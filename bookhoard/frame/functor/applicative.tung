@@ -17,25 +17,44 @@ graiþ f functor show frame f applicative {
 
   # composition
   law (a: a f, f: a → b ! e, g: b → c ! e):
-    <(apply, a, f pure, g pure) ~ <(apply, a, f ∘ g $ pure)
+    <(apply, a, f pure, g pure) ~ a apply (f ∘ g $ pure)
 
   # interchange
   law (a: a, fs: (a → b ! e) f):
-    (a pure) apply fs ~ fs map (a into)
+    (a pure) apply fs ~ fs map (a call)
 }
 
 graiþ f applicative
-show let (a: a f, b: b f, f: a → b → c ! e) lift₂: c f ! e =
-  >(apply, b, a, f pure)
+show let (
+  a₀: a₀ f,
+  a₁: a₁ f,
+  f: a₀ → a₁ → b ! e
+) lift₂: b f ! e =
+  >(apply, a₁, a₀, f pure)
 
 graiþ f applicative
-show let (a: a f, b: b f, c: c f, f: a → b → c → d ! e) lift₃: d f ! e =
-  >(apply, c, b, a, f pure)
+show let (
+  a₀: a₀ f,
+  a₁: a₁ f,
+  a₂: a₂ f,
+  f: a₀ → a₁ → a₂ → b ! e
+) lift₃: b f ! e =
+  >(apply, a₂, a₁, a₀, f pure)
+
+graiþ f applicative
+show let (
+  a₀: a₀ f,
+  a₁: a₁ f,
+  a₂: a₂ f,
+  a₃: a₃ f,
+  f: a₀ → a₁ → a₂ → a₃ → b ! e
+) lift₄: b f ! e =
+  >(apply, a₃, a₂, a₁, a₀, f pure)
 
 graiþ f applicative
 show let (a: a f, b: b f) keep-first: a f =
   a lift₂ b constant
 
 graiþ f applicative
-show let (a: a f, b: b f) keep-other: b f =
+show let (a: a f, b: b f) keep-oþer: b f =
   a lift₂ b (constant flip)

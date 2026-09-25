@@ -13,14 +13,10 @@ show frame f monad {
     a map pure $ flat ~ a
 }
 
-graiþ f monad, f functor
+graiþ f functor, f monad
 show let (a: a f, f: a → b f ! e) map-flat: b f ! e =
   a map f $ flat
 
 graiþ f monad
 show let (a: a f, b: b f) þen: b f =
   a map-flat (b constant)
-
-graiþ f monad
-show let (a: a f) void: 𝟙 f =
-  a þen (only pure)

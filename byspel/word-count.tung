@@ -28,7 +28,7 @@ let write-count [entry:text ∏ ℤ, 𝟙; console] (
 let main [_:𝟙, 𝟙; console, file, system]
   match only arguments {
     list~empty ^ 'usage: tung word-count.tung <file>' write-line,
-    paþ _* _ ^ try (
+    paþ ⁖ _ ^ try (
       let content [] paþ read-file
       let counts [] content count-words
       yield (counts entries) each write-count

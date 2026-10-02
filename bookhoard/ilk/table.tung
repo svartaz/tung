@@ -17,7 +17,7 @@ show ilk table [k:*, v:*, *] {
 show let empty [@k:*, @v:*, k table v] list~empty from-list
 
 show let singleton [@k:*, @v:*, key:k, value:v, k table v]
-  key ∏ value $ _* list~empty $ from-list
+  key ∏ value $ ⁖ list~empty $ from-list
 
 show let entries [@k:*, @v:*, list from-list:k table v, (k ∏ v) list]
   list
@@ -30,7 +30,7 @@ show let put [byzen k equal, @v:*,
   key:k,
   value:v,
   k table v
-] (key ∏ value) _* (list filter { pair ^ key ≢ (pair project₀) }) $ from-list
+] (key ∏ value) ⁖ (list filter { pair ^ key ≢ (pair project₀) }) $ from-list
 
 show let rid [byzen k equal, @v:*, list from-list:k table v, key:k, k table v]
   list filter { pair ^ key ≢ (pair project₀) } $ from-list

@@ -370,7 +370,7 @@ languageKeywordNames :: [String]
 languageKeywordNames = keywordNames ++ ["eftgin"]
 
 keywordOrIdent :: String -> Token
--- only a standalone star is kind syntax; names such as _* remain whole.
+-- only a standalone star is kind syntax; names such as ⁖ remain whole.
 keywordOrIdent "*" = TKindStar
 keywordOrIdent name = fromMaybe (TIdent name) (lookup name keywordTokens)
 

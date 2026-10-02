@@ -37,7 +37,7 @@ show let reverse-text [text:text, text]
   text text-to-list $ reverse $ list-to-text
 
 show let prepend-text [character:unicode, text:text, text]
-  character _* (text text-to-list) $ list-to-text
+  character ⁖ (text text-to-list) $ list-to-text
 
 show let append-text [text:text, character:unicode, text]
   text text-to-list $ · (character singleton) $ list-to-text
@@ -47,12 +47,12 @@ let split-unicode-by [
   separates:[unicode, 𝟚],
   (unicode list) list]
   match list {
-    empty ^ empty _* empty,
-    character _* rest ^ match rest split-unicode-by separates {
-      empty ^ (character _* empty) _* empty,
-      current _* previous ^ match character separates {
-        yea ^ empty _* (current _* previous),
-        nay ^ (character _* current) _* previous
+    empty ^ empty ⁖ empty,
+    character ⁖ rest ^ match rest split-unicode-by separates {
+      empty ^ (character ⁖ empty) ⁖ empty,
+      current ⁖ previous ^ match character separates {
+        yea ^ empty ⁖ (current ⁖ previous),
+        nay ^ (character ⁖ current) ⁖ previous
       }
     }
   }
@@ -80,7 +80,7 @@ show let words-text [text:text, text list]
 ## join text values wiþ a separator between neighbours.
 show let join-wiþ-text [text list, text, text] {
   empty, _ ^ '',
-  text _* texts, separator ^ texts fold₁ text {
+  text ⁖ texts, separator ^ texts fold₁ text {
     joined, next ^ (joined · separator) · next
   }
 }

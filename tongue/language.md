@@ -108,7 +108,7 @@ most non-space, non-reserved characters may occur in names. `~` qualifieþ
 imports; `.` selecteþ record fields; `^` separateþ match and handler cases. type
 alias, data, effect, and flock names are unqualified. so are þeir constructors,
 operations, and members. outside `.tung` import paths, a name may contain at
-most one `~`. its namespace and member must be nonempty and slash-free. `_*` is
+most one `~`. its namespace and member must be nonempty and slash-free. `⁖` is
 an ordinary name; there is no general infix escape. `_` discardeþ a binding or
 match value.
 
@@ -148,7 +148,7 @@ evaluation is strict: first the function, then arguments from left to right.
 `ilk` putteþ its name first, then kinded parameters and a final `*` in brackets.
 its constructors go in `{}`. a type wiþ no parameters useþ `[*]`.
 `*` is the kind of ordinary types. `[*, *]` is a kind from types to types.
-only a standalone `*` is kind syntax. names such as `_*` remain ordinary names.
+only a standalone `*` is kind syntax. names such as `⁖` remain ordinary names.
 the magma operation is `·`.
 constructors may declare their argument types and result type in brackets.
 the result type must name the declared `ilk` with its full arity. adjacent
@@ -157,7 +157,7 @@ constructor signatures need no commas.
 ```tung
 ilk list [a:*, *] {
   empty [a list]
-  _* [a, a list, a list]
+  ⁖ [a, a list, a list]
 }
 ```
 

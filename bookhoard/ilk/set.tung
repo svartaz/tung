@@ -25,7 +25,7 @@ show ilk set [a:*, *] {
 show let empty [@a:*, a set] list~empty from-list
 
 show let singleton [@a:*, a:a, a set]
-  (a _* list~empty) from-list
+  (a ⁖ list~empty) from-list
 
 show let to-list [@a:*, list from-list:a set, a list] list
 
@@ -34,7 +34,7 @@ bizen [byzen (a list) inhold a]:(a set) inhold a {
 }
 
 show let put [byzen (a list) inhold a, list from-list:a set, a:a, a set]
-  (list ∋ a) if (list from-list) ((a _* list) from-list)
+  (list ∋ a) if (list from-list) ((a ⁖ list) from-list)
 
 show let keep [
   @a:*, @e:*,

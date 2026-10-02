@@ -356,7 +356,7 @@ importCases =
     typeOkWith "value with a private imported type remaineth inferable" "use opaque.tung opaque let value [] opaque~value" opaqueTypeImport,
     typeOkWith "type identity surviveþ a re-export" "use base-data.tung original use middle-data.tung reexport let from-original [reexport~token] original~value let from-reexport [original~token] reexport~value" reexportedTypeImport,
     typeErrWith "host data schema rejecteþ nested nominal lookalikes" nestedTableLookalike rawTableImport,
-    typeOkWith "declared host data dependencies remain ABI-compatible" "use ilk/table.tung standard ilk ∏ [a:*, b:*, *] { a ∏ b } ilk list [a:*, *] { empty, a _* (a list) } ilk table [k:*, v:*, *] { ((k ∏ v) list) from-list } let cast [ℤ table text, ℤ standard~table text] { x ^ x }" rawTableImport,
+    typeOkWith "declared host data dependencies remain ABI-compatible" "use ilk/table.tung standard ilk ∏ [a:*, b:*, *] { a ∏ b } ilk list [a:*, *] { empty, a ⁖ (a list) } ilk table [k:*, v:*, *] { ((k ∏ v) list) from-list } let cast [ℤ table text, ℤ standard~table text] { x ^ x }" rawTableImport,
     typeOkWith "coverage separateþ same-spelled imported data" "use left-token.tung left use right-token.tung right let result [ℤ] match left~value { left~zero ^ 0, left~one ^ 1 }" nominalCoverageImports,
     typeErrWith "use aliases cannot collide" "use left.tung common use right.tung common" duplicateAliases,
     typeErrWith "default use aliases cannot collide" "use ilk/item.tung use syntax/item.tung" defaultAliasCollisionImports,
@@ -462,7 +462,7 @@ importCases =
     ambiguousZeros = Map.fromList [("ilk/natural.tung", "show let zero [] 0"), ("flock/algebra/arithmetic/semiring.tung", "show let zero [] 1")]
     privateClassImports = Map.fromList [("leaf.tung", "show flock hidden [a:*] { let hidden [a, a] }"), ("middle.tung", "use leaf.tung")]
     reservedTwoLookalike = Map.singleton "ilk/two.tung" "show ilk 𝟚 [*] { yea, maybe }"
-    rawTableImport = Map.singleton "ilk/table.tung" "ilk ∏ [a:*, b:*, *] { a ∏ b } ilk list [a:*, *] { empty, a _* (a list) } show ilk table [k:*, v:*, *] { ((k ∏ v) list) from-list }"
+    rawTableImport = Map.singleton "ilk/table.tung" "ilk ∏ [a:*, b:*, *] { a ∏ b } ilk list [a:*, *] { empty, a ⁖ (a list) } show ilk table [k:*, v:*, *] { ((k ∏ v) list) from-list }"
     nestedTableLookalike =
       "use ilk/table.tung standard "
         ++ "ilk ∏ [a:*, b:*, *] { pair } ilk list [a:*, *] { empty } ilk table [k:*, v:*, *] { ((k ∏ v) list) from-list } "
@@ -520,9 +520,9 @@ orderCases imports =
 boundCases :: Map.Map String String -> [Test]
 boundCases imports =
   [ typeOkWith "finite orders provide both endpoints" (prefix ++ "let low [𝟚] ⟂ let high [𝟛] ⊤") imports,
-    typeOkWith "natural supporteþ the lower-bound fold" (prefix ++ "let value [ℕ] (natural~zero _* list~empty) …∨") imports,
-    typeErrWith "natural doth not claim an upper bound" (prefix ++ "let value [ℕ] (natural~zero _* list~empty) …∧") imports,
-    typeOkWith "powerset is a bounded lattice without total order" (powersetPrefix ++ "let joined [ℤ powerset] (empty-set _* (full-set _* list~empty)) …∨") imports,
+    typeOkWith "natural supporteþ the lower-bound fold" (prefix ++ "let value [ℕ] (natural~zero ⁖ list~empty) …∨") imports,
+    typeErrWith "natural doth not claim an upper bound" (prefix ++ "let value [ℕ] (natural~zero ⁖ list~empty) …∧") imports,
+    typeOkWith "powerset is a bounded lattice without total order" (powersetPrefix ++ "let joined [ℤ powerset] (empty-set ⁖ (full-set ⁖ list~empty)) …∨") imports,
     typeErrWith "lattice doth not imply total order" (powersetPrefix ++ "let bad [] empty-set ≤ full-set") imports,
     typeErrWith "float doth not claim a lawful lattice" "use ground.tung let bad [float] 1.0 ∧ 2.0" imports,
     typeOkWith "infimum semilattice stands without supremum" (semilatticePrefix ++ "let good [] item ∧ item") imports,
@@ -815,7 +815,7 @@ reorderedWebSource =
 webData =
   unitData
     ++ "ilk ∏ [a:*, b:*, *] { a ∏ b } "
-    ++ "ilk list [a:*, *] { empty, a _* (a list) } "
+    ++ "ilk list [a:*, *] { empty, a ⁖ (a list) } "
     ++ "ilk table [k:*, v:*, *] { ((k ∏ v) list) from-list } "
     ++ "ilk request [*] { text request text (text table text) text } "
     ++ "ilk response [*] { ℤ response (text table text) text } "

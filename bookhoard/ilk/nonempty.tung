@@ -20,12 +20,12 @@ show let singleton [@a:*, a:a, a nonempty]
 
 ## expose a non-empty list as an ordinary list.
 show let to-list [@a:*, (first nonempty rest):a nonempty, a list]
-  first _* rest
+  first ⁖ rest
 
 ## make a non-empty list when þe input haþ a first element.
 show let from-list [@a:*, a list, (a nonempty) option] {
   empty ^ none,
-  first _* rest ^ (first nonempty rest) some
+  first ⁖ rest ^ (first nonempty rest) some
 }
 
 show let head [@a:*, (first nonempty _):a nonempty, a] first
@@ -50,7 +50,7 @@ bizen:nonempty applicative {
   let pure [] singleton
   let (first nonempty rest) apply (f nonempty fs) []
     (first f) nonempty (
-      (rest map f) · ((first _* rest) apply fs)
+      (rest map f) · ((first ⁖ rest) apply fs)
     )
 }
 

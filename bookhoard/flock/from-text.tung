@@ -1,5 +1,0 @@
-use deed/fail.tung
-
-show flock from-text [a:*] {
-  let from-text [text, a; text fail]
-}

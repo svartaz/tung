@@ -5,7 +5,7 @@ module Tung.Highlight (highlightSource) where
 import Data.Aeson (encode)
 import Data.ByteString.Lazy.Char8 qualified as ByteString
 import Data.Map.Strict qualified as Map
-import Tung.Parse (SourceRole (..), parseSourceRoles)
+import Tung.Dependent.Source.Parse (SourceRole (..), parseSourceRoles)
 import Tung.Token (SourceSpan (..))
 
 highlightSource :: String -> String

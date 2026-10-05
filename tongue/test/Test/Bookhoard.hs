@@ -4,15 +4,17 @@
 module Test.Bookhoard (group) where
 
 import Data.Foldable (traverse_)
-import Data.List (intercalate, isPrefixOf, nub, sort)
+import Data.List (intercalate, isPrefixOf, nub, sort, stripPrefix)
 import Data.Map.Strict qualified as Map
-import Data.Maybe (catMaybes, listToMaybe)
+import Data.Maybe (catMaybes, fromMaybe, listToMaybe)
 import Data.Set qualified as Set
 import System.Directory (doesDirectoryExist, listDirectory)
 import System.FilePath (takeBaseName, takeDirectory, takeExtension, (</>))
-import Test.Harness (Group, Test)
+import Test.DependentSupport (Library, compileAs, compileWith, loadLibrary, rejectContaining, sameNormalIn)
+import Test.Harness (Group, Test, expectEq)
 import Test.Harness qualified as Harness
 import Tung
+import Tung.Dependent.Source qualified as Source
 
 group :: IO Group
 group = do
@@ -20,18 +22,89 @@ group = do
   imports <- readLibraryImports "." >>= either fail pure
   registry <- registryCase files
   loaded <- loadedSourcesCase files imports
+  equality <- loadLibrary ["equality.tung"]
+  theorems <- loadLibrary ["ilk/list_theorem.tung", "ilk/natural.tung"]
   Harness.group "bookhoard" $
     registry
       : loaded
       : acyclicCase imports
       : noUmbrellaDependencyCase files
-      : groundEffectExportsCase imports
+      : groundDeedExportsCase imports
       : systemExplicitCase imports
-      : runnerEffectsCase imports
+      : runnerDeedsCase imports
       : primitiveCatalogueCase imports
       : classLayoutCase files
-      : map (typeCase imports) (typeCheckRoots files imports)
+      : equalityCases equality
+      ++ soundnessCases theorems
+      ++ map (typeCase imports) (typeCheckRoots files imports)
       ++ map oneDataTypeCase (nub (map fst files))
+
+equalityCases :: Library -> [Test]
+equalityCases library =
+  [ expectEq "equality helpers compute on reflection" (Right [True, True, True]) do
+      program <- compile "let same:[x:ℤ, ℤ] ≔ x"
+      traverse
+        (\expression -> sameNormalIn program expression "reflect @ℤ @+1")
+        [ "same leibnitz (reflect @ℤ @+1)",
+          "(reflect @ℤ @+1) symmetry",
+          "(reflect @ℤ @+1) transitivity (reflect @ℤ @+1)"
+        ],
+    rejectContaining "transitivity requireþ matching middle endpoints" "cannot unify" $
+      compile "let bad ≔ (reflect @ℤ @+1) transitivity (reflect @ℤ @+2)"
+  ]
+  where
+    compile source = compileWith library "equality_test.tung" ("use equality.tung\n" ++ source)
+
+-- þe list theorems are proved; false or ill-founded statements beside þem
+-- must be rejected for þe stated reason, wiþout `sorry`.
+soundnessCases :: Library -> [Test]
+soundnessCases library =
+  [ expectEq "a closed instance of a proved theorem computeþ to reflect" (Right True) do
+      program <-
+        compile
+          """
+          let closed: ((1 ‥ (2 ‥ empty)) reverse $ reverse) = (1 ‥ (2 ‥ empty)) ≔ (1 ‥ (2 ‥ empty)) reverse_reverse
+          let direct: ((1 ‥ (2 ‥ empty)) reverse $ reverse) = (1 ‥ (2 ‥ empty)) ≔ reflect
+          """
+      sameNormalIn program "closed" "direct",
+    rejectContaining "a list is not its own double" "cannot unify" $
+      compile "let bad: [l: ℕ list, (l · l) = l] ≔ reflect",
+    rejectContaining "appending is not commutative" "cannot unify" $
+      compile "let bad: [a: ℕ list, b: ℕ list, (a · b) = (b · a)] ≔ match a { empty ^ (b ·_empty) symmetry, first ‥ rest ^ (first ‥) leibnitz (rest bad b) }",
+    rejectContaining "distinct lists are not equal" "cannot unify 1 wiþ 2" $
+      compile "let bad: (1 ‥ empty) = (2 ‥ empty) ≔ reflect",
+    rejectContaining "reversing is not þe identity" "cannot unify" $
+      compile "let bad: [l: ℕ list, (l reverse) = l] ≔ match l { empty ^ reflect, first ‥ rest ^ (first ‥) leibnitz (rest bad) }",
+    rejectContaining "recursion on þe same list cannot prove þe empty type" "a recursive call must pass a direct child" $
+      compile "let bad: [l: ℕ list, 𝟘] ≔ l bad",
+    rejectContaining "recursion on a larger list cannot prove þe empty type" "a recursive call must pass a direct child" $
+      compile "let bad: [l: ℕ list, 𝟘] ≔ (0 ‥ l) bad",
+    rejectContaining "a branch cannot recurse on its own input" "a recursive call must pass a direct child" $
+      compile "let bad: [l: ℕ list, 𝟘] ≔ match l { empty ^ sorry, first ‥ rest ^ (first ‥ rest) bad }",
+    rejectContaining "a partial match proveþ noþing" "the match is not exhaustive: missing ‥" $
+      compile "let bad: [l: ℕ list, l = empty] ≔ match l { empty ^ reflect }",
+    rejectContaining "an empty function needeþ an impossible input" "the match is not exhaustive" $
+      compile "let bad: [(1 ‥ empty) = (1 ‥ empty), 𝟘] ≔ {}",
+    rejectContaining "pointwise equal functions are not provably equal" "cannot unify" $
+      compile "let bad: [f: [ℕ, ℕ], g: [ℕ, ℕ], [n: ℕ, (n f) = (n g)], f = g] ≔ {_ ^ reflect}",
+    rejectContaining "a list of one type is not a list of anoþer" "cannot unify ℕ wiþ" $
+      compile "let bad: [ℕ list, 𝟚 list] ≔ {l ^ l}",
+    rejectContaining "a host binding cannot inhabit an empty type" "requireþ a different type" $
+      compileAs "soundness_host.tung" "ilk void: * {}\nlet bad: void ≔ 'add_natural' fremmed"
+  ]
+  where
+    compile source =
+      compileWith library "soundness_test.tung" $
+        unlines
+          [ "use equality.tung",
+            "use flock/algebra/total/magma.tung",
+            "use ilk/list.tung",
+            "use ilk/list_theorem.tung",
+            "use ilk/natural.tung",
+            "use ilk/two.tung",
+            "use ilk/zero.tung"
+          ]
+          ++ source
 
 -- checking a root also checkeþ every module it importeth, so each module
 -- needeþ one reachable path through the import graph.
@@ -42,7 +115,7 @@ typeCheckRoots files imports = filter (\(_, name) -> name `Set.notMember` refere
       Set.fromList
         [ path
         | source <- Map.elems imports,
-          Right (Program declarations) <- [parse source],
+          Right declarations <- [Source.parseSource source],
           declaration <- declarations,
           path <- importedPaths declaration
         ]
@@ -86,7 +159,7 @@ symmetricDifference left right = filter (`notElem` right) left ++ filter (`notEl
 typeCase :: Map.Map String String -> (FilePath, String) -> Test
 typeCase imports (path, importName) = do
   source <- readFile path
-  pure $ case checkWithImports source imports of
+  pure $ case Harness.checkSource False source imports of
     "type ok" -> Nothing
     actual -> Just ("type " ++ importName ++ ": " ++ actual)
 
@@ -98,7 +171,7 @@ acyclicCase imports = pure $ case traverse_ (walk []) (Map.keys imports) of
     walk stack path = do
       nextStack <- enterImport stack path
       source <- maybe (Left ("missing use '" ++ path ++ "'")) Right (Map.lookup path imports)
-      Program declarations <- either (Left . (("parse " ++ path ++ ": ") ++)) Right (parse source)
+      declarations <- either (Left . (("parse " ++ path ++ ": ") ++)) Right (Source.parseSource source)
       traverse_ (walk nextStack) (concatMap importedPaths declarations)
 
 noUmbrellaDependencyCase :: [(FilePath, String)] -> Test
@@ -107,99 +180,80 @@ noUmbrellaDependencyCase files = listToMaybe . catMaybes <$> traverse checkModul
     checkModule (_, "ground.tung") = pure Nothing
     checkModule (path, _) = do
       source <- readFile path
-      pure $ case parse source of
+      pure $ case Source.parseSource source of
         Left message -> Just ("parse " ++ path ++ ": " ++ message)
-        Right (Program declarations)
+        Right declarations
           | "ground.tung" `elem` concatMap importedPaths declarations -> Just (path ++ " imports the ground umbrella")
           | otherwise -> Nothing
 
-groundEffectExportsCase :: Map.Map String String -> Test
-groundEffectExportsCase imports =
-  pure $ case checkWithImports source imports of
+groundDeedExportsCase :: Map.Map String String -> Test
+groundDeedExportsCase imports =
+  pure $ case Harness.checkSource False source imports of
     "type ok" -> Nothing
-    actual -> Just ("ground effect exports: " ++ actual)
+    actual -> Just ("ground deed exports: " ++ actual)
   where
     source =
       "use ground.tung "
-        ++ "show-ilk ground~fail, ground~console, ground~random, ground~state, ground~async, ground~file"
+        ++ "let echo:𝟙 deed ≔ read map_flat { _ ^ >{þen, 'a' write_line, random, 0 sleep, 'x' read_file, only pure} } "
+        ++ "let task:(ℤ task) deed ≔ (+1 pure) fork"
 
 systemExplicitCase :: Map.Map String String -> Test
 systemExplicitCase imports =
-  pure $ case checkWithImports "use ground.tung show-ilk ground~system" imports of
+  pure $ case Harness.checkSource False "use ground.tung let args ≔ arguments" imports of
     actual | "type error:" `isPrefixOf` actual -> Nothing
-    actual -> Just ("ground unexpectedly exports system: " ++ actual)
+    actual -> Just ("ground unexpectedly exports system deeds: " ++ actual)
 
-runnerEffectsCase :: Map.Map String String -> Test
-runnerEffectsCase imports =
-  pure $ case checkRunnableWithImports source imports of
+runnerDeedsCase :: Map.Map String String -> Test
+runnerDeedsCase imports =
+  pure $ case Harness.checkSource True source imports of
     "type ok" -> Nothing
-    actual -> Just ("runner effects: " ++ actual)
+    actual -> Just ("runner deeds: " ++ actual)
   where
     source =
       "use ground.tung use deed/clock.tung use deed/process.tung use deed/system.tung use web/server.tung use ilk/list.tung use ilk/option.tung "
-        ++ "let route [_: request, response] 'ok' ok "
-        ++ "let main [_: 𝟙, 𝟙; system, clock, process, web] ("
-        ++ "let args [] only arguments "
-        ++ "let setting [] 'TUNG_SETTING' environment "
-        ++ "let stamp [] only unix-time "
-        ++ "yield try 8080 serve route { _ fail ^ only })"
+        ++ "let route:[_: _request, _response deed] ≔ 'ok' ok $ pure "
+        ++ "let main:𝟙 deed ≔ >{þen, arguments, 'TUNG_SETTING' environment, unix_time, 'true' run_process empty, 8080 serve route $ void}"
 
 primitiveCatalogueCase :: Map.Map String String -> Test
-primitiveCatalogueCase imports = pure $ case traverse parse (Map.elems imports) of
+primitiveCatalogueCase imports = pure $ case traverse Source.parseSource (Map.elems imports) of
   Left message -> Just ("primitive catalogue parse: " ++ message)
   Right programs ->
-    let declarations = concat [items | Program items <- programs]
+    let declarations = concat programs
         declaredForeigns = Set.fromList (concatMap foreignNames declarations)
-        declaredEffects = Map.fromList (concatMap effectArities declarations)
-        catalogueForeigns = Set.fromList [hostName | HostBinding {hostName, hostRole = ForeignBinding} <- hostBindings]
-        catalogueEffects =
-          Map.fromList
-            [ ((owner, hostName), length hostArguments)
-            | HostBinding {hostName, hostRole, hostSignature = HostSignature {hostArguments}} <- hostBindings,
-              owner <- effectOwners hostRole
-            ]
+        catalogueForeigns = Set.fromList [hostName | HostBinding {hostName} <- hostBindings]
      in if catalogueForeigns /= declaredForeigns
           then Just "host catalogue and fremmed declarations differ"
           else
-            if not (Map.isSubmapOfBy (==) catalogueEffects declaredEffects)
-              then Just "host catalogue and dispatched effect declarations differ"
-              else
-                if any (null . hostArguments . hostSignature) hostBindings
-                  then Just "host catalogue containeþ an empty function"
-                  else Nothing
+            -- þe evaluator performeþ an argumentless binding as a deed.
+            if any (argumentless . hostSignature) hostBindings
+              then Just "host catalogue containeþ an argumentless binding þat is not a deed"
+              else Nothing
   where
+    argumentless HostSignature {hostArguments, hostResult} = null hostArguments && not (isDeed hostResult)
+    isDeed (HostApp "deed" _) = True
+    isDeed _ = False
     foreignNames = \case
-      Export declaration -> foreignNames declaration
-      Let _ _ (EForeign hostKey) -> [hostKey]
+      Source.ShownDeclaration declaration -> foreignNames declaration
+      Source.HostDeclaration {Source.hostKey} -> [hostKey]
       _ -> []
-    effectArities = \case
-      Export declaration -> effectArities declaration
-      EffectDecl _ owner operations -> [((owner, name), effectArity signature) | EffectOp name signature <- operations]
-      _ -> []
-    effectArity (TypeArrow arguments _ _) = length arguments
-    effectArity (TypeForall _ body) = effectArity body
-    effectArity _ = 0
-    effectOwners (BaseEffect owner) = [owner]
-    effectOwners (SourceEffect owner) = [owner]
-    effectOwners _ = []
 
 oneDataTypeCase :: FilePath -> Test
 oneDataTypeCase path = do
   source <- readFile path
-  pure $ case parse source of
+  pure $ case Source.parseSource source of
     Left message -> Just ("parse " ++ path ++ ": " ++ message)
-    Right (Program declarations) ->
+    Right declarations ->
       let count = length [() | declaration <- declarations, isDataDecl declaration]
        in if count <= 1 then Nothing else Just (path ++ " owneþ " ++ show count ++ " data types")
 
-importedPaths :: Decl -> [String]
-importedPaths (Import path _) = [path]
-importedPaths (Export declaration) = importedPaths declaration
+importedPaths :: Source.Declaration -> [String]
+importedPaths (Source.ImportDeclaration path _) = [path]
+importedPaths (Source.ShownDeclaration declaration) = importedPaths declaration
 importedPaths _ = []
 
-isDataDecl :: Decl -> Bool
-isDataDecl DataDecl {} = True
-isDataDecl (Export declaration) = isDataDecl declaration
+isDataDecl :: Source.Declaration -> Bool
+isDataDecl Source.InductiveDeclaration {} = True
+isDataDecl (Source.ShownDeclaration declaration) = isDataDecl declaration
 isDataDecl _ = False
 
 classLayoutCase :: [(FilePath, String)] -> Test
@@ -207,19 +261,20 @@ classLayoutCase files = listToMaybe . catMaybes <$> traverse checkModule files
   where
     checkModule (path, name) = do
       source <- readFile path
-      pure $ case parse source of
+      pure $ case Source.parseSource source of
         Left message -> Just ("parse " ++ path ++ ": " ++ message)
-        Right (Program declarations) -> checkClasses path name (concatMap classNames declarations)
+        Right declarations -> checkClasses path name (concatMap classNames declarations)
     checkClasses path name names
       | classPrefix `isPrefixOf` name = case names of
-          [name] | name == takeBaseName path -> Nothing
+          -- a `haþ_` prefix separateþ a flock from its member of þe same name.
+          [name] | fromMaybe name (stripPrefix "haþ_" name) == takeBaseName path -> Nothing
           [name] -> Just (path ++ " defineþ class '" ++ name ++ "'")
           _ -> Just (path ++ " owneþ " ++ show (length names) ++ " classes")
       | null names = Nothing
       | otherwise = Just (path ++ " defineþ a class outside the flock directory")
     classPrefix = "flock/"
 
-classNames :: Decl -> [String]
-classNames (ClassDecl _ name _) = [name]
-classNames (Export declaration) = classNames declaration
+classNames :: Source.Declaration -> [String]
+classNames (Source.FlockDeclaration name _ _) = [name]
+classNames (Source.ShownDeclaration declaration) = classNames declaration
 classNames _ = []

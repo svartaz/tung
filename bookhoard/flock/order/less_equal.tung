@@ -1,0 +1,27 @@
+use flock/equal.tung
+use ilk/three.tung
+use ilk/two.tung
+
+## a decidable less-þan-or-equal operation, wiþout order laws.
+show flock less_equal: [α: *, @: α equal, *] {
+  let ≤: [α, α, 𝟚]
+}
+
+show let <: [@α: *, @: α less_equal, @: α equal, a: α, b: α, 𝟚] ≔ (a ≤ b) if (a ≭ b) nay
+
+bizen: 𝟚 less_equal {
+  let ≤ ≔ {
+    nay, _ ^ yea,
+    yea, b ^ b
+  }
+}
+
+bizen: 𝟛 less_equal {
+  let ≤ ≔ {
+    fore, _    ^ yea,
+    mid,  fore ^ nay,
+    mid,  _    ^ yea,
+    aft,  aft  ^ yea,
+    aft,  _    ^ nay
+  }
+}

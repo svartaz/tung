@@ -3,23 +3,16 @@
 -- | shared host ABI catalogues for the checker/runtime boundary.
 module Tung.Primitive
   ( HostBinding (..),
-    HostRole (..),
     HostSignature (..),
     HostType (..),
-    PrimitiveInstanceSpec (..),
+    HostDataSchema (..),
     hostBindings,
+    hostDataSchemas,
     hostArity,
-    hostEffectNames,
-    runnerEffectNames,
     primitiveTypeNames,
-    effectId,
-    effectOperationId,
-    renderEffectId,
-    primitiveClassId,
+    opaqueTypeFamilyNames,
     canonicalHostTypeName,
     hostTypeId,
-    dataDeclarationRef,
-    primitiveInstanceSpecs,
     onlyConstructorId,
     yeaConstructorId,
     nayConstructorId,
@@ -32,93 +25,86 @@ module Tung.Primitive
     requestConstructorId,
     responseConstructorId,
     tableConstructorId,
+    leftConstructorId,
+    rightConstructorId,
     findForeignBinding,
-    baseNativeBindings,
-    baseEffectBindings,
+    HostValue (..),
+    pureOperation,
+    naturalZeroId,
+    naturalSuccessorId,
+    listName,
+    optionName,
+    productName,
+    sumName,
+    tableName,
+    oneName,
+    twoName,
+    processResultName,
+    requestName,
+    responseName,
   )
 where
 
-import Data.Char (isAscii, isDigit, isLower)
-import Data.List (find, nub, sortOn)
-import Data.List.NonEmpty (NonEmpty (..))
-import Data.Maybe (fromMaybe)
-import Tung.Identity (ModuleId (..), SymbolId (..), TypeRef (..))
+import Data.Char (ord)
+import Data.List (find)
+import GHC.TypeLits (Natural)
+import Text.Read (readMaybe)
+import Tung.Identity (ModuleId (..), SymbolId (..))
 import Tung.Name (importNamespace)
-import Tung.Syntax (ClassMember (..), Ctor (..), EffectOp (..), TypeAnn (..), TypeExpr (..), parameterNames, unknownParameters)
+import Tung.Token (unicodeScalar)
 
+-- host types are first order, except þat an argument may be a function.
 data HostType
   = HostVar String
   | HostCon String
   | HostApp String [HostType]
+  | HostArrow [HostType] HostType
   deriving (Eq, Show)
 
 data HostSignature = HostSignature
   { hostVariables :: [String],
     hostArguments :: [HostType],
-    hostEffects :: [HostType],
     hostResult :: HostType
   }
   deriving (Eq, Show)
 
-data HostRole
-  = ForeignBinding
-  | BaseNative
-  | BaseEffect String
-  | SourceEffect String
-  deriving (Eq, Show)
-
+-- every host operation is reached through an annotated `fremmed` let.
 data HostBinding = HostBinding
   { hostName :: String,
-    hostRole :: HostRole,
     hostSignature :: HostSignature
   }
   deriving (Eq, Show)
 
+-- a host data type is þe `ilk` of þis name declared in þis bookhoard file;
+-- þe runtime readeþ its constructors by identity.
 data HostData = HostData
   { hostDataSource :: FilePath,
-    hostDataName :: String,
+    hostDataName :: String
+  }
+
+-- nominal data declarations used by host operations have a fixed constructor
+-- ABI. signatures reuse the same type language as the operation catalogue.
+data HostDataSchema = HostDataSchema
+  { hostDataType :: String,
     hostDataParameters :: [String],
-    hostDataConstructors :: [Ctor]
-  }
-
-data HostEffect = HostEffect
-  { hostEffectName :: String,
-    hostEffectParameters :: [String],
-    hostEffectOperations :: [EffectOp]
-  }
-
-data PrimitiveInstanceSpec = PrimitiveInstanceSpec
-  { primitiveInstanceClass :: String,
-    primitiveInstanceClassTarget :: SymbolId,
-    primitiveInstanceType :: String,
-    primitiveInstanceMember :: String
+    hostDataConstructors :: [(SymbolId, HostSignature)]
   }
   deriving (Eq, Show)
 
-data PrimitiveClass = PrimitiveClass
-  { primitiveClassSource :: FilePath,
-    primitiveClassName :: String,
-    primitiveClassParameters :: [String],
-    primitiveClassRequired :: (String, TypeAnn)
-  }
-
-data SchemaOrdering = SourceOrdering | StructuralOrdering
-
-oneData, twoData, listData, optionData, productData, tableData :: HostData
-oneData = HostData "ilk/one.tung" "𝟙" [] [Ctor "only" [] [] Nothing]
-twoData = HostData "ilk/two.tung" "𝟚" [] [Ctor "yea" [] [] Nothing, Ctor "nay" [] [] Nothing]
-listData = HostData "ilk/list.tung" "list" ["a"] [Ctor "empty" [] [] Nothing, Ctor "⁖" [] [TypeName "a", TypeApply "list" [TypeName "a"]] Nothing]
-optionData = HostData "ilk/option.tung" "option" ["a"] [Ctor "none" [] [] Nothing, Ctor "some" [] [TypeName "a"] Nothing]
-productData = HostData "ilk/product.tung" "∏" ["a", "b"] [Ctor "∏" [] [TypeName "a", TypeName "b"] Nothing]
-tableData = HostData "ilk/table.tung" "table" ["k", "v"] [Ctor "from-list" [] [TypeApply "list" [TypeApply "∏" [TypeName "k", TypeName "v"]]] Nothing]
+oneData, twoData, listData, optionData, productData, sumData, tableData :: HostData
+oneData = HostData "ilk/one.tung" "𝟙"
+twoData = HostData "ilk/two.tung" "𝟚"
+listData = HostData "ilk/list.tung" "list"
+optionData = HostData "ilk/option.tung" "option"
+productData = HostData "ilk/product.tung" "∏"
+-- a fallible host deed returneþ `text ∑ α`: an error message or a result.
+sumData = HostData "ilk/sum.tung" "∑"
+tableData = HostData "ilk/table.tung" "table"
 
 processResultData, requestData, responseData :: HostData
-processResultData = HostData "process/result.tung" "process-result" [] [Ctor "process-result" [] [TypeName "ℤ", TypeName "text", TypeName "text"] Nothing]
-requestData = HostData "web/request.tung" "request" [] [Ctor "request" [] [TypeName "text", TypeName "text", textTable, TypeName "text"] Nothing]
-responseData = HostData "web/response.tung" "response" [] [Ctor "response" [] [TypeName "ℤ", textTable, TypeName "text"] Nothing]
-
-textTable :: TypeExpr
-textTable = TypeApply "table" [TypeName "text", TypeName "text"]
+processResultData = HostData "process/result.tung" "_process_result"
+requestData = HostData "web/request.tung" "_request"
+responseData = HostData "web/response.tung" "_response"
 
 hostData :: [HostData]
 hostData =
@@ -127,239 +113,45 @@ hostData =
     listData,
     optionData,
     productData,
+    sumData,
     tableData,
     processResultData,
     requestData,
     responseData
   ]
 
-primitiveInstanceSpecs :: [PrimitiveInstanceSpec]
-primitiveInstanceSpecs =
-  [ instance_ typeName class_
-  | (typeName, supported) <-
-      [ ("ℤ", ["equal", "less-equal", "add", "zero", "subtract", "multiply", "one", "divide-remainder", "to-text"]),
-        ("float", ["equal", "less-equal", "add", "zero", "subtract", "multiply", "one", "divide", "from-text", "to-text"])
-      ],
-    class_@PrimitiveClass {primitiveClassName} <- primitiveClasses,
-    primitiveClassName `elem` supported
+hostDataSchemas :: [HostDataSchema]
+hostDataSchemas =
+  [ schema oneData [] [("only", [])],
+    schema twoData [] [("yea", []), ("nay", [])],
+    schema optionData ["a"] [("none", []), ("some", [a])],
+    schema listData ["a"] [("empty", []), ("‥", [a, app listData [a]])],
+    schema productData ["a", "b"] [("boþ", [a, b])],
+    schema sumData ["a", "b"] [("inject₀", [a]), ("inject₁", [b])],
+    schema tableData ["a", "b"] [("from_list", [app listData [app productData [a, b]]])],
+    schema processResultData [] [("process_result", [HostCon "ℤ", text, text])],
+    schema requestData [] [("request", [text, text, headers, text])],
+    schema responseData [] [("response", [HostCon "ℕ", headers, text])]
   ]
   where
-    instance_ typeName class_@PrimitiveClass {primitiveClassName, primitiveClassRequired = (member, _)} =
-      PrimitiveInstanceSpec primitiveClassName (primitiveClassTarget class_) typeName member
+    a = HostVar "a"
+    b = HostVar "b"
+    text = HostCon "text"
+    headers = app tableData [text, text]
+    app dataType = HostApp (canonicalDataTypeName dataType)
+    schema dataType variables constructors =
+      let name = canonicalDataTypeName dataType
+          result = if null variables then HostCon name else HostApp name (map HostVar variables)
+       in HostDataSchema name variables [(constructorId dataType constructor, HostSignature variables fields result) | (constructor, fields) <- constructors]
 
--- | assign þe reserved primitive identity only to a compatible class schema.
-primitiveClassId :: Bool -> ModuleId -> [String] -> String -> [ClassMember] -> SymbolId
-primitiveClassId schemaResolves owner parameters name members = case find compatible primitiveClasses of
-  Just class_ | schemaResolves -> primitiveClassTarget class_
-  _
-    | any reservedOwner primitiveClasses -> SymbolId owner ("$nominal@" ++ name)
-    | otherwise -> SymbolId owner name
-  where
-    compatible PrimitiveClass {..} =
-      name == primitiveClassName
-        && owner `elem` [RootModule, SourceModule primitiveClassSource]
-        && length parameters == length primitiveClassParameters
-        && normaliseClassSchema parameters members == normaliseExpectedClass primitiveClassParameters [primitiveClassRequired]
-    reservedOwner PrimitiveClass {primitiveClassSource, primitiveClassName} = owner == SourceModule primitiveClassSource && name == primitiveClassName
+-- native types and type operators are available before library loading.
+-- opaque unary families have no constructors or eliminators. their values
+-- carry runtime resources, so an ordinary data schema cannot represent þem.
+opaqueTypeFamilyNames :: [String]
+opaqueTypeFamilyNames = ["deed", "task"]
 
-primitiveClassTarget :: PrimitiveClass -> SymbolId
-primitiveClassTarget PrimitiveClass {primitiveClassSource, primitiveClassName} = SymbolId (SourceModule primitiveClassSource) primitiveClassName
-
-primitiveClasses :: [PrimitiveClass]
-primitiveClasses =
-  [ class_ "flock/equal.tung" "equal" "≡" (arrow [variable "a", variable "a"] [] two),
-    class_ "flock/order/less-equal.tung" "less-equal" "≤" (arrow [variable "a", variable "a"] [] two),
-    class_ "flock/algebra/arithmetic/add.tung" "add" "+" (arrow [variable "a", variable "a"] [] (variable "a")),
-    class_ "flock/algebra/arithmetic/zero.tung" "zero" "zero" (variable "a"),
-    class_ "flock/algebra/arithmetic/subtract.tung" "subtract" "-" (arrow [variable "a", variable "a"] [] (variable "a")),
-    class_ "flock/algebra/arithmetic/multiply.tung" "multiply" "×" (arrow [variable "a", variable "a"] [] (variable "a")),
-    class_ "flock/algebra/arithmetic/one.tung" "one" "one" (variable "a"),
-    class_ "flock/algebra/arithmetic/divide-remainder.tung" "divide-remainder" "%" (arrow [variable "a", variable "a"] [failText] (TypeApply "∏" [variable "a", variable "a"])),
-    class_ "flock/algebra/arithmetic/divide.tung" "divide" "÷" (arrow [variable "a", variable "a"] [] (variable "a")),
-    class_ "flock/from-text.tung" "from-text" "from-text" (arrow [text] [failText] (variable "a")),
-    class_ "flock/to-text.tung" "to-text" "to-text" (arrow [variable "a"] [] text)
-  ]
-  where
-    class_ source name member signature = PrimitiveClass source name ["a"] (member, TypeAnn signature [])
-    arrow (argument : arguments) effects result = TypeArrow (argument :| arguments) effects result
-    arrow [] _ _ = error "internal primitive flock member without an argument"
-    variable = TypeName
-    text = TypeName "text"
-    two = TypeName "𝟚"
-    failText = TypeApply "fail" [text]
-
-normaliseClassSchema :: [String] -> [ClassMember] -> [(String, TypeAnn)]
-normaliseClassSchema parameters = sortOn fst . map normaliseMember . foldr required []
-  where
-    required (ClassSignature member annotation) rest = (member, annotation) : rest
-    required _ rest = rest
-    normaliseMember (member, TypeAnn signature constraints) = (member, TypeAnn (normaliseClassType parameters signature) constraints)
-
-normaliseExpectedClass :: [String] -> [(String, TypeAnn)] -> [(String, TypeAnn)]
-normaliseExpectedClass parameters = sortOn fst . map (fmap normaliseAnnotation)
-  where
-    normaliseAnnotation (TypeAnn signature constraints) = TypeAnn (normaliseClassType parameters signature) constraints
-
-normaliseClassType :: [String] -> TypeExpr -> TypeExpr
-normaliseClassType parameters ty = normaliseSchemaType StructuralOrdering (numberedVariables "$" parameters) (unquantified ty)
-  where
-    unquantified (TypeForall _ body) = body
-    unquantified body = body
-
-normaliseSchemaType :: SchemaOrdering -> [(String, String)] -> TypeExpr -> TypeExpr
-normaliseSchemaType ordering variables = go
-  where
-    normaliseName name = fromMaybe name (lookup name variables)
-    go = \case
-      TypeHole ident -> TypeHole ident
-      TypeName name -> TypeName (normaliseName name)
-      TypeApply name arguments -> TypeApply (normaliseName name) (map go arguments)
-      TypeRecord fields -> TypeRecord (orderFields (map (fmap go) fields))
-      TypeArrow arguments effects result -> TypeArrow (fmap go arguments) (orderEffects (map go effects)) (go result)
-      TypeForall (parameterNames -> names) body ->
-        let local = numberedVariables ("$bound" ++ show (length variables) ++ "_") names
-         in TypeForall (unknownParameters (map snd local)) (normaliseSchemaType ordering (local ++ filter ((`notElem` names) . fst) variables) body)
-    orderFields = case ordering of
-      SourceOrdering -> id
-      StructuralOrdering -> sortOn fst
-    orderEffects = case ordering of
-      SourceOrdering -> id
-      StructuralOrdering -> sortOn show
-
-numberedVariables :: String -> [String] -> [(String, String)]
-numberedVariables prefix variables = zip variables [prefix ++ show index | index <- [(0 :: Int) ..]]
-
-hostEffectNames :: [String]
-hostEffectNames = map hostEffectName hostEffectSchemas
-
--- only effects whose operations enter the runner's host dispatch appear here.
-runnerEffectNames :: [String]
-runnerEffectNames = nub (concatMap executedEffect hostBindings)
-  where
-    executedEffect HostBinding {hostRole = BaseEffect owner} = [owner]
-    executedEffect HostBinding {hostRole = SourceEffect owner} = [owner]
-    executedEffect _ = []
-
-effectId :: (String -> Bool) -> ModuleId -> [String] -> String -> [EffectOp] -> SymbolId
-effectId isConcrete owner parameters name operations
-  | isHostEffectDeclaration isConcrete parameters name operations = SymbolId RuntimeModule name
-  | otherwise = SymbolId owner name
-
-effectOperationId :: SymbolId -> String -> SymbolId
-effectOperationId (SymbolId RuntimeModule _) operationName = SymbolId RuntimeModule operationName
-effectOperationId (SymbolId owner effectName) operationName = SymbolId owner (effectName ++ "@" ++ operationName)
-
-renderEffectId :: SymbolId -> String
-renderEffectId SymbolId {symbolModule = RuntimeModule, symbolName} = symbolName
-renderEffectId SymbolId {symbolModule = RootModule, symbolName}
-  | symbolName `elem` hostEffectNames = "$root@" ++ symbolName
-  | otherwise = symbolName
-renderEffectId SymbolId {symbolModule = SourceModule path, symbolName} = importNamespace path ++ "~" ++ symbolName
-
-findHostEffect :: String -> Maybe HostEffect
-findHostEffect name = find ((== name) . hostEffectName) hostEffectSchemas
-
-findHostEffectOperation :: String -> String -> Maybe (HostEffect, EffectOp)
-findHostEffectOperation effectName operationName = do
-  effect@HostEffect {hostEffectOperations} <- findHostEffect effectName
-  operation <- find ((== operationName) . effectOperationName) hostEffectOperations
-  pure (effect, operation)
-
-effectOperationName :: EffectOp -> String
-effectOperationName (EffectOp name _) = name
-
-isHostEffectDeclaration :: (String -> Bool) -> [String] -> String -> [EffectOp] -> Bool
-isHostEffectDeclaration isConcrete parameters name operations = maybe False matches (findHostEffect name)
-  where
-    matches HostEffect {hostEffectName, hostEffectParameters, hostEffectOperations} =
-      name == hostEffectName
-        && length parameters == length hostEffectParameters
-        && normaliseEffectSchema isConcrete parameters operations == normaliseEffectSchema (`elem` hostConcreteTypeNames) hostEffectParameters hostEffectOperations
-
-normaliseEffectSchema :: (String -> Bool) -> [String] -> [EffectOp] -> [EffectOp]
-normaliseEffectSchema isConcrete parameters operations = sortOn effectOperationName (map normaliseOperation operations)
-  where
-    shared = numberedVariables "$parameter" parameters
-    normaliseOperation operation@(EffectOp name signature) =
-      let (names, body) = case signature of TypeForall (parameterNames -> declared) inner -> (declared, inner); _ -> (operationVariables isConcrete operation, signature)
-          local = filter (`notElem` parameters) names
-          variables = shared ++ numberedVariables "$local" local
-       in EffectOp name (normaliseSchemaType StructuralOrdering variables body)
-
-operationVariables :: (String -> Bool) -> EffectOp -> [String]
-operationVariables isConcrete (EffectOp _ signature) = nub (typeVariables signature)
-  where
-    typeVariables = \case
-      TypeHole _ -> []
-      TypeName name -> [name | isHostTypeVariable name]
-      TypeApply name arguments -> [name | isHostTypeVariable name] ++ concatMap typeVariables arguments
-      TypeRecord fields -> concatMap (typeVariables . snd) fields
-      TypeArrow arguments effects result -> concatMap typeVariables (foldr (:) [result] arguments) ++ concatMap effectVariables effects
-      TypeForall (parameterNames -> names) body -> filter (`notElem` names) (typeVariables body)
-    effectVariables = \case
-      TypeName name -> [name | isEffectVariable name]
-      TypeApply _ arguments -> concatMap typeVariables arguments
-      other -> typeVariables other
-    isHostTypeVariable name =
-      not (isConcrete name) && case name of
-        first : rest -> isAscii first && isLower first && all (\character -> isAscii character && (isLower character || isDigit character)) rest
-        [] -> False
-    isEffectVariable ('e' : rest) = all (\character -> isDigit character || character `elem` ("₀₁₂₃₄₅₆₇₈₉" :: String)) rest
-    isEffectVariable _ = False
-
-hostConcreteTypeNames :: [String]
-hostConcreteTypeNames = ["ℤ", "float", "unicode", "text", "𝟙", "list", "option", "task", "process-result", "request", "response", "fail"]
-
--- literal-backed types are available before library loading.
 primitiveTypeNames :: [String]
-primitiveTypeNames = ["ℤ", "float", "unicode", "text", "→"]
-
-hostEffectSchemas :: [HostEffect]
-hostEffectSchemas =
-  [ HostEffect "fail" ["e"] [operation "fail" [variable "e"] [] (variable "a")],
-    HostEffect "console" [] [operation "write" [text] [] one, operation "read" [one] [] text],
-    HostEffect "random" [] [operation "random" [one] [] float],
-    HostEffect "state" ["a"] [operation "get" [one] [] (variable "a"), operation "set" [variable "a"] [] one],
-    HostEffect
-      "async"
-      []
-      [ operation "fork" [arrow [one] [variable "e"] (variable "a")] [variable "e"] (task (variable "a")),
-        operation "wait" [task (variable "a")] [failText] (variable "a"),
-        operation "fordo" [task (variable "a")] [] one,
-        operation "wait-for" [task (variable "a"), integer] [failText] (option (variable "a")),
-        operation "sleep" [integer] [] one
-      ],
-    HostEffect
-      "file"
-      []
-      [ operation "read-file" [text] [failText] text,
-        operation "write-file" [text, text] [failText] one,
-        operation "append-file" [text, text] [failText] one
-      ],
-    HostEffect
-      "system"
-      []
-      [ operation "arguments" [one] [] (list text),
-        operation "environment" [text] [] (option text),
-        operation "exit" [integer] [] (variable "a")
-      ],
-    HostEffect "clock" [] [operation "unix-time" [one] [] integer],
-    HostEffect "process" [] [operation "run-process" [text, list text] [failText] (TypeName "process-result")],
-    HostEffect "web" [] [operation "serve" [integer, arrow [TypeName "request"] [variable "e"] (TypeName "response")] [variable "e", failText] one]
-  ]
-  where
-    operation name arguments effects result = EffectOp name (arrow arguments effects result)
-    arrow (argument : arguments) effects result = TypeArrow (argument :| arguments) effects result
-    arrow [] _ _ = error "internal host effect operation without an argument"
-    variable = TypeName
-    integer = TypeName "ℤ"
-    float = TypeName "float"
-    text = TypeName "text"
-    one = TypeName "𝟙"
-    list value = TypeApply "list" [value]
-    option value = TypeApply "option" [value]
-    task value = TypeApply "task" [value]
-    failText = TypeApply "fail" [text]
+primitiveTypeNames = ["ℕ", "ℤ", "float", "unicode", "text"] ++ opaqueTypeFamilyNames
 
 -- | find the canonical imported name of a host-provided data type.
 canonicalHostTypeName :: String -> Maybe String
@@ -370,37 +162,11 @@ hostTypeId name = dataTypeId <$> find matches hostData
   where
     matches dataType = name == hostDataName dataType || name == canonicalDataTypeName dataType
 
--- | assign þe host identity only to a complete ABI declaration. a rejected
--- declaration at its reserved source retaineþ an explicit nominal identity.
-dataDeclarationRef :: Bool -> ModuleId -> [String] -> String -> [Ctor] -> TypeRef
-dataDeclarationRef schemaResolves owner parameters name constructors = case find ((== name) . hostDataName) hostData of
-  Just dataType@HostData {hostDataSource}
-    | schemaResolves && sameHostDataSchema parameters constructors dataType ->
-        TypeRef (dataTypeId dataType) (canonicalDataTypeName dataType)
-    | owner == SourceModule hostDataSource -> nominal ("$nominal@" ++ name)
-  _ -> nominal name
-  where
-    nominal displayName = TypeRef (SymbolId owner displayName) displayName
-
-sameHostDataSchema :: [String] -> [Ctor] -> HostData -> Bool
-sameHostDataSchema parameters constructors HostData {hostDataName, hostDataParameters, hostDataConstructors} =
-  length parameters == length hostDataParameters
-    && normalise parameters constructors == normalise hostDataParameters hostDataConstructors
-  where
-    normalise vars = sortOn constructorName . map (normaliseConstructor hostDataName vars)
-    constructorName (Ctor name _ _ _) = name
-
-normaliseConstructor :: String -> [String] -> Ctor -> Ctor
-normaliseConstructor dataName parameters (Ctor name names fields result) =
-  Ctor name names (map normaliseType fields) normalizedResult
-  where
-    normaliseType = normaliseSchemaType SourceOrdering (numberedVariables "$" parameters)
-    resultType = case parameters of
-      [] -> TypeName dataName
-      _ -> TypeApply dataName (map TypeName parameters)
-    normalizedResult = case normaliseType <$> result of
-      Just ty | ty == normaliseType resultType -> Nothing
-      other -> other
+-- `ℕ` is primitive but structural: `0` and `n succeed` are its
+-- constructors, and a literal is a compact chain of þem.
+naturalZeroId, naturalSuccessorId :: SymbolId
+naturalZeroId = SymbolId PrimitiveModule "0"
+naturalSuccessorId = SymbolId PrimitiveModule "succeed"
 
 onlyConstructorId, yeaConstructorId, nayConstructorId :: SymbolId
 onlyConstructorId = constructorId oneData "only"
@@ -409,20 +175,39 @@ nayConstructorId = constructorId twoData "nay"
 
 emptyConstructorId, consConstructorId :: SymbolId
 emptyConstructorId = constructorId listData "empty"
-consConstructorId = constructorId listData "⁖"
+consConstructorId = constructorId listData "‥"
 
 noneConstructorId, someConstructorId :: SymbolId
 noneConstructorId = constructorId optionData "none"
 someConstructorId = constructorId optionData "some"
 
 productConstructorId :: SymbolId
-productConstructorId = constructorId productData "∏"
+productConstructorId = constructorId productData "boþ"
+
+leftConstructorId, rightConstructorId :: SymbolId
+leftConstructorId = constructorId sumData "inject₀"
+rightConstructorId = constructorId sumData "inject₁"
 
 processResultConstructorId, requestConstructorId, responseConstructorId, tableConstructorId :: SymbolId
-processResultConstructorId = constructorId processResultData "process-result"
+processResultConstructorId = constructorId processResultData "process_result"
 requestConstructorId = constructorId requestData "request"
 responseConstructorId = constructorId responseData "response"
-tableConstructorId = constructorId tableData "from-list"
+tableConstructorId = constructorId tableData "from_list"
+
+-- catalogue names of þe host data types.
+listName, optionName, productName, sumName, tableName, oneName, twoName :: String
+listName = canonicalDataTypeName listData
+optionName = canonicalDataTypeName optionData
+productName = canonicalDataTypeName productData
+sumName = canonicalDataTypeName sumData
+tableName = canonicalDataTypeName tableData
+oneName = canonicalDataTypeName oneData
+twoName = canonicalDataTypeName twoData
+
+processResultName, requestName, responseName :: String
+processResultName = canonicalDataTypeName processResultData
+requestName = canonicalDataTypeName requestData
+responseName = canonicalDataTypeName responseData
 
 canonicalDataTypeName :: HostData -> String
 canonicalDataTypeName HostData {hostDataSource, hostDataName} = importNamespace hostDataSource ++ "~" ++ hostDataName
@@ -436,135 +221,167 @@ dataTypeId HostData {hostDataSource, hostDataName} = SymbolId (SourceModule host
 hostArity :: HostBinding -> Int
 hostArity = length . hostArguments . hostSignature
 
-baseNativeBindings, baseEffectBindings :: [HostBinding]
-baseNativeBindings = filter ((== BaseNative) . hostRole) hostBindings
-baseEffectBindings = filter isBaseEffect hostBindings
-
 findForeignBinding :: String -> Maybe HostBinding
-findForeignBinding key = find (\binding -> hostRole binding == ForeignBinding && hostName binding == key) hostBindings
-
-isBaseEffect :: HostBinding -> Bool
-isBaseEffect HostBinding {hostRole = BaseEffect _} = True
-isBaseEffect _ = False
+findForeignBinding key = find ((== key) . hostName) hostBindings
 
 hostBindings :: [HostBinding]
 hostBindings =
-  [ foreignBinding "add-integer" (binary integer integer [] integer),
-    foreignBinding "subtract-integer" (binary integer integer [] integer),
-    foreignBinding "multiply-integer" (binary integer integer [] integer),
-    foreignBinding "divide-remainder-integer" (binary integer integer [failText] (product integer integer)),
-    foreignBinding "add-float" (binary float float [] float),
-    foreignBinding "subtract-float" (binary float float [] float),
-    foreignBinding "multiply-float" (binary float float [] float),
-    foreignBinding "divide-float" (binary float float [] float),
-    foreignBinding "sine-float" (unary float [] float),
-    foreignBinding "arctan-float" (binary float float [] float),
-    foreignBinding "exponent-float" (unary float [] float),
-    foreignBinding "logariþm-float" (unary float [] float),
-    foreignBinding "⌊" (unary float [failText] integer),
-    foreignBinding "equal-integer" (binary integer integer [] two),
-    foreignBinding "integer-to-text" (unary integer [] text),
-    foreignBinding "float-to-text" (unary float [] text),
-    foreignBinding "unicode-to-integer" (unary unicode [] integer),
-    foreignBinding "integer-to-unicode" (unary integer [failText] unicode),
-    foreignBinding "behead-text" (unary text [] (option (product unicode text))),
-    foreignBinding "text-to-list" (unary text [] (list unicode)),
-    foreignBinding "list-to-text" (unary (list unicode) [] text),
-    foreignBinding "join-text" (binary text text [] text),
-    foreignBinding "equal-text" (binary text text [] two),
-    foreignBinding "equal-unicode" (binary unicode unicode [] two),
-    foreignBinding "less-equal-text" (binary text text [] two),
-    foreignBinding "less-equal-unicode" (binary unicode unicode [] two),
-    native "to-text" (unary integer [] text),
-    native "to-text" (unary float [] text),
-    native "from-text" (unary text [failText] float),
-    native "⌊" (unary float [failText] integer),
-    native "≡" (binary integer integer [] two),
-    native "≡" (binary float float [] two),
-    native "≤" (binary integer integer [] two),
-    native "≤" (binary float float [] two),
-    native "+" (binary integer integer [] integer),
-    native "+" (binary float float [] float),
-    native "×" (binary integer integer [] integer),
-    native "×" (binary float float [] float),
-    native "-" (binary integer integer [] integer),
-    native "-" (binary float float [] float),
-    native "÷" (binary float float [] float),
-    native "%" (binary integer integer [failText] (product integer integer)),
-    native "exponent" (unary float [] float),
-    native "logariþm" (unary float [] float),
-    native "sine" (unary float [] float),
-    baseEffect "console" "write",
-    baseEffect "console" "read",
-    baseEffect "async" "sleep",
-    baseEffect "random" "random",
-    baseEffect "file" "read-file",
-    baseEffect "file" "write-file",
-    baseEffect "file" "append-file",
-    baseEffect "system" "arguments",
-    baseEffect "system" "environment",
-    baseEffect "system" "exit",
-    baseEffect "clock" "unix-time",
-    sourceEffect "async" "fork",
-    sourceEffect "async" "wait",
-    sourceEffect "async" "fordo",
-    sourceEffect "async" "wait-for",
-    sourceEffect "process" "run-process",
-    sourceEffect "web" "serve"
+  [ foreignBinding "natural_to_integer" (unary natural integer),
+    foreignBinding "integer_to_natural" (unary integer (option natural)),
+    foreignBinding "add_integer" (binary integer integer integer),
+    foreignBinding "subtract_integer" (binary integer integer integer),
+    foreignBinding "subtract_natural" (binary natural natural natural),
+    foreignBinding "multiply_integer" (binary integer integer integer),
+    foreignBinding "divide_remainder_integer" (binary integer integer (option (product integer integer))),
+    foreignBinding "add_float" (binary float float float),
+    foreignBinding "subtract_float" (binary float float float),
+    foreignBinding "multiply_float" (binary float float float),
+    foreignBinding "divide_float" (binary float float float),
+    foreignBinding "sine_float" (unary float float),
+    foreignBinding "arctan_float" (binary float float float),
+    foreignBinding "exponent_float" (unary float float),
+    foreignBinding "logariþm_float" (unary float float),
+    foreignBinding "⌊" (unary float (option integer)),
+    foreignBinding "equal_integer" (binary integer integer two),
+    foreignBinding "integer_to_text" (unary integer text),
+    foreignBinding "float_to_text" (unary float text),
+    foreignBinding "unicode_to_natural" (unary unicode natural),
+    foreignBinding "natural_to_unicode" (unary natural (option unicode)),
+    foreignBinding "behead_text" (unary text (option (product unicode text))),
+    foreignBinding "text_to_list" (unary text (list unicode)),
+    foreignBinding "list_to_text" (unary (list unicode) text),
+    foreignBinding "join_text" (binary text text text),
+    foreignBinding "equal_text" (binary text text two),
+    foreignBinding "equal_unicode" (binary unicode unicode two),
+    foreignBinding "less_equal_text" (binary text text two),
+    foreignBinding "less_equal_unicode" (binary unicode unicode two),
+    foreignBinding "less_equal_integer" (binary integer integer two),
+    foreignBinding "equal_float" (binary float float two),
+    foreignBinding "less_equal_float" (binary float float two),
+    foreignBinding "text_to_float" (unary text (option float)),
+    foreignBinding "equal_natural" (binary natural natural two),
+    foreignBinding "less_equal_natural" (binary natural natural two),
+    foreignBinding "add_natural" (binary natural natural natural),
+    foreignBinding "multiply_natural" (binary natural natural natural),
+    foreignBinding "divide_remainder_natural" (binary natural natural (option (product natural natural))),
+    foreignBinding "natural_to_text" (unary natural text),
+    -- deeds: actions þat only þe runner performeþ.
+    deed "deed_pure" ["a"] [variable "a"] (action (variable "a")),
+    deed "deed_bind" ["a", "b"] [action (variable "a"), HostArrow [variable "a"] (action (variable "b"))] (action (variable "b")),
+    -- þe restricted fixed point: a deed may repeat itself, a pure value may not.
+    deed "deed_fix" ["a"] [HostArrow [action (variable "a")] (action (variable "a"))] (action (variable "a")),
+    deed "write" [] [text] (action one),
+    deed "read" [] [] (action (option text)),
+    deed "random" [] [] (action float),
+    deed "unix_time" [] [] (action integer),
+    deed "sleep" [] [natural] (action one),
+    deed "fork" ["a"] [action (variable "a")] (action (task (variable "a"))),
+    deed "wait" ["a"] [task (variable "a")] (action (option (variable "a"))),
+    deed "wait_for" ["a"] [task (variable "a"), natural] (action (option (variable "a"))),
+    deed "cancel" ["a"] [task (variable "a")] (action one),
+    deed "read_file" [] [text] (action (outcome text)),
+    deed "write_file" [] [text, text] (action (outcome one)),
+    deed "append_file" [] [text, text] (action (outcome one)),
+    deed "arguments" [] [] (action (list text)),
+    deed "environment" [] [text] (action (option text)),
+    deed "exit" ["a"] [natural] (action (variable "a")),
+    deed "run_process" [] [text, list text] (action (outcome (HostCon (canonicalDataTypeName processResultData)))),
+    deed "serve" [] [natural, HostArrow [HostCon (canonicalDataTypeName requestData)] (action (HostCon (canonicalDataTypeName responseData)))] (action text)
   ]
   where
+    natural = HostCon "ℕ"
     integer = HostCon "ℤ"
     float = HostCon "float"
     unicode = HostCon "unicode"
     text = HostCon "text"
     two = HostCon (canonicalDataTypeName twoData)
-    failText = HostApp "fail" [text]
+    one = HostCon (canonicalDataTypeName oneData)
+    variable = HostVar
+    action value = HostApp "deed" [value]
+    task value = HostApp "task" [value]
+    outcome value = HostApp (canonicalDataTypeName sumData) [text, value]
+    deed name variables arguments result = foreignBinding name (HostSignature variables arguments result)
     list value = HostApp (canonicalDataTypeName listData) [value]
     option value = HostApp (canonicalDataTypeName optionData) [value]
     product left right = HostApp (canonicalDataTypeName productData) [left, right]
 
-foreignBinding, native :: String -> HostSignature -> HostBinding
-foreignBinding name = HostBinding name ForeignBinding
-native name = HostBinding name BaseNative
+foreignBinding :: String -> HostSignature -> HostBinding
+foreignBinding = HostBinding
 
-baseEffect :: String -> String -> HostBinding
-baseEffect owner name = HostBinding name (BaseEffect owner) (baseEffectSignature owner name)
-
--- base operations enter þe static environment and therefore retain þeir full
--- first-order schema. source-dispatched operations constraint only runtime arity.
-baseEffectSignature :: String -> String -> HostSignature
-baseEffectSignature owner name = case findHostEffectOperation owner name of
-  Just (HostEffect {hostEffectName, hostEffectParameters}, operation@(EffectOp _ (TypeArrow (argument :| arguments) effects result))) ->
-    let variables = nub (hostEffectParameters ++ operationVariables (`elem` hostConcreteTypeNames) operation)
-        convert = firstOrderHostType variables
-     in HostSignature
-          variables
-          (map convert (argument : arguments))
-          (HostApp hostEffectName (map HostVar hostEffectParameters) : map convert effects)
-          (convert result)
-  _ -> error ("internal unknown base effect operation '" ++ owner ++ "@" ++ name ++ "'")
-
-firstOrderHostType :: [String] -> TypeExpr -> HostType
-firstOrderHostType variables = \case
-  TypeName name
-    | name `elem` variables -> HostVar name
-    | otherwise -> HostCon (canonical name)
-  TypeApply name arguments -> HostApp (canonical name) (map (firstOrderHostType variables) arguments)
-  unsupported -> error ("internal non-first-order base effect type " ++ show unsupported)
-  where
-    canonical name = fromMaybe name (canonicalHostTypeName name)
-
-sourceEffect :: String -> String -> HostBinding
-sourceEffect owner name =
-  HostBinding name (SourceEffect owner) (HostSignature [] (replicate (hostEffectArity owner name) (HostVar "_")) [] (HostVar "_"))
-
-hostEffectArity :: String -> String -> Int
-hostEffectArity owner name = case findHostEffectOperation owner name of
-  Just (_, EffectOp _ (TypeArrow arguments _ _)) -> length arguments
-  _ -> error ("internal unknown source effect operation '" ++ owner ++ "@" ++ name ++ "'")
-
-unary :: HostType -> [HostType] -> HostType -> HostSignature
+unary :: HostType -> HostType -> HostSignature
 unary argument = HostSignature [] [argument]
 
-binary :: HostType -> HostType -> [HostType] -> HostType -> HostSignature
+binary :: HostType -> HostType -> HostType -> HostSignature
 binary left right = HostSignature [] [left, right]
+
+-- a value crosseþ þe host boundary in þis shape. each runtime convertþ its
+-- own representation, so pure operations have one meaning everywhere.
+data HostValue
+  = HostNatural Natural
+  | HostInteger Integer
+  | HostFloat Double
+  | HostUnicode Char
+  | HostText String
+  | HostTruth Bool
+  | HostOption (Maybe HostValue)
+  | HostPair HostValue HostValue
+  | HostList [HostValue]
+  deriving (Eq, Show)
+
+-- þe total pure operations of þe catalogue. a partial result is an option:
+-- division by zero, a negative natural, a non-scalar code point, an infinite
+-- floor, or unreadable text yieldeþ none. integer division is euclidean.
+pureOperation :: String -> Maybe ([HostValue] -> Maybe HostValue)
+pureOperation = \case
+  "natural_to_integer" -> unaryOperation \case HostNatural a -> Just (HostInteger (toInteger a)); _ -> Nothing
+  "integer_to_natural" -> unaryOperation \case HostInteger a -> Just (HostOption (if a >= 0 then Just (HostNatural (fromInteger a)) else Nothing)); _ -> Nothing
+  "add_natural" -> naturals \a b -> HostNatural (a + b)
+  "subtract_natural" -> naturals \a b -> HostNatural (if b > a then 0 else a - b)
+  "multiply_natural" -> naturals \a b -> HostNatural (a * b)
+  "divide_remainder_natural" -> naturals \a b -> HostOption (if b == 0 then Nothing else Just (HostPair (HostNatural (a `div` b)) (HostNatural (a `mod` b))))
+  "equal_natural" -> naturals \a b -> HostTruth (a == b)
+  "less_equal_natural" -> naturals \a b -> HostTruth (a <= b)
+  "natural_to_text" -> unaryOperation \case HostNatural a -> Just (HostText (show a)); _ -> Nothing
+  "add_integer" -> integers \a b -> HostInteger (a + b)
+  "subtract_integer" -> integers \a b -> HostInteger (a - b)
+  "multiply_integer" -> integers \a b -> HostInteger (a * b)
+  "divide_remainder_integer" -> integers \a b -> HostOption (if b == 0 then Nothing else Just (let (q, r) = euclidean a b in HostPair (HostInteger q) (HostInteger r)))
+  "equal_integer" -> integers \a b -> HostTruth (a == b)
+  "less_equal_integer" -> integers \a b -> HostTruth (a <= b)
+  "integer_to_text" -> unaryOperation \case HostInteger a -> Just (HostText (show a)); _ -> Nothing
+  "add_float" -> floats \a b -> HostFloat (a + b)
+  "subtract_float" -> floats \a b -> HostFloat (a - b)
+  "multiply_float" -> floats \a b -> HostFloat (a * b)
+  "divide_float" -> floats \a b -> HostFloat (a / b)
+  -- þe angle of þe point (real, imaginary), in [0, 2π).
+  "arctan_float" -> floats \real imaginary -> let angle = atan2 imaginary real in HostFloat (if angle < 0 then angle + 2 * pi else angle)
+  "sine_float" -> floatUnary sin
+  "exponent_float" -> floatUnary exp
+  "logariþm_float" -> floatUnary log
+  "⌊" -> unaryOperation \case HostFloat a -> Just (HostOption (if isNaN a || isInfinite a then Nothing else Just (HostInteger (floor a)))); _ -> Nothing
+  "equal_float" -> floats \a b -> HostTruth (a == b)
+  "less_equal_float" -> floats \a b -> HostTruth (a <= b)
+  "float_to_text" -> unaryOperation \case HostFloat a -> Just (HostText (show a)); _ -> Nothing
+  "text_to_float" -> unaryOperation \case HostText a -> Just (HostOption (HostFloat <$> readMaybe a)); _ -> Nothing
+  "unicode_to_natural" -> unaryOperation \case HostUnicode a -> Just (HostNatural (fromIntegral (ord a))); _ -> Nothing
+  "natural_to_unicode" -> unaryOperation \case HostNatural a -> Just (HostOption (HostUnicode <$> unicodeScalar (toInteger a))); _ -> Nothing
+  "equal_unicode" -> binaryOperation \case [HostUnicode a, HostUnicode b] -> Just (HostTruth (a == b)); _ -> Nothing
+  "less_equal_unicode" -> binaryOperation \case [HostUnicode a, HostUnicode b] -> Just (HostTruth (a <= b)); _ -> Nothing
+  "behead_text" -> unaryOperation \case HostText a -> Just (HostOption (case a of first : rest -> Just (HostPair (HostUnicode first) (HostText rest)); [] -> Nothing)); _ -> Nothing
+  "text_to_list" -> unaryOperation \case HostText a -> Just (HostList (map HostUnicode a)); _ -> Nothing
+  "list_to_text" -> unaryOperation \case HostList values -> HostText <$> traverse (\case HostUnicode a -> Just a; _ -> Nothing) values; _ -> Nothing
+  "join_text" -> binaryOperation \case [HostText a, HostText b] -> Just (HostText (a ++ b)); _ -> Nothing
+  "equal_text" -> binaryOperation \case [HostText a, HostText b] -> Just (HostTruth (a == b)); _ -> Nothing
+  "less_equal_text" -> binaryOperation \case [HostText a, HostText b] -> Just (HostTruth (a <= b)); _ -> Nothing
+  _ -> Nothing
+  where
+    unaryOperation f = Just \case [a] -> f a; _ -> Nothing
+    binaryOperation = Just
+    naturals f = binaryOperation \case [HostNatural a, HostNatural b] -> Just (f a b); _ -> Nothing
+    integers f = binaryOperation \case [HostInteger a, HostInteger b] -> Just (f a b); _ -> Nothing
+    floats f = binaryOperation \case [HostFloat a, HostFloat b] -> Just (f a b); _ -> Nothing
+    floatUnary f = unaryOperation \case HostFloat a -> Just (HostFloat (f a)); _ -> Nothing
+    -- þe remainder is never negative.
+    euclidean a b =
+      let (quotient, remainder) = a `divMod` b
+       in if remainder < 0 then (quotient + 1, remainder - b) else (quotient, remainder)

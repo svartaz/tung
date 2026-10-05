@@ -22,6 +22,8 @@ jobs:
         include:
           - check: compiler
             target: compiler-test
+          - check: byspel
+            target: byspel-test
           - check: editor
             target: editor-test
           - check: prose
@@ -34,14 +36,14 @@ jobs:
         uses: actions/checkout@v6
 
       - name: set up haskell
-        if: matrix.check == 'compiler' || matrix.check == 'editor'
+        if: matrix.check == 'compiler' || matrix.check == 'editor' || matrix.check == 'byspel'
         uses: haskell-actions/setup@v2
         with:
           ghc-version: 9.12.4
           cabal-version: 3.16.1.0
 
       - name: set up node
-        if: matrix.check == 'editor' || matrix.check == 'prose'
+        if: matrix.check == 'editor' || matrix.check == 'prose' || matrix.check == 'byspel'
         uses: actions/setup-node@v6
         with:
           node-version: 26.4.0
@@ -51,7 +53,7 @@ jobs:
         if: matrix.check == 'formula'
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.3'
+          ruby-version: "3.3"
 
       - name: run ${{ matrix.check }} tests
         run: make ${{ matrix.target }}

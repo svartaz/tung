@@ -3,7 +3,7 @@
 -- | source lexer. a name containeþ any non-space character not reserved by
 -- 'specialNameChars'; literals and comments are consumed before name parsing.
 module Tung.Token
-  ( Token (TIdent, TInteger, TFloat, TUnicode, TText, TBraceKeyword, TLet, TExport, TExportType, TImport, TType, TEffect, TYield, TForeign, TClass, TInstance, TConstraint, TLaw, TMatch, TTry, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TArrow, TBang, TEquals, TKindStar, TDollar, TAt),
+  ( Token (TIdent, TNatural, TInteger, TFloat, TUnicode, TText, TBraceKeyword, TLet, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TInduce, TFall, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TEquals, TKindStar, TDollar, TAt),
     SourceSpan (..),
     LocatedToken (..),
     tokenSpan,
@@ -14,7 +14,6 @@ module Tung.Token
     lexLocatedTokensDetailed,
     lexLocatedPrefix,
     keywordNames,
-    languageKeywordNames,
     specialNameChars,
     isNameChar,
     unicodeScalar,
@@ -27,6 +26,7 @@ import Data.IntMap.Strict qualified as IntMap
 import Data.List.NonEmpty qualified as NE
 import Data.Maybe (fromMaybe, isJust)
 import Data.Void (Void)
+import GHC.TypeLits (Natural)
 import Text.Megaparsec (Parsec)
 import Text.Megaparsec qualified as M
 import Text.Megaparsec.Char qualified as C
@@ -52,24 +52,23 @@ data Token = Token !(Maybe TokenCursor) !TokenKind
 
 data TokenKind
   = KTIdent String
+  | KTNatural Natural
   | KTInteger Integer
   | KTFloat Double
   | KTUnicode Char
   | KTText String
   | KTLet
   | KTExport
-  | KTExportType
   | KTImport
   | KTType
-  | KTEffect
   | KTYield
   | KTForeign
   | KTClass
   | KTInstance
-  | KTConstraint
-  | KTLaw
   | KTMatch
-  | KTTry
+  | KTSorry
+  | KTInduce
+  | KTFall
   | KTBraceKeyword String
   | KTLParen
   | KTRParen
@@ -82,8 +81,6 @@ data TokenKind
   | KTSemicolon
   | KTDot
   | KTMapsTo
-  | KTArrow
-  | KTBang
   | KTEquals
   | KTKindStar
   | KTDollar
@@ -100,6 +97,11 @@ pattern TIdent :: String -> Token
 pattern TIdent name <- Token _ (KTIdent name)
   where
     TIdent name = Token Nothing (KTIdent name)
+
+pattern TNatural :: Natural -> Token
+pattern TNatural value <- Token _ (KTNatural value)
+  where
+    TNatural value = Token Nothing (KTNatural value)
 
 pattern TInteger :: Integer -> Token
 pattern TInteger value <- Token _ (KTInteger value)
@@ -126,21 +128,19 @@ pattern TBraceKeyword name <- Token _ (KTBraceKeyword name)
   where
     TBraceKeyword name = Token Nothing (KTBraceKeyword name)
 
-pattern TLet, TExport, TExportType, TImport, TType, TEffect, TYield, TForeign, TClass, TInstance, TConstraint, TLaw, TMatch, TTry, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TArrow, TBang, TEquals, TKindStar, TDollar, TAt :: Token
+pattern TLet, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TInduce, TFall, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TEquals, TKindStar, TDollar, TAt :: Token
 pattern TLet <- Token _ KTLet where TLet = Token Nothing KTLet
 pattern TExport <- Token _ KTExport where TExport = Token Nothing KTExport
-pattern TExportType <- Token _ KTExportType where TExportType = Token Nothing KTExportType
 pattern TImport <- Token _ KTImport where TImport = Token Nothing KTImport
 pattern TType <- Token _ KTType where TType = Token Nothing KTType
-pattern TEffect <- Token _ KTEffect where TEffect = Token Nothing KTEffect
 pattern TYield <- Token _ KTYield where TYield = Token Nothing KTYield
 pattern TForeign <- Token _ KTForeign where TForeign = Token Nothing KTForeign
 pattern TClass <- Token _ KTClass where TClass = Token Nothing KTClass
 pattern TInstance <- Token _ KTInstance where TInstance = Token Nothing KTInstance
-pattern TConstraint <- Token _ KTConstraint where TConstraint = Token Nothing KTConstraint
-pattern TLaw <- Token _ KTLaw where TLaw = Token Nothing KTLaw
 pattern TMatch <- Token _ KTMatch where TMatch = Token Nothing KTMatch
-pattern TTry <- Token _ KTTry where TTry = Token Nothing KTTry
+pattern TSorry <- Token _ KTSorry where TSorry = Token Nothing KTSorry
+pattern TInduce <- Token _ KTInduce where TInduce = Token Nothing KTInduce
+pattern TFall <- Token _ KTFall where TFall = Token Nothing KTFall
 pattern TLParen <- Token _ KTLParen where TLParen = Token Nothing KTLParen
 pattern TRParen <- Token _ KTRParen where TRParen = Token Nothing KTRParen
 pattern TLBracket <- Token _ KTLBracket where TLBracket = Token Nothing KTLBracket
@@ -152,14 +152,12 @@ pattern TComma <- Token _ KTComma where TComma = Token Nothing KTComma
 pattern TSemicolon <- Token _ KTSemicolon where TSemicolon = Token Nothing KTSemicolon
 pattern TDot <- Token _ KTDot where TDot = Token Nothing KTDot
 pattern TMapsTo <- Token _ KTMapsTo where TMapsTo = Token Nothing KTMapsTo
-pattern TArrow <- Token _ KTArrow where TArrow = Token Nothing KTArrow
-pattern TBang <- Token _ KTBang where TBang = Token Nothing KTBang
 pattern TEquals <- Token _ KTEquals where TEquals = Token Nothing KTEquals
 pattern TKindStar <- Token _ KTKindStar where TKindStar = Token Nothing KTKindStar
 pattern TDollar <- Token _ KTDollar where TDollar = Token Nothing KTDollar
 pattern TAt <- Token _ KTAt where TAt = Token Nothing KTAt
 
-{-# COMPLETE TIdent, TInteger, TFloat, TUnicode, TText, TBraceKeyword, TLet, TExport, TExportType, TImport, TType, TEffect, TYield, TForeign, TClass, TInstance, TConstraint, TLaw, TMatch, TTry, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TArrow, TBang, TEquals, TKindStar, TDollar, TAt #-}
+{-# COMPLETE TIdent, TNatural, TInteger, TFloat, TUnicode, TText, TBraceKeyword, TLet, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TInduce, TFall, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TEquals, TKindStar, TDollar, TAt #-}
 
 tokenSpan :: Token -> Maybe SourceSpan
 tokenSpan (Token cursor _) = (\(TokenCursor span _ _) -> span) <$> cursor
@@ -240,6 +238,7 @@ rawTokenParser =
   M.choice
     [ TInteger <$> M.try integerParser,
       TFloat <$> M.try floatParser,
+      TNatural <$> M.try naturalParser,
       unicodeLiteralParser,
       textParser,
       specialOpenParser,
@@ -267,19 +266,25 @@ singleTokenParser =
       TSemicolon <$ C.char ';',
       TDot <$ C.char '.',
       TMapsTo <$ C.char '^',
-      TArrow <$ C.char '→',
-      TBang <$ C.char '!',
-      TEquals <$ C.char '=',
+      TEquals <$ C.char '≔',
       TDollar <$ C.char '$',
       TAt <$ C.char '@'
     ]
 
+-- an integer literal always hath a sign: `+3`, `-3`, `+0`. unsigned digits
+-- are a natural number.
 integerParser :: Lexer Integer
 integerParser = do
-  sign <- M.optional (C.char '-')
+  sign <- M.choice [id <$ C.char '+', negate <$ C.char '-']
   value <- L.decimal
   M.notFollowedBy (C.char '.' *> C.digitChar)
-  pure (maybe value (const (-value)) sign)
+  pure (sign value)
+
+naturalParser :: Lexer Natural
+naturalParser = do
+  value <- L.decimal
+  M.notFollowedBy (C.char '.' *> C.digitChar)
+  pure value
 
 floatParser :: Lexer Double
 floatParser = do
@@ -361,16 +366,12 @@ spaceConsumer = L.space C.space1 (L.skipLineComment "#") (L.skipBlockComment "/*
 lexeme :: Lexer a -> Lexer a
 lexeme = L.lexeme spaceConsumer
 
+-- `deed`, the type of actions, is lexed as a name but presented as a keyword.
 keywordNames :: [String]
-keywordNames = map fst keywordTokens
-
--- eftgin is contextual rather than a lexer token, but editor metadata still
--- presenteþ it as a language keyword.
-languageKeywordNames :: [String]
-languageKeywordNames = keywordNames ++ ["eftgin"]
+keywordNames = map fst keywordTokens ++ ["deed"]
 
 keywordOrIdent :: String -> Token
--- only a standalone star is kind syntax; names such as ⁖ remain whole.
+-- only a standalone star is kind syntax; names such as ‥ remain whole.
 keywordOrIdent "*" = TKindStar
 keywordOrIdent name = fromMaybe (TIdent name) (lookup name keywordTokens)
 
@@ -378,22 +379,20 @@ keywordTokens :: [(String, Token)]
 keywordTokens =
   [ ("let", TLet),
     ("show", TExport),
-    ("show-ilk", TExportType),
     ("use", TImport),
     ("ilk", TType),
-    ("deed", TEffect),
     ("yield", TYield),
     ("fremmed", TForeign),
     ("flock", TClass),
     ("bizen", TInstance),
-    ("byzen", TConstraint),
-    ("law", TLaw),
     ("match", TMatch),
-    ("try", TTry)
+    ("sorry", TSorry),
+    ("induce", TInduce),
+    ("fall", TFall)
   ]
 
 isNameChar :: Char -> Bool
 isNameChar c = not (isSpace c) && c `notElem` specialNameChars
 
 specialNameChars :: [Char]
-specialNameChars = "#()[]{}:,;!=$→`'@^."
+specialNameChars = "#()[]{}:,;≔$`'@^."

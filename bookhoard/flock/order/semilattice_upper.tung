@@ -1,0 +1,29 @@
+use combinator.tung
+use flock/order/less_equal.tung
+use flock/order/order_total.tung
+use ilk/two.tung
+
+## a carrier whose every pair haþ a supremum.
+show flock semilattice_upper: [α: *, *] {
+  let ∨: [α, α, α]
+  let ∨_absorb: [a: α, (a ∨ a) = a]
+  let ∨_commute: [a: α, b: α, (a ∨ b) = (b ∨ a)]
+  let ∨_∨: [a: α, b: α, c: α, ((a ∨ b) ∨ c) = (a ∨ (b ∨ c))]
+}
+
+bizen: [@β: *, @: β semilattice_upper, @α: *, (α → β) semilattice_upper] {
+  let ∨: [f:, g:, a:] ≔ (a f) ∨ (a g)
+
+  let ∨_absorb ≔ sorry
+  let ∨_commute ≔ sorry
+  let ∨_∨ ≔ sorry
+}
+
+bizen: [@α: *, @: α order_total, α semilattice_upper] {
+  let ∨: [a:, b:] ≔ (a ≤ b) if b a
+
+  # each comparison result chooseþ a, so matching on it proveþ the law.
+  let ∨_absorb ≔ {a ^ match a ≤ a {yea ^ reflect, nay ^ reflect}}
+  let ∨_commute ≔ sorry
+  let ∨_∨ ≔ sorry
+}

@@ -1,0 +1,14 @@
+show ilk nat: * {
+  zero: nat,
+  succeed: [nat, nat]
+}
+
+show let plus: [x: nat, y: nat, nat] ≔ match x {
+  zero ^ y,
+  n succeed ^ (n plus y) succeed
+}
+
+## private: not visible to importers.
+let double: [x: nat, nat] ≔ x plus x
+
+show let four: nat ≔ ((zero succeed) succeed) double

@@ -95,9 +95,6 @@ resolveIO = lift . ExceptT
 manifestName :: FilePath
 manifestName = "tung.yaml"
 
-legacyManifestName :: FilePath
-legacyManifestName = "tung.libraries"
-
 resolveLibraryRoots :: FilePath -> IO (Either String [FilePath])
 resolveLibraryRoots owner = do
   manifest <- findManifest owner
@@ -152,12 +149,8 @@ findManifest owner = do
 manifestAt :: FilePath -> IO (Either String (Maybe FilePath))
 manifestAt directory = do
   let path = directory </> manifestName
-      legacy = directory </> legacyManifestName
   present <- doesFileExist path
-  old <- doesFileExist legacy
-  if old
-    then pure (Left ("replace '" ++ legacy ++ "' with '" ++ path ++ "'"))
-    else if present then Right . Just <$> canonicalizePath path else pure (Right Nothing)
+  if present then Right . Just <$> canonicalizePath path else pure (Right Nothing)
 
 resolveManifest :: FilePath -> FilePath -> Resolver [FilePath]
 resolveManifest cache manifest = do

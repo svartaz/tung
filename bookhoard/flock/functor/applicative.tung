@@ -3,56 +3,55 @@ use flock/algebra/partial/category.tung
 use flock/algebra/partial/semigroupoid.tung
 use flock/functor.tung
 
-show flock applicative [byzen f functor] {
-  let pure [@a:*, a, a f]
-  let apply [@a:*, @b:*, @e:*, a f, [a, b; e] f, b f; e]
+show flock applicative: [φ: [*, *], @: φ functor, *] {
+  let pure: [@α: *, α, α φ]
+  let apply: [@α: *, @β: *, α φ, [α, β] φ, β φ]
 
-  # sameness
-  law [@a:*, a:a f]
-    a apply ((sameness:[a, a]) pure) = a
+  let apply_sameness_pure: [@α: *, a: α φ,
+    (a apply ((sameness: [α, α]) pure)) = a]
 
-  # homomorphism
-  law [@a:*, @b:*, @e:*, a:a, f:[a, b; e]]
-    (a pure) apply (f pure) = (a f) pure
+  let pure_apply_pure: [@α: *, @β: *, a: α, f: [α, β],
+    ((a pure) apply (f pure)) = ((a f) pure)]
 
-  # composition
-  law [@a:*, @b:*, @c:*, @e:*, a:a f, f:[a, b; e], g:[b, c; e]]
-    <{apply, a, f pure, g pure} = a apply (f ∘ g $ pure)
+  let apply_apply: [@α: *, @β: *, @γ: *, a: α φ, f: [α, β], g: [β, γ],
+    <{apply, a, f pure, g pure} = (a apply (f ▷ g $ pure))]
 
-  # interchange
-  law [@a:*, @b:*, @e:*, a:a, fs:[a, b; e] f]
-    (a pure) apply fs = fs map (a call)
+  let pure_apply: [@α: *, @β: *, a: α, fs: [α, β] φ,
+    ((a pure) apply fs) = (fs map (a call))]
 }
 
-show let lift₂ [byzen f applicative,
-  @a₀:*, @a₁:*, @b:*, @e:*,
-  a₀:a₀ f,
-  a₁:a₁ f,
-  f:[a₀, a₁, b; e],
-  b f; e
-] >{apply, a₁, a₀, f pure}
+show let lift₂: [
+  @φ: [*, *], @: φ applicative,
+  @α₀: *, @α₁: *, @β: *,
+  a₀: α₀ φ,
+  a₁: α₁ φ,
+  f: [α₀, α₁, β],
+  β φ
+] ≔ >{apply, a₁, a₀, f pure}
 
-show let lift₃ [byzen f applicative,
-  @a₀:*, @a₁:*, @a₂:*, @b:*, @e:*,
-  a₀:a₀ f,
-  a₁:a₁ f,
-  a₂:a₂ f,
-  f:[a₀, a₁, a₂, b; e],
-  b f; e
-] >{apply, a₂, a₁, a₀, f pure}
+show let lift₃: [
+  @φ: [*, *], @: φ applicative,
+  @α₀: *, @α₁: *, @α₂: *, @β: *,
+  a₀: α₀ φ,
+  a₁: α₁ φ,
+  a₂: α₂ φ,
+  f: [α₀, α₁, α₂, β],
+  β φ
+] ≔ >{apply, a₂, a₁, a₀, f pure}
 
-show let lift₄ [byzen f applicative,
-  @a₀:*, @a₁:*, @a₂:*, @a₃:*, @b:*, @e:*,
-  a₀:a₀ f,
-  a₁:a₁ f,
-  a₂:a₂ f,
-  a₃:a₃ f,
-  f:[a₀, a₁, a₂, a₃, b; e],
-  b f; e
-] >{apply, a₃, a₂, a₁, a₀, f pure}
+show let lift₄: [
+  @φ: [*, *], @: φ applicative,
+  @α₀: *, @α₁: *, @α₂: *, @α₃: *, @β: *,
+  a₀: α₀ φ,
+  a₁: α₁ φ,
+  a₂: α₂ φ,
+  a₃: α₃ φ,
+  f: [α₀, α₁, α₂, α₃, β],
+  β φ
+] ≔ >{apply, a₃, a₂, a₁, a₀, f pure}
 
-show let keep-first [byzen f applicative, @a:*, @b:*, a:a f, b:b f, a f]
+show let keep_first: [@φ: [*, *], @: φ applicative, @α: *, @β: *, a: α φ, b: β φ, α φ] ≔
   a lift₂ b constant
 
-show let keep-oþer [byzen f applicative, @a:*, @b:*, a:a f, b:b f, b f]
+show let keep_oþer: [@φ: [*, *], @: φ applicative, @α: *, @β: *, a: α φ, b: β φ, β φ] ≔
   a lift₂ b (constant flip)

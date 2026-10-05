@@ -4,13 +4,11 @@ import generatedLanguageNames from "../generated/language-names.json";
 const keywords = new Set(generatedLanguageNames.keywords);
 const primitiveTypes = new Set(generatedLanguageNames.primitiveTypes);
 const specialNameChars = new Set([...generatedLanguageNames.specialNameChars]);
-const declarationKeywords = new Set(["let", "ilk", "deed", "flock", "bizen"]);
+const declarationKeywords = new Set(["let", "ilk", "flock", "bizen"]);
 const fileDeclarationKeywords = new Set([
   "use",
-  "law",
   "yield",
   "show",
-  "show-ilk",
   ...declarationKeywords,
 ]);
 const closeForOpen = new Map([
@@ -109,7 +107,8 @@ const tokenize = (text) => {
   };
   const consumeNumber = () => {
     const [startOffset, startLine, startChar] = position();
-    if (current() === "-") advance();
+    // `+3` and `-3` are integers; unsigned digits are a natural.
+    if (current() === "-" || current() === "+") advance();
     while (!atEnd() && /[0-9]/.test(current())) advance();
     if (!atEnd() && current() === "." && /[0-9]/.test(next() || "")) {
       advance();
@@ -145,10 +144,6 @@ const tokenize = (text) => {
       consumeSpecialOpen();
     } else if (isNumberStart(text, offset)) {
       consumeNumber();
-    } else if (ch === "→") {
-      const [startOffset, startLine, startChar] = position();
-      advance();
-      push("name", startOffset, startLine, startChar);
     } else if (specialNameChars.has(ch)) {
       const [startOffset, startLine, startChar] = position();
       advance();
@@ -163,7 +158,7 @@ const tokenize = (text) => {
 const isNumberStart = (text, offset) => {
   const ch = text[offset];
   const nextCh = text[offset + 1];
-  return /[0-9]/.test(ch) || (ch === "-" && /[0-9]/.test(nextCh || ""));
+  return /[0-9]/.test(ch) || (/[-+]/.test(ch) && /[0-9]/.test(nextCh || ""));
 };
 const isNameChar = (ch) => {
   return ch !== undefined && !/\s/.test(ch) && !specialNameChars.has(ch);
@@ -216,25 +211,6 @@ const findOpening = (tokens, closeIndex) => {
   return tokenStructure(tokens).backward.get(closeIndex) ?? -1;
 };
 
-const splitTopLevel = (tokens, start, end, separators) => {
-  const segments = [];
-  let depth = 0;
-  let segmentStart = start;
-  for (let index = start; index < end; index += 1) {
-    const value = tokens[index].text;
-    if (isOpen(value)) depth += 1;
-    else if (isClose(value)) depth -= 1;
-    else if (depth === 0 && separators.has(value)) {
-      if (segmentStart < index) {
-        segments.push({ start: segmentStart, end: index });
-      }
-      segmentStart = index + 1;
-    }
-  }
-  if (segmentStart < end) segments.push({ start: segmentStart, end });
-  return segments;
-};
-
 // pattern arms recover independently in incomplete buffers: an unmatched
 // opener begins a local pattern, and a missing body terminator extends to EOF.
 const patternArmRegions = (tokens) => {
@@ -270,26 +246,6 @@ const patternArmRegions = (tokens) => {
   return regions;
 };
 
-const splitDeclarations = (tokens, start, end, heads = new Set(["let"])) => {
-  const depths = tokenDepths(tokens);
-  const baseDepth = depths[start] ?? 0;
-  const segments = [];
-  let segmentStart = -1;
-  for (let index = start; index < end; index += 1) {
-    const token = tokens[index];
-    if (
-      depths[index] !== baseDepth ||
-      token.kind !== "keyword" ||
-      !heads.has(token.text)
-    )
-      continue;
-    if (segmentStart >= 0) segments.push({ start: segmentStart, end: index });
-    segmentStart = index;
-  }
-  if (segmentStart >= 0) segments.push({ start: segmentStart, end });
-  return segments;
-};
-
 const findFileDeclarationBoundary = (
   tokens,
   start,
@@ -308,21 +264,38 @@ const findFileDeclarationBoundary = (
   return tokens.length;
 };
 
+// `bizen:head {` or `bizen:[@parameters, @:requirements, head] {`. the
+// parameters run from `open` to `close`, the head from `head` to `headEnd`.
 const findInstanceHeader = (tokens, start) => {
-  let open;
-  let close;
-  let colon = start;
-  if (tokens[start]?.text === "[") {
-    open = start;
-    close = findMatching(tokens, start);
-    if (close < 0) return undefined;
-    colon = close + 1;
+  if (tokens[start]?.text !== ":") return undefined;
+  const bracket = start + 1;
+  if (tokens[bracket]?.text === "[" && tokens[bracket + 1]?.text === "@") {
+    const end = findMatching(tokens, bracket);
+    if (end >= 0 && tokens[end + 1]?.text === "{") {
+      let lastComma = -1;
+      for (let index = bracket + 1; index < end; index += 1) {
+        if (tokens[index].text === ",") lastComma = index;
+        else if (isOpen(tokens[index].text)) {
+          const matching = findMatching(tokens, index);
+          if (matching < 0) return undefined;
+          index = matching;
+        }
+      }
+      if (lastComma >= 0)
+        return {
+          open: bracket,
+          close: lastComma,
+          head: lastComma + 1,
+          headEnd: end,
+          body: end + 1,
+        };
+    }
   }
-  if (tokens[colon]?.text !== ":") return undefined;
   const end = findFileDeclarationBoundary(tokens, start);
-  const head = colon + 1;
+  const head = start + 1;
   for (let index = head; index < end; index += 1) {
-    if (tokens[index].text === "{") return { open, close, head, body: index };
+    if (tokens[index].text === "{")
+      return { head, headEnd: index, body: index };
     if (!isOpen(tokens[index].text)) continue;
     const matching = findMatching(tokens, index);
     if (matching < 0) return undefined;
@@ -378,14 +351,10 @@ export {
   findInstanceHeader,
   findMatching,
   findOpening,
-  isClose,
-  isOpen,
   languageNames,
   lastQualifiedSegment,
   patternArmRegions,
   primitiveTypes,
-  splitDeclarations,
-  splitTopLevel,
   tokenDepths,
   tokenize,
   useNamespace,

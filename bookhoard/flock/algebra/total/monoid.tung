@@ -1,23 +1,32 @@
 use flock/algebra/total/magma.tung
 use flock/algebra/total/semigroup.tung
-use flock/order/semilattice-bounded-upper.tung
-use flock/order/semilattice-upper-bounded.tung
+use flock/order/semilattice_bounded_upper.tung
+use flock/order/semilattice_upper_bounded.tung
 
-show flock monoid [byzen a semigroup] {
-  let ∅ [a]
+show flock monoid: [α: *, @: α semigroup, *] {
+  let ∅: α
 
-  law [a:a] ∅ · a = a
-  law [a:a] a · ∅ = a
+  let ∅_·: [a: α, (∅ · a) = a]
+  let ·_∅: [a: α, (a · ∅) = a]
 }
 
-bizen [byzen b monoid, @a:*]:[a, b] monoid {
-  let _ ∅ [] ∅
+bizen: [@β: *, @: β monoid, @α: *, [α, β] monoid] {
+  let ∅: [_:] ≔ ∅
+
+  let ∅_· ≔ sorry
+  let ·_∅ ≔ sorry
 }
 
-bizen [byzen a semilattice-bounded-upper]:(a infimal) monoid {
-  let ∅ [] ⊤ infimal
+bizen: [@α: *, @: α semilattice_bounded_upper, (α _infimal) monoid] {
+  let ∅ ≔ ⊤ infimal
+
+  let ∅_· ≔ sorry
+  let ·_∅ ≔ sorry
 }
 
-bizen [byzen a semilattice-upper-bounded]:(a supremal) monoid {
-  let ∅ [] ⟂ supremal
+bizen: [@α: *, @: α semilattice_upper_bounded, (α _supremal) monoid] {
+  let ∅ ≔ ⟂ supremal
+
+  let ∅_· ≔ sorry
+  let ·_∅ ≔ sorry
 }

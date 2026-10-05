@@ -7,7 +7,7 @@ use flock/functor.tung
 use flock/functor/cata.tung
 use flock/functor/filter.tung
 use flock/order/complement.tung
-use flock/order/semilattice-upper.tung
+use flock/order/semilattice_upper.tung
 use flock/size.tung
 use ilk/list.tung
 use ilk/natural.tung
@@ -16,71 +16,71 @@ use ilk/text/structure.tung
 use ilk/two.tung
 
 ## true when text haþ no unicode code points.
-show let is-empty-text [text:text, 𝟚]
-  match text behead-text {
+show let is_empty_text: [t: text, 𝟚] ≔
+  match t behead_text {
     none ^ yea,
     _ some ^ nay
   }
 
 ## count unicode code points, not bytes or utf-16 units.
-bizen:text size {
-  let text size [] text text-to-list $ size
+bizen: text haþ_size {
+  let size: [t:] ≔ t text_to_list $ size
 }
 
-show let take-text [text:text, count:ℤ, text]
-  text text-to-list $ take count $ list-to-text
+show let take_text: [t: text, count: ℕ, text] ≔
+  t text_to_list $ take count $ list_to_text
 
-show let drop-text [text:text, count:ℤ, text]
-  text text-to-list $ drop count $ list-to-text
+show let drop_text: [t: text, count: ℕ, text] ≔
+  t text_to_list $ drop count $ list_to_text
 
-show let reverse-text [text:text, text]
-  text text-to-list $ reverse $ list-to-text
+show let reverse_text: [t: text, text] ≔
+  t text_to_list $ reverse $ list_to_text
 
-show let prepend-text [character:unicode, text:text, text]
-  character ⁖ (text text-to-list) $ list-to-text
+show let prepend_text: [character: unicode, t: text, text] ≔
+  character ‥ (t text_to_list) $ list_to_text
 
-show let append-text [text:text, character:unicode, text]
-  text text-to-list $ · (character singleton) $ list-to-text
+show let append_text: [t: text, character: unicode, text] ≔
+  t text_to_list $ · (character singleton) $ list_to_text
 
-let split-unicode-by [
-  list:unicode list,
-  separates:[unicode, 𝟚],
-  (unicode list) list]
-  match list {
-    empty ^ empty ⁖ empty,
-    character ⁖ rest ^ match rest split-unicode-by separates {
-      empty ^ (character ⁖ empty) ⁖ empty,
-      current ⁖ previous ^ match character separates {
-        yea ^ empty ⁖ (current ⁖ previous),
-        nay ^ (character ⁖ current) ⁖ previous
+let split_unicode_by: [
+  l: unicode list,
+  separates: [unicode, 𝟚],
+  (unicode list) list] ≔
+  match l {
+    empty ^ empty ‥ empty,
+    character ‥ rest ^ match rest split_unicode_by separates {
+      empty ^ (character ‥ empty) ‥ empty,
+      current ‥ previous ^ match character separates {
+        yea ^ empty ‥ (current ‥ previous),
+        nay ^ (character ‥ current) ‥ previous
       }
     }
   }
 
-let split-unicode [
-  list:unicode list,
-  separator:unicode,
-  (unicode list) list]
-  list split-unicode-by { character ^
-    character ≡ separator
-  }
+let split_unicode: [
+  l: unicode list,
+  separator: unicode,
+  (unicode list) list
+] ≔ l split_unicode_by { character ^
+  character ≍ separator
+}
 
-let is-whitespace [unicode:unicode, 𝟚]
-  <{∨, unicode ≡ `\32;, unicode ≡ `\9;, unicode ≡ `\10;, unicode ≡ `\13;}
+let is_whitespace: [c: unicode, 𝟚] ≔
+  <{∨, c ≍ `\32;, c ≍ `\9;, c ≍ `\10;, c ≍ `\13;}
 
 
 ## split text at each separator code point.
-show let split-text [text:text, separator:unicode, text list]
-  text text-to-list $ split-unicode separator $ map list-to-text
+show let split_text: [t: text, separator: unicode, text list] ≔
+  t text_to_list $ split_unicode separator $ map list_to_text
 
 ## split text on runs of common ascii whitespace.
-show let words-text [text:text, text list]
-  text text-to-list $ split-unicode-by is-whitespace $ map list-to-text $ filter (is-empty-text ∘ ¬)
+show let words_text: [t: text, text list] ≔
+  t text_to_list $ split_unicode_by is_whitespace $ map list_to_text $ filter (is_empty_text ▷ ¬)
 
 ## join text values wiþ a separator between neighbours.
-show let join-wiþ-text [text list, text, text] {
+show let join_wiþ_text: [text list, text, text] ≔ {
   empty, _ ^ '',
-  text ⁖ texts, separator ^ texts fold₁ text {
+  text ‥ texts, separator ^ texts fold₁ text {
     joined, next ^ (joined · separator) · next
   }
 }

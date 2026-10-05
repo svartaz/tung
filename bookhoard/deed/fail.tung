@@ -1,4 +1,0 @@
-## abort a computation with a typed failure value.
-show deed e fail {
-  fail [@a:*, e, a]
-}

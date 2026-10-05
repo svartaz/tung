@@ -16,7 +16,7 @@ BENCH_RUNS ?= 3
 BENCH_SIZE ?= 1000
 
 .PHONY: all setup build test benchmark install \
-	compiler-build compiler-test compiler-install runner-check prose-test \
+	compiler-build compiler-test compiler-install runner-check prose-test byspel-test \
 	editor-deps editor-build editor-test language-metadata extension-package extension-install formula-check
 
 all: build
@@ -26,7 +26,7 @@ setup: test install
 
 build: compiler-build editor-build
 
-test: prose-test formula-check compiler-test editor-test
+test: prose-test formula-check compiler-test byspel-test editor-test
 
 benchmark: compiler-build
 	@printf 'benchmarking tung compiler and evaluator\n'
@@ -45,6 +45,10 @@ compiler-test:
 prose-test:
 	@printf 'checking repository prose\n'
 	@$(NODE) --test tool/prose.test.mjs
+
+byspel-test: compiler-build
+	@printf 'checking and running byspels\n'
+	@TUNG_EXECUTABLE="$$(cd "$(TONGUE_DIR)" && $(CABAL) list-bin exe:tung)" $(NODE) --test tool/byspel.test.mjs
 
 $(NPM_STAMP): package.json package-lock.json vscode/package.json
 	@$(NPM) ci
@@ -78,8 +82,8 @@ compiler-install: compiler-build
 
 runner-check:
 	@printf 'checking installed tung runner\n'
-	@printf '%s\n' 'let value identity [] value' | (cd /tmp && "$(BIN_DIR)/tung" --check-stdin) | grep -qx 'type ok'
-	@printf '%s\n' ' let value [] 1 ' | (cd /tmp && "$(BIN_DIR)/tung" --format-stdin) | grep -qx 'let value [] 1'
+	@printf '%s\n' 'let identity: [value:] ≔ value' | (cd /tmp && "$(BIN_DIR)/tung" --check-stdin) | grep -qx 'type ok'
+	@printf '%s\n' ' let value ≔ 1 ' | (cd /tmp && "$(BIN_DIR)/tung" --format-stdin) | grep -qx 'let value ≔ 1'
 	@if ! printf '%s' ":$$PATH:" | grep -Fq ':$(BIN_DIR):'; then \
 		printf 'add %s to path to run: tung filename.tung\n' "$(BIN_DIR)"; \
 	fi

@@ -1,6 +1,7 @@
-// tolerant structural model for incomplete buffers. it joineþ semantic roles,
-// declaration regions, docs, imports, and scopes without attempting type checks.
-import { analyzeTokens, semanticRole } from "./semantic.ts";
+// structural model for incomplete buffers. it joineþ þe compiler's source
+// roles wiþ declaration regions, docs, imports, and scopes; it never checkeþ
+// types.
+import type { SourceRole } from "./checker.ts";
 import {
   bracketPairs,
   declarationKeywords,
@@ -9,45 +10,42 @@ import {
   findMatching,
   lastQualifiedSegment,
   patternArmRegions,
-  splitTopLevel,
   tokenDepths,
   tokenize,
   useNamespace,
   useParts,
 } from "./syntax.ts";
-const ownedKinds = new Set(["ilk", "deed", "flock"]);
+const ownedKinds = new Set(["ilk", "flock"]);
 const localRoles = new Set(["parameter", "typeParameter"]);
 const keywordHelp = {
   use: "import a tung file; its last path segment is the default namespace, and an optional alias overrideeþ it.",
-  show: "publish a declaration or re-export a visible term.",
-  "show-ilk": "re-export a visible type.",
-  yield:
-    "introduce a block result or handle the normal result of a `try` expression.",
+  show: "publish a declaration, or re-export every visible term, type, and flock wiþ a name.",
+  yield: "introduce a block result.",
+  sorry:
+    "stand for an omitted proof or definition of any type; performing it is a runtime error.",
+  induce:
+    "name the eliminator of an ilk or flock: `motive induce name methods target` performeþ structural induction.",
   flock: "declare a flock and its members.",
   fremmed:
     "bind an annotated file-level let to the host function named by a preceding text key.",
   bizen: "provide evidence and member definitions for a flock.",
-  byzen: "require a flock instance; its arguments determine parameter kinds.",
-  law: "state a type-checked equation required of a flock; equivalence is not proved.",
-  deed: "declare an algebraic effect and its operations.",
-  try: "handle effect operations for an expression.",
-  eftgin: "continue the handled computation from an operation clause.",
-  match: "match one or more values against exhaustive pattern rows.",
+  match:
+    "match one or more values against exhaustive pattern rows; `;` joineþ rows that share a result.",
+  fall: "write a typed function: inputs, a final result type, `^`, and the body (dependent frontend only).",
   let: "bind a value, curried function, or type alias.",
   ilk: "declare an algebraic data type.",
 };
-const analyzeDocument = (text, uri = "") => {
+const analyzeDocument = (
+  text: string,
+  uri = "",
+  sourceRoles: SourceRole[] = [],
+) => {
   const tokens = tokenize(text);
-  const semantic = analyzeTokens(tokens);
-  const roles = new Map(
-    tokens.flatMap((token) => {
-      const role = semanticRole(token, tokens, semantic);
-      return role ? [[token.index, role] as const] : [];
-    }),
-  );
   const depths = tokenDepths(tokens);
   const pairs = bracketPairs(tokens);
   const regions = declarationRegions(tokens, depths, pairs);
+  const semantic = compilerSemantic(tokens, sourceRoles, regions);
+  const roles = semantic.semantic;
   const docs = collectDocComments(text);
   attachDocs(regions, docs, tokens);
   const imports = collectImports(tokens, depths);
@@ -56,7 +54,6 @@ const analyzeDocument = (text, uri = "") => {
     ...patternDefinitions(tokens, semantic),
     ...semanticDefinitions(text, tokens, semantic, depths, regions),
   ]);
-  collectRequirementDefinitions(tokens, roles, semantic, regions, definitions);
   definitions.forEach((definition, id) => {
     definition.id = `${uri}:${definition.token.offset}:${id}`;
     definition.uri = uri;
@@ -82,6 +79,53 @@ const analyzeDocument = (text, uri = "") => {
       }))
       .filter(({ startLine, endLine }) => endLine > startLine),
   };
+};
+// compiler roles become þe model's token roles. a header binder arriveþ as
+// `headerPattern`, since only name resolution can tell a binder from a
+// constructor: it is a parameter here, and resolution prefereþ a visible
+// constructor of þe same name. a declaration in a flock or bizen body is a
+// method.
+const compilerSemantic = (tokens, sourceRoles: SourceRole[], regions) => {
+  const byOffset = new Map<number, ReturnType<typeof tokenize>[number]>(
+    tokens.map((token) => [token.offset, token]),
+  );
+  const semantic = new Map<number, { type: string; modifiers: string[] }>();
+  const callableConstructors = new Set<string>();
+  for (const [start, , role, modifiers] of sourceRoles) {
+    const token = byOffset.get(start);
+    if (!token || token.kind !== "name") continue;
+    const declared = modifiers.includes("declaration");
+    let type = role;
+    let roleModifiers = modifiers.filter(
+      (modifier) => modifier !== "constructor",
+    );
+    if (modifiers.includes("constructor")) {
+      type = "enumMember";
+      if (role === "function") {
+        callableConstructors.add(lastQualifiedSegment(token.text));
+      }
+    } else if (role === "headerPattern") {
+      type = "parameter";
+      roleModifiers = ["declaration"];
+    } else if (role === "call" && declared) {
+      type = "function";
+    }
+    if (
+      declared &&
+      (type === "variable" || type === "function") &&
+      regions.some(
+        (region) =>
+          (region.kind === "flock" || region.kind === "bizen") &&
+          token.index > region.headerEnd &&
+          token.offset <= region.endOffset &&
+          token.offset >= region.startOffset,
+      )
+    ) {
+      type = "method";
+    }
+    semantic.set(token.index, { type, modifiers: roleModifiers });
+  }
+  return { semantic, callableConstructors };
 };
 const collectInstances = (tokens, semantic, regions) => {
   return regions
@@ -246,8 +290,10 @@ const findHeaderEnd = (tokens, depths, start, end, baseDepth) => {
   for (let index = start; index < end; index += 1) {
     if (depths[index] === baseDepth && tokens[index].text === "[") {
       const close = findMatching(tokens, index);
-      if (close >= 0) return close + 1;
+      if (close >= 0) return close + (tokens[close + 1]?.text === "≔" ? 2 : 1);
     }
+    if (depths[index] === baseDepth && tokens[index].text === "≔")
+      return index + 1;
     if (depths[index] === baseDepth && tokens[index].text === "{") return index;
   }
   return Math.max(start, end - 1);
@@ -273,8 +319,7 @@ const collectImports = (tokens, depths) => {
 const collectReexports = (tokens, depths) => {
   const reexports = [];
   for (const token of tokens) {
-    if (!["show", "show-ilk"].includes(token.text) || depths[token.index] !== 0)
-      continue;
+    if (token.text !== "show" || depths[token.index] !== 0) continue;
     const next = tokens[token.index + 1];
     if (!next || next.kind !== "name") continue;
     const end = findFileDeclarationBoundary(
@@ -285,10 +330,7 @@ const collectReexports = (tokens, depths) => {
     );
     for (let index = next.index; index < end; index += 1) {
       if (tokens[index].kind === "name") {
-        reexports.push({
-          name: tokens[index].text,
-          kind: token.text === "show-ilk" ? "type" : "term",
-        });
+        reexports.push({ name: tokens[index].text });
       }
     }
   }
@@ -393,79 +435,6 @@ const definitionScope = (tokens, region, role) => {
         : (tokens[region.headerEnd]?.offset ?? region.startOffset),
     end: region.endOffset,
   };
-};
-// requirements introduce syntactic binder candidates. workspace lookup resolveþ
-// imported concrete types before these candidates; no kind checking is needed.
-const collectRequirementDefinitions = (
-  tokens,
-  roles,
-  semantic,
-  regions,
-  definitions,
-) => {
-  const byName = new Map();
-  for (const definition of definitions) {
-    const entries = byName.get(definition.name) || [];
-    entries.push(definition);
-    byName.set(definition.name, entries);
-  }
-  for (const region of regions) {
-    let open = region.startIndex + 1;
-    while (open < region.headerEnd && tokens[open]?.text !== "[") open += 1;
-    if (open >= region.headerEnd) continue;
-    const close = findMatching(tokens, open);
-    if (close < 0) continue;
-    for (const { start, end } of splitTopLevel(
-      tokens,
-      open + 1,
-      close,
-      new Set([",", ";"]),
-    )) {
-      if (tokens[start]?.text !== "byzen") continue;
-      for (let next = start + 1; next < end; next += 1) {
-        const token = tokens[next];
-        if (
-          token.kind !== "name" ||
-          token.text.includes("~") ||
-          roles.get(token.index)?.type !== "typeParameter" ||
-          semantic.types.has(token.text) ||
-          semantic.effects.has(token.text) ||
-          (byName.get(token.text) || []).some(
-            (definition) =>
-              definition.name === token.text &&
-              ["typeParameter", "type", "class"].includes(definition.role) &&
-              definition.scopeStart <= token.offset &&
-              token.offset <= definition.scopeEnd,
-          )
-        )
-          continue;
-        roles.set(token.index, {
-          type: "typeParameter",
-          modifiers: ["declaration"],
-        });
-        const definition = {
-          name: token.text,
-          bareName: token.text,
-          role: "typeParameter",
-          modifiers: ["declaration"],
-          token,
-          range: tokenRange(token),
-          selectionRange: tokenRange(token),
-          scopeStart: region.startOffset,
-          scopeEnd: region.endOffset,
-          local: true,
-          exported: false,
-          topLevel: false,
-          inferredRequirement: true,
-          detail: "type parameter from byzen",
-        };
-        definitions.push(definition);
-        const entries = byName.get(token.text) || [];
-        entries.push(definition);
-        byName.set(token.text, entries);
-      }
-    }
-  }
 };
 const declarationDetail = (text, tokens, token, region, role) => {
   if (!region) return `${role} ${lastQualifiedSegment(token.text)}`;

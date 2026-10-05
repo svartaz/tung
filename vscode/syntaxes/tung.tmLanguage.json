@@ -106,7 +106,7 @@
     "declaration-keyword": {
       "patterns": [
         {
-          "match": "\\b(?:let|use|ilk|deed|flock|bizen|byzen|law|show-ilk|show)\\b",
+          "match": "(?<![^\\s#()\\[\\]{}:,;≔$`'@^.])(?:let|use|ilk|flock|bizen|show)(?![^\\s#()\\[\\]{}:,;≔$`'@^.])",
           "name": "keyword.declaration.tung"
         }
       ]
@@ -114,7 +114,7 @@
     "control-keyword": {
       "patterns": [
         {
-          "match": "\\b(?:yield|match|try|eftgin)\\b",
+          "match": "(?<![^\\s#()\\[\\]{}:,;≔$`'@^.])(?:yield|match|fall|deed|sorry|induce)(?![^\\s#()\\[\\]{}:,;≔$`'@^.])",
           "name": "keyword.control.tung"
         }
       ]
@@ -130,19 +130,23 @@
     "number": {
       "patterns": [
         {
-          "match": "(?<![^\\s#()\\[\\]{}:,;!=$→`'@^.])-?[0-9]+\\.[0-9]+(?![^\\s#()\\[\\]{}:,;!=$→`'@^.])",
+          "match": "(?<![^\\s#()\\[\\]{}:,;≔$`'@^.])-?[0-9]+\\.[0-9]+(?![^\\s#()\\[\\]{}:,;≔$`'@^.])",
           "name": "constant.numeric.float.tung"
         },
         {
-          "match": "(?<![^\\s#()\\[\\]{}:,;!=$→`'@^.])-?[0-9]+(?![^\\s#()\\[\\]{}:,;!=$→`'@^.])",
+          "match": "(?<![^\\s#()\\[\\]{}:,;≔$`'@^.])[-+][0-9]+(?![^\\s#()\\[\\]{}:,;≔$`'@^.])",
           "name": "constant.numeric.integer.tung"
+        },
+        {
+          "match": "(?<![^\\s#()\\[\\]{}:,;≔$`'@^.])[0-9]+(?![^\\s#()\\[\\]{}:,;≔$`'@^.])",
+          "name": "constant.numeric.natural.tung"
         }
       ]
     },
     "qualified-name": {
       "patterns": [
         {
-          "match": "(?<![^\\s#()\\[\\]{}:,;!=$→`'@^.])([^\\s#()\\[\\]{}:,;!=$→`'@^./~]+)(~)([^\\s#()\\[\\]{}:,;!=$→`'@^./~]+)(?![^\\s#()\\[\\]{}:,;!=$→`'@^.])",
+          "match": "(?<![^\\s#()\\[\\]{}:,;≔$`'@^.])([^\\s#()\\[\\]{}:,;≔$`'@^./~]+)(~)([^\\s#()\\[\\]{}:,;≔$`'@^./~]+)(?![^\\s#()\\[\\]{}:,;≔$`'@^.])",
           "captures": {
             "1": {
               "name": "entity.name.namespace.tung"
@@ -157,11 +161,7 @@
     "operator": {
       "patterns": [
         {
-          "match": "→",
-          "name": "support.type.tung"
-        },
-        {
-          "match": "@|(?<![^\\s#()\\[\\]{}:,;!=$→`'@^.])\\*(?![^\\s#()\\[\\]{}:,;!=$→`'@^.])",
+          "match": "@|(?<![^\\s#()\\[\\]{}:,;≔$`'@^.])\\*(?![^\\s#()\\[\\]{}:,;≔$`'@^.])",
           "name": "keyword.other.tung"
         },
         {
@@ -169,11 +169,11 @@
           "name": "keyword.operator.tung"
         },
         {
-          "match": "=",
+          "match": "≔",
           "name": "keyword.operator.assignment.tung"
         },
         {
-          "match": "\\^|\\|",
+          "match": "\\^",
           "name": "keyword.operator.arrow.case.tung"
         }
       ]
@@ -181,7 +181,7 @@
     "punctuation": {
       "patterns": [
         {
-          "match": "(?<![^\\s#()\\[\\]{}:,;!=$→`'@^.])(?:r|[<>])\\{",
+          "match": "(?<![^\\s#()\\[\\]{}:,;≔$`'@^.])(?:r|[<>])\\{",
           "name": "punctuation.section.braces.begin.tung"
         },
         {

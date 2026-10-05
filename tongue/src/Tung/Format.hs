@@ -67,13 +67,19 @@ formatLine state line
           lineContinuation
             | closes > 0 || startsDeclaration || startsComment = 0
             | formatHeaderBracket state /= Nothing && "]" `isPrefixOf` content = max 0 (formatContinuation state - 1)
+            -- a top-level line þat is no declaration head continueþ þe
+            -- previous declaration, as a body after `] ≔ {...}` doþ.
+            | formatDepth state == 0 && formatHeaderBracket state == Nothing && not ("]" `isPrefixOf` content) = max 1 (formatContinuation state)
             | otherwise = formatContinuation state
           lineDepth = max 0 (formatDepth state - closes + lineContinuation)
           (delta, bracketDelta, lexicalState, code) = scanLine (formatLexicalState state) content
           oldDepth = formatDepth state
-          balancedDepth = max 0 (oldDepth + delta + if lineContinuation > 0 && delta > 0 then lineContinuation else 0)
+          -- a continued line opening a block keepeþ its continuation, unless
+          -- it closeþ a header bracket, as `@a:*, head] {` doth.
+          continuedBlock = lineContinuation > 0 && delta > 0 && not headerClosed
+          balancedDepth = max 0 (oldDepth + delta + if continuedBlock then lineContinuation else 0)
           blocks =
-            if lineContinuation > 0 && delta > 0
+            if continuedBlock
               then (oldDepth + lineContinuation, lineContinuation) : formatContinuationBlocks state
               else formatContinuationBlocks state
           (depth, remainingBlocks) = if delta < 0 then releaseBlocks balancedDepth blocks else (balancedDepth, blocks)
@@ -82,8 +88,8 @@ formatLine state line
             Just _ -> Nothing
             Nothing
               | bracketDelta > 0
-                  && any (`startsWord` code) ["let", "show let", "law", "bizen"]
-                  && '=' `notElem` code ->
+                  && any (`startsHead` code) ["let", "show let", "bizen", "flock", "show flock"]
+                  && '≔' `notElem` code ->
                   Just (oldDepth, bracketDelta)
             Nothing -> Nothing
           headerClosed = case formatHeaderBracket state of
@@ -91,10 +97,12 @@ formatLine state line
             Nothing -> False
           continuation
             | startsComment = formatContinuation state
-            | headerClosed = if "]" `isSuffixOf` code then 1 else 0
+            | headerClosed = if any (`isSuffixOf` code) ["]", "≔"] then 1 else 0
             | Just (base, count) <- headerBracket = max 0 (count - (depth - base))
-            | "=" `isSuffixOf` code = 1
+            | "≔" `isSuffixOf` code = 1
             | closes > 0 = 0
+            -- a trailing comma endeþ a row or item, and wiþ it its continuation.
+            | "," `isSuffixOf` code = 0
             | delta == 0 && lineContinues code (lineContinuation > 0) = 1
             | lineContinuation > 0 && delta == 0 = max 2 lineContinuation
             | otherwise = 0
@@ -103,8 +111,9 @@ formatLine state line
   where
     content = compactTypeColons (formatLexicalState state) (trim line)
 
--- ':' introduceth a type, so its surrounding horizontal space is optional.
--- retain quoted text, character literals, and comments byte for byte.
+-- ':' introduceth a type. it is written wiþ no space before it and one space
+-- after it: `x: α`, or none when þe type is left to inference: `[x:, y:]`. retain quoted text, character literals, and comments byte
+-- for byte.
 compactTypeColons :: LexicalState -> String -> String
 compactTypeColons started = reverse . go started []
   where
@@ -121,7 +130,11 @@ compactTypeColons started = reverse . go started []
       let remaining = characterLiteralTail rest
           literal = take (length rest - length remaining) rest
        in go Code (reverse literal ++ '`' : acc) remaining
-    go Code acc (':' : rest) = go Code (':' : dropWhile isSpace acc) (dropWhile isSpace rest)
+    go Code acc (':' : rest) = case dropWhile isSpace rest of
+      [] -> ':' : dropWhile isSpace acc
+      -- `a:` before `,` or `]` leaveþ þe type to inference and needeþ no space.
+      following@(next : _) | next `elem` ",]" -> go Code (':' : dropWhile isSpace acc) following
+      following -> go Code (' ' : ':' : dropWhile isSpace acc) following
     go Code acc (character : rest) = go Code (character : acc) rest
 
 releaseBlocks :: Int -> [(Int, Int)] -> (Int, [(Int, Int)])
@@ -140,10 +153,14 @@ leadingClosures :: String -> Int
 leadingClosures = length . takeWhile (`elem` ("})" :: String))
 
 declarationHead :: String -> Bool
-declarationHead line = "bizen:" `isPrefixOf` line || any (`startsWord` line) ["use", "yield", "show", "show-ilk", "let", "ilk", "deed", "flock", "bizen", "law"]
+declarationHead line = any (`startsHead` line) ["use", "yield", "show", "let", "ilk", "flock", "bizen"]
 
 commentHead :: String -> Bool
 commentHead line = "#" `isPrefixOf` line || "/*" `isPrefixOf` line
+
+-- a declaration keyword is followed by a space or, for `bizen`, ':'.
+startsHead :: String -> String -> Bool
+startsHead word line = startsWord word line || (word ++ ":") `isPrefixOf` line
 
 startsWord :: String -> String -> Bool
 startsWord word line = case stripPrefix word line of
@@ -151,12 +168,12 @@ startsWord word line = case stripPrefix word line of
   Just (next : _) -> isSpace next
   Nothing -> False
 
+-- a line ending in `≔` or a row's `^` continueþ on þe next line.
 lineContinues :: String -> Bool -> Bool
 lineContinues code continued =
-  "=" `isSuffixOf` code
-    || (startsWord "law" code && "]" `isSuffixOf` code)
+  "≔" `isSuffixOf` code
+    || "^" `isSuffixOf` code
     || (continued && ":" `isPrefixOf` code)
-    || ("let" `elem` words code && '=' `notElem` code)
 
 scanLine :: LexicalState -> String -> (Int, Int, LexicalState, String)
 scanLine started input =

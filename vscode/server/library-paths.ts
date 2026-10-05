@@ -8,15 +8,15 @@ const resolveLibraryPaths = (
   inherited: string | undefined,
 ): string[] => {
   const settings = Array.isArray(configured)
-    ? configured.filter((entry): entry is string =>
-      typeof entry === "string" && Boolean(entry)
-    )
+    ? configured.filter(
+        (entry): entry is string => typeof entry === "string" && Boolean(entry),
+      )
     : [];
   const environment = inherited?.split(path.delimiter).filter(Boolean) || [];
   return [
     ...new Set(
       [...declared, ...settings, ...environment].map((root) =>
-        path.resolve(root)
+        path.resolve(root),
       ),
     ),
   ];
@@ -37,9 +37,10 @@ const readDeclaredLibraryPaths = (
       );
       roots.push(...output.split(/\r?\n/u).filter(Boolean));
     } catch (error) {
-      const output = error && typeof error === "object" && "stdout" in error
-        ? String(error.stdout).trim()
-        : "";
+      const output =
+        error && typeof error === "object" && "stdout" in error
+          ? String(error.stdout).trim()
+          : "";
       throw new Error(
         `cannot resolve libraries for ${project}: ${output || String(error)}`,
       );

@@ -1,0 +1,30 @@
+## pure host functions compute during checking when every input is a literal.
+## a comparison returneþ bookhoard's `𝟚`; a partial operation returneþ an
+## option, which is none when no result existeþ.
+use ilk/one.tung
+use ilk/option.tung
+use ilk/product.tung
+use ilk/two.tung
+
+let +: [ℤ, ℤ, ℤ] ≔ 'add_integer' fremmed
+let -: [ℤ, ℤ, ℤ] ≔ 'subtract_integer' fremmed
+let ×: [ℤ, ℤ, ℤ] ≔ 'multiply_integer' fremmed
+let divide_remainder: [ℤ, ℤ, (ℤ ∏ ℤ) option] ≔ 'divide_remainder_integer' fremmed
+let ≤: [ℤ, ℤ, 𝟚] ≔ 'less_equal_integer' fremmed
+let ≍: [ℤ, ℤ, 𝟚] ≔ 'equal_integer' fremmed
+let to_text: [ℤ, text] ≔ 'integer_to_text' fremmed
+let ⊕: [float, float, float] ≔ 'add_float' fremmed
+let ⌊: [float, ℤ option] ≔ '⌊' fremmed
+let ·: [text, text, text] ≔ 'join_text' fremmed
+let behead: [text, (unicode ∏ text) option] ≔ 'behead_text' fremmed
+let code: [unicode, ℕ] ≔ 'unicode_to_natural' fremmed
+
+## unsigned digits are a natural; an integer literal hath a sign.
+let ⊞: [ℕ, ℕ, ℕ] ≔ 'add_natural' fremmed
+let ⊟: [ℕ, ℕ, ℕ] ≔ 'subtract_natural' fremmed
+let to_integer: [ℕ, ℤ] ≔ 'natural_to_integer' fremmed
+let to_natural: [ℤ, ℕ option] ≔ 'integer_to_natural' fremmed
+
+## a type may depend on a computed comparison.
+let sized: [ℤ, *] ≔ {n ^ match n ≤ +0 { yea ^ text, nay ^ ℤ }}
+let five: (+1 sized) ≔ +2 + +3

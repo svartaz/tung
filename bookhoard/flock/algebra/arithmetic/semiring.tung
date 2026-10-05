@@ -1,24 +1,62 @@
 use flock/algebra/arithmetic/add.tung
-use flock/algebra/arithmetic/monoid-additive.tung
-use flock/algebra/arithmetic/monoid-multiplicative.tung
+use flock/algebra/arithmetic/monoid_additive.tung
+use flock/algebra/arithmetic/monoid_multiplicative.tung
 use flock/algebra/arithmetic/multiply.tung
 use flock/algebra/arithmetic/one.tung
 use flock/algebra/arithmetic/zero.tung
 use ilk/two.tung
 
-show flock semiring [byzen a monoid-additive, byzen a monoid-multiplicative] {
-  law [a:a, b:a] a + b = b + a
-  law [a:a, b:a, c:a] a × (b + c) = (a × b) + (a × c)
-  law [a:a, b:a, c:a] (a + b) × c = (a × c) + (b × c)
-  law [a:a, b:a] zero × a = zero
-  law [a:a, b:a] a × zero = zero
+show flock semiring: [α: *, @: α monoid_additive, @: α monoid_multiplicative, *] {
+  let +_commute: [a: α, b: α, (a + b) = (b + a)]
+  let ×_+: [a: α, b: α, c: α, (a × (b + c)) = ((a × b) + (a × c))]
+  let +_×: [a: α, b: α, c: α, ((a + b) × c) = ((a × c) + (b × c))]
+  let zero_×: [a: α, b: α, (zero × a) = zero]
+  let ×_zero: [a: α, b: α, (a × zero) = zero]
 }
 
-bizen [byzen b semiring, @a:*]:[a, b] semiring {
-  let f + g a [] (a f) + (a g)
-  let _ zero [] zero
-  let f × g a [] (a f) × (a g)
-  let _ one [] one
+bizen: [@β: *, @: β semiring, @α: *, [α, β] semiring] {
+  let +: [f:, g:, a:] ≔ (a f) + (a g)
+  let zero: [_:] ≔ zero
+  let ×: [f:, g:, a:] ≔ (a f) × (a g)
+  let one: [_:] ≔ one
+
+  let +_+ ≔ sorry
+  let zero_+ ≔ sorry
+  let +_zero ≔ sorry
+  let ×_× ≔ sorry
+  let one_× ≔ sorry
+  let ×_one ≔ sorry
+  let +_commute ≔ sorry
+  let ×_+ ≔ sorry
+  let +_× ≔ sorry
+  let zero_× ≔ sorry
+  let ×_zero ≔ sorry
 }
 
-bizen:𝟚 semiring {}
+bizen: 𝟚 semiring {
+  let +_commute ≔ {
+    nay, nay;
+    nay, yea;
+    yea, nay;
+    yea, yea ^ reflect
+  }
+  let ×_+ ≔ {
+    nay, _, _;
+    yea, nay, nay;
+    yea, nay, yea;
+    yea, yea, nay;
+    yea, yea, yea ^ reflect
+  }
+  let +_× ≔ {
+    nay, nay, nay;
+    nay, nay, yea;
+    nay, yea, nay;
+    nay, yea, yea;
+    yea, nay, nay;
+    yea, nay, yea;
+    yea, yea, nay;
+    yea, yea, yea ^ reflect
+  }
+  let zero_× ≔ {_, _ ^ reflect}
+  let ×_zero ≔ {nay, _; yea, _ ^ reflect}
+}

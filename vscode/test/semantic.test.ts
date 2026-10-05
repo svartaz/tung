@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import * as path from "node:path";
 import test from "node:test";
 import { CompilerBridge, SourceRole } from "../server/checker.ts";
-import { HighlightCache, buildHighlightRanges } from "../server/highlight.ts";
+import { buildHighlightRanges, HighlightCache } from "../server/highlight.ts";
 import { WorkspaceIndex } from "../server/workspace.ts";
 
 const compiler = new CompilerBridge();
@@ -13,12 +13,16 @@ compiler.configure(
 );
 test.after(() => compiler.dispose());
 const labels = async (source: string, name: string) => {
-  const uri = "file:///highlight-test.tung";
+  const uri = "file:///highlight_test.tung";
   const document = { uri, getText: () => source };
-  const workspace = new WorkspaceIndex({
-    get: () => document,
-    all: () => [document],
-  });
+  const workspace = new WorkspaceIndex(
+    {
+      get: () => document,
+      all: () => [document],
+    },
+    compiler,
+  );
+  await workspace.ready();
   const model = workspace.model(uri);
   const roles = await compiler.highlight(source).result;
   assert(roles, "the compiler must support the highlight request");
@@ -40,11 +44,11 @@ const labels = async (source: string, name: string) => {
 };
 test("compiler roles keep types, header binders and application positions consistent", async () => {
   const source =
-    "show let constant [@a:*, @b:*, x:a, _:b, a] x\n" +
-    "show let read-paþ [text paþ:paþ, text; file, text fail] text paþ\n" +
-    "show let join-paþ [text₀ paþ:paþ, text₁ paþ:paþ, paþ] text₀ · '/' $ · text₁ $ paþ";
+    "show let constant:[@a:*, @b:*, x:a, _:b, a] ≔ x\n" +
+    "show let read_paþ:[text paþ:_paþ, (text ∑ text) deed] ≔ text read_file\n" +
+    "show let join_paþ:[text₀ paþ:_paþ, text₁ paþ:_paþ, _paþ] ≔ text₀ · '/' $ · text₁ $ paþ";
   assert.deepEqual(await labels(source, "a"), [
-    "type:declaration",
+    "typeParameter:declaration",
     "type:",
     "type:",
   ]);
@@ -53,7 +57,7 @@ test("compiler roles keep types, header binders and application positions consis
   assert.deepEqual(await labels(source, "text"), [
     undefined,
     "type:",
-    "type:effect",
+    "type:",
     undefined,
   ]);
   assert.deepEqual(await labels(source, "text₀"), [undefined, undefined]);
@@ -62,20 +66,87 @@ test("compiler roles keep types, header binders and application positions consis
   assert.deepEqual(await labels(source, "*"), ["keyword:", "keyword:"]);
   assert((await labels(source, ":")).every((label) => label === undefined));
 });
+test("names bound by value slots stay terms inside later types", async () => {
+  const source =
+    "ilk =:[@α:*, a:α, α, *] { reflect:a = a }\n" +
+    "let leibnitz:[@α:*, @β:*, @a:α, @b:α, f:[α, β], reflect:a = b, (a f) = (b f)] ≔ reflect\n" +
+    "let other:[@a:*, a] ≔ sorry";
+  assert.deepEqual(await labels(source, "a"), [
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    "typeParameter:declaration",
+    "type:",
+  ]);
+  assert.deepEqual(await labels(source, "f"), [
+    undefined,
+    "call:applied",
+    "call:applied",
+  ]);
+  assert.deepEqual(await labels(source, "α"), [
+    "typeParameter:declaration",
+    "type:",
+    "type:",
+    "typeParameter:declaration",
+    "type:",
+    "type:",
+    "type:",
+  ]);
+});
 test("ilk-returning let declarations have type roles", async () => {
   const source =
-    "show let powerset [a:*, *] a → 𝟚\n" +
-    "let predicate [ℤ powerset] {_ ^ yea}";
+    "show let powerset:[a:*, *] ≔ a → 𝟚\n" +
+    "let predicate:ℤ powerset ≔ {_ ^ yea}";
   assert.deepEqual(await labels(source, "powerset"), [
     "type:declaration.typeFunction",
     "type:applied",
   ]);
-  assert.deepEqual(await labels(source, "a"), ["type:declaration", "type:"]);
+  assert.deepEqual(await labels(source, "a"), [
+    "typeParameter:declaration",
+    "type:",
+  ]);
+});
+test("declaration annotations retain compiler roles for prefixed names and greek parameters", async () => {
+  const source =
+    "let count:* ≔ ℤ\n" +
+    "let identity:[@α:*, x:α, α] ≔ x\n" +
+    "let answer:count ≔ +42 identity @count";
+  assert.deepEqual(await labels(source, "count"), [
+    "type:declaration",
+    "type:",
+    "type:",
+  ]);
+  assert.deepEqual(await labels(source, "α"), [
+    "typeParameter:declaration",
+    "type:",
+    "type:",
+  ]);
+  assert.deepEqual(await labels(source, "x"), [undefined, undefined]);
+  assert.deepEqual(await labels(source, "≔"), [
+    undefined,
+    undefined,
+    undefined,
+  ]);
+  assert.deepEqual(await labels(source, "identity"), [
+    "function:declaration.applied",
+    "call:applied",
+  ]);
+});
+test("right composition useþ ordinary function roles", async () => {
+  const source = "let values:ℤ list ≔ >{cons, +1, empty}";
+  assert.deepEqual(await labels(source, "values"), ["variable:declaration"]);
+  assert.deepEqual(await labels(source, "list"), ["type:applied"]);
+  assert.deepEqual(await labels(source, "cons"), ["call:applied"]);
+  assert.deepEqual(await labels(source, ">{"), [undefined]);
+  assert.deepEqual(await labels(source, "}"), [undefined]);
 });
 test("nested polymorphic binders use compiler type roles", async () => {
-  const source = "let twice [f:[@a:*, a, a], ℤ] 1 f";
+  const source = "let twice:[f:[@a:*, a, a], ℤ] ≔ +1 f";
   assert.deepEqual(await labels(source, "a"), [
-    "type:declaration",
+    "typeParameter:declaration",
     "type:",
     "type:",
   ]);
@@ -84,7 +155,7 @@ test("nested polymorphic binders use compiler type roles", async () => {
 });
 test("explicit type arguments retain type roles among value arguments", async () => {
   const source =
-    "let f [@a:*, @b:*, x:a, _:b, a] x\nyield 'x' f @text @(text list) empty";
+    "let f:[@a:*, @b:*, x:a, _:b, a] ≔ x\nyield 'x' f @text @(text list) empty";
   assert.deepEqual(await labels(source, "text"), ["type:", "type:"]);
   assert.deepEqual(await labels(source, "list"), ["type:applied"]);
   assert.deepEqual(await labels(source, "@"), [
@@ -100,10 +171,10 @@ test("explicit type arguments retain type roles among value arguments", async ()
 });
 test("compiler roles use GADT, flock and pattern grammar", async () => {
   const source =
-    "show ilk tag [a:*, *] { integer [ℤ tag], boolean [𝟚 tag] }\n" +
-    "show flock functor [f:[*, *]] { let map [@a:*, @b:*, @e:*, a f, [a, b; e], b f; e] law [@a:*, af:a f] af map sameness = af }\n" +
-    "show let void [byzen f functor, @a:*, af:a f, 𝟙 f] af map {_ ^ only}\n" +
-    "let read [ℤ tag, ℤ] { x integer ^ x }";
+    "show ilk tag: [a:*, *] { integer: ℤ tag, boolean: 𝟚 tag }\n" +
+    "show flock functor:[f:[*, *], *] { let map:[@a:*, @b:*, a f, [a, b], b f] let map_sameness:[@a:*, af:a f, (af map sameness) = af] }\n" +
+    "show let void:[@f:[*, *], @:f functor, @a:*, af:a f, 𝟙 f] ≔ af map {_ ^ only}\n" +
+    "let read:[ℤ tag, ℤ] ≔ { x integer ^ x }";
   assert.deepEqual(await labels(source, "tag"), [
     "type:declaration.typeFunction",
     "type:applied",
@@ -114,7 +185,6 @@ test("compiler roles use GADT, flock and pattern grammar", async () => {
     "class:declaration.typeFunction",
     "class:applied",
   ]);
-  assert.deepEqual(await labels(source, "byzen"), ["keyword:"]);
   assert.deepEqual(await labels(source, "integer"), [
     "enumMember:declaration",
     "enumMember:",
@@ -128,19 +198,19 @@ test("compiler roles use GADT, flock and pattern grammar", async () => {
 });
 test("local polymorphic binders have compiler roles in declarations", async () => {
   const source =
-    "ilk packed [*] { pack [@a:*, a, packed] }\n" +
-    "flock same [a:*] { law [@b:*, x:b] x = x }\n" +
-    "bizen [@a:*]:a same {}";
+    "ilk packed: * { pack: [@a:*, a, packed] }\n" +
+    "flock same:[a:*, *] { let rule:[@b:*, x:b, x = x] }\n" +
+    "bizen:[@a:*, a same] {}";
   assert.deepEqual(await labels(source, "@"), [
     "keyword:",
     "keyword:",
     "keyword:",
   ]);
   assert.deepEqual(await labels(source, "a"), [
-    "type:declaration",
+    "typeParameter:declaration",
     "type:",
-    "type:declaration",
-    "type:declaration",
+    "typeParameter:declaration",
+    "typeParameter:declaration",
     "type:",
   ]);
   assert.deepEqual(await labels(source, "same"), [
@@ -149,11 +219,11 @@ test("local polymorphic binders have compiler roles in declarations", async () =
   ]);
 });
 test("compiler highlighting recovereþ incomplete syntax without accepting it", async () => {
-  const source = "let before [ℤ] 1\nlet broken [x:ℤ\nlet after [text] 'ok'";
+  const source = "let before:ℤ ≔ +1\nlet broken [x:ℤ\nlet after:text ≔ 'ok'";
   assert.deepEqual(await labels(source, "ℤ"), ["type:", undefined]);
   assert.deepEqual(await labels(source, "text"), ["type:"]);
   assert.deepEqual(
-    await labels("let before [ℤ] 1\nlet broken [] 'unfinished", "ℤ"),
+    await labels("let before:ℤ ≔ +1\nlet broken ≔ 'unfinished", "ℤ"),
     ["type:"],
   );
   assert.match(

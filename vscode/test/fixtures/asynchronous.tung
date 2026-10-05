@@ -1,15 +1,14 @@
 use ground.tung
+use ilk/option.tung
 
-let answer [_:𝟙, ℤ; async] (
-  let _ [] 1000 sleep
-  let left [] { _ ^ 20 } fork
-  let right [] { _ ^ 22 } fork
-  yield try (left wait) + (right wait) {
-    _ fail ^ 0
-  }
-)
+let total: [left: ℤ option, right: ℤ option, ℤ] ≔ match left, right {
+  l some, r some ^ l + r,
+  _, _ ^ +0
+}
 
-let main [_:𝟙, 𝟙; console, async] (
-  let _ [] 'async' write-line
-  yield only answer $ to-text $ write-line
-)
+let answer: ℤ deed ≔ (1000 sleep) þen ((+20 pure) fork $ map_flat { left ^
+    (+22 pure) fork $ map_flat { right ^ (left wait) lift₂ (right wait) total }
+})
+
+let main: 𝟙 deed ≔
+  ('async' write_line) þen (answer map to_text $ map_flat write_line)

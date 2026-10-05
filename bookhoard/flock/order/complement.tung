@@ -1,20 +1,23 @@
-use flock/order/lattice-bounded.tung
-use flock/order/semilattice-bounded-upper.tung
-use flock/order/semilattice-lower.tung
-use flock/order/semilattice-upper-bounded.tung
-use flock/order/semilattice-upper.tung
+use flock/order/lattice_bounded.tung
+use flock/order/semilattice_bounded_upper.tung
+use flock/order/semilattice_lower.tung
+use flock/order/semilattice_upper.tung
+use flock/order/semilattice_upper_bounded.tung
 use ilk/two.tung
 
 ## a bounded lattice wiþ a chosen complement for every value.
-show flock complement [byzen a lattice-bounded] {
-  let ¬ [a, a]
-  law [a:a] a ∧ (a ¬) = ⟂
-  law [a:a] a ∨ (a ¬) = ⊤
+show flock complement: [α: *, @: α lattice_bounded, *] {
+  let ¬: [α, α]
+  let ∧_¬: [a: α, (a ∧ (a ¬)) = ⟂]
+  let ∨_¬: [a: α, (a ∨ (a ¬)) = ⊤]
 }
 
-bizen:𝟚 complement {
-  let ¬ [] {
+bizen: 𝟚 complement {
+  let ¬ ≔ {
     yea ^ nay,
     nay ^ yea
   }
+
+  let ∧_¬ ≔ {yea; nay ^ reflect}
+  let ∨_¬ ≔ {yea; nay ^ reflect}
 }

@@ -24,7 +24,11 @@ import {
   tokenAtPosition,
   tokenRange,
 } from "./analysis.ts";
-import { CompilerBridge, parseCompilerDiagnostic } from "./checker.ts";
+import {
+  CompilerBridge,
+  parseCompilerDiagnostic,
+  parseCompilerGoals,
+} from "./checker.ts";
 import { formatRangeEdit } from "./format.ts";
 import {
   readDeclaredLibraryPaths,
@@ -40,12 +44,24 @@ import {
 } from "./highlight.ts";
 const connection = createConnection(ProposedFeatures.all);
 const documents = new TextDocuments(TextDocument);
-const workspace = new WorkspaceIndex(documents);
 const compiler = new CompilerBridge();
+const workspace = new WorkspaceIndex(documents, compiler);
+// navigation readeþ models built from compiler roles; missing roles are
+// fetched before þe request is answered.
+const navigation =
+  <Arguments extends unknown[], Result>(
+    handler: (...parameters: Arguments) => Result,
+  ) =>
+  async (...parameters: Arguments): Promise<Awaited<Result>> => {
+    await workspace.ready();
+    return await handler(...parameters);
+  };
 const highlights = new HighlightCache(compiler);
 const timers = new Map();
 const checks = new Map();
 const diagnosticReports = new Map();
+// þe goals of þe latest successful check, by document.
+const goalReports = new Map();
 const typeCache = new Map<
   string,
   { promise: Promise<string | undefined>; cancel: () => void }
@@ -173,192 +189,245 @@ connection.languages.semanticTokens.on(({ textDocument }) =>
 connection.languages.semanticTokens.onRange(({ textDocument, range }) =>
   semanticTokens(textDocument.uri, range),
 );
-connection.onCompletion(({ textDocument, position }) => {
-  const model = workspace.model(textDocument.uri);
-  if (!model) return [];
-  if (inUsePath(model, position)) {
-    return workspace.modulePaths(textDocument.uri).map((label) => ({
-      label,
-      kind: CompletionItemKind.Module,
-      detail: "tung module",
-    }));
-  }
-  const prefix = completionPrefix(model, position);
-  const definitions = [
-    ...workspace.completions(textDocument.uri, position),
-    ...workspace.primitiveCompletions(),
-  ];
-  const definitionItems = definitions
-    .map((definition) => definitionCompletion(definition))
-    .filter(
-      ({ label }) =>
-        !prefix || label.startsWith(prefix) || label.includes(`.${prefix}`),
-    );
-  const keywordItems = languageNames.keywords
-    .filter((name) => !prefix || name.startsWith(prefix))
-    .map((label) => ({
-      label,
-      kind: CompletionItemKind.Keyword,
-      detail: keywordHelp[label] || "tung keyword",
-    }));
-  return uniqueByKey(
-    [...definitionItems, ...keywordItems],
-    ({ label }) => label,
-  );
-});
-connection.onHover(async ({ textDocument, position }, cancellation) => {
-  const resolved = workspace.resolveAt(textDocument.uri, position);
-  if (resolved.definition) {
-    const definition = resolved.definition;
-    const header =
-      definition.detail || `${definition.role} ${definition.bareName}`;
-    const inferred = await inspectType(definition, cancellation);
-    const docText = definition.documentation
-      ? `${definition.documentation}\n\n`
-      : "";
-    const typeText = inferred
-      ? `\n\n**inferred type**\n\n\`\`\`tung\n${definition.bareName}: ${inferred}\n\`\`\``
-      : "";
-    return {
-      range: nameRange(resolved.token),
-      contents: {
-        kind: MarkupKind.Markdown,
-        value: `${docText}\`\`\`tung\n${header}\n\`\`\`\n\n${roleDescription(
-          definition,
-        )}${typeText}`,
-      },
-    };
-  }
-  if (resolved.token?.kind === "keyword" && keywordHelp[resolved.token.text]) {
-    return {
-      range: tokenRange(resolved.token),
-      contents: {
-        kind: MarkupKind.Markdown,
-        value: keywordHelp[resolved.token.text],
-      },
-    };
-  }
-  const primitive = workspace
-    .primitiveCompletions()
-    .find(({ bareName }) => bareName === resolved.token?.text);
-  return primitive
-    ? {
-        range: nameRange(resolved.token),
-        contents: { kind: MarkupKind.Markdown, value: primitive.detail },
-      }
-    : null;
-});
-connection.onDefinition(({ textDocument, position }) =>
-  definitionLocation(textDocument.uri, position),
-);
-connection.onDeclaration(({ textDocument, position }) =>
-  definitionLocation(textDocument.uri, position),
-);
-connection.onTypeDefinition(({ textDocument, position }) =>
-  definitionLocation(textDocument.uri, position),
-);
-connection.onImplementation(({ textDocument, position }) => {
-  const { definition } = workspace.resolveAt(textDocument.uri, position);
-  return workspace.implementations(definition);
-});
-connection.onReferences(({ textDocument, position, context }) => {
-  const { definition } = workspace.resolveAt(textDocument.uri, position);
-  return workspace.references(definition, context.includeDeclaration);
-});
-connection.onDocumentHighlight(({ textDocument, position }) => {
-  const { definition } = workspace.resolveAt(textDocument.uri, position);
-  return workspace
-    .references(definition, true)
-    .filter(({ uri }) => uri === textDocument.uri)
-    .map(({ range }) => ({ range, kind: DocumentHighlightKind.Read }));
-});
-connection.onDocumentSymbol(({ textDocument }) => {
-  const model = workspace.model(textDocument.uri);
-  if (!model) return [];
-  const visible = model.definitions.filter(
-    (definition) => !definition.local && definition.topLevel,
-  );
-  return visible.map((definition) => ({
-    name: definition.bareName,
-    detail: definition.detail,
-    kind: symbolKind(definition.role),
-    range:
-      smallestRegion(model.regions, definition.token.offset)?.range ||
-      definition.range,
-    selectionRange: definition.selectionRange,
-  }));
-});
-connection.onWorkspaceSymbol(({ query }) => {
-  const wanted = query.toLocaleLowerCase();
-  return workspace.models().flatMap((model) =>
-    model.definitions
+connection.onCompletion(
+  navigation(({ textDocument, position }) => {
+    const model = workspace.model(textDocument.uri);
+    if (!model) return [];
+    if (inUsePath(model, position)) {
+      return workspace.modulePaths(textDocument.uri).map((label) => ({
+        label,
+        kind: CompletionItemKind.Module,
+        detail: "tung module",
+      }));
+    }
+    const prefix = completionPrefix(model, position);
+    const definitions = [
+      ...workspace.completions(textDocument.uri, position),
+      ...workspace.primitiveCompletions(),
+    ];
+    const definitionItems = definitions
+      .map((definition) => definitionCompletion(definition))
       .filter(
-        (definition) =>
-          !definition.local &&
-          (!wanted || definition.bareName.toLocaleLowerCase().includes(wanted)),
-      )
-      .map((definition) => ({
-        name: definition.bareName,
-        kind: symbolKind(definition.role),
-        location: {
-          uri: definition.uri,
-          range: definition.selectionRange,
-        },
-        containerName: definition.containerName,
-      })),
-  );
-});
-connection.onPrepareRename(({ textDocument, position }) => {
-  const { token, definition, candidates } = workspace.resolveAt(
-    textDocument.uri,
-    position,
-  );
-  if (!token || !definition || definition.primitive) return null;
-  if (candidates?.length > 1) {
-    throw new Error(`cannot rename ambiguous name '${token.text}'`);
-  }
-  return { range: nameRange(token), placeholder: definition.bareName };
-});
-connection.onRenameRequest(({ textDocument, position, newName }) => {
-  if (!validName(newName)) throw new Error(`invalid tung name '${newName}'`);
-  const { definition, candidates } = workspace.resolveAt(
-    textDocument.uri,
-    position,
-  );
-  if (!definition || definition.primitive) return null;
-  if (candidates?.length > 1) {
-    throw new Error("cannot rename an ambiguous name");
-  }
-  const changes = {};
-  for (const { uri, range } of workspace.references(definition, true)) {
-    (changes[uri] ||= []).push({ range, newText: newName });
-  }
-  return { changes };
-});
-connection.onFoldingRanges(
-  ({ textDocument }) => workspace.model(textDocument.uri)?.folds || [],
+        ({ label }) =>
+          !prefix || label.startsWith(prefix) || label.includes(`.${prefix}`),
+      );
+    const keywordItems = languageNames.keywords
+      .filter((name) => !prefix || name.startsWith(prefix))
+      .map((label) => ({
+        label,
+        kind: CompletionItemKind.Keyword,
+        detail: keywordHelp[label] || "tung keyword",
+      }));
+    return uniqueByKey(
+      [...definitionItems, ...keywordItems],
+      ({ label }) => label,
+    );
+  }),
 );
-connection.onSelectionRanges(({ textDocument, positions }) => {
-  const model = workspace.model(textDocument.uri);
-  if (!model) return [];
-  return positions.map((position) => selectionRange(model, position));
-});
-connection.onDocumentLinks(({ textDocument }) => {
-  const model = workspace.model(textDocument.uri);
-  if (!model) return [];
-  return model.imports.flatMap((imported) => {
-    const target = workspace.resolveImport(model, imported);
-    return target
-      ? [
-          {
-            range: imported.range,
-            target: target.uri,
-            tooltip: `open ${imported.path}`,
+connection.onHover(
+  navigation(async ({ textDocument, position }, cancellation) => {
+    // a `sorry` showeþ þe goal and context þe latest check found þere.
+    const open = documents.get(textDocument.uri);
+    const offset = open?.offsetAt(position);
+    const goal = (goalReports.get(textDocument.uri) || []).find(
+      ({ start, end }) =>
+        offset !== undefined && start <= offset && offset < end,
+    );
+    if (open && goal) {
+      return {
+        range: {
+          start: open.positionAt(goal.start),
+          end: open.positionAt(goal.end),
+        },
+        contents: {
+          kind: MarkupKind.Markdown,
+          value: `\`\`\`tung\n${goal.message}\n\`\`\``,
+        },
+      };
+    }
+    const resolved = workspace.resolveAt(textDocument.uri, position);
+    if (resolved.definition) {
+      const definition = resolved.definition;
+      const header =
+        definition.detail || `${definition.role} ${definition.bareName}`;
+      const inferred = await inspectType(definition, cancellation);
+      const docText = definition.documentation
+        ? `${definition.documentation}\n\n`
+        : "";
+      const typeText = inferred
+        ? `\n\n**inferred type**\n\n\`\`\`tung\n${definition.bareName}: ${inferred}\n\`\`\``
+        : "";
+      return {
+        range: nameRange(resolved.token),
+        contents: {
+          kind: MarkupKind.Markdown,
+          value: `${docText}\`\`\`tung\n${header}\n\`\`\`\n\n${roleDescription(
+            definition,
+          )}${typeText}`,
+        },
+      };
+    }
+    if (
+      resolved.token?.kind === "keyword" &&
+      keywordHelp[resolved.token.text]
+    ) {
+      return {
+        range: tokenRange(resolved.token),
+        contents: {
+          kind: MarkupKind.Markdown,
+          value: keywordHelp[resolved.token.text],
+        },
+      };
+    }
+    const primitive = workspace
+      .primitiveCompletions()
+      .find(({ bareName }) => bareName === resolved.token?.text);
+    return primitive
+      ? {
+          range: nameRange(resolved.token),
+          contents: { kind: MarkupKind.Markdown, value: primitive.detail },
+        }
+      : null;
+  }),
+);
+connection.onDefinition(
+  navigation(({ textDocument, position }) =>
+    definitionLocation(textDocument.uri, position),
+  ),
+);
+connection.onDeclaration(
+  navigation(({ textDocument, position }) =>
+    definitionLocation(textDocument.uri, position),
+  ),
+);
+connection.onTypeDefinition(
+  navigation(({ textDocument, position }) =>
+    definitionLocation(textDocument.uri, position),
+  ),
+);
+connection.onImplementation(
+  navigation(({ textDocument, position }) => {
+    const { definition } = workspace.resolveAt(textDocument.uri, position);
+    return workspace.implementations(definition);
+  }),
+);
+connection.onReferences(
+  navigation(({ textDocument, position, context }) => {
+    const { definition } = workspace.resolveAt(textDocument.uri, position);
+    return workspace.references(definition, context.includeDeclaration);
+  }),
+);
+connection.onDocumentHighlight(
+  navigation(({ textDocument, position }) => {
+    const { definition } = workspace.resolveAt(textDocument.uri, position);
+    return workspace
+      .references(definition, true)
+      .filter(({ uri }) => uri === textDocument.uri)
+      .map(({ range }) => ({ range, kind: DocumentHighlightKind.Read }));
+  }),
+);
+connection.onDocumentSymbol(
+  navigation(({ textDocument }) => {
+    const model = workspace.model(textDocument.uri);
+    if (!model) return [];
+    const visible = model.definitions.filter(
+      (definition) => !definition.local && definition.topLevel,
+    );
+    return visible.map((definition) => ({
+      name: definition.bareName,
+      detail: definition.detail,
+      kind: symbolKind(definition.role),
+      range:
+        smallestRegion(model.regions, definition.token.offset)?.range ||
+        definition.range,
+      selectionRange: definition.selectionRange,
+    }));
+  }),
+);
+connection.onWorkspaceSymbol(
+  navigation(({ query }) => {
+    const wanted = query.toLocaleLowerCase();
+    return workspace.models().flatMap((model) =>
+      model.definitions
+        .filter(
+          (definition) =>
+            !definition.local &&
+            (!wanted ||
+              definition.bareName.toLocaleLowerCase().includes(wanted)),
+        )
+        .map((definition) => ({
+          name: definition.bareName,
+          kind: symbolKind(definition.role),
+          location: {
+            uri: definition.uri,
+            range: definition.selectionRange,
           },
-        ]
-      : [];
-  });
-});
+          containerName: definition.containerName,
+        })),
+    );
+  }),
+);
+connection.onPrepareRename(
+  navigation(({ textDocument, position }) => {
+    const { token, definition, candidates } = workspace.resolveAt(
+      textDocument.uri,
+      position,
+    );
+    if (!token || !definition || definition.primitive) return null;
+    if (candidates?.length > 1) {
+      throw new Error(`cannot rename ambiguous name '${token.text}'`);
+    }
+    return { range: nameRange(token), placeholder: definition.bareName };
+  }),
+);
+connection.onRenameRequest(
+  navigation(({ textDocument, position, newName }) => {
+    if (!validName(newName)) throw new Error(`invalid tung name '${newName}'`);
+    const { definition, candidates } = workspace.resolveAt(
+      textDocument.uri,
+      position,
+    );
+    if (!definition || definition.primitive) return null;
+    if (candidates?.length > 1) {
+      throw new Error("cannot rename an ambiguous name");
+    }
+    const changes = {};
+    for (const { uri, range } of workspace.references(definition, true)) {
+      (changes[uri] ||= []).push({ range, newText: newName });
+    }
+    return { changes };
+  }),
+);
+connection.onFoldingRanges(
+  navigation(
+    ({ textDocument }) => workspace.model(textDocument.uri)?.folds || [],
+  ),
+);
+connection.onSelectionRanges(
+  navigation(({ textDocument, positions }) => {
+    const model = workspace.model(textDocument.uri);
+    if (!model) return [];
+    return positions.map((position) => selectionRange(model, position));
+  }),
+);
+connection.onDocumentLinks(
+  navigation(({ textDocument }) => {
+    const model = workspace.model(textDocument.uri);
+    if (!model) return [];
+    return model.imports.flatMap((imported) => {
+      const target = workspace.resolveImport(model, imported);
+      return target
+        ? [
+            {
+              range: imported.range,
+              target: target.uri,
+              tooltip: `open ${imported.path}`,
+            },
+          ]
+        : [];
+    });
+  }),
+);
 const formatDocument = async (uri) => {
   const document = documents.get(uri);
   if (!document) return undefined;
@@ -381,37 +450,39 @@ connection.onDocumentRangeFormatting(async ({ textDocument, range }) => {
   const edit = formatRangeEdit(result.source, result.formatted, range);
   return edit ? [edit] : [];
 });
-connection.onSignatureHelp(({ textDocument, position }) => {
-  const model = workspace.model(textDocument.uri);
-  if (!model) return null;
-  const before = model.tokens
-    .filter(
-      (token) =>
-        token.line < position.line ||
-        (token.line === position.line && token.char < position.character),
-    )
-    .at(-1);
-  if (!before) return null;
-  const resolved = workspace.resolveAt(textDocument.uri, {
-    line: before.line,
-    character: before.char,
-  });
-  if (
-    !resolved.definition ||
-    !["function", "method"].includes(resolved.definition.role)
-  ) {
-    return null;
-  }
-  return {
-    signatures: [
-      {
-        label: resolved.definition.detail || resolved.definition.bareName,
-      },
-    ],
-    activeSignature: 0,
-    activeParameter: 0,
-  };
-});
+connection.onSignatureHelp(
+  navigation(({ textDocument, position }) => {
+    const model = workspace.model(textDocument.uri);
+    if (!model) return null;
+    const before = model.tokens
+      .filter(
+        (token) =>
+          token.line < position.line ||
+          (token.line === position.line && token.char < position.character),
+      )
+      .at(-1);
+    if (!before) return null;
+    const resolved = workspace.resolveAt(textDocument.uri, {
+      line: before.line,
+      character: before.char,
+    });
+    if (
+      !resolved.definition ||
+      !["function", "method"].includes(resolved.definition.role)
+    ) {
+      return null;
+    }
+    return {
+      signatures: [
+        {
+          label: resolved.definition.detail || resolved.definition.bareName,
+        },
+      ],
+      activeSignature: 0,
+      activeParameter: 0,
+    };
+  }),
+);
 documents.onDidOpen(({ document }) => {
   configureWorkspace();
   workspace.invalidate(document.uri);
@@ -441,12 +512,13 @@ documents.onDidClose(({ document }) => {
   workspace.invalidate(document.uri);
   const previous = diagnosticReports.get(document.uri);
   diagnosticReports.delete(document.uri);
+  goalReports.delete(document.uri);
   refreshDiagnostics(previous?.targetUri);
   refreshDiagnostics(document.uri);
   checkAllOpenDocuments();
 });
 // requests share one compiler parse per buffer version. navigation refineþ only
-// names whose constructor or effect identity requireþ workspace context.
+// names whose constructor identity requireþ workspace context.
 const semanticTokens = async (uri, requestedRange = undefined) => {
   const document = documents.get(uri);
   const builder = new SemanticTokensBuilder();
@@ -454,6 +526,7 @@ const semanticTokens = async (uri, requestedRange = undefined) => {
   const source = document.getText();
   const version = document.version;
   const roles = await highlights.get(uri, source, version);
+  await workspace.ready();
   if (documents.get(uri)?.version !== version) return builder.build();
   const resolve = (token) =>
     workspace.resolveAt(uri, { line: token.line, character: token.char })
@@ -533,7 +606,9 @@ const runCheck = (document) => {
     checks.delete(document.uri);
     const current = documents.get(document.uri);
     if (!current || current.version !== running.version) return;
-    publish(current, parseCompilerDiagnostic(output));
+    const goals = parseCompilerGoals(output);
+    goalReports.set(current.uri, goals);
+    publish(current, parseCompilerDiagnostic(output), goals);
   });
 };
 const inspectType = (definition, cancellation = undefined) => {
@@ -576,7 +651,7 @@ const clearTypeCache = (uri) => {
     typeCache.delete(key);
   }
 };
-const publish = (document, diagnostic) => {
+const publish = (document, diagnostic, goals = []) => {
   const previous = diagnosticReports.get(document.uri);
   const message =
     typeof diagnostic === "string" ? diagnostic : diagnostic?.message;
@@ -590,7 +665,15 @@ const publish = (document, diagnostic) => {
           message,
         },
       ]
-    : [];
+    : goals.map(({ start, end, message: goal }) => ({
+        range: {
+          start: document.positionAt(start),
+          end: document.positionAt(end),
+        },
+        severity: DiagnosticSeverity.Information,
+        source: "tung",
+        message: goal,
+      }));
   if (items.length) {
     diagnosticReports.set(document.uri, {
       targetUri: owner.uri,
@@ -781,7 +864,7 @@ const inUsePath = (model, position) => {
 const completionPrefix = (model, position) => {
   const offset = offsetAt(model.text, position);
   const before = model.text.slice(0, offset);
-  return before.match(/[^\s#(){}:,|!=.$→`']+$/u)?.[0] || "";
+  return before.match(/[^\s#()[\]{}:,;=.$`'@^]+$/u)?.[0] || "";
 };
 const fullRange = (document) => {
   return {
@@ -810,7 +893,7 @@ const offsetAt = (text, position) => {
   return offset + position.character;
 };
 const validName = (name) => {
-  return Boolean(name) && name !== "*" && !/[\s#(){}:,|!=.$→`']/u.test(name);
+  return Boolean(name) && name !== "*" && !/[\s#()[\]{}:,;=.$`'@^]/u.test(name);
 };
 const configureWorkspace = () => {
   tongueDir = findTongueDir(configuredTongue);

@@ -24,10 +24,10 @@ generatedIdempotence = expect "formatter is idempotent for generated structural 
         ending <- ["", "\n"]
       ]
     declarations =
-      [ ["show ilk box [a:*, *] {", "a box", "}"],
-        ["let result []", "match value {", "yea | nay ^ 1", "}"],
-        ["let handled []", "try risky {", "message fail ^ 0", "}"],
-        ["flock identity [a:*] {", "let identity [@a:*, a, a]", "law [@a:*, x:a]", "x identity = x", "}"]
+      [ ["show ilk box: [a:*, *] {", "box: [a, a box]", "}"],
+        ["let result ≔", "match value {", "yea; nay ^ 1", "}"],
+        ["let handled ≔", "try risky {", "message fail ^ 0", "}"],
+        ["flock identity:[a:*, *] {", "let identity:[@a:*, a, a]", "let rule:[@a:*, x:a,", "(x identity) ≔ x]", "}"]
       ]
 
 isIdempotent :: String -> Bool
@@ -37,50 +37,132 @@ isIdempotent source = formatSource formatted == formatted
 
 cases :: [(String, String, String)]
 cases =
-  [ ( "braced class body uses one indentation level",
-      "show flock add [a:*] {\nlet + [a, a, a]\n}\n",
-      "show flock add [a:*] {\n  let + [a, a, a]\n}\n"
-    ),
-    ( "instance colon beginneþ a declaration after a continued let",
-      "let value []\n1\nbizen : ℤ ring {\nlet f - g [] f\n}\n",
-      "let value []\n  1\nbizen:ℤ ring {\n  let f - g [] f\n}\n"
-    ),
-    ( "instance header brackets use one indentation level",
+  [ ( "a body after a closed header continueþ its declaration",
       """
-      bizen [
-      byzen b ring,
-      @a : *
-      ] : [a, b] ring {
-      let f - g x [] (x f) - (x g)
+      let kept: [
+      x: ℕ,
+      x = x
+      ] ≔ {c: ℕ ^ c = c}
+      transport reflect reflect
+      let next ≔ 0
+      """,
+      """
+      let kept: [
+        x: ℕ,
+        x = x
+      ] ≔ {c: ℕ ^ c = c}
+        transport reflect reflect
+      let next ≔ 0
+      """
+    ),
+    ( "a row body after its separator is indented",
+      """
+      let result ≔ match value {
+      yea ^
+      1,
+      nay ^ 0
+      }
+      """,
+      """
+      let result ≔ match value {
+        yea ^
+          1,
+        nay ^ 0
+      }
+      """
+    ),
+    ( "declaration annotations compact colons and indent the body once",
+      """
+      let identity : [
+      @α : *,
+      x : α,
+      α] ≔
+      x
+      let answer : ℤ ≔ +42
+
+      """,
+      """
+      let identity: [
+        @α: *,
+        x: α,
+        α] ≔
+        x
+      let answer: ℤ ≔ +42
+
+      """
+    ),
+    ( "braced bodies and composition use one indentation level",
+      """
+      show flock add:[a:*, *] {
+      let +:[a, a, a]
+      }
+      let paired:* ≔ >{
+      pair,
+      ℤ
       }
 
       """,
       """
-      bizen [
-        byzen b ring,
-        @a:*
-      ]:[a, b] ring {
-        let f - g x [] (x f) - (x g)
+      show flock add: [a: *, *] {
+        let +: [a, a, a]
+      }
+      let paired: * ≔ >{
+        pair,
+        ℤ
       }
 
       """
     ),
-    ( "type colons have no surrounding spaces",
+    ( "instance colon beginneþ a declaration after a continued let",
       """
-      let add [x : ℤ, y:  ℤ, ℤ] (x + y: ℤ)
-      flock identity [a:*] { law [x : a] x = x }
-      let record [r{field : ℤ}] r{field: 1}
-      let text [] 'x: y' # note: untouched
-      let letter [] `:
+      let value ≔
+      +1
+      bizen : ℤ ring {
+      let -: [f:, g:] ≔ f
+      }
+
+      """,
+      """
+      let value ≔
+        +1
+      bizen: ℤ ring {
+        let -: [f:, g:] ≔ f
+      }
+
+      """
+    ),
+    ( "instance header brackets use one indentation level",
+      """
+      bizen:[@b:*, @:b ring,
+      @a : *, [a, b] ring] {
+      let -: [f:, g:, x:] ≔ (x f) - (x g)
+      }
+
+      """,
+      """
+      bizen: [@b: *, @: b ring,
+        @a: *, [a, b] ring] {
+        let -: [f:, g:, x:] ≔ (x f) - (x g)
+      }
+
+      """
+    ),
+    ( "a type colon hath one space after it",
+      """
+      let add:[x : ℤ, y:  ℤ, ℤ] ≔ (x + y: ℤ)
+      flock identity:[a:*, *] { let rule:[x : a, x = x] }
+      let record:r{field : ℤ} ≔ r{field: +1}
+      let text ≔ 'x: y' # note: untouched
+      let letter ≔ `:
       /* note: untouched */
 
       """,
       """
-      let add [x:ℤ, y:ℤ, ℤ] (x + y:ℤ)
-      flock identity [a:*] { law [x:a] x = x }
-      let record [r{field:ℤ}] r{field:1}
-      let text [] 'x: y' # note: untouched
-      let letter [] `:
+      let add: [x: ℤ, y: ℤ, ℤ] ≔ (x + y: ℤ)
+      flock identity: [a: *, *] { let rule: [x: a, x = x] }
+      let record: r{field: ℤ} ≔ r{field: +1}
+      let text ≔ 'x: y' # note: untouched
+      let letter ≔ `:
       /* note: untouched */
 
       """
@@ -107,30 +189,30 @@ cases =
     ),
     ( "nested declarations",
       """
-      show ilk box [a:*, *] {
-      a box
+      show ilk box: [a:*, *] {
+      box: [a, a box]
       }
-      let text [] '{not a block}' # }
+      let text ≔ '{not a block}' # }
 
       """,
       """
-      show ilk box [a:*, *] {
-        a box
+      show ilk box: [a: *, *] {
+        box: [a, a box]
       }
-      let text [] '{not a block}' # }
+      let text ≔ '{not a block}' # }
 
       """
     ),
     ( "current application syntax",
       """
-      show let filter [x:a option, f:[a, 𝟚], a option] x match {
+      show let filter:[x:a option, f:[a, 𝟚], a option] ≔ x match {
       a some ^ a f $ if (a some) none
       none ^ none
       }
 
       """,
       """
-      show let filter [x:a option, f:[a, 𝟚], a option] x match {
+      show let filter: [x: a option, f: [a, 𝟚], a option] ≔ x match {
         a some ^ a f $ if (a some) none
         none ^ none
       }
@@ -139,51 +221,51 @@ cases =
     ),
     ( "expression continuations",
       """
-      let picked []
+      let picked ≔
       match value {
-      yea ^ 1,
-      nay ^ 0
+      yea ^ +1,
+      nay ^ +0
       }
-      let handled []
+      let handled ≔
       try risky {
       yield value ^ value,
-      message fail ^ 0
+      message fail ^ +0
       }
-      let identity []
+      let identity ≔
       { x ^ x }
 
       """,
       """
-      let picked []
+      let picked ≔
         match value {
-          yea ^ 1,
-          nay ^ 0
+          yea ^ +1,
+          nay ^ +0
         }
-      let handled []
+      let handled ≔
         try risky {
           yield value ^ value,
-          message fail ^ 0
+          message fail ^ +0
         }
-      let identity []
+      let identity ≔
         { x ^ x }
 
       """
     ),
     ( "local result",
       """
-      let main [] (
-      let first []
-      1 + 2
-      let second [] 3
+      let main ≔ (
+      let first ≔
+      +1 + +2
+      let second ≔ +3
       yield first + second
       )
 
       """,
       """
-      let main [] (
-        let first []
-          1 + 2
-        let second [] 3
+      let main ≔ (
+        let first ≔
+          +1 + +2
+        let second ≔ +3
         yield first + second
       )
 
@@ -191,22 +273,22 @@ cases =
     ),
     ( "nested continuation",
       """
-      let fixtures []
-      first ⁖
-      (second ⁖
-      (third ⁖ empty))
+      let fixtures ≔
+      first ‥
+      (second ‥
+      (third ‥ empty))
 
-      let next []
+      let next ≔
       value
 
       """,
       """
-      let fixtures []
-        first ⁖
-          (second ⁖
-            (third ⁖ empty))
+      let fixtures ≔
+        first ‥
+          (second ‥
+            (third ‥ empty))
 
-      let next []
+      let next ≔
         value
 
       """
@@ -214,101 +296,81 @@ cases =
     ( "split right side",
       """
       bizen:(float complex) elementary {
-      let (a complex b) sine []
-      (((0.0 subtract-float b) complex a) exponent)
-      sine-from-exponents ((b complex (0.0 subtract-float a)) exponent)
+      let sine: [a complex b:] ≔
+      (((0.0 subtract_float b) complex a) exponent)
+      sine-from-exponents ((b complex (0.0 subtract_float a)) exponent)
       }
 
       """,
       """
-      bizen:(float complex) elementary {
-        let (a complex b) sine []
-          (((0.0 subtract-float b) complex a) exponent)
-            sine-from-exponents ((b complex (0.0 subtract-float a)) exponent)
+      bizen: (float complex) elementary {
+        let sine: [a complex b:] ≔
+          (((0.0 subtract_float b) complex a) exponent)
+            sine-from-exponents ((b complex (0.0 subtract_float a)) exponent)
       }
-
-      """
-    ),
-    ( "split annotation and definition",
-      """
-      show let compose [f0:[a, b; e0], f1:[b, c; e1], [a, c]; e0, e1] { a ^ a f0 $ f1 }
-
-      """,
-      """
-      show let compose [f0:[a, b; e0], f1:[b, c; e1], [a, c]; e0, e1] { a ^ a f0 $ f1 }
 
       """
     ),
     ( "body after a multiline header",
       """
-      show let identity [value:a, a]
+      show let identity:[value:a, a] ≔
       value
 
       """,
       """
-      show let identity [value:a, a]
+      show let identity: [value: a, a] ≔
         value
 
       """
     ),
     ( "multiline bracket header keepeþ one indentation level",
       """
-      show let lift₃ [
+      show let lift₃:[
       a₀:a₀ f,
       a₁:a₁ f,
       a₂:a₂ f,
-      f:[a₀, a₁, a₂, b; e],
-      b f; e]
+      f:[a₀, a₁, a₂, b],
+      b f] ≔
       >{apply, a₂, a₁, a₀, f pure}
 
       """,
       """
-      show let lift₃ [
-        a₀:a₀ f,
-        a₁:a₁ f,
-        a₂:a₂ f,
-        f:[a₀, a₁, a₂, b; e],
-        b f; e]
+      show let lift₃: [
+        a₀: a₀ f,
+        a₁: a₁ f,
+        a₂: a₂ f,
+        f: [a₀, a₁, a₂, b],
+        b f] ≔
         >{apply, a₂, a₁, a₀, f pure}
-
-      """
-    ),
-    ( "term type ascription",
-      """
-      let answer [] (1 + 2:ℤ)
-
-      """,
-      """
-      let answer [] (1 + 2:ℤ)
 
       """
     ),
     ( "multiline record",
       """
-      let person [r{
+      let person:r{
       name:text,
       age:ℤ
-      }] r{
-      name = 'naoki',
-      age = 35
+      } ≔ r{
+      name ≔ 'naoki',
+      age ≔ +35
       }
 
       """,
       """
-      let person [r{
-        name:text,
-        age:ℤ
-      }] r{
-        name = 'naoki',
-        age = 35
+      let person: r{
+        name: text,
+        age: ℤ
+      } ≔ r{
+        name ≔ 'naoki',
+        age ≔ +35
       }
 
       """
     ),
     ( "associative sequence",
       """
-      let list [] >{
-      ⁖,
+      let list ≔ >{
+      ‥,
       a,
       b,
       empty
@@ -316,8 +378,8 @@ cases =
 
       """,
       """
-      let list [] >{
-        ⁖,
+      let list ≔ >{
+        ‥,
         a,
         b,
         empty
@@ -325,39 +387,39 @@ cases =
 
       """
     ),
-    ( "multiline law header",
+    ( "multiline law annotation",
       """
-      flock applicative [f:[*, *]] {
-      law [a:a f]
-      a apply (identity pure) = a
-      law [a:a] a pure = a pure
+      flock applicative:[f:[*, *], *] {
+      let rule:[a:a f,
+      (a apply (identity pure)) = a]
+      let pure_rule:[a:a, (a pure) = (a pure)]
       }
 
       """,
       """
-      flock applicative [f:[*, *]] {
-        law [a:a f]
-          a apply (identity pure) = a
-        law [a:a] a pure = a pure
+      flock applicative: [f: [*, *], *] {
+        let rule: [a: a f,
+          (a apply (identity pure)) = a]
+        let pure_rule: [a: a, (a pure) = (a pure)]
       }
 
       """
     ),
     ( "equals signs in strings and comments",
       """
-      let text [] 'a = b' # =
-      let next [] 1
+      let text ≔ 'a = b' # =
+      let next ≔ +1
 
       """,
       """
-      let text [] 'a = b' # =
-      let next [] 1
+      let text ≔ 'a = b' # =
+      let next ≔ +1
 
       """
     ),
     ( "decimal unicode and block comments",
       """
-      let result []
+      let result ≔
       match character {
       `\\32; ^ 1,
       _ ^ 0
@@ -365,11 +427,11 @@ cases =
       /*
         {
       */
-      let next [] 1
+      let next ≔ 1
 
       """,
       """
-      let result []
+      let result ≔
         match character {
           `\\32; ^ 1,
           _ ^ 0
@@ -377,67 +439,75 @@ cases =
       /*
         {
       */
-      let next [] 1
+      let next ≔ 1
 
       """
     ),
     ( "delimiters in block comments",
       """
-      let x [] 1 /* { = */
-      let y [] 2
+      let x ≔ +1 /* { = */
+      let y ≔ +2
       /*
         {
       */
-      let z [] 3
+      let z ≔ +3
 
       """,
       """
-      let x [] 1 /* { = */
-      let y [] 2
+      let x ≔ +1 /* { = */
+      let y ≔ +2
       /*
         {
       */
-      let z [] 3
+      let z ≔ +3
 
       """
     ),
-    ("windows newlines", "ilk box [*] {\r\nbox\r\n}\r\n", "ilk box [*] {\n  box\n}\n"),
+    ( "windows newlines",
+      "ilk box: * {\r\nbox: box\r\n}\r\n",
+      """
+      ilk box: * {
+        box: box
+      }
+
+      """
+    ),
     ( "blank line endeþ continuation",
       """
-      show let value []
-      1
+      show let value ≔
+        +1
 
       ## the next declaration.
-      show let next [] 2
+      show let next ≔ +2
 
       """,
       """
-      show let value []
-        1
+      show let value ≔
+        +1
 
       ## the next declaration.
-      show let next [] 2
+      show let next ≔ +2
 
       """
     ),
     ( "comment useþ structural indentation",
       """
-      flock identity [a:*] {
-      law [x:a]
-      # the equation.
-      x identity = x
-      # the next law.
-      law [x:a] x identity = x
+      flock identity: [a: *, *] {
+        let rule: [x: a,
+        # the equation.
+          (x identity) = x]
+        # the next law.
+        let next_rule: [x: a, (x identity) = x]
       }
 
       """,
       """
-      flock identity [a:*] {
-        law [x:a]
+      flock identity: [a: *, *] {
+        let rule: [x: a,
         # the equation.
-          x identity = x
+          (x identity) = x]
         # the next law.
-        law [x:a] x identity = x
+        let next_rule: [x: a, (x identity) = x]
       }
 
       """

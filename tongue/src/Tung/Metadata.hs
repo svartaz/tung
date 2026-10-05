@@ -3,12 +3,12 @@ module Tung.Metadata (languageMetadata) where
 
 import Data.List (intercalate)
 import Tung.Primitive (primitiveTypeNames)
-import Tung.Token (languageKeywordNames, specialNameChars)
+import Tung.Token (keywordNames, specialNameChars)
 
 languageMetadata :: String
 languageMetadata =
   "{\"keywords\":"
-    ++ jsonArray languageKeywordNames
+    ++ jsonArray keywordNames
     ++ ",\"primitiveTypes\":"
     ++ jsonArray primitiveTypeNames
     ++ ",\"specialNameChars\":"
@@ -20,7 +20,7 @@ jsonArray values = "[" ++ intercalate "," (map jsonString values) ++ "]"
 
 jsonString :: String -> String
 jsonString value = "\"" ++ concatMap escape value ++ "\""
- where
-  escape '"' = "\\\""
-  escape '\\' = "\\\\"
-  escape character = [character]
+  where
+    escape '"' = "\\\""
+    escape '\\' = "\\\\"
+    escape character = [character]

@@ -1,3 +1,7 @@
+use combinator.tung
+use equality.tung
+use flock/algebra/partial/category.tung
+use flock/algebra/partial/semigroupoid.tung
 use flock/algebra/total/magma.tung
 use flock/algebra/total/semigroup.tung
 use flock/functor.tung
@@ -10,62 +14,125 @@ use ilk/list.tung
 use ilk/option.tung
 
 ## a list wiþ a statically known first element.
-show ilk nonempty [a:*, *] {
-  nonempty [a, a list, a nonempty]
+show ilk nonempty: [α: *, *] {
+  ‥′: [α, α list, α nonempty]
 }
 
 ## build a one-element non-empty list.
-show let singleton [@a:*, a:a, a nonempty]
-  a nonempty empty
+show let singleton: [@α: *, a: α, α nonempty] ≔
+  a ‥′ empty
 
 ## expose a non-empty list as an ordinary list.
-show let to-list [@a:*, (first nonempty rest):a nonempty, a list]
-  first ⁖ rest
+show let to_list: [@α: *, (first ‥′ rest): α nonempty, α list] ≔
+  first ‥ rest
 
 ## make a non-empty list when þe input haþ a first element.
-show let from-list [@a:*, a list, (a nonempty) option] {
+show let from_list: [@α: *, α list, (α nonempty) option] ≔ {
   empty ^ none,
-  first ⁖ rest ^ (first nonempty rest) some
+  first ‥ rest ^ (first ‥′ rest) some
 }
 
-show let head [@a:*, (first nonempty _):a nonempty, a] first
+show let head: [@α: *, (first ‥′ _): α nonempty, α] ≔ first
 
-show let tail [@a:*, (_ nonempty rest):a nonempty, a list] rest
+show let tail: [@α: *, (_ ‥′ rest): α nonempty, α list] ≔ rest
 
-bizen [byzen (a list) inhold a]:(a nonempty) inhold a {
-  let þing ∋ a [] (þing to-list) ∋ a
+bizen: [@α: *, @: (α list) inhold α, (α nonempty) inhold α] {
+  let ∋: [þing:, a:] ≔ (þing to_list) ∋ a
 }
 
-bizen:nonempty functor {
-  let (first nonempty rest) map f []
-    (first f) nonempty (rest map f)
+bizen: nonempty functor {
+  let map: [first ‥′ rest:, f:] ≔
+    (first f) ‥′ (rest map f)
+
+  let map_sameness ≔ {@α ^ {first ‥′ rest ^
+      (first ‥′) leibnitz (
+        {l: α list ^ (l map sameness) = l} induce list reflect
+        {head, _, proof ^ (head ‥) leibnitz proof} rest
+      )
+  }}
 }
 
-bizen [@a:*]:(a nonempty) semigroup {
-  let (first nonempty rest) · right []
-    first nonempty (rest · (right to-list))
-}
+bizen: [@α: *, (α nonempty) semigroup] {
+  let ·: [first ‥′ rest:, right:] ≔
+    first ‥′ (rest · (right to_list))
 
-bizen:nonempty applicative {
-  let pure [] singleton
-  let (first nonempty rest) apply (f nonempty fs) []
-    (first f) nonempty (
-      (rest map f) · ((first ⁖ rest) apply fs)
+  let ·_· ≔ {first ‥′ rest, next ‥′ middle, last ‥′ end ^
+    (first ‥′) leibnitz (
+      {l: α list ^ (l · ((next ‥ middle) · (last ‥ end))) = ((l · (next ‥ middle)) · (last ‥ end))}
+      induce list reflect {head, _, proof ^ (head ‥) leibnitz proof} rest
     )
+  }
 }
 
-bizen:nonempty monad {
-  let (first nonempty rest) flat [] rest fold₁ first ·
+bizen: nonempty applicative {
+  let pure ≔ singleton
+  let apply: [first ‥′ rest:, f ‥′ fs:] ≔
+    (first f) ‥′ (
+      (rest map f) · ((first ‥ rest) apply fs)
+    )
+
+  let apply_sameness_pure ≔ {@α ^ {first ‥′ rest ^
+      (first ‥′) leibnitz (
+        {l: α list ^ ((l map sameness) · empty) = l} induce list reflect
+        {head, _, proof ^ (head ‥) leibnitz proof} rest
+      )
+  }}
+  let pure_apply_pure ≔ {_, _ ^ reflect}
+  let apply_apply ≔ {@α, @β, @γ ^ {first ‥′ rest, f, g ^
+      ((first f $ g) ‥′) leibnitz (
+        {l: α list ^ (((l map f) · empty) map g $ · empty) = ((l map (f ▷ g)) · empty)}
+        induce list reflect
+        {head, _, proof ^ ((head f $ g) ‥) leibnitz proof} rest
+      )
+  }}
+  let pure_apply ≔ {@α, @β ^ {a, f ‥′ fs ^
+      ((a f) ‥′) leibnitz (
+        {l: [α, β] list ^ ((a list~singleton) apply l) = (l map (a call))}
+        induce list reflect
+        {head, _, proof ^ ((a head) ‥) leibnitz proof} fs
+      )
+  }}
 }
 
-bizen:nonempty cata {
-  let (first nonempty rest) fold₀ b f []
+bizen: nonempty monad {
+  let flat: [first ‥′ rest:] ≔ rest fold₁ first ·
+
+  let pure_map_flat ≔ {_, _ ^ reflect}
+  let map_pure_flat ≔ {first ‥′ rest ^ rest fold_singletons (first singleton)}
+}
+
+## list append equations for þe non-empty flattening proof.
+let join_right: [@α: *, l: α list, (l · empty) = l] ≔ match l {
+  empty ^ reflect,
+  first ‥ rest ^ (first ‥) leibnitz (rest join_right)
+}
+
+let join_associative: [@α: *, a: α list, b: α list, c: α list,
+  (a · (b · c)) = ((a · b) · c)
+] ≔ match a {
+  empty ^ reflect,
+  first ‥ rest ^ (first ‥) leibnitz (rest join_associative b c)
+}
+
+## folding singleton lists appendeþ every element to þe initial value.
+let fold_singletons: [@α: *, l: α list, start: α nonempty,
+  (l map singleton $ fold₁ start ·) =
+  (match start {first ‥′ rest ^ first ‥′ (rest · l)})
+] ≔ match l, start {
+  empty, first ‥′ rest ^ ((first ‥′) leibnitz (rest join_right)) symmetry,
+  next ‥ tail, first ‥′ rest ^
+    (tail fold_singletons ((first ‥′ rest) · (next singleton))) transitivity
+      ((first ‥′) leibnitz ((rest join_associative (next ‥ empty) tail) symmetry))
+}
+
+bizen: nonempty cata {
+  let fold₀: [first ‥′ rest:, b:, f:] ≔
     first f (rest fold₀ b f)
-  let (first nonempty rest) fold₁ b f []
+  let fold₁: [first ‥′ rest:, b:, f:] ≔
     rest fold₁ (b f first) f
 }
 
-bizen:nonempty traverse {
-  let (first nonempty rest) traverse f []
-    (first f) lift₂ (rest traverse f) nonempty
+bizen: nonempty haþ_traverse {
+  let traverse: [first ‥′ rest:, f:] ≔
+    (first f) lift₂ (rest traverse f) ‥′
 }

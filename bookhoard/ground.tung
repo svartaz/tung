@@ -1,38 +1,41 @@
 use _foreign.tung
+use combinator.tung
 use control.tung
+use deed/action.tung
+use deed/file.tung
 use flock/algebra/arithmetic/add.tung
-use flock/algebra/arithmetic/divide-remainder.tung
 use flock/algebra/arithmetic/divide.tung
+use flock/algebra/arithmetic/divide_remainder.tung
 use flock/algebra/arithmetic/euclidean.tung
 use flock/algebra/arithmetic/field.tung
-use flock/algebra/arithmetic/monoid-additive.tung
-use flock/algebra/arithmetic/monoid-multiplicative.tung
+use flock/algebra/arithmetic/monoid_additive.tung
+use flock/algebra/arithmetic/monoid_multiplicative.tung
 use flock/algebra/arithmetic/multiply.tung
-use flock/algebra/arithmetic/one.tung one-flock
+use flock/algebra/arithmetic/one.tung one_flock
 use flock/algebra/arithmetic/ring.tung
 use flock/algebra/arithmetic/semiring.tung
 use flock/algebra/arithmetic/subtract.tung
-use flock/algebra/arithmetic/zero.tung zero-flock
+use flock/algebra/arithmetic/zero.tung zero_flock
 use flock/elementary.tung
 use flock/equal.tung
-use flock/from-text.tung
+use flock/from_text.tung
 use flock/functor.tung
 use flock/functor/applicative.tung
 use flock/functor/bifunctor.tung
 use flock/functor/monad.tung
 use flock/inhold.tung
 use flock/order/complement.tung
-use flock/order/lattice-bounded.tung
-use flock/order/lattice-distributive.tung
 use flock/order/lattice.tung
-use flock/order/less-equal.tung
-use flock/order/order-partial.tung
-use flock/order/order-total.tung
-use flock/order/semilattice-bounded-upper.tung
-use flock/order/semilattice-lower.tung
-use flock/order/semilattice-upper-bounded.tung
-use flock/order/semilattice-upper.tung
-use flock/to-text.tung
+use flock/order/lattice_bounded.tung
+use flock/order/lattice_distributive.tung
+use flock/order/less_equal.tung
+use flock/order/order_partial.tung
+use flock/order/order_total.tung
+use flock/order/semilattice_bounded_upper.tung
+use flock/order/semilattice_lower.tung
+use flock/order/semilattice_upper.tung
+use flock/order/semilattice_upper_bounded.tung
+use flock/to_text.tung
 use ilk/float.tung
 use ilk/integer.tung
 use ilk/one.tung
@@ -41,61 +44,53 @@ use ilk/three.tung
 use ilk/two.tung
 use ilk/zero.tung
 
-## write text followed by a newline.
-show let write-line [text:text, 𝟙; console] (
-  let _ [] text write
-  yield '\n' write
-)
-
-show-ilk 𝟘
+show 𝟘
 show initial
 
-show-ilk 𝟙
+show 𝟙
 show only
 show terminal
 
-show-ilk 𝟚
+show 𝟚
 show yea, nay
 
-show-ilk 𝟛
+show 𝟛
 show fore, mid, aft
 
-show-ilk task
+show task
 
-show-ilk fail, console, random, state, async, file
+show equal
+show less_equal, order_partial, order_total
+show semilattice_lower, semilattice_upper, lattice, lattice_distributive
+show semilattice_bounded_upper, semilattice_upper_bounded, lattice_bounded, complement
+show haþ_to_text, haþ_from_text
+show add, haþ_zero, monoid_additive, multiply, haþ_one, monoid_multiplicative, semiring
+show subtract, ring, divide, field, divide_remainder, euclidean
+show functor, bifunctor, applicative, monad, inhold
+show elementary
 
-show-ilk equal
-show-ilk less-equal, order-partial, order-total
-show-ilk semilattice-lower, semilattice-upper, lattice, lattice-distributive
-show-ilk semilattice-bounded-upper, semilattice-upper-bounded, lattice-bounded, complement
-show-ilk to-text, from-text
-show-ilk add, zero, monoid-additive, multiply, one, monoid-multiplicative, semiring
-show-ilk subtract, ring, divide, field, divide-remainder, euclidean
-show-ilk functor, bifunctor, applicative, monad, inhold
-show-ilk elementary
-
+show →
 show ¬, if
-show when, when-not, branch
+show when, when_not, branch
 
-show fail
-show write, write-line, read
+show write, write_line, read
 show random
-show get, set
-show fork, wait, fordo, wait-for, sleep
-show read-file, write-file, append-file
-show ≡, ≢
+show fork, wait, cancel, wait_for, sleep
+show read_file, write_file, append_file
+show ≍, ≭
 show ≤, <, compare, clamp, ∧, ∨, ⟂, ⊤
 show ∋
 
 show +, zero, ×, one, -, ÷, %
 show sine, cosine, tangent, exponent, logariþm, ⌊
-show to-ℕ
+show to_ℕ, to_ℤ
 
-show to-text
-show from-text
-show unicode-to-integer, integer-to-unicode
-show behead-text, text-to-list, list-to-text
+show to_text
+show from_text
+show unicode_to_natural, natural_to_unicode
+show behead_text, text_to_list, list_to_text
 show map
 show bimap
-show pure, apply, lift₂, lift₃, keep-first, keep-oþer
-show flat, map-flat, þen, void
+show pure, apply, lift₂, lift₃, keep_first, keep_oþer
+show flat, map_flat, þen, void
+show deed_fix

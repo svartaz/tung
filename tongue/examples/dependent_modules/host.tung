@@ -1,0 +1,7 @@
+## bookhoard's host bindings, shown again to every importing module.
+use _foreign.tung
+use ilk/one.tung
+
+show 𝟙, only, write, deed_pure, deed_bind
+
+show let þen: [@α: *, @β: *, first: α deed, next: β deed, β deed] ≔ first deed_bind {_ ^ next}

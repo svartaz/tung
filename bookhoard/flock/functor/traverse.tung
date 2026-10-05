@@ -3,9 +3,9 @@ use flock/functor.tung
 use flock/functor/applicative.tung
 use flock/functor/cata.tung
 
-show flock traverse [byzen f functor, byzen f cata] {
-  let traverse [byzen m applicative, @a:*, @b:*, a f, [a, b m], (b f) m]
+show flock haþ_traverse: [φ: [*, *], @: φ functor, @: φ cata, *] {
+  let traverse: [@μ: [*, *], @: μ applicative, @α: *, @β: *, α φ, [α, β μ], (β φ) μ]
 }
 
-show let sequence [byzen f traverse, byzen m applicative, @a:*, amf:(a m) f, (a f) m]
+show let sequence: [@φ: [*, *], @: φ haþ_traverse, @μ: [*, *], @: μ applicative, @α: *, amf: (α μ) φ, (α φ) μ] ≔
   amf traverse sameness

@@ -1,0 +1,181 @@
+use equality.tung
+use flock/algebra/total/magma.tung
+use flock/functor.tung
+use flock/functor/cata.tung
+use flock/functor/filter.tung
+use ilk/list.tung
+use ilk/two.tung
+use ilk/zero.tung
+
+## a non-empty list is never empty.
+show let ‥_not_empty: [@α: *, @a: α, @l: α list, (a ‥ l) = empty, 𝟘] ≔ {}
+
+## equal non-empty lists have equal first elements.
+show let ‥_injective_first: [
+  @α: *, @a: α, @b: α, @l: α list, @m: α list,
+  reflect: (a ‥ l) = (b ‥ m), a = b
+] ≔ reflect
+
+## equal non-empty lists have equal rests.
+show let ‥_injective_rest: [
+  @α: *, @a: α, @b: α, @l: α list, @m: α list,
+  reflect: (a ‥ l) = (b ‥ m), l = m
+] ≔ reflect
+
+## appending empty changeþ noþing.
+show let ·_empty: [@α: *, l: α list, (l · empty) = l] ≔ match l {
+  empty ^ reflect,
+  first ‥ rest ^ (first ‥) leibnitz (rest ·_empty)
+}
+
+## appending is associative.
+show let ·_·: [@α: *, a: α list, b: α list, c: α list, (a · (b · c)) = ((a · b) · c)] ≔
+  match a {
+    empty ^ reflect,
+    first ‥ rest ^ (first ‥) leibnitz (rest ·_· b c)
+  }
+
+## mapping þe identity function changeþ noþing.
+show let map_identity: [@α: *, l: α list, (l map {x ^ x}) = l] ≔ match l {
+  empty ^ reflect,
+  first ‥ rest ^ (first ‥) leibnitz (rest map_identity)
+}
+
+## two maps are one map of þe composite function.
+show let map_map: [
+  @α: *, @β: *, @γ: *,
+  l: α list, f: [α, β], g: [β, γ],
+  ((l map f) map g) = (l map {x ^ x f $ g})
+] ≔ match l {
+  empty ^ reflect,
+  first ‥ rest ^ ((first f $ g) ‥) leibnitz (rest map_map f g)
+}
+
+## mapping distributeþ over appending.
+show let map_·: [
+  @α: *, @β: *,
+  a: α list, b: α list, f: [α, β],
+  ((a · b) map f) = ((a map f) · (b map f))
+] ≔ match a {
+  empty ^ reflect,
+  first ‥ rest ^ ((first f) ‥) leibnitz (rest map_· b f)
+}
+
+## folding from þe right over an appended list foldeþ þe first part onto
+## þe fold of þe second.
+show let fold₀_·: [
+  @α: *, @β: *,
+  a: α list, b: α list, start: β, f: [α, β, β],
+  ((a · b) fold₀ start f) = (a fold₀ (b fold₀ start f) f)
+] ≔ match a {
+  empty ^ reflect,
+  first ‥ rest ^ (first f) leibnitz (rest fold₀_· b start f)
+}
+
+## folding from þe left over an appended list continueþ from þe fold of þe
+## first part.
+show let fold₁_·: [
+  @α: *, @β: *,
+  a: α list, b: α list, start: β, f: [β, α, β],
+  ((a · b) fold₁ start f) = (b fold₁ (a fold₁ start f) f)
+] ≔ match a {
+  empty ^ reflect,
+  first ‥ rest ^ rest fold₁_· b (start f first) f
+}
+
+## filtering distributeþ over appending.
+show let filter_·: [
+  @α: *,
+  a: α list, b: α list, p: [α, 𝟚],
+  ((a · b) filter p) = ((a filter p) · (b filter p))
+] ≔ match a {
+  empty ^ reflect,
+  first ‥ rest ^ match first p {
+    yea ^ (first ‥) leibnitz (rest filter_· b p),
+    nay ^ rest filter_· b p
+  }
+}
+
+## a kept first element stayeþ first.
+show let filter_kept: [
+  @α: *,
+  first: α, rest: α list, p: [α, 𝟚], kept: (first p) = yea,
+  ((first ‥ rest) filter p) = (first ‥ (rest filter p))
+] ≔ (kept symmetry) transport reflect
+
+## a dropped first element is gone.
+show let filter_dropped: [
+  @α: *,
+  first: α, rest: α list, p: [α, 𝟚], dropped: (first p) = nay,
+  ((first ‥ rest) filter p) = (rest filter p)
+] ≔ (dropped symmetry) transport reflect
+
+## filtering twice by one predicate is filtering once.
+show let filter_filter: [
+  @α: *, l: α list, p: [α, 𝟚], ((l filter p) filter p) = (l filter p)
+] ≔ match l {
+  empty ^ reflect,
+  first ‥ rest ^ (first p) inspect {
+    yea, kept ^ (kept symmetry) transport ((first ‥) leibnitz (rest filter_filter p)),
+    nay, _ ^ rest filter_filter p
+  }
+}
+
+## folding wiþ þe constructors rebuildeþ þe list.
+show let fold₀_‥: [@α: *, l: α list, (l fold₀ empty {x, rest ^ x ‥ rest}) = l] ≔
+  match l {
+    empty ^ reflect,
+    first ‥ rest ^ (first ‥) leibnitz (rest fold₀_‥)
+  }
+
+## reversing onto a start appendeþ þe start to þe reversed list.
+show let reverse_onto: [
+  @α: *, l: α list, start: α list,
+  (l fold₁ start {outcome, x ^ x ‥ outcome}) = ((l reverse) · start)
+] ≔ match l {
+  empty ^ reflect,
+  first ‥ rest ^ (
+    let shifted ≔ rest reverse_onto (first ‥ start)
+    let regrouped ≔ (rest reverse) ·_· (first ‥ empty) start
+    let unshifted ≔ {x ^ x · start} leibnitz ((rest reverse_onto (first ‥ empty)) symmetry)
+    yield (shifted transitivity regrouped) transitivity unshifted
+  )
+}
+
+## reversing an appended list appendeþ þe reversed parts in turn.
+show let reverse_·: [@α: *, a: α list, b: α list, ((a · b) reverse) = ((b reverse) · (a reverse))] ≔
+  (a fold₁_· b empty {outcome, x ^ x ‥ outcome}) transitivity (b reverse_onto (a reverse))
+
+## reversing twice giveþ þe list back.
+show let reverse_reverse: [@α: *, l: α list, ((l reverse) reverse) = l] ≔ match l {
+  empty ^ reflect,
+  first ‥ rest ^ (
+    let unfolded ≔ {x ^ x reverse} leibnitz (rest reverse_onto (first ‥ empty))
+    let split ≔ (rest reverse) reverse_· (first ‥ empty)
+    let restored ≔ (first ‥) leibnitz (rest reverse_reverse)
+    yield (unfolded transitivity split) transitivity restored
+  )
+}
+
+## mapping commuteþ wiþ reversing.
+show let map_reverse: [@α: *, @β: *, l: α list, f: [α, β], ((l reverse) map f) = ((l map f) reverse)] ≔
+  match l {
+    empty ^ reflect,
+    first ‥ rest ^ (
+      let unfolded ≔ {x ^ x map f} leibnitz (rest reverse_onto (first ‥ empty))
+      let split ≔ (rest reverse) map_· (first ‥ empty) f
+      let inner ≔ {x ^ x · ((first f) ‥ empty)} leibnitz (rest map_reverse f)
+      let folded ≔ ((rest map f) reverse_onto ((first f) ‥ empty)) symmetry
+      yield ((unfolded transitivity split) transitivity inner) transitivity folded
+    )
+  }
+
+## mapping a repeated value repeateþ þe mapped value.
+show let map_replicate: [
+  @α: *, @β: *,
+  a: α, count: ℕ, f: [α, β],
+  ((a replicate count) map f) = ((a f) replicate count)
+] ≔ match count {
+  0 ^ reflect,
+  n succeed ^ ((a f) ‥) leibnitz (a map_replicate n f)
+}

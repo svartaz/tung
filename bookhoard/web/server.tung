@@ -3,24 +3,23 @@ use ilk/one.tung
 use web/request.tung
 use web/response.tung
 
-show-ilk request
+show _request
 show request
-show request-meþod
-show request-target
-show request-headers
-show request-body
+show request_meþod
+show request_target
+show request_headers
+show request_body
 
-show-ilk response
+show _response
 show response
-show response-status
-show response-headers
-show response-body
+show response_status
+show response_headers
+show response_body
 show respond
 show ok
-show not-found
-show wiþ-header
+show not_found
+show wiþ_header
 
-## serve http/1.1 over ipv4 wiþ one request per connection.
-show deed web {
-  serve [@e:*, ℤ, [request, response; e], 𝟙; e, text fail]
-}
+## serve http/1.1 over ipv4 wiþ one request per connection. þe deed endeþ
+## only when serving stopþ, wiþ a message saying why.
+show let serve: [ℕ, [_request, _response deed], text deed] ≔ 'serve' fremmed

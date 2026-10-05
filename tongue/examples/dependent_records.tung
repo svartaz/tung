@@ -1,0 +1,13 @@
+let +: [ℤ, ℤ, ℤ] ≔ 'add_integer' fremmed
+
+## records are closed. field order in source doþ not matter.
+let person: * ≔ r{name: text, age: ℤ}
+let someone: person ≔ r{age ≔ +1, name ≔ 'tung'}
+
+## an update keepeþ, setþ, addeþ, or removeþ fields.
+let older: person ≔ r{≔ someone, age ≔ someone.age + +1}
+let anonymous: r{age: ℤ} ≔ r{≔ someone, - name}
+
+let tagged: * ≔ r{who: person, tag: text}
+let entry: tagged ≔ r{who ≔ older, tag ≔ 'x'}
+let name: text ≔ entry.who.name

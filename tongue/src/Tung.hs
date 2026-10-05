@@ -1,84 +1,28 @@
--- | public compiler, evaluator, and library api.
+-- | public source services, diagnostics, and library api.
 -- internal modules remain hidden by the cabal package.
 module Tung
-  ( Program (..),
-    Decl (..),
-    TypeExpr (..),
-    KindExpr (..),
-    TypeParameter,
-    TypeHeaderEntry (..),
-    Expr (..),
-    Pattern (..),
-    MatchCase (..),
-    HandlerCase (..),
-    RecordUpdate (..),
-    EffectOp (..),
-    Ctor (..),
-    ClassMember (..),
-    ClassConstraint (..),
-    Token (..),
+  ( Token (..),
     SourceSpan (..),
     LocatedToken (..),
     Diagnostic (..),
     DiagnosticKind (..),
     HostBinding (..),
-    HostRole (..),
     HostSignature (..),
+    HostType (..),
     ModuleId (..),
     SymbolId (..),
-    TypeRef (..),
-    HandlerTarget (..),
-    InstanceType (..),
-    InstanceId (..),
     Project (..),
-    projectSource,
-    projectImports,
-    ParsedBundle,
-    prepareBundle,
-    Scheme (..),
-    EnvLookup (..),
-    TcContext,
-    TcResult (..),
-    CoreProgram,
-    ModuleInterface (..),
-    TermExport (..),
-    TermKind (..),
-    coreInterface,
-    coreImportInterface,
     formatSource,
     highlightSource,
-    parse,
     lexTokens,
     lexLocatedTokens,
     keywordNames,
     languageMetadata,
     enterImport,
-    validateProgram,
-    check,
-    checkWithImports,
-    checkDiagnosticWithImports,
-    checkBundleDiagnostic,
     checkEditorDiagnosticWithImports,
     renderFileDiagnostic,
+    failureDiagnostic,
     renderDiagnostic,
-    checkRunnableWithImports,
-    elaborateProgramWithImports,
-    elaborateInteractiveProgramWithImports,
-    typeOfWithImports,
-    typeOfBundle,
-    baseContext,
-    inferProgramContext,
-    lookupEnv,
-    canonicalTypeName,
-    showTy,
-    evaluate,
-    evaluateWithImports,
-    evaluateWithArgsAndImports,
-    evaluateCoreProgram,
-    evaluateMainCoreProgram,
-    evaluateMainWithImports,
-    evaluateMainWithArgsAndImports,
-    evaluateMainBundleWithArgs,
     resolveLibraryRoots,
     readLibraryImportFiles,
     readLibraryImports,
@@ -89,19 +33,13 @@ module Tung
   )
 where
 
-import Tung.Core (CoreProgram, ModuleInterface (..), coreImportInterface, coreInterface)
 import Tung.Diagnostic
-import Tung.Evaluate (evaluate, evaluateCoreProgram, evaluateMainBundleWithArgs, evaluateMainCoreProgram, evaluateMainWithArgsAndImports, evaluateMainWithImports, evaluateWithArgsAndImports, evaluateWithImports)
 import Tung.Format (formatSource)
 import Tung.Highlight (highlightSource)
 import Tung.Identity
 import Tung.Import (enterImport)
 import Tung.Library (readLibraryImportFiles, readLibraryImports, resolveLibraryRoots)
 import Tung.Metadata (languageMetadata)
-import Tung.Parse (ParsedBundle, parse, prepareBundle)
 import Tung.Primitive
 import Tung.Project
-import Tung.Syntax
 import Tung.Token (LocatedToken (..), SourceSpan (..), Token (..), keywordNames, lexLocatedTokens, lexTokens)
-import Tung.Type
-import Tung.Validate (validateProgram)

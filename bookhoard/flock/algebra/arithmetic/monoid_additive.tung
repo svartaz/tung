@@ -1,0 +1,24 @@
+use flock/algebra/arithmetic/add.tung
+use flock/algebra/arithmetic/zero.tung
+use ilk/two.tung
+
+show flock monoid_additive: [α: *, @: α add, @: α haþ_zero, *] {
+  let +_+: [a: α, b: α, c: α, (a + (b + c)) = ((a + b) + c)]
+  let zero_+: [a: α, (zero + a) = a]
+  let +_zero: [a: α, (a + zero) = a]
+}
+
+bizen: 𝟚 monoid_additive {
+  let +_+ ≔ {
+    nay, nay, nay;
+    nay, nay, yea;
+    nay, yea, nay;
+    nay, yea, yea;
+    yea, nay, nay;
+    yea, nay, yea;
+    yea, yea, nay;
+    yea, yea, yea ^ reflect
+  }
+  let zero_+ ≔ {nay; yea ^ reflect}
+  let +_zero ≔ {nay; yea ^ reflect}
+}

@@ -1,0 +1,19 @@
+## one list family storeþ values, types, or type constructors.
+ilk list: [α: *, *] {
+  ∅: α list,
+  ‥: [head: α, tail: α list, α list]
+}
+
+## induction descendeth through the left list.
+let ·: [@α: *, left: α list, right: α list, α list] ≔
+  {_: α list ^ α list} induce list @α right
+    {head, _, rest ^ head ‥ @α rest} left
+
+let map: [@α: *, @β: *, l: α list, f: [α, β], β list] ≔
+  {_: α list ^ β list} induce list @α (∅ @β)
+    {head, _, rest ^ (head f) ‥ @β rest} l
+
+## fold replaceþ ∅ with empty and ‥ with step, from right to left.
+let fold: [@α: *, @β: *, l: α list, empty: β, step: [α, β, β], β] ≔
+  {_: α list ^ β} induce list @α empty
+    {head, _, rest ^ head step rest} l

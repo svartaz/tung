@@ -1,24 +1,30 @@
 use flock/algebra/total/magma.tung
-use flock/order/semilattice-lower.tung
-use flock/order/semilattice-upper.tung
+use flock/order/semilattice_lower.tung
+use flock/order/semilattice_upper.tung
 use ilk/infimal.tung
 use ilk/supremal.tung
 
-show flock semigroup [byzen a magma] {
-  law [a:a, b:a, c:a] a · (b · c) = (a · b) · c
+show flock semigroup: [α: *, @: α magma, *] {
+  let ·_·: [a: α, b: α, c: α, (a · (b · c)) = ((a · b) · c)]
 }
 
-show-ilk infimal, supremal
+show _infimal, _supremal
 show infimal, supremal
 
-bizen [byzen b semigroup, @a:*]:[a, b] semigroup {
-  let f · g a [] (a f) · (a g)
+bizen: [@β: *, @: β semigroup, @α: *, [α, β] semigroup] {
+  let ·: [f:, g:, α:] ≔ (α f) · (α g)
+
+  let ·_· ≔ sorry
 }
 
-bizen [byzen a semilattice-lower]:(a infimal) semigroup {
-  let (a infimal) · (b infimal) [] (a ∧ b) infimal
+bizen: [@α: *, @: α semilattice_lower, (α _infimal) semigroup] {
+  let ·: [a infimal:, b infimal:] ≔ (a ∧ b) infimal
+
+  let ·_· ≔ sorry
 }
 
-bizen [byzen a semilattice-upper]:(a supremal) semigroup {
-  let (a supremal) · (b supremal) [] (a ∨ b) supremal
+bizen: [@α: *, @: α semilattice_upper, (α _supremal) semigroup] {
+  let ·: [a supremal:, b supremal:] ≔ (a ∨ b) supremal
+
+  let ·_· ≔ sorry
 }

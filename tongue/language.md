@@ -1,31 +1,37 @@
 # tung language reference
 
-this reference defineþ source syntax, module lookup, library manifests, and
-runtime-visible behaviour. [`readme.md`](../readme.md) covereþ installation.
-the checked [tutorial](../byspel/tutorial.tung) showeþ basic examples.
-[`development.md`](development.md) covereþ the compiler and repository.
+audience: agents. purpose: source syntax, module lookup, manifests, and runner
+behaviour. ordinary commands and editor tooling use one dependent compiler.
+[`dependent.md`](dependent.md) owneþ dependent typing, conversion, inductives,
+and elaboration boundaries. [`development.md`](development.md) owneþ implementation.
 
 ## files and modules
 
-a `.tung` file containeþ declarations. a runnable file declareþ local `main`. it
-takeþ `𝟙`, returneþ `𝟙`, and useþ only runner-supported effects. the runner
-calleþ `only main` after pure module initialisation.
+a `.tung` file containeþ declarations. a runnable file declareþ local
+`main: 𝟙 deed`. the runner performeþ that deed; see [deeds](#deeds).
 
-declarations are private by default. `show` publisheþ a declaration or visible
-term. `show-ilk` publisheþ a visible type, effect, or flock. term and type
-namespaces are separate. ordinary `use` doth not re-export anything.
+declarations are private by default. `show` publisheþ a declaration.
+`show ilk` publisheþ þe family and its constructors; its eliminator
+followþ þe family. `show
+name` re-exporteþ the visible declaration spelled `name`; `show ns~name`
+publisheþ it as `name`. ordinary `use` doth not re-export anything.
+
+lets, ilks, constructors, flocks, and flock members share one namespace. a
+module declareþ each top-level name once, so a flock and its member, or an
+ilk and its constructor, need different names; bookhoard prefixeþ such a
+flock wiþ `haþ_` and such a type wiþ `_`.
 
 ## libraries and imports
 
-`use path` importeþ a module. its final path segment becomeþ the default
-namespace. an optional final name replaceþ it.
+`use path` importeþ a module. its final path segment, up to þe first dot,
+becomeþ the default namespace. an optional final name replaceþ it.
 
 ```tung
 use ilk/list.tung
 use ilk/table.tung hashmap
 
-let xs [] list~empty
-let entries [] hashmap~empty
+let xs ≔ list~empty
+let entries ≔ hashmap~empty
 ```
 
 visible imported names may remain bare when unambiguous. two different direct
@@ -33,11 +39,22 @@ imports cannot claim the same namespace. the import graph must be acyclic. a
 local term shadoweþ an imported bare term in value and application positions. a
 qualified name still reacheþ the import.
 
+re-exported names retain their defining identities. ambiguous bare names
+must be qualified wiþ a direct import namespace; diagnostics suggest þose
+visible namespaces. a missing or cyclic use is reported at its importing
+statement, in þe module containing þat statement.
+
+cached modules must agree on every shared defining identity, including
+transitive dependencies. different definitions of one identity are rejected
+at þe incoming `use`; an identical dependency reached along two paths is
+accepted.
+
 the host catalogue explicitly overloadeþ primitive names, such as `+` for
 integer and float, within primitive scope. direct application trieþ their
 signatures in catalogue order. as a value, the name selecteþ þe first signature.
-constructors and flock members with the same spelling remain distinct
-application candidates. later bindings shadow earlier ones of the same kind.
+a local value shadoweþ an imported constructor of the same spelling, in
+patterns too: þere the name bindeþ a variable, and a qualified name still
+reacheþ the constructor.
 
 module lookup searcheþ paths relative to the importing file, declared library roots,
 þen `TUNG_PATH` entries. a `.tung` path resolving to different files is
@@ -99,26 +116,33 @@ one directory count as one path. remote locators are compared as written.
 every manifest. `TUNG_PATH` roots lie outside manifest conflict checking. the
 same `.tung` path in different roots remaineþ ambiguous when imported.
 
-to migrate from `tung.libraries`, move each repository and commit under
-`dependencies` in `tung.yaml`. then remove the old file.
-
 ## names, comments, and literals
 
 most non-space, non-reserved characters may occur in names. `~` qualifieþ
-imports; `.` selecteþ record fields; `^` separateþ match and handler cases. type
-alias, data, effect, and flock names are unqualified. so are þeir constructors,
-operations, and members. outside `.tung` import paths, a name may contain at
-most one `~`. its namespace and member must be nonempty and slash-free. `⁖` is
+imports; `.` selecteþ record fields; `^` separateþ a match case's patterns from its
+result. type alias, data, and flock names are unqualified. so are þeir
+constructors and members. outside `.tung` import paths, a name may contain at
+most one `~`. its namespace and member must be nonempty and slash-free. `‥` is
 an ordinary name; there is no general infix escape. `_` discardeþ a binding or
 match value.
+
+names, keywords, host keys, and `.tung` paths use snake_case: words are
+lowercase and joined by `_`, as in `to_text`, `map_flat`, and
+`flock/order/less_equal.tung`. `-` remaineþ a legal name character, so this is
+a convention, not a lexical rule.
 
 `#` starteþ a line comment. `/* ... */` formeþ a non-nested block comment. `##`
 and `/** ... */` attach doc comments to the next declaration. editor help and
 generated bookhoard pages use them.
 
-integer literals are arbitrary-precision decimal values. float literals contain
-a decimal point. a backtick introduceþ one unicode scalar, and single quotes
-delimit text. both literal forms accept `\n`, `\r`, `\t`, `\'`, `\\`, and
+an integer literal of type `ℤ` always hath a sign: `+42`, `-7`, `+0`. unsigned
+digits such as `42` are a natural number of type `ℕ`. boþ are arbitrary
+precision; the compiler storeþ naturals as haskell `Natural`. `+ 1` wiþ a space
+is the name `+` applied to the natural `1`. `ℕ` subtraction stoppeþ at zero:
+`2 - 3` is `0`. a quantity þat cannot be negative is a `ℕ`: counts, indices,
+durations in milliseconds, ports, exit codes, http status codes, and unicode
+code points. float literals contain a decimal point and an optional `-`. a
+backtick introduceþ one unicode scalar, and single quotes delimit text. both literal forms accept `\n`, `\r`, `\t`, `\'`, `\\`, and
 decimal escapes such as `\23383;`.
 
 ## application
@@ -140,24 +164,33 @@ starteþ a function-first segment.
 `<{`, and `>{` are single opening delimiters. the brace must touch the
 marker.
 
-partial application is pure. latent effects run only after saturation.
-evaluation is strict: first the function, then arguments from left to right.
+runtime evaluation is call-by-need. application arguments, local `let`
+values, globals, record fields, and constructor fields are computed when
+inspected and shared thereafter. unused values are not computed. `match`
+inspecteþ its scrutinee and computeþ only its selected branch; recursive
+hypotheses follow þe same rule. a failure value, such as `sorry`, faileþ
+when inspected. pure native operations compute their inputs fully. host
+deed inputs and deed results are computed fully when þe deed is performed.
+building a deed performeþ no action.
 
 ## declarations and types
 
-`ilk` putteþ its name first, then kinded parameters and a final `*` in brackets.
-its constructors go in `{}`. a type wiþ no parameters useþ `[*]`.
-`*` is the kind of ordinary types. `[*, *]` is a kind from types to types.
-only a standalone `*` is kind syntax. names such as `⁖` remain ordinary names.
-the magma operation is `·`.
-constructors may declare their argument types and result type in brackets.
-the result type must name the declared `ilk` with its full arity. adjacent
-constructor signatures need no commas.
+`ilk name:signature {constructors}` declareþ a data type. the signature is `*`
+for a type wiþout parameters, or a bracket of kinded parameters ending in `*`,
+as in `[a: *, *]`. `*` is a universe with an inferred level. `[*, *]` is a function type from
+types to types. only a standalone `*` is universe syntax. names such as `‥` remain
+ordinary names. the magma operation is `·`.
+
+constructors are comma-separated, and every constructor stateþ its type, as in
+a GADT: `name:type`. a bracketed type listeþ optional `@` parameters, þe
+field types, and þe result type; a single type is þe result alone, as in
+`none: a option`. fields are bare types, as in `some: [a, a option]`. the
+result type must name the declared `ilk` with its full arity. a constructor wiþout a type is an error.
 
 ```tung
-ilk list [a:*, *] {
-  empty [a list]
-  ⁖ [a, a list, a list]
+ilk list: [a: *, *] {
+  empty: a list,
+  ‥: [a, a list, a list]
 }
 ```
 
@@ -166,69 +199,99 @@ within its own case. a type variable used only by a constructor is existential;
 it cannot escape that case.
 
 ```tung
-ilk tag [a:*, *] {
-  integer [ℤ, ℤ tag]
-  textual [text, text tag]
+ilk tag: [a: *, *] {
+  integer: [ℤ, ℤ tag],
+  textual: [text, text tag]
 }
-let unpack [@a:*, x:a tag, a] match x {
-  integer n ^ n,
-  textual t ^ t
+let unpack: [@a: *, x: a tag, a] ≔ match x {
+  n integer ^ n,
+  t textual ^ t
 }
 ```
 
-`let` bindeþ a value. `[type]` annotateþ a value. brackets with argument
-slots describe a curried function.
+### let declarations
+
+`let name ≔ body` bindeþ a name. `let name:annotation ≔ body` also annotateþ
+it. the header is only the name; arguments are named slots of the annotation.
+a slot wiþ no type after its `:` is inferred, so `let add: [x:, y:] ≔ x + y`
+is an unannotated binary function. `_` is never a type; it only discardeþ an
+input. an annotation whose slots are all inferred
+stateþ no type: like an unannotated let, it is inferred and generalised.
 
 ```tung
-let answer [ℤ] 42
-let add [x:ℤ, y:ℤ, ℤ] x + y
-let identity [@a:*, a, a] { x ^ x }
-let x sameness [] x
-let x add-after [y:ℤ, ℤ] x + y
+let count ≔ 42
+let answer: ℤ ≔ +42
+let identity: [x:] ≔ x
+let identity: [@a: *, x: a, a] ≔ x
+let identity: [@a: *, a, a] ≔ {x ^ x}
+let add_after: [x:, y: ℤ, ℤ] ≔ x + y
 ```
 
-in a bracketed `let`, `pattern:type` bindeþ an argument. patterns may
-destructure constructors without grouping the whole pattern:
-`let unbox [@a:*, box x:a box, a] x`. symbolic infix patterns such as `a ∏ b`
-also work without grouping. named patterns precede bare argument types.
-a bare slot giveþ a type only; it bindeth no name. use `_` before the function
-name or `_:type` in brackets to discard an argument. the final bare slot is
-the result type. one bare slot after a name annotateþ a value; after
-positional arguments, it giveþ the function result. the right-hand side
-supplieþ any bare arguments. omit the final type to infer a result after a
-named pattern. spaces around `:` are allowed; the formatter removeþ them.
+an annotation is one type or a bracketed list of slots:
+
+- one type annotateþ a value.
+- a bracket list holdeþ `@name:kind` type parameters and `@:flock`
+  requirements, then value slots, as described below.
+- a bracket wiþ one bare expression is þat expression; without an input it
+  introduceþ no function argument.
+- `pattern:type` is a named slot. it bindeþ an argument for the body. its
+  pattern followeþ the second-is-function rule and needeþ no grouping, as in
+  `let unbox:[@a:*, x box:a box, a] ≔ x` and `a boþ b`. a slot named by a
+  constructor wiþout fields matcheþ þat constructor, so
+  `let symmetry:[@α:*, @a:α, @b:α, reflect:a = b, b = a] ≔ reflect` rewriteþ
+  `b` to `a` in þe result. þe match itself is þe evidence: `_:a = b` doth
+  not inspect þe proof, so `b` stayeþ distinct from `a`. slot patterns never match literals; use `match`.
+- a bare slot giveþ a type only and bindeth no name. the body supplieþ bare
+  arguments, usually wiþ an anonymous function. named slots precede bare
+  slots.
+- the final bare slot is the result type. after a named slot, omit it to
+  infer the result.
+- `_:type` as a slot discardeþ an argument.
+- the formatter writeþ `:` wiþ no space before and one space after: `x: α`.
+- an annotation must be followed by `≔`.
+
+an annotation endeþ in a kind declareþ a type alias; see
+[type expressions](#type-expressions).
+
+use Greek letters for generic polymorphic parameters. type and flock names
+carry no `*` prefix, and no term reuseþ a type's name: name a slot `l`, not
+`list`, beside `list`. when a constructor would share its type's name, the
+constructor getteþ a new name (`boþ` wiþ `boþ`, `complex` wiþ `+i`, `nonempty`
+wiþ `‥′`), or, for a type wiþ one constructor, the type takeþ a `_` prefix
+(`_request` wiþ `request`). a flock whose member would share its name takeþ a
+`haþ_` prefix (`haþ_zero` wiþ `zero`). `*name` still lexeþ as one name, and
+standalone `*` is syntax.
 
 leading `@name:kind` declareþ a polymorphic type parameter. use `@a:*` for
 an ordinary type and `@f:[*, *]` for a unary type constructor.
 type declarations use `name:kind` wiþout `@`.
 every type variable in a written annotation must be declared or already in
-scope. `byzen` requirements may introduce parameters as described below.
-this includeþ type constructor variables and effect-row variables.
-unknown names are errors. an unannotated `let x identity [] x` may still infer
+scope, including type constructor variables. a
+requirement nameþ only parameters declared before it.
+unknown names are errors. an unannotated `let identity: [x:] ≔ x` may still infer
 a polymorphic type.
 
 an anonymous function bound by `let` may call itself, with or without an
 annotation. other initialisers see preceding bindings, including a preceding
 binding with the same name. an unguarded self-reference is an error.
 
-data, alias, effect, and flock parameters scope over þeir declarations.
+data, alias, and flock parameters scope over þeir declarations.
 flock methods, constructors, and laws may introduce local leading `@` parameters.
 local parameters cannot redeclare þeir owner parameters.
-an instance declareþ its variables before `:`, then its head:
-`bizen [@a:*]:(a list) equal {...}`.
+an instance's type listeþ its variables and requirements before its head:
+`bizen:[@a:*, @:a equal, (a list) equal] {...}`.
 these variables scope over its head, requirements, and members. a constructor such as
 `pack [@a:*, a, packed]` declareþ an existential payload when matched.
 
-calls may supply declared type parameters explicitly. `@text` passeþ a named
+calls may supply declared implicit parameters explicitly, including values. `@text` passeþ a named
 type; `@(text list)` passeþ a compound type. type arguments select header
-parameters in declaration order, including those introduced by `byzen`,
-regardless of their position among value arguments. omitted trailing type
+parameters in declaration order, regardless of their position among value arguments. omitted trailing type
 arguments are inferred. each supplied type must have the declared parameter's
-kind, including when the parameter is unused. type arguments are
-erased before evaluation:
+kind, including when the parameter is unused. type inputs are erased before evaluation; implicit value inputs remain runtime
+arguments:
 
 ```tung
-let f [@a:*, @b:*, x:a, _:b, a] x
+let f: [@a: *, @b: *, x: a, _: b, a] ≔ x
 'x' f empty
 'x' f @text empty
 'x' f @text @(text list) empty
@@ -243,9 +306,9 @@ quantifier. its scope is that bracketed type. quantifiers may occur in arguments
 or results, at any rank:
 
 ```tung
-let both [f:[@a:*, a, a], r{number:ℤ, word:text}]
-  r{number=1 f, word='x' f}
-let make [_:ℤ, [@a:*, a, a]] {x ^ x}
+let both: [f: [@a: *, a, a], r{number: ℤ, word: text}] ≔
+  r{number≔+1 f, word≔'x' f}
+let make: [_: ℤ, [@a: *, a, a]] ≔ {x ^ x}
 ```
 
 `both` requireþ a function that workeþ for every `a`. each use of `f`
@@ -253,54 +316,68 @@ instantiateþ it independently. `make` returneþ such a function. a monomorphic
 function cannot satisfy either quantified type. nested binders shadow outer
 type variables; other free variables retain their outer meaning.
 
-higher-rank types require explicit annotations. inference remaineth predicative:
-it doth not instantiate an inferred type variable wiþ a universally quantified
-type. passing an anonymous function checkeþ its arguments against the expected
-signature. quantifiers create no runtime arguments. nested class constraints
-are not supported.
-
-untyped positional arguments follow the second-is-function rule:
-`let a f b c [] ...` bindeþ `a`, `b`, and `c` to `f`. replace `[]` to
-specify later typed arguments, a result, or effects. `let a f [] ...` is a
-unary function even if `f` is also a type name. write `let a [f] ...` to
-annotate a value.
+higher-rank types require explicit annotations. universe constraints enforce
+predicativity; inferred type inputs may themselves be function types. passing an anonymous function checkeþ its arguments against the expected
+signature. type inputs create no runtime arguments. requirements are implicit dictionary
+inputs and may occur in nested products.
 
 local blocks are parenthesised and end with `yield`.
 
 ```tung
 (
-  let six [] 2 × 3
-  yield six + 1
+  let six ≔ +2 × +3
+  yield six + +1
 )
 ```
 
-type application useþ second-is-function syntax.
-`ℤ list` applieþ `list` to `ℤ`; `a ∏ b` applieþ the binary product type.
-`let` wiþ a final `*` in its brackets defineþ a transparent type alias.
-preceding inputs declare type parameters and þeir kinds:
-`let powerset [a:*, *] a → 𝟚`. a non-parameterised alias useþ `[*]`, as in
-`let count [*] ℤ`. alias headers accept no value arguments, effects, or
-class constraints. the body is a type expression; it is not evaluated.
+### type expressions
 
-function types use `[argument, result]`. latent effects follow a semicolon:
-`[argument, result; effect]`. several effects are comma-separated. nested
-brackets describe function arguments. a stored non-function value cannot carry
-an effect row. `→` is the binary pure-function type constructor for passing
-to a flock: `a → b` and `[a, b]` agree. it associateþ to þe right, and
-type application bindeþ more tightly.
-`(term:type)` constraineþ any term.
+type application useþ second-is-function syntax.
+`ℤ list` applieþ `list` to `ℤ`; `a boþ b` applieþ the binary product type.
+a let returning `*` defineþ a transparent type function, as in
+`let powerset:[a:*, *] ≔ a → 𝟚`. `let count:* ≔ ℤ` defineþ a transparent
+constant. types and values use one expression syntax. type functions may take
+value inputs and requirements; partial application followeþ ordinary function
+application. conversion unfoldeth transparent definitions.
+
+function types use `[argument, result]`. nested brackets describe function
+arguments. `→` is an ordinary name, not syntax. `combinator.tung` defineþ it,
+and `ground.tung` showeþ it:
 
 ```tung
-let powerset [a:*, *] a → 𝟚
-let call [@a:*, @b:*, @e:*, f:[a, b; e], x:a, b; e] x f
-let answer [] (1 + 2:ℤ)
+show let →: [α: *, β: *, *] ≔ [α, β]
 ```
 
-pure inferred lets are generalised. immediately effectful right-hand sides
-remain monomorphic. creating a function with latent effects is pure.
-generalisation quantifyþ variables free in the binding's type and requirements,
-but not in the enclosing environment. thus, a local alias of a function
+`a → b` is ordinary type application, so it hath no associativity: write
+`a → (b → c)`. because its body applieþ the function type constructor to its
+parameters, `→` may be passed unapplied to a flock, as in
+`bizen: → semigroupoid`. `(term:type)` constraineþ any term.
+
+```tung
+let powerset: [a: *, *] ≔ a → 𝟚
+let call: [@a: *, @b: *, f: [a, b], x: a, b] ≔ x f
+let answer ≔ (+1 + +2: ℤ)
+```
+
+top-level inferred lets are generalised over open type holes and their
+requirements. local lets are monomorphic. thus, a local alias of a function
 parameter retaineþ its type constraints.
+
+a let whose body nameþ itself is recursive, unless a binding of that name is
+already visible, such as an import or an outer local; then the mention refereþ
+to that binding, so `use source.tung let value ≔ value + +1` extendeþ the
+import. a recursive let needeþ an annotation, or an ascribed body such as
+`let f ≔ (body: [ℕ, ℕ])`. recursion must be structural; see
+[dependent.md](dependent.md#pattern-matching-and-recursion).
+
+### composition and lists
+
+`<{f, a, b, c}` and `>{f, a, b, c}` work in type expressions as well as
+terms. they expand to `(a f b) f c` and `a f (b f c)`, respectively.
+composition hath no special list rules. native type-list kinds and operators
+have been removed. the compiler useþ one ordinary list family for
+values, types, and type constructors. see
+[dependent lists](dependent.md#ordinary-lists) for checked examples and indices.
 
 ## algebraic data and patterns
 
@@ -308,53 +385,75 @@ parameter retaineþ its type constraints.
 follow the ordinary sequence rule.
 
 ```tung
-ilk option [a:*, *] {
-  none,
-  a some
+ilk option: [a: *, *] {
+  none: a option,
+  some: [a, a option]
 }
 ```
 
 constructor application is curried. patterns may bind variables, use `_`, match
-exact integer or text literals, or destructure constructors. each binder may
-occur only once in a pattern row.
+exact natural, integer, or text literals, or destructure constructors. `n succeed`
+matcheþ a positive natural and bindeþ its predecessor, so `0` and `n succeed`
+together cover `ℕ`, and a function on `ℕ` may recurse on `n`. as a term,
+`succeed: [ℕ, ℕ]` addeþ one, unless a constructor named `succeed` is in scope.
+each binder may occur only once in a pattern row.
 
 `match` consumeþ one or more comma-separated scrutinees. `{...}` formeþ an
 anonymous function with one curried input per pattern. `^` separateþ a case from
-its result. `|` joineþ complete alternative rows that share a result.
+its result. `;` joineþ complete alternative rows that share a result. when a
+scrutinee is a computation, such as `a ≤ a`, each row's expected type hath
+that row's constructor in its place, so `match a ≤ a {yea ^ reflect, nay ^
+reflect}` proveþ a statement about `a ≤ a` by cases. the
+[dependent rules](dependent.md#inductive-declarations-and-proofs) give the
+exact conditions.
 
 ```tung
-let chosen [] match yea, nay {
-  yea, b | b, yea ^ b,
+let chosen ≔ match yea, nay {
+  yea, b; b, yea ^ b,
   nay, _ ^ nay
 }
 
-let not [𝟚, 𝟚] {
+let not: [𝟚, 𝟚] ≔ {
   yea ^ nay,
   nay ^ yea
 }
 
-let classify [text, ℤ] {
-  'yes' ^ 1,
-  _ ^ 0
+let classify: [text, ℤ] ≔ {
+  'yes' ^ +1,
+  _ ^ +0
 }
 ```
 
 the checker rejecteþ non-exhaustive and redundant rows over algebraic data.
-finite rows of integer or text literals need a variable or `_`. both types have
-infinitely many values. an empty function `{}` eliminateþ an annotated
+finite rows of integer or text literals need a variable or `_`, as þese types
+have infinitely many values. natural rows may instead end wiþ `n succeed`. an empty function `{}` eliminateþ an annotated
 uninhabited input such as `𝟘`.
+
+`induce name` is þe eliminator of þe ilk or flock `name`, as a term. it takeþ
+a motive, one method per constructor, and þe value, so a proof by
+structural induction is written wiþ þe motive first:
+
+```tung
+let doubled: [l: ℕ list, ℕ list] ≔
+  {_: ℕ list ^ ℕ list} induce list empty {first, _, rest ^ first ‥ (first ‥ rest)} l
+```
+
+`name` may be qualified, and `induce ℕ` and `induce =` name þe primitive
+eliminators. any name þat is not an ilk or flock is rejected. þe
+[dependent rules](dependent.md#inductive-declarations-and-proofs) define þe
+method types.
 
 ## records
 
-records are closed. `r{field:type}` formeþ a type; `r{field = value}` formeþ a
-value. an update placeþ its base after `=`. later entries set or remove fields.
+records are closed. `r{field:type}` formeþ a type; `r{field ≔ value}` formeþ a
+value. an update placeþ its base after `≔`. later entries set or remove fields.
 
 ```tung
-let person [r{name:text, age:ℤ}]
-  r{name = 'naoki', age = 35}
-let older [] r{= person, age = 36}
-let public [] r{= person, - age}
-let age [] older.age
+let person: r{name: text, age: ℤ} ≔
+  r{name ≔ 'naoki', age ≔ +35}
+let older ≔ r{≔ person, age ≔ +36}
+let public ≔ r{≔ person, - age}
+let age ≔ older.age
 ```
 
 in `record.field`, `record` is a term and `field` an unqualified field name.
@@ -369,142 +468,221 @@ removal, and non-record updates are errors.
 | type          | `ilk`   |
 | type class    | `flock` |
 | type instance | `bizen` |
-| effect        | `deed`  |
+| io action     | `deed`  |
 
-`flock` putteþ its name first, then optional kinded parameters in `[]`, then
-members in `{}`. `a:*` declareþ a type parameter. `f:[*, *]` declareþ a
-unary type constructor parameter. `bizen [parameters]:head {...}` provideþ
-evidence and member implementations. its brackets contain `@name:kind` parameters
-and `byzen requirement` entries. empty brackets may be omitted: `bizen:ℤ ring {}`
-and `bizen []:ℤ ring {}` mean the same. the head keepeþ
-second-is-function order: `bizen:ℤ convert text {...}`.
-`byzen a equal` in a declaration header stateþ required evidence.
-headers contain `byzen` requirements first, then type parameters, then value
-arguments. each section is optional. requirements cannot follow type parameters
-or value arguments. flock and bizen headers have no value arguments.
-an unbound name in a requirement becomeþ a type parameter. its kind comeþ from
-the required flock, including imported flocks. scoped parameters and visible
-types keep þeir existing meanings. an explicit parameter may shadow a visible
-type. repeating a kind already determined by requirements is an error.
-a compound requirement may leave some kinds undetermined;
-an explicit annotation may supply the missing information. unconstrained parameters
-still need an explicit kind. conflicting required kinds are errors.
-parameters follow þeir first occurrence in the header.
-required members use a name
-followed by bracketed types, wiþ the result last. laws bind typed patterns in
-brackets. þeir equation beginneþ after `]`.
+`flock name:[parameters, @:parent, *] {...}` declareþ a flock. its signature
+listeþ `name:kind` parameters and `@:parent` requirements and endeþ in `*`;
+`flock name:* {...}` hath no parameters. `a:*` declareþ a type parameter.
+`f:[*, *]` declareþ a unary type constructor parameter.
+
+`bizen:head {...}` provideþ evidence and member implementations. the head keepeþ
+second-is-function order: `bizen:ℤ convert text {...}`. a bizen wiþ
+parameters or requirements writeþ þem before the head in one bracket:
+`bizen:[@a:*, @:a equal, (a list) equal] {...}`.
+
+`@:a equal` in a header stateþ required evidence. requirements and `@`
+parameters precede value arguments, in any order among þemselves, but a
+requirement nameþ only parameters declared before it. flock and bizen headers
+have no value arguments. a required member is `let name:type` wiþ no body; a
+function member writeþ its inputs and result in brackets. a law is a named
+member whose type is an equality on terms: `let name:[binders, left = right]`
+bindeþ typed patterns and endeþ in its equation. a law hath no body.
 
 ```tung
-flock equal [a:*] {
-  let ≡ [a, a, 𝟚]
-  law [x:a] x ≡ x = yea
+flock equal: [a: *, *] {
+  let ≍: [a, a, 𝟚]
+  let reflexive: [x: a, (x ≍ x) = yea]
 }
 
-let ≢ [byzen a equal, a:a, b:a, 𝟚] (a ≡ b) if nay yea
+let ≭: [@a: *, @: a equal, a: a, b: a, 𝟚] ≔ (a ≍ b) if nay yea
 
-flock applicative [byzen f functor] {...}
-bizen [byzen b ring, @a:*]:[a, b] ring {...}
+flock applicative: [f: [*, *], @: f functor, *] {...}
+bizen: [@b: *, @: b ring, @a: *, [a, b] ring] {...}
 
-bizen:𝟚 equal {
-  let ≡ [] {
+bizen: 𝟚 equal {
+  let ≍ ≔ {
     yea, yea ^ yea,
     nay, nay ^ yea,
     _, _ ^ nay
   }
+  let reflexive ≔ sorry
 }
 ```
 
-in a `law`, `=` separateþ two expressions. every `let` requireþ brackets.
-`[]` inferreþ the whole annotation; `[type]` annotateþ a value.
-the definition beginneþ directly after `]`.
-þis also applieþ to `let` implementations inside `bizen`.
-law brackets require a type for each pattern. they also accept
-constructor-first patterns. parentheses keep any nested `let` inside a law side.
+`=` is the [identity type](#equality) in scope, applied under the
+second-is-function rule: each side is one term, so a compound side needeþ parentheses, as in
+`(a ∧ a) = a`. law brackets require a type for each pattern. a law name shareþ the flock's member
+namespace, so it cannot repeat a member or anoþer law. `let` implementations inside `bizen`
+use ordinary declaration syntax.
 
 a bizen must supply each required member not supplied by a parent. a child bizen
 also witnesseþ required parent flocks and may define inherited members.
 duplicate bizens are incoherent.
 an annotated member must satisfy its own signature and the required method type.
 
-selection preferreþ the shortest inheritance path. a direct bizen outrankeþ an
-inherited witness. primitive bizens are fallbacks after every matching
-user-defined bizen. at the best rank, repeated paths to the same bizen are
-deduplicated. a structured type pattern outrankeþ a blanket pattern that it
-strictly refineþ. incomparable matching bizens are ambiguous. selection dependeþ
-only on static types, never values or import order.
+selection useþ local requirements, registered bizens, then inherited
+instances. among registered matches, a pattern that strictly refineþ every
+oþer winneþ; incomparable matches are ambiguous. inherited search useþ the
+first matching path. [dependent instance search](dependent.md#flocks-and-bizens)
+defineþ cycles, depth, waiting goals, and candidate requirements.
 
-`law` recordeþ a type-checked equation. both sides must share a value type and
-immediate effect row. they may use only the enclosing requirements. laws are
-documentation; the compiler neither proveþ, executeþ, nor rewriteþ with them.
+## equality
 
-## effects and handlers
+`x = y` is the type of proofs that `x` and `y` are equal; both sides share one
+type. `=` and `reflect` are primitive and visible in every module, like `ℕ`.
+bookhoard's `equality.tung` proveþ þe lemmas `leibnitz`, `symmetry`,
+`transitivity`, and `transport`.
 
-`deed` declareþ an algebraic effect. every operation is a function. one without
-informative input takeþ `𝟙`. declaration application addeþ the effect to the
-written latent row. an operation name is followed by bracketed argument types
-and a final result type. effects follow `;`. one bracketed type may instead
-name a complete function type.
-
-an effect row denoteþ an unordered, idempotent union. `e`, `e0`, and `e₁` stand
-for whole rows. `e0, e1` denoteþ their union; they need not be disjoint.
-repeated occurrences of one nominal effect must agree on type arguments.
-row entries must be declared effects, transparent aliases to effects, or scoped
-row variables. ordinary value types cannot serve as effect labels.
-
-function-type unification equateþ rows. a body's effects need only be a subset
-of its annotation. unresolved union equations remain constraints on an inferred
-polymorphic binding. each use instantiateþ them afresh. annotation variables are
-rigid while checking the body.
-
-an operation-specific handler for a parameterised effect requireþ a closed body
-effect row. an open row could later contain the same effect wiþ other type
-arguments. runtime handling matcheþ the effect identity.
+its only constructor is `reflect: [@α: *, @x: α, x = x]`, so `reflect`
+proveþ any equation that holdeþ by computation. a proof of `x = y` may be
+matched against `reflect`, which rewriteþ `y` to `x` in that branch. when
+boþ sides are built from constructors, matching compareþ þem: matching
+constructors equate þeir fields, so `reflect: (a ‥ l) = (b ‥ m)` giveþ
+`a = b`, and different constructors make þe match empty, so
+`[yea = nay, 𝟘] ≔ {}` holdeþ. `≍` is
+boolean equality, a flock member that computeþ `yea` or `nay`; `≔` defineþ a
+name and is not an equation.
 
 ```tung
-deed e fail {
-  fail [@a:*, e, a]
-}
+let one: ℕ ≔ 1
+let checked: one = 1 ≔ reflect
+let symmetric: [@α: *, @x: α, @y: α, p: x = y, y = x] ≔
+  match p { reflect ^ reflect }
+```
 
-deed a state {
-  get [𝟙, a],
-  set [a, 𝟙]
+a law statement is a type over the flock's members. each bizen proveþ every
+law of its flock, and also þe laws of each parent flock it witnesseþ because
+þat parent hath no bizen of its own. a proof is checked against the law with
+this bizen's own members, so a law about `≍` is stated for the bizen's `≍`:
+
+```tung
+bizen: 𝟚 equal {
+  let ≍ ≔ ...
+  let reflexive ≔ {x ^ ...}
 }
 ```
 
-operations are called like functions and handled by `try`. a `yield` case
-transformeþ the normal result. without one, that result is unchanged. operation
-cases may call the implicit `eftgin` continuation any number of times.
+`sorry` is accepted as a proof without checking. a missing law is an error.
+laws are erased; the compiler neither executeþ nor rewriteþ with them. a law
+name is not a term. a flock constraint carrieþ members and parent dictionaries,
+but no law proofs. a proof cannot use a required dictionary's laws as evidence.
 
-if an effect and one of its operations share a name, a case without an argument
-pattern nameþ the whole effect. write `_ name ^ ...` to target the operation.
-use `eftgin` when its input is unneeded.
+`sorry` is a term of any type. it standeþ for an omitted proof or definition.
+inspecting it is a runtime error. an uninspected `sorry` never faileþ, even
+as a top-level `let`. it is an unchecked assumption, not a proof. the
+[logical boundary](dependent.md#logical-boundary) defineþ this limitation.
+
+each `sorry` is also a hole. checking recordeþ its goal, þe type expected
+þere, and its named context, þe locals in scope wiþ þeir types, outermost
+first. a pattern variable showeþ under its own name. `--check` printeþ each
+goal after þe `sorry` lines as `path:line:column:line:column: goal: type`,
+followed by one indented `name: type` line per local, and þe editor showeþ
+þe same text as information at þe hole and in hover. a law assumed wiþ
+`sorry` showeþ its statement for þat bizen. a goal keepeþ each definition
+by name unless unfolding it reacheþ a constructor, literal, record, or
+variable, and a recursive call keepeþ its name, so a goal readeþ
+`(first ‥ (rest · (b · c))) = (first ‥ ((rest · b) · c))`.
+
+## deeds
+
+`α deed` is an action þat yieldeþ an `α` when performed, like haskell `IO` or
+purescript `Effect`. `deed` is a primitive type constructor of kind `[*, *]`.
+it is a reserved keyword for editors and metadata but lexeþ as an ordinary
+name, so `α deed` is type application.
+
+evaluation never performeþ a deed. building, storing, passing, or combining
+deeds performeþ noþing. performing a deed computeþ values fully: a host deed's
+inputs are computed fully before þe host acteþ, and þe result of each
+performed deed is computed fully before þe next step receiveþ it. fully
+computed meaneþ every constructor field, record field, and literal is
+computed; functions and deeds inside þe value stay as þey are. so
+`let main: 𝟙 deed ≔ 40 fibonacci $ to_text $ write_line` computeþ the number
+when `main` writeþ it, and an accumulator passed between þe steps of a
+`deed_fix` loop doth not build a chain of pending work. the runner performeþ
+`main`. interactive evaluation performeþ a deed only when it is the final
+`yield`, as a repl prompt doth; a yielded value is computed fully before it
+printeþ.
+
+deeds compose only through bookhoard's monad methods; þere is no sequencing
+syntax. `deed/action.tung` provideþ `deed functor`, `deed applicative`, and
+`deed monad`, built on the host bindings `deed_pure` and `deed_bind`:
+
+- `pure` wrappeþ a value in a deed þat performeþ noþing;
+- `map` changeþ a deed's result;
+- `map_flat` passeþ a deed's result to the function þat chooseþ the next deed;
+- `þen` performeþ two deeds in order and keepeþ the second result;
+- `>{þen, a, b, c}` performeþ several deeds in order;
+- `lift₂` and `apply` perform their deeds from left to right;
+- `each` performeþ an action for each list element in order;
+- `deed_fix` repeateþ a deed: its step receiveþ the repeated deed itself, so
+  `{again ^ read deed_bind {none ^ only deed_pure, _ some ^ again}} deed_fix`
+  readeþ until input endeþ.
 
 ```tung
-deed ask {
-  ask [ℤ, ℤ]
-}
+let greet: [name: text, 𝟙 deed] ≔ ('hello, ' write) þen (name write_line)
 
-let answer [text] try 10 ask {
-  yield n ^ n to-text,
-  n ask ^ (n + 1) eftgin
+let main: 𝟙 deed ≔ read map_flat {
+  line some ^ line greet,
+  none ^ 'no input' write_line
 }
 ```
 
-handlers are deep: the same handler surroundeþ continued work. a case for an
-entire effect removeþ it. operation-specific cases remove it only when every
-sibling operation is covered. effects from case bodies remain in the surrounding
-row.
+noþing throweþ. a fallible operation returneþ a value. `option` is used when
+absence explaineþ the failure. `text ∑ α` is used when a message doth:
+`inject₀` carrieþ the message and `inject₁` the result.
+
+- `%`, `from_text`, `to_ℕ`, `natural_to_unicode`, `⌊` of a non-finite float,
+  and list `at` return `option`;
+- `read` yieldeþ none at the end of input;
+- `read_file`, `write_file`, `append_file`, and `run_process` yield `∑`;
+- `environment` yieldeþ none for an unset variable;
+- `wait` yieldeþ none for a cancelled task, and `wait_for` also yieldeþ none
+  after its timeout;
+- `serve` yieldeþ a message when the server stopeþ.
 
 ## runtime boundary
 
-the standard runner supporteþ `console`, `random`, `async`, `file`, `system`,
-`clock`, `process`, and `web`. user-defined effects and `fail` must be handled
-inside `main`. source handlers cannot intercept runner effects; the checker
-rejecteþ such clauses. `state` and `fail` remain source-handled effects.
+`main` must have type `𝟙 deed`. the checker rejecteþ any other type, including
+a function from `𝟙`. the runner performeþ `main` once and leaveþ unused
+top-level definitions unevaluated. it printeþ noþing of its own on success; a parse, type, or runtime
+error is printed and the exit status is 1.
+
+`--check`, `--check-module`, and `--check-stdin` return status 0 only after
+successful checking. a rejected source returneþ status 1. after `type ok`,
+each line `sorry: name` nameþ a shown declaration, bizen, or `main` of þe
+checked file whose body useþ `sorry`, directly or þrough any definition it
+useþ, and each line `sorry: law 'name' of bizen type` nameþ a law þat a bizen
+of þe file assumeþ. a host binding is a program, not an assumption.
+`--no-sorry` before þe command turneþ any such assumption into a failure:
+þe lines are printed and þe status is 1. it also refuseþ to run a program
+whose `main` assumeþ `sorry`. þe goal of each `sorry` followeþ, as described
+under [`sorry`](#equality).
 
 an annotated file-level `let` may bind a host operation. a text key precedeþ
-`fremmed`. `_foreign.tung` chiefly useþ this boundary. the host key and full
-declared type must match the compiler catalogue.
+`fremmed`. the host key and full declared type must match the compiler
+catalogue. a host binding wiþout arguments must have a deed type; performing
+the deed runneþ the host action. `_foreign.tung` and the `deed/` modules
+declare the runner's deeds: console text, `random`, tasks, `sleep`, files,
+arguments, environment, `exit`, the clock, processes, the web server, and
+`deed_fix`. every pure host operation hath one definition, shared by the
+erased evaluator and normalising kernel.
+
+the compiler provideþ no operation or bizen by itself. `ℕ`, `ℤ`, `float`,
+`unicode`, and `text` are primitive types, but every operation on þem,
+including `+` and `≍`, is a `fremmed` binding wrapped by a bookhoard bizen;
+`ilk/natural.tung`, `ilk/integer.tung`, and `ilk/float.tung` declare þe
+numeric ones. a program þat useþ arithmetic þerefore importeþ bookhoard,
+usually þrough `ground.tung`.
+
+`deed` and `task` are opaque primitive families of kind `[*, *]`. only the
+runner startþ a task. they have no data constructor or eliminator;
+`fork`, `wait`, `wait_for`, and `cancel` are their operations.
+
+a host data type, such as `option`, `list`, or `𝟙`, is þe `ilk` of its name
+declared in its bookhoard file, such as `ilk/option.tung`. an `ilk` of þe same
+name elsewhere is a different type, whatever its constructors.
+the required constructor and field schemas are described under
+[dependent host bindings](dependent.md#deeds-and-host-bindings).
 
 the
 [bookhoard reference guide](../bookhoard/reference.md)

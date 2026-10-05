@@ -1,8 +1,9 @@
-use deed/fail.tung
 use ilk/list.tung
+use ilk/sum.tung
 use process/result.tung
 
-## run a child process and capture its status, standard output, and standard error.
-show deed process {
-  run-process [text, text list, process-result; text fail]
-}
+## run a child process and capture its status, standard output, and standard
+## error. a process þat cannot start yieldeþ its error message.
+show let run_process: [
+  text, text list, (text ∑ _process_result) deed
+] ≔ 'run_process' fremmed

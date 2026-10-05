@@ -1,0 +1,33 @@
+## runner deeds beyond þe console, through bookhoard's host bindings.
+use _foreign.tung
+use deed/file.tung
+use ilk/one.tung
+use ilk/option.tung
+use ilk/product.tung
+use ilk/sum.tung
+
+let þen: [@α: *, @β: *, first: α deed, next: β deed, β deed] ≔ first deed_bind {_ ^ next}
+let line: [text, 𝟙 deed] ≔ {x ^ (x join_text '\n') write}
+
+## a fallible deed returneþ `text ∑ α`: a message or a result.
+let report: [(text ∑ text) deed, 𝟙 deed] ≔ {action ^ action deed_bind {
+    message inject₀ ^ message line,
+    contents inject₁ ^ contents line
+}}
+
+## a cancelled or failed task hath no result.
+let await: [(text task) deed, 𝟙 deed] ≔ {started ^ started deed_bind {task ^ (task wait) deed_bind {
+      none ^ 'no result' line,
+      message some ^ message line
+}}}
+
+let main: 𝟙 deed ≔
+  >{þen,
+    ('note.txt' write_file 'saved') deed_bind {_ ^ only deed_pure},
+    'note.txt' read_file $ report,
+    'absent.txt' read_file $ report,
+    ('from a task' deed_pure) fork $ await,
+    match 'tung' behead_text {
+      none ^ 'empty' line,
+      (_ boþ rest) some ^ rest line
+  }}

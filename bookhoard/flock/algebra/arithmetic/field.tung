@@ -2,7 +2,7 @@ use flock/algebra/arithmetic/divide.tung
 use flock/algebra/arithmetic/multiply.tung
 use flock/algebra/arithmetic/ring.tung
 
-show flock field [byzen a ring, byzen a divide] {
-  law [dividend:a, divisor:a]
-    (dividend ÷ divisor) × divisor = dividend
+show flock field: [α: *, @: α ring, @: α divide, *] {
+  let ÷_×: [dividend: α, divisor: α,
+    ((dividend ÷ divisor) × divisor) = dividend]
 }

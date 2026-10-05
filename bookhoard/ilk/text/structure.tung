@@ -2,42 +2,62 @@ use _foreign.tung
 use flock/algebra/total/monoid.tung
 use flock/algebra/total/semigroup.tung
 use flock/equal.tung
-use flock/order/less-equal.tung
-use flock/order/order-partial.tung
-use flock/order/order-total.tung
+use flock/order/less_equal.tung
+use flock/order/order_partial.tung
+use flock/order/order_total.tung
 use ilk/list.tung
 use ilk/option.tung
 use ilk/product.tung
 use ilk/two.tung
 
-bizen:text equal {
-  let ≡ [] equal-text
+show let text_to_list: [text, unicode list] ≔ 'text_to_list' fremmed
+show let list_to_text: [unicode list, text] ≔ 'list_to_text' fremmed
+
+bizen: text equal {
+  let ≍ ≔ equal_text
 }
 
-bizen:unicode equal {
-  let ≡ [] equal-unicode
+bizen: unicode equal {
+  let ≍ ≔ equal_unicode
 }
 
-bizen:text less-equal {
-  let ≤ [] less-equal-text
+bizen: text less_equal {
+  let ≤ ≔ less_equal_text
 }
 
-bizen:text order-partial {}
-
-bizen:text order-total {}
-
-bizen:unicode less-equal {
-  let ≤ [] less-equal-unicode
+bizen: text order_partial {
+  let ≤_reflect ≔ sorry
+  let ≤_antisymmetric ≔ sorry
+  let ≤_transit ≔ sorry
 }
 
-bizen:unicode order-partial {}
-
-bizen:unicode order-total {}
-
-bizen:text semigroup {
-  let · [] join-text
+bizen: text order_total {
+  let ≤_total ≔ sorry
 }
 
-bizen:text monoid {
-  let ∅ [] ''
+bizen: unicode less_equal {
+  let ≤ ≔ less_equal_unicode
+}
+
+bizen: unicode order_partial {
+  let ≤_reflect ≔ sorry
+  let ≤_antisymmetric ≔ sorry
+  let ≤_transit ≔ sorry
+}
+
+bizen: unicode order_total {
+  let ≤_total ≔ sorry
+}
+
+bizen: text semigroup {
+  let · ≔ join_text
+
+  let ·_· ≔ sorry
+}
+
+bizen: text monoid {
+  let ∅ ≔ ''
+
+  let ∅_· ≔ sorry
+  let ·_∅ ≔ sorry
 }

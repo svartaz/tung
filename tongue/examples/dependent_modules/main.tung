@@ -1,0 +1,14 @@
+use host.tung
+use natural.tung number
+
+## bare names come from an unambiguous import; qualified names always work.
+let repeat: [count: nat, action: 𝟙 deed, 𝟙 deed] ≔ match count {
+  zero ^ only deed_pure,
+  n succeed ^ action þen (n repeat action)
+}
+
+let main: 𝟙 deed ≔ >{
+  þen,
+  number~four repeat ('tung ' write),
+  '\n' host~write
+}

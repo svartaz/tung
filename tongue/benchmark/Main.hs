@@ -3,7 +3,7 @@ module Main (main) where
 import Control.Exception qualified as Exception
 import Control.Monad (forM, replicateM, unless, void)
 import Data.Foldable (asum)
-import Data.List (find, intercalate, isPrefixOf, sort)
+import Data.List (find, intercalate, sort)
 import Data.Map.Strict qualified as Map
 import Data.Word (Word64)
 import GHC.Clock (getMonotonicTimeNSec)
@@ -17,6 +17,9 @@ import System.Process (readProcessWithExitCode)
 import Text.Printf (printf)
 import Text.Read (readMaybe)
 import Tung
+import Tung.Dependent (Inferred (..))
+import Tung.Dependent.Run (ioHost, renderRuntime, requireMain, runMain, runYield)
+import Tung.Dependent.Source (SourceProgram, compileYieldWith, sourceDefinitions)
 
 data Config = Config
   { configRuns :: Int,
@@ -29,8 +32,8 @@ data BenchmarkCase
   | FibonacciCompile
   | FizzbuzzCompile
   | FizzbuzzEvaluate
-  | MultishotCompile
-  | MultishotEvaluate
+  | LambdaCompile
+  | LambdaEvaluate
   deriving stock (Bounded, Enum, Eq, Show)
 
 data Sample = Sample
@@ -170,16 +173,16 @@ prepareAction benchmarkCase size = case benchmarkCase of
   FibonacciCompile -> compileAndForce True <$> loadByspel "benchmark/fibonacci.tung"
   FizzbuzzCompile -> compileAndForce True <$> loadByspel "byspel/fizzbuzz.tung"
   FizzbuzzEvaluate -> loadByspel "byspel/fizzbuzz.tung" >>= evaluateAction True
-  MultishotCompile -> compileAndForce True <$> loadByspel "byspel/multishot.tung"
-  MultishotEvaluate -> loadByspel "byspel/multishot.tung" >>= evaluateAction True
+  LambdaCompile -> compileAndForce True <$> loadByspel "byspel/lambda.tung"
+  LambdaEvaluate -> loadByspel "byspel/lambda.tung" >>= evaluateAction True
 
 generatedBundle :: Int -> SourceBundle
 generatedBundle size =
   SourceBundle
     { bundleSource =
         unlines
-          ( ["let value0 [ℤ] 0"]
-              ++ ["let value" ++ show index ++ " [ℤ] " ++ show index | index <- [1 .. size - 1]]
+          ( ["let value0:ℤ = +0"]
+              ++ ["let value" ++ show index ++ ":ℤ = +" ++ show index | index <- [1 .. size - 1]]
               ++ ["yield value" ++ show (size - 1)]
           ),
       bundleImports = Map.empty
@@ -213,28 +216,29 @@ compileAndForce runnable bundle = compileBundle runnable bundle >>= forceCore
 
 evaluateAction :: Bool -> SourceBundle -> IO (IO ())
 evaluateAction runnable bundle = do
-  program <- compileBundle runnable bundle
-  forceCore program
-  pure do
-    result <-
-      if runnable
-        then evaluateMainCoreProgram program
-        else evaluateCoreProgram program
-    Exception.evaluate (length result)
-    unless ("eval ok: " `isPrefixOf` result) (die result)
+  (program, yielded) <- compileBundle runnable bundle
+  forceCore (program, yielded)
+  host <- ioHost []
+  if runnable
+    then case runMain host program of
+      Left message -> die message
+      Right action -> pure (action >>= either die (\status -> unless (status == 0) (die ("main exited wiþ " ++ show status))))
+    else case yielded of
+      Nothing -> die "benchmark source yieldeþ no value"
+      Just inferred -> pure do
+        result <- runYield host program (inferredTerm inferred) >>= either die pure
+        void (Exception.evaluate (length (renderRuntime result)))
 
-compileBundle :: Bool -> SourceBundle -> IO CoreProgram
+compileBundle :: Bool -> SourceBundle -> IO (SourceProgram, Maybe Inferred)
 compileBundle runnable SourceBundle {bundleSource, bundleImports} =
-  case parse bundleSource >>= elaborate of
+  case compileYieldWith Map.empty (SourceModule "benchmark.tung") bundleSource bundleImports of
     Left message -> die ("benchmark compilation failed: " ++ message)
-    Right program -> pure program
-  where
-    elaborate program
-      | runnable = elaborateProgramWithImports program bundleImports True
-      | otherwise = elaborateInteractiveProgramWithImports program bundleImports
+    Right compiled@(program, _) -> case if runnable then () <$ requireMain program else Right () of
+      Left message -> die message
+      Right () -> pure compiled
 
-forceCore :: CoreProgram -> IO ()
-forceCore program = void (Exception.evaluate (length (show program)))
+forceCore :: (SourceProgram, Maybe Inferred) -> IO ()
+forceCore (program, yielded) = void (Exception.evaluate (length (show (sourceDefinitions program, yielded))))
 
 caseName :: BenchmarkCase -> String
 caseName benchmarkCase = case benchmarkCase of
@@ -243,8 +247,8 @@ caseName benchmarkCase = case benchmarkCase of
   FibonacciCompile -> "fibonacci/compile"
   FizzbuzzCompile -> "fizzbuzz/compile"
   FizzbuzzEvaluate -> "fizzbuzz/evaluate"
-  MultishotCompile -> "multishot/compile"
-  MultishotEvaluate -> "multishot/evaluate"
+  LambdaCompile -> "lambda/compile"
+  LambdaEvaluate -> "lambda/evaluate"
 
 parseCase :: String -> IO BenchmarkCase
 parseCase name = case find ((== name) . caseName) allCases of

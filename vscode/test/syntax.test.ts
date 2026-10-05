@@ -12,6 +12,20 @@ test("token depths recover from an unmatched close", () => {
   assert.deepEqual(tokenDepths(tokens), [0, 0, 1, 2, 2, 1]);
 });
 
+test("right composition participateþ in delimiter navigation", () => {
+  const tokens = tokenize(">{cons, >{cons, value, empty}, empty}");
+  const opening = tokens.filter(({ text }) => text === ">{");
+  const closing = tokens.filter(({ text }) => text === "}");
+  assert.deepEqual(
+    opening.map(({ index }) => findMatching(tokens, index)),
+    [closing[1].index, closing[0].index],
+  );
+  assert.deepEqual(
+    closing.map(({ index }) => findOpening(tokens, index)),
+    [opening[1].index, opening[0].index],
+  );
+});
+
 test("bracket lookups agree for nested and unmatched delimiters", () => {
   const tokens = tokenize("(r{value} { unmatched ) } )");
   const opening = tokens.filter(({ text }) => ["(", "r{", "{"].includes(text));

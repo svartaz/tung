@@ -1,21 +1,25 @@
 use ground.tung
+use ilk/option.tung
 
-let read-user [_:𝟙, float; console]
-  try (only read) from-text {
-    _ fail ^ (
-      let _ [] 'could not read a float; using 0.0' write-line
-      yield 0.0
-    )
-  }
+let fallback: float deed ≔
+  ('could not read a float; using 0.0' write_line) þen (0.0 pure)
 
-let main [_:𝟙, 𝟙; console, random] (
-  let _ [] 'input a float between 0.0 and 1.0' write-line
-  let user [] only read-user
-  let hidden [] only random
-  let outcome [text] match user ≤ hidden, hidden ≤ user {
+let read_user: float deed ≔ read map_flat {
+  line some ^ match line from_text {
+    value some ^ value pure,
+    none ^ fallback
+  },
+  none ^ fallback
+}
+
+let outcome: [user: float, hidden: float, text] ≔
+  match user ≤ hidden, hidden ≤ user {
     yea, nay ^ 'lose',
     nay, yea ^ 'win',
     _, _ ^ 'draw'
   }
-  yield outcome write-line
-)
+
+let main: 𝟙 deed ≔ >{þen,
+  'input a float between 0.0 and 1.0' write_line,
+  read_user map_flat { user ^ random map (user outcome) $ map_flat write_line }
+}

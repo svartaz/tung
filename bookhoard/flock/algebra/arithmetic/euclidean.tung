@@ -1,34 +1,40 @@
 use flock/algebra/arithmetic/add.tung
-use flock/algebra/arithmetic/divide-remainder.tung
+use flock/algebra/arithmetic/divide_remainder.tung
 use flock/algebra/arithmetic/multiply.tung
 use flock/algebra/arithmetic/ring.tung
 use flock/algebra/arithmetic/subtract.tung
 use flock/algebra/arithmetic/zero.tung
-use flock/order/less-equal.tung
-use flock/order/order-total.tung
+use flock/order/less_equal.tung
+use flock/order/order_total.tung
+use ilk/integer.tung
+use ilk/option.tung
 use ilk/product.tung
 use ilk/two.tung
 
 ## euclidean division, whose remainder lieþ between zero and þe divisor's
-## absolute magnitude. each law shareþ þe operations' division-by-zero effect.
-show flock euclidean [byzen a ring, byzen a divide-remainder, byzen a order-total] {
-  law [dividend:a, divisor:a]
-    match dividend % divisor {
-      quotient ∏ rest ^ (quotient × divisor) + rest
-    } = dividend + (zero × ((dividend % divisor) project₁))
+## absolute magnitude. division by zero yieldeþ none, which þe laws skip.
+show flock euclidean: [α: *, @: α ring, @: α divide_remainder, @: α order_total, *] {
+  let %_×_+: [dividend: α, divisor: α,
+    (match dividend % divisor {
+        none ^ dividend,
+        (quotient boþ rest) some ^ (quotient × divisor) + rest
+    }) = dividend]
 
-  law [dividend:a, divisor:a]
-    zero ≤ ((dividend % divisor) project₁)
-      = match dividend % divisor {
-        _ ∏ rest ^ rest ≤ rest
-      }
+  let %_nonnegative: [dividend: α, divisor: α,
+    (match dividend % divisor {
+        none ^ yea,
+        (_ boþ rest) some ^ zero ≤ rest
+    }) = yea]
 
-  law [dividend:a, divisor:a]
-    match dividend % divisor {
-      _ ∏ rest ^ (zero ≤ divisor) if (rest < divisor) (rest < (zero - divisor))
-    } = match dividend % divisor {
-      _ ∏ rest ^ rest ≤ rest
-    }
+  let %_bounded: [dividend: α, divisor: α,
+    (match dividend % divisor {
+        none ^ yea,
+        (_ boþ rest) some ^ (zero ≤ divisor) if (rest < divisor) (rest < (zero - divisor))
+    }) = yea]
 }
 
-bizen:ℤ euclidean {}
+bizen: ℤ euclidean {
+  let %_×_+ ≔ sorry
+  let %_nonnegative ≔ sorry
+  let %_bounded ≔ sorry
+}

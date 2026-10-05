@@ -1,25 +1,50 @@
 use _foreign.tung
 use flock/algebra/arithmetic/add.tung
-use flock/algebra/arithmetic/monoid-additive.tung
-use flock/algebra/arithmetic/monoid-multiplicative.tung
+use flock/algebra/arithmetic/monoid_additive.tung
+use flock/algebra/arithmetic/monoid_multiplicative.tung
 use flock/algebra/arithmetic/multiply.tung
 use flock/algebra/arithmetic/one.tung
 use flock/algebra/arithmetic/semiring.tung
+use flock/algebra/arithmetic/subtract.tung
 use flock/algebra/arithmetic/zero.tung
+use flock/equal.tung
+use flock/from_text.tung
+use flock/order/less_equal.tung
+use flock/to_text.tung
 
 ## ieee floats keep þeir useful operations wiþout claiming exact semiring laws.
-bizen:float add {
-  let + [] add-float
+bizen: float add {
+  let + ≔ add_float
 }
 
-bizen:float zero {
-  let zero [] 0.0
+bizen: float subtract {
+  let - ≔ subtract_float
 }
 
-bizen:float multiply {
-  let × [] multiply-float
+bizen: float haþ_zero {
+  let zero ≔ 0.0
 }
 
-bizen:float one {
-  let one [] 1.0
+bizen: float multiply {
+  let × ≔ multiply_float
+}
+
+bizen: float haþ_one {
+  let one ≔ 1.0
+}
+
+bizen: float equal {
+  let ≍ ≔ equal_float
+}
+
+bizen: float less_equal {
+  let ≤ ≔ less_equal_float
+}
+
+bizen: float haþ_to_text {
+  let to_text ≔ float_to_text
+}
+
+bizen: float haþ_from_text {
+  let from_text ≔ text_to_float
 }

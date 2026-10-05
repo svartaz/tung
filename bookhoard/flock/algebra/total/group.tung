@@ -1,8 +1,8 @@
 use flock/algebra/total/monoid.tung
 use flock/algebra/total/semigroup.tung
 
-show flock group [byzen a monoid] {
-  let / [a, a, a]
+show flock group: [α: *, @: α monoid, *] {
+  let /: [α, α, α]
 
-  law [a:a] a / a = ∅
+  let /_cancel: [a: α, (a / a) = ∅]
 }

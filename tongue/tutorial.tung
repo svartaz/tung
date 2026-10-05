@@ -1,0 +1,103 @@
+use ground.tung
+# imported as `list`
+use ilk/list.tung
+# imported as `hashmap`
+use ilk/table.tung hashmap
+
+# use imported values
+let l ≔ list~empty
+let table ≔ hashmap~empty
+
+# define variables
+let number: ℤ ≔ 42
+let text ≔ 'hello!'
+
+# define functions
+let sameness₀: [a:] ≔ a
+let sameness₁: [@α: *, a: α, α] ≔ a
+let sameness₂: [@α: *, α, α] ≔ {a ^ a}
+let sameness₃ ≔ fall @α: *, a: α, α ^ a
+
+let constant₀: [a:, b:] ≔ a
+let constant₁: [@α: *, @β: *, a: α, _: β, α] ≔ a
+let constant₂: [@α: *, @β: *, α, β, α] ≔ {a, _ ^ a}
+let constant₃ ≔ fall @α: *, @β: *, a: α, b: β, α ^ a
+
+# infer type inputs or supply þem with `@`
+let greeting: text ≔ 'hello' constant₁ 42
+let explicit-greeting: text ≔ 'hello' constant₁ @text @ℤ 42
+# combine a positional argument with a typed argument and result
+let add-after: [x:, y: ℤ, ℤ] ≔ x + y
+
+# `yield` a value from a local block
+let seven ≔ (
+  let six ≔ 2 × 3
+  yield six + 1
+)
+
+# define a type alias
+let powerset ≔ fall a: *, * ^ [a, 𝟚]
+
+# ordinary lists contain types or type constructors
+let types: * list ≔ >{‥, ℤ, text, ∅}
+let constructors: [*, *] list ≔ >{‥, list, ∅}
+
+# prepend a type or concatenate type lists
+let prefixed: [xs: * list, * list] ≔ ℤ ‥ xs
+let joined: * list ≔ (ℤ ‥ ∅) · >{‥, text, ∅}
+
+# define algebraic data types
+ilk 𝟘: * {}
+ilk 𝟙: * {
+  only: 𝟙
+}
+ilk 𝟚: * {
+  yea: 𝟚,
+  nay: 𝟚
+}
+ilk option: [α: *, *] {
+  empty: α option,
+  some: [a: α, α option]
+}
+
+# match a value
+let ¬: [𝟚, 𝟚] ≔ {
+  yea ^ nay,
+  nay ^ yea
+}
+# or equivalently
+let ¬′: [x: 𝟚, 𝟚] ≔ match x {
+  yea ^ nay,
+  nay ^ yea
+}
+
+# define records
+let person: * ≔ r{name: text, age: ℤ}
+let person: person ≔ r{name ≔ 'tung', age ≔ 1}
+let older ≔ r{≔ person, age ≔ 2}
+let age ≔ older.age
+
+# define a type class
+show flock functor: [ϝ: [*, *], *] {
+  let map: [@α: *, @β: * α ϝ, [α, β], β ϝ]
+
+  let map_sameness: [@α: *, b: α ϝ, (b map sameness) = b]
+}
+
+show flock applicative: [ϝ: [*, *], @: ϝ functor, *] {
+  let pure: [@α: *, α, α f]
+  let apply: [@α: *, @β: *, a f, [a, β] f, β f]
+
+  # omitted laws
+}
+
+# implement a type class
+bizen: option functor {
+  let map ≔ {
+    none,   _ ^ none,
+    a some, f ^ a f $ some
+  }
+}
+
+let main: 𝟙 deed ≔
+  'hello!' write

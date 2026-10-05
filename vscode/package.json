@@ -86,10 +86,6 @@
       {
         "id": "typeFunction",
         "description": "parameterised type or flock declaration"
-      },
-      {
-        "id": "effect",
-        "description": "effect operation or effect type"
       }
     ],
     "semanticTokenScopes": [
@@ -108,9 +104,8 @@
             "support.type.tung",
             "support.type"
           ],
-          "type.effect": [
-            "support.type.effect.tung",
-            "support.type.effect",
+          "typeParameter": [
+            "support.type.tung",
             "support.type"
           ],
           "class": [
@@ -125,23 +120,11 @@
             "entity.name.function.member.tung",
             "entity.name.function.member"
           ],
-          "method.effect": [
-            "entity.name.function.member.tung",
-            "entity.name.function.member"
-          ],
           "call": [
             "variable.other.tung",
             "variable.other"
           ],
-          "call.effect": [
-            "variable.other.tung",
-            "variable.other"
-          ],
           "variable": [
-            "variable.other.tung",
-            "variable.other"
-          ],
-          "variable.effect": [
             "variable.other.tung",
             "variable.other"
           ],
@@ -166,6 +149,9 @@
             "italic": false
           },
           "type:tung": {
+            "italic": false
+          },
+          "typeParameter:tung": {
             "italic": false
           },
           "class:tung": {

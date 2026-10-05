@@ -1,36 +1,38 @@
 use flock/algebra/partial/semigroupoid.tung
 use ground.tung
 use ilk/list.tung
+use ilk/option.tung
 use ilk/product.tung
 
-let can-divide [byzen a divide-remainder, byzen a zero, byzen a equal, divisor:a, dividend:a, 𝟚]
-  try ((dividend % divisor) project₁) ≡ zero {
-    _ fail ^ nay
+let can_divide: [@α: *, @: α divide_remainder, @: α haþ_zero, @: α equal, divisor: α, dividend: α, 𝟚] ≔
+  match dividend % divisor {
+    (_ boþ rest) some ^ rest ≍ zero,
+    none ^ nay
   }
 
-ilk fizzbuzz [*] {
-  fizz,
-  buzz,
-  fizzbuzz,
-  ℤ raw
+ilk _fizzbuzz: * {
+  fizz: _fizzbuzz,
+  buzz: _fizzbuzz,
+  fizzbuzz: _fizzbuzz,
+  raw: [ℤ, _fizzbuzz]
 }
 
-bizen:fizzbuzz to-text {
-  let to-text [] {
+bizen: _fizzbuzz haþ_to_text {
+  let to_text ≔ {
     fizz ^ 'fizz',
     buzz ^ 'buzz',
     fizzbuzz ^ 'fizzbuzz',
-    i raw ^ i to-text
+    i raw ^ i to_text
   }
 }
 
-let to-fizzbuzz [integer:ℤ, fizzbuzz]
-  match 3 can-divide integer, 5 can-divide integer {
+let to_fizzbuzz: [integer: ℤ, _fizzbuzz] ≔
+  match +3 can_divide integer, +5 can_divide integer {
     yea, yea ^ fizzbuzz,
     yea, nay ^ fizz,
     nay, yea ^ buzz,
     nay, nay ^ integer raw
   }
 
-let _ main [𝟙; console]
-  0 till 32 $ map (to-fizzbuzz ∘ to-text) $ each write-line
+let main: 𝟙 deed ≔
+  +0 till +32 $ map (to_fizzbuzz ▷ to_text) $ each write_line

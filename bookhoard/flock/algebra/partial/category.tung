@@ -1,12 +1,16 @@
+use combinator.tung
 use flock/algebra/partial/semigroupoid.tung
 
-show flock category [byzen ⇨ semigroupoid] {
-  let sameness [@a:*, a ⇨ a]
+show flock category: [⇨: [*, *, *], @: ⇨ semigroupoid, *] {
+  let sameness: [@α: *, α ⇨ α]
 
-  law [@a:*, @b:*, f:a ⇨ b] sameness ∘ f = f
-  law [@a:*, @b:*, f:a ⇨ b] f ∘ sameness = f
+  let sameness_▷: [@α: *, @β: *, f: α ⇨ β, (sameness ▷ f) = f]
+  let ▷_sameness: [@α: *, @β: *, f: α ⇨ β, (f ▷ sameness) = f]
 }
 
-bizen:→ category {
-  let a sameness [] a
+bizen: → category {
+  let sameness: [a:] ≔ a
+
+  let sameness_▷ ≔ {_ ^ reflect}
+  let ▷_sameness ≔ {_ ^ reflect}
 }

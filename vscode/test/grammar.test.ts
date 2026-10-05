@@ -23,32 +23,30 @@ const languageConfiguration = JSON.parse(
 );
 test("textmate immediately scopeþ lexical syntax", async () => {
   const loaded = await loadGrammar();
-  for (
-    const [source, name, scope] of [
-      [
-        "use flock/functor.tung functor",
-        "flock/functor.tung",
-        "string.unquoted.import-path.tung",
-      ],
-      [
-        "use flock/functor.tung functor",
-        "functor",
-        "entity.name.namespace.tung",
-      ],
-      ["let value [] '𝟙\\128512;'", "'𝟙", "string.quoted.single.tung"],
-      ["let value [] `\\128512;", "`\\128512;", "constant.character.tung"],
-      ["let value [] 12.5", "12.5", "constant.numeric.float.tung"],
-      ["# a comment", "#", "comment.line.number-sign.tung"],
-      ["/* a comment */", "a comment", "comment.block.tung"],
-      ["show let identity [x:ℤ, ℤ] x", "let", "keyword.declaration.tung"],
-      ["match value {x ^ x}", "match", "keyword.control.tung"],
-      ["a → b", "→", "support.type.tung"],
-      ["@a:*", "*", "keyword.other.tung"],
-      ["@a:*", "@", "keyword.other.tung"],
-      ["byzen a equal", "byzen", "keyword.declaration.tung"],
-      ["r{field = 1}", "r{", "punctuation.section.braces.begin.tung"],
-    ]
-  ) {
+  for (const [source, name, scope] of [
+    [
+      "use flock/functor.tung functor",
+      "flock/functor.tung",
+      "string.unquoted.import-path.tung",
+    ],
+    ["use flock/functor.tung functor", "functor", "entity.name.namespace.tung"],
+    ["let value ≔ '𝟙\\128512;'", "'𝟙", "string.quoted.single.tung"],
+    ["let value ≔ `\\128512;", "`\\128512;", "constant.character.tung"],
+    ["let value ≔ 12.5", "12.5", "constant.numeric.float.tung"],
+    ["let value ≔ +12", "+12", "constant.numeric.integer.tung"],
+    ["let value ≔ 12", "12", "constant.numeric.natural.tung"],
+    ["# a comment", "#", "comment.line.number-sign.tung"],
+    ["/* a comment */", "a comment", "comment.block.tung"],
+    ["show let identity:[x:ℤ, ℤ] ≔ x", "let", "keyword.declaration.tung"],
+    ["match value {x ^ x}", "match", "keyword.control.tung"],
+    ["let main: 𝟙 deed ≔ only pure", "deed", "keyword.control.tung"],
+    ["let proof ≔ sorry", "sorry", "keyword.control.tung"],
+    ["let fold ≔ induce list", "induce", "keyword.control.tung"],
+    ["@a:*", "*", "keyword.other.tung"],
+    ["@a:*", "@", "keyword.other.tung"],
+    [">{cons, value, empty}", ">{", "punctuation.section.braces.begin.tung"],
+    ["r{field ≔ 1}", "r{", "punctuation.section.braces.begin.tung"],
+  ]) {
     const position = source.lastIndexOf(name);
     const token = loaded
       .tokenizeLine(source)
@@ -62,18 +60,18 @@ test("textmate immediately scopeþ lexical syntax", async () => {
 test("textmate leaveþ name roles to the compiler", async () => {
   const loaded = await loadGrammar();
   let state = textmate.INITIAL;
-  for (
-    const source of [
-      "show flock functor [f:[*, *]] {",
-      "  let map [@a:*, @b:*, @e:*, a f, [a, b; e], b f; e]",
-      "}",
-      "show let void [@a:*, @f:[*, *], af:a f, 𝟙 f]",
-      "  af map {_ ^ only}",
-      "show let read-paþ [text paþ:paþ, text; file, text fail]",
-      "show let join-paþ [text₀ paþ:paþ, text₁ paþ:paþ, paþ]",
-      "x ⁖ xs · list~⁖",
-    ]
-  ) {
+  for (const source of [
+    "show flock functor:[f:[*, *], *] {",
+    "  let map:[@a:*, @b:*, a f, [a, b], b f] ≔",
+    "}",
+    "show let void:[@a:*, @f:[*, *], af:a f, 𝟙 f] ≔",
+    "  af map {_ ^ only}",
+    "show let read_paþ:[text paþ:_paþ, (text ∑ text) deed] ≔",
+    "show let join_paþ:[text₀ paþ:_paþ, text₁ paþ:_paþ, _paþ] ≔",
+    "x ‥ xs · list~‥",
+    "let count:* ≔ ℤ",
+    "let identity:[@α:*, x:α, α] ≔ x",
+  ]) {
     const result = loaded.tokenizeLine(source, state);
     state = result.ruleStack;
     assert(
@@ -101,9 +99,10 @@ test("special openers remain paired in language configuration", () => {
 test("manifest mapeþ semantic roles to theme scopes", () => {
   const defaults = manifest.contributes.configurationDefaults["[tung]"];
   const scopes = manifest.contributes.semanticTokenScopes[0].scopes;
-  const semanticDefaults = manifest.contributes.configurationDefaults[
-    "editor.semanticTokenColorCustomizations"
-  ];
+  const semanticDefaults =
+    manifest.contributes.configurationDefaults[
+      "editor.semanticTokenColorCustomizations"
+    ];
   const semanticTypes = Object.fromEntries(
     manifest.contributes.semanticTokenTypes.map(({ id, superType }) => [
       id,
@@ -115,16 +114,14 @@ test("manifest mapeþ semantic roles to theme scopes", () => {
   assert.equal(semanticDefaults.rules["parameter:tung"].italic, false);
   assert.equal(semanticDefaults.rules["type:tung"].italic, false);
   assert.equal(semanticDefaults.rules["class:tung"].italic, false);
-  for (
-    const selector of [
-      "call.applied:tung",
-      "type.applied:tung",
-      "class.applied:tung",
-      "typeParameter.applied:tung",
-      "type.typeFunction:tung",
-      "class.typeFunction:tung",
-    ]
-  ) {
+  for (const selector of [
+    "call.applied:tung",
+    "type.applied:tung",
+    "class.applied:tung",
+    "typeParameter.applied:tung",
+    "type.typeFunction:tung",
+    "class.typeFunction:tung",
+  ]) {
     assert.equal(semanticDefaults.rules[selector].italic, true);
   }
   assert.equal(semanticTypes.call, "variable");
@@ -147,21 +144,6 @@ test("manifest mapeþ semantic roles to theme scopes", () => {
     scopes.call,
     scopes.variable,
     "applied functions use the theme's ordinary variable colour",
-  );
-  assert.deepEqual(
-    scopes["call.effect"],
-    scopes.call,
-    "effect calls keep the theme's ordinary variable colour",
-  );
-  assert.deepEqual(
-    scopes["method.effect"],
-    scopes.method,
-    "effect declarations keep the theme's method colour",
-  );
-  assert.deepEqual(
-    scopes["variable.effect"],
-    scopes.variable,
-    "unapplied effect operations keep the theme's variable colour",
   );
   assert.equal(
     scopes.type.some((scope) => scopes.function.includes(scope)),
@@ -234,9 +216,9 @@ const loadGrammar = async () => {
       Promise.resolve(
         scopeName === grammar.scopeName
           ? textmate.parseRawGrammar(
-            JSON.stringify(grammar),
-            "tung.tmLanguage.json",
-          )
+              JSON.stringify(grammar),
+              "tung.tmLanguage.json",
+            )
           : null,
       ),
   });

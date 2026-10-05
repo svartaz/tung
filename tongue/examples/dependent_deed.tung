@@ -1,0 +1,31 @@
+## host deeds come from bookhoard. þe catalogue checkeþ each binding's type.
+use _foreign.tung
+use ilk/one.tung
+use ilk/option.tung
+
+## sequencing discardeþ þe first result.
+let þen: [@α: *, @β: *, first: α deed, next: β deed, β deed] ≔ first deed_bind {_ ^ next}
+
+ilk nat: * {
+  zero: nat,
+  succeed: [nat, nat]
+}
+
+## bounded repetition is ordinary structural induction producing a deed.
+let times: [action: 𝟙 deed, count: nat, 𝟙 deed] ≔
+  {_: nat ^ 𝟙 deed} induce nat (only deed_pure) {_, rest ^ action þen rest} count
+
+## an unbounded loop useþ þe deed fixed point. it endeþ when input endeþ.
+let echo: 𝟙 deed ≔ {again ^ read deed_bind {
+    none ^ only deed_pure,
+    line some ^ >{þen, line write, '\n' write, again}
+}} deed_fix
+
+let main: 𝟙 deed ≔
+  >{þen,
+    ('tung ' write) times ((zero succeed) succeed),
+    '\nwhat is thy name? ' write,
+    read deed_bind {
+      none ^ 'nobody\n' write,
+      name some ^ >{þen, 'hail, ' write, name write, '!\n' write}
+  }}

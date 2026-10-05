@@ -1,0 +1,7 @@
+use ilk/option.tung
+use ilk/product.tung
+
+## euclidean quotient and remainder computed togeþer.
+show flock divide_remainder: [α: *, *] {
+  let %: [α, α, (α ∏ α) option]
+}

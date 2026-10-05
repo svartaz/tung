@@ -1,0 +1,7 @@
+use ilk/one.tung
+use ilk/sum.tung
+
+## file access. a failure yieldeþ its error message on þe left.
+show let read_file: [text, (text ∑ text) deed] ≔ 'read_file' fremmed
+show let write_file: [text, text, (text ∑ 𝟙) deed] ≔ 'write_file' fremmed
+show let append_file: [text, text, (text ∑ 𝟙) deed] ≔ 'append_file' fremmed

@@ -1,0 +1,5 @@
+use ilk/option.tung
+
+show flock haþ_from_text: [α: *, *] {
+  let from_text: [text, α option]
+}

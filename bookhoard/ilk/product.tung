@@ -8,66 +8,96 @@ use flock/functor/bifunctor.tung
 use flock/functor/cata.tung
 use flock/functor/monad.tung
 use flock/functor/traverse.tung
-use flock/order/lattice-distributive.tung
 use flock/order/lattice.tung
-use flock/order/semilattice-lower.tung
-use flock/order/semilattice-upper.tung
+use flock/order/lattice_distributive.tung
+use flock/order/semilattice_lower.tung
+use flock/order/semilattice_upper.tung
 
-show ilk ∏ [a:*, b:*, *] {
-  ∏ [a, b, a ∏ b]
+show ilk ∏: [α: *, β: *, *] {
+  boþ: [α, β, α ∏ β]
 }
 
-show let project₀ [@a:*, @b:*, a ∏ _:a ∏ b, a] a
+show let project₀: [@α: *, @β: *, α boþ _: α ∏ β, α] ≔ α
 
-show let project₁ [@a:*, @b:*, a ∏ b:a ∏ b, b] b
+show let project₁: [@α: *, @β: *, α boþ β: α ∏ β, β] ≔ β
 
-show let swap [@a:*, @b:*, a ∏ b:a ∏ b, b ∏ a] b ∏ a
+show let swap: [@α: *, @β: *, a boþ b: α ∏ β, β ∏ α] ≔ b boþ a
 
-bizen:∏ bifunctor {
-  let (a ∏ b) bimap f g [] (a f) ∏ (b g)
+bizen: ∏ bifunctor {
+  let bimap: [a boþ b:, f:, g:] ≔ (a f) boþ (b g)
+
+  let bimap_sameness_sameness ≔ {_ boþ _ ^ reflect}
+  let bimap_bimap ≔ {_ boþ _, _, _, _, _ ^ reflect}
 }
 
-bizen [@a:*]:(a ∏) functor {
-  let þing map f [] þing bimap sameness f
+bizen: [@α: *, (α ∏) functor] {
+  let map: [þing:, f:] ≔ þing bimap sameness f
+
+  let map_sameness ≔ {_ boþ _ ^ reflect}
 }
 
-bizen [byzen a monoid]:(a ∏) applicative {
-  let b pure [] ∅ ∏ b
-  let (a0 ∏ b) apply (a1 ∏ f) [] (a0 · a1) ∏ (b f)
+bizen: [@α: *, @: α monoid, (α ∏) applicative] {
+  let pure: [b:] ≔ ∅ boþ b
+  let apply: [a₀ boþ b:, a₁ boþ f:] ≔ (a₀ · a₁) boþ (b f)
+
+  let apply_sameness_pure ≔ sorry
+  let pure_apply_pure ≔ sorry
+  let apply_apply ≔ sorry
+  let pure_apply ≔ sorry
 }
 
-bizen [byzen a monoid]:(a ∏) monad {
-  let (a ∏ (b ∏ c)) flat []
-    (a · b) ∏ c
+bizen: [@α: *, @: α monoid, (α ∏) monad] {
+  let flat: [α boþ (β boþ γ):] ≔
+    (α · β) boþ γ
+
+  let pure_map_flat ≔ sorry
+  let map_pure_flat ≔ sorry
 }
 
-bizen [@a:*]:(a ∏) cata {
-  let (_ ∏ a) fold₀ b f [] a f b
-  let (_ ∏ a) fold₁ b f [] b f a
+bizen: [@α: *, (α ∏) cata] {
+  let fold₀: [_ boþ a:, b:, f:] ≔ a f b
+  let fold₁: [_ boþ a:, b:, f:] ≔ b f a
 }
 
-bizen [@a:*]:(a ∏) traverse {
-  let (a ∏ b) traverse f []
-    (b f) map (a ∏)
+bizen: [@α: *, (α ∏) haþ_traverse] {
+  let traverse: [a boþ b:, f:] ≔
+    (b f) map (a boþ)
 }
 
-bizen [byzen a semilattice-lower, byzen b semilattice-lower]:(a ∏ b) semilattice-lower {
-  let (a₀ ∏ b₀) ∧ (a₁ ∏ b₁) [] (a₀ ∧ a₁) ∏ (b₀ ∧ b₁)
+bizen: [@α: *, @: α semilattice_lower,
+  @β: *, @: β semilattice_lower, (α ∏ β) semilattice_lower] {
+  let ∧: [a₀ boþ b₀:, a₁ boþ b₁:] ≔ (a₀ ∧ a₁) boþ (b₀ ∧ b₁)
+
+  let ∧_absorb ≔ sorry
+  let ∧_commute ≔ sorry
+  let ∧_∧ ≔ sorry
 }
 
-bizen [byzen a semilattice-upper, byzen b semilattice-upper]:(a ∏ b) semilattice-upper {
-  let (a₀ ∏ b₀) ∨ (a₁ ∏ b₁) [] (a₀ ∨ a₁) ∏ (b₀ ∨ b₁)
+bizen: [@α: *, @: α semilattice_upper,
+  @β: *, @: β semilattice_upper, (α ∏ β) semilattice_upper] {
+  let ∨: [a₀ boþ b₀:, a₁ boþ b₁:] ≔ (a₀ ∨ a₁) boþ (b₀ ∨ b₁)
+
+  let ∨_absorb ≔ sorry
+  let ∨_commute ≔ sorry
+  let ∨_∨ ≔ sorry
 }
 
-bizen [byzen a lattice, byzen b lattice]:(a ∏ b) lattice {}
+bizen: [@α: *, @: α lattice, @β: *, @: β lattice, (α ∏ β) lattice] {
+  let ∧_∨_absorption ≔ sorry
+  let ∨_∧_absorption ≔ sorry
+}
 
-bizen [byzen a lattice-distributive, byzen b lattice-distributive]:(a ∏ b) lattice-distributive {}
+bizen: [@α: *, @: α lattice_distributive,
+  @β: *, @: β lattice_distributive, (α ∏ β) lattice_distributive] {
+  let ∧_∨ ≔ sorry
+  let ∨_∧ ≔ sorry
+}
 
-show let uncurry [@a:*, @b:*, @c:*, a ∏ b:a ∏ b, f:[a, b, c], c]
+show let uncurry: [@α: *, @β: *, @γ: *, a boþ b: α ∏ β, f: [α, β, γ], γ] ≔
   a f b
 
-show let uncurry₃ [
-  @a:*, @b:*, @c:*, @d:*,
-  a ∏ (b ∏ c):a ∏ (b ∏ c),
-  f:[a, b, c, d], d
-] a f b c
+show let uncurry₃: [
+  @α: *, @β: *, @γ: *, @δ: *,
+  a boþ (b boþ c): α ∏ (β ∏ γ),
+  f: [α, β, γ, δ], δ
+] ≔ a f b c

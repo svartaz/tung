@@ -1,0 +1,3 @@
+## an opaque running task. `fork` starteþ one; `wait` observeþ its result.
+## the primitive family hath no constructor or eliminator.
+show task

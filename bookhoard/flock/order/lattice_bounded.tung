@@ -1,0 +1,14 @@
+use flock/order/lattice.tung
+use flock/order/semilattice_bounded_upper.tung
+use flock/order/semilattice_upper_bounded.tung
+use ilk/three.tung
+use ilk/two.tung
+
+## a lattice wiþ greatest and least values.
+show flock lattice_bounded: [α: *, @: α lattice, @: α semilattice_bounded_upper, @: α semilattice_upper_bounded, *] {}
+
+bizen: [@β: *, @: β lattice_bounded, @α: *, [α, β] lattice_bounded] {}
+
+bizen: 𝟚 lattice_bounded {}
+
+bizen: 𝟛 lattice_bounded {}

@@ -1,5 +1,6 @@
-// workspace-wide import and visibility index over tolerant document models.
-// text and file changes invalidate models, resolution, and public-name caches.
+// workspace-wide import and visibility index over document models. models
+// take þeir roles from þe compiler: `ready` fetcheþ missing roles before a
+// request, and text and file changes invalidate models and derived caches.
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -9,9 +10,13 @@ import {
   nameRange,
   tokenAtPosition,
 } from "./analysis.ts";
+import type { SourceRole } from "./checker.ts";
 import { languageNames } from "./syntax.ts";
 type DocumentModel = ReturnType<typeof analyzeDocument>;
-type CachedModel = { text: string; model: DocumentModel };
+type CachedModel = { text: string; roles: SourceRole[]; model: DocumentModel };
+type RoleSource = {
+  highlight(source: string): { result: Promise<SourceRole[] | undefined> };
+};
 type DocumentLike = { uri: string; getText(): string };
 type DocumentStore = {
   get(uri: string): DocumentLike | undefined;
@@ -24,13 +29,6 @@ const skippedDirectories = new Set([
   "dist-newstyle",
   "node_modules",
 ]);
-const termRoles = new Set([
-  "function",
-  "method",
-  "variable",
-  "enumMember",
-  "operator",
-]);
 class WorkspaceIndex {
   documents: DocumentStore;
   roots: string[];
@@ -41,8 +39,13 @@ class WorkspaceIndex {
   modelsCache: DocumentModel[] | undefined;
   resolveImportCache: Map<string, DocumentModel | undefined>;
   publicDefinitionsCache: Map<string, Definition[]>;
-  constructor(documents: DocumentStore) {
+  compiler: RoleSource | undefined;
+  // þe latest compiler roles of each uri, wiþ þe text þey describe.
+  roleCache: Map<string, { text: string; roles: SourceRole[] }>;
+  constructor(documents: DocumentStore, compiler?: RoleSource) {
     this.documents = documents;
+    this.compiler = compiler;
+    this.roleCache = new Map();
     this.roots = [];
     this.libraryRoots = [];
     this.cache = new Map();
@@ -76,27 +79,55 @@ class WorkspaceIndex {
     this.resolveImportCache.clear();
     this.publicDefinitionsCache.clear();
   }
-  model(uri) {
+  // fetch compiler roles for every known document whose text changed.
+  async ready() {
+    if (!this.compiler) return;
+    const missing = this.knownUris().flatMap((uri) => {
+      const text = this.textOf(uri);
+      return text !== undefined && this.roleCache.get(uri)?.text !== text
+        ? [[uri, text] as const]
+        : [];
+    });
+    await Promise.all(
+      missing.map(async ([uri, text]) => {
+        const roles = (await this.compiler.highlight(text).result) || [];
+        this.roleCache.set(uri, { text, roles });
+      }),
+    );
+    if (missing.length) this.invalidateDerived();
+  }
+  knownUris() {
+    const uris = new Set(this.workspaceFileUris());
+    for (const document of this.documents.all()) uris.add(document.uri);
+    return [...uris];
+  }
+  textOf(uri) {
     const open = this.documents.get(uri);
-    if (open) return this.modelForText(uri, open.getText());
+    if (open) return open.getText();
     const file = toFilePath(uri);
     if (!file || !fs.existsSync(file)) return undefined;
-    return this.modelForText(uri, fs.readFileSync(file, "utf8"));
+    return fs.readFileSync(file, "utf8");
+  }
+  model(uri) {
+    const text = this.textOf(uri);
+    return text === undefined ? undefined : this.modelForText(uri, text);
   }
   modelForText(uri, text) {
+    const known = this.roleCache.get(uri);
+    const roles = known?.text === text ? known.roles : [];
     const cached = this.cache.get(uri);
-    if (cached?.text === text) return cached.model;
-    const model = analyzeDocument(text, uri);
+    if (cached?.text === text && cached.roles === roles) return cached.model;
+    const model = analyzeDocument(text, uri, roles);
     model.instances.forEach((instance) => (instance.uri = uri));
-    this.cache.set(uri, { text, model });
+    this.cache.set(uri, { text, roles, model });
     this.invalidateDerived();
     return model;
   }
   models() {
     if (this.modelsCache) return this.modelsCache;
-    const uris = new Set(this.workspaceFileUris());
-    for (const document of this.documents.all()) uris.add(document.uri);
-    this.modelsCache = [...uris].map((uri) => this.model(uri)).filter(Boolean);
+    this.modelsCache = this.knownUris()
+      .map((uri) => this.model(uri))
+      .filter(Boolean);
     return this.modelsCache;
   }
   workspaceFileUris() {
@@ -155,10 +186,9 @@ class WorkspaceIndex {
       .flatMap((imported) =>
         this.publicDefinitions(this.resolveImport(model, imported), nextSeen),
       );
-    const reexported = model.reexports.flatMap(({ name, kind }) =>
-      this.resolveVisible(model, name, nextSeen).filter(({ role }) =>
-        kind === "type" ? role === "type" : termRoles.has(role),
-      ),
+    // `show name` re-exporteþ every visible role wiþ þat name.
+    const reexported = model.reexports.flatMap(({ name }) =>
+      this.resolveVisible(model, name, nextSeen),
     );
     const definitions = uniqueByKey(
       [...own, ...shownImports, ...reexported],
@@ -239,17 +269,6 @@ class WorkspaceIndex {
       return { model, token, definition: undefined };
     }
     const local = findDefinition(model, token, token.offset);
-    if (local?.inferredRequirement && !token.text.includes("~")) {
-      const types = this.resolveVisibleRole(model, token.text, "type");
-      if (types.length) {
-        return {
-          model,
-          token,
-          definition: types.length === 1 ? types[0] : undefined,
-          candidates: types,
-        };
-      }
-    }
     if (local?.role === "parameter" && !token.text.includes("~")) {
       const constructors = this.resolveVisibleRole(
         model,
@@ -269,7 +288,9 @@ class WorkspaceIndex {
       return { model, token, definition: local };
     }
     const visible = this.resolveVisible(model, token.text);
-    const role = model.roles.get(token.index)?.type;
+    // a name in type position wiþout a local binder nameþ a visible type.
+    const tokenRole = model.roles.get(token.index)?.type;
+    const role = tokenRole === "typeParameter" ? "type" : tokenRole;
     const matching = role
       ? visible.filter((definition) => definition.role === role)
       : visible;

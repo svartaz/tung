@@ -1,32 +1,28 @@
 use _foreign.tung
+use deed/file.tung
 use flock/algebra/total/magma.tung
-use flock/to-text.tung
+use flock/to_text.tung
 use ilk/one.tung
+use ilk/sum.tung
 use ilk/text/structure.tung
 
 ## a paþ kept distinct from arbitrary text at api boundaries.
-show ilk paþ [*] {
-  paþ [text, paþ]
+show ilk _paþ: * {
+  paþ: [text, _paþ]
 }
 
-bizen:paþ to-text {
-  let (text paþ) to-text [] text
+bizen: _paþ haþ_to_text {
+  let to_text: [t paþ:] ≔ t
 }
 
-show let join-paþ [text₀ paþ:paþ, text₁ paþ:paþ, paþ]
-  text₀ · '/' $ · text₁ $ paþ
+show let join_paþ: [t₀ paþ: _paþ, t₁ paþ: _paþ, _paþ] ≔
+  t₀ · '/' $ · t₁ $ paþ
 
-show let read-paþ [text paþ:paþ, text; file, text fail]
-  text read-file
+show let read_paþ: [t paþ: _paþ, (text ∑ text) deed] ≔
+  t read_file
 
-show let write-paþ [
-  text paþ:paþ,
-  contents:text,
-  𝟙; file, text fail
-] text write-file contents
+show let write_paþ: [t paþ: _paþ, contents: text, (text ∑ 𝟙) deed] ≔
+  t write_file contents
 
-show let append-paþ [
-  text paþ:paþ,
-  contents:text,
-  𝟙; file, text fail
-] text append-file contents
+show let append_paþ: [t paþ: _paþ, contents: text, (text ∑ 𝟙) deed] ≔
+  t append_file contents

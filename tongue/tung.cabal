@@ -2,6 +2,7 @@ cabal-version: 3.0
 name: tung
 version: 0.1.0.0
 build-type: Simple
+extra-source-files: examples/dependent_list.tung
 
 common warnings
   ghc-options: -O2 -Wall -Wno-name-shadowing -Wno-unused-do-bind
@@ -17,27 +18,36 @@ common warnings
 
 library
   import: warnings
-  exposed-modules: Tung
+  exposed-modules: Tung, Tung.Dependent, Tung.Dependent.Run, Tung.Dependent.Source
   other-modules:
-      Tung.Core
-    , Tung.Coverage
+      Tung.Dependent.Check
+    , Tung.Dependent.Elaboration
+    , Tung.Dependent.Host
+    , Tung.Dependent.Inductive
+    , Tung.Dependent.Literal
+    , Tung.Dependent.Normalise
+    , Tung.Dependent.Render
+    , Tung.Dependent.Source.Environment
+    , Tung.Dependent.Source.Error
+    , Tung.Dependent.Source.Instance
+    , Tung.Dependent.Source.Module
+    , Tung.Dependent.Source.Parse
+    , Tung.Dependent.Source.Pattern
+    , Tung.Dependent.Source.Scope
+    , Tung.Dependent.Source.Syntax
+    , Tung.Dependent.Syntax
+    , Tung.Dependent.Universe
     , Tung.Diagnostic
-    , Tung.Evaluate
     , Tung.Format
     , Tung.Highlight
     , Tung.Import
     , Tung.Identity
-    , Tung.Kind
     , Tung.Library
     , Tung.Metadata
     , Tung.Name
-    , Tung.Parse
     , Tung.Primitive
     , Tung.Project
-    , Tung.Syntax
     , Tung.Token
-    , Tung.Type
-    , Tung.Validate
     , Tung.Web
   hs-source-dirs: src
   default-language: Haskell2010
@@ -46,6 +56,7 @@ library
     , base >=4.20 && <5
     , bytestring
     , containers
+    , deepseq
     , directory
     , filepath
     , megaparsec
@@ -91,11 +102,26 @@ test-suite tung-test
   hs-source-dirs: test
   default-extensions: MultilineStrings
   other-modules:
-      Test.Core
+      Test.Program
+    , Test.Dependent
+    , Test.DependentInductive
+    , Test.DependentInductiveSource
+    , Test.DependentDeed
+    , Test.DependentFlock
+    , Test.DependentHost
+    , Test.DependentList
+    , Test.DependentLiteral
+    , Test.DependentMatch
+    , Test.DependentModule
+    , Test.DependentRecord
+    , Test.DependentRecursion
+    , Test.DependentSource
+    , Test.DependentSupport
     , Test.Diagnostic
     , Test.Evaluate
     , Test.Format
     , Test.Harness
+    , Test.HarnessTests
     , Test.Import
     , Test.Integration
     , Test.Library
@@ -116,5 +142,7 @@ test-suite tung-test
     , network >=3.1 && <4
     , process
     , QuickCheck
+    , text
     , time
+    , transformers
     , tung

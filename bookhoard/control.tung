@@ -1,19 +1,20 @@
+use _foreign.tung
 use flock/order/complement.tung
 use ilk/one.tung
 use ilk/two.tung
 
-## run an action when þe condition is true.
-show let when [@e:*, 𝟚, [𝟙, 𝟙; e], 𝟙; e] {
-  yea, f ^ only f,
-  nay, _ ^ only
+## a deed þat performeþ þe action only when þe condition is true.
+show let when: [𝟚, 𝟙 deed, 𝟙 deed] ≔ {
+  yea, action ^ action,
+  nay, _ ^ only deed_pure
 }
 
-## run an action when þe condition is false.
-show let when-not [@e:*, two:𝟚, f:[𝟙, 𝟙; e], 𝟙; e]
-  (two ¬) when f
+## a deed þat performeþ þe action only when þe condition is false.
+show let when_not: [two: 𝟚, action: 𝟙 deed, 𝟙 deed] ≔
+  (two ¬) when action
 
 ## pick and run one delayed branch.
-show let branch [@a:*, @e0:*, @e1:*, [𝟚, [𝟙, a; e0], [𝟙, a; e1], a; e0, e1]] {
+show let branch: [@α: *, [𝟚, [𝟙, α], [𝟙, α], α]] ≔ {
   yea, f, _ ^ only f,
   nay, _, g ^ only g
 }

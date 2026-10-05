@@ -1,72 +1,60 @@
-use deed/fail.tung
-use ilk/list.tung
 use ilk/one.tung
 use ilk/option.tung
 use ilk/product.tung
+use ilk/task.tung
 use ilk/two.tung
 
-ilk task [a:*, *] {
-  done [a, a task]
-}
+show task
 
-show-ilk task
+## `α deed` is an action þat produceþ an α when þe runner performeþ it.
+## building or combining deeds performeþ noþing.
+show let deed_pure: [@α: *, α, α deed] ≔ 'deed_pure' fremmed
+show let deed_bind: [@α: *, @β: *, α deed, [α, β deed], β deed] ≔ 'deed_bind' fremmed
+## repeat a deed: þe step receiveþ þe repeated deed. only a deed may loop.
+show let deed_fix: [@α: *, [α deed, α deed], α deed] ≔ 'deed_fix' fremmed
 
-show deed divergent {}
+show let write: [text, 𝟙 deed] ≔ 'write' fremmed
+## none once input endeþ.
+show let read: (text option) deed ≔ 'read' fremmed
+## a float in [0, 1).
+show let random: float deed ≔ 'random' fremmed
+## milliseconds.
+show let sleep: [ℕ, 𝟙 deed] ≔ 'sleep' fremmed
 
-show-ilk fail
-show fail
+## a task runneþ its deed concurrently. waiting yieldeþ none for a cancelled
+## task, and `wait_for` yieldeþ none after its timeout in milliseconds.
+show let fork: [@α: *, α deed, (α task) deed] ≔ 'fork' fremmed
+show let wait: [@α: *, α task, (α option) deed] ≔ 'wait' fremmed
+show let wait_for: [@α: *, α task, ℕ, (α option) deed] ≔ 'wait_for' fremmed
+show let cancel: [@α: *, α task, 𝟙 deed] ≔ 'cancel' fremmed
 
-show deed console {
-  write [text, 𝟙],
-  read [𝟙, text]
-}
-
-show deed random {
-  random [𝟙, float]
-}
-
-show deed a state {
-  get [𝟙, a],
-  set [a, 𝟙]
-}
-
-show deed async {
-  fork [@a:*, @e:*, [𝟙, a; e], a task; e],
-  wait [@a:*, a task, a; text fail],
-  fordo [@a:*, a task, 𝟙],
-  wait-for [@a:*, a task, ℤ, a option; text fail],
-  sleep [ℤ, 𝟙]
-}
-
-show deed file {
-  read-file [text, text; text fail],
-  write-file [text, text, 𝟙; text fail],
-  append-file [text, text, 𝟙; text fail]
-}
-
-show let add-integer [ℤ, ℤ, ℤ] 'add-integer' fremmed
-show let subtract-integer [ℤ, ℤ, ℤ] 'subtract-integer' fremmed
-show let multiply-integer [ℤ, ℤ, ℤ] 'multiply-integer' fremmed
-show let divide-remainder-integer [ℤ, ℤ, ℤ ∏ ℤ; text fail] 'divide-remainder-integer' fremmed
-show let add-float [float, float, float] 'add-float' fremmed
-show let subtract-float [float, float, float] 'subtract-float' fremmed
-show let multiply-float [float, float, float] 'multiply-float' fremmed
-show let divide-float [float, float, float] 'divide-float' fremmed
-show let sine-float [float, float] 'sine-float' fremmed
-show let arctan-float [float, float, float] 'arctan-float' fremmed
-show let exponent-float [float, float] 'exponent-float' fremmed
-show let logariþm-float [float, float] 'logariþm-float' fremmed
-show let ⌊ [float, ℤ; text fail] '⌊' fremmed
-show let equal-integer [ℤ, ℤ, 𝟚] 'equal-integer' fremmed
-show let integer-to-text [ℤ, text] 'integer-to-text' fremmed
-show let float-to-text [float, text] 'float-to-text' fremmed
-show let unicode-to-integer [unicode, ℤ] 'unicode-to-integer' fremmed
-show let integer-to-unicode [ℤ, unicode; text fail] 'integer-to-unicode' fremmed
-show let behead-text [text, (unicode ∏ text) option] 'behead-text' fremmed
-show let text-to-list [text, unicode list] 'text-to-list' fremmed
-show let list-to-text [unicode list, text] 'list-to-text' fremmed
-show let join-text [text, text, text] 'join-text' fremmed
-show let equal-text [text, text, 𝟚] 'equal-text' fremmed
-show let equal-unicode [unicode, unicode, 𝟚] 'equal-unicode' fremmed
-show let less-equal-text [text, text, 𝟚] 'less-equal-text' fremmed
-show let less-equal-unicode [unicode, unicode, 𝟚] 'less-equal-unicode' fremmed
+show let natural_to_integer: [ℕ, ℤ] ≔ 'natural_to_integer' fremmed
+show let integer_to_natural: [ℤ, ℕ option] ≔ 'integer_to_natural' fremmed
+show let add_integer: [ℤ, ℤ, ℤ] ≔ 'add_integer' fremmed
+show let subtract_integer: [ℤ, ℤ, ℤ] ≔ 'subtract_integer' fremmed
+show let multiply_integer: [ℤ, ℤ, ℤ] ≔ 'multiply_integer' fremmed
+show let divide_remainder_integer: [ℤ, ℤ, (ℤ ∏ ℤ) option] ≔ 'divide_remainder_integer' fremmed
+show let add_float: [float, float, float] ≔ 'add_float' fremmed
+show let subtract_float: [float, float, float] ≔ 'subtract_float' fremmed
+show let multiply_float: [float, float, float] ≔ 'multiply_float' fremmed
+show let divide_float: [float, float, float] ≔ 'divide_float' fremmed
+show let sine_float: [float, float] ≔ 'sine_float' fremmed
+show let arctan_float: [float, float, float] ≔ 'arctan_float' fremmed
+show let exponent_float: [float, float] ≔ 'exponent_float' fremmed
+show let logariþm_float: [float, float] ≔ 'logariþm_float' fremmed
+show let ⌊: [float, ℤ option] ≔ '⌊' fremmed
+show let equal_integer: [ℤ, ℤ, 𝟚] ≔ 'equal_integer' fremmed
+show let less_equal_integer: [ℤ, ℤ, 𝟚] ≔ 'less_equal_integer' fremmed
+show let equal_float: [float, float, 𝟚] ≔ 'equal_float' fremmed
+show let less_equal_float: [float, float, 𝟚] ≔ 'less_equal_float' fremmed
+show let text_to_float: [text, float option] ≔ 'text_to_float' fremmed
+show let integer_to_text: [ℤ, text] ≔ 'integer_to_text' fremmed
+show let float_to_text: [float, text] ≔ 'float_to_text' fremmed
+show let unicode_to_natural: [unicode, ℕ] ≔ 'unicode_to_natural' fremmed
+show let natural_to_unicode: [ℕ, unicode option] ≔ 'natural_to_unicode' fremmed
+show let behead_text: [text, (unicode ∏ text) option] ≔ 'behead_text' fremmed
+show let join_text: [text, text, text] ≔ 'join_text' fremmed
+show let equal_text: [text, text, 𝟚] ≔ 'equal_text' fremmed
+show let equal_unicode: [unicode, unicode, 𝟚] ≔ 'equal_unicode' fremmed
+show let less_equal_text: [text, text, 𝟚] ≔ 'less_equal_text' fremmed
+show let less_equal_unicode: [unicode, unicode, 𝟚] ≔ 'less_equal_unicode' fremmed

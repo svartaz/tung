@@ -1,9 +1,12 @@
-show flock semigroupoid [⇨:[*, *, *]] {
-  let ∘ [@a:*, @b:*, @c:*, a ⇨ b, b ⇨ c, a ⇨ c]
+use combinator.tung
+show flock semigroupoid: [⇨: [*, *, *], *] {
+  let ▷: [@α: *, @β: *, @γ: *, α ⇨ β, β ⇨ γ, α ⇨ γ]
 
-  law [@a:*, @b:*, @c:*, @d:*, f:a ⇨ b, g:b ⇨ c, h:c ⇨ d] f ∘ (g ∘ h) = (f ∘ g) ∘ h
+  let ▷_▷: [@α: *, @β: *, @γ: *, @δ: *, f: α ⇨ β, g: β ⇨ γ, h: γ ⇨ δ, (f ▷ (g ▷ h)) = ((f ▷ g) ▷ h)]
 }
 
-bizen:→ semigroupoid {
-  let f ∘ g a [] a f $ g
+bizen: → semigroupoid {
+  let ▷: [f:, g:, a:] ≔ a f $ g
+
+  let ▷_▷ ≔ {_, _, _ ^ reflect}
 }

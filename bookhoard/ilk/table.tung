@@ -1,3 +1,5 @@
+use equality.tung
+use flock/algebra/partial/category.tung
 use flock/equal.tung
 use flock/functor.tung
 use flock/functor/cata.tung
@@ -10,69 +12,79 @@ use ilk/product.tung
 use ilk/two.tung
 
 ## a list-backed finite association table.
-show ilk table [k:*, v:*, *] {
-  from-list [(k ∏ v) list, k table v]
+show ilk table: [α: *, β: *, *] {
+  from_list: [(α ∏ β) list, α table β]
 }
 
-show let empty [@k:*, @v:*, k table v] list~empty from-list
+show let empty: [@α: *, @β: *, α table β] ≔ list~empty from_list
 
-show let singleton [@k:*, @v:*, key:k, value:v, k table v]
-  key ∏ value $ ⁖ list~empty $ from-list
+show let singleton: [@α: *, @β: *, key: α, value: β, α table β] ≔
+  key boþ value $ ‥ list~empty $ from_list
 
-show let entries [@k:*, @v:*, list from-list:k table v, (k ∏ v) list]
-  list
+show let entries: [@α: *, @β: *, l from_list: α table β, (α ∏ β) list] ≔
+  l
 
-show let lookup [byzen k equal, @v:*, list from-list:k table v, key:k, v option]
-  list find { pair ^ key ≡ (pair project₀) } $ map project₁
+show let lookup: [@α: *, @: α equal, @β: *, l from_list: α table β, key: α, β option] ≔
+  l find { pair ^ key ≍ (pair project₀) } $ map project₁
 
-show let put [byzen k equal, @v:*,
-  list from-list:k table v,
-  key:k,
-  value:v,
-  k table v
-] (key ∏ value) ⁖ (list filter { pair ^ key ≢ (pair project₀) }) $ from-list
+show let put: [@α: *, @: α equal, @β: *,
+  l from_list: α table β,
+  key: α,
+  value: β,
+  α table β
+] ≔ (key boþ value) ‥ (l filter { pair ^ key ≭ (pair project₀) }) $ from_list
 
-show let rid [byzen k equal, @v:*, list from-list:k table v, key:k, k table v]
-  list filter { pair ^ key ≢ (pair project₀) } $ from-list
+show let rid: [@α: *, @: α equal, @β: *, l from_list: α table β, key: α, α table β] ≔
+  l filter { pair ^ key ≭ (pair project₀) } $ from_list
 
-show let keys [@k:*, @v:*, list from-list:k table v, k list]
-  list map project₀
+show let keys: [@α: *, @β: *, l from_list: α table β, α list] ≔
+  l map project₀
 
-show let values [@k:*, @v:*, list from-list:k table v, v list]
-  list map project₁
+show let values: [@α: *, @β: *, l from_list: α table β, β list] ≔
+  l map project₁
 
-bizen [ byzen k equal, @v:*]:(k table v) inhold k {
-  let table ∋ key [] (table lookup key) is-some
+bizen: [@α: *, @: α equal, @β: *, (α table β) inhold α] {
+  let ∋: [t:, key:] ≔ (t lookup key) is_some
 }
 
-bizen [@k:*]:(k table) functor {
-  let (list from-list) map f []
-    list map { pair ^ pair map f } $ from-list
+bizen: [@α: *, (α table) functor] {
+  let map: [l from_list:, f:] ≔
+    l map { pair ^ pair map f } $ from_list
+
+  let map_sameness ≔ {@β ^ {entries from_list ^
+      from_list leibnitz (
+        {l: (α ∏ β) list ^ (l map {pair ^ pair map sameness}) = l}
+        induce list reflect {first, _, proof ^ match first {
+            a boþ b ^ ((a boþ b) ‥) leibnitz proof
+        }} entries
+      )
+  }}
 }
 
-bizen [@k:*]:(k table) filter {
-  let (list from-list) filter predicate []
-    list filter {
+bizen: [@α: *, (α table) haþ_filter] {
+  let filter: [l from_list:, predicate:] ≔
+    l filter {
       pair ^ (pair project₁) predicate
-    } $ from-list
+    } $ from_list
 }
 
-bizen [@k:*, @v:*]:(k table v) size {
-  let table size [] (table entries) size
+bizen: [@α: *, @β: *, (α table β) haþ_size] {
+  let size: [t:] ≔ (t entries) size
 }
 
-show let merge [byzen k equal, @v:*, first:k table v, oþer:k table v, k table v]
-  (oþer entries) fold₁ first {
-    table, pair ^ table put (pair project₀) (pair project₁)
-  }
+show let merge: [
+  @α: *, @: α equal, @β: *,
+  first: α table β, oþer: α table β, α table β
+] ≔ (oþer entries) fold₁ first {
+  t, pair ^ t put (pair project₀) (pair project₁)
+}
 
-show let adjust [byzen k equal,
-  @e:*, @v:*,
-  list from-list:k table v,
-  key:k,
-  change:[v, v; e],
-  k table v; e]
-  list map { pair ^ match key ≡ (pair project₀) {
-      nay ^ pair,
-      yea ^ pair map change
-    } } $ from-list
+show let adjust: [@α: *, @: α equal, @β: *,
+  l from_list: α table β,
+  key: α,
+  change: [β, β],
+  α table β
+] ≔ l map { pair ^ match key ≍ (pair project₀) {
+    nay ^ pair,
+    yea ^ pair map change
+  } } $ from_list

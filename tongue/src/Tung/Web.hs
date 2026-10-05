@@ -1,13 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | a bounded, one-request-per-connection http/1.1 transport.
-module Tung.Web (
-  Request (..),
-  Response (..),
-  serve,
-  validHeaderName,
-  validHeaderValue,
-) where
+module Tung.Web
+  ( Request (..),
+    Response (..),
+    serve,
+    validHeaderName,
+    validHeaderValue,
+  )
+where
 
 import Control.Exception (IOException, bracket, finally, onException, try)
 import Data.ByteString qualified as ByteString
@@ -19,28 +20,30 @@ import Network.Socket.ByteString qualified as SocketBytes
 import Text.Read (readMaybe)
 
 data Request = Request
-  { requestMethod :: Text.Text
-  , requestTarget :: Text.Text
-  , requestHeaders :: [(Text.Text, Text.Text)]
-  , requestBody :: Text.Text
+  { requestMethod :: Text.Text,
+    requestTarget :: Text.Text,
+    requestHeaders :: [(Text.Text, Text.Text)],
+    requestBody :: Text.Text
   }
+  deriving stock (Eq, Show)
 
 data Response = Response
-  { responseStatus :: Integer
-  , responseHeaders :: [(Text.Text, Text.Text)]
-  , responseBody :: Text.Text
+  { responseStatus :: Integer,
+    responseHeaders :: [(Text.Text, Text.Text)],
+    responseBody :: Text.Text
   }
+  deriving stock (Eq, Show)
 
 serve :: Integer -> (Request -> IO (Either stop Response)) -> IO stop
 serve port respond = Socket.withSocketsDo (bracket (openSocket port) Socket.close loop)
- where
-  loop listener = do
-    (connection, _) <- Socket.accept listener
-    outcome <- tryIOException (handleConnection respond connection `finally` Socket.close connection)
-    case outcome of
-      Left _ -> loop listener
-      Right Nothing -> loop listener
-      Right (Just stop) -> pure stop
+  where
+    loop listener = do
+      (connection, _) <- Socket.accept listener
+      outcome <- tryIOException (handleConnection respond connection `finally` Socket.close connection)
+      case outcome of
+        Left _ -> loop listener
+        Right Nothing -> loop listener
+        Right (Just stop) -> pure stop
 
 openSocket :: Integer -> IO Socket.Socket
 openSocket port = do
@@ -73,7 +76,7 @@ readRequest connection =
         pure do
           bodyBytes <- body
           bodyText <- decodeUtf8 "body" bodyBytes
-          pure Request{requestMethod = method, requestTarget = target, requestHeaders = headers, requestBody = bodyText}
+          pure Request {requestMethod = method, requestTarget = target, requestHeaders = headers, requestBody = bodyText}
 
 receiveHead :: Socket.Socket -> ByteString.ByteString -> IO (Either String (ByteString.ByteString, ByteString.ByteString))
 receiveHead connection buffered
@@ -92,14 +95,14 @@ receiveHead connection buffered
 
 receiveBody :: Socket.Socket -> Int -> ByteString.ByteString -> IO (Either String ByteString.ByteString)
 receiveBody connection wanted initial = collect (ByteString.take wanted initial)
- where
-  collect body
-    | ByteString.length body == wanted = pure (Right body)
-    | otherwise = do
-        chunk <- SocketBytes.recv connection (min 4096 (wanted - ByteString.length body))
-        if ByteString.null chunk
-          then pure (Left "http request ended before its body")
-          else collect (body <> chunk)
+  where
+    collect body
+      | ByteString.length body == wanted = pure (Right body)
+      | otherwise = do
+          chunk <- SocketBytes.recv connection (min 4096 (wanted - ByteString.length body))
+          if ByteString.null chunk
+            then pure (Left "http request ended before its body")
+            else collect (body <> chunk)
 
 parseHead :: ByteString.ByteString -> Either String (Text.Text, Text.Text, [(Text.Text, Text.Text)], Int)
 parseHead bytes = case linesCRLF bytes of
@@ -150,21 +153,21 @@ headerValues :: Text.Text -> [(Text.Text, Text.Text)] -> [Text.Text]
 headerValues wanted headers = [value | (name, value) <- headers, Text.toCaseFold name == wanted]
 
 sendResponse :: Socket.Socket -> Response -> IO ()
-sendResponse connection Response{responseStatus, responseHeaders, responseBody} =
+sendResponse connection Response {responseStatus, responseHeaders, responseBody} =
   SocketBytes.sendAll connection (ByteString.concat (statusLine : map renderHeader headers ++ ["\r\n", bodyBytes]))
- where
-  bodyBytes = TextEncoding.encodeUtf8 responseBody
-  statusLine = Char8.pack ("HTTP/1.1 " ++ show responseStatus ++ " " ++ statusReason responseStatus ++ "\r\n")
-  kept = filter (not . reserved . fst) responseHeaders
-  typed
-    | any ((== "content-type") . Text.toCaseFold . fst) kept = kept
-    | otherwise = ("Content-Type", "text/plain; charset=utf-8") : kept
-  headers =
-    ("Content-Length", Text.pack (show (ByteString.length bodyBytes)))
-      : ("Connection", "close")
-      : typed
-  reserved name = Text.toCaseFold name `elem` ["content-length", "connection", "transfer-encoding"]
-  renderHeader (name, value) = TextEncoding.encodeUtf8 name <> ": " <> TextEncoding.encodeUtf8 value <> "\r\n"
+  where
+    bodyBytes = TextEncoding.encodeUtf8 responseBody
+    statusLine = Char8.pack ("HTTP/1.1 " ++ show responseStatus ++ " " ++ statusReason responseStatus ++ "\r\n")
+    kept = filter (not . reserved . fst) responseHeaders
+    typed
+      | any ((== "content-type") . Text.toCaseFold . fst) kept = kept
+      | otherwise = ("Content-Type", "text/plain; charset=utf-8") : kept
+    headers =
+      ("Content-Length", Text.pack (show (ByteString.length bodyBytes)))
+        : ("Connection", "close")
+        : typed
+    reserved name = Text.toCaseFold name `elem` ["content-length", "connection", "transfer-encoding"]
+    renderHeader (name, value) = TextEncoding.encodeUtf8 name <> ": " <> TextEncoding.encodeUtf8 value <> "\r\n"
 
 statusReason :: Integer -> String
 statusReason = \case
@@ -200,13 +203,13 @@ linesCRLF = map (ByteString.dropWhileEnd (== 13)) . Char8.split '\n'
 
 trimWhitespace :: ByteString.ByteString -> ByteString.ByteString
 trimWhitespace = ByteString.dropWhileEnd horizontal . ByteString.dropWhile horizontal
- where
-  horizontal byte = byte == 32 || byte == 9
+  where
+    horizontal byte = byte == 32 || byte == 9
 
 validHeaderName :: Text.Text -> Bool
 validHeaderName name = not (Text.null name) && Text.all valid name
- where
-  valid character = character > ' ' && character < '\DEL' && character /= ':'
+  where
+    valid character = character > ' ' && character < '\DEL' && character /= ':'
 
 validHeaderValue :: Text.Text -> Bool
 validHeaderValue = not . Text.any (`elem` ['\r', '\n'])

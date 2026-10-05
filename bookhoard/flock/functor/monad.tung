@@ -3,18 +3,18 @@ use flock/functor.tung
 use flock/functor/applicative.tung
 use ilk/one.tung
 
-show flock monad [byzen f applicative] {
-  let flat [@a:*, (a f) f, a f]
+show flock monad: [φ: [*, *], @: φ applicative, *] {
+  let flat: [@α: *, (α φ) φ, α φ]
 
-  law [@a:*, @b:*, @e:*, a:a, f:[a, b f; e]]
-    (a pure) map f $ flat = a f
+  let pure_map_flat: [@α: *, @β: *, a: α, f: [α, β φ],
+    ((a pure) map f $ flat) = (a f)]
 
-  law [@a:*, a:a f]
-    a map pure $ flat = a
+  let map_pure_flat: [@α: *, a: α φ,
+    (a map pure $ flat) = a]
 }
 
-show let map-flat [byzen f functor, byzen f monad, @a:*, @b:*, @e:*, a:a f, f:[a, b f; e], b f; e]
+show let map_flat: [@φ: [*, *], @: φ functor, @: φ monad, @α: *, @β: *, a: α φ, f: [α, β φ], β φ] ≔
   a map f $ flat
 
-show let þen [byzen f monad, @a:*, @b:*, a:a f, b:b f, b f]
-  a map-flat (b constant)
+show let þen: [@φ: [*, *], @: φ monad, @α: *, @β: *, a: α φ, b: β φ, β φ] ≔
+  a map_flat (b constant)

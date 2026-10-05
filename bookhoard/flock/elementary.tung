@@ -2,20 +2,22 @@ use _foreign.tung
 use flock/algebra/arithmetic/divide.tung
 use flock/algebra/arithmetic/multiply.tung
 use flock/algebra/arithmetic/subtract.tung
+use ilk/float.tung
 use numeric/constant.tung
 
-show flock elementary [byzen a divide] {
-  let exponent [a, a]
-  let logariþm [a, a]
-  let sine [a, a]
-  let cosine [a, a]
+show flock elementary: [α: *, @: α divide, *] {
+  let exponent: [α, α]
+  let logariþm: [α, α]
+  let sine: [α, α]
+  let cosine: [α, α]
 }
 
-show let tangent [byzen a elementary, byzen a divide, a:a, a] (a sine) ÷ (a cosine)
+show let tangent: [@α: *, @: α elementary, @: α divide, a: α, α] ≔
+  (a sine) ÷ (a cosine)
 
-bizen:float elementary {
-  let exponent [] exponent-float
-  let logariþm [] logariþm-float
-  let sine [] sine-float
-  let a cosine [] circumference × 0.25 $ - a $ sine
+bizen: float elementary {
+  let exponent ≔ exponent_float
+  let logariþm ≔ logariþm_float
+  let sine ≔ sine_float
+  let cosine: [a:] ≔ circumference × 0.25 $ - a $ sine
 }

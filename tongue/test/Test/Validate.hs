@@ -1,76 +1,70 @@
 -- structural reuse across scopes and duplicate labels, binders, operations, and members.
 module Test.Validate (group) where
 
-import Test.Harness (Group, Test)
+import Data.Map.Strict qualified as Map
+import Test.Harness (Group, Test, checkSource)
 import Test.Harness qualified as Harness
-import Tung
+import Tung.Dependent.Source (sourceImportPaths)
 
 group :: IO Group
 group =
   Harness.group "validate" $
     map (uncurry validationOk) accepted
       ++ map (uncurry validationErr) rejected
-      ++ astCases
 
 accepted :: [(String, String)]
 accepted =
-  [ ("distinct declarations", "ilk pair [*] { pair } deed pulse { pulse [ℤ, ℤ] } flock same [a:*] { let same [a, a] }"),
-    ("distinct namespaces may share a name", "ilk same [*] {} flock same [a:*] {} let same [] 1"),
-    ("explicit aliases override colliding defaults", "use ilk/list.tung data-list use syntax/list.tung syntax-list"),
+  [ ("distinct declarations", "ilk _pair: * { pair: _pair } flock haþ_same:[a:*, *] { let same:[a, a] }"),
+    ("explicit aliases override colliding defaults", "use ilk/list.tung data_list use syntax/list.tung syntax_list"),
     ("explicit aliases distinguish extension-sharing paths", "use a.tung one use a.extra.tung two"),
     ("explicit aliases distinguish dotted directories", "use pkg.one/query.tung one use pkg.two/query.tung two"),
-    ("labels may repeat in separate records", "let first [] r{x = 1} let second [] r{x = 2}"),
-    ("handler names may repeat in separate handlers", "yield try (try 1 { fail ^ 2 }) { fail ^ 3 }"),
-    ("annotated fremmed let", "let plus [ℤ, ℤ, ℤ] 'add-integer' fremmed"),
-    ("shared constructor heads in law parameters", "ilk box [a:*, *] { a box } flock identity [a:*] { law [x box:a box, y box:a box] x = y }")
+    ("labels may repeat in separate records", "let first ≔ r{x ≔ +1} let second ≔ r{x ≔ +2}"),
+    ("annotated fremmed let", "let plus:[ℤ, ℤ, ℤ] ≔ 'add_integer' fremmed"),
+    ("shared constructor heads in law parameters", "ilk _box: [a:*, *] { box: [a, a _box] } flock identity:[a:*, *] { let rule:[x box:a _box, y box:a _box, x = y] }")
   ]
 
 rejected :: [(String, String)]
 rejected =
   [ ("colliding default use aliases", "use ilk/list.tung use syntax/list.tung"),
-    ("duplicate class declarations", "show flock same [a:*] {} flock same [a:*] {}"),
-    ("type and effect declarations share a namespace", "ilk same [*] {} deed same {}"),
+    ("duplicate class declarations", "show flock same:[a:*, *] {} flock same:[a:*, *] {}"),
+    ("type alias and data declarations share a namespace", "ilk same: * {} let same:* ≔ ℤ"),
+    ("a flock and its member share a namespace", "flock same:[a:*, *] { let same:[a, a] }"),
+    ("an ilk and its constructor share a namespace", "ilk same: * { same: same }"),
+    ("a flock and a let share a namespace", "flock same:[a:*, *] {} let same ≔ +1"),
     ("extension-sharing paths retain colliding default aliases", "use a.tung use a.extra.tung"),
     ("extensionless use path", "use ground"),
-    ("qualified type alias name", "let left~right [*] ℤ"),
-    ("qualified data name", "ilk left~right [*] { value }"),
-    ("qualified constructor name", "ilk value [*] { left~right }"),
-    ("duplicate data parameter", "ilk bad [a:*, a:*, *] { bad }"),
-    ("duplicate type alias parameter", "let bad [a:*, a:*, *] a"),
-    ("duplicate constructor", "ilk bad [*] { same, same }"),
-    ("qualified effect name", "deed left~right { op [ℤ, ℤ] }"),
-    ("qualified effect operation name", "deed left { right~op [ℤ, ℤ] }"),
-    ("duplicate effect parameter", "deed a bad a { op [a, a] }"),
-    ("duplicate effect operation", "deed bad { op [ℤ, ℤ], op [ℤ, ℤ] }"),
-    ("unannotated fremmed let", "let plus [] 'add-integer' fremmed"),
-    ("nested fremmed marker", "let bad [r{value: ℤ}] r{value = 'add-integer' fremmed}"),
-    ("qualified flock name", "flock left~right [a:*] { let op [a, a] }"),
-    ("qualified flock member name", "flock left [a:*] { let right~op [a, a] }"),
-    ("duplicate flock parameter", "flock bad [a:*, a:*] { let op [a, a] }"),
-    ("duplicate flock member", "flock bad [a:*] { let op [a, a] let op [a, a] }"),
-    ("duplicate flock law parameter", "flock bad [a:*] { law [x: a, x: a] x = x }"),
-    ("duplicate bracketed flock law parameter", "flock bad [a:*] { law [x: a, x: a] x = x }"),
-    ("duplicate bizen member", "bizen:ℤ bad { let x op [] x let y op [] y }"),
-    ("duplicate record type field", "let bad [r{x: ℤ, x: text}] r{x = 1}"),
-    ("duplicate record field", "let bad [] r{x = 1, x = 2}"),
-    ("duplicate handler case", "yield try 1 { fail ^ 2, fail ^ 3 }")
+    ("qualified type alias name", "let left~right:* ≔ ℤ"),
+    ("qualified data name", "ilk left~right: * { value: left~right }"),
+    ("qualified constructor name", "ilk value: * { left~right: value }"),
+    ("duplicate data parameter", "ilk bad: [a:*, a:*, *] { bad: a bad a }"),
+    ("duplicate type alias parameter", "let bad:[a:*, a:*, *] ≔ a"),
+    ("duplicate constructor", "ilk bad: * { same: bad, same: bad }"),
+    ("unannotated fremmed let", "let plus ≔ 'add_integer' fremmed"),
+    ("nested fremmed marker", "let bad:r{value: ℤ} ≔ r{value ≔ 'add_integer' fremmed}"),
+    ("qualified flock name", "flock left~right:[a:*, *] { let op:[a, a] }"),
+    ("qualified flock member name", "flock left:[a:*, *] { let right~op:[a, a] }"),
+    ("duplicate flock parameter", "flock bad:[a:*, a:*, *] { let op:[a, a] }"),
+    ("duplicate flock member", "flock bad:[a:*, *] { let op:[a, a] let op:[a, a] }"),
+    ("duplicate flock law parameter", "flock bad:[a:*, *] { let rule:[x: a, x: a, x = x] }"),
+    ("a law and a member share one namespace", "flock bad:[a:*, *] { let same:[a, a] let same:[x: a, (x same) = x] }"),
+    ("duplicate bizen member", "bizen:ℤ bad { let op: [x:] ≔ x let op: [y:] ≔ y }"),
+    ("duplicate record type field", "let bad:r{x: ℤ, x: text} ≔ r{x ≔ +1}"),
+    ("duplicate record field", "let bad ≔ r{x ≔ +1, x ≔ +2}")
   ]
 
 validationOk, validationErr :: String -> String -> Test
 validationOk name = validationCase name True
 validationErr name = validationCase name False
 
+-- a `use` path þat noþing provideþ is an empty module here.
 validationCase :: String -> Bool -> String -> Test
-validationCase name shouldPass source = pure $ case parse source of
-  Left message -> Just (name ++ ": parse failed: " ++ message)
-  Right program -> case (shouldPass, validateProgram program) of
-    (True, Left message) -> Just (name ++ ": unexpected rejection: " ++ message)
-    (False, Right ()) -> Just (name ++ ": unexpected acceptance")
-    _ -> Nothing
-
-astCases :: [Test]
-astCases =
-  [ pure $ case validateProgram (Program [Export (Import "ground.tung" Nothing)]) of
-      Left _ -> Nothing
-      Right () -> Just "show use ast: unexpected acceptance"
-  ]
+validationCase name shouldPass source =
+  let imports = Map.fromList [(path, "") | path <- sourceImportPaths source]
+      result = checkSource False source (Map.difference imports libraryPaths)
+   in pure $ case (shouldPass, result) of
+        (True, "type ok") -> Nothing
+        (True, message) -> Just (name ++ ": unexpected rejection: " ++ message)
+        (False, "type ok") -> Just (name ++ ": unexpected acceptance")
+        _ -> Nothing
+  where
+    libraryPaths = Map.fromList [(path, ()) | path <- ["ilk/list.tung", "ground.tung"]]

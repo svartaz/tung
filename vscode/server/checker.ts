@@ -11,7 +11,12 @@ interface ResponseHeader {
   version: number;
   length: number;
 }
-type SourceRole = [start: number, end: number, role: string, modifiers: string[]];
+type SourceRole = [
+  start: number,
+  end: number,
+  role: string,
+  modifiers: string[],
+];
 class CompilerBridge {
   tongue: string | undefined;
   executablePath: string | undefined;
@@ -25,7 +30,8 @@ class CompilerBridge {
   configure(tongue, libraryRoots: string[] = [], executablePath?: string) {
     const tongueChanged = tongue !== this.tongue;
     const executableChanged = executablePath !== this.executablePath;
-    const rootsChanged = libraryRoots.length !== this.libraryRoots.length ||
+    const rootsChanged =
+      libraryRoots.length !== this.libraryRoots.length ||
       libraryRoots.some((root, index) => root !== this.libraryRoots[index]);
     if (tongueChanged || rootsChanged || executableChanged) {
       this.dispose();
@@ -51,7 +57,7 @@ class CompilerBridge {
       result: request.result.then((output) =>
         output.startsWith(formatResponseHeader)
           ? output.slice(formatResponseHeader.length)
-          : undefined
+          : undefined,
       ),
     };
   }
@@ -62,7 +68,7 @@ class CompilerBridge {
       result: request.result.then((output): SourceRole[] | undefined =>
         output.startsWith(highlightResponseHeader)
           ? JSON.parse(output.slice(highlightResponseHeader.length))
-          : undefined
+          : undefined,
       ),
     };
   }
@@ -95,7 +101,9 @@ class CompilerBridge {
   }
   ensureSession(executable) {
     if (
-      this.session && this.session.exitCode === null && !this.session.killed
+      this.session &&
+      this.session.exitCode === null &&
+      !this.session.killed
     ) {
       return this.session;
     }
@@ -103,9 +111,9 @@ class CompilerBridge {
       cwd: this.tongue,
       env: this.libraryRoots.length
         ? {
-          ...globalThis.process.env,
-          TUNG_PATH: this.libraryRoots.join(path.delimiter),
-        }
+            ...globalThis.process.env,
+            TUNG_PATH: this.libraryRoots.join(path.delimiter),
+          }
         : globalThis.process.env,
       stdio: ["pipe", "pipe", "pipe"],
     });
@@ -213,22 +221,17 @@ class CompilerBridge {
     return this.executable;
   }
   findCabalExecutable() {
-    const result = childProcess.spawnSync(
-      "cabal",
-      ["list-bin", "exe:tung"],
-      {
-        cwd: this.tongue,
-        encoding: "utf8",
-      },
-    );
+    const result = childProcess.spawnSync("cabal", ["list-bin", "exe:tung"], {
+      cwd: this.tongue,
+      encoding: "utf8",
+    });
     const found = result.status === 0 ? result.stdout.trim() : "";
     return found && fs.existsSync(found) ? found : undefined;
   }
   findDistExecutable() {
     const root = path.join(this.tongue, "dist-newstyle", "build");
-    return findFile(
-      root,
-      (file) => file.endsWith(path.join("x", "tung", "build", "tung", "tung")),
+    return findFile(root, (file) =>
+      file.endsWith(path.join("x", "tung", "build", "tung", "tung")),
     );
   }
 }
@@ -269,7 +272,8 @@ const findFile = (root, predicate) => {
 };
 const parseCompilerDiagnostic = (output) => {
   const trimmed = output.trim();
-  if (trimmed === "tung-ok") return undefined;
+  if (trimmed === "tung-ok" || trimmed.startsWith("tung-ok\n"))
+    return undefined;
   const [header = "", ...body] = output.split(/\r?\n/);
   const fields = header.split("\t");
   if (fields.length === 5 && fields[0] === "tung-diagnostic") {
@@ -297,24 +301,34 @@ const parseCompilerDiagnostic = (output) => {
     .find((line) => /^(parse error|type error)\b/.test(line));
   return { message: message || trimmed || "checker gave no output" };
 };
-const sourceBundle = (source, imports) => {
-  return `(${haskellString(source)},[${
-    imports.map(([name, imported]) =>
-      `(${haskellString(name)},${haskellString(imported)})`
-    ).join(",")
-  }])`;
+// a successful check listeþ each `sorry` goal after `tung-ok`: a
+// `tung-goal` header wiþ its utf-16 span, þen þe goal and its context.
+const parseCompilerGoals = (output: string) => {
+  if (!output.startsWith("tung-ok")) return [];
+  return output
+    .split("\ntung-goal\t")
+    .slice(1)
+    .map((block) => {
+      const [header = "", ...body] = block.split("\n");
+      const [start, end] = header.split("\t").map(Number);
+      return { start, end, message: body.join("\n").trimEnd() };
+    })
+    .filter(
+      ({ start, end }) => Number.isInteger(start) && Number.isInteger(end),
+    );
 };
-const sessionRequest = (
-  requestId,
-  version,
-  command,
-  name,
-  source,
-  imports,
-) => {
-  return `(${requestId},${version},${haskellString(command)},${
-    haskellString(name)
-  },${sourceBundle(source, imports)})\n`;
+const sourceBundle = (source, imports) => {
+  return `(${haskellString(source)},[${imports
+    .map(
+      ([name, imported]) =>
+        `(${haskellString(name)},${haskellString(imported)})`,
+    )
+    .join(",")}])`;
+};
+const sessionRequest = (requestId, version, command, name, source, imports) => {
+  return `(${requestId},${version},${haskellString(command)},${haskellString(
+    name,
+  )},${sourceBundle(source, imports)})\n`;
 };
 const haskellString = (value) => {
   let result = '"';
@@ -335,6 +349,7 @@ export {
   SourceRole,
   haskellString,
   parseCompilerDiagnostic,
+  parseCompilerGoals,
   sessionRequest,
   sourceBundle,
 };

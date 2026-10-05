@@ -1,8 +1,8 @@
 -- | import-stack growth and cycle reporting shared by checking and evaluation.
-module Tung.Import (
-  ImportStack,
-  enterImport,
-)
+module Tung.Import
+  ( ImportStack,
+    enterImport,
+  )
 where
 
 import Data.List (intercalate)

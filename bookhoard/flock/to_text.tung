@@ -1,0 +1,12 @@
+use ilk/two.tung
+
+show flock haþ_to_text: [α: *, *] {
+  let to_text: [α, text]
+}
+
+bizen: 𝟚 haþ_to_text {
+  let to_text ≔ {
+    yea ^ 'yea',
+    nay ^ 'nay'
+  }
+}

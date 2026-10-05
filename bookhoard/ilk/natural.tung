@@ -1,63 +1,102 @@
 use flock/algebra/arithmetic/add.tung
-use flock/algebra/arithmetic/monoid-additive.tung
-use flock/algebra/arithmetic/monoid-multiplicative.tung
+use flock/algebra/arithmetic/divide_remainder.tung
+use flock/algebra/arithmetic/monoid_additive.tung
+use flock/algebra/arithmetic/monoid_multiplicative.tung
 use flock/algebra/arithmetic/multiply.tung
 use flock/algebra/arithmetic/one.tung
 use flock/algebra/arithmetic/semiring.tung
+use flock/algebra/arithmetic/subtract.tung
 use flock/algebra/arithmetic/zero.tung
 use flock/equal.tung
-use flock/order/less-equal.tung
-use flock/order/order-partial.tung
-use flock/order/order-total.tung
-use flock/order/semilattice-upper-bounded.tung
+use flock/order/less_equal.tung
+use flock/order/order_partial.tung
+use flock/order/order_total.tung
+use flock/order/semilattice_upper_bounded.tung
+use flock/to_text.tung
+use ilk/option.tung
+use ilk/product.tung
 use ilk/two.tung
 
-show ilk ℕ [*] {
-  zero [ℕ]
-  suc [ℕ, ℕ]
+## ℕ is a primitive type wiþ arbitrary precision. its operations are host
+## bindings; þese bizens give it equality, order, and semiring structure.
+let equal_natural: [ℕ, ℕ, 𝟚] ≔ 'equal_natural' fremmed
+let less_equal_natural: [ℕ, ℕ, 𝟚] ≔ 'less_equal_natural' fremmed
+let add_natural: [ℕ, ℕ, ℕ] ≔ 'add_natural' fremmed
+## subtraction stoppeþ at zero.
+let subtract_natural: [ℕ, ℕ, ℕ] ≔ 'subtract_natural' fremmed
+let multiply_natural: [ℕ, ℕ, ℕ] ≔ 'multiply_natural' fremmed
+let divide_remainder_natural: [ℕ, ℕ, (ℕ ∏ ℕ) option] ≔ 'divide_remainder_natural' fremmed
+let natural_to_text: [ℕ, text] ≔ 'natural_to_text' fremmed
+
+bizen: ℕ equal {
+  let ≍ ≔ equal_natural
 }
 
-bizen:ℕ equal {
-  let ≡ [] {
-    zero, zero ^ yea,
-    a suc, b suc ^ a ≡ b,
-    _, _ ^ nay
-  }
+bizen: ℕ less_equal {
+  let ≤ ≔ less_equal_natural
 }
 
-bizen:ℕ less-equal {
-  let ≤ [] {
-    zero, _ ^ yea,
-    _, zero ^ nay,
-    a suc, b suc ^ a ≤ b
-  }
+bizen: ℕ add {
+  let + ≔ add_natural
 }
 
-bizen:ℕ order-partial {}
-
-bizen:ℕ order-total {}
-
-bizen:ℕ semilattice-upper-bounded {
-  let ⟂ [] zero
+## natural subtraction stoppeþ at zero: `2 - 3` is `0`.
+bizen: ℕ subtract {
+  let - ≔ subtract_natural
 }
 
-bizen:ℕ semiring {
-  let + [] {
-    a, zero ^ a,
-    a, b suc ^ (a + b) suc
-  }
-
-  let zero [] zero
-
-  let × [] {
-    _, zero ^ zero,
-    a, b suc ^ a + (a × b)
-  }
-
-  let one [] zero suc
+bizen: ℕ haþ_zero {
+  let zero ≔ 0
 }
 
-show let to-ℤ [ℕ, ℤ] {
-  zero  ^ 0,
-  a suc ^ 1 + (a to-ℤ)
+bizen: ℕ multiply {
+  let × ≔ multiply_natural
+}
+
+bizen: ℕ haþ_one {
+  let one ≔ 1
+}
+
+bizen: ℕ divide_remainder {
+  let % ≔ divide_remainder_natural
+}
+
+bizen: ℕ haþ_to_text {
+  let to_text ≔ natural_to_text
+}
+
+bizen: ℕ order_partial {
+  let ≤_reflect ≔ sorry
+  let ≤_antisymmetric ≔ sorry
+  let ≤_transit ≔ sorry
+}
+
+bizen: ℕ order_total {
+  let ≤_total ≔ sorry
+}
+
+bizen: ℕ semilattice_upper_bounded {
+  let ⟂ ≔ 0
+
+  let ⟂_∨ ≔ sorry
+}
+
+bizen: ℕ monoid_additive {
+  let +_+ ≔ sorry
+  let zero_+ ≔ sorry
+  let +_zero ≔ sorry
+}
+
+bizen: ℕ monoid_multiplicative {
+  let ×_× ≔ sorry
+  let one_× ≔ sorry
+  let ×_one ≔ sorry
+}
+
+bizen: ℕ semiring {
+  let +_commute ≔ sorry
+  let ×_+ ≔ sorry
+  let +_× ≔ sorry
+  let zero_× ≔ sorry
+  let ×_zero ≔ sorry
 }

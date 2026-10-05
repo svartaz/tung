@@ -1,0 +1,75 @@
+use flock/equal.tung
+use flock/order/less_equal.tung
+use ilk/three.tung
+use ilk/two.tung
+
+## a decidable partial order.
+show flock order_partial: [α: *, @: α less_equal, *] {
+  let ≤_reflect: [a: α, (a ≤ a) = yea]
+  let ≤_antisymmetric: [a: α, b: α, >{≤, a ≤ b, b ≤ a, a ≍ b} = yea]
+  let ≤_transit: [a: α, b: α, c: α, >{≤, a ≤ b, b ≤ c, a, c} = yea]
+}
+
+bizen: 𝟚 order_partial {
+  let ≤_reflect ≔ {
+    yea;
+    nay ^ reflect
+  }
+  let ≤_antisymmetric ≔ {
+    yea, yea;
+    yea, nay;
+    nay, yea;
+    nay, nay ^ reflect
+  }
+  let ≤_transit ≔ {
+    yea, nay, _;
+    yea, yea, yea;
+    yea, yea, nay;
+    nay, yea, yea;
+    nay, yea, nay;
+    nay, nay, yea;
+    nay, nay, nay ^ reflect
+  }
+}
+
+bizen: 𝟛 order_partial {
+  let ≤_reflect ≔ {
+    fore;
+    mid;
+    aft ^ reflect
+  }
+  let ≤_antisymmetric ≔ {
+    fore, fore;
+    fore, mid;
+    fore, aft;
+    mid, fore;
+    mid, mid;
+    mid, aft;
+    aft, fore;
+    aft, mid;
+    aft, aft ^ reflect
+  }
+  let ≤_transit ≔ {
+    mid, fore, _;
+    aft, fore, _;
+    aft, mid, _;
+    fore, fore, fore;
+    fore, fore, mid;
+    fore, fore, aft;
+    fore, mid, fore;
+    fore, mid, mid;
+    fore, mid, aft;
+    fore, aft, fore;
+    fore, aft, mid;
+    fore, aft, aft;
+    mid, mid, fore;
+    mid, mid, mid;
+    mid, mid, aft;
+    mid, aft, fore;
+    mid, aft, mid;
+    mid, aft, aft;
+    aft, aft, fore;
+    aft, aft, mid;
+    aft, aft, aft ^ reflect
+  }
+}

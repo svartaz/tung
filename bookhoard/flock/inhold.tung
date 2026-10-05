@@ -1,6 +1,6 @@
 use ilk/two.tung
 
 ## a container whose membership can be decided.
-show flock inhold [a:*, b:*] {
-  let ∋ [a, b, 𝟚]
+show flock inhold: [α: *, β: *, *] {
+  let ∋: [α, β, 𝟚]
 }

@@ -1,4 +1,4 @@
--- runnable byspels and host-backed effects cross the full compiler boundary here.
+-- runnable byspels and host-backed deeds cross the full compiler boundary here.
 module Test.Integration (group) where
 
 import Control.Concurrent (forkFinally, killThread, threadDelay)
@@ -16,9 +16,9 @@ import System.FilePath (takeExtension)
 import System.IO.Error (isDoesNotExistError)
 import System.Process (readProcess)
 import System.Timeout qualified as Timeout
-import Test.Harness (Group, Test)
+import Test.Harness (Group, Test, checkSource, evaluateSource, runMainSource)
 import Test.Harness qualified as Harness
-import Tung
+import Tung (readLibraryImports)
 
 group :: IO Group
 group = do
@@ -44,35 +44,41 @@ tungFiles directory = do
 runnableFileCase :: Imports -> FilePath -> Test
 runnableFileCase imports path = do
   source <- readFile path
-  pure $ case checkRunnableWithImports source imports of
+  pure $ case checkSource True source imports of
     "type ok" -> Nothing
     actual -> Just ("runnable file " ++ path ++ ": " ++ actual)
 
 mainEntry :: Imports -> Test
 mainEntry imports = do
-  actual <- evaluateMainWithImports "use ground.tung let main [_: 𝟙, 𝟙] only yield 42" imports
-  pure $ if actual == "eval ok: only" then Nothing else Just ("main entry: " ++ actual)
+  actual <- runMainSource "use ground.tung let main:𝟙 deed ≔ only pure" imports
+  pure $ if actual == "ok 0" then Nothing else Just ("main entry: " ++ actual)
 
 rejectedMain :: Imports -> Test
 rejectedMain imports = do
-  actual <- evaluateMainWithImports "use ground.tung let main [_: 𝟙, 𝟙] missing" imports
+  actual <- runMainSource "use ground.tung let main:𝟙 deed ≔ missing" imports
   pure $ if "type error:" `isPrefixOf` actual then Nothing else Just ("rejected main reached evaluation: " ++ actual)
 
 fibonacciSampleResult :: Imports -> Test
 fibonacciSampleResult imports = do
   source <- readFile "../benchmark/fibonacci.tung"
-  actual <- evaluateWithImports (source ++ "\nyield 20 fibonacci") imports
+  actual <- evaluateSource (source ++ "\nyield 20 fibonacci") imports
   pure $ if actual == "eval ok: 6765" then Nothing else Just ("fibonacci 20: " ++ actual)
 
 fileRoundTrip :: Imports -> Test
 fileRoundTrip imports = do
   directory <- getTemporaryDirectory
-  let path = directory ++ "/tung-file-effect-test~txt"
-      source = "use ground.tung let _ [] '" ++ path ++ "' write-file 'hello' let _ [] '" ++ path ++ "' append-file ' world' yield '" ++ path ++ "' read-file"
+  let path = directory ++ "/tung-file-deed-test~txt"
+      file = "'" ++ path ++ "'"
+      -- `each` appendeþ in list order.
+      source =
+        "use ground.tung use ilk/list.tung yield >{þen, "
+          ++ (file ++ " write_file 'hello', ")
+          ++ ("(' ' ‥ ('world' ‥ empty)) each { part ^ " ++ file ++ " append_file part $ void }, ")
+          ++ (file ++ " read_file}")
   removeIfPresent path
-  actual <- evaluateWithImports source imports
+  actual <- evaluateSource source imports
   removeIfPresent path
-  pure $ if actual == "eval ok: 'hello world'" then Nothing else Just ("file round trip: " ++ actual)
+  pure $ if actual == "eval ok: ('hello world' inject₁)" then Nothing else Just ("file round trip: " ++ actual)
 
 webServerRoundTrip :: Imports -> Test
 webServerRoundTrip imports = do
@@ -85,27 +91,26 @@ webServerRoundTrip imports = do
         use ilk/table.tung
         use web/server.tung
 
-        let route [incoming: request, response; clock] (
-          let stamp [] only unix-time
-          yield match ((incoming request-meþod) ≡ 'POST') ∧ ((incoming request-target) ≡ '/echo') {
-            yea ^ match ((incoming request-headers) table~lookup 'Host') {
-              host option~some ^ match host ≡ 'localhost' {
-                yea ^ ((((incoming request-body) ok) wiþ-header 'Transfer-Encoding' 'chunked') wiþ-header 'X-Tung' 'old') wiþ-header 'X-Tung' 'yea',
-                nay ^ 'not found\\n' not-found
+        let route:[incoming: _request, _response deed] ≔ unix_time map { _ ^
+          match ((incoming request_meþod) ≍ 'POST') ∧ ((incoming request_target) ≍ '/echo') {
+            yea ^ match ((incoming request_headers) table~lookup 'Host') {
+              host option~some ^ match host ≍ 'localhost' {
+                yea ^ ((((incoming request_body) ok) wiþ_header 'Transfer-Encoding' 'chunked') wiþ_header 'X-Tung' 'old') wiþ_header 'X-Tung' 'yea',
+                nay ^ 'not found\\n' not_found
               },
-              _ ^ 'not found\\n' not-found
+              _ ^ 'not found\\n' not_found
             },
-            nay ^ 'not found\\n' not-found
+            nay ^ 'not found\\n' not_found
           }
-        )
+        }
 
-        let main [_: 𝟙, 𝟙; clock, web] try
+        let main:𝟙 deed ≔
         """
           ++ " "
           ++ show port
-          ++ " serve route { _ fail ^ only }"
+          ++ " serve route $ void"
   completed <- newEmptyMVar
-  server <- forkFinally (evaluateMainWithImports source imports) (putMVar completed)
+  server <- forkFinally (runMainSource source imports) (putMVar completed)
   -- type checking and evaluator startup share this budget with the round trip.
   response <- Timeout.timeout 30000000 (requestEventually completed port) `finally` killThread server
   pure case response of

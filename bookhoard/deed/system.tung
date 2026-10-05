@@ -1,10 +1,7 @@
 use ilk/list.tung
-use ilk/one.tung
 use ilk/option.tung
 
 ## host arguments, settings, and process ending.
-show deed system {
-  arguments [𝟙, text list],
-  environment [text, text option],
-  exit [@a:*, ℤ, a]
-}
+show let arguments: (text list) deed ≔ 'arguments' fremmed
+show let environment: [text, (text option) deed] ≔ 'environment' fremmed
+show let exit: [@α: *, ℕ, α deed] ≔ 'exit' fremmed

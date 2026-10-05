@@ -1,0 +1,69 @@
+use flock/algebra/partial/category.tung
+use flock/algebra/partial/semigroupoid.tung
+use flock/functor.tung
+use flock/functor/applicative.tung
+use flock/functor/monad.tung
+
+## a computation: eiþer a result, or one request and þe continuation þat
+## receiveþ its answer. a request `ξ φ` asketh for a `ξ`; φ need not be a
+## functor, and þe type stayeþ strictly positive, so every function below
+## recurseþ structurally.
+show ilk freer: [φ: [*, *], α: *, *] {
+  done: [α, φ freer α],
+  more: [@ξ: *, ξ φ, [ξ, φ freer α], φ freer α]
+}
+
+## run þe continuation on þe result, after every request.
+show let bind: [@φ: [*, *], @α: *, @β: *, program: φ freer α, next: [α, φ freer β], φ freer β] ≔
+  match program {
+    value done ^ value next,
+    request more continue ^ request more { answer ^ (answer continue) bind next }
+  }
+
+## a program of one request, whose answer is its result.
+show let lift: [@φ: [*, *], @α: *, request: α φ, φ freer α] ≔
+  request more done
+
+show let map_freer: [@φ: [*, *], @α: *, @β: *, program: φ freer α, change: [α, β], φ freer β] ≔
+  program bind { value ^ (value change) done }
+
+show let flat_freer: [@φ: [*, *], @α: *, program: φ freer (φ freer α), φ freer α] ≔
+  program bind sameness
+
+## interpret a program: `handle` answereþ each request by calling its
+## continuation, and `leaf` turneþ þe result into þe answer.
+show let fold: [
+  @φ: [*, *], @α: *, @β: *,
+  leaf: [α, β],
+  handle: [@ξ: *, ξ φ, [ξ, β], β],
+  program: φ freer α,
+  β
+] ≔ match program {
+  value done ^ value leaf,
+  request more continue ^ request handle { answer ^ leaf fold handle (answer continue) }
+}
+
+## general mapping and right-identity proofs need function extensionality
+## to turn pointwise continuation proofs into equality of `more` programs.
+bizen: [@φ: [*, *], (φ freer) functor] {
+  let map: [program:, change:] ≔ program map_freer change
+
+  let map_sameness ≔ sorry
+}
+
+bizen: [@φ: [*, *], (φ freer) applicative] {
+  let pure ≔ done
+  let apply: [program:, changes:] ≔ changes bind { change ^ program map_freer change }
+
+  let apply_sameness_pure ≔ sorry
+  let pure_apply_pure ≔ {_, _ ^ reflect}
+  let apply_apply ≔ sorry
+  let pure_apply ≔ {_, _ ^ reflect}
+}
+
+bizen: [@φ: [*, *], (φ freer) monad] {
+  let flat: [program:] ≔ program flat_freer
+
+  let pure_map_flat ≔ {_, _ ^ reflect}
+  let map_pure_flat ≔ sorry
+}

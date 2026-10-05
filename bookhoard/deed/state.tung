@@ -1,6 +1,0 @@
-use ilk/one.tung
-
-show deed a state {
-  get [𝟙, a],
-  set [a, 𝟙]
-}

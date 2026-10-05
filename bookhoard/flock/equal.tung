@@ -1,24 +1,25 @@
 use ilk/three.tung
 use ilk/two.tung
 
-show flock equal [a:*] {
-  let ≡ [a, a, 𝟚]
+show flock equal: [α: *, *] {
+  let ≍: [α, α, 𝟚]
 }
 
-show let ≢ [byzen a equal, a:a, b:a, 𝟚] (a ≡ b) if nay yea
+show let ≭: [@α: *, @: α equal, a: α, b: α, 𝟚] ≔ (a ≍ b) if nay yea
 
-bizen:𝟚 equal {
-  let ≡ [] {
-    yea, yea | nay, nay ^ yea,
-    _  , _              ^ nay
+bizen: 𝟚 equal {
+  let ≍ ≔ {
+    yea, yea;
+    nay, nay ^ yea,
+    _,   _   ^ nay
   }
 }
 
-bizen:𝟛 equal {
-  let ≡ [] {
+bizen: 𝟛 equal {
+  let ≍ ≔ {
     fore, fore ^ yea,
-    mid , mid  ^ yea,
-    aft , aft  ^ yea,
-    _   , _    ^ nay
+    mid,  mid  ^ yea,
+    aft,  aft  ^ yea,
+    _,    _    ^ nay
   }
 }

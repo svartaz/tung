@@ -1,16 +1,13 @@
 ## captured process status and standard streams.
-show ilk process-result [*] {
-  process-result [ℤ, text, text, process-result]
+show ilk _process_result: * {
+  process_result: [ℤ, text, text, _process_result]
 }
 
-show let process-status
-  [status process-result _ _:process-result, ℤ]
-    status
+show let process_status: [status process_result _ _: _process_result, ℤ] ≔
+  status
 
-show let process-output
-  [_ process-result output _:process-result, text]
-    output
+show let process_output: [_ process_result output _: _process_result, text] ≔
+  output
 
-show let process-errors
-  [_ process-result _ errors:process-result, text]
-    errors
+show let process_errors: [_ process_result _ errors: _process_result, text] ≔
+  errors

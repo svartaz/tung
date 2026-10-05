@@ -1,9 +1,9 @@
 use flock/algebra/partial/category.tung
 use flock/algebra/partial/semigroupoid.tung
 
-show flock groupoid [byzen ⇨ category] {
-  let invert [@a:*, @b:*, a ⇨ b, b ⇨ a]
+show flock groupoid: [⇨: [*, *, *], @: ⇨ category, *] {
+  let invert: [@α: *, @β: *, α ⇨ β, β ⇨ α]
 
-  law [@a:*, @b:*, f:a ⇨ b] f ∘ (f invert) = sameness
-  law [@a:*, @b:*, f:a ⇨ b] (f invert) ∘ f = sameness
+  let ▷_invert: [@α: *, @β: *, f: α ⇨ β, (f ▷ (f invert)) = sameness]
+  let invert_▷: [@α: *, @β: *, f: α ⇨ β, ((f invert) ▷ f) = sameness]
 }

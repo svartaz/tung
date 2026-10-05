@@ -1,15 +1,19 @@
-show let call [@a:*, @b:*, @e:*, a:a, f:[a, b; e], b; e]
+## þe binary function type constructor: `α → β` is `[α, β]`. it may be
+## passed unapplied, as in `bizen: → semigroupoid`.
+show let →: [α: *, β: *, *] ≔ [α, β]
+
+show let call: [@α: *, @β: *, a: α, f: [α, β], β] ≔
   a f
 
-show let constant [@a:*, @b:*, a:a, _:b, a]
+show let constant: [@α: *, @β: *, a: α, _: β, α] ≔
   a
 
-show let flip [
-  @a:*, @b:*, @c:*, @e:*,
-  f:[a, b, c; e], b:b, a:a, c; e
-] a f b
+show let flip: [
+  @α: *, @β: *, @γ: *,
+  f: [α, β, γ], b: β, a: α, γ
+] ≔ a f b
 
-show let duplicate [
-  @a:*, @b:*, @e:*,
-  a:a, f:[a, a, b; e], b; e
-] a f a
+show let duplicate: [
+  @α: *, @β: *,
+  a: α, f: [α, α, β], β
+] ≔ a f a

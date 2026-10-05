@@ -1,7 +1,7 @@
 # tung language support
 
-this directory containeth the vscode extension for `.tung` files. it shareþ
-the repository wiþ the compiler in `../tongue`.
+this page helpeþ thee set up and use the VS Code extension for `.tung` files.
+the extension liveþ beside the compiler in `../tongue`.
 
 ## setup
 
@@ -40,6 +40,7 @@ the extension provideth:
 
 - syntax and semantic highlighting, folding, and selection ranges;
 - compiler-backed diagnostics and inferred types in hover;
+- the goal and named context of each `sorry`, as information and in hover;
 - completion, signature help, and doc comments in hover;
 - declaration, definition, type-definition, implementation, and reference
   navigation;

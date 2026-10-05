@@ -2,10 +2,8 @@
 module Tung.Diagnostic
   ( Diagnostic (..),
     DiagnosticKind (..),
-    checkDiagnosticWithImports,
-    checkBundleDiagnostic,
     checkEditorDiagnosticWithImports,
-    diagnoseResult,
+    failureDiagnostic,
     renderFileDiagnostic,
     renderDiagnostic,
   )
@@ -16,12 +14,11 @@ import Data.Char (isSpace)
 import Data.List (find, intercalate, isInfixOf, isPrefixOf, isSuffixOf, tails)
 import Data.Map.Strict qualified as Map
 import Data.Maybe (fromMaybe, listToMaybe, mapMaybe)
-import Tung.Parse (ParsedBundle (..), ParsedSource (..), SourceUnit (..), prepareBundle)
-import Tung.Syntax qualified
+import Tung.Dependent.Source (CompileFailure (..), FailureKind (..), compileProjectDetailed)
+import Tung.Identity (ModuleId (..))
 import Tung.Token
-import Tung.Type (TypeFailure (..), checkEditorProgramPrepared, checkProgramPrepared)
 
-data DiagnosticKind = ParseDiagnostic | TypeDiagnostic
+data DiagnosticKind = ParseDiagnostic | TypeDiagnostic | GoalDiagnostic
   deriving (Eq, Show)
 
 data Diagnostic = Diagnostic
@@ -32,42 +29,19 @@ data Diagnostic = Diagnostic
   }
   deriving (Eq, Show)
 
+-- a source and þe modules it useþ, checked togeþer; þe first failure, if any.
 checkEditorDiagnosticWithImports :: String -> Map.Map String String -> Maybe Diagnostic
-checkEditorDiagnosticWithImports source imports = checkPreparedDiagnostic checkEditorProgramPrepared (prepareBundle source imports)
+checkEditorDiagnosticWithImports source imports = either (Just . failureDiagnostic source imports) (const Nothing) (compileProjectDetailed Map.empty RootModule source imports)
 
-checkDiagnosticWithImports :: Bool -> String -> Map.Map String String -> Maybe Diagnostic
-checkDiagnosticWithImports runnable source imports = checkBundleDiagnostic runnable (prepareBundle source imports)
-
-checkBundleDiagnostic :: Bool -> ParsedBundle -> Maybe Diagnostic
-checkBundleDiagnostic runnable = checkPreparedDiagnostic (\program imports -> checkProgramPrepared program imports runnable)
-
-checkPreparedDiagnostic :: (Tung.Syntax.Program -> Map.Map String SourceUnit -> Maybe TypeFailure) -> ParsedBundle -> Maybe Diagnostic
-checkPreparedDiagnostic checkProgram ParsedBundle {bundleRoot = SourceUnit {unitSource = source, unitParsed}, bundleImports} = case unitParsed of
-  Left failure -> Just (parseDiagnostic source failure)
-  Right ParsedSource {parsedProgram} -> diagnosticFromFailure source (unitSource <$> bundleImports) (checkProgram parsedProgram bundleImports)
-
-parseDiagnostic :: String -> SourceFailure -> Diagnostic
-parseDiagnostic source SourceFailure {failureSpan, failureMessage} =
-  Diagnostic ParseDiagnostic Nothing (fromMaybe (pointSpan source (firstCodeOffset source)) failureSpan) ("parse error: " ++ failureMessage)
-
-diagnosticFromFailure :: String -> Map.Map String String -> Maybe TypeFailure -> Maybe Diagnostic
-diagnosticFromFailure source imports = fmap \TypeFailure {typeFailureMessage, typeFailureSpan, typeFailurePath} ->
-  let ownerSource = maybe source (\path -> Map.findWithDefault source path imports) typeFailurePath
-   in Diagnostic
-        { diagnosticKind = TypeDiagnostic,
-          diagnosticPath = typeFailurePath,
-          diagnosticSpan = fromMaybe (findSourceSpan ownerSource typeFailureMessage) typeFailureSpan,
-          diagnosticMessage = "type error: " ++ typeFailureMessage
-        }
-
-diagnoseResult :: String -> String -> Diagnostic
-diagnoseResult source message =
-  Diagnostic
-    { diagnosticKind = if "parse error:" `isPrefixOf` message then ParseDiagnostic else TypeDiagnostic,
-      diagnosticPath = Nothing,
-      diagnosticSpan = findSourceSpan source message,
-      diagnosticMessage = message
-    }
+-- a dependent compile failure, located in þe module þat raised it. wiþout
+-- a span of its own, þe names in its message locate it.
+failureDiagnostic :: String -> Map.Map String String -> CompileFailure -> Diagnostic
+failureDiagnostic source imports CompileFailure {failureKind, failurePath, failureSpan, failureText} =
+  let owner = maybe source (\path -> Map.findWithDefault source path imports) failurePath
+      (kind, prefix) = case failureKind of
+        ParseFailure -> (ParseDiagnostic, "parse error: ")
+        CheckFailure -> (TypeDiagnostic, "type error: ")
+   in Diagnostic kind failurePath (fromMaybe (findSourceSpan owner failureText) failureSpan) (prefix ++ failureText)
 
 renderDiagnostic :: Diagnostic -> String
 renderDiagnostic Diagnostic {diagnosticKind, diagnosticPath, diagnosticSpan = SourceSpan start end, diagnosticMessage} =
@@ -93,6 +67,7 @@ sourcePosition source wanted = go 0 1 1 source
 renderKind :: DiagnosticKind -> String
 renderKind ParseDiagnostic = "parse"
 renderKind TypeDiagnostic = "type"
+renderKind GoalDiagnostic = "goal"
 
 findSourceSpan :: String -> String -> SourceSpan
 findSourceSpan source message = case lexLocatedTokens source of
@@ -116,7 +91,7 @@ diagnosticNames message = case mapMaybe (`quotedAfter` message) prefixes of
   [] -> Nothing
   names -> Just names
   where
-    prefixes = ["type error: in '", "while checking let '", "unknown name '", "ambiguous name '", "unknown type '", "ambiguous type '", "handler case '"]
+    prefixes = ["type error: in '", "while checking let '", "unknown name '", "ambiguous name '", "unknown type '", "ambiguous type '"]
 
 matchesAny :: [String] -> Token -> Bool
 matchesAny names (TIdent name) = name `elem` names || any ((`isSuffixOf` name) . ('.' :)) names

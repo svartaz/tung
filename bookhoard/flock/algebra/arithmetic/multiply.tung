@@ -1,11 +1,11 @@
 use ilk/two.tung
 
-show flock multiply [a:*] {
-  let × [a, a, a]
+show flock multiply: [α: *, *] {
+  let ×: [α, α, α]
 }
 
-bizen:𝟚 multiply {
-  let × [] {
+bizen: 𝟚 multiply {
+  let × ≔ {
     yea, yea ^ yea,
     _,   _   ^ nay
   }

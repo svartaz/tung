@@ -1,20 +1,21 @@
 use _foreign.tung
+use flock/algebra/arithmetic/multiply.tung
+use ilk/natural.tung
 use ilk/one.tung
 
 ## a non-normalised span measured in milliseconds.
-show ilk milliseconds [*] {
-  milliseconds [ℤ, milliseconds]
+show ilk _milliseconds: * {
+  milliseconds: [ℕ, _milliseconds]
 }
 
-show let seconds [t:ℤ, milliseconds]
+show let seconds: [t: ℕ, _milliseconds] ≔
   t × 1000 $ milliseconds
 
-show let minutes [t:ℤ, milliseconds]
+show let minutes: [t: ℕ, _milliseconds] ≔
   t × 60 $ seconds
 
-
-show let hours [t:ℤ, milliseconds]
+show let hours: [t: ℕ, _milliseconds] ≔
   t × 60 $ minutes
 
-show let sleep-for [(t milliseconds):milliseconds, 𝟙; async]
+show let sleep_for: [(t milliseconds): _milliseconds, 𝟙 deed] ≔
   t sleep

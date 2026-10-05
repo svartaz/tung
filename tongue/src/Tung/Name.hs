@@ -1,13 +1,13 @@
 -- | pure helpers for import namespaces and qualification.
-module Tung.Name (
-  checkImportAlias,
-  importAlias,
-  importNamespace,
-  isQualifiedName,
-  lastQualifiedSegment,
-  splitQualifiedName,
-  replaceNamespace,
-)
+module Tung.Name
+  ( checkImportAlias,
+    importAlias,
+    importNamespace,
+    isQualifiedName,
+    lastQualifiedSegment,
+    splitQualifiedName,
+    replaceNamespace,
+  )
 where
 
 import Data.List (stripPrefix)

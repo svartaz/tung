@@ -4,12 +4,13 @@ module Test.Type (group) where
 import Control.Monad (replicateM)
 import Data.List (intercalate, isInfixOf, isPrefixOf, isSuffixOf)
 import Data.Map.Strict qualified as Map
+import Test.Compile (compileProject, compileSource)
 import Test.Harness (Group, Test, checkSource, expect, expectEq, expectPrefix, integerSource, runnableErr, typeErr, typeErrContaining, typeErrWith, typeOk, typeOkWith)
 import Test.Harness qualified as Harness
 import Test.QuickCheck qualified as QuickCheck
 import Tung (ModuleId (..), SymbolId (..), readLibraryImports)
 import Tung.Dependent qualified as Kernel
-import Tung.Dependent.Source (compileProject, compileSource, normaliseSourceExpression, sourceDefinitions, sourceEnvironment, typeOfName)
+import Tung.Dependent.Source (normaliseSourceExpression, sourceDefinitions, sourceEnvironment, typeOfName)
 
 group :: IO Group
 group = do
@@ -117,12 +118,12 @@ accepted =
     ("second-position header pattern binds several fields", "ilk _pair: * { pair: [ℤ, text, _pair] } let first:[number pair word: _pair, ℤ] ≔ number let answer:ℤ ≔ (+1 pair 'x') first"),
     ("second-position law patterns bind distinct arguments", "ilk _box: [a:*, *] { box: [a, a _box] } flock identity:[a:*, *] { let rule:[x box:a _box, y box:a _box, x = y] }"),
     ("bare argument after named prefix is supplied by þe body", "use ground.tung let add_after:[x: ℤ, ℤ, ℤ] ≔ { y ^ x + y } let answer:ℤ ≔ +1 add_after +2"),
-    ("an inferred slot type inferþ þe result", "let identity: [x:] ≔ x let answer:ℤ ≔ +1 identity"),
+    ("an inferred result followeþ a written slot type", "let identity: [x: ℤ] ≔ x let answer:ℤ ≔ +1 identity"),
     ("inferred and written slot types mix", "use ground.tung let add_after: [x:, y: ℤ, ℤ] ≔ x + y let answer:ℤ ≔ +1 add_after +2"),
     ("an inferred slot wiþ a written result", "let identity: [x:, ℤ] ≔ x let answer:ℤ ≔ +1 identity"),
     ("local alias constraineþ its captured parameter", "use ground.tung let add_one: [x:] ≔ (let y ≔ x let number:ℤ ≔ y yield number + +1) let result:ℤ ≔ +2 add_one"),
-    ("inlocal function remaineþ polymorphic", "let keep: [x:] ≔ (let identity:[@α:*, y:α, α] ≔ y let number:ℤ ≔ +1 identity let word:text ≔ 'x' identity yield x)"),
-    ("constructor variables remain linked through composition", "ilk _box: [a:*, *] { box: [a, a _box] } let lift:[@a:*, @f:[*, *], x: a f, a f] ≔ x let twice: [x:] ≔ (x lift) lift let good:ℤ _box ≔ (+1 box) twice"),
+    ("inlocal function remaineþ polymorphic", "let keep: [x: ℤ] ≔ (let identity:[@α:*, y:α, α] ≔ y let number:ℤ ≔ +1 identity let word:text ≔ 'x' identity yield x)"),
+    ("constructor variables remain linked through composition", "ilk _box: [a:*, *] { box: [a, a _box] } let lift:[@a:*, @f:[*, *], x: a f, a f] ≔ x let twice: [x: ℤ _box, ℤ _box] ≔ (x lift) lift let good:ℤ _box ≔ (+1 box) twice"),
     ("annotated global function may call itself", "use ground.tung let factorial:[ℕ, ℕ] ≔ { 0 ^ 1, n succeed ^ (n succeed) × (n factorial) } let answer:ℕ ≔ 5 factorial"),
     ("annotated local initializer seeþ its preceding binding", "let answer:text ≔ (let value ≔ +1 let value:text ≔ match value { +0 ^ 'zero', _ ^ 'other' } yield value)"),
     ("arbitrary term type ascription", "use ground.tung let answer ≔ (+1 + +2: ℤ)"),
@@ -131,7 +132,6 @@ accepted =
     ("type ascription preserveþ a constraint", equalPrelude ++ "let same:[@a:*, @:a equal, x: a, y: a, 𝟚] ≔ (x ≍ y: 𝟚)"),
     ("unicode primitive", "let letter:unicode ≔ `a"),
     ("text primitive", "let word:text ≔ 'λ字'"),
-    ("let polymorphism is reusable", "let id: [x:] ≔ x let number:ℤ ≔ +1 id let word:text ≔ 'x' id"),
     ("annotated polymorphic identity", "let id:[@a:*, x: a, a] ≔ x let number:ℤ ≔ +1 id let word:text ≔ 'x' id"),
     ("declared type parameters remain inferred at calls", "let constant:[@a:*, @b:*, x:a, _:b, a] ≔ x let number:ℤ ≔ +1 constant 'x' let word:text ≔ 'x' constant +1"),
     ("explicit type arguments select declaration order around value arguments", "ilk list: [a:*, *] { empty: a list } let f:[@a:*, @b:*, x:a, _:b, a] ≔ x let explicit:text ≔ 'a' f @text @(text list) empty"),
@@ -142,11 +142,11 @@ accepted =
     ("method quantifiers cannot capture instance parameters", "use ground.tung ilk product: [a:*, b:*, *] { pair: [a, b, a product b] } flock mapper:[f:[*, *], *] { let map:[@a:*, @b:*, a f, [a, b], b f] } bizen:[@a:*, (a product) mapper] { let map: [x pair y:, f:] ≔ x pair (y f) } let good:ℤ product text ≔ (+1 pair +2) map to_text"),
     ("instance parameter scopes explicit type inputs", "ilk _box: [a:*, *] { box: [a, a _box] } let id:[@a:*, x:a, a] ≔ x flock haþ_copy:[a:*, *] { let copy:[a, a] } bizen:[@a:*, (a _box) haþ_copy] { let copy: [x box:] ≔ (x id @a) box } let answer:ℤ _box ≔ (+1 box) copy"),
     ("instance method annotation scopes its own parameters", "let id:[@a:*, x:a, a] ≔ x flock owner:[a:*, *] { let copy:[@b:*, a, b, b] } bizen:ℤ owner { let copy:[@c:*, _:ℤ, x:c, c] ≔ x id @c } let answer:text ≔ +1 copy 'x'"),
-    ("polymorphic argument accepteth explicit type input", "let call:[f:[@a:*, a, a], ℤ] ≔ +1 f @ℤ let id: [x:] ≔ x let answer:ℤ ≔ id call"),
+    ("polymorphic argument accepteth explicit type input", "let call:[f:[@a:*, a, a], ℤ] ≔ +1 f @ℤ let id:[@a:*, x:a, a] ≔ x let answer:ℤ ≔ id call"),
     ("explicit type application may precede value application", "let keep:[@a:*, x:a, a] ≔ x let copy ≔ (keep @ℤ) let answer:ℤ ≔ +1 copy"),
     ("a quantified ascription retaineth explicit input after let binding", "let id ≔ ({x ^ x}:[@a:*, a, a]) let answer:ℤ ≔ +1 id @ℤ"),
     ("constructor fields preserve polymorphism through a match", "ilk holder: * { hold: [[@a:*, a, a], holder] } let unpack:[h:holder, [@a:*, a, a]] ≔ match h { f hold ^ f } let id:[@a:*, x:a, a] ≔ x let answer:ℤ ≔ +1 ((id hold) unpack) @ℤ"),
-    ("higher-rank argument instantiateþ at distinct types", polymorphicPrelude ++ "let identity: [x:] ≔ x let good ≔ identity both let lambda ≔ {x ^ x} both"),
+    ("higher-rank argument instantiateþ at distinct types", polymorphicPrelude ++ "let identity:[@a:*, x:a, a] ≔ x let good ≔ identity both let lambda ≔ {x ^ x} both"),
     ("rank-three annotation floweþ into a lambda argument", "let run:[k:[[@a:*, a, a], ℤ], ℤ] ≔ {x ^ x} k let good:ℤ ≔ {f ^ +1 f} run"),
     ("polymorphic result is checked and reused", polymorphicPrelude ++ "let make:[_:ℤ, [@a:*, a, a]] ≔ {x ^ x} let good ≔ (+1 make) both"),
     ("explicit polymorphic ascription retaineth its quantifier", polymorphicPrelude ++ "let good ≔ ({x ^ x}:[@t1:*, t1, t1]) both"),
@@ -162,7 +162,7 @@ accepted =
     ("flock parameters shadow type aliases", "let a:* ≔ ℤ flock haþ_identity:[a:*, *] { let identity:[a, a] } bizen:text haþ_identity { let identity: [x:] ≔ x } let good:text ≔ 'x' identity"),
     ("parameterised type alias is transparent", boolData ++ "let predicate:[a:*, *] ≔ [a, 𝟚] let member:ℤ predicate ≔ { _ ^ yea } let answer:𝟚 ≔ +1 member"),
     ("an arrow alias equaleþ a unary function type", "let →:[α:*, β:*, *] ≔ [α, β] let id:[x: ℤ, ℤ] ≔ x let same:ℤ → ℤ ≔ id"),
-    ("an alias applying a constructor to its parameters may stay unapplied", "let →:[α:*, β:*, *] ≔ [α, β] flock marker:[φ:[*, *, *], *] { let mark:[@α:*, α φ α, ℤ] } bizen:→ marker { let mark: [_:] ≔ +1 } let value:ℤ ≔ ({x ^ x}:[ℤ, ℤ]) mark"),
+    ("an alias applying a constructor to its parameters may stay unapplied", "let →:[α:*, β:*, *] ≔ [α, β] flock marker:[φ:[*, *, *], *] { let mark:[@α:*, α φ α, ℤ] } bizen fallback:→ marker { let mark: [_:] ≔ +1 } let value:ℤ ≔ ({x ^ x}:[ℤ, ℤ]) mark"),
     ("curried triple function", "let pick:[x: ℤ, _: text, _: float, ℤ] ≔ x"),
     ("constructor application is curried", "ilk option: [a:*, *] { none: a option, some: [a, a option] } let make ≔ some let value:ℤ option ≔ +1 make"),
     ("kinded data constructor hath an explicit result", "ilk _box: [a:*, *] { box: [a, a _box] } let value:ℤ _box ≔ +1 box"),
@@ -271,7 +271,6 @@ rejected =
     ("bizen rejecteþ unknown member", "flock haþ_identity:[a:*, *] { let identity:[a, a] } bizen:ℤ haþ_identity { let other: [x:] ≔ x }"),
     ("bizen member hath declared type", "flock haþ_identity:[a:*, *] { let identity:[a, a] } bizen:ℤ haþ_identity { let identity: [x:] ≔ 'wrong' }"),
     ("duplicate bizen is incoherent", "flock haþ_identity:[a:*, *] { let identity:[a, a] } bizen:ℤ haþ_identity { let identity: [x:] ≔ x } bizen:ℤ haþ_identity { let identity: [x:] ≔ x }"),
-    ("incomparable instances are ambiguous when used", "flock haþ_identity:[a:*, *] { let identity:[a, a] } ilk _box: [a:*, *] { box: [a, a _box] } bizen:[@f:[*, *], (ℤ f) haþ_identity] { let identity: [x:] ≔ x } bizen:[@a:*, (a _box) haþ_identity] { let identity: [x:] ≔ x } let bad ≔ (+1 box) identity"),
     ("flock law sides share a value type", "flock bad:[a:*, *] { let rule:[x: a, x = +1] }"),
     ("flock law rejecteþ an unbound value", "flock bad:[a:*, *] { let rule:[x: a, x = missing] }"),
     ("flock law needeþ must be declared", equalPrelude ++ "flock bad:[a:*, *] { let rule:[x: a, (x ≍ x) = (x ≍ x)] }"),
@@ -336,8 +335,8 @@ importCases =
     runnableErr "main must be a deed" (unitData ++ "let main ≔ only"),
     runnableErr "main is not a function" (deedPrelude ++ "let main:[_: 𝟙, 𝟙 deed] ≔ { _ ^ only pure }"),
     runnableErr "main's deed yieldeþ unit" (deedPrelude ++ "let main:ℤ deed ≔ +42 pure"),
-    expectEq "reporteþ an inferred source type" (Right "[@α: *, α, α]") (inspectType "show let identity: [x:] ≔ x" Map.empty "identity"),
-    expectEq "type display showeþ a deed result" (Right "[@α: *, α, α deed]") (inspectType (deedPrelude ++ "let wrap ≔ { x ^ x pure }") unitModule "wrap"),
+    expectEq "reporteþ a source type" (Right "[@α: *, α, α]") (inspectType "show let identity: [@α: *, x: α, α] ≔ x" Map.empty "identity"),
+    expectEq "type display showeþ a deed result" (Right "[@α: *, α, α deed]") (inspectType (deedPrelude ++ "let wrap: [@α: *, x: α, α deed] ≔ x pure") unitModule "wrap"),
     expectEq "reporteþ an unknown inspected name" (Left "unknown name 'missing'") (inspectType "let answer ≔ +42" Map.empty "missing"),
     expect "elaboration resolveþ every type-class evidence hole" evidenceIsResolved,
     typeOkWith "shared diamond imports" "use left.tung use right.tung yield r{left ≔ left~left, right ≔ right~right}" sharedImports
@@ -527,7 +526,7 @@ inferenceProperties =
               [ "let value" ++ show index ++ ":" ++ ty ++ " ≔ " ++ literal ++ " identity "
               | (index, (ty, literal)) <- zip [(0 :: Int) ..] (take 12 values)
               ]
-            source = "let identity: [x:] ≔ x " ++ concat declarations
+            source = "let identity: [@α: *, x: α, α] ≔ x " ++ concat declarations
          in QuickCheck.counterexample source (checkSource False source Map.empty QuickCheck.=== "type ok"),
     Harness.propertyTest "property: primitive annotations rejecteþ a different inferred type" $
       QuickCheck.forAll (QuickCheck.elements primitiveValues) \(actualType, literal) ->
@@ -578,8 +577,13 @@ evidenceResolved source = case compileSource (SourceModule "main.tung") source o
   Right program ->
     all (either (const False) (const True) . Kernel.validate (sourceEnvironment program) . snd) (sourceDefinitions program)
       && all
-        (\name -> normaliseSourceExpression program name == normaliseSourceExpression program "yea")
+        (\name -> isYea (normaliseSourceExpression program name))
         [symbolName symbol | (symbol, _) <- sourceDefinitions program, symbolName symbol == "answer" || "-evidence" `isSuffixOf` symbolName symbol]
+  where
+    -- universe arguments may differ; þe constant is what matters.
+    isYea = \case
+      Right (Kernel.Global symbol _) -> symbolName symbol == "yea"
+      _ -> False
 
 inspectType :: String -> Map.Map String String -> String -> Either String String
 inspectType source imports name = compileProject (SourceModule "main.tung") source imports >>= (`typeOfName` name)

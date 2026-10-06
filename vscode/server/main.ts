@@ -24,11 +24,7 @@ import {
   tokenAtPosition,
   tokenRange,
 } from "./analysis.ts";
-import {
-  CompilerBridge,
-  parseCompilerDiagnostic,
-  parseCompilerGoals,
-} from "./checker.ts";
+import { CompilerBridge } from "./checker.ts";
 import { formatRangeEdit } from "./format.ts";
 import {
   readDeclaredLibraryPaths,
@@ -606,9 +602,18 @@ const runCheck = (document) => {
     checks.delete(document.uri);
     const current = documents.get(document.uri);
     if (!current || current.version !== running.version) return;
-    const goals = parseCompilerGoals(output);
+    const diagnostics = output.kind === "check" ? output.diagnostics : [];
+    const goals = diagnostics.filter(
+      (diagnostic) => diagnostic.kind === "goal",
+    );
     goalReports.set(current.uri, goals);
-    publish(current, parseCompilerDiagnostic(output), goals);
+    publish(
+      current,
+      output.kind === "error"
+        ? output.message
+        : diagnostics.find((diagnostic) => diagnostic.kind !== "goal"),
+      goals,
+    );
   });
 };
 const inspectType = (definition, cancellation = undefined) => {
@@ -630,10 +635,7 @@ const inspectType = (definition, cancellation = undefined) => {
   const entry = {
     cancel: running.cancel,
     promise: running.result.then((output) =>
-      output
-        .split(/\r?\n/)
-        .find((line) => line.startsWith("type: "))
-        ?.slice(6),
+      output.kind === "type" ? output.type : undefined,
     ),
   };
   typeCache.set(key, entry);
@@ -726,47 +728,10 @@ const errorRange = (document, diagnostic) => {
       end: document.positionAt(diagnostic.end),
     };
   }
-  const message =
-    typeof diagnostic === "string" ? diagnostic : diagnostic?.message || "";
-  const parseAt = /^parse error:\s+source:(\d+):(\d+):/m.exec(message);
-  if (parseAt) {
-    const start = {
-      line: Math.max(0, Number(parseAt[1]) - 1),
-      character: Math.max(0, Number(parseAt[2]) - 1),
-    };
-    return {
-      start,
-      end: { line: start.line, character: start.character + 1 },
-    };
-  }
-  const model = workspace.model(document.uri);
-  const name = diagnosticName(message);
-  const token =
-    name &&
-    model?.tokens.find(
-      (candidate) =>
-        candidate.text === name || candidate.text.endsWith(`.${name}`),
-    );
-  if (token) return tokenRange(token);
-  const offset = firstCodeOffset(document.getText());
-  const start = document.positionAt(offset);
-  return { start, end: document.positionAt(offset + 1) };
-};
-const diagnosticName = (message) => {
-  return [
-    /^type error: in '([^']+)'/,
-    /unknown name '([^']+)'/,
-    /ambiguous name '([^']+)'/,
-    /unknown type '([^']+)'/,
-    /ambiguous type '([^']+)'/,
-    /handler case '([^']+)'/,
-  ]
-    .map((pattern) => pattern.exec(message)?.[1])
-    .find(Boolean);
-};
-const firstCodeOffset = (text) => {
-  const match = /\S/.exec(text);
-  return match ? match.index : 0;
+  return {
+    start: document.positionAt(0),
+    end: document.positionAt(Math.min(1, document.getText().length)),
+  };
 };
 const definitionLocation = (uri, position) => {
   const { definition } = workspace.resolveAt(uri, position);

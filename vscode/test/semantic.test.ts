@@ -226,10 +226,10 @@ test("compiler highlighting recovereþ incomplete syntax without accepting it", 
     await labels("let before:ℤ ≔ +1\nlet broken ≔ 'unfinished", "ℤ"),
     ["type:"],
   );
-  assert.match(
-    await compiler.check({ text: source }, []).result,
-    /^tung-diagnostic\tparse/,
-  );
+  const result = await compiler.check({ text: source }, []).result;
+  assert.equal(result.kind, "check");
+  if (result.kind === "check")
+    assert.equal(result.diagnostics[0]?.kind, "parse");
 });
 test("compiler spans map unicode and line endings without eager name resolution", () => {
   const resolve = () => {

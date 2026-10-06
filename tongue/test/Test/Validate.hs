@@ -4,7 +4,7 @@ module Test.Validate (group) where
 import Data.Map.Strict qualified as Map
 import Test.Harness (Group, Test, checkSource)
 import Test.Harness qualified as Harness
-import Tung.Dependent.Source (sourceImportPaths)
+import Tung.Dependent.Source (snapshotImportPaths, sourceSnapshot)
 
 group :: IO Group
 group =
@@ -59,7 +59,7 @@ validationErr name = validationCase name False
 -- a `use` path þat noþing provideþ is an empty module here.
 validationCase :: String -> Bool -> String -> Test
 validationCase name shouldPass source =
-  let imports = Map.fromList [(path, "") | path <- sourceImportPaths source]
+  let imports = Map.fromList [(path, "") | path <- snapshotImportPaths (sourceSnapshot source)]
       result = checkSource False source (Map.difference imports libraryPaths)
    in pure $ case (shouldPass, result) of
         (True, "type ok") -> Nothing

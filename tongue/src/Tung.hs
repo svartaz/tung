@@ -18,17 +18,13 @@ module Tung
     lexLocatedTokens,
     keywordNames,
     languageMetadata,
-    enterImport,
-    checkEditorDiagnosticWithImports,
     renderFileDiagnostic,
     failureDiagnostic,
-    renderDiagnostic,
     resolveLibraryRoots,
     readLibraryImportFiles,
     readLibraryImports,
     loadProjectFile,
-    loadProjectFileWithRoots,
-    loadProjectSourceWithRoots,
+    loadProjectSource,
     hostBindings,
   )
 where
@@ -37,7 +33,6 @@ import Tung.Diagnostic
 import Tung.Format (formatSource)
 import Tung.Highlight (highlightSource)
 import Tung.Identity
-import Tung.Import (enterImport)
 import Tung.Library (readLibraryImportFiles, readLibraryImports, resolveLibraryRoots)
 import Tung.Metadata (languageMetadata)
 import Tung.Primitive

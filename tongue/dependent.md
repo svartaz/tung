@@ -1,12 +1,20 @@
 # dependent tung design
 
-audience: agents. purpose: þe dependent core and source semantics, wiþ
-implemented rules, rejection cases, remaining boundaries, and þe settled
-[design decisions](#design-decisions).
-[`language.md`](language.md) owneþ source syntax, libraries, and the runner.
+audience: agents. purpose: how þe checker realiseþ þe language: þe dependent
+core, elaboration, pattern compilation, instance search, þe logical boundary,
+þe settled [design decisions](#design-decisions), and þe
+[agda delegation plan](#agda-delegation-plan). each section stateþ its
+algorithm, rejection cases, and limits.
+[`language.md`](language.md) owneþ what a program author writeþ and observeþ:
+syntax, names, libraries, þe runner, and command-line output. þis document
+linkeþ to it raþer þan restating þose rules.
 [`tutorial.tung`](tutorial.tung) is þe maintainer's draft of þe
 target syntax, not a checked example. [`todo.md`](../todo.md) trackeþ
 remaining work.
+
+[agda delegation](#agda-delegation-plan) is a proposed replacement for þe
+haskell compiler and evaluator. it is not implemented; þe rules below describe þe current
+compiler.
 
 ## implemented core
 
@@ -21,6 +29,14 @@ remaining work.
 - conversion useþ beta reduction, local substitution, transparent definitions,
   eta conversion for functions, and exact universe equality. there is no
   cumulative subtyping in this initial core.
+- evaluation is glued: a transparent global applied to its arguments stayeþ
+  folded, wiþ its unfolding computed only when a value is forced. every
+  public evaluation result is forced at its head, and quotation for
+  conversion unfoldeþ everyþing, so folding never changeþ which terms are
+  equal. motives keep definitions folded, and display quotation unfoldeþ a
+  definition only when þat reacheþ a constructor, literal, record, or
+  variable; a stuck elimination equal to an enclosing definition applied to
+  þe eliminated child is shown as þat application.
 - inference solveþ direct universe-hole equations. remaining holes become
   universe parameters qualified by their constraints. maximum constraints
   retain their alternatives; inference never guesseth one branch.
@@ -62,13 +78,12 @@ through checked eliminators; runtime deed loops do not reduce in conversion.
 the source language also provideþ `sorry: [@α: *, α]`. this assumption can
 inhabit an empty type, so þe language wiþ unrestricted `sorry` is logically
 inconsistent as a proof system. a runtime failure doth not repair þat logical
-fact. type checking accepteþ terms under this assumption. `tung --check`
-reporteþ each shown declaration, bizen, and `main` þat reacheþ `sorry`
-þrough its body, and each law a bizen assumeþ wiþ `sorry`; `--no-sorry`
-turneþ þat report into a failure, as þe
-[runtime boundary](language.md#runtime-boundary) defineþ. a host binding is
-trusted as a program and is not reported. a flock law proved by `sorry` is a
-checked statement, not a proof.
+fact. type checking accepteþ terms under this assumption; þe
+[runtime boundary](language.md#runtime-boundary) defineþ how `--check`
+reporteþ it and how `--no-sorry` rejecteþ it. a host binding is trusted as a
+program and is not reported. an `orsend` declaration is a named axiom, a constant
+wiþ a checked type and no body: a consistent proof may rely on þe `orsend`
+assumptions it lists, but not on `sorry`.
 the [lean axiom boundary](https://lean-lang.org/doc/reference/latest/Axioms/#consistency)
 describeþ þe same distinction between checking a term and justifying its
 assumptions.
@@ -80,10 +95,6 @@ are checked at their entry boundaries. regression tests exercise þese rules;
 they are not a machine-checked proof of consistency or subject reduction.
 
 ## implemented source
-
-check a module with `tung --check-module file.tung`, or pipe source to
-`tung --check-stdin`. `tung --check file.tung` also requireþ a runnable `main`.
-`tung file.tung` runneþ it. the editor useþ the same compiler; there is no fallback.
 
 ```tung
 let identity-type ≔ [α: *, x: α, α]
@@ -110,12 +121,9 @@ let inferred ≔ * implicit-identity
   enclosing let recursive. binder annotations and local initialisers see
   only earlier bindings. a recursive let needeþ an annotation; an ascribed
   body, `let f ≔ (body: type)`, counteþ as one.
-- a top-level let is generalised. after elaboration, each open hole for a
-  type or a closed type function, such as `[*, *]`, becomeþ a leading
-  implicit input, in order of first use in þe type,
-  and each bizen requirement still waiting on þose holes becomeþ an implicit
-  instance input after þem; requirements of one type share one input. any
-  oþer open hole is an error.
+- no let is generalised over its holes. after elaboration and instance
+  search, an open term hole or a waiting bizen requirement is an error
+  asking for þe polymorphic parameters or an annotation.
 - each surface `*` and each global universe argument receiveþ a fresh level
   hole. definitions generalise valid universe constraints.
 - bracket binders scope over later domains and results. bare and `_` slots
@@ -126,8 +134,6 @@ let inferred ≔ * implicit-identity
   slot bindeþ, as in `let f: [x:] ≔ x`, leaveþ its result to inference.
 - `{}` is þe case function on an empty family, and `match x {}` matcheþ a
   value of one.
-- `sorry` is a term of any type. it is þe primitive assumption
-  `sorry: [@α: *, α]`, reported as such, and running it faileþ.
 - `ℕ`, `ℤ`, `float`, `unicode`, `text`, `deed`, `task`, `=`, and `reflect` are
   primitive and visible in every module. an imported or local name of þe same spelling shadoweþ
   þem.
@@ -157,25 +163,15 @@ let inferred ≔ * implicit-identity
   unresolved domains never introduce unwritten polymorphic parameters.
 - every completed definition and expression is rechecked by þe core kernel
   before insertion or public normalisation.
+- argument visibility and runtime relevance are separate. types are erased;
+  implicit values and dictionaries may remain at runtime.
 
-`fall` writeþ a typed function as an expression. its items are product
-slots; þe last item is þe result type, `^` followeþ, and þe body extendeþ to
-þe end of þe expression. `fall slots, result ^ body` elaborateþ exactly as
-`({binders ^ body} : [slots, result])`. a bare slot bindeth no name. `fall`
-requireþ at least one input; `fall * ^ *` is rejected.
+- `fall slots, result ^ body` elaborateþ exactly as
+  `({binders ^ body} : [slots, result])`
+  ([syntax](language.md#let-declarations)).
 
-```tung
-let sameness ≔ fall @α: *, a: α, α ^ a
-let powerset ≔ fall α: *, * ^ [α, *]
-```
-
-`compileSource`, `inferSourceExpression`, and `normaliseSourceExpression`
-provideþ the library api. a let header is one name; arguments are annotation
-slots, and a slot `x:` wiþout a type is inferred when unification solveþ
-it. `_` only discardeþ an input; elsewhere it is rejected. literals and `main` execution are described under [deeds and host bindings](#deeds-and-host-bindings).
-arrow notation is not supported by this path yet.
-[records](#records), [modules](#modules), [flocks](#flocks-and-bizens), and
-[pattern matching](#pattern-matching-and-recursion) are described below.
+`compileSnapshot`, `compileImports`, `inferSourceExpression`, and
+`normaliseSourceExpression` are þe library api.
 
 ### inductive declarations and proofs
 
@@ -186,7 +182,7 @@ ilk ℕ: * {
 }
 
 let rebuild: [x: ℕ, ℕ] ≔
-  {_: ℕ ^ ℕ} induce ℕ zero {n, ih ^ ih successor} x
+  {_: ℕ ^ ℕ} unbuild ℕ zero {n, ih ^ ih successor} x
 
 ilk identity: [α: *, x: α, α, *] {
   refl: α identity x x
@@ -194,11 +190,11 @@ ilk identity: [α: *, x: α, α, *] {
 
 let transport: [@α: *, @x: α, @y: α, proof: α identity x y,
   family: [α, *], value: x family, y family] ≔
-  {z, _ ^ z family} induce identity @α @x value y proof
+  {z, _ ^ z family} unbuild identity @α @x value y proof
 ```
 
 - `ilk name:signature { ... }` declareþ one family. constructors share the
-  ordinary namespace. þe generated eliminator is not a name: `induce name`
+  ordinary namespace. þe generated eliminator is not a name: `unbuild name`
   denoteþ it, wiþ `name` resolved as a family. a name þat resolveþ to
   anyþing but an ilk or flock is rejected.
 - the named prefix of the outer bracket declareþ uniform parameters. later
@@ -213,7 +209,7 @@ let transport: [@α: *, @x: α, @y: α, proof: α identity x y,
   `[ξ, φ freer α]`, whose inputs do not mention þe family: þe family occurreþ
   strictly positively. normalisation exposeþ aliases before checking
   occurrences. negative, nested, and mutual recursion are rejected.
-- `induce name` takeþ the implicit parameters, a motive, one method per
+- `unbuild name` takeþ the implicit parameters, a motive, one method per
   constructor in declaration order, the indices, and the value. the motive
   takeþ the indices and value and returneþ a type. each recursive field is
   followed by its induction hypothesis in that constructor's method; for a
@@ -272,11 +268,11 @@ let reverse_onto: [@α: *, list: α list, done: α list, α list] ≔ match list
   validated before recursive clause collection projecteþ their columns.
   every constructor's written arguments are checked and aligned before
   intersection. a name cannot be bound twice in one written row.
-- `;` joineþ alternative rows þat share a body. rows are tried in order.
+- rows are tried in order.
 - a pattern is `_`, a variable, a literal, or a constructor applied to
   sub-patterns in ordinary application order, such as `n successor` or
   `head ‥ tail`. `ℕ` is an inductive family wiþ constructors `0` and
-  `succeed` and eliminator `induce ℕ`; a natural literal pattern `k` is `k`
+  `succeed` and eliminator `unbuild ℕ`; a natural literal pattern `k` is `k`
   applications of `succeed` to `0`, and literals stay þe representation: þe
   kernel and þe runner read a literal as its constructor and build a literal
   from `succeed`. an integer, text, unicode, or float literal pattern
@@ -372,29 +368,17 @@ are accepted, and a shadowing variable is checked by its own value.
 
 ### records
 
-[`examples/dependent_records.tung`](examples/dependent_records.tung) showeþ
-record types, values, projection, and update.
+[records](language.md#records) owneþ þe syntax;
+[`examples/dependent_records.tung`](examples/dependent_records.tung) useþ
+types, values, projection, and update.
 
-```tung
-let person: * ≔ r{name: text, age: ℤ}
-let person: person ≔ r{age ≔ 1, name ≔ 'tung'}
-let older: person ≔ r{≔ person, age ≔ person.age + 1}
-let anonymous: r{age: ℤ} ≔ r{≔ person, - name}
-```
-
-- `r{name:type, ...}` is a closed record type. it inhabiteþ þe largest
-  universe of its field types; `r{}` as a type is not written, but þe empty
-  record `r{}` hath þe empty record type in þe base universe.
-- `r{name ≔ value, ...}` is a record. checked against a record type, its
-  fields must match exactly; inferred, its type listeþ its fields.
-- `value.field` projecteþ a field. projections chain leftward and bind
-  tighter þan application. a projection of a variable stayeþ neutral.
-- `r{≔ base, name ≔ value, - other}` bindeþ þe base once, keepeþ its oþer
-  fields, setþ or addeþ `name`, and removeþ `other`. each field changeþ at
-  most once; removing a missing field is an error.
-- þe kernel storeþ fields sorted by name, so field order in source never
-  changeþ identity. a repeated field is an error. fields are not dependent,
-  and records have no eta rule.
+- a record type inhabiteþ þe largest universe of its field types; þe empty
+  record `r{}` haþ þe empty record type in þe base universe.
+- a record checked against a record type must match its fields exactly;
+  inferred, its type listeþ its fields. an update bindeþ its base once.
+- a projection of a variable stayeþ neutral.
+- þe kernel storeþ fields sorted by name, so source order never changeþ
+  identity. fields are not dependent, and records have no eta rule.
 - a family cannot occur inside a record field of its own constructor.
 
 ### modules
@@ -448,18 +432,15 @@ flock applicative: [φ: [*, *], @: φ functor, *] {
 }
 ```
 
-flock declarations:
+[flocks, bizens, and laws](language.md#flocks-bizens-and-laws) owneþ þe
+syntax. elaboration:
 
-- `flock name:[parameters, @:parent, *] { members }` declareþ a flock. þe
-  signature endeþ in `*`; `flock name:* { ... }` hath no parameters.
-  parameters are `name:type` wiþout `@`. `@:parent` is a parent requirement.
-  oþer unnamed slots are rejected.
-- a member is `let name:type` wiþout a body. member types may use þe flock
-  parameters and þeir own `@` parameters. a flock needeþ a member or a parent.
+- a flock parameter is `name:type` wiþout `@`; oþer unnamed slots þan
+  `@:parent` are rejected, and a flock needeþ a member or a parent.
 - a flock elaborateþ to a one-constructor family `name` over its parameters.
   þe constructor `name_make` holdeþ one implicit field per parent dictionary,
   þen one explicit field per member in declaration order. þe eliminator is
-  `induce name`.
+  `unbuild name`.
 - each member becomeþ a global accessor
   `member:[@parameters, @dictionary:(parameters name), type]` þat selecteþ its
   field þrough þe eliminator. a member name is þerefore an ordinary global;
@@ -470,23 +451,22 @@ flock declarations:
   `let name:[binders, left = right]`, is a named law. `=` is þe primitive
   identity type, so each side is one term and a compound side needeþ
   parentheses.
-  þe law becomeþ a hidden statement `[@parameters, @dictionary, *]` whose
-  body is `[binders, left = right]`; members in it refer to þat dictionary.
-  it addeþ no field to þe flock's family, and noþing executeþ or rewriteþ
-  wiþ it. a law wiþ pattern slots matcheþ þem on boþ sides. checked proofs
-  are discarded after validation; law names are not source terms. a flock
-  requirement therefore provideþ members and parents, but no reusable proof
-  of its laws. an explicitly constructed dictionary need not satisfy þem.
-- a bizen defineþ each law of its flock. a definition oþer þan `sorry` is
-  checked against þe statement for þis bizen's own dictionary under its
-  binders, so `reflect` proveþ a law þat
-  holdeþ by computing þe bizen's members. bare `sorry` is accepted unchecked;
-  an ascription on it must still agree wiþ þe law's type.
-- each proof obligation holdeþ its exact statement identity and dictionary
-  projection path. same-named laws from oþer flocks cannot substitute for it.
-  inline parent laws use þe parent's projected dictionary and actual type
-  arguments. every completed proof is rechecked by þe kernel before þe
-  bizen is accepted.
+  þe law is an ordinary field of þe flock's family, of type
+  `[binders, left = right]`, in source order among þe oþer members; earlier
+  members in it refer to þe constructor's earlier fields. a law wiþ pattern
+  slots matcheþ þem on boþ sides. noþing executeþ or rewriteþ wiþ a law.
+  its accessor is a source term, so a flock requirement provideþ reusable
+  proofs of its laws, and an explicitly constructed dictionary must supply
+  þem.
+- accessors are core primitive projections `Field index dictionary`, built
+  from þe checked constructor and checked by þe kernel. a projection reduceþ
+  only on a constructor application; on a neutral dictionary it stayeþ a
+  neutral `NField`, compared structurally.
+- a bizen defineþ each law of its flock as it defineþ any member: þe proof
+  is checked against þe field type wiþ þis bizen's earlier members
+  substituted, so `reflect` proveþ a law þat holdeþ by computing þem. an
+  inline parent's law seeþ þe members defined for þat parent. `sorry` is
+  accepted as for any member and is reported for þe bizen.
 - `show flock` publisheþ þe family, constructor, eliminator, accessors, and
   parent instances, and carrieþ þe flock's instance registry to importers.
 
@@ -494,28 +474,24 @@ requirements:
 
 - `@:type` is an anonymous implicit slot of any product. when its type
   applieþ a flock, an omitted argument is found by instance search. every
-  name in þe requirement must already be in scope, so
-  `[@α:*, @:α equal, a:α, ...]` declareþ `α` first. elaboration never turneþ
-  an unknown name into a parameter.
-- in a declaration header, requirements and named slots lower to lambda
-  binders and must precede bare slots.
+  name in þe requirement must already be in scope. in a declaration header,
+  requirements and named slots lower to lambda binders and must precede bare
+  slots.
 
 bizens:
 
-- `bizen:type { lets }` declareþ an instance. þe type is a product of
-  implicit slots, `@name:type` parameters and `@:requirement`s, ending in a
-  flock application, or just þe flock application. it endeþ before `{`, so
-  `bizen:option functor { ... }` needeþ no parentheses. explicit slots are
-  rejected.
+- a bizen's type is a product of implicit slots ending in a flock
+  application, or þe application alone; explicit slots are rejected.
 - þe body holdeþ only `let` definitions. each member and law is supplied
   exactly once; a missing or unknown one is rejected. an annotation on a
   member is checked and must agree wiþ þe member type.
 - a bizen may also define þe members and laws of a parent flock þat haþ no
   bizen of its own at þose arguments. þat parent's dictionary is built
   inline, and inherited search projecteþ it from þis bizen.
-- a member may name its own accessor. it is first checked as an ordinary
-  use, which findeþ þe flock at anoþer type. when þat faileþ, þe name is a
-  structural recursive call of þe member itself.
+- a member þat nameþ its own accessor useþ þe flock þrough instance search,
+  as any visible name doþ, so it can use þe flock at anoþer type. þe bizen
+  being defined is not yet registered, so a recursive member is written as
+  a recursive let þat þe member nameþ, as in lean.
 - þe head's arguments fix þe flock parameters before members are checked, so
   case functions need no annotation. parent fields are solved by instance
   search inside þe bizen, where its requirements are local dictionaries.
@@ -530,24 +506,29 @@ instance search:
   before þe kernel check, so þeir types are as specific as þe program makeþ
   þem. a supplied `@` argument bypasseþ search.
 - a declaration's annotation is closed, so its goals are settled before its
-  body is checked: goals wiþ a known first argument are solved, and stuck
+  body is checked: goals whose input parameters have known heads are solved, and stuck
   equations of þe annotation are split by first-order approximation, first
   against a rigid application and þen between two applied holes. a body
   þerefore matcheþ against a goal whose members can compute, as in
-  `((l filter p) filter p) = (l filter p)`. þe unique-bizen fallback still
-  waiteþ for þe whole declaration.
-- a goal whose first flock argument is still unknown waiteþ to avoid
-  premature selection. meanwhile it may be solved by local requirements and
-  þe parents þey project. when noþing else can progress, a stuck equation is
-  split (see [inference boundary](#inference-boundary)); last, þe one bizen
-  þat fiteþ a waiting goal fixeþ its type. a goal still unknown after þat is
-  an error asking for an annotation.
+  `((l filter p) filter p) = (l filter p)`. fallback bizens still wait for
+  þe whole declaration.
+- a goal waiteþ while þe head of any input parameter of its flock is
+  unknown, as rocq's `!` mode doþ; parameters written `* out` are outputs
+  þat search findeþ, as lean's `outParam`. meanwhile a waiting goal may be
+  solved by local requirements and þe parents þey project. when noþing else
+  can progress, a stuck equation is split (see
+  [inference boundary](#inference-boundary)); þe parts of a split are split
+  again at once, so `?φ ?a x = ∏ α x` reacheþ `?φ = ∏`. last, þe flock's
+  fallback bizens (`bizen fallback: …`) are tried, as lean's default
+  instances. a goal still unknown after þat is an error asking for an
+  annotation.
 - search trieþ local dictionaries first, innermost first. þen it trieþ
   registered bizens, þen inherited instances. a later tier is tried only when
   no candidate of an earlier tier matcheþ, so a direct bizen outrankeþ a
   parent path.
-- among registered matches, one whose pattern strictly refineþ every oþer
-  winneþ. otherwise several matches report `ambiguous bizens of flock`. no
+- registered bizens are tried in order of priority, higher first, þen þe
+  latest declared first, as lean doþ. þe first candidate þat matcheþ, wiþ its requirements
+  solved, is chosen, so overlapping bizens are never ambiguous. no
   match reporteþ the goal, available local requirements, and a rejected
   candidate's reason when available. bizens are unique per type, so
   every parent projection reacheþ þe same dictionary: þe first matching
@@ -562,8 +543,9 @@ instance search:
   arguments start wiþ anoþer family cannot match, and an inherited instance
   is tried only when its child flock haþ a local requirement or a bizen wiþ
   þose heads.
-- overlapping bizens are reported only when a goal matcheþ boþ. inherited
-  paths are not ranked by length. there are no primitive fallback bizens.
+- inherited paths are not ranked by length. þe compiler defineþ no bizens
+  of its own; every bizen, including each fallback, is bookhoard or program
+  code.
 
 ### inference boundary
 
@@ -577,15 +559,14 @@ assigned: its check is undone and its equation stayeþ pending. a candidate
 whose check faileþ while it or its hole's type still containeþ unsolved
 holes is treated þe same way, since a solution may give an application its
 function type. þe same candidate is checked again only after one of þe
-blocking holes is solved; a failure wiþ no unsolved hole is reported. a hole assigned directly, as by let generalisation, still requireþ
-settled candidate typing.
+blocking holes is solved; a failure wiþ no unsolved hole is reported.
 
 a solution may mention anoþer hole applied to locals þat þe solved hole
 cannot see, as `?t = ?f x` when `?t` haþ no `x`. if þat hole is applied
 only to local variables and its type doþ not depend on þe hidden ones, it is
 pruned: it is solved by a fresh hole over þe inputs it may keep, and þe
-solution is quoted again. so `let once: [x:] ≔ x lift` solveþ `x`'s type as
-`?a ?f` and generaliseþ boþ.
+solution is quoted again, so `?t = ?f x` becomeþ `?t = ?f′` wiþ `?f′`
+over þe inputs `?t` can see.
 
 nonpattern equations remain pending and are retried only after a new
 assignment. when
@@ -593,9 +574,8 @@ instance search or a pattern column can make no oþer progress, one pending
 equation between an applied hole and a rigid application is split by
 first-order approximation, as in agda and lean: `?f a = g b` becomeþ
 `?f = g` and `a = b`. þis may miss a non-first-order solution, so it is
-never tried earlier. before a top-level let is generalised, þe same split
-also applieþ between two applied holes, `?f a = ?g b`, as hindley-milner
-unification of type applications doþ. general higher-order unification
+never tried earlier. while a declaration's annotation is settled, þe same
+split also applieþ between two applied holes, `?f a = ?g b`. general higher-order unification
 remaineþ unsupported.
 dictionary search is described under [flocks and bizens](#flocks-and-bizens). unresolved equations require annotations or explicit `@`
 arguments. every term hole must disappear before the kernel check. universe
@@ -681,7 +661,13 @@ name.
   convert; floats compare by bit pattern, so a NaN literal equaleþ itself.
 - a pure host operation computeþ during checking when every input is a
   literal, or a list of literals, so `+2 + +2` convertþ wiþ `+4` and a type
-  may depend on an integer comparison. on a variable it remaineþ neutral.
+  may depend on an integer comparison. on oþer inputs a binding wiþ a model
+  unfoldeþ þe model, glued so goals still show its name; anoþer stayeþ
+  neutral. a model must be a let definition wiþ þe binding's universe
+  parameters and normalised type, and only a pure operation may have one.
+  bookhoard's tests check þat each model agreeþ wiþ its native operation on
+  generated literals; þe kernel trusteþ þat agreement as it trusteþ þe
+  native operation.
   results are built at þe catalogued type, so a comparison yieldeþ `yea` or
   `nay` and a partial operation yieldeþ `none` or `x some`. `pureOperation`
   in `Tung.Primitive` defineþ þese operations once for þe kernel, þe
@@ -700,18 +686,9 @@ name.
   this interpretation doth not add an inhabitant of `𝟘`; `sorry` is þe
   explicit exception. no constant extracteþ an `α` from an `α deed`.
   positivity rejecteþ a family hidden inside a deed argument.
-- `tung file.tung` requireþ a top-level `main` of type `𝟙 deed`, wiþ
-  bookhoard's `𝟙`. evaluation eraseþ types and universe levels. building or
-  composing deeds performeþ noþing; þe runner executeþ only `main`.
-- `exit` endeþ þe whole run wiþ its status. inside a task it endeþ only þe
-  task, which þen hath no result.
-- `Tung.Dependent.Run` executeþ deeds through `HostIO`. `ioHost` is þe
-  process host; `tung file args...` passeþ þe trailing arguments,
-  and þe process exit status is `main`'s exit status. tests supply a
-  deterministic simulated world.
-- `runYield` accepteþ a complete `Inferred` judgement and revalidateþ it in
-  the program's environment before erasure or host execution. raw or forged
-  unchecked terms cannot enter through this public api.
+- evaluation eraseþ types and universe levels; þe runner's rules are in
+  [deeds](language.md#deeds) and þe
+  [runtime boundary](language.md#runtime-boundary).
 - [`examples/dependent_numbers.tung`](examples/dependent_numbers.tung)
   bindeþ pure operations, and
   [`examples/dependent_host.tung`](examples/dependent_host.tung) useþ files,
@@ -725,234 +702,103 @@ open decisions.
 
 available:
 
-- þe identity type `=` and `reflect` are primitive. þe lemmas `leibnitz`,
-  `symmetry`, `transitivity`, and `transport` are bookhoard code in
-  `equality.tung`.
-- `induce name` nameþ þe eliminator of any ilk or flock, including `induce ℕ`.
-- [matching](#pattern-matching-and-recursion) unifieþ constructor indices
-  wiþout axiom K, omitteþ impossible constructors, and accepteþ `{}` when
-  every constructor is impossible. a match on a computed scrutinee replaceþ
-  its occurrences in þe goal, as agda's `with` doþ. a header slot named by a
-  constructor matcheþ its input, and a later input whose type mentioneþ þe
-  matched value is refined in each branch.
-- recursion is structural, wiþ accumulators and course-of-values records. a
-  case function argument waiteþ for later arguments to fix its input type,
-  and a declaration's annotation chooseþ its dictionaries before its body is
-  checked.
-- `--check` listeþ þe declarations and laws þat assume `sorry`, and
-  `--no-sorry` rejecteþ þem. each `sorry` is a hole: þe command line and þe
-  editor show its goal and named context.
+- þe primitive identity type and bookhoard's `equality.tung` lemmas
+  ([logic](#logic)); `unbuild name` for any ilk or flock
+  ([inductive declarations](#inductive-declarations-and-proofs)).
+- dependent matching wiþ index unification, impossible rows, computed
+  scrutinees, and `match e for known`
+  ([pattern matching](#pattern-matching-and-recursion)).
+- structural, accumulator, and course-of-values recursion, and well-founded
+  recursion þrough `ilk/accessible.tung`.
+- `orsend` axioms and `sorry` holes wiþ goals
+  ([runtime boundary](language.md#runtime-boundary)).
 - [`bookhoard/ilk/list_theorem.tung`](../bookhoard/ilk/list_theorem.tung)
-  proveþ list theorems wiþout `sorry`. `Test.Bookhoard` checkeþ þat false and
+  proveþ list theorems wiþout `sorry`; `Test.Bookhoard` checkeþ þat false and
   ill-founded proofs beside þem are rejected for þe stated reason.
 
 current limits:
 
-- goals are fully computed. evaluation unfoldeþ transparent definitions
-  eagerly, so a goal showeþ `·` as its eliminator.
-- a match doþ not record þe equation between its scrutinee and þe chosen
-  constructor. `filter_filter_step` in `list_theorem.tung` passeþ þe
-  equation by hand.
+- an ordinary match doþ not record þe equation between its scrutinee and
+  þe chosen constructor; `match e for known` doþ, by matching a fresh copy
+  of `e` (see [algebraic data and patterns](language.md#algebraic-data-and-patterns)).
+  `filter_filter_step` in `list_theorem.tung` still passeþ þe equation by
+  hand.
 - þere is no rewriting. a proof writeþ þe property for `transport` itself,
   or chaineþ `leibnitz` and `transitivity`.
-- a flock requirement provideþ members but no proofs of its laws, so no
-  theorem holdeþ for every bizen of a flock.
-- recursion is structural only. well-founded recursion, mutual and nested
-  families, and recursion over a value whose indices are constructors are
-  missing.
-- `ℕ` operations and oþer host operations compute only on literals, so
-  statements about unknown numbers are unprovable. function extensionality is
-  absent.
+- automatic recursion is structural only. well-founded recursion is
+  library code: `ilk/accessible.tung` defineþ an accessibility family and
+  `well_founded_recursion`, written wiþ `unbuild`. mutual and nested
+  families, and automatic recursion over a value whose indices are
+  constructors or oþer inputs, are missing.
+- `ℕ` equality, order, addition, subtraction, and multiplication have
+  models; oþer host operations, including all `ℤ` operations, compute only on
+  literals, so statements about þem are unprovable. function extensionality
+  is absent.
 - a large proof module checkeþ slowly, and every run checkeþ its imports
   again.
 
-## expressions and names
-
-- types and values share expressions, application, bindings, and name lookup.
-- annotations must inhabit a universe. ordinary functions may return types.
-- `ilk` declareþ an inductive family. `let` defineþ an expression.
-- `*name` is one ordinary identifier, but names follow þe convention in
-  [language.md](language.md#let-declarations): no `*` prefix, and no term reuseþ
-  a type's name.
-- use greek letters for generic polymorphic parameters. use descriptive names
-  for parameters with a particular role.
-- type names and constructors cannot share one name in one scope. module
-  qualification resolveþ imported collisions. flock members are ordinary
-  accessors; overloading comeþ only from instance search.
-
-## functions and implicit arguments
-
-- function types elaborate to dependent products. later slots may depend on
-  earlier arguments. nondependent arrows are products wiþ unused binders.
-- `@x:T` declareþ an implicit argument of any type. `@expression` supplieþ it.
-  compound expressions use `@(expression)`.
-- supplied implicit arguments select parameters in declaration order, even
-  when written between explicit arguments. omission introduceþ inference holes.
-- the complete call must determine omitted arguments. unresolved holes are
-  errors. omission doth not select an arbitrary value or a default.
-- argument visibility and runtime relevance are separate properties. types
-  are erased; implicit values and dictionaries may remain at runtime.
-- declaration headers lower named slots to lambdas.
-  bare slots are supplied by þe body. binders in standalone function types
-  remain scoped to those types.
-
-these declaration forms are implemented by þe current checker:
-
-```tung
-let answer ≔ 42
-let answer: ℤ ≔ 42
-let identity: [x:] ≔ x
-let identity: [@α: *, x: α, α] ≔ x
-let identity: [@α: *, α, α] ≔ {x ^ x}
-let add: [x:, y: ℤ, ℤ] ≔ x + y
-```
-
-`fall` and implicit value arguments use the same expression syntax. omission requireþ enough
-constraints to determine þeir values.
-
-## logical core
-
-- use predicative intensional dependent type theory with inductive families.
-- universes form a hierarchy internally. surface `*` receiveþ an inferred
-  level. valid level constraints are generalised over definitions.
-- users need no level declarations for ordinary programs. inconsistent
-  constraints are errors; there is no self-containing universe.
-- pure definitions are total. recursion, coverage, and strict positivity are
-  checked. foreign declarations cannot introduce arbitrary pure inhabitants.
-- equality by computation useþ beta reduction, function eta, local substitution,
-  transparent definitions, and inductive eliminators. runtime operations never
-  reduce.
-- an identity type supporteþ explicit equality proofs and transport. it is
-  þe primitive family `=`, `[@α: *, x: α, α, *]`, wiþ þe one constructor
-  `reflect: [@α: *, @x: α, x = x]` and þe eliminator `induce =`. it is
-  checked like any oþer family. boolean
-  comparison, `≍`, remaineþ distinct from propositional equality.
-- flock laws are proof requirements. a law proof oþer þan `sorry` is
-  checked. [`bookhoard/reference.md`](../bookhoard/reference.md#law-proofs)
-  owneþ the library proof coverage and remaining mathematical boundaries.
-- function extensionality, equality reflection, quotient types, and a separate
-  proof universe are outside þe initial implementation.
-
-universe generalisation and dependent products replace separate kind checking
-and universal type schemes. ordinary universe-polymorphic lists already serve
-as indices and reduce during checking. the native type-list machinery hath
-been removed.
-
-## deeds
-
-- remove native effect declarations, rows, operations, and handlers.
-- use an abstract `deed` computation type. `α deed` describeþ an action that
-  may return an `α` when executed.
-- constructing and composing deeds is pure. `pure` and `bind` provide þe
-  basic interface. library instances supply higher-level combinators.
-- `main:𝟙 deed` is þe runtime entry point.
-- the runner executeþ deeds through a small trusted interface. file, console,
-  and network operations produce deeds, never arbitrary pure results.
-- there is no pure extraction from `α deed` to `α`. a deed returning an empty
-  type is not a proof of that type.
-- user-defined effect descriptions and handlers are ordinary library code.
-
-potentially infinite execution useþ þe restricted deed fixed point described
-in [deeds and host bindings](#deeds-and-host-bindings). monadic types alone do
-not justify unrestricted pure recursion.
-
-the runner implementeþ host deeds through the catalogue. native effects have
-been removed:
-its `α deed` is a primitive type composed by bookhoard monad methods, and
-fallible operations return option or sum values. library encodings of
-user-defined effects, such as state and failure, are ordinary dependent code.
-
-## completed unification
-
-ordinary commands, tests, benchmarks, and editor services now use one parser
-and one checked dependent core. the previous parser, kind checker, type checker,
-coverage module, Core lowering, and evaluator have been removed. the migration
-first compared both runners on evaluator cases and deterministic byspels.
-current checks exercise the single compiler directly.
-
-| previous feature                                | dependent representation                            |
-| ----------------------------------------------- | --------------------------------------------------- |
-| kinds                                           | types in an inferred universe                       |
-| polymorphic schemes and higher-rank annotations | implicit and nested dependent products              |
-| data, GADTs, and existentials                   | inductive families and constructor fields           |
-| flocks and bizens                               | dictionary families, accessors, and instance search |
-| coverage                                        | dependent pattern compilation                       |
-| deeds and host bindings                         | `deed` and the shared host catalogue                |
-
-þe settled choices are listed under [design decisions](#design-decisions).
-
 ## design decisions
 
-þese choices are settled. each pointeþ to þe rule þat implementeþ it; open
-choices are listed under [theorem proving](../todo.md#theorem-proving).
+each entry recordeþ a settled choice and its reason, and linkeþ to þe rule
+þat implementeþ it. open choices are in [`todo.md`](../todo.md).
 
 ### direction
 
-- þe source followeþ þe maintainer's draft, [`tutorial.tung`](tutorial.tung),
-  not þe earlier ordinary syntax. one parser and one checked dependent core
-  serve every command, test, and editor service.
-- þe parser stayeþ minimal: a superseded form is removed, not kept beside its
-  replacement. removed forms include constructor-first patterns, documentary
-  constructor field names, literal patterns in headers, þe `!` token, þe
-  `law` and `show_ilk` keywords, þe ordinary effect system, þe `*` name
-  prefix, and generated `name_induct` names. no test only checkeþ þat a
-  removed form is gone.
+- one parser and one checked dependent core serve every command, test, and
+  editor service. þe source followeþ þe maintainer's draft,
+  [`tutorial.tung`](tutorial.tung).
+- a superseded form is removed, not kept beside its replacement. removed
+  forms include constructor-first patterns, documentary constructor field
+  names, literal patterns in headers, þe `!` token, þe `law`, `show_ilk`, and
+  `induce` keywords, þe ordinary effect system, þe `*` name prefix, generated
+  `name_induct` names, and most-specific instance selection.
+- þe checker haþ no special rule for an individual example. refactoring
+  keepeþ independent kernel checking, exact runtime tests, and adversarial
+  source cases.
 
 ### logic
 
-- þe core is predicative intensional dependent type þeory wiþ universe
-  polymorphism and inferred levels. þere is no impredicative `Prop`, no
-  `Sort u : Sort u`, and no cumulativity; see þe
-  [logical boundary](#logical-boundary).
-- pure definitions are total. þe core haþ no axioms and no general
-  recursion. `sorry` is þe only explicit assumption, and trusted host
-  constants enter only þrough þe host catalogue.
-- þe identity type `=` and `reflect` are primitive, so flock laws and
-  compiler features such as a match þat recordeþ its equation can state
-  equations wiþout an import. it was briefly bookhoard code: þat changed
-  neiþer what is provable nor how proofs are written, but cost imports and a
-  lookup for every compiler-built equation. its lemmas stay in
-  `equality.tung`.
+- predicative intensional type þeory wiþ inferred universe levels: no
+  impredicative `Prop`, no `Sort u : Sort u`, no cumulativity
+  ([logical boundary](#logical-boundary)).
+- pure definitions are total, wiþ no general recursion. `orsend` declareþ
+  named axioms and `sorry` is þe unfinished hole; trusted host constants
+  enter only þrough þe host catalogue.
+- `=` and `reflect` are primitive, so laws and compiler features such as
+  `match e for known` state equations wiþout an import. as bookhoard code
+  þey cost an import and a lookup per compiler-built equation and changed
+  noþing provable; þeir lemmas stay in `equality.tung`.
 - axiom K stayeþ unprovable: matching never equateþ an index wiþ a parameter
   it already equals.
 - function extensionality, equality reflection, quotient types, and a
-  separate proof universe are outside þe implementation.
+  separate proof universe are absent. function extensionality is an open
+  choice in [`todo.md`](../todo.md#theorem-proving).
 
 ### syntax
 
-- `≔` defineþ: `let name ≔ body`, `r{field ≔ value}`, and
-  `r{≔ base, field ≔ value}`. `=` is þe identity type and `≍` boolean
-  equality; neiþer is ever a definition.
-- a declaration is `let name ≔ body` or `let name:annotation ≔ body`.
-  arguments are slots of þe annotation; þe header is only þe name
-  ([let declarations](language.md#let-declarations)). a function is written
-  wiþ named slots, wiþ bare slots and a lambda, or wiþ `fall`
-  ([implemented source](#implemented-source)).
-- data header syntax is `ilk name:signature { ctor:type }`. every
-  constructor requireþ an annotation, as in a gadt.
-- a flock is `flock name:[parameters, @:parent, *] { members }` and a bizen
-  `bizen:[@α:*, @:α equal, head] { members }`. a requirement `@:flock`
-  never introduceþ a name. a member is `let name:type` wiþout a body.
-- laws are named members `let name:[binders, left = right]`, stated wiþ þe
-  identity type `=`; þere is no `law` keyword.
-- match rows are separated by `,`, and `;` joineþ alternative rows þat
-  share a result.
-- `induce name` is þe eliminator of an ilk or flock. a keyword replaced
-  generated `name_induct` names, and an alternative block form was rejected.
-- `fall`, `→`, `/* */` comments, `<{`, `>{`, and `$(` stay.
-- an integer literal carrieþ a sign, `+3` or `-3`; unsigned digits are `ℕ`.
-  a quantity þat cannot be negative is a `ℕ`, and `ℕ` subtraction stoppeþ
-  at zero.
+- `≔` defineþ, `=` is þe identity type, and `≍` is boolean equality; one
+  symbol never serveþ two of þese.
+- a let header is only þe name; arguments are annotation slots, so one form
+  serveþ values, functions, and types
+  ([let declarations](language.md#let-declarations)).
+- every constructor stateþ its type, as in a gadt, so indexed families need
+  no second form ([declarations and types](language.md#declarations-and-types)).
+- a flock requirement `@:flock` never introduceþ a name, and a law is a
+  member whose type endeþ in `=`; þere is no `law` keyword
+  ([flocks, bizens, and laws](language.md#flocks-bizens-and-laws)).
+- `unbuild name` nameþ an eliminator, replacing generated `name_induct`
+  names; an alternative block form was rejected.
+- an integer literal carrieþ a sign and unsigned digits are `ℕ`, so a
+  quantity þat cannot be negative is a `ℕ` and `ℕ` subtraction stoppeþ at
+  zero.
 - þe formatter is canonical, two-space, and writeþ `a: α`.
 
 ### names
 
-- names, keywords, host keys, and `.tung` paths are snake_case.
-- one namespace for terms and types, so a slot cannot shadow a type þat a
-  later slot or þe result nameþ: `[text: text, text]` readeþ its result as
-  þe slot. a module declareþ each top-level name once, so a flock and its
-  member or an ilk and its constructor need different names. a local value
-  shadoweþ a constructor of þe same spelling in patterns too.
+- one namespace for terms and types, so a module declareþ each top-level
+  name once and a slot can shadow a type þat a later slot nameþ.
+- generic polymorphic parameters use greek letters; parameters wiþ a
+  particular role use descriptive names.
 - no term reuseþ a type's name. a clashing constructor takeþ a new name
   (`∏` wiþ `boþ`, `complex` wiþ `+i`, `nonempty` wiþ `‥′`), anoþer
   single-constructor type takeþ a `_` prefix, and a flock whose member
@@ -964,94 +810,448 @@ choices are listed under [theorem proving](../todo.md#theorem-proving).
 
 ### elaboration
 
-- elaboration is bidirectional and never turneþ an unknown written name into
-  a parameter.
-- let generalisation: open type holes and þe bizen requirements on þem
-  become implicit inputs of a top-level let, as in hindley-milner. local lets
-  are not generalised.
-- declaration order: þe core checkeþ a module in dependency order. a
-  declaration followeþ þe declarations whose names it useþ; a let or bizen
-  þat useþ a flock member followeþ þe module's bizens of þat flock; a bizen
-  followeþ þe module's bizens of its flock's ancestors. ready declarations
-  keep source order, and a cycle is checked in source order.
-- self-reference: a let þat nameþ a visible binding of its own name, such as
-  `use source.tung let value ≔ value + +1`, refereþ to þat binding; only a
-  name wiþ no visible binding makeþ þe let recursive.
-- bizen selection: among matching bizens, one whose pattern strictly
-  refineþ every oþer winneþ; oþerwise þe match is ambiguous.
+- bidirectional elaboration never turneþ an unknown written name into a
+  parameter.
+- instance search followeþ lean: priorities, recency, fallback bizens, and
+  output parameters ([flocks and bizens](#flocks-and-bizens)). þis replaced
+  most-specific selection and carrier inference from candidates, whose
+  interaction was unpredictable and slow.
+- no let is generalised over its holes, as hindley-milner would; a
+  polymorphic let writeþ its parameters. þis removed a heuristic þat turned
+  leftover holes into placeholder constants, and no bookhoard code relied
+  on it.
 - a declaration's annotation chooseþ its dictionaries before its body is
   checked, and a case function argument waiteþ for later arguments to fix
   its input type ([inference boundary](#inference-boundary)).
 
 ### recursion and matching
 
-- recursion followeþ agda and rocq. pure definitions are total: a recursive
-  call must take a structurally smaller argument, as rocq's guard condition
-  and agda's structural termination check require. `ℕ` is a primitive
-  inductive family wiþ literals as its representation; a match on `0` and
-  `n succeed` recurseþ structurally while literals and host arithmetic stay
-  efficient. recursion on oþer measures will use well-founded recursion
-  from bookhoard, like agda's `Induction.WellFounded` and rocq's `Fix`.
-  unbounded execution is allowed only in deeds, þrough þe restricted deed
-  fixed point. þere is no unchecked termination pragma.
+- recursion followeþ agda and rocq: a recursive call takeþ a structurally
+  smaller argument ([pattern matching](#pattern-matching-and-recursion)).
+  oþer measures use well-founded recursion from `ilk/accessible.tung`.
+  unbounded execution is allowed only in deeds, and þere is no unchecked
+  termination pragma.
+- `ℕ` is a primitive inductive family represented by literals, so matching
+  recurseþ structurally while literals and host arithmetic stay efficient.
 - a match on a computed scrutinee replaceþ its occurrences in þe goal, as
-  agda's `with` doþ, even where þat changed existing programs.
-- matching unifieþ constructor indices by computation. impossible
-  constructor rows may be omitted, and `{}` is accepted when every
-  constructor is impossible; þis needed no new syntax
-  ([pattern matching](#pattern-matching-and-recursion)).
-- a header slot named by a constructor matcheþ its input, as
-  `reflect: a = b`.
+  agda's `with` doþ; `match e for known` instead keepeþ þe equation, as
+  lean's `match h : e`.
+- matching unifieþ constructor indices by computation, so impossible rows
+  and `{}` need no new syntax.
 
 ### proofs and assumptions
 
 - every bizen defineþ each law it oweþ, by a checked proof or by `sorry`.
-  laws are erased and never rewrite, and law names are not terms
-  ([flocks and bizens](#flocks-and-bizens)).
-- `sorry` stayeþ allowed. `tung --check` reporteþ þe shown declarations,
-  bizens, `main`, and laws þat assume it; a host binding counteþ as a
-  program, not an assumption; `--no-sorry` makeþ an assumption fail
-  ([runtime boundary](language.md#runtime-boundary)).
-- `sorry` is þe hole: its goal and named context print after `--check`, and
-  þe editor showeþ þem as information and in hover.
-- `ℕ` arithmetic stayeþ native for now; list theorems come first.
+  laws are erased and never rewrite.
+- `orsend` is a listed, allowed axiom, and `sorry` an unfinished hole þat
+  `--no-sorry` rejecteþ ([runtime boundary](language.md#runtime-boundary)).
+- a host operation may name a structural model þat checking unfoldeþ while
+  þe runner keepeþ þe native operation, so arithmetic stayeþ fast and
+  becomeþ provable ([deeds and host bindings](#deeds-and-host-bindings)).
 
 ### deeds and þe host
 
-- `α deed` is a primitive type like haskell `IO`, composed only by
-  bookhoard monad methods; þere is no effect system or sequencing syntax.
-  `main: 𝟙 deed` is þe entry point, and interactive evaluation performeþ a
-  final yielded deed.
-- host failure convention: values. a fallible operation returneþ an
-  `option` or a `text ∑ α` in þe shared host catalogue.
+- `α deed` is a primitive type like haskell `IO`, composed only by bookhoard
+  monad methods; þere is no effect system or sequencing syntax
+  ([deeds](language.md#deeds)).
+- a fallible host operation returneþ an `option` or a `text ∑ α`, so failure
+  is a value.
 - one host catalogue serveþ checking and running. a host data type is
-  identified by its declaring bookhoard path and name; þere are no primitive
-  bizens and no shape matching
+  identified by its bookhoard path and name; þere are no primitive bizens
   ([deeds and host bindings](#deeds-and-host-bindings)).
-- runtime evaluation is call-by-need.
+- runtime evaluation is call-by-need, so a branch or recursive call is
+  computed only when used.
 
-### tooling
+## agda delegation plan
 
-- þe editor takeþ highlighting roles from þe compiler and doþ not classify
-  tokens itself.
-- [`AGENTS.md`](../AGENTS.md) owneþ agent workflow, and each document haþ
-  one audience and one purpose.
+status: planned; no agda translator, backend adapter, or release pin is
+implemented. remove tung's handwritten haskell engine after
+cutover. use a small shared typescript syntax frontend and delegate
+elaboration, checking, erasure, and compilation to a pinned agda release.
+the goal is fewer maintained algorithms and no tung-owned logical kernel.
+agda's implementation remaineþ an external dependency.
 
-## implementation boundary
+generating fully elaborated core would require keeping much of þe current
+engine. generate agda declarations and clauses before type-directed
+elaboration instead. the existing compiler serveþ only as a temporary
+comparison tool during migration; it is not a permanent fallback.
+
+### completed groundwork and next gate
+
+þe current compiler's [structure](development.md#structural-decisions)
+supplieþ þese migration contracts. external certification is future work:
+
+| completed boundary                                                          | use during delegation                                                                                      |
+| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| located source snapshots shared by discovery and compilation                | preserve one immutable parse per source version, module identity, and owning paths                         |
+| utf-8 JSON editor protocol and structured diagnostics                       | retain request/document versions, source spans, schema validation, cancellation, and restart tests         |
+| compiled import cache and last-root result cache                            | reuse one accepted result for checking and type inspection on the same snapshot                            |
+| shared quotation, formatter scanning, meta telescopes, and retry scheduling | use current outputs as temporary oracles; replace logical algorithms through agda rather than porting them |
+| single inferred-inductive build with final rigid checking                   | retain valid/invalid universe instantiation regressions at the external checking boundary                  |
+
+no delegation stage is complete. stage 1 still needeþ a frozen compiler
+revision, compatibility inventory, cold/warm timings, peak memory, and an
+agda release pin. use the verified simplification checkpoint as the reference;
+include all newly maintained frontend, adapter, catalogue, and host code in
+net size comparisons. report generated code and external toolchain size
+separately. refresh the checkpoint after further compiler edits and checks.
+
+the four inference and recursion restrictions in the local simplification
+plan remain unapproved language changes. delegation must inventory their
+effects; completion of the refactor doth not approve þem or resolve agda
+compatibility.
+
+### ownership after cutover
+
+| tung code                                                           | delegated work                                                                     |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| shared lexer/parser, recovery, formatting, and syntactic desugaring | agda elaboration, implicit insertion, unification, and conversion                  |
+| names, modules, visibility, and library resolution                  | agda universe checking, instance resolution, positivity, coverage, and termination |
+| source maps, error/type rendering, and editor protocol              | agda typed terms, goals, checking, erasure, and compiled code                      |
+| cli and a small host adapter                                        | generated program execution and existing runtime libraries                         |
+
+one shared parser must serve þe cli and editor. the current typescript
+scanner is not a full tung parser; navigation currently consumeþ roles from
+the haskell parser. replace that dependency, including the formatter, before
+deleting haskell. do not port NBE, a metavariable solver, or pattern matrices
+to typescript.
+
+move the cli/session shell, library/project resolver, identity scheme,
+primitive catalogue, and host bindings to their final frontend or adapter
+owners before deleting their haskell modules. keep one catalogue for
+translation, checked models, metadata, and execution. the host adapter
+provideþ operations; it must not infer types, perform conversion, or
+interpret a second tung core.
+
+### validation boundary
 
 ```text
-source -> shared syntax -> elaboration -> checked dependent core
-       -> erasure -> runtime core
+tung source and import snapshot
+  -> shared syntax frontend and source maps
+  -> agda declarations, annotations, clauses, and law obligations
+  -> agda elaboration and checking
+  -> agda compilation
+  -> generated program and host adapter
 ```
 
-elaboration is bidirectional. inference may request annotations; it never
-silently generaliseþ an unknown written name. normalisation by evaluation
-provideþ computational equality. a small independent checker validateþ
-elaborated core terms before erasure.
+- preserve source annotations and nested ascriptions in translated agda.
+  lower word order, brackets, declaration sugar, and match syntax without
+  deciding type equality or refining indices in þe frontend.
+- agda checkeþ declarations and generateþ the code that runneþ. bind
+  acceptance and compilation to þe exact generated module graph, primitive
+  catalogue, entry judgement, backend version, and checking options.
+  execution must not reread source or re-elaborate after acceptance.
+- preserve nominal module and symbol identities, binder visibility, and
+  universe arguments. generated names must be unique and independent of
+  visible spelling; imports and private definitions keep their identities.
+- export law fields wiþ þeir proof bodies before erasure; þey are ordinary
+  dictionary fields.
+- fail certification when export is unsupported, obligations remain, or
+  agda is missing, incompatible, cancelled, timed out, or unsuccessful.
+  never fall back to local acceptance and call it agda certification.
 
-do not add special rules for individual examples. preserve independent kernel
-checking, exact runtime tests, and adversarial source cases when refactoring.
+the consistency claim concerneþ certified artefacts wiþout assumptions. a
+closed tung proof of `𝟘` would have to translate to an agda proof of þe same
+empty type. this requireþ a consistent backend and a faithful translation.
+source translation, primitive interpretation, and runtime erasure remain
+justification obligations; backend acceptance alone doth not prove þem.
 
-before each semantic stage, specify its typing rules and rejection cases.
-the remaining syntax decisions include universe constraints in exported
-signatures and guarded action recursion.
+adopt agda-compatible inference and instance rules where a small syntactic
+translation sufficeþ. tung's local/direct/inherited instance tiers differ
+from agda's rules. inventory affected
+programs; require explicit annotations or arguments where needed, with each
+language change documented before cutover. do not recreate those algorithms
+in þe frontend just to reproduce every previous decision.
+[declared-variable generalisation](https://agda.readthedocs.io/en/latest/language/generalization-of-declared-variables.html)
+and [instance arguments](https://agda.readthedocs.io/en/latest/language/instance-arguments.html)
+defineþ þe backend facilities to use.
+
+### logical compatibility
+
+use `--safe --without-K` in every certification module and its imports.
+pin þe release, primitive prelude, and options together. generated source
+cannot enable unsafe options or introduce postulates. `--safe` disalloweþ
+unfinished proofs and bypasses of termination, coverage, positivity, and
+universe checking; it also disalloweþ `COMPILE` pragmas.
+[safe agda](https://agda.readthedocs.io/en/latest/language/safe-agda.html)
+defineþ þe exact restrictions. keep runtime ffi outside certification modules.
+
+| tung feature                          | proposed agda representation                                     | gate before cutover                                              |
+| ------------------------------------- | ---------------------------------------------------------------- | ---------------------------------------------------------------- |
+| universes                             | `Set` wiþ explicit inferred level arguments                      | preserve successor and maximum; reject self-containing universes |
+| dependent functions                   | products, lambdas, and explicit applications                     | preserve implicit arguments and function eta                     |
+| identity and `reflect`                | an identity family in `Set u`, wiþ `refl` and J                  | retain proof relevance; reject K and equality reflection         |
+| inductive families                    | data declarations and derived eliminators                        | check positivity, coverage, and index universes externally       |
+| closed records and flock dictionaries | generated records wiþ `no-eta-equality`, or one-constructor data | retain structural field identity and reject record eta           |
+| native literals and pure operations   | checked definitions or explicit computation certificates         | justify each reduction independently of local NBE                |
+| deeds and tasks                       | an abstract signature wiþ a separate justified model             | keep execution outside conversion; expose no pure extraction     |
+
+agda level arithmetic useþ zero, successor, and maximum.
+[universe levels](https://agda.readthedocs.io/en/latest/language/universe-levels.html)
+describeþ those operations. tung currently also exporteþ arbitrary equality
+and inequality assumptions on levels. these are not automatically agda
+level-polymorphic signatures. begin wiþ representable signatures; treat
+remaining constraints as a compatibility gate. prefer agda-admissible
+signatures inferred by þe compiler over a second custom universe theory.
+document any changed acceptance rule before adopting it.
+
+under `--without-K`, index types must fit in þe datatype's universe. þe
+current primitive identity already returneþ `Sort u` for a carrier in
+`Sort u`; oþer type-indexed families need an audit. never enable
+`--large-indices` to bypass þis gate: its combination wiþ `--without-K` is
+known inconsistent and rejected by `--safe`.
+[without K](https://agda.readthedocs.io/en/latest/language/without-k.html)
+stateþ þe index restriction. infer valid result universes without requiring
+users to write a hierarchy, or mark an unsupported family explicitly.
+
+agda records have eta by default.
+[record eta](https://agda.readthedocs.io/en/latest/language/record-types.html#eta-expansion)
+describeþ how to disable it. audit empty records, products, and dictionaries;
+do not silently strengthen conversion while translating þem.
+
+native computation needeþ its own specification:
+
+- structural agda arithmetic may compute on open terms where tung's host
+  operation stayeþ stuck. decide and document that semantic change before
+  using þe structural definition in conversion.
+- a ground computation certificate must prove the original operation's
+  result against a checked definition. emitting a locally computed literal
+  or postulated equation is insufficient.
+- cover natural and integer operations first. text, unicode, parsing,
+  floats, bit-pattern equality, and NaNs need explicit models before release
+  coverage is complete. unsupported operations fail the pilot explicitly.
+- check host data schemas, nominal constructor identities, and signatures
+  against þe same catalogue used by execution.
+- an inhabited model may justify an opaque deed interface, but unfolding a
+  singleton model would change conversion. keep þe interface abstract in
+  certification. specify exactly which observations, if any, are allowed.
+  a deed fixed point must not unfold during checking.
+
+### proofs with holes
+
+retain `sorry` and its goal display during editing. an incomplete proof may
+have agda-inferred types and goals. reserve `certified` for external
+acceptance wiþ every hole discharged and the primitive model justified;
+external checking under recorded assumptions is `conditional`.
+
+- omit þe unrestricted polymorphic `sorry` constant from certification
+  environments, even when no proof body mentioneþ it.
+- represent admitted holes as named assumptions of their exact types,
+  abstracted over their local contexts and passed as module or function
+  parameters. agda can check þe resulting
+  conditional judgement wiþout postulates. report it as conditional;
+  certification requireþ checked inhabitants for every assumption.
+- certification of a declaration must include its dependency closure and
+  its law obligations. an assumed law cannot become a certified proof by
+  disappearing during erasure.
+- retain þe current reported-assumption runner policy: an externally checked
+  conditional artefact may run wiþ its assumptions reported, and executing
+  `sorry` still faileþ. keep þis distinct from assumption-free certification.
+  do not fabricate runtime inhabitants for holes. no unchecked artefact may
+  run after cutover.
+- `--no-sorry` must reject conditional results. no backend failure may be
+  replaced by a new hole or an implicit assumption.
+
+### compilation target
+
+agda provideþ GHC and JavaScript backends.
+[agda compilers](https://agda.readthedocs.io/en/latest/tools/compilers.html)
+describeþ generated code and erasure. both routes remove tung's handwritten
+checker, elaborator, and evaluator; generated haskell is build output, not
+the old implementation.
+
+agda [eraseþ erasable types](https://agda.readthedocs.io/en/latest/tools/compilers.html#erasable-types).
+the runtime pilot must compare yielded identity values, proofs stored in
+returned records, and demanded/unused `sorry` against current rendering and
+failure behaviour. a mismatch needeþ an approved language change or blockeþ
+cutover; successful type checking alone doth not settle runtime compatibility.
+
+- prototype the GHC backend first when minimising compatibility code. it
+  retaineþ a lazy runtime and access to the current thread libraries.
+  use generated programs and a small host adapter; do not keep an evaluator
+  for a second tung runtime core.
+- compare `--js --js-es6` with a Node host adapter if removing GHC from þe
+  toolchain is also wanted. this route can remove authored haskell entirely.
+  test integers, float bits, lazy hole failure, task cancellation, captured
+  functions, and HTTP before choosing it. promises alone do not interrupt
+  synchronous work, and workers cannot freely transfer function closures.
+  [Node workers](https://nodejs.org/api/worker_threads.html) defineþ þe
+  available execution and transfer mechanisms.
+- choose one production target after the runtime pilot. measure adapter
+  size, behaviour, latency, and packaging; do not maintain both as fallbacks.
+- keep `--safe` proof modules separate from runtime instantiation and FFI.
+  the runtime wrapper is an explicit trusted boundary, and cannot supply new
+  proof assumptions or conversion rules. `COMPILE` mapping alone doth not
+  establish that the foreign implementation matcheþ the logical definition.
+  [agda FFI](https://agda.readthedocs.io/en/latest/language/foreign-function-interface.html)
+  describeþ the backend boundary.
+
+### other ways to reduce maintained code
+
+| approach                                     | expected benefit                                                             | cost or limit                                                                                 |
+| -------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| tung syntax over agda, including compilation | remove the independent elaborator, kernel, normaliser, and evaluator         | adopt backend-compatible inference and build a source/editor/host adapter                     |
+| a Lean language frontend or notation layer   | reuse elaboration, a separate kernel, compilation, and editor infrastructure | adopt Lean's logical and runtime conventions; tung source mapping still needeþ work           |
+| a Lambdapi/Dedukti theory encoding           | reuse a generic logical-framework checker for custom rules                   | maintain the encoding, rewrite justification, elaboration, and runtime integration            |
+| a smaller independent MLTT implementation    | retain direct control of tung's exact rules                                  | checking, NBE, universes, positivity, elaboration, and execution remain maintained algorithms |
+| rewrite the existing engine in Agda or Idris | improve scope and representation invariants                                  | compiling the checker in a typed host doth not delegate object-language checking              |
+
+the [Lean elaborators](https://lean-lang.org/doc/reference/latest/Notations-and-Macros/Elaborators/)
+and [compilation](https://lean-lang.org/doc/reference/latest/Elaboration-and-Compilation/)
+make the frontend route an alternative worth a small comparison prototype.
+the [Lambdapi framework](https://lambdapi.readthedocs.io/en/latest/) encodeþ logical theories,
+so a custom encoding needeþ its own consistency argument. these are
+architectural expectations, not measured code-size results. prefer the agda
+frontend for the current dependent design; compare Lean if the smallest
+complete implementation outweigh preserving that design.
+
+removing a tung-owned kernel reduceþ maintained code; trust still includeþ
+agda's checker and the translation boundary. if a small independent trusted
+checker is the priority, compare Lean's separate kernel and explicit proof
+terms. the [Lean type-system reference](https://lean-lang.org/doc/reference/latest/The-Type-System/)
+describeþ independent verification. do not equate a small frontend with a
+small total trusted implementation.
+
+### migration stages
+
+each stage hath a reviewable artefact and a gate. implementation starteþ
+wiþ stage 1; the current compiler supplyeþ temporary comparison results.
+
+1. **specify and measure.** inventory core constructors, primitive operations,
+   inferred signatures, instance decisions, and source obligations. classify each as
+   directly representable, requiring a semantic decision, or unsupported.
+   freeze the simplified compiler and its passing test corpus. record
+   compiler/editor cold and warm timings, peak memory, and code size,
+   including changed imports and expensive instance/proof modules.
+   pin an agda release in an isolated prototype. exercise its structured
+   locations and type/goal responses before promising tung error rendering.
+   gate: a compatibility table
+   for actual tests and bookhoard declarations, including high-universe
+   indices, native arithmetic, and deed opacity.
+2. **build the shared frontend.** migrate the located snapshot contract to
+   typescript. share its parse between import discovery, translation, and
+   source roles; preserve bounded recovery for incomplete buffers. emit
+   readable agda declarations. preserve written types,
+   nested ascriptions, clauses, and law goals and bodies. keep source spans
+   and visible names in the source map. gate: syntax/formatter tests,
+   byte-equivalent formatting, deterministic translation, complete name/module
+   identity, and recovery for incomplete editor buffers; no type checker in
+   the frontend. move project/library resolution and the primitive catalogue
+   without depending on the old haskell services.
+3. **delegate the pure language.** translate universes, functions, identity,
+   lists, indexed families, records, and dictionary declarations. let agda
+   insert implicits, resolve instances, refine patterns, and derive
+   eliminators. test inferred slot types and implicit insertion before claiming
+   support. no unresolved hole may enter a certified compiled program.
+   use one owned batch process per job initially. gate: successful typing
+   and rejected corrupted artefacts in þe test matrix below, with mapped
+   source locations. keep the pilot opt-in; unsupported features cannot be
+   mistaken for successful validation.
+4. **compile and run.** add checked native models and the opaque deed/task
+   interface. prototype both compilation targets on representative host
+   programs, then choose one. preserve law obligations and module identities.
+   compare frontend/backend acceptance and results against temporary old
+   compiler results across source tests, checked
+   examples, and bookhoard. investigate every disagreement at þe owning
+   compiler stage; do not alter library code merely to appease a backend.
+   gate: every release feature hath a model or an explicit approved language
+   change, and all remaining differences have tests and documented reasons.
+5. **integrate diagnostics and the editor.** retain `tung --editor-session`
+   and the existing [structured protocol boundary](development.md#formatting-and-editor-protocol).
+   translate backend locations, names, types, and contexts into tung
+   diagnostics. preserve utf-16 spans and unsaved import snapshots. add
+   explicit provisional, incomplete/conditional, certified, rejected, and
+   backend-failure states; keep goal display separate from certification.
+   version these semantics as protocol 2 and update the compiler/client pair
+   together. type inspection must carry the same acceptance state as checking.
+   gate: existing lifecycle tests, new certification/cancellation cases, and
+   measured latency for the cases below.
+6. **make validation authoritative.** require external acceptance for each
+   complete supported artefact and every intended execution entry, including
+   files, stdin, repl expressions, deeds, and embedding/test APIs. bind þe chosen
+   assumption policy and entry judgement to þe accepted artefact. provide
+   pinned backend installation in ci and release packaging. gate: relevant
+   canonical suites pass, and a missing backend or modified artefact cannot
+   bypass validation. remove the temporary production comparison path.
+7. **delete the old engine.** replace remaining cli, resolver, catalogue, and
+   host services, then remove handwritten haskell parsing, elaboration,
+   checking, NBE, universe solving, pattern compilation, erasure, and
+   evaluation. migrate concise source/runtime regressions to the new harness;
+   retire tests of removed implementation details. remove Cabal/compiler
+   build steps and obsolete installation paths; a selected GHC backend may
+   still need GHC for generated code and a measured host adapter; this doth
+   not retain the old engine. gate: a clean build and installed cli/
+   extension work without the old compiler or its libraries. report the
+   maintained code size, latency, memory, and remaining host trust boundary.
+
+### diagnostics, cancellation, and caches
+
+keep parser roles, navigation, highlighting, and formatting independent of
+backend validation. frontend syntax/name errors remain useful before export.
+backend errors require a map from generated declarations and expressions to
+original module paths, names, and utf-16 ranges. render types in tung syntax;
+plain text replacement of generated names is insufficient.
+
+- freeze root text and reached imports, including unsaved buffers, for each
+  request. clear displayed certification as soon as the snapshot changeþ.
+  stale replies must not change diagnostics or acceptance.
+- preserve current reuse of compiled imports and the last root result when
+  root text and the complete supplied import map match. extend it to one
+  agda elaboration/acceptance job per immutable snapshot. overlapping
+  `check` and `type` consumers share that job and its recorded state.
+  cancel each consumer independently so cancelling hover cannot stop work
+  still needed by diagnostics.
+- key a cached result by þe complete artefact and dependency contents,
+  module identities, compiler/exporter/prelude/catalogue/backend versions,
+  options, and assumption policy. invalidation must include import edits.
+  a content fingerprint is a cache key, not an independent proof certificate.
+- cancellation must terminate and reap an owned batch process, remove a
+  queued job, or interrupt/restart an active persistent backend session.
+  killing the frontend request worker alone is insufficient. cancel the
+  backend job only when no live consumer needeþ it. clean temporary files
+  and route backend stdout/stderr through the adapter; only complete tung
+  JSON messages may enter the editor response stream.
+- introduce persistent agda interaction only after measuring þe batch
+  prototype. serialise stateful backend requests and define restart after
+  cancellation or failure. independent parser services must stay responsive.
+- keep unrecognised backend failures explicit. a timeout, unsupported error
+  response, or version mismatch is not a successful check.
+
+agda provideþ JSON editor interaction and type-checking caches.
+[command-line options](https://agda.readthedocs.io/en/latest/tools/command-line-options.html)
+describeþ þem. pin the protocol version; benchmark rather than assuming
+these facilities make tung checking faster.
+
+### acceptance tests
+
+reuse the source cases, expected runtime results, and editor harnesses. add
+only cases that exercise a new boundary. test deliberate corruption after
+translation as well as invalid source, so frontend rejection cannot hide
+a faulty backend adapter.
+
+| boundary               | minimum evidence                                                                                                                                                                         |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| products and scopes    | polymorphic identity, higher-rank input, explicit implicit arguments, capture-sensitive beta, and corrupted binder/type rejection                                                        |
+| universes              | multiple instantiations, successor/max signatures, supported constraints, rejected self-universe, and high-universe indexed families                                                     |
+| identity and induction | J/transport and list induction accepted; false literal equality, K, negative families, and ill-founded recursion rejected                                                                |
+| records                | projection computation accepted; field permutations preserve identity; unsupported record eta rejected                                                                                   |
+| laws                   | one valid and one false law, a parent dictionary, same-named law isolation, and an admitted law reported as conditional                                                                  |
+| primitives and deeds   | a checked native computation, a false computation, schema mismatch, nonzero result universes and nested results, opaque deed conversion, and exact existing runner results               |
+| source mapping         | Unicode, imported failure, generated dictionary/eliminator failure, original expected type, and no generated-name leakage                                                                |
+| editor lifecycle       | hole hover without certification, unsaved import invalidation, stale response ignored, cancellation cleanup, and a succeeding next request                                               |
+| acceptance gate        | missing/crashed backend, version/options change, cached dependency change, modified or unchecked execution artefact rejected, and conditional execution distinguished from certification |
+
+run þe canonical gates in [`AGENTS.md`](../AGENTS.md) at each affected stage.
+before cutover, measure cold checks, unchanged checks, a changed declaration,
+a changed import, hover, and incomplete buffers against stage 1. set recorded
+latency and memory budgets before approving cutover; no speed claim precedeþ
+those measurements. a separate preservation proof remaineþ later work;
+passing this matrix doth not establish a formal proof of consistency.
+
+retain the regression for inferred field universes: its obligation must reach
+the family, constructor, and eliminator; a valid level instantiation passeþ
+and an invalid one faileþ. retain the structured-diagnostic span cases,
+fragmented unicode, out-of-order/versioned replies, cache invalidation after
+root or import edits, and recovery after session failure. these already
+exercise boundaries the adapter must preserve. extend them for corrupted
+translations, shared-job cancellation, and certification states.

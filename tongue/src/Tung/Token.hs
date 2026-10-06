@@ -3,7 +3,7 @@
 -- | source lexer. a name containeþ any non-space character not reserved by
 -- 'specialNameChars'; literals and comments are consumed before name parsing.
 module Tung.Token
-  ( Token (TIdent, TNatural, TInteger, TFloat, TUnicode, TText, TBraceKeyword, TLet, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TInduce, TFall, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TEquals, TKindStar, TDollar, TAt),
+  ( Token (TIdent, TNatural, TInteger, TFloat, TUnicode, TText, TBraceKeyword, TLet, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TOrsend, TInduce, TFall, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TEquals, TKindStar, TDollar, TAt),
     SourceSpan (..),
     LocatedToken (..),
     tokenSpan,
@@ -15,7 +15,6 @@ module Tung.Token
     lexLocatedPrefix,
     keywordNames,
     specialNameChars,
-    isNameChar,
     unicodeScalar,
   )
 where
@@ -67,6 +66,7 @@ data TokenKind
   | KTInstance
   | KTMatch
   | KTSorry
+  | KTOrsend
   | KTInduce
   | KTFall
   | KTBraceKeyword String
@@ -128,7 +128,7 @@ pattern TBraceKeyword name <- Token _ (KTBraceKeyword name)
   where
     TBraceKeyword name = Token Nothing (KTBraceKeyword name)
 
-pattern TLet, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TInduce, TFall, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TEquals, TKindStar, TDollar, TAt :: Token
+pattern TLet, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TOrsend, TInduce, TFall, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TEquals, TKindStar, TDollar, TAt :: Token
 pattern TLet <- Token _ KTLet where TLet = Token Nothing KTLet
 pattern TExport <- Token _ KTExport where TExport = Token Nothing KTExport
 pattern TImport <- Token _ KTImport where TImport = Token Nothing KTImport
@@ -139,6 +139,7 @@ pattern TClass <- Token _ KTClass where TClass = Token Nothing KTClass
 pattern TInstance <- Token _ KTInstance where TInstance = Token Nothing KTInstance
 pattern TMatch <- Token _ KTMatch where TMatch = Token Nothing KTMatch
 pattern TSorry <- Token _ KTSorry where TSorry = Token Nothing KTSorry
+pattern TOrsend <- Token _ KTOrsend where TOrsend = Token Nothing KTOrsend
 pattern TInduce <- Token _ KTInduce where TInduce = Token Nothing KTInduce
 pattern TFall <- Token _ KTFall where TFall = Token Nothing KTFall
 pattern TLParen <- Token _ KTLParen where TLParen = Token Nothing KTLParen
@@ -157,7 +158,7 @@ pattern TKindStar <- Token _ KTKindStar where TKindStar = Token Nothing KTKindSt
 pattern TDollar <- Token _ KTDollar where TDollar = Token Nothing KTDollar
 pattern TAt <- Token _ KTAt where TAt = Token Nothing KTAt
 
-{-# COMPLETE TIdent, TNatural, TInteger, TFloat, TUnicode, TText, TBraceKeyword, TLet, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TInduce, TFall, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TEquals, TKindStar, TDollar, TAt #-}
+{-# COMPLETE TIdent, TNatural, TInteger, TFloat, TUnicode, TText, TBraceKeyword, TLet, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TOrsend, TInduce, TFall, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TEquals, TKindStar, TDollar, TAt #-}
 
 tokenSpan :: Token -> Maybe SourceSpan
 tokenSpan (Token cursor _) = (\(TokenCursor span _ _) -> span) <$> cursor
@@ -387,7 +388,8 @@ keywordTokens =
     ("bizen", TInstance),
     ("match", TMatch),
     ("sorry", TSorry),
-    ("induce", TInduce),
+    ("orsend", TOrsend),
+    ("unbuild", TInduce),
     ("fall", TFall)
   ]
 

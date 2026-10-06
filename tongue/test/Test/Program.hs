@@ -45,7 +45,7 @@ integerTerms = atoms ++ binary ++ nested
 
 languagePrograms :: [(String, String, String)]
 languagePrograms =
-  [ ("checked declaration annotations and inferred functions", "use ground.tung let count:* ≔ ℤ let identity: [x:] ≔ x let choose:[@α:*, @β:*, x:α, _:β, α] ≔ x let add: [x:, y:count, count] ≔ x + y let number:count ≔ (let value ≔ +3 yield value identity) let result ≔ number add (+4 choose @ℤ @text 'ignored') yield result", "eval ok: +7"),
+  [ ("checked declaration annotations and inferred functions", "use ground.tung let count:* ≔ ℤ let identity: [@α: *, x: α, α] ≔ x let choose:[@α:*, @β:*, x:α, _:β, α] ≔ x let add: [x:, y:count, count] ≔ x + y let number:count ≔ (let value ≔ +3 yield value identity) let result ≔ number add (+4 choose @ℤ @text 'ignored') yield result", "eval ok: +7"),
     ("checked record access", "let value ≔ r{left ≔ +1, right ≔ +2} yield value.right", "eval ok: +2"),
     ("checked record update", "let value ≔ r{left ≔ +1, right ≔ +2} yield r{≔ value, right ≔ +3, - left}", "eval ok: r{right ≔ +3}"),
     ("checked exhaustive match", "ilk 𝟚: * { yea: 𝟚, nay: 𝟚 } yield match nay { yea ^ +1, nay ^ +2 }", "eval ok: +2"),

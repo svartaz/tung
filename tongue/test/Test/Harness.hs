@@ -19,9 +19,7 @@ module Test.Harness
     typeErrWith,
     runnableOk,
     runnableErr,
-    evalOk,
     evalOkWith,
-    evalTypeErr,
     evalTypeErrWith,
     evaluateSource,
     evaluateSourceWithArgs,
@@ -40,11 +38,12 @@ import System.Exit (ExitCode (..), exitFailure, exitWith)
 import System.IO (hFlush, stdout)
 import System.IO.Unsafe (unsafePerformIO)
 import System.Process (createProcess, env, proc, waitForProcess)
+import Test.Compile (compileProjectDetailed, compileYieldWith)
 import Test.QuickCheck qualified as QuickCheck
 import Test.QuickCheck.Random qualified as QuickCheck
 import Tung
 import Tung.Dependent.Run (ioHost, renderRuntime, requireMain, runMain, runYield)
-import Tung.Dependent.Source (CompileFailure (..), FailureKind (..), SourceProgram, compileImports, compileProjectDetailed, compileYieldWith, parseProgram)
+import Tung.Dependent.Source (CompileFailure (..), FailureKind (..), SourceProgram, compileImports, parseProgram, sourceSnapshot)
 
 type Test = IO (Maybe String)
 
@@ -143,14 +142,8 @@ typeOkWith, typeErrWith :: String -> String -> Map.Map String String -> Test
 typeOkWith name source imports = expectEq name "type ok" (checkSource False source imports)
 typeErrWith name source imports = expectPrefix name "type error:" (checkSource False source imports)
 
-evalOk :: String -> String -> String -> Test
-evalOk name source = evalOkWith name source Map.empty
-
 evalOkWith :: String -> String -> Map.Map String String -> String -> Test
 evalOkWith name source imports expected = evaluateSource source imports >>= expectEq name expected
-
-evalTypeErr :: String -> String -> Test
-evalTypeErr name source = evalTypeErrWith name source Map.empty
 
 evalTypeErrWith :: String -> String -> Map.Map String String -> Test
 evalTypeErrWith name source imports = evaluateSource source imports >>= expectPrefix name "eval error: type error:"
@@ -206,7 +199,7 @@ libraryFor imports =
 dependentLibrary :: (Map.Map String String, Either String (Map.Map String SourceProgram))
 dependentLibrary = unsafePerformIO do
   sources <- readLibraryImports "." >>= either fail pure
-  let compile compiled path = either (const compiled) id (compileImports compiled sources [path])
+  let compile compiled path = either (const compiled) id (compileImports compiled (Map.map sourceSnapshot sources) [path])
   pure (sources, Right (foldl compile Map.empty (Map.keys sources)))
 
 expectEither :: String -> Bool -> Either String a -> Test

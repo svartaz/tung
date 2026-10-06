@@ -64,6 +64,18 @@ dependencies:
 - read and run the [tutorial](byspel/tutorial.tung): `tung byspel/tutorial.tung`.
 - try the oþer examples in [`byspel/`](byspel/).
 - set up the [editor extension](vscode/readme.md).
+- some keywords are anglish words:
+
+  | tung    | meaning    | tung       | meaning          |
+  | ------- | ---------- | ---------- | ---------------- |
+  | `ilk`   | data type  | `fremmed`  | foreign binding  |
+  | `flock` | type class | `orsend`   | axiom            |
+  | `bizen` | instance   | `fallback` | default instance |
+  | `deed`  | io action  | `fall`     | function         |
+
+  the [keyword table](tongue/language.md#nonstandard-keywords) listeþ all
+  of them.
+
 - tung useþ dependent types. the [design](tongue/dependent.md)
   explaineþ its rules.
 

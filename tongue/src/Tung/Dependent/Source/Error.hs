@@ -9,7 +9,6 @@ module Tung.Dependent.Source.Error
     inContext,
     atSpan,
     compilationFailure,
-    compileString,
   )
 where
 
@@ -50,6 +49,3 @@ atSpan span = first (\failure -> failure {Token.failureSpan = Token.failureSpan 
 
 compilationFailure :: FailureKind -> Either Token.SourceFailure a -> Either CompileFailure a
 compilationFailure kind = first (\Token.SourceFailure {..} -> CompileFailure kind Nothing failureSpan failureMessage)
-
-compileString :: Either CompileFailure a -> Either String a
-compileString = first failureText

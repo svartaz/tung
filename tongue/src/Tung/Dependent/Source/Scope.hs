@@ -24,7 +24,6 @@ import Data.List (find)
 import Tung.Dependent.Check qualified as K
 import Tung.Dependent.Elaboration qualified as E
 import Tung.Dependent.Normalise qualified as N
-import Tung.Dependent.Source.Environment (globals)
 import Tung.Dependent.Syntax
 
 type Elaboration = E.Elaboration
@@ -77,25 +76,25 @@ bindingName name = name
 depth :: Scope -> Int
 depth = length . scopeNames
 
-quote :: K.Environment -> Scope -> N.Value -> Elaboration Term
-quote environment scope = E.quote (globals environment) (depth scope)
+quote :: Scope -> N.Value -> Elaboration Term
+quote scope = E.quote (depth scope)
 
-quoteFolded :: K.Environment -> Scope -> N.Value -> Elaboration Term
-quoteFolded environment scope = E.quoteFolded (globals environment) (depth scope)
+quoteFolded :: Scope -> N.Value -> Elaboration Term
+quoteFolded scope = E.quoteFolded (depth scope)
 
-eval :: K.Environment -> Scope -> Term -> Elaboration N.Value
-eval environment Scope {scopeContext} = E.evaluate (globals environment) scopeContext
+eval :: Scope -> Term -> Elaboration N.Value
+eval Scope {scopeContext} = E.evaluate scopeContext
 
-inferCore :: K.Environment -> Scope -> Term -> Elaboration N.Value
-inferCore environment Scope {scopeContext} = E.infer (globals environment) scopeContext
+inferCore :: Scope -> Term -> Elaboration N.Value
+inferCore Scope {scopeContext} = E.infer scopeContext
 
-requireUniverse :: K.Environment -> Scope -> N.Value -> Elaboration Level
-requireUniverse environment Scope {scopeContext} value =
-  E.force (globals environment) value >>= \case
+requireUniverse :: Scope -> N.Value -> Elaboration Level
+requireUniverse Scope {scopeContext} value =
+  E.force value >>= \case
     N.VSort level -> pure level
     N.VNeutral (N.NMeta _ _) -> do
       level <- E.freshLevel
-      E.unify (globals environment) scopeContext value (N.VSort level)
+      E.unify scopeContext value (N.VSort level)
       pure level
     _ -> E.failure "annotation is not a type"
 

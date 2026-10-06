@@ -46,7 +46,7 @@ bizen: nonempty functor {
 
   let map_sameness ≔ {@α ^ {first ‥′ rest ^
       (first ‥′) leibnitz (
-        {l: α list ^ (l map sameness) = l} induce list reflect
+        {l: α list ^ (l map sameness) = l} unbuild list reflect
         {head, _, proof ^ (head ‥) leibnitz proof} rest
       )
   }}
@@ -59,7 +59,7 @@ bizen: [@α: *, (α nonempty) semigroup] {
   let ·_· ≔ {first ‥′ rest, next ‥′ middle, last ‥′ end ^
     (first ‥′) leibnitz (
       {l: α list ^ (l · ((next ‥ middle) · (last ‥ end))) = ((l · (next ‥ middle)) · (last ‥ end))}
-      induce list reflect {head, _, proof ^ (head ‥) leibnitz proof} rest
+      unbuild list reflect {head, _, proof ^ (head ‥) leibnitz proof} rest
     )
   }
 }
@@ -73,7 +73,7 @@ bizen: nonempty applicative {
 
   let apply_sameness_pure ≔ {@α ^ {first ‥′ rest ^
       (first ‥′) leibnitz (
-        {l: α list ^ ((l map sameness) · empty) = l} induce list reflect
+        {l: α list ^ ((l map sameness) · empty) = l} unbuild list reflect
         {head, _, proof ^ (head ‥) leibnitz proof} rest
       )
   }}
@@ -81,14 +81,14 @@ bizen: nonempty applicative {
   let apply_apply ≔ {@α, @β, @γ ^ {first ‥′ rest, f, g ^
       ((first f $ g) ‥′) leibnitz (
         {l: α list ^ (((l map f) · empty) map g $ · empty) = ((l map (f ▷ g)) · empty)}
-        induce list reflect
+        unbuild list reflect
         {head, _, proof ^ ((head f $ g) ‥) leibnitz proof} rest
       )
   }}
   let pure_apply ≔ {@α, @β ^ {a, f ‥′ fs ^
       ((a f) ‥′) leibnitz (
         {l: [α, β] list ^ ((a list~singleton) apply l) = (l map (a call))}
-        induce list reflect
+        unbuild list reflect
         {head, _, proof ^ ((a head) ‥) leibnitz proof} fs
       )
   }}

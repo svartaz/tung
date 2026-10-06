@@ -30,11 +30,14 @@ show ilk list: [α: *, *] {
   ‥: [α, α list, α list]
 }
 
-bizen: [@α: *, @: α equal, (α list) inhold α] {
-  let ∋ ≔ {
-    empty, _ ^ nay,
-    first ‥ rest, a ^ (a ≍ first) if yea (rest ∋ a)
+let list_holds: [@α: *, @: α equal, l: α list, a: α, 𝟚] ≔
+  match l {
+    empty        ^ nay,
+    first ‥ rest ^ (a ≍ first) if yea (rest list_holds a)
   }
+
+bizen: [@α: *, @: α equal, (α list) inhold α] {
+  let ∋ ≔ list_holds
 }
 
 ## `count` integers from start.
@@ -54,14 +57,17 @@ show let till: [start: ℤ, stop: ℤ, ℤ list] ≔
 ## build a one-element list.
 show let singleton: [@α: *, a: α, α list] ≔ a ‥ empty
 
-bizen: [@α: *, (α list) semigroup] {
-  let · ≔ {
-    empty,        l ^ l,
-    first ‥ rest, l ^ first ‥ (rest · l)
+let list_append: [@α: *, l: α list, m: α list, α list] ≔
+  match l {
+    empty        ^ m,
+    first ‥ rest ^ first ‥ (rest list_append m)
   }
 
+bizen: [@α: *, (α list) semigroup] {
+  let · ≔ list_append
+
   let ·_· ≔ {a, b, c ^
-    {l: α list ^ (l · (b · c)) = ((l · b) · c)} induce list reflect
+    {l: α list ^ (l · (b · c)) = ((l · b) · c)} unbuild list reflect
     {first, _, proof ^ (first ‥) leibnitz proof} a
   }
 }
@@ -71,67 +77,79 @@ bizen: [@α: *, (α list) monoid] {
 
   let ∅_· ≔ {_ ^ reflect}
   let ·_∅ ≔ {a ^
-    {l: α list ^ (l · empty) = l} induce list reflect
+    {l: α list ^ (l · empty) = l} unbuild list reflect
     {first, _, proof ^ (first ‥) leibnitz proof} a
   }
 }
 
-bizen: list functor {
-  let map ≔ {
-    empty, _ ^ empty,
-    first ‥ rest, f ^ (first f) ‥ (rest map f)
+let list_map: [@α: *, @β: *, l: α list, f: [α, β], β list] ≔
+  match l {
+    empty        ^ empty,
+    first ‥ rest ^ (first f) ‥ (rest list_map f)
   }
 
+bizen: list functor {
+  let map ≔ list_map
+
   let map_sameness ≔ {@α ^ {a ^
-      {l: α list ^ (l map sameness) = l} induce list reflect
+      {l: α list ^ (l map sameness) = l} unbuild list reflect
       {first, _, proof ^ (first ‥) leibnitz proof} a
   }}
 }
 
-bizen: list monad {
-  let pure: [a:] ≔ a ‥ empty
-  let apply: [l:] ≔ {
-    empty ^ empty,
-    first ‥ rest ^ (l map first) · (l apply rest)
-  }
-  let flat ≔ {
-    empty ^ empty,
-    first ‥ rest ^ first · (rest flat)
+let list_apply: [@α: *, @β: *, l: α list, fs: [α, β] list, β list] ≔
+  match fs {
+    empty        ^ empty,
+    first ‥ rest ^ (l list_map first) list_append (l list_apply rest)
   }
 
+let list_flat: [@α: *, l: (α list) list, α list] ≔
+  match l {
+    empty        ^ empty,
+    first ‥ rest ^ first list_append (rest list_flat)
+  }
+
+bizen: list monad {
+  let pure: [a:] ≔ a ‥ empty
+  let apply ≔ list_apply
+  let flat ≔ list_flat
+
   let pure_map_flat ≔ {@α, @β ^ {a, f ^
-      {l: β list ^ (l · empty) = l} induce list reflect
+      {l: β list ^ (l · empty) = l} unbuild list reflect
       {first, _, proof ^ (first ‥) leibnitz proof} (a f)
   }}
   let map_pure_flat ≔ {@α ^ {a ^
-      {l: α list ^ (l map pure $ flat) = l} induce list reflect
+      {l: α list ^ (l map pure $ flat) = l} unbuild list reflect
       {first, _, proof ^ (first ‥) leibnitz proof} a
   }}
   let apply_sameness_pure ≔ {@α ^ {a ^
-      {l: α list ^ (l apply (sameness pure)) = l} induce list reflect
+      {l: α list ^ (l apply (sameness pure)) = l} unbuild list reflect
       {first, _, proof ^ (first ‥) leibnitz proof} a
   }}
   let pure_apply_pure ≔ {_, _ ^ reflect}
   let apply_apply ≔ {@α, @β, @γ ^ {a, f, g ^
       {l: α list ^ <{apply, l, f pure, g pure} = (l apply (f ▷ g $ pure))}
-      induce list reflect
+      unbuild list reflect
       {first, _, proof ^ ((first f $ g) ‥) leibnitz proof} a
   }}
   let pure_apply ≔ {@α, @β ^ {a, fs ^
       {l: [α, β] list ^ ((a pure) apply l) = (l map (a call))}
-      induce list reflect
+      unbuild list reflect
       {first, _, proof ^ ((a first) ‥) leibnitz proof} fs
   }}
 }
 
-bizen: list haþ_filter {
-  let filter ≔ {
-    empty, _ ^ empty,
-    first ‥ rest, f ^ match first f {
-      yea ^ first ‥ (rest filter f),
-      nay ^ rest filter f
+let list_filter: [@α: *, l: α list, f: [α, 𝟚], α list] ≔
+  match l {
+    empty        ^ empty,
+    first ‥ rest ^ match first f {
+      yea ^ first ‥ (rest list_filter f),
+      nay ^ rest list_filter f
     }
   }
+
+bizen: list haþ_filter {
+  let filter ≔ list_filter
 }
 
 ## perform an action for each element, in order.
@@ -180,22 +198,31 @@ show let find: [@α: *, α list, [α, 𝟚], α option] ≔ {
   }
 }
 
+let list_fold₀: [@α: *, @β: *, l: α list, b: β, f: [α, β, β], β] ≔
+  match l {
+    empty        ^ b,
+    first ‥ rest ^ first f (rest list_fold₀ b f)
+  }
+
+let list_fold₁: [@α: *, @β: *, l: α list, b: β, f: [β, α, β], β] ≔
+  match l {
+    empty        ^ b,
+    first ‥ rest ^ rest list_fold₁ (b f first) f
+  }
+
 bizen: list cata {
-  let fold₀: [l:, b:, f:] ≔ match l {
-    empty        ^ b,
-    first ‥ rest ^ first f (rest fold₀ b f)
-  }
-  let fold₁: [l:, b:, f:] ≔ match l {
-    empty        ^ b,
-    first ‥ rest ^ rest fold₁ (b f first) f
-  }
+  let fold₀ ≔ list_fold₀
+  let fold₁ ≔ list_fold₁
 }
 
-bizen: list haþ_traverse {
-  let traverse ≔ {
-    empty, _ ^ empty pure,
-    first ‥ rest, f ^ (first f) lift₂ (rest traverse f) ‥
+let list_traverse: [@μ: [*, *], @: μ applicative, @α: *, @β: *, l: α list, f: [α, β μ], (β list) μ] ≔
+  match l {
+    empty        ^ empty pure,
+    first ‥ rest ^ (first f) lift₂ (rest list_traverse f) ‥
   }
+
+bizen: list haþ_traverse {
+  let traverse ≔ list_traverse
 }
 
 bizen: [@α: *, (α list) haþ_size] {

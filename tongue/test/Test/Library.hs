@@ -13,7 +13,7 @@ import System.FilePath (takeDirectory, takeFileName, (</>))
 import System.Process (readProcessWithExitCode)
 import Test.Harness (Group, Test, expect)
 import Test.Harness qualified as Harness
-import Tung (loadProjectFileWithRoots, projectImports, resolveLibraryRoots)
+import Tung (loadProjectFile, projectImports, resolveLibraryRoots)
 
 group :: IO Group
 group = Harness.group "library" [pinnedCheckout, gitSubdirectory, distinctGitSubdirectories, conflictingGitSubdirectoryNames, escapedGitSubdirectory, localPathDependency, transitivePathDependency, sharedTransitivePin, conflictingTransitivePins, conflictingAliasedPins, conflictingRepositoryNames, conflictingLibrarySources, conflictingPathNames, conflictingPathAndGitSources, invalidManifest, invalidPathSource, duplicateManifestKey, unknownManifestField, malformedManifest, transitiveCheckout]
@@ -36,7 +36,7 @@ pinnedCheckout = withDirectory \root -> do
   imported <- case first of
     Left message -> pure (Left message)
     Right roots -> do
-      projectResult <- loadProjectFileWithRoots Map.empty roots owner
+      projectResult <- loadProjectFile roots owner
       pure (Map.lookup "value.tung" . projectImports <$> projectResult)
   writeFile libraryFile "show let value ≔ +99"
   commitAll repository "second"
@@ -190,7 +190,7 @@ transitivePathDependency = withDirectory \root -> do
 importedSource :: Either String [FilePath] -> FilePath -> FilePath -> IO (Either String (Maybe String))
 importedSource (Left message) _ _ = pure (Left message)
 importedSource (Right roots) owner name = do
-  project <- loadProjectFileWithRoots Map.empty roots owner
+  project <- loadProjectFile roots owner
   pure (Map.lookup name . projectImports <$> project)
 
 invalidManifest :: Test
@@ -268,7 +268,7 @@ transitiveCheckout = withDirectory \root -> do
   imported <- case resolved of
     Left message -> pure (Left message)
     Right roots -> do
-      projectResult <- loadProjectFileWithRoots Map.empty roots owner
+      projectResult <- loadProjectFile roots owner
       pure (Map.lookup "dep.tung" . projectImports <$> projectResult)
   pure $ case (resolved, imported) of
     (Right [_, _], Right (Just "show let answer ≔ +42")) -> Nothing

@@ -22,6 +22,7 @@ where
 import Control.Monad (foldM, forM_, unless, void, when)
 import Data.List (elemIndex, find, sort)
 import Data.Map.Strict qualified as Map
+import Data.Maybe (isNothing)
 import Data.Set qualified as Set
 import Tung.Dependent.Check qualified as K
 import Tung.Dependent.Inductive qualified as I
@@ -29,7 +30,7 @@ import Tung.Dependent.Literal (coreConstructor, hostTypeSymbol, literalTypeNames
 import Tung.Dependent.Normalise qualified as N
 import Tung.Dependent.Syntax
 import Tung.Identity (ModuleId (..), SymbolId (..), inductionSymbol)
-import Tung.Primitive (HostBinding (..), HostDataSchema (..), HostSignature (..), HostType (..), findForeignBinding, hostDataSchemas, naturalSuccessorId, naturalZeroId, oneName, opaqueTypeFamilyNames)
+import Tung.Primitive (HostBinding (..), HostDataSchema (..), HostSignature (..), HostType (..), findForeignBinding, hostDataSchemas, naturalSuccessorId, naturalZeroId, oneName, opaqueTypeFamilyNames, pureOperation)
 
 -- primitive types, `=`, and `sorry` precede every module. host value types live in
 -- þe base universe, so literals carry no levels. `sorry` inhabiteþ every type;
@@ -37,12 +38,12 @@ import Tung.Primitive (HostBinding (..), HostDataSchema (..), HostSignature (..)
 primitiveDefinitions :: Globals
 primitiveDefinitions =
   Map.union (Map.union naturalDefinitions identityDefinitions) . Map.fromList $
-    [(SymbolId PrimitiveModule name, Definition 0 [] (Sort LZero) (Host name)) | name <- literalTypeNames, name /= "ℕ"]
-      ++ [(SymbolId PrimitiveModule name, Definition 1 [] (Pi Explicit (Sort (LParam 0)) (Sort (LParam 0))) (Host name)) | name <- opaqueTypeFamilyNames]
-      ++ [ (sorrySymbol, Definition 1 [] (Pi Implicit (Sort (LParam 0)) (Local 0)) (Host "sorry")),
+    [(SymbolId PrimitiveModule name, Definition 0 [] (Sort LZero) (Host name Nothing)) | name <- literalTypeNames, name /= "ℕ"]
+      ++ [(SymbolId PrimitiveModule name, Definition 1 [] (Pi Explicit (Sort (LParam 0)) (Sort (LParam 0))) (Host name Nothing)) | name <- opaqueTypeFamilyNames]
+      ++ [ (sorrySymbol, Definition 1 [] (Pi Implicit (Sort (LParam 0)) (Local 0)) (Host "sorry" Nothing)),
            -- `[@α: *, @β, x: α, k: α, yes: β, no: β, β]` chooseþ `yes` when þe
            -- literals `x` and `k` are equal. literal patterns compile to it.
-           (literalCaseSymbol, Definition 1 [] literalCaseType (Host "literal_case"))
+           (literalCaseSymbol, Definition 1 [] literalCaseType (Host "literal_case" Nothing))
          ]
   where
     literalCaseType =
@@ -50,7 +51,7 @@ primitiveDefinitions =
         Pi Explicit (Local 1) (Pi Explicit (Local 2) (Pi Explicit (Local 2) (Pi Explicit (Local 3) (Local 4))))
 
 -- `ℕ` is an inductive family wiþ `0` and `succeed`, checked like any
--- oþer, and eliminated by `induce ℕ`. literals represent its values; þe
+-- oþer, and eliminated by `unbuild ℕ`. literals represent its values; þe
 -- normaliser and þe runner read a literal as its constructors.
 naturalDefinitions :: Globals
 naturalDefinitions =
@@ -63,7 +64,7 @@ naturalDefinitions =
 
 -- `x = y` is þe type of proofs þat `x` and `y` are equal: parameters `@α`
 -- and `x`, one index, þe one constructor `reflect: [@α: *, @x: α, x = x]`,
--- and þe eliminator `induce =`. it is checked like any oþer family; it is
+-- and þe eliminator `unbuild =`. it is checked like any oþer family; it is
 -- primitive so þat flock laws and elaboration can state equations wiþout an
 -- import. its lemmas are bookhoard code in `equality.tung`.
 identityDefinitions :: Globals
@@ -86,8 +87,11 @@ sorrySymbol, literalCaseSymbol :: SymbolId
 sorrySymbol = SymbolId PrimitiveModule "sorry"
 literalCaseSymbol = SymbolId PrimitiveModule "literal_case"
 
-defineHost :: K.Environment -> SymbolId -> String -> K.Inferred -> Either String K.Environment
-defineHost environment@(K.Environment globals) name key signature@K.Inferred {..} = do
+-- a model is a checked tung definition of þe same type þat conversion
+-- unfoldeþ when an input is not a literal; þe runner keepeþ þe native
+-- operation. only a pure operation can have one.
+defineHost :: K.Environment -> SymbolId -> String -> Maybe SymbolId -> K.Inferred -> Either String K.Environment
+defineHost environment@(K.Environment globals) name key model signature@K.Inferred {..} = do
   when (Map.member name globals) (Left "duplicate definition")
   HostBinding {hostSignature} <- maybe (Left ("unknown host key '" ++ key ++ "'")) pure (findForeignBinding key)
   when (any (isHost key . definitionBody) (Map.elems globals)) (Left ("host key '" ++ key ++ "' is already bound"))
@@ -100,9 +104,18 @@ defineHost environment@(K.Environment globals) name key signature@K.Inferred {..
   ty <- N.normalise globals 0 inferredTerm
   unless (matches hostSignature ty) (Left ("host key '" ++ key ++ "' requireþ a different type"))
   validateHostData globals hostSignature
-  pure (K.Environment (Map.insert name (Definition inferredUniverses inferredConstraints ty (Host key)) globals))
+  forM_ model \symbol -> do
+    when (isNothing (pureOperation key)) (Left ("host key '" ++ key ++ "' is not a pure operation, so it cannot have a model"))
+    Definition {definitionUniverses, definitionType, definitionBody} <- maybe (Left "unknown model") pure (Map.lookup symbol globals)
+    case definitionBody of
+      Transparent _ -> pure ()
+      _ -> Left "a model must be a let definition"
+    unless (definitionUniverses == inferredUniverses) (Left "a model must have þe binding's universe parameters")
+    modelType <- N.normalise globals 0 definitionType
+    unless (modelType == ty) (Left ("a model must have þe binding's type"))
+  pure (K.Environment (Map.insert name (Definition inferredUniverses inferredConstraints ty (Host key model)) globals))
   where
-    isHost wanted (Host actual) = wanted == actual
+    isHost wanted (Host actual _) = wanted == actual
     isHost _ _ = False
 
 -- a canonical name alone doth not establish its runtime representation. check

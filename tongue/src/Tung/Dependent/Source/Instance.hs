@@ -12,10 +12,12 @@ module Tung.Dependent.Source.Instance
   )
 where
 
-import Control.Monad (filterM, foldM, forM_, unless, when)
+import Control.Monad (filterM, foldM, forM_, when)
 import Data.Functor ((<&>))
+import Data.List (sortOn)
 import Data.Map.Strict qualified as Map
 import Data.Maybe (catMaybes)
+import Data.Ord (Down (..))
 import Tung.Dependent.Check qualified as K
 import Tung.Dependent.Elaboration qualified as E
 import Tung.Dependent.Normalise qualified as N
@@ -64,20 +66,20 @@ instanceOf (broadBound, broad) (narrowBound, narrow) = maybe False (const True) 
     go _ _ = Nothing
 
 -- an implicit input whose type applieþ a class becomeþ an instance goal.
-implicitArgument :: K.Environment -> Names -> K.Context -> N.Value -> Elaboration (Term, N.Value)
-implicitArgument environment names context domain = do
-  hole@(_, holeValue) <- E.newMeta (globals environment) context domain
-  family <- classFamily environment names domain
+implicitArgument :: Names -> K.Context -> N.Value -> Elaboration (Term, N.Value)
+implicitArgument names context domain = do
+  hole@(_, holeValue) <- E.newMeta context domain
+  family <- classFamily names domain
   case family of
     Just _ -> do
-      E.markCarriers (globals environment) context domain
+      E.markCarriers context domain
       E.addInstanceGoal (E.InstanceGoal holeValue context domain)
     Nothing -> pure ()
   pure hole
 
-classFamily :: K.Environment -> Names -> N.Value -> Elaboration (Maybe SymbolId)
-classFamily environment names ty =
-  E.force (globals environment) ty >>= \case
+classFamily :: Names -> N.Value -> Elaboration (Maybe SymbolId)
+classFamily names ty =
+  E.force ty >>= \case
     N.VNeutral neutral
       | (N.NGlobal family _, _) <- N.neutralSpine neutral,
         Map.member family (nameClasses names) ->
@@ -86,48 +88,43 @@ classFamily environment names ty =
 
 -- goals are solved after the declaration's ordinary unification, so their
 -- types are as specific as the program makeþ them.
--- a goal waiteþ while its class's first argument is still unknown, to avoid
--- premature selection; unification usually fixeþ þat argument later.
+-- a goal waiteþ while þe head of an input parameter of its flock is still
+-- unknown, as rocq's `!` mode doþ; output parameters (`* out`) are found by
+-- þe search. a waiting goal may still be fixed by a local requirement or by
+-- splitting a stuck equation; no candidate bizen fixeþ an unknown input.
 solveInstances :: K.Environment -> Names -> Elaboration ()
-solveInstances environment names = do
-  goals <- E.takeInstanceGoals
-  (ready, waiting) <- partitionM (determined environment . E.goalType) goals
-  mapM_ solve ready
-  -- an undetermined goal may still be fixed by a local requirement. as a
-  -- last resort, þe one instance þat fiteþ it fixeþ its type.
+solveInstances environment names = E.repeatProgress do
+  (ready, waiting) <- takeReadyGoals names
+  mapM_ (search AllInstances) ready
   still <- catMaybes <$> traverse (\goal -> E.speculate (search LocalRequirements goal) >>= maybe (pure (Just goal)) (\(_, commit) -> commit >> pure Nothing)) waiting
-  progressed <-
-    if null ready && length still == length waiting
-      then lastResort still
-      else mapM_ E.addInstanceGoal still >> pure True
-  when progressed (solveInstances environment names)
+  if null ready && length still == length waiting
+    then
+      E.approximate >>= \case
+        True -> mapM_ E.addInstanceGoal still >> pure True
+        False -> fallback still
+    else mapM_ E.addInstanceGoal still >> pure True
   where
-    -- a stuck equation is split first; only þen may one instance fix a type.
-    lastResort goals =
-      E.approximate (globals environment) >>= \case
-        True -> mapM_ E.addInstanceGoal goals >> pure True
-        False -> uniqueInstance goals
-    uniqueInstance = \case
+    search = searchGoal environment names
+    -- a goal still stuck on an unknown input trieþ its flock's fallback
+    -- bizens; þe first þat fiteþ fixeþ þe input.
+    fallback = \case
       [] -> pure False
       goal : rest ->
-        E.speculate (search AllInstances goal) >>= \case
+        E.speculate (searchFallback environment names goal) >>= \case
           Just (_, commit) -> commit >> mapM_ E.addInstanceGoal rest >> pure True
           Nothing -> do
-            more <- uniqueInstance rest
+            more <- fallback rest
             E.addInstanceGoal goal
             pure more
-    search = searchGoal environment names
-    solve = search AllInstances
 
 -- goals whose class argument is known are solved now, so a computed match
 -- scrutinee can be compared wiþ its goal. oþer goals keep waiting.
 solveDeterminedInstances :: K.Environment -> Names -> Elaboration ()
-solveDeterminedInstances environment names = do
-  goals <- E.takeInstanceGoals
-  (ready, waiting) <- partitionM (determined environment . E.goalType) goals
+solveDeterminedInstances environment names = E.repeatProgress do
+  (ready, waiting) <- takeReadyGoals names
   mapM_ E.addInstanceGoal waiting
   mapM_ (searchGoal environment names AllInstances) ready
-  unless (null ready) (solveDeterminedInstances environment names)
+  pure (not (null ready))
 
 -- a declaration's annotation is closed, so its dictionaries are chosen before
 -- its body is checked. known goals are solved, and a stuck equation of þe
@@ -136,41 +133,60 @@ solveDeterminedInstances environment names = do
 -- such as `(l filter p) filter p` need. þe unique-instance fallback still
 -- waiteþ for þe whole declaration.
 settleAnnotation :: K.Environment -> Names -> Elaboration ()
-settleAnnotation environment names = do
+settleAnnotation environment names = E.repeatProgress do
   solveDeterminedInstances environment names
-  rigid <- E.approximate (globals environment)
-  progressed <- if rigid then pure True else E.approximateFlexible (globals environment)
-  when progressed (settleAnnotation environment names)
+  rigid <- E.approximate
+  if rigid then pure True else E.approximateFlexible
+
+-- the same ordered partition serveþ body and annotation phases.
+takeReadyGoals :: Names -> Elaboration ([E.InstanceGoal], [E.InstanceGoal])
+takeReadyGoals names = E.takeInstanceGoals >>= partitionM (determined names . E.goalType)
 
 searchGoal :: K.Environment -> Names -> SearchMode -> E.InstanceGoal -> Elaboration ()
 searchGoal environment names mode E.InstanceGoal {..} = do
-  hole <- E.force (globals environment) goalHole
+  hole <- E.force goalHole
   case hole of
     N.VNeutral neutral | (N.NMeta _ _, _) <- N.neutralSpine neutral -> do
       term <- searchInstance environment names mode [] goalContext goalType
-      value <- E.evaluate (globals environment) goalContext term
-      E.unify (globals environment) goalContext goalHole value
+      value <- E.evaluate goalContext term
+      E.unify goalContext goalHole value
     _ -> pure ()
+
+-- þe flock's fallback bizens, by priority, for a goal wiþ unknown inputs.
+searchFallback :: K.Environment -> Names -> E.InstanceGoal -> Elaboration ()
+searchFallback environment names E.InstanceGoal {..} = do
+  family <- classFamily names goalType >>= maybe (E.failure "instance goal is not a flock") pure
+  let fallbacks = maybe [] classFallbacks (Map.lookup family (nameClasses names))
+  when (null fallbacks) (E.failure "no fallback bizen")
+  term <- searchInstanceAmong (Just fallbacks) environment names AllInstances [] goalContext goalType
+  value <- E.evaluate goalContext term
+  E.unify goalContext goalHole value
 
 partitionM :: (Monad m) => (a -> m Bool) -> [a] -> m ([a], [a])
 partitionM predicate = foldr (\goal rest -> do (yes, no) <- rest; keep <- predicate goal; pure (if keep then (goal : yes, no) else (yes, goal : no))) (pure ([], []))
 
-determined :: K.Environment -> N.Value -> Elaboration Bool
-determined environment goal =
-  E.force (globals environment) goal >>= \case
+-- a goal is ready when every input parameter of its flock haþ a known head.
+determined :: Names -> N.Value -> Elaboration Bool
+determined names goal =
+  E.force goal >>= \case
     N.VNeutral neutral
-      | (_, (_, first) : _) <- N.neutralSpine neutral ->
-          E.force (globals environment) first <&> \case
-            N.VNeutral argument | (N.NMeta _ _, _) <- N.neutralSpine argument -> False
-            _ -> True
+      | (N.NGlobal family _, arguments) <- N.neutralSpine neutral -> do
+          let outputs = maybe [] classOutputs (Map.lookup family (nameClasses names))
+              inputs = [argument | (index, (_, argument)) <- zip [0 :: Int ..] arguments, not (or (take 1 (drop index outputs)))]
+          and <$> traverse known inputs
     _ -> pure True
+  where
+    known argument =
+      E.force argument <&> \case
+        N.VNeutral neutral | (N.NMeta _ _, _) <- N.neutralSpine neutral -> False
+        _ -> True
 
 -- þe first local requirement of þe goal's class þat unifieþ wiþ it.
-localInstance :: K.Environment -> Names -> K.Context -> SymbolId -> N.Value -> Elaboration (Maybe Term)
-localInstance environment names context family goal = do
+localInstance :: Names -> K.Context -> SymbolId -> N.Value -> Elaboration (Maybe Term)
+localInstance names context family goal = do
   let localTypes = zip [0 ..] (K.contextTypes context)
-  locals <- filterM (\(_, ty) -> (== Just family) <$> classFamily environment names ty) localTypes
-  firstJust [E.attempt (E.unify (globals environment) context ty goal >> pure (Local index)) | (index, ty) <- locals]
+  locals <- filterM (\(_, ty) -> (== Just family) <$> classFamily names ty) localTypes
+  firstJust [E.attempt (E.unify context ty goal >> pure (Local index)) | (index, ty) <- locals]
 
 -- local requirements are tried first, then registered instances, then inherited
 -- instances. one registered match þat refineþ every oþer winneþ; þe first matching
@@ -183,49 +199,56 @@ resolveInstance :: K.Environment -> Names -> K.Context -> N.Value -> Elaboration
 resolveInstance environment names = searchInstance environment names AllInstances []
 
 searchInstance :: K.Environment -> Names -> SearchMode -> [Term] -> K.Context -> N.Value -> Elaboration Term
-searchInstance environment names mode ancestors context goal = do
+searchInstance = searchInstanceAmong Nothing
+
+-- a search restricted to þe given bizens, such as a flock's fallbacks.
+searchInstanceAmong :: Maybe [SymbolId] -> K.Environment -> Names -> SearchMode -> [Term] -> K.Context -> N.Value -> Elaboration Term
+searchInstanceAmong restriction environment names mode ancestors context goal = do
   when (length ancestors > 16) (E.failure "instance search is too deep")
-  current <- E.quote (globals environment) (length (K.contextTypes context)) goal
+  current <- E.quote (length (K.contextTypes context)) goal
   -- global universe instantiations do not distinguish repeated goals;
   -- sort arguments remain significant to the kernel's constraints.
   let key = eraseGlobalLevels current
   when (key `elem` ancestors) (E.failure "cyclic instance search")
-  family <- classFamily environment names goal >>= maybe (E.failure "instance goal is not a flock") pure
-  localMatch <- localInstance environment names context family goal
+  family <- classFamily names goal >>= maybe (E.failure "instance goal is not a flock") pure
+  localMatch <- localInstance names context family goal
   case localMatch of
     Just term -> pure term
     Nothing -> do
       let classInfo = Map.lookup family (nameClasses names)
       wanted <- goalHeads goal
       let path = key : ancestors
-      trials <- if mode == LocalRequirements then pure [] else traverse (\symbol -> (symbol,) <$> E.trial (candidate path symbol)) (filter (fits wanted) (maybe [] classInstances classInfo))
-      let matching = [(symbol, result) | (symbol, Right result) <- trials]
-          failures = [failureMessage failure | (_, Left failure) <- trials]
-      -- an instance whose pattern strictly refineþ every oþer match outrankeþ þem.
-      let direct = case [found | found@(symbol, _) <- matching, all (refines symbol . fst) [other | other@(name, _) <- matching, name /= symbol]] of
-            [(_, best)] -> [best]
-            _ -> map snd matching
+      -- candidates are tried by priority, þe latest first among equals, as
+      -- lean doþ; þe first þat succeedeþ is chosen, wiþ its requirements.
+      (direct, failures) <-
+        if mode == LocalRequirements
+          then pure ([], [])
+          else firstSuccess path (filter (\symbol -> fits wanted symbol && maybe True (symbol `elem`) restriction) (maybe [] ordered classInfo))
       -- instances are unique per type, so every parent projection reacheþ þe
       -- same dictionary; a diamond of parents is not ambiguous.
       inherited <-
-        if null direct
+        if null direct && restriction == Nothing
           then do
-            localFamilies <- catMaybes <$> traverse (classFamily environment names) (K.contextTypes context)
+            localFamilies <- catMaybes <$> traverse (classFamily names) (K.contextTypes context)
             firstMatching path (filter (viable localFamilies [family] wanted . Just) (maybe [] classInherited classInfo))
           else pure []
       case direct ++ inherited of
-        [(term, commit)] -> commit >> pure term
+        (term, commit) : _ -> commit >> pure term
         [] -> do
-          localRequirements <- filterM (fmap (/= Nothing) . classFamily environment names) (K.contextTypes context)
-          available <- traverse (E.quote (globals environment) (length (K.contextTypes context))) localRequirements
+          localRequirements <- filterM (fmap (/= Nothing) . classFamily names) (K.contextTypes context)
+          available <- traverse (E.quote (length (K.contextTypes context))) localRequirements
           let rendered = renderTermWith (displayName names) []
               detail = ["available requirement '" ++ rendered requirement ++ "'" | requirement <- available] ++ take 1 failures
           E.failure ("no bizen of flock '" ++ displayName names family ++ "' matcheþ goal '" ++ rendered current ++ "'" ++ concatMap ("; " ++) detail)
-        _ -> E.failure ("ambiguous bizens of flock '" ++ displayName names family ++ "'")
   where
-    refines specific general = case (instancePattern environment specific, instancePattern environment general) of
-      (Just narrow, Just broad) -> instanceOf broad narrow && not (instanceOf narrow broad)
-      _ -> False
+    ordered ClassInfo {classInstances, classPriorities} =
+      map snd (sortOn fst [((Down (Map.findWithDefault defaultPriority symbol classPriorities), Down age), symbol) | (age, symbol) <- zip [0 :: Int ..] classInstances])
+    firstSuccess path = \case
+      [] -> pure ([], [])
+      symbol : rest ->
+        E.trial (candidate path symbol) >>= \case
+          Right found -> pure ([found], [])
+          Left failure -> fmap (failureMessage failure :) <$> firstSuccess path rest
     firstMatching path = \case
       [] -> pure []
       symbol : rest -> E.speculate (candidate path symbol) >>= maybe (firstMatching path rest) (pure . pure)
@@ -233,14 +256,14 @@ searchInstance environment names mode ancestors context goal = do
     -- family can never match. any oþer argument is compared by unification.
     rigid symbol = case definitionBody <$> Map.lookup symbol (globals environment) of
       Just (TypeConstructor _) -> True
-      Just (Host _) -> True
+      Just (Host _ _) -> True
       _ -> False
     goalHeads value =
-      E.force (globals environment) value >>= \case
+      E.force value >>= \case
         N.VNeutral neutral -> traverse (argumentHead . snd) (snd (N.neutralSpine neutral))
         _ -> pure []
     argumentHead value =
-      E.force (globals environment) value <&> \case
+      E.force value <&> \case
         N.VNeutral neutral | (N.NGlobal symbol _, _) <- N.neutralSpine neutral, rigid symbol -> Just symbol
         _ -> Nothing
     fits wanted symbol = case Map.lookup symbol (globals environment) of
@@ -281,26 +304,25 @@ searchInstance environment names mode ancestors context goal = do
       Global symbol _ | rigid symbol -> Just symbol
       _ -> Nothing
     candidate path symbol = do
-      universes <- maybe (E.failure "missing bizen") (pure . definitionUniverses) (Map.lookup symbol (globals environment))
-      levels <- mapM (const E.freshLevel) [1 .. universes]
+      levels <- E.freshUniverses symbol
       let headTerm = Global symbol levels
-      headType <- E.infer (globals environment) context headTerm
+      headType <- E.infer context headTerm
       (term, ty, pending) <- instantiate headTerm headType []
-      E.unify (globals environment) context ty goal
+      E.unify context ty goal
       forM_ pending \(holeValue, domain) ->
-        determined environment domain >>= \case
+        determined names domain >>= \case
           True -> do
             sub <- searchInstance environment names mode path context domain
-            value <- E.evaluate (globals environment) context sub
-            E.unify (globals environment) context holeValue value
+            value <- E.evaluate context sub
+            E.unify context holeValue value
           False -> E.addInstanceGoal (E.InstanceGoal holeValue context domain)
       pure term
     instantiate term ty pending =
-      E.force (globals environment) ty >>= \case
+      E.force ty >>= \case
         N.VPi Implicit domain codomain -> do
-          (argument, value) <- E.newMeta (globals environment) context domain
-          isClass <- classFamily environment names domain
-          next <- E.instantiate (globals environment) codomain value
+          (argument, value) <- E.newMeta context domain
+          isClass <- classFamily names domain
+          next <- E.instantiate codomain value
           instantiate (Apply Implicit term argument) next ([(value, domain) | Just _ <- [isClass]] ++ pending)
         other -> pure (term, other, reverse pending)
 

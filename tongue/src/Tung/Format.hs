@@ -47,12 +47,12 @@ sortUseBlocks = go Code
 
 lineLexicalState :: LexicalState -> String -> LexicalState
 lineLexicalState lexicalState line =
-  let (_, _, next, _) = scanLine lexicalState line
+  let (_, _, next, _, _) = scanLine lexicalState line
    in next
 
 formatLine :: FormatState -> String -> (FormatState, String)
 formatLine state@FormatState {formatLexicalState = BlockComment} line =
-  let (_, _, lexicalState, _) = scanLine BlockComment line
+  let (_, _, lexicalState, _, _) = scanLine BlockComment line
    in (state {formatLexicalState = lexicalState}, line)
 formatLine state line
   | null content =
@@ -72,7 +72,7 @@ formatLine state line
             | formatDepth state == 0 && formatHeaderBracket state == Nothing && not ("]" `isPrefixOf` content) = max 1 (formatContinuation state)
             | otherwise = formatContinuation state
           lineDepth = max 0 (formatDepth state - closes + lineContinuation)
-          (delta, bracketDelta, lexicalState, code) = scanLine (formatLexicalState state) content
+          (delta, bracketDelta, lexicalState, code, content) = scanned
           oldDepth = formatDepth state
           -- a continued line opening a block keepeþ its continuation, unless
           -- it closeþ a header bracket, as `@a:*, head] {` doth.
@@ -88,7 +88,7 @@ formatLine state line
             Just _ -> Nothing
             Nothing
               | bracketDelta > 0
-                  && any (`startsHead` code) ["let", "show let", "bizen", "flock", "show flock"]
+                  && any (`startsHead` code) ["let", "show let", "bizen", "flock", "show flock", "orsend", "show orsend"]
                   && '≔' `notElem` code ->
                   Just (oldDepth, bracketDelta)
             Nothing -> Nothing
@@ -109,33 +109,7 @@ formatLine state line
           next = FormatState depth lexicalState continuation remainingBlocks headerBracket
        in (next, replicate (lineDepth * 2) ' ' ++ content)
   where
-    content = compactTypeColons (formatLexicalState state) (trim line)
-
--- ':' introduceth a type. it is written wiþ no space before it and one space
--- after it: `x: α`, or none when þe type is left to inference: `[x:, y:]`. retain quoted text, character literals, and comments byte
--- for byte.
-compactTypeColons :: LexicalState -> String -> String
-compactTypeColons started = reverse . go started []
-  where
-    go _ acc [] = acc
-    go BlockComment acc ('*' : '/' : rest) = go Code ('/' : '*' : acc) rest
-    go BlockComment acc (character : rest) = go BlockComment (character : acc) rest
-    go Text acc ('\\' : character : rest) = go Text (character : '\\' : acc) rest
-    go Text acc ('\'' : rest) = go Code ('\'' : acc) rest
-    go Text acc (character : rest) = go Text (character : acc) rest
-    go Code acc ('#' : rest) = reverse rest ++ '#' : acc
-    go Code acc ('/' : '*' : rest) = go BlockComment ('*' : '/' : acc) rest
-    go Code acc ('\'' : rest) = go Text ('\'' : acc) rest
-    go Code acc ('`' : rest) =
-      let remaining = characterLiteralTail rest
-          literal = take (length rest - length remaining) rest
-       in go Code (reverse literal ++ '`' : acc) remaining
-    go Code acc (':' : rest) = case dropWhile isSpace rest of
-      [] -> ':' : dropWhile isSpace acc
-      -- `a:` before `,` or `]` leaveþ þe type to inference and needeþ no space.
-      following@(next : _) | next `elem` ",]" -> go Code (':' : dropWhile isSpace acc) following
-      following -> go Code (' ' : ':' : dropWhile isSpace acc) following
-    go Code acc (character : rest) = go Code (character : acc) rest
+    scanned@(_, _, _, _, content) = scanLine (formatLexicalState state) (trim line)
 
 releaseBlocks :: Int -> [(Int, Int)] -> (Int, [(Int, Int)])
 releaseBlocks depth blocks@((closingDepth, extraDepth) : rest)
@@ -153,7 +127,7 @@ leadingClosures :: String -> Int
 leadingClosures = length . takeWhile (`elem` ("})" :: String))
 
 declarationHead :: String -> Bool
-declarationHead line = any (`startsHead` line) ["use", "yield", "show", "let", "ilk", "flock", "bizen"]
+declarationHead line = any (`startsHead` line) ["use", "yield", "show", "let", "ilk", "flock", "bizen", "orsend"]
 
 commentHead :: String -> Bool
 commentHead line = "#" `isPrefixOf` line || "/*" `isPrefixOf` line
@@ -175,32 +149,43 @@ lineContinues code continued =
     || "^" `isSuffixOf` code
     || (continued && ":" `isPrefixOf` code)
 
-scanLine :: LexicalState -> String -> (Int, Int, LexicalState, String)
+-- one tolerant scan preserveþ quoted text and comments while collecting
+-- layout and compacting type colons. code after a block comment affecteþ
+-- depth, but not the line's continuation marker.
+scanLine :: LexicalState -> String -> (Int, Int, LexicalState, String, String)
 scanLine started input =
-  let (delta, bracketDelta, lexicalState, reversedCode) = go 0 0 started True [] input
-   in (delta, bracketDelta, lexicalState, dropWhileEnd isSpace (reverse reversedCode))
+  let (delta, bracketDelta, lexicalState, code, output) = go 0 0 started True [] [] input
+   in (delta, bracketDelta, lexicalState, dropWhileEnd isSpace (reverse code), reverse output)
   where
-    go delta bracketDelta lexicalState _ code [] = (delta, bracketDelta, lexicalState, code)
-    go delta bracketDelta BlockComment collect code ('*' : '/' : rest) = go delta bracketDelta Code collect code rest
-    go delta bracketDelta BlockComment collect code (_ : rest) = go delta bracketDelta BlockComment collect code rest
-    go delta bracketDelta Text collect code ('\\' : _ : rest) = go delta bracketDelta Text collect code rest
-    go delta bracketDelta Text collect code ('\'' : rest) = go delta bracketDelta Code collect code rest
-    go delta bracketDelta Text collect code (_ : rest) = go delta bracketDelta Text collect code rest
-    go delta bracketDelta Code _ code ('#' : _) = (delta, bracketDelta, Code, code)
-    go delta bracketDelta Code _ code ('/' : '*' : rest) = go delta bracketDelta BlockComment False code rest
-    go delta bracketDelta Code collect code ('\'' : rest) = go delta bracketDelta Text collect code rest
-    go delta bracketDelta Code collect code ('`' : rest) =
-      go delta bracketDelta Code collect code (characterLiteralTail rest)
-    go delta bracketDelta Code collect code (character : rest)
-      | character `elem` ("{(" :: String) = go (delta + 1) bracketDelta Code collect next rest
-      | character `elem` ("})" :: String) = go (delta - 1) bracketDelta Code collect next rest
-      | character == '[' = go delta (bracketDelta + 1) Code collect next rest
-      | character == ']' = go delta (bracketDelta - 1) Code collect next rest
-      | otherwise = go delta bracketDelta Code collect next rest
-      where
-        next = keep character collect code
-
-    keep character collect code = if collect then character : code else code
+    go delta brackets lexicalState _ code output [] = (delta, brackets, lexicalState, code, output)
+    go delta brackets BlockComment collect code output ('*' : '/' : rest) = go delta brackets Code collect code ('/' : '*' : output) rest
+    go delta brackets BlockComment collect code output (character : rest) = go delta brackets BlockComment collect code (character : output) rest
+    go delta brackets Text collect code output ('\\' : character : rest) = go delta brackets Text collect code (character : '\\' : output) rest
+    go delta brackets Text collect code output ('\'' : rest) = go delta brackets Code collect code ('\'' : output) rest
+    go delta brackets Text collect code output (character : rest) = go delta brackets Text collect code (character : output) rest
+    go delta brackets Code _ code output ('#' : rest) = (delta, brackets, Code, code, reverse rest ++ '#' : output)
+    go delta brackets Code _ code output ('/' : '*' : rest) = go delta brackets BlockComment False code ('*' : '/' : output) rest
+    go delta brackets Code collect code output ('\'' : rest) = go delta brackets Text collect code ('\'' : output) rest
+    go delta brackets Code collect code output ('`' : rest) =
+      let remaining = characterLiteralTail rest
+          literal = take (length rest - length remaining) rest
+       in go delta brackets Code collect code (reverse literal ++ '`' : output) remaining
+    go delta brackets Code collect code output (':' : rest) =
+      let following = dropWhile isSpace rest
+          spaced = case following of
+            [] -> False
+            next : _ -> next `notElem` ",]"
+          suffix = if spaced then " :" else ":"
+          -- only output whitespace immediately before the colon is removed.
+          removed = length (takeWhile isSpace output)
+          prefix = if collect then drop removed code else code
+          nextCode = if collect then suffix ++ prefix else code
+       in go delta brackets Code collect nextCode (suffix ++ dropWhile isSpace output) following
+    go delta brackets Code collect code output (character : rest) =
+      let depthChange = if character `elem` ("{(" :: String) then 1 else if character `elem` ("})" :: String) then -1 else 0
+          bracketChange = if character == '[' then 1 else if character == ']' then -1 else 0
+          nextCode = if collect then character : code else code
+       in go (delta + depthChange) (brackets + bracketChange) Code collect nextCode (character : output) rest
 
 characterLiteralTail :: String -> String
 characterLiteralTail [] = []

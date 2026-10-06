@@ -3,12 +3,13 @@ module Test.DependentDeed (group) where
 
 import Data.List (isPrefixOf)
 import Data.Map.Strict qualified as Map
+import Test.Compile (compileProject)
 import Test.DependentSupport
 import Test.Harness (Test, expectEq)
 import Test.Harness qualified as Harness
 import Tung.Dependent
 import Tung.Dependent.Run (ioHost, renderRuntime, runYield)
-import Tung.Dependent.Source (compileProject, inferSourceExpression, normaliseSourceExpression, parseSource, sourceEnvironment)
+import Tung.Dependent.Source (inferSourceExpression, normaliseSourceExpression, parseSource, sourceEnvironment)
 
 group :: IO Harness.Group
 group = do
@@ -27,7 +28,14 @@ yieldTests =
           wrong = Inferred 0 [] (Apply Explicit (Lambda Explicit (Sort LZero) (Local 0)) literal) integer
       checked <- either fail pure (infer (sourceEnvironment program) literal)
       actual <- traverse (runYield host program) [checked, wrong]
-      expectEq "yield validateþ its judgement before erasing types" [Right "+7", Left "cannot unify ℤ wiþ *"] (map (fmap renderRuntime) actual)
+      first <- either fail pure (compileAs "yield.tung" "let value ≔ +7")
+      second <- either fail pure (compileAs "yield.tung" "let value ≔ 'other'")
+      borrowed <- either fail pure (inferSourceExpression first "value")
+      transferred <- traverse (\owner -> runYield host owner borrowed) [first, second]
+      expectEq
+        "yield validateþ its judgement in the supplied environment before erasure"
+        [Right "+7", Left "cannot unify ℤ wiþ *", Right "+7", Left "cannot unify text wiþ ℤ"]
+        (map (fmap renderRuntime) (actual ++ transferred))
   ]
 
 tests :: Library -> String -> [Test]
@@ -94,6 +102,14 @@ tests library example =
       compile "ilk 𝟙:* { only:𝟙 }\nlet write:[text, 𝟙 deed] ≔ 'write' fremmed\n",
     rejectContaining "one host key cannot be bound twice" "already bound" $
       compile (prelude ++ "let other:[text, 𝟙 deed] ≔ 'write' fremmed\n"),
+    -- a model must be a checked definition of þe binding's type, for a pure
+    -- operation; an unknown name is rejected.
+    rejectContaining "a model must have þe binding's type" "a model must have þe binding's type" $
+      compile "let wrong:[ℤ, ℤ, ℤ] ≔ {a, b ^ a}\nlet plus:[ℕ, ℕ, ℕ] ≔ 'add_natural' fremmed wrong\n",
+    rejectContaining "only a pure operation haþ a model" "cannot have a model" $
+      compile "let model:[@α:*, a: α, α deed] ≔ sorry\nlet wrap:[@α:*, α, α deed] ≔ 'deed_pure' fremmed model\n",
+    rejectContaining "a model must be declared" "unknown model 'missing'" $
+      compile "let plus:[ℕ, ℕ, ℕ] ≔ 'add_natural' fremmed missing\n",
     rejectContaining "a fremmed binding requireþ an annotation" "requireþ a type annotation" $
       parseSource "let deed ≔ 'deed' fremmed\n",
     rejectContaining "fremmed cannot appear inside an expression" "only an annotated top-level let" $

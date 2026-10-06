@@ -23,15 +23,17 @@ const keywordHelp = {
   yield: "introduce a block result.",
   sorry:
     "stand for an omitted proof or definition of any type; performing it is a runtime error.",
-  induce:
-    "name the eliminator of an ilk or flock: `motive induce name methods target` performeþ structural induction.",
+  orsend:
+    "assume a named constant of a type without a proof; `--check` lists it and `--no-sorry` allows it.",
+  unbuild:
+    "name the eliminator of an ilk or flock: `motive unbuild name methods target` performeþ structural induction.",
   flock: "declare a flock and its members.",
   fremmed:
     "bind an annotated file-level let to the host function named by a preceding text key.",
   bizen: "provide evidence and member definitions for a flock.",
   match:
     "match one or more values against exhaustive pattern rows; `;` joineþ rows that share a result.",
-  fall: "write a typed function: inputs, a final result type, `^`, and the body (dependent frontend only).",
+  fall: "write a typed function: inputs, a final result type, `^`, and the body.",
   let: "bind a value, curried function, or type alias.",
   ilk: "declare an algebraic data type.",
 };

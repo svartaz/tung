@@ -8,7 +8,7 @@ show flock category: [⇨: [*, *, *], @: ⇨ semigroupoid, *] {
   let ▷_sameness: [@α: *, @β: *, f: α ⇨ β, (f ▷ sameness) = f]
 }
 
-bizen: → category {
+bizen fallback: → category {
   let sameness: [a:] ≔ a
 
   let sameness_▷ ≔ {_ ^ reflect}

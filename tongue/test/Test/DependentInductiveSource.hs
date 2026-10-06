@@ -52,8 +52,8 @@ tests =
         [ "let nat ≔ *\n" ++ naturalSource,
           "let zero ≔ *\n" ++ naturalSource
         ],
-    rejectContaining "only an ilk or flock can be induced" "cannot be induced" $
-      compile (naturalSource ++ "let origin ≔ zero\nlet bad ≔ induce origin\n"),
+    rejectContaining "only an ilk or flock can be unbuilt" "cannot be unbuilt" $
+      compile (naturalSource ++ "let origin ≔ zero\nlet bad ≔ unbuild origin\n"),
     rejectContaining "a transparent alias cannot hide negative source recursion" "strictly positive" $
       compile
         ( naturalSource
@@ -81,14 +81,14 @@ vectorSource = "ilk vec:[α:*, [nat, *]] { nil:α vec zero, cons:[n:nat, head:α
 vectorProofSource = "ilk vec_proof:[α:*, [nat, *]] { nil:α vec_proof zero, cons:[n:nat, tail:α vec_proof n, proof:(n equal @nat n), α vec_proof (n successor)] }\n"
 identitySource = "ilk equal:[@α:*, x:α, [α, *]] { refl:(x equal @α x) }\n"
 vectorHead = "let head:[@α:*, @n:nat, v:α vec (n successor), α] ≔ match v { _ cons a _ ^ a }\n"
-transportSource = "let transport:[F:[nat, *], value:zero F, zero F] ≔ {y:nat ^ {proof:(zero equal @nat y) ^ y F}} induce equal @nat @zero value zero (refl @nat @zero)\n"
+transportSource = "let transport:[F:[nat, *], value:zero F, zero F] ≔ {y:nat ^ {proof:(zero equal @nat y) ^ y F}} unbuild equal @nat @zero value zero (refl @nat @zero)\n"
 
 naturalFold, vectorOne, vectorFold, vectorProofOne, vectorProofFold :: String
-naturalFold = "{n:nat ^ nat} induce nat zero {n:nat ^ {ih:nat ^ ih successor}} ((zero successor) successor)"
+naturalFold = "{n:nat ^ nat} unbuild nat zero {n:nat ^ {ih:nat ^ ih successor}} ((zero successor) successor)"
 vectorOne = "zero cons @nat zero (nil @nat)"
-vectorFold = "{n:nat ^ {value:(nat vec n) ^ nat vec n}} induce vec @nat (nil @nat) {n:nat ^ {head:nat ^ {tail:(nat vec n) ^ {ih:(nat vec n) ^ n cons @nat head ih}}}} (zero successor) (" ++ vectorOne ++ ")"
+vectorFold = "{n:nat ^ {value:(nat vec n) ^ nat vec n}} unbuild vec @nat (nil @nat) {n:nat ^ {head:nat ^ {tail:(nat vec n) ^ {ih:(nat vec n) ^ n cons @nat head ih}}}} (zero successor) (" ++ vectorOne ++ ")"
 vectorProofOne = "zero cons @nat (nil @nat) (refl @nat @zero)"
-vectorProofFold = "{n:nat ^ {value:(nat vec_proof n) ^ nat vec_proof n}} induce vec_proof @nat (nil @nat) {n:nat ^ {tail:(nat vec_proof n) ^ {ih:(nat vec_proof n) ^ {proof:(n equal @nat n) ^ n cons @nat ih proof}}}} (zero successor) (" ++ vectorProofOne ++ ")"
+vectorProofFold = "{n:nat ^ {value:(nat vec_proof n) ^ nat vec_proof n}} unbuild vec_proof @nat (nil @nat) {n:nat ^ {tail:(nat vec_proof n) ^ {ih:(nat vec_proof n) ^ {proof:(n equal @nat n) ^ n cons @nat ih proof}}}} (zero successor) (" ++ vectorProofOne ++ ")"
 
 compile :: String -> Either String SourceProgram
 compile = compileAs "inductive_example.tung"

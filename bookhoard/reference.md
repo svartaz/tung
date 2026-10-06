@@ -63,8 +63,9 @@ uniqueness, but direct `set~from_list` may build a noncanonical value.
 `set~from_list` and `table~from_list` remain distinct by qualification.
 
 the planned order-insensitive bag is tracked in [`todo.md`](../todo.md).
-flock laws are identity types (`=`) over þe members. a bizen proveþ each law
-or assumeþ it wiþ `sorry`; laws are never evaluator rewrite rules.
+flock laws are members whose types are identities (`=`) over þe oþer
+members. a bizen proveþ each law or assumeþ it wiþ `sorry`; a requirement
+provideþ þe laws as proofs. laws are never evaluator rewrite rules.
 
 ## law proofs
 
@@ -77,8 +78,7 @@ by cases. generic min/max idempotence holdeth for either comparison result.
 
 [`ilk/list_theorem.tung`](ilk/list_theorem.tung) proveþ standalone list
 theorems wiþout `sorry`: no confusion and injectivity of `‥`, appending,
-mapping, both folds, filtering, reversing, and repetition. þey are terms,
-unlike law names. ℕ arithmetic is native and computeþ only on literals, so
+mapping, both folds, filtering, reversing, and repetition. law names are terms too. ℕ arithmetic is native and computeþ only on literals, so
 statements about lengths are not among þem. þe bookhoard tests also try
 false and ill-founded proofs beside þese theorems and require each to be
 rejected.
@@ -87,7 +87,7 @@ remaining `sorry` statements have distinct boundaries:
 
 | statements                                                                             | boundary                                                                                                                                        |
 | -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| integer, natural, text, unicode, and euclidean laws                                    | native operations reduce on literal inputs; there are no equations for open inputs                                                              |
+| integer, natural, text, unicode, and euclidean laws                                    | natural operations have structural models but þeir laws are not yet proved; oþer native operations reduce only on literal inputs                |
 | deed laws                                                                              | deed constructors and composition are opaque in conversion; there is no observational equality principle                                        |
 | four freer laws and powerset complement                                                | pointwise proofs require equality of continuation or characteristic functions; function extensionality is absent                                |
 | function-carrier algebra, order, lattice, and bound laws                               | function extensionality and reusable component-law evidence are absent                                                                          |

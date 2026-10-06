@@ -408,17 +408,16 @@ runtimeGlobals globals = table
         | name == naturalSuccessorId -> pure (RFunction \case RLiteral (NaturalValue value) -> pure (RLiteral (NaturalValue (value + 1))); RFailure message -> Left message; _ -> Left "successor of a non-natural")
       DataConstructor owner index -> constructor name owner index
       Eliminator family -> eliminator name family
-      Host key | key `elem` Primitive.opaqueTypeFamilyNames ++ literalTypeNames -> pure RErased
-      Host "sorry" -> pure (RFunction \_ -> pure (RFailure "reached sorry"))
-      Host "literal_case" -> curried 6 \case
-        [_, _, actual, expected, yes, no] -> do
-          actual <- inspected actual
-          expected <- inspected expected
-          case (actual, expected) of
-            (RLiteral actual, RLiteral expected) -> inspected (if actual == expected then yes else no)
+      Host key _ | key `elem` Primitive.opaqueTypeFamilyNames ++ literalTypeNames -> pure RErased
+      Host "sorry" _ -> pure (RFunction \_ -> pure (RFailure "reached sorry"))
+      Assumption -> pure (RFailure ("reached orsend '" ++ symbolName name ++ "'"))
+      Host "literal_case" _ -> curried 6 \case
+        [_, _, actual, expected, yes, no] ->
+          traverse inspected [actual, expected] >>= \case
+            [RLiteral actual, RLiteral expected] -> inspected (if actual == expected then yes else no)
             _ -> Left "invalid runtime literal case"
         _ -> Left "invalid runtime literal case"
-      Host key -> host key
+      Host key _ -> host key
     constructor name owner index = do
       (parameters, fields) <- constructorInfo owner index
       curried (parameters + length fields) (pure . RConstructor name . drop parameters)
@@ -452,10 +451,11 @@ runtimeGlobals globals = table
             -- a function field's hypothesis takeþ þe field's inputs first.
             field prefix method ((_, annotation, recursive), value) = do
               applied <- apply method value
+              let recurse child = induct (prefix ++ replicate indexCount RErased ++ [child])
               if recursive
                 then case inputCount annotation of
-                  0 -> apply applied (delayed (induct (prefix ++ replicate indexCount RErased ++ [value])))
-                  count -> apply applied =<< curried count (\inputs -> foldM apply value inputs >>= \result -> induct (prefix ++ replicate indexCount RErased ++ [result]))
+                  0 -> apply applied (delayed (recurse value))
+                  count -> apply applied =<< curried count (foldM apply value >=> recurse)
                 else pure applied
             inputCount = length . fst . termTelescope
         curried (prefixSize + indexCount + 1) induct
@@ -505,6 +505,10 @@ evaluate table environment = \case
       RRecord fields | Just value <- lookup name fields -> pure value
       RFailure message -> Left message
       _ -> Left ("runtime projection of a missing field '" ++ name ++ "'")
+  Field index value ->
+    evaluate table environment value >>= inspected >>= \case
+      RConstructor _ fields | field : _ <- drop index fields -> inspected field
+      _ -> Left "runtime field of a non-constructor"
 
 apply :: Runtime -> Runtime -> Either String Runtime
 apply function argument = case function of

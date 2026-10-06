@@ -2,12 +2,13 @@
 module Test.DependentModule (group) where
 
 import Data.Map.Strict qualified as Map
+import Test.Compile (compileProject, compileProjectDetailed, compileProjectWith)
 import Test.DependentSupport
 import Test.Harness (Test, expectEq)
 import Test.Harness qualified as Harness
 import Tung (SourceSpan (..))
 import Tung.Dependent
-import Tung.Dependent.Source (CompileFailure (..), FailureKind (..), SourceProgram, compileProject, compileProjectDetailed, compileProjectWith, parseSource)
+import Tung.Dependent.Source (CompileFailure (..), FailureKind (..), SourceProgram, parseSource)
 
 group :: IO Harness.Group
 group = do

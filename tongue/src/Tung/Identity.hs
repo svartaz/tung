@@ -1,7 +1,6 @@
 -- | nominal module and symbol identities, shared by source lookup and the core.
 module Tung.Identity
   ( ModuleId (..),
-    renderModuleId,
     SymbolId (..),
     inductionSymbol,
     inducedFamily,
@@ -26,12 +25,7 @@ instance Eq SymbolId where
 instance Ord SymbolId where
   compare (SymbolId leftModule leftName) (SymbolId rightModule rightName) = compare leftName rightName <> compare leftModule rightModule
 
-renderModuleId :: ModuleId -> String
-renderModuleId RootModule = "$root"
-renderModuleId (SourceModule path) = path
-renderModuleId PrimitiveModule = "$primitive"
-
--- þe eliminator of an ilk or flock, written `induce name`. its spelling
+-- þe eliminator of an ilk or flock, written `unbuild name`. its spelling
 -- containeþ a space, so no source name can collide wiþ it or name it.
 inductionSymbol :: SymbolId -> SymbolId
 inductionSymbol family = family {symbolName = inductionPrefix ++ symbolName family}
@@ -42,4 +36,4 @@ inducedFamily symbol = case splitAt (length inductionPrefix) (symbolName symbol)
   _ -> Nothing
 
 inductionPrefix :: String
-inductionPrefix = "induce "
+inductionPrefix = "unbuild "

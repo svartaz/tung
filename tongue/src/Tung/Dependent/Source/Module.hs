@@ -4,7 +4,6 @@
 module Tung.Dependent.Source.Module
   ( compileProject,
     compileImports,
-    sourceImportPaths,
   )
 where
 
@@ -19,7 +18,7 @@ import Tung.Dependent.Host qualified as H
 import Tung.Dependent.Source.Environment
 import Tung.Dependent.Source.Error (CompileFailure (..), FailureKind (..))
 import Tung.Dependent.Source.Error qualified as Error
-import Tung.Dependent.Source.Parse (parseProgramLocated, parseSource)
+import Tung.Dependent.Source.Parse (SourceSnapshot (..))
 import Tung.Dependent.Source.Syntax
 import Tung.Dependent.Syntax (Definition (..))
 import Tung.Identity (ModuleId (..), SymbolId (..), inducedFamily)
@@ -30,12 +29,12 @@ import Tung.Token (SourceFailure, SourceSpan)
 -- updated, kernel-checked module; import loading cannot bypass that check.
 type CheckDeclaration = ModuleId -> SourceProgram -> Declaration -> Either SourceFailure SourceProgram
 
-parsed :: String -> Either CompileFailure ([(Maybe SourceSpan, Declaration)], Maybe Expression)
-parsed = Error.compilationFailure ParseFailure . parseProgramLocated
+parsed :: SourceSnapshot -> Either CompileFailure ([(Maybe SourceSpan, Declaration)], Maybe Expression)
+parsed = Error.compilationFailure ParseFailure . snapshotProgram
 
 -- a root may yield an expression. its checking and execution belong to þe
 -- source facade, after every reachable declaration hath been checked.
-compileProject :: CheckDeclaration -> Map.Map String SourceProgram -> ModuleId -> String -> Map.Map String String -> Either CompileFailure (SourceProgram, Maybe Expression)
+compileProject :: CheckDeclaration -> Map.Map String SourceProgram -> ModuleId -> SourceSnapshot -> Map.Map String SourceSnapshot -> Either CompileFailure (SourceProgram, Maybe Expression)
 compileProject check compiled owner source modules = do
   (declarations, yielded) <- parsed source
   done <- compileImportsAt check compiled modules (importEdges declarations)
@@ -44,10 +43,10 @@ compileProject check compiled owner source modules = do
 
 -- precompiled modules are authoritative and are never reloaded. every oþer
 -- reached module is compiled once, wiþ its dependencies available first.
-compileImports :: CheckDeclaration -> Map.Map String SourceProgram -> Map.Map String String -> [String] -> Either CompileFailure (Map.Map String SourceProgram)
+compileImports :: CheckDeclaration -> Map.Map String SourceProgram -> Map.Map String SourceSnapshot -> [String] -> Either CompileFailure (Map.Map String SourceProgram)
 compileImports check compiled modules = compileImportsAt check compiled modules . map (Nothing,)
 
-compileImportsAt :: CheckDeclaration -> Map.Map String SourceProgram -> Map.Map String String -> [(Maybe SourceSpan, String)] -> Either CompileFailure (Map.Map String SourceProgram)
+compileImportsAt :: CheckDeclaration -> Map.Map String SourceProgram -> Map.Map String SourceSnapshot -> [(Maybe SourceSpan, String)] -> Either CompileFailure (Map.Map String SourceProgram)
 compileImportsAt check compiled modules = foldM (compileImport []) compiled
   where
     compileImport stack done (span, path)
@@ -68,10 +67,6 @@ compileImportsAt check compiled modules = foldM (compileImport []) compiled
 
 importEdges :: [(Maybe SourceSpan, Declaration)] -> [(Maybe SourceSpan, String)]
 importEdges declarations = [(span, importPath) | (span, ImportDeclaration {importPath}) <- declarations]
-
--- a parse error is reported later by compilation.
-sourceImportPaths :: String -> [FilePath]
-sourceImportPaths = either (const []) (\declarations -> [importPath | ImportDeclaration {importPath} <- declarations]) . parseSource
 
 compileModule :: CheckDeclaration -> ModuleId -> [(Maybe SourceSpan, Declaration)] -> Map.Map String SourceProgram -> Either CompileFailure SourceProgram
 compileModule check owner declarations compiled = do
@@ -96,7 +91,7 @@ compileModule check owner declarations compiled = do
       importedMembers = Map.fromList [(member, symbolName family) | (family, ClassInfo {classMembers}) <- Map.toList instances, member <- classMembers]
       importedParents = Map.fromList [(symbolName family, map symbolName classParents) | (family, ClassInfo {classParents}) <- Map.toList instances]
       insert program (span, declaration) = Error.compilationFailure CheckFailure (maybe id Error.atSpan span (check owner program declaration))
-      initial = SourceProgram environment [] (Names (Map.unions [qualified, bare, primitives]) instances) Set.empty (Names Map.empty instances) [] []
+      initial = SourceProgram environment [] (Names (Map.unions [qualified, bare, primitives]) instances) Set.empty (Names Map.empty instances) []
   foldM insert initial (orderDeclarations importedMembers importedParents declarations)
   where
     -- cached modules may have been checked independently. shared identities
@@ -169,7 +164,7 @@ orderDeclarations importedMembers importedParents located = go scheduled
     constructors = Set.fromList [constructorName constructor | InductiveDeclaration {inductiveConstructors} <- map unshown declarations, constructor <- inductiveConstructors]
     mentioned declaration = Set.toList . Set.unions . map (freeNames (`Set.member` constructors) Set.empty) $ case unshown declaration of
       Declaration {..} -> maybe [] pure declarationAnnotation ++ [declarationBody]
-      HostDeclaration {hostAnnotation} -> [hostAnnotation]
+      HostDeclaration {hostAnnotation, hostModel} -> hostAnnotation : map Name (maybe [] pure hostModel)
       InductiveDeclaration {..} -> inductiveSignature : map constructorAnnotation inductiveConstructors
       FlockDeclaration {..} -> map parameterType flockParameters ++ concat [memberExpressions member | member <- flockMembers]
       BizenDeclaration {..} -> bizenType : concat [maybe [] pure declarationAnnotation ++ [declarationBody] | Declaration {..} <- bizenMembers]

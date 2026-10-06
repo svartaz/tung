@@ -41,7 +41,7 @@ test("textmate immediately scopeþ lexical syntax", async () => {
     ["match value {x ^ x}", "match", "keyword.control.tung"],
     ["let main: 𝟙 deed ≔ only pure", "deed", "keyword.control.tung"],
     ["let proof ≔ sorry", "sorry", "keyword.control.tung"],
-    ["let fold ≔ induce list", "induce", "keyword.control.tung"],
+    ["let fold ≔ unbuild list", "unbuild", "keyword.control.tung"],
     ["@a:*", "*", "keyword.other.tung"],
     ["@a:*", "@", "keyword.other.tung"],
     [">{cons, value, empty}", ">{", "punctuation.section.braces.begin.tung"],

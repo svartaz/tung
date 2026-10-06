@@ -1,4 +1,4 @@
-{-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE GADTs #-}
 
 -- | shared host ABI catalogues for the checker/runtime boundary.
 module Tung.Primitive
@@ -11,7 +11,6 @@ module Tung.Primitive
     hostArity,
     primitiveTypeNames,
     opaqueTypeFamilyNames,
-    canonicalHostTypeName,
     hostTypeId,
     onlyConstructorId,
     yeaConstructorId,
@@ -33,15 +32,8 @@ module Tung.Primitive
     naturalZeroId,
     naturalSuccessorId,
     listName,
-    optionName,
-    productName,
-    sumName,
-    tableName,
     oneName,
-    twoName,
-    processResultName,
     requestName,
-    responseName,
   )
 where
 
@@ -153,10 +145,6 @@ opaqueTypeFamilyNames = ["deed", "task"]
 primitiveTypeNames :: [String]
 primitiveTypeNames = ["ℕ", "ℤ", "float", "unicode", "text"] ++ opaqueTypeFamilyNames
 
--- | find the canonical imported name of a host-provided data type.
-canonicalHostTypeName :: String -> Maybe String
-canonicalHostTypeName name = canonicalDataTypeName <$> find ((== name) . hostDataName) hostData
-
 hostTypeId :: String -> Maybe SymbolId
 hostTypeId name = dataTypeId <$> find matches hostData
   where
@@ -195,19 +183,15 @@ responseConstructorId = constructorId responseData "response"
 tableConstructorId = constructorId tableData "from_list"
 
 -- catalogue names of þe host data types.
-listName, optionName, productName, sumName, tableName, oneName, twoName :: String
+listName, optionName, productName, oneName, twoName :: String
 listName = canonicalDataTypeName listData
 optionName = canonicalDataTypeName optionData
 productName = canonicalDataTypeName productData
-sumName = canonicalDataTypeName sumData
-tableName = canonicalDataTypeName tableData
 oneName = canonicalDataTypeName oneData
 twoName = canonicalDataTypeName twoData
 
-processResultName, requestName, responseName :: String
-processResultName = canonicalDataTypeName processResultData
+requestName :: String
 requestName = canonicalDataTypeName requestData
-responseName = canonicalDataTypeName responseData
 
 canonicalDataTypeName :: HostData -> String
 canonicalDataTypeName HostData {hostDataSource, hostDataName} = importNamespace hostDataSource ++ "~" ++ hostDataName
@@ -226,93 +210,44 @@ findForeignBinding key = find ((== key) . hostName) hostBindings
 
 hostBindings :: [HostBinding]
 hostBindings =
-  [ foreignBinding "natural_to_integer" (unary natural integer),
-    foreignBinding "integer_to_natural" (unary integer (option natural)),
-    foreignBinding "add_integer" (binary integer integer integer),
-    foreignBinding "subtract_integer" (binary integer integer integer),
-    foreignBinding "subtract_natural" (binary natural natural natural),
-    foreignBinding "multiply_integer" (binary integer integer integer),
-    foreignBinding "divide_remainder_integer" (binary integer integer (option (product integer integer))),
-    foreignBinding "add_float" (binary float float float),
-    foreignBinding "subtract_float" (binary float float float),
-    foreignBinding "multiply_float" (binary float float float),
-    foreignBinding "divide_float" (binary float float float),
-    foreignBinding "sine_float" (unary float float),
-    foreignBinding "arctan_float" (binary float float float),
-    foreignBinding "exponent_float" (unary float float),
-    foreignBinding "logariþm_float" (unary float float),
-    foreignBinding "⌊" (unary float (option integer)),
-    foreignBinding "equal_integer" (binary integer integer two),
-    foreignBinding "integer_to_text" (unary integer text),
-    foreignBinding "float_to_text" (unary float text),
-    foreignBinding "unicode_to_natural" (unary unicode natural),
-    foreignBinding "natural_to_unicode" (unary natural (option unicode)),
-    foreignBinding "behead_text" (unary text (option (product unicode text))),
-    foreignBinding "text_to_list" (unary text (list unicode)),
-    foreignBinding "list_to_text" (unary (list unicode) text),
-    foreignBinding "join_text" (binary text text text),
-    foreignBinding "equal_text" (binary text text two),
-    foreignBinding "equal_unicode" (binary unicode unicode two),
-    foreignBinding "less_equal_text" (binary text text two),
-    foreignBinding "less_equal_unicode" (binary unicode unicode two),
-    foreignBinding "less_equal_integer" (binary integer integer two),
-    foreignBinding "equal_float" (binary float float two),
-    foreignBinding "less_equal_float" (binary float float two),
-    foreignBinding "text_to_float" (unary text (option float)),
-    foreignBinding "equal_natural" (binary natural natural two),
-    foreignBinding "less_equal_natural" (binary natural natural two),
-    foreignBinding "add_natural" (binary natural natural natural),
-    foreignBinding "multiply_natural" (binary natural natural natural),
-    foreignBinding "divide_remainder_natural" (binary natural natural (option (product natural natural))),
-    foreignBinding "natural_to_text" (unary natural text),
-    -- deeds: actions þat only þe runner performeþ.
-    deed "deed_pure" ["a"] [variable "a"] (action (variable "a")),
-    deed "deed_bind" ["a", "b"] [action (variable "a"), HostArrow [variable "a"] (action (variable "b"))] (action (variable "b")),
-    -- þe restricted fixed point: a deed may repeat itself, a pure value may not.
-    deed "deed_fix" ["a"] [HostArrow [action (variable "a")] (action (variable "a"))] (action (variable "a")),
-    deed "write" [] [text] (action one),
-    deed "read" [] [] (action (option text)),
-    deed "random" [] [] (action float),
-    deed "unix_time" [] [] (action integer),
-    deed "sleep" [] [natural] (action one),
-    deed "fork" ["a"] [action (variable "a")] (action (task (variable "a"))),
-    deed "wait" ["a"] [task (variable "a")] (action (option (variable "a"))),
-    deed "wait_for" ["a"] [task (variable "a"), natural] (action (option (variable "a"))),
-    deed "cancel" ["a"] [task (variable "a")] (action one),
-    deed "read_file" [] [text] (action (outcome text)),
-    deed "write_file" [] [text, text] (action (outcome one)),
-    deed "append_file" [] [text, text] (action (outcome one)),
-    deed "arguments" [] [] (action (list text)),
-    deed "environment" [] [text] (action (option text)),
-    deed "exit" ["a"] [natural] (action (variable "a")),
-    deed "run_process" [] [text, list text] (action (outcome (HostCon (canonicalDataTypeName processResultData)))),
-    deed "serve" [] [natural, HostArrow [HostCon (canonicalDataTypeName requestData)] (action (HostCon (canonicalDataTypeName responseData)))] (action text)
-  ]
+  map fst pureBindings
+    ++ [
+         -- deeds: actions þat only þe runner performeþ.
+         deed "deed_pure" ["a"] [variable "a"] (action (variable "a")),
+         deed "deed_bind" ["a", "b"] [action (variable "a"), HostArrow [variable "a"] (action (variable "b"))] (action (variable "b")),
+         -- þe restricted fixed point: a deed may repeat itself, a pure value may not.
+         deed "deed_fix" ["a"] [HostArrow [action (variable "a")] (action (variable "a"))] (action (variable "a")),
+         deed "write" [] [text] (action one),
+         deed "read" [] [] (action (option text)),
+         deed "random" [] [] (action float),
+         deed "unix_time" [] [] (action integer),
+         deed "sleep" [] [natural] (action one),
+         deed "fork" ["a"] [action (variable "a")] (action (task (variable "a"))),
+         deed "wait" ["a"] [task (variable "a")] (action (option (variable "a"))),
+         deed "wait_for" ["a"] [task (variable "a"), natural] (action (option (variable "a"))),
+         deed "cancel" ["a"] [task (variable "a")] (action one),
+         deed "read_file" [] [text] (action (outcome text)),
+         deed "write_file" [] [text, text] (action (outcome one)),
+         deed "append_file" [] [text, text] (action (outcome one)),
+         deed "arguments" [] [] (action (list text)),
+         deed "environment" [] [text] (action (option text)),
+         deed "exit" ["a"] [natural] (action (variable "a")),
+         deed "run_process" [] [text, list text] (action (outcome (HostCon (canonicalDataTypeName processResultData)))),
+         deed "serve" [] [natural, HostArrow [HostCon (canonicalDataTypeName requestData)] (action (HostCon (canonicalDataTypeName responseData)))] (action text)
+       ]
   where
     natural = HostCon "ℕ"
     integer = HostCon "ℤ"
     float = HostCon "float"
-    unicode = HostCon "unicode"
     text = HostCon "text"
-    two = HostCon (canonicalDataTypeName twoData)
     one = HostCon (canonicalDataTypeName oneData)
     variable = HostVar
     action value = HostApp "deed" [value]
     task value = HostApp "task" [value]
     outcome value = HostApp (canonicalDataTypeName sumData) [text, value]
-    deed name variables arguments result = foreignBinding name (HostSignature variables arguments result)
+    deed name variables arguments result = HostBinding name (HostSignature variables arguments result)
     list value = HostApp (canonicalDataTypeName listData) [value]
     option value = HostApp (canonicalDataTypeName optionData) [value]
-    product left right = HostApp (canonicalDataTypeName productData) [left, right]
-
-foreignBinding :: String -> HostSignature -> HostBinding
-foreignBinding = HostBinding
-
-unary :: HostType -> HostType -> HostSignature
-unary argument = HostSignature [] [argument]
-
-binary :: HostType -> HostType -> HostType -> HostSignature
-binary left right = HostSignature [] [left, right]
 
 -- a value crosseþ þe host boundary in þis shape. each runtime convertþ its
 -- own representation, so pure operations have one meaning everywhere.
@@ -332,55 +267,112 @@ data HostValue
 -- division by zero, a negative natural, a non-scalar code point, an infinite
 -- floor, or unreadable text yieldeþ none. integer division is euclidean.
 pureOperation :: String -> Maybe ([HostValue] -> Maybe HostValue)
-pureOperation = \case
-  "natural_to_integer" -> unaryOperation \case HostNatural a -> Just (HostInteger (toInteger a)); _ -> Nothing
-  "integer_to_natural" -> unaryOperation \case HostInteger a -> Just (HostOption (if a >= 0 then Just (HostNatural (fromInteger a)) else Nothing)); _ -> Nothing
-  "add_natural" -> naturals \a b -> HostNatural (a + b)
-  "subtract_natural" -> naturals \a b -> HostNatural (if b > a then 0 else a - b)
-  "multiply_natural" -> naturals \a b -> HostNatural (a * b)
-  "divide_remainder_natural" -> naturals \a b -> HostOption (if b == 0 then Nothing else Just (HostPair (HostNatural (a `div` b)) (HostNatural (a `mod` b))))
-  "equal_natural" -> naturals \a b -> HostTruth (a == b)
-  "less_equal_natural" -> naturals \a b -> HostTruth (a <= b)
-  "natural_to_text" -> unaryOperation \case HostNatural a -> Just (HostText (show a)); _ -> Nothing
-  "add_integer" -> integers \a b -> HostInteger (a + b)
-  "subtract_integer" -> integers \a b -> HostInteger (a - b)
-  "multiply_integer" -> integers \a b -> HostInteger (a * b)
-  "divide_remainder_integer" -> integers \a b -> HostOption (if b == 0 then Nothing else Just (let (q, r) = euclidean a b in HostPair (HostInteger q) (HostInteger r)))
-  "equal_integer" -> integers \a b -> HostTruth (a == b)
-  "less_equal_integer" -> integers \a b -> HostTruth (a <= b)
-  "integer_to_text" -> unaryOperation \case HostInteger a -> Just (HostText (show a)); _ -> Nothing
-  "add_float" -> floats \a b -> HostFloat (a + b)
-  "subtract_float" -> floats \a b -> HostFloat (a - b)
-  "multiply_float" -> floats \a b -> HostFloat (a * b)
-  "divide_float" -> floats \a b -> HostFloat (a / b)
-  -- þe angle of þe point (real, imaginary), in [0, 2π).
-  "arctan_float" -> floats \real imaginary -> let angle = atan2 imaginary real in HostFloat (if angle < 0 then angle + 2 * pi else angle)
-  "sine_float" -> floatUnary sin
-  "exponent_float" -> floatUnary exp
-  "logariþm_float" -> floatUnary log
-  "⌊" -> unaryOperation \case HostFloat a -> Just (HostOption (if isNaN a || isInfinite a then Nothing else Just (HostInteger (floor a)))); _ -> Nothing
-  "equal_float" -> floats \a b -> HostTruth (a == b)
-  "less_equal_float" -> floats \a b -> HostTruth (a <= b)
-  "float_to_text" -> unaryOperation \case HostFloat a -> Just (HostText (show a)); _ -> Nothing
-  "text_to_float" -> unaryOperation \case HostText a -> Just (HostOption (HostFloat <$> readMaybe a)); _ -> Nothing
-  "unicode_to_natural" -> unaryOperation \case HostUnicode a -> Just (HostNatural (fromIntegral (ord a))); _ -> Nothing
-  "natural_to_unicode" -> unaryOperation \case HostNatural a -> Just (HostOption (HostUnicode <$> unicodeScalar (toInteger a))); _ -> Nothing
-  "equal_unicode" -> binaryOperation \case [HostUnicode a, HostUnicode b] -> Just (HostTruth (a == b)); _ -> Nothing
-  "less_equal_unicode" -> binaryOperation \case [HostUnicode a, HostUnicode b] -> Just (HostTruth (a <= b)); _ -> Nothing
-  "behead_text" -> unaryOperation \case HostText a -> Just (HostOption (case a of first : rest -> Just (HostPair (HostUnicode first) (HostText rest)); [] -> Nothing)); _ -> Nothing
-  "text_to_list" -> unaryOperation \case HostText a -> Just (HostList (map HostUnicode a)); _ -> Nothing
-  "list_to_text" -> unaryOperation \case HostList values -> HostText <$> traverse (\case HostUnicode a -> Just a; _ -> Nothing) values; _ -> Nothing
-  "join_text" -> binaryOperation \case [HostText a, HostText b] -> Just (HostText (a ++ b)); _ -> Nothing
-  "equal_text" -> binaryOperation \case [HostText a, HostText b] -> Just (HostTruth (a == b)); _ -> Nothing
-  "less_equal_text" -> binaryOperation \case [HostText a, HostText b] -> Just (HostTruth (a <= b)); _ -> Nothing
+pureOperation key = snd <$> find ((== key) . hostName . fst) pureBindings
+
+-- codecs are private trusted ABI mappings. the binding GADT coupleþ each
+-- native function to its input and result codecs; one entry deriveþ both
+-- the checker signature and the adapter used by normalisation and execution.
+data Codec a = Codec
+  { codecType :: HostType,
+    encodeHost :: a -> HostValue,
+    decodeHost :: HostValue -> Maybe a
+  }
+
+data PureBinding where
+  UnaryBinding :: String -> Codec a -> Codec b -> (a -> b) -> PureBinding
+  BinaryBinding :: String -> Codec a -> Codec b -> Codec c -> (a -> b -> c) -> PureBinding
+
+eraseBinding :: PureBinding -> (HostBinding, [HostValue] -> Maybe HostValue)
+eraseBinding = \case
+  UnaryBinding name argument result function ->
+    ( HostBinding name (HostSignature [] [codecType argument] (codecType result)),
+      \case [value] -> encodeHost result . function <$> decodeHost argument value; _ -> Nothing
+    )
+  BinaryBinding name left right result function ->
+    ( HostBinding name (HostSignature [] [codecType left, codecType right] (codecType result)),
+      \case [a, b] -> encodeHost result <$> (function <$> decodeHost left a <*> decodeHost right b); _ -> Nothing
+    )
+
+natural :: Codec Natural
+natural = Codec (HostCon "ℕ") HostNatural \case HostNatural value -> Just value; _ -> Nothing
+
+integer :: Codec Integer
+integer = Codec (HostCon "ℤ") HostInteger \case HostInteger value -> Just value; _ -> Nothing
+
+float :: Codec Double
+float = Codec (HostCon "float") HostFloat \case HostFloat value -> Just value; _ -> Nothing
+
+unicode :: Codec Char
+unicode = Codec (HostCon "unicode") HostUnicode \case HostUnicode value -> Just value; _ -> Nothing
+
+text :: Codec String
+text = Codec (HostCon "text") HostText \case HostText value -> Just value; _ -> Nothing
+
+truth :: Codec Bool
+truth = Codec (HostCon twoName) HostTruth \case HostTruth value -> Just value; _ -> Nothing
+
+optionCodec :: Codec a -> Codec (Maybe a)
+optionCodec inner = Codec (HostApp optionName [codecType inner]) (HostOption . fmap (encodeHost inner)) \case
+  HostOption value -> traverse (decodeHost inner) value
   _ -> Nothing
+
+-- producing the pair constructor needeþ neither numeric payload yet.
+pairCodec :: Codec a -> Codec b -> Codec (a, b)
+pairCodec left right = Codec (HostApp productName [codecType left, codecType right]) (\ ~(a, b) -> HostPair (encodeHost left a) (encodeHost right b)) \case
+  HostPair a b -> (,) <$> decodeHost left a <*> decodeHost right b
+  _ -> Nothing
+
+listCodec :: Codec a -> Codec [a]
+listCodec inner = Codec (HostApp listName [codecType inner]) (HostList . map (encodeHost inner)) \case
+  HostList values -> traverse (decodeHost inner) values
+  _ -> Nothing
+
+pureBindings :: [(HostBinding, [HostValue] -> Maybe HostValue)]
+pureBindings =
+  map
+    eraseBinding
+    [ UnaryBinding "natural_to_integer" natural integer toInteger,
+      UnaryBinding "integer_to_natural" integer (optionCodec natural) \a -> if a >= 0 then Just (fromInteger a) else Nothing,
+      BinaryBinding "add_integer" integer integer integer (+),
+      BinaryBinding "subtract_integer" integer integer integer (-),
+      BinaryBinding "subtract_natural" natural natural natural \a b -> if b > a then 0 else a - b,
+      BinaryBinding "multiply_integer" integer integer integer (*),
+      BinaryBinding "divide_remainder_integer" integer integer (optionCodec (pairCodec integer integer)) \a b -> if b == 0 then Nothing else Just (euclidean a b),
+      BinaryBinding "add_float" float float float (+),
+      BinaryBinding "subtract_float" float float float (-),
+      BinaryBinding "multiply_float" float float float (*),
+      BinaryBinding "divide_float" float float float (/),
+      UnaryBinding "sine_float" float float sin,
+      -- þe angle of þe point (real, imaginary), in [0, 2π).
+      BinaryBinding "arctan_float" float float float \real imaginary -> let angle = atan2 imaginary real in if angle < 0 then angle + 2 * pi else angle,
+      UnaryBinding "exponent_float" float float exp,
+      UnaryBinding "logariþm_float" float float log,
+      UnaryBinding "⌊" float (optionCodec integer) \a -> if isNaN a || isInfinite a then Nothing else Just (floor a),
+      BinaryBinding "equal_integer" integer integer truth (==),
+      UnaryBinding "integer_to_text" integer text show,
+      UnaryBinding "float_to_text" float text show,
+      UnaryBinding "unicode_to_natural" unicode natural (fromIntegral . ord),
+      UnaryBinding "natural_to_unicode" natural (optionCodec unicode) (unicodeScalar . toInteger),
+      UnaryBinding "behead_text" text (optionCodec (pairCodec unicode text)) \case first : rest -> Just (first, rest); [] -> Nothing,
+      UnaryBinding "text_to_list" text (listCodec unicode) id,
+      UnaryBinding "list_to_text" (listCodec unicode) text id,
+      BinaryBinding "join_text" text text text (++),
+      BinaryBinding "equal_text" text text truth (==),
+      BinaryBinding "equal_unicode" unicode unicode truth (==),
+      BinaryBinding "less_equal_text" text text truth (<=),
+      BinaryBinding "less_equal_unicode" unicode unicode truth (<=),
+      BinaryBinding "less_equal_integer" integer integer truth (<=),
+      BinaryBinding "equal_float" float float truth (==),
+      BinaryBinding "less_equal_float" float float truth (<=),
+      UnaryBinding "text_to_float" text (optionCodec float) readMaybe,
+      BinaryBinding "equal_natural" natural natural truth (==),
+      BinaryBinding "less_equal_natural" natural natural truth (<=),
+      BinaryBinding "add_natural" natural natural natural (+),
+      BinaryBinding "multiply_natural" natural natural natural (*),
+      BinaryBinding "divide_remainder_natural" natural natural (optionCodec (pairCodec natural natural)) \a b -> if b == 0 then Nothing else Just (a `div` b, a `mod` b),
+      UnaryBinding "natural_to_text" natural text show
+    ]
   where
-    unaryOperation f = Just \case [a] -> f a; _ -> Nothing
-    binaryOperation = Just
-    naturals f = binaryOperation \case [HostNatural a, HostNatural b] -> Just (f a b); _ -> Nothing
-    integers f = binaryOperation \case [HostInteger a, HostInteger b] -> Just (f a b); _ -> Nothing
-    floats f = binaryOperation \case [HostFloat a, HostFloat b] -> Just (f a b); _ -> Nothing
-    floatUnary f = unaryOperation \case HostFloat a -> Just (HostFloat (f a)); _ -> Nothing
     -- þe remainder is never negative.
     euclidean a b =
       let (quotient, remainder) = a `divMod` b

@@ -19,7 +19,6 @@ import Test.Evaluate qualified as Evaluate
 import Test.Format qualified as Format
 import Test.Harness (runGroups)
 import Test.HarnessTests qualified as HarnessTests
-import Test.Import qualified as Import
 import Test.Integration qualified as Integration
 import Test.Library qualified as Library
 import Test.Name qualified as Name
@@ -38,7 +37,6 @@ main =
       ("parse", Parse.group),
       ("format", Format.group),
       ("validate", Validate.group),
-      ("import", Import.group),
       ("project", Project.group),
       ("library", Library.group),
       ("type", Type.group),

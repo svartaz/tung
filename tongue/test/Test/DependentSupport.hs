@@ -27,11 +27,12 @@ import Data.List (isInfixOf)
 import Data.Map.Strict qualified as Map
 import System.Directory (doesFileExist, getCurrentDirectory)
 import System.FilePath (takeDirectory, (</>))
+import Test.Compile (compileModules, compileProjectWith, compileSource)
 import Test.Harness (Test, expect)
 import Tung (readLibraryImports)
 import Tung.Dependent
 import Tung.Dependent.Run (HostIO (..), Request, Response, Runtime, runMain)
-import Tung.Dependent.Source (SourceProgram, compileModules, compileProjectWith, compileSource, normaliseSourceExpression)
+import Tung.Dependent.Source (SourceProgram, normaliseSourceExpression)
 
 level :: Int -> Level
 level n = iterate LSucc LZero !! n

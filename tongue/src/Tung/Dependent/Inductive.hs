@@ -74,8 +74,17 @@ inferInductive environment name eliminator parameters annotation constructors co
               assumptions
               (replaceSelfUniverses name canonical family)
               (zip (map fst constructors) (map (replaceSelfUniverses name canonical) constructorTypes))
-      (_, obligations) <- runStateT (build environment declaration) assumptions
-      defineInductive environment declaration {inductiveConstraints = nub obligations}
+      (K.Environment built, obligations) <- runStateT (build environment declaration) assumptions
+      let constraints = nub obligations
+          updated = declaration {inductiveConstraints = constraints}
+          names = name : eliminator : map fst constructors
+          final = foldr (Map.adjust (\definition -> definition {definitionConstraints = constraints})) built names
+      validateSyntax (Just universes) False updated
+      -- adding inferred assumptions cannot alter positivity or the generated
+      -- eliminator. recheck final signatures rigidly, wiþout rebuilding them.
+      (_, rigid) <- runStateT (traverse_ (K.checkType final K.emptyContext . definitionType . (final Map.!)) names) constraints
+      unless (all (U.entails constraints) (K.openObligations constraints rigid)) (Left "unproved universe constraint in inductive declaration")
+      pure (K.Environment final)
     [] -> Left "missing inductive family signature"
   where
     checkPlaceholders levels = do
@@ -250,17 +259,16 @@ localAt :: Int -> Int -> Term
 localAt depth level = Local (depth - level - 1)
 
 renameTerm :: [Int] -> Int -> Term -> Either String Term
-renameTerm mapping depth = go 0
+renameTerm mapping depth = traverseScoped renameLocal
   where
-    go bound = \case
-      Local index
-        | index < 0 -> Left "negative inductive local index"
-        | index < bound -> pure (Local index)
-        | otherwise -> case drop (length mapping - (index - bound) - 1) mapping of
-            level : _ | index - bound < length mapping -> pure (Local (depth - level - 1 + bound))
-            _ -> Left "inductive term outside its telescope"
-      Meta _ _ -> Left "unresolved term inference hole in inductive declaration"
-      term -> mapChildren (\binders -> go (bound + binders)) term
+    renameLocal bound (Local index) _
+      | index < 0 = Left "negative inductive local index"
+      | index < bound = pure (Local index)
+      | otherwise = case drop (length mapping - (index - bound) - 1) mapping of
+          level : _ | index - bound < length mapping -> pure (Local (depth - level - 1 + bound))
+          _ -> Left "inductive term outside its telescope"
+    renameLocal _ Meta {} _ = Left "unresolved term inference hole in inductive declaration"
+    renameLocal _ _ descend = descend
 
 containsFamily :: SymbolId -> Term -> Bool
 containsFamily name = not . null . selfUniverses name
@@ -271,8 +279,7 @@ selfUniverses name = \case
   term -> concatMap (selfUniverses name . snd) (children term)
 
 replaceSelfUniverses :: SymbolId -> [Level] -> Term -> Term
-replaceSelfUniverses name levels = go
+replaceSelfUniverses name levels = runIdentity . traverseScoped replace
   where
-    go = \case
-      Global identity _ | identity == name -> Global name levels
-      term -> runIdentity (mapChildren (\_ child -> Identity (go child)) term)
+    replace _ (Global identity _) _ | identity == name = pure (Global name levels)
+    replace _ _ descend = descend

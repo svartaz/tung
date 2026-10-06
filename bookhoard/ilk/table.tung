@@ -54,7 +54,7 @@ bizen: [@α: *, (α table) functor] {
   let map_sameness ≔ {@β ^ {entries from_list ^
       from_list leibnitz (
         {l: (α ∏ β) list ^ (l map {pair ^ pair map sameness}) = l}
-        induce list reflect {first, _, proof ^ match first {
+        unbuild list reflect {first, _, proof ^ match first {
             a boþ b ^ ((a boþ b) ‥) leibnitz proof
         }} entries
       )

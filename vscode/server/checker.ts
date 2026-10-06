@@ -3,13 +3,29 @@ import * as childProcess from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
 interface PendingRequest {
-  resolve: (value: string) => void;
+  resolve: (value: CompilerResult) => void;
+  command: CompilerCommand;
   version: number;
 }
-interface ResponseHeader {
-  requestId: number;
+type CompilerCommand = "check" | "type" | "format" | "highlight" | "cancel";
+interface CompilerDiagnostic {
+  kind: "parse" | "type" | "goal";
+  path?: string;
+  start: number;
+  end: number;
+  message: string;
+}
+type CompilerResult =
+  | { kind: "check"; diagnostics: CompilerDiagnostic[] }
+  | { kind: "type"; type: string }
+  | { kind: "format"; source: string }
+  | { kind: "highlight"; roles: SourceRole[] }
+  | { kind: "error"; message: string };
+interface CompilerResponse {
+  protocol: 1;
+  id: number;
   version: number;
-  length: number;
+  result: CompilerResult;
 }
 type SourceRole = [
   start: number,
@@ -26,7 +42,6 @@ class CompilerBridge {
   pending = new Map<number, PendingRequest>();
   nextRequestId = 1;
   output = "";
-  responseHeader: ResponseHeader | undefined;
   configure(tongue, libraryRoots: string[] = [], executablePath?: string) {
     const tongueChanged = tongue !== this.tongue;
     const executableChanged = executablePath !== this.executablePath;
@@ -54,10 +69,8 @@ class CompilerBridge {
     const request = this.request("format", source, [], "", version);
     return {
       ...request,
-      result: request.result.then((output) =>
-        output.startsWith(formatResponseHeader)
-          ? output.slice(formatResponseHeader.length)
-          : undefined,
+      result: request.result.then((result) =>
+        result.kind === "format" ? result.source : undefined,
       ),
     };
   }
@@ -65,29 +78,32 @@ class CompilerBridge {
     const request = this.request("highlight", source, [], "", version);
     return {
       ...request,
-      result: request.result.then((output): SourceRole[] | undefined =>
-        output.startsWith(highlightResponseHeader)
-          ? JSON.parse(output.slice(highlightResponseHeader.length))
-          : undefined,
+      result: request.result.then((result): SourceRole[] | undefined =>
+        result.kind === "highlight" ? result.roles : undefined,
       ),
     };
   }
-  request(command, source, imports, name, version) {
+  request(command: CompilerCommand, source, imports, name, version) {
     const executable = this.findExecutable();
     if (!executable) {
       return {
         process: undefined,
         requestId: 0,
         version,
-        result: Promise.resolve("could not find the tung executable"),
+        result: Promise.resolve<CompilerResult>({
+          kind: "error",
+          message: "could not find the tung executable",
+        }),
         cancel() {},
       };
     }
     const process = this.ensureSession(executable);
     const requestId = this.nextRequestId++;
-    let resolveResult;
-    const result = new Promise<string>((resolve) => (resolveResult = resolve));
-    this.pending.set(requestId, { resolve: resolveResult, version });
+    let resolveResult: PendingRequest["resolve"];
+    const result = new Promise<CompilerResult>(
+      (resolve) => (resolveResult = resolve),
+    );
+    this.pending.set(requestId, { resolve: resolveResult, command, version });
     process.stdin.write(
       sessionRequest(requestId, version, command, name, source, imports),
     );
@@ -119,11 +135,10 @@ class CompilerBridge {
     });
     this.session = process;
     this.output = "";
-    this.responseHeader = undefined;
     let stderr = "";
     process.stdout.setEncoding("utf8");
     process.stderr.setEncoding("utf8");
-    process.stdout.on("data", (chunk) => this.consume(chunk));
+    process.stdout.on("data", (chunk) => this.consume(chunk, process));
     process.stderr.on("data", (chunk) => (stderr += chunk));
     process.on("error", (error) => {
       this.failSession(
@@ -140,44 +155,52 @@ class CompilerBridge {
           : "haskell checker session stopped",
       );
     });
-    process.stdin.on("error", () => {});
+    process.stdin.on("error", (error) => {
+      this.failSession(
+        process,
+        `could not write to the checker: ${error.message}`,
+      );
+    });
     return process;
   }
-  consume(chunk) {
+  consume(chunk: string, process = this.session) {
+    if (!process || process !== this.session) return;
     this.output += chunk;
     while (true) {
-      if (!this.responseHeader) {
-        const newline = this.output.indexOf("\n");
-        if (newline < 0) return;
-        const header = this.output.slice(0, newline).replace(/\r$/, "");
-        this.output = this.output.slice(newline + 1);
-        const fields = header.split("\t");
-        if (fields.length !== 4 || fields[0] !== "tung-response") continue;
-        this.responseHeader = {
-          requestId: Number(fields[1]),
-          version: Number(fields[2]),
-          length: Number(fields[3]),
-        };
+      const newline = this.output.indexOf("\n");
+      if (newline < 0) return;
+      const line = this.output.slice(0, newline);
+      this.output = this.output.slice(newline + 1);
+      let response: unknown;
+      try {
+        response = JSON.parse(line);
+      } catch {
+        this.failSession(process, "invalid JSON from the checker");
+        return;
       }
-      const characters = Array.from(this.output);
-      if (characters.length < this.responseHeader.length + 1) return;
-      const response = characters.slice(0, this.responseHeader.length).join("");
-      this.output = characters.slice(this.responseHeader.length).join("");
-      if (this.output.startsWith("\r\n")) this.output = this.output.slice(2);
-      else if (this.output.startsWith("\n")) this.output = this.output.slice(1);
-      const { requestId, version } = this.responseHeader;
-      this.responseHeader = undefined;
-      const pending = this.pending.get(requestId);
-      if (!pending || pending.version !== version) continue;
-      this.pending.delete(requestId);
-      pending.resolve(response);
+      if (!isCompilerResponse(response)) {
+        this.failSession(process, "invalid checker response schema");
+        return;
+      }
+      const pending = this.pending.get(response.id);
+      if (!pending) continue;
+      if (
+        pending.version !== response.version ||
+        (response.result.kind !== pending.command &&
+          response.result.kind !== "error")
+      ) {
+        this.failSession(process, "checker response did not match its request");
+        return;
+      }
+      this.pending.delete(response.id);
+      pending.resolve(response.result);
     }
   }
   cancel(requestId, version) {
     const pending = this.pending.get(requestId);
     if (!pending) return;
     this.pending.delete(requestId);
-    pending.resolve("checker request cancelled");
+    pending.resolve({ kind: "error", message: "checker request cancelled" });
     if (this.session?.exitCode === null && !this.session.killed) {
       this.session.stdin.write(
         sessionRequest(requestId, version, "cancel", "", "", []),
@@ -187,6 +210,7 @@ class CompilerBridge {
   failSession(process, message) {
     if (this.session !== process) return;
     this.reset(message);
+    if (process.exitCode === null && !process.killed) process.kill();
   }
   dispose() {
     const process = this.reset("checker request cancelled");
@@ -195,10 +219,11 @@ class CompilerBridge {
   reset(message) {
     const process = this.session;
     this.session = undefined;
-    for (const { resolve } of this.pending.values()) resolve(message);
+    for (const { resolve } of this.pending.values()) {
+      resolve({ kind: "error", message });
+    }
     this.pending.clear();
     this.output = "";
-    this.responseHeader = undefined;
     return process;
   }
   findExecutable() {
@@ -235,8 +260,6 @@ class CompilerBridge {
     );
   }
 }
-const formatResponseHeader = "tung-format\n";
-const highlightResponseHeader = "tung-highlight\n";
 const findOnPath = () => {
   const names = process.platform === "win32" ? ["tung.exe", "tung"] : ["tung"];
   for (const directory of (process.env.PATH || "").split(path.delimiter)) {
@@ -270,86 +293,68 @@ const findFile = (root, predicate) => {
   }
   return undefined;
 };
-const parseCompilerDiagnostic = (output) => {
-  const trimmed = output.trim();
-  if (trimmed === "tung-ok" || trimmed.startsWith("tung-ok\n"))
-    return undefined;
-  const [header = "", ...body] = output.split(/\r?\n/);
-  const fields = header.split("\t");
-  if (fields.length === 5 && fields[0] === "tung-diagnostic") {
-    const start = Number(fields[3]);
-    const end = Number(fields[4]);
-    return {
-      kind: fields[1],
-      path: fields[2] || undefined,
-      start,
-      end,
-      message: body.join("\n").trim(),
-    };
+const isObject = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === "object" && !Array.isArray(value);
+const isStrings = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every((item) => typeof item === "string");
+const isRange = (start: unknown, end: unknown) =>
+  Number.isSafeInteger(start) &&
+  Number.isSafeInteger(end) &&
+  (start as number) >= 0 &&
+  (end as number) >= (start as number);
+const isDiagnostic = (value: unknown): value is CompilerDiagnostic =>
+  isObject(value) &&
+  ["parse", "type", "goal"].includes(value.kind as string) &&
+  (value.path === undefined || typeof value.path === "string") &&
+  isRange(value.start, value.end) &&
+  typeof value.message === "string";
+const isRole = (value: unknown): value is SourceRole =>
+  Array.isArray(value) &&
+  value.length === 4 &&
+  isRange(value[0], value[1]) &&
+  typeof value[2] === "string" &&
+  isStrings(value[3]);
+const isResult = (value: unknown): value is CompilerResult => {
+  if (!isObject(value)) return false;
+  switch (value.kind) {
+    case "check":
+      return (
+        Array.isArray(value.diagnostics) &&
+        value.diagnostics.every(isDiagnostic)
+      );
+    case "type":
+      return typeof value.type === "string";
+    case "format":
+      return typeof value.source === "string";
+    case "highlight":
+      return Array.isArray(value.roles) && value.roles.every(isRole);
+    case "error":
+      return typeof value.message === "string";
+    default:
+      return false;
   }
-  if (fields.length === 4 && fields[0] === "tung-diagnostic") {
-    return {
-      kind: fields[1],
-      start: Number(fields[2]),
-      end: Number(fields[3]),
-      message: body.join("\n").trim(),
-    };
-  }
-  const message = output
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .find((line) => /^(parse error|type error)\b/.test(line));
-  return { message: message || trimmed || "checker gave no output" };
 };
-// a successful check listeþ each `sorry` goal after `tung-ok`: a
-// `tung-goal` header wiþ its utf-16 span, þen þe goal and its context.
-const parseCompilerGoals = (output: string) => {
-  if (!output.startsWith("tung-ok")) return [];
-  return output
-    .split("\ntung-goal\t")
-    .slice(1)
-    .map((block) => {
-      const [header = "", ...body] = block.split("\n");
-      const [start, end] = header.split("\t").map(Number);
-      return { start, end, message: body.join("\n").trimEnd() };
-    })
-    .filter(
-      ({ start, end }) => Number.isInteger(start) && Number.isInteger(end),
-    );
-};
-const sourceBundle = (source, imports) => {
-  return `(${haskellString(source)},[${imports
-    .map(
-      ([name, imported]) =>
-        `(${haskellString(name)},${haskellString(imported)})`,
-    )
-    .join(",")}])`;
-};
-const sessionRequest = (requestId, version, command, name, source, imports) => {
-  return `(${requestId},${version},${haskellString(command)},${haskellString(
+const isCompilerResponse = (value: unknown): value is CompilerResponse =>
+  isObject(value) &&
+  value.protocol === 1 &&
+  Number.isSafeInteger(value.id) &&
+  (value.id as number) > 0 &&
+  Number.isSafeInteger(value.version) &&
+  isResult(value.result);
+const sessionRequest = (id, version, command, name, source, imports) =>
+  JSON.stringify({
+    protocol: 1,
+    id,
+    version,
+    command,
     name,
-  )},${sourceBundle(source, imports)})\n`;
-};
-const haskellString = (value) => {
-  let result = '"';
-  for (const character of value) {
-    const code = character.codePointAt(0);
-    if (character === '"') result += '\\"';
-    else if (character === "\\") result += "\\\\";
-    else if (character === "\n") result += "\\n";
-    else if (character === "\r") result += "\\r";
-    else if (character === "\t") result += "\\t";
-    else if (code < 32 || code === 127) result += `\\${code}\\&`;
-    else result += character;
-  }
-  return `${result}"`;
-};
+    source,
+    imports: Object.fromEntries(imports),
+  }) + "\n";
 export {
   CompilerBridge,
+  CompilerDiagnostic,
+  CompilerResult,
   SourceRole,
-  haskellString,
-  parseCompilerDiagnostic,
-  parseCompilerGoals,
   sessionRequest,
-  sourceBundle,
 };

@@ -1,9 +1,11 @@
 -- | the dependent frontend reuseþ the compiler lexer. annotations and bodies
 -- pass through one expression parser; unsupported legacy forms are rejected.
 module Tung.Dependent.Source.Parse
-  ( parseSource,
+  ( SourceSnapshot (..),
+    sourceSnapshot,
+    snapshotImportPaths,
+    parseSource,
     parseProgram,
-    parseProgramLocated,
     parseExpression,
     SourceRole (..),
     parseSourceRoles,
@@ -20,6 +22,22 @@ import GHC.Float (castDoubleToWord64)
 import Tung.Dependent.Source.Syntax
 import Tung.Dependent.Syntax (HostLiteral (..), Plicity (..))
 import Tung.Token
+
+-- a source snapshot shareþ one lazy parse between import discovery and
+-- compilation. failures stay located and are reported by the owning stage.
+data SourceSnapshot = SourceSnapshot
+  { snapshotText :: String,
+    snapshotProgram :: Either SourceFailure ([(Maybe SourceSpan, Declaration)], Maybe Expression)
+  }
+  deriving stock (Eq, Show)
+
+sourceSnapshot :: String -> SourceSnapshot
+sourceSnapshot text = SourceSnapshot text (parseProgramLocated text)
+
+snapshotImportPaths :: SourceSnapshot -> [FilePath]
+snapshotImportPaths snapshot = case snapshotProgram snapshot of
+  Left _ -> []
+  Right (declarations, _) -> [importPath | (_, ImportDeclaration {importPath}) <- declarations]
 
 -- token ranges and syntax roles from the shared expression parser.
 data SourceRole = SourceRole SourceSpan String [String] deriving (Eq, Show)
@@ -127,13 +145,15 @@ oneDeclaration tokens = case tokens of
   TType : rest -> inductiveDeclaration rest
   TClass : rest -> flockDeclaration rest
   TInstance : rest -> bizenDeclaration rest
+  TOrsend : rest -> orsendDeclaration rest
   TImport : rest -> importDeclaration rest
   TExport : rest@(TLet : _) -> shown rest
   TExport : rest@(TType : _) -> shown rest
   TExport : rest@(TClass : _) -> shown rest
+  TExport : rest@(TOrsend : _) -> shown rest
   TExport : rest@(TIdent _ : _) -> (\(names, following) -> (ReExportDeclaration names, following)) <$> reexported [] rest
-  TExport : _ -> failAt tokens "show must precede a let, ilk, or flock declaration or a name"
-  _ -> failAt tokens "expected a declaration: let, ilk, flock, bizen, use, or show"
+  TExport : _ -> failAt tokens "show must precede a let, ilk, flock, or orsend declaration or a name"
+  _ -> failAt tokens "expected a declaration: let, ilk, flock, bizen, orsend, use, or show"
 
 -- `show a, b` re-exporteþ visible names.
 reexported :: [String] -> Parser [String]
@@ -234,19 +254,36 @@ flockMemberList tokens = case tokens of
 -- `bizen:type { lets }`. þe type endeþ before þe opening brace, as match
 -- scrutinees do. member bodies are ordinary declarations.
 bizenDeclaration :: Parser Declaration
-bizenDeclaration (TColon : rest) = do
-  (parts, afterType) <- typeRoles (applicationPartsUntil (== TLBrace) rest)
-  ty <- liftAt rest (application parts)
-  markClass ty
-  case afterType of
-    TLBrace : afterOpen -> do
-      (located, afterMembers) <- declarationsUsing (memberRoles . oneDeclaration) afterOpen
-      let members = map snd located
-      case afterMembers of
-        TRBrace : remaining -> pure (BizenDeclaration ty members, remaining)
-        _ -> failAt afterMembers "expected '}' after bizen members"
-    _ -> failAt afterType "expected '{' after bizen type"
-bizenDeclaration tokens = failAt tokens "expected ':' after bizen"
+bizenDeclaration = bizenHeader False Nothing
+
+-- `fallback` and a priority may precede þe colon, in þat order.
+bizenHeader :: Bool -> Maybe Integer -> Parser Declaration
+bizenHeader fallback priority tokens = case tokens of
+  marker@(TIdent "fallback") : rest | not fallback, Nothing <- priority -> markRole "keyword" [] marker >> bizenHeader True priority rest
+  TNatural value : rest | Nothing <- priority -> bizenHeader fallback (Just (toInteger value)) rest
+  TColon : rest -> do
+    (parts, afterType) <- typeRoles (applicationPartsUntil (== TLBrace) rest)
+    ty <- liftAt rest (application parts)
+    markClass ty
+    case afterType of
+      TLBrace : afterOpen -> do
+        (located, afterMembers) <- declarationsUsing (memberRoles . oneDeclaration) afterOpen
+        let members = map snd located
+        case afterMembers of
+          TRBrace : remaining -> pure (BizenDeclaration priority fallback ty members, remaining)
+          _ -> failAt afterMembers "expected '}' after bizen members"
+      _ -> failAt afterType "expected '{' after bizen type"
+  _ -> failAt tokens "expected ':' after bizen"
+
+-- `orsend name: type` nameþ an assumption. þe type may not bind inputs.
+orsendDeclaration :: Parser Declaration
+orsendDeclaration tokens = case tokens of
+  TIdent name : TColon : rest -> do
+    plainName tokens name
+    (ty, remaining) <- typeRoles (expression rest)
+    markFirst (if callable ty then "function" else "variable") ["declaration"] tokens
+    pure (AssumptionDeclaration name ty, remaining)
+  _ -> failAt tokens "expected 'name:' after orsend"
 
 -- the path is one name wiþ dotted segments; a following name is its alias.
 importDeclaration :: Parser Declaration
@@ -321,7 +358,8 @@ letDeclaration tokens = do
   case (bodyTokens, annotation) of
     (TText key : TForeign : remaining, Just (ty, written))
       | any bindsInput written -> failAt bodyTokens "a fremmed annotation cannot bind inputs"
-      | otherwise -> pure (HostDeclaration name ty key, remaining)
+      | modelName@(TIdent model) : afterModel <- remaining -> markRole "function" [] modelName >> pure (HostDeclaration name ty key (Just model), afterModel)
+      | otherwise -> pure (HostDeclaration name ty key Nothing, remaining)
     (TText _ : TForeign : _, Nothing) -> failAt bodyTokens "a fremmed binding requireþ a type annotation"
     _ -> do
       (body, remaining) <- (if typeDefinition then typeRoles else id) (expression bodyTokens)
@@ -441,7 +479,7 @@ applicationPartsUntil stop = go []
     finish accumulated rest = pure (reverse accumulated, rest)
 
 stopsExpression :: Token -> Bool
-stopsExpression token = token `elem` [TLet, TType, TImport, TExport, TClass, TInstance, TYield, TComma, TColon, TSemicolon, TEquals, TMapsTo, TRParen, TRBracket, TRBrace, TDollar]
+stopsExpression token = token `elem` [TLet, TType, TImport, TExport, TClass, TInstance, TOrsend, TYield, TComma, TColon, TSemicolon, TEquals, TMapsTo, TRParen, TRBracket, TRBrace, TDollar]
 
 parseArgument :: Parser Argument
 parseArgument (TAt : rest) = do
@@ -494,7 +532,7 @@ atomBase tokens = case tokens of
   TIdent "_" : rest -> pure (Wildcard, rest)
   TSorry : rest -> pure (Sorry, rest)
   TInduce : token@(TIdent name) : rest -> markRole "type" [] token >> pure (Induce name, rest)
-  TInduce : rest -> failAt rest "expected an ilk or flock name after 'induce'"
+  TInduce : rest -> failAt rest "expected an ilk or flock name after 'unbuild'"
   TMatch : rest -> matchExpression rest
   token@(TIdent name) : rest -> markRole "term" [] token >> pure (Name name, rest)
   TLBracket : rest -> bracket rest
@@ -718,17 +756,35 @@ matchExpression :: Parser Expression
 matchExpression tokens = do
   (scrutinees, afterScrutinees) <- scrutineeList tokens
   case afterScrutinees of
-    TLBrace : TRBrace : remaining -> pure (Match scrutinees [], remaining)
-    TLBrace : rest -> do
-      (groups, remaining) <- caseGroups rest
-      pure (Match scrutinees [Row items body | (alternatives, body) <- groups, items <- map (map pattern) alternatives], remaining)
-    _ -> failAt afterScrutinees "expected '{' after match scrutinees"
+    -- `for known` nameþ þe equation between þe scrutinee and each pattern.
+    for@(TIdent "for") : named@(TIdent known : afterName) -> case scrutinees of
+      [scrutinee] -> do
+        markRole "keyword" [] for
+        markFirst "parameter" ["declaration"] named
+        (rows, remaining) <- rowsAfter afterName
+        pure (MatchFor scrutinee known rows, remaining)
+      _ -> failAt afterScrutinees "'for' nameþ þe equation of one scrutinee"
+    TIdent "for" : afterFor -> failAt afterFor "expected an equation name after 'for'"
+    _ -> do
+      (rows, remaining) <- rowsAfter afterScrutinees
+      pure (Match scrutinees rows, remaining)
   where
+    rowsAfter = \case
+      TLBrace : TRBrace : remaining -> pure ([], remaining)
+      TLBrace : rest -> do
+        (groups, remaining) <- caseGroups rest
+        pure ([Row items body | (alternatives, body) <- groups, items <- map (map pattern) alternatives], remaining)
+      afterHeader -> failAt afterHeader "expected '{' after match scrutinees"
     pattern = either (\(Binder _ name _) -> maybe Wildcard Name name) id
+    -- `for` endeþ þe scrutinees only here; elsewhere it is an ordinary name.
+    headerEnd = \case
+      TLBrace -> True
+      TIdent "for" -> True
+      _ -> False
     scrutineeList ts = do
-      (parts, afterParts) <- applicationPartsUntil (== TLBrace) ts
+      (parts, afterParts) <- applicationPartsUntil headerEnd ts
       initial <- liftAt ts (application parts)
-      (first, rest) <- dollarsUntil (== TLBrace) initial afterParts
+      (first, rest) <- dollarsUntil headerEnd initial afterParts
       case rest of
         TComma : more -> do
           (others, remaining) <- scrutineeList more
@@ -908,7 +964,7 @@ parseSourceRoles source =
     chunks [] = []
     chunks (token : rest) = let (body, remaining) = break boundary rest in (token : body) : chunks remaining
     boundary token =
-      token `elem` [TLet, TType, TClass, TInstance, TImport, TExport, TYield]
+      token `elem` [TLet, TType, TClass, TInstance, TOrsend, TImport, TExport, TYield]
         && maybe False ((`Set.member` starts) . spanStart) (tokenSpan token)
     starts = Set.fromList (0 : lineStarts 0 source)
     lineStarts _ [] = []

@@ -12,14 +12,13 @@ module Tung.Dependent.Syntax
     Globals,
     children,
     mapChildren,
-    traverseLevels,
+    traverseScoped,
     mapLevels,
     instantiateLevel,
     instantiateLevels,
     termLevels,
     constraintLevels,
     eraseGlobalLevels,
-    sameUpToLevels,
     abstractTerms,
     freeIndices,
     termTelescope,
@@ -69,6 +68,9 @@ data Term
     RecordType [(String, Term)]
   | Record [(String, Term)]
   | Project Term String
+  | -- þe field at an index of a value of a one-constructor family wiþout
+    -- indices, counting implicit fields, as lean's primitive projections.
+    Field Int Term
   deriving stock (Eq, Show)
 
 data Definition = Definition
@@ -87,8 +89,12 @@ data DefinitionBody
   | DataConstructor SymbolId Int
   | Eliminator SymbolId
   | -- a trusted host constant, bound to a catalogue key. a pure operation
-    -- reduceþ on literal inputs; any oþer host constant is opaque.
-    Host String
+    -- reduceþ on literal inputs. on oþer inputs it unfoldeþ its model, a
+    -- checked tung definition of þe same type, when it haþ one; any oþer
+    -- host constant is opaque.
+    Host String (Maybe SymbolId)
+  | -- an `orsend` assumption: a constant wiþ a checked type and no body.
+    Assumption
   deriving stock (Eq, Show)
 
 data InductiveInfo = InductiveInfo
@@ -118,11 +124,10 @@ applyArguments = foldl (\function (plicity, argument) -> Apply plicity function 
 
 -- free locals move past þe given number of new outer binders.
 shiftTerm :: Int -> Term -> Term
-shiftTerm amount = go 0
+shiftTerm amount = runIdentity . traverseScoped move
   where
-    go bound = \case
-      Local index | index >= bound -> Local (index + amount)
-      term -> runIdentity (mapChildren (\binders -> Identity . go (bound + binders)) term)
+    move bound (Local index) _ | index >= bound = pure (Local (index + amount))
+    move _ _ descend = descend
 
 -- | each immediate subterm, in order, wiþ the number of binders between it
 -- and its parent. every term traversal is built from þese two functions.
@@ -139,18 +144,26 @@ mapChildren f = \case
   RecordType fields -> RecordType <$> traverse (\(name, field) -> (name,) <$> f 0 field) fields
   Record fields -> Record <$> traverse (\(name, field) -> (name,) <$> f 0 field) fields
   Project record name -> (`Project` name) <$> f 0 record
+  Field index value -> Field index <$> f 0 value
   term@Local {} -> pure term
   term@Global {} -> pure term
   term@Sort {} -> pure term
   term@Literal {} -> pure term
 
-traverseLevels :: (Applicative f) => (Level -> f Level) -> Term -> f Term
-traverseLevels f = go
+-- visit a node before its children, carrying þe number of enclosing binders.
+-- use þe lazy default descent at most once; replacements are not revisited.
+-- this walk trackeþ depth but doth not validate local indices.
+traverseScoped :: (Applicative f) => (Int -> Term -> f Term -> f Term) -> Term -> f Term
+traverseScoped visit = go 0
   where
-    go = \case
-      Global name levels -> Global name <$> traverse f levels
-      Sort level -> Sort <$> f level
-      term -> mapChildren (\_ -> go) term
+    go bound term = visit bound term (mapChildren (\binders -> go (bound + binders)) term)
+
+traverseLevels :: (Applicative f) => (Level -> f Level) -> Term -> f Term
+traverseLevels f = traverseScoped visit
+  where
+    visit _ (Global name levels) _ = Global name <$> traverse f levels
+    visit _ (Sort level) _ = Sort <$> f level
+    visit _ _ descend = descend
 
 mapLevels :: (Level -> Level) -> Term -> Term
 mapLevels f = runIdentity . traverseLevels (Identity . f)
@@ -179,11 +192,10 @@ constraintLevels (LevelBelow left right) = [left, right]
 
 -- search keys ignore global instantiations, but retain written sort levels.
 eraseGlobalLevels :: Term -> Term
-eraseGlobalLevels = go
+eraseGlobalLevels = runIdentity . traverseScoped erase
   where
-    go = \case
-      Global name _ -> Global name []
-      term -> runIdentity (mapChildren (\_ -> Identity . go) term)
+    erase _ (Global name _) _ = pure (Global name [])
+    erase _ _ descend = descend
 
 -- equality þat ignoreþ global universe instantiations, as
 -- 'eraseGlobalLevels' doþ, wiþout rebuilding eiþer term.
@@ -202,15 +214,14 @@ abstractTerms targets body = (abstracted, [position `elem` found | position <- [
   where
     count = length targets
     shifted = [map (shiftTerm (bound + count)) targets | bound <- [0 :: Int ..]]
-    (found, abstracted) = go 0 (shiftTerm count body)
-    go bound term = case findIndex (sameUpToLevels term) (shifted !! bound) of
+    (found, abstracted) = traverseScoped replace (shiftTerm count body)
+    replace bound term descend = case findIndex (sameUpToLevels term) (shifted !! bound) of
       Just position -> ([position], Local (bound + count - 1 - position))
-      Nothing -> mapChildren (\binders -> go (bound + binders)) term
+      Nothing -> descend
 
 -- free de bruijn indices, measured outside the term's own binders.
 freeIndices :: Term -> [Int]
-freeIndices = go 0
+freeIndices = getConst . traverseScoped collect
   where
-    go bound = \case
-      Local index | index >= bound -> [index - bound]
-      term -> concat [go (bound + binders) child | (binders, child) <- children term]
+    collect bound (Local index) _ | index >= bound = Const [index - bound]
+    collect _ _ descend = descend

@@ -4,8 +4,7 @@
 module Tung.Project
   ( Project (..),
     loadProjectFile,
-    loadProjectFileWithRoots,
-    loadProjectSourceWithRoots,
+    loadProjectSource,
   )
 where
 
@@ -21,7 +20,7 @@ import Data.Text.IO qualified as Text
 import System.Directory (canonicalizePath, doesFileExist, makeAbsolute)
 import System.FilePath (normalise, takeDirectory, (</>))
 import System.IO.Error (tryIOError)
-import Tung.Dependent.Source (sourceImportPaths)
+import Tung.Dependent.Source (SourceSnapshot, snapshotImportPaths, snapshotText, sourceSnapshot)
 
 -- a root source and every source it reacheþ, keyed by `use` path, wiþ þe
 -- file each `use` path resolved to.
@@ -29,47 +28,44 @@ data Project = Project
   { projectPath :: FilePath,
     projectSource :: String,
     projectImports :: Map.Map String String,
-    projectImportPaths :: Map.Map String FilePath
+    projectImportPaths :: Map.Map String FilePath,
+    projectSnapshot :: SourceSnapshot,
+    projectImportSnapshots :: Map.Map String SourceSnapshot
   }
   deriving stock (Eq, Show)
 
-type Loaded = Map.Map String (FilePath, String)
+type Loaded = Map.Map String (FilePath, SourceSnapshot)
 
 type Loader = StateT Loaded (ExceptT String IO)
 
--- supplied sources stand for `use` paths þat no file provideþ.
-loadProjectFile :: Map.Map String String -> FilePath -> IO (Either String Project)
-loadProjectFile builtins = loadProjectFileWithRoots builtins []
-
-loadProjectFileWithRoots :: Map.Map String String -> [FilePath] -> FilePath -> IO (Either String Project)
-loadProjectFileWithRoots builtins roots path = runExceptT do
+loadProjectFile :: [FilePath] -> FilePath -> IO (Either String Project)
+loadProjectFile roots path = runExceptT do
   absolute <- liftIOError "resolve" path (canonicalizePath =<< makeAbsolute path)
-  absoluteRoots <- traverse absoluteRoot roots
   source <- readSource absolute
-  loadProjectSourceM builtins absoluteRoots absolute source
+  loadProjectSourceM roots absolute source
 
 -- source text placed at an owner path, as standard input is.
-loadProjectSourceWithRoots :: Map.Map String String -> [FilePath] -> FilePath -> String -> IO (Either String Project)
-loadProjectSourceWithRoots builtins roots owner source = runExceptT do
+loadProjectSource :: [FilePath] -> FilePath -> String -> IO (Either String Project)
+loadProjectSource roots owner source = runExceptT do
   absolute <- liftIOError "resolve" owner (makeAbsolute owner)
+  loadProjectSourceM roots absolute source
+
+loadProjectSourceM :: [FilePath] -> FilePath -> String -> ExceptT String IO Project
+loadProjectSourceM roots owner source = do
   absoluteRoots <- traverse absoluteRoot roots
-  loadProjectSourceM builtins absoluteRoots absolute source
+  let snapshot = sourceSnapshot source
+  loaded <- execStateT (discover absoluteRoots owner (takeDirectory owner) snapshot) Map.empty
+  let snapshots = snd <$> loaded
+  pure (Project owner source (Map.map snapshotText snapshots) (fst <$> loaded) snapshot snapshots)
 
-loadProjectSourceM :: Map.Map String String -> [FilePath] -> FilePath -> String -> ExceptT String IO Project
-loadProjectSourceM builtins roots owner source = do
-  loaded <- execStateT (discover builtins roots owner (takeDirectory owner) source) Map.empty
-  pure (Project owner source (Map.union (snd <$> loaded) builtins) (fst <$> loaded))
+discover :: [FilePath] -> FilePath -> FilePath -> SourceSnapshot -> Loader ()
+discover roots owner base source = mapM_ (loadImport roots owner base) (snapshotImportPaths source)
 
-discover :: Map.Map String String -> [FilePath] -> FilePath -> FilePath -> String -> Loader ()
-discover builtins roots owner base source = mapM_ (loadImport builtins roots owner base) (sourceImportPaths source)
-
-loadImport :: Map.Map String String -> [FilePath] -> FilePath -> FilePath -> FilePath -> Loader ()
-loadImport builtins roots owner base importPath = do
+loadImport :: [FilePath] -> FilePath -> FilePath -> FilePath -> Loader ()
+loadImport roots owner base importPath = do
   candidates <- importCandidates roots base importPath
   case candidates of
-    []
-      | Map.member importPath builtins -> pure ()
-      | otherwise -> failLoader ("missing use '" ++ importPath ++ "' from '" ++ owner ++ "'")
+    [] -> failLoader ("missing use '" ++ importPath ++ "' from '" ++ owner ++ "'")
     [candidate] -> loadCandidate candidate
     paths ->
       failLoader
@@ -80,7 +76,7 @@ loadImport builtins roots owner base importPath = do
         )
   where
     loadCandidate candidate = do
-      absolute <- liftIOErrorL "resolve" candidate (canonicalizePath candidate)
+      absolute <- lift (liftIOError "resolve" candidate (canonicalizePath candidate))
       known <- gets (Map.lookup importPath)
       case known of
         Just (other, _)
@@ -110,9 +106,9 @@ loadImport builtins roots owner base importPath = do
                 )
         Just _ -> pure ()
         Nothing -> do
-          imported <- readSourceL absolute
+          imported <- sourceSnapshot <$> lift (readSource absolute)
           modify' (Map.insert importPath (absolute, imported))
-          discover builtins roots absolute (takeDirectory absolute) imported
+          discover roots absolute (takeDirectory absolute) imported
 
 importCandidates :: [FilePath] -> FilePath -> FilePath -> Loader [FilePath]
 importCandidates roots base importPath = do
@@ -128,16 +124,10 @@ absoluteRoot root = liftIOError "resolve module root" root (normalise <$> makeAb
 readSource :: FilePath -> ExceptT String IO String
 readSource path = liftIOError "read" path (Text.unpack <$> Text.readFile path)
 
-readSourceL :: FilePath -> Loader String
-readSourceL path = lift (readSource path)
-
 liftIOError :: String -> FilePath -> IO a -> ExceptT String IO a
 liftIOError action path operation = do
   result <- liftIO (tryIOError operation)
   either (throwE . renderIoError action path . show) pure result
-
-liftIOErrorL :: String -> FilePath -> IO a -> Loader a
-liftIOErrorL action path operation = lift (liftIOError action path operation)
 
 failLoader :: String -> Loader a
 failLoader = lift . throwE

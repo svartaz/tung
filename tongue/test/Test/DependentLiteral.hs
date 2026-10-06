@@ -2,11 +2,12 @@
 module Test.DependentLiteral (group) where
 
 import Data.Map.Strict qualified as Map
+import Test.Compile (compileProject)
 import Test.DependentSupport
 import Test.Harness (Test, expectEq)
 import Test.Harness qualified as Harness
 import Tung.Dependent
-import Tung.Dependent.Source (SourceProgram, compileProject, inferSourceExpression, sourceEnvironment, sourceGlobal)
+import Tung.Dependent.Source (SourceProgram, inferSourceExpression, sourceEnvironment, sourceGlobal)
 
 group :: IO Harness.Group
 group = do
@@ -26,6 +27,9 @@ tests compiled example =
     computes "integers convert to text" "+42 to_text" "'42'",
     computes "float addition computeþ" "0.5 ⊕ 0.25" "0.75",
     computes "a float floor is an integer" "-2.5 ⌊" "-3 some",
+    expectEq "non-finite floats have no integer floor" (Right [True, True, True]) do
+      program <- compiled (example ++ "let divide_float:[float,float,float] ≔ 'divide_float' fremmed\n")
+      traverse (\number -> sameNormalIn program ("(" ++ number ++ " divide_float 0.0) ⌊") "(none:ℤ option)") ["1.0", "-1.0", "0.0"],
     computes "text joineþ" "'tu' · 'ng'" "'tung'",
     computes "text splitteþ off its first scalar" "'tung' behead" "(`t boþ 'ung') some",
     computes "empty text hath no first scalar" "'' behead" "(none : (unicode ∏ text) option)",

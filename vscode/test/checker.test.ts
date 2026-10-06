@@ -2,54 +2,35 @@ import assert from "node:assert/strict";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import test from "node:test";
+import test, { type TestContext } from "node:test";
 import { compiler } from "./compiler.ts";
-import {
-  CompilerBridge,
-  haskellString,
-  parseCompilerDiagnostic,
-  parseCompilerGoals,
-  sessionRequest,
-  sourceBundle,
-} from "../server/checker.ts";
-test("checker bundle preserveþ unicode, quotes, slashes, and control characters", () => {
-  assert.equal(haskellString('𝟙\n"\\\t'), '"𝟙\\n\\"\\\\\\t"');
-  assert.equal(
-    sourceBundle("main", [["dep.tung", "source"]]),
-    '("main",[("dep.tung","source")])',
-  );
-  assert.equal(
-    sessionRequest(7, 4, "check", "", "main", [["dep.tung", "source"]]),
-    '(7,4,"check","",("main",[("dep.tung","source")]))\n',
-  );
-});
-test("checker protocol carrieþ an exact source range", () => {
-  assert.deepEqual(
-    parseCompilerDiagnostic(
-      "tung-diagnostic\ttype\tdep.tung\t4\t9\ntype error: in 'value'",
-    ),
-    {
-      kind: "type",
-      path: "dep.tung",
-      start: 4,
-      end: 9,
-      message: "type error: in 'value'",
-    },
-  );
-  assert.equal(parseCompilerDiagnostic("tung-ok\n"), undefined);
+import { CompilerBridge, sessionRequest } from "../server/checker.ts";
+test("checker requests preserve unicode, quotes, slashes, and control characters", () => {
+  const source = '𝟙\n"\\\t\r\u0000';
+  const request = sessionRequest(7, 4, "check", "", source, [
+    ["dep.tung", source],
+  ]);
+  assert.equal(request.split("\n").length, 2);
+  assert.deepEqual(JSON.parse(request), {
+    protocol: 1,
+    id: 7,
+    version: 4,
+    command: "check",
+    name: "",
+    source,
+    imports: { "dep.tung": source },
+  });
 });
 test("a successful check carrieþ each sorry goal wiþ its span and context", async () => {
-  const source = "let twice:[x:ℤ, ℤ] ≔ sorry\nlet value:ℤ ≔ +1";
+  const source = "# 𝟙\nlet twice:[x:ℤ, ℤ] ≔ sorry\nlet value:ℤ ≔ +1";
   const output = await compiler.check({ text: source }, []).result;
-  assert.equal(parseCompilerDiagnostic(output), undefined);
   const start = source.indexOf("sorry");
-  assert.deepEqual(parseCompilerGoals(output), [
-    { start, end: start + 5, message: "goal: ℤ\n  x: ℤ" },
-  ]);
-  assert.deepEqual(
-    parseCompilerGoals("tung-diagnostic\ttype\t\t0\t1\nbad"),
-    [],
-  );
+  assert.deepEqual(output, {
+    kind: "check",
+    diagnostics: [
+      { kind: "goal", start, end: start + 5, message: "goal: ℤ\n  x: ℤ" },
+    ],
+  });
 });
 test("checker findeþ a built executable without cabal list-bin", (context) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-checker-"));
@@ -97,14 +78,152 @@ test("checker reuseþ one versioned session and cancellable requests", async (co
   assert.equal(checked.process, typed.process);
   assert.equal(checked.process, formatted.process);
   assert.equal(checked.version, 3);
-  assert.equal((await checked.result).trim(), "tung-ok");
-  assert.equal((await typed.result).trim(), "type: ℤ");
+  assert.deepEqual(await checked.result, { kind: "check", diagnostics: [] });
+  assert.deepEqual(await typed.result, { kind: "type", type: "ℤ" });
   assert.equal(
     await formatted.result,
     "show ilk box: [a: *, *] { box: a box }\n",
   );
   const cancelled = bridge.check(model, [], 4);
   cancelled.cancel();
-  assert.equal(await cancelled.result, "checker request cancelled");
-  assert.equal((await bridge.check(model, [], 5).result).trim(), "tung-ok");
+  assert.deepEqual(await cancelled.result, {
+    kind: "error",
+    message: "checker request cancelled",
+  });
+  assert.deepEqual(await bridge.check(model, [], 5).result, {
+    kind: "check",
+    diagnostics: [],
+  });
 });
+
+test("source and unsaved import changes invalidate the compiled cache", async () => {
+  const imported = "use dep.tung\nlet value ≔ exported";
+  for (const [source, annotation, value, expected] of [
+    [imported, "ℤ", "+1", "ℤ"],
+    [imported, "text", "'new'", "text"],
+    ["use dep.tung\nlet value ≔ +2", "text", "'new'", "ℤ"],
+  ]) {
+    const imports = [
+      ["dep.tung", `show let exported:${annotation} ≔ ${value}`],
+    ];
+    assert.deepEqual(
+      await compiler.typeOf({ text: source }, imports, "value").result,
+      {
+        kind: "type",
+        type: expected,
+      },
+    );
+  }
+});
+
+// actual subprocesses exercise stream decoding and session teardown together.
+const fixtureBridge = (context: TestContext, body: string) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-protocol-"));
+  const executable = path.join(root, "tung");
+  fs.writeFileSync(
+    executable,
+    `#!${process.execPath}
+const readline = require("node:readline");
+const requests = [];
+const reply = (request, result = {kind:"check", diagnostics:[]}) =>
+  process.stdout.write(JSON.stringify({protocol:1, id:request.id, version:request.version, result}) + "\\n");
+readline.createInterface({input:process.stdin}).on("line", line => {
+  const request = JSON.parse(line);
+  if (request.command === "cancel") return;
+  ${body}
+});
+`,
+    { mode: 0o755 },
+  );
+  const bridge = new CompilerBridge();
+  bridge.configure(undefined, [], executable);
+  context.after(() => {
+    bridge.dispose();
+    fs.rmSync(root, { recursive: true, force: true });
+  });
+  return bridge;
+};
+
+test(
+  "JSON responses survive fragmented unicode and multiline source",
+  { timeout: 5000 },
+  async (context) => {
+    const bridge = fixtureBridge(
+      context,
+      `
+    const bytes = Buffer.from(JSON.stringify({protocol:1, id:request.id, version:request.version,
+      result:{kind:"format", source:request.source}}) + "\\n");
+    let position = 0;
+    const write = () => {
+      if (position === bytes.length) return;
+      process.stdout.write(bytes.subarray(position, ++position));
+      setImmediate(write);
+    };
+    write();
+  `,
+    );
+    const source = '𝟙\n"\\\t\r\u0000';
+    assert.equal(await bridge.format(source, 4).result, source);
+  },
+);
+
+test(
+  "out-of-order responses retain their request and document versions",
+  { timeout: 5000 },
+  async (context) => {
+    const bridge = fixtureBridge(
+      context,
+      `
+    requests.push(request);
+    if (requests.length === 2) {
+      for (const request of requests.reverse()) reply(request, {kind:"type", type:request.name});
+    }
+  `,
+    );
+    const first = bridge.typeOf({ text: "" }, [], "ℤ", 3);
+    const second = bridge.typeOf({ text: "" }, [], "text", 4);
+    assert.deepEqual(await Promise.all([first.result, second.result]), [
+      { kind: "type", type: "ℤ" },
+      { kind: "type", type: "text" },
+    ]);
+  },
+);
+
+test(
+  "invalid responses settle pending requests and restart the session",
+  { timeout: 5000 },
+  async (context) => {
+    const corruptions = [
+      "'not-json'",
+      "JSON.stringify({})",
+      "JSON.stringify({...response, protocol:2})",
+      "JSON.stringify({...response, version:0})",
+      'JSON.stringify({...response, result:{kind:"type", type:"ℤ"}})',
+      'JSON.stringify({...response, result:{kind:"check", diagnostics:[{kind:"type", start:9, end:2, message:"bad"}]}})',
+    ];
+    for (const corrupted of corruptions) {
+      const bridge = fixtureBridge(
+        context,
+        `
+      if (request.version === 1) {
+        const response = {protocol:1, id:request.id, version:request.version, result:{kind:"check", diagnostics:[]}};
+        process.stdout.write(${corrupted} + "\\n");
+      } else reply(request);
+    `,
+      );
+      const first = bridge.check({ text: "" }, [], 1);
+      const second = bridge.check({ text: "" }, [], 1);
+      for (const result of await Promise.all([first.result, second.result])) {
+        assert.equal(result.kind, "error", corrupted);
+      }
+      assert.equal(bridge.pending.size, 0);
+      const restarted = bridge.check({ text: "" }, [], 2);
+      assert.notEqual(restarted.process, first.process);
+      assert.deepEqual(await restarted.result, {
+        kind: "check",
+        diagnostics: [],
+      });
+      bridge.dispose();
+    }
+  },
+);

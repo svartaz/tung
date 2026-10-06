@@ -14,10 +14,11 @@ import System.Directory
     removePathForcibly,
   )
 import System.FilePath (takeDirectory, (</>))
+import Test.Compile (compileProject)
 import Test.Harness (Group, Test, expect, expectEq)
 import Test.Harness qualified as Harness
-import Tung (ModuleId (..), Project (..), loadProjectFile, loadProjectFileWithRoots)
-import Tung.Dependent.Source (compileProject, typeOfName)
+import Tung (ModuleId (..), Project (..), loadProjectFile)
+import Tung.Dependent.Source (typeOfName)
 
 group :: IO Group
 group =
@@ -28,10 +29,7 @@ group =
       localImportPaths,
       moduleRootImport,
       localShadowsModuleRoot,
-      moduleRootShadowsSupplied,
       ambiguousModuleRoots,
-      suppliedSourcesFallback,
-      localShadowsSupplied,
       missingImport,
       ambiguousRelativeImport,
       canonicalAlias
@@ -69,7 +67,7 @@ localImportPaths = withDirectory \root -> do
   writeProject root [("main.tung", "use dep.tung"), ("dep.tung", "show let value ≔ +1")]
   canonicalMain <- canonicalizePath mainPath
   canonicalDep <- canonicalizePath depPath
-  result <- loadProjectFile Map.empty mainPath
+  result <- loadProjectFile [] mainPath
   expectEq
     "retaineþ owning filesystem paths"
     (Just (canonicalMain, canonicalDep))
@@ -79,25 +77,13 @@ localImportPaths = withDirectory \root -> do
         result
     )
 
-localShadowsSupplied :: Test
-localShadowsSupplied = withProjectUsing (Map.singleton "value.tung" "show let value ≔ +1") files "main.tung" \result ->
-  expectEq
-    "local use shadows a supplied source"
-    (Just "show let value ≔ +2")
-    (either (const Nothing) (Map.lookup "value.tung" . projectImports) result)
-  where
-    files =
-      [ ("main.tung", "use value.tung"),
-        ("value.tung", "show let value ≔ +2")
-      ]
-
 moduleRootImport :: Test
 moduleRootImport = withDirectory \root -> do
   let project = root </> "project"
       modules = root </> "modules"
       source = "show let shared ≔ +7"
   writeProject root [("project/main.tung", "use shared.tung"), ("modules/shared.tung", source)]
-  result <- loadProjectFileWithRoots Map.empty [modules] (project </> "main.tung")
+  result <- loadProjectFile [modules] (project </> "main.tung")
   expectEq "loadeþ an import from a module root" (Just source) (either (const Nothing) (Map.lookup "shared.tung" . projectImports) result)
 
 localShadowsModuleRoot :: Test
@@ -111,18 +97,8 @@ localShadowsModuleRoot = withDirectory \root -> do
       ("project/shared.tung", localSource),
       ("modules/shared.tung", "show let shared ≔ +1")
     ]
-  result <- loadProjectFileWithRoots Map.empty [modules] (project </> "main.tung")
+  result <- loadProjectFile [modules] (project </> "main.tung")
   expectEq "local use precedeþ a module root" (Just localSource) (either (const Nothing) (Map.lookup "shared.tung" . projectImports) result)
-
-moduleRootShadowsSupplied :: Test
-moduleRootShadowsSupplied = withDirectory \root -> do
-  let project = root </> "project"
-      modules = root </> "modules"
-      source = "show let shared ≔ +2"
-      supplied = Map.singleton "shared.tung" "show let shared ≔ +1"
-  writeProject root [("project/main.tung", "use shared.tung"), ("modules/shared.tung", source)]
-  result <- loadProjectFileWithRoots supplied [modules] (project </> "main.tung")
-  expectEq "module root precedeþ a supplied source" (Just source) (either (const Nothing) (Map.lookup "shared.tung" . projectImports) result)
 
 ambiguousModuleRoots :: Test
 ambiguousModuleRoots = withDirectory \root -> do
@@ -135,15 +111,8 @@ ambiguousModuleRoots = withDirectory \root -> do
       ("left/shared.tung", "show let left ≔ +1"),
       ("right/shared.tung", "show let right ≔ +2")
     ]
-  result <- loadProjectFileWithRoots Map.empty [left, right] (project </> "main.tung")
+  result <- loadProjectFile [left, right] (project </> "main.tung")
   expect "rejecteþ duplicate module-root matches" (either (isInfixOf "ambiguous use 'shared.tung'") (const False) result)
-
-suppliedSourcesFallback :: Test
-suppliedSourcesFallback = withProjectUsing supplied [("main.tung", "use ground.tung")] "main.tung" \result ->
-  expectEq "useþ a supplied source when no file exists" (Just source) (either (const Nothing) (Map.lookup "ground.tung" . projectImports) result)
-  where
-    source = "show let value ≔ +1"
-    supplied = Map.singleton "ground.tung" source
 
 missingImport :: Test
 missingImport = withProject [("main.tung", "use absent.tung")] "main.tung" \result ->
@@ -172,17 +141,14 @@ canonicalAlias = withDirectory \root -> do
       ("source.tung", "show let value ≔ +1")
     ]
   createFileLink sourcePath aliasPath
-  result <- loadProjectFile Map.empty mainPath
+  result <- loadProjectFile [] mainPath
   expect
     "rejecteþ two import paths for one canonical file"
     (either (isInfixOf "resolveþ to the same file") (const False) result)
 
 withProject :: [(FilePath, String)] -> FilePath -> (Either String Project -> Test) -> Test
-withProject = withProjectUsing Map.empty
-
-withProjectUsing :: Map.Map String String -> [(FilePath, String)] -> FilePath -> (Either String Project -> Test) -> Test
-withProjectUsing builtins files entry assertion = do
-  withDirectory \root -> writeProject root files >> loadProjectFile builtins (root </> entry) >>= assertion
+withProject files entry assertion =
+  withDirectory \root -> writeProject root files >> loadProjectFile [] (root </> entry) >>= assertion
 
 withDirectory :: (FilePath -> Test) -> Test
 withDirectory action = do

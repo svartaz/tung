@@ -17,9 +17,9 @@ import System.Process (readProcessWithExitCode)
 import Text.Printf (printf)
 import Text.Read (readMaybe)
 import Tung
-import Tung.Dependent (Inferred (..))
+import Tung.Dependent (Inferred)
 import Tung.Dependent.Run (ioHost, renderRuntime, requireMain, runMain, runYield)
-import Tung.Dependent.Source (SourceProgram, compileYieldWith, sourceDefinitions)
+import Tung.Dependent.Source (CompileFailure (..), SourceProgram, compileSnapshot, sourceDefinitions, sourceSnapshot)
 
 data Config = Config
   { configRuns :: Int,
@@ -181,8 +181,8 @@ generatedBundle size =
   SourceBundle
     { bundleSource =
         unlines
-          ( ["let value0:ℤ = +0"]
-              ++ ["let value" ++ show index ++ ":ℤ = +" ++ show index | index <- [1 .. size - 1]]
+          ( ["let value0:ℤ ≔ +0"]
+              ++ ["let value" ++ show index ++ ":ℤ ≔ +" ++ show index | index <- [1 .. size - 1]]
               ++ ["yield value" ++ show (size - 1)]
           ),
       bundleImports = Map.empty
@@ -191,8 +191,8 @@ generatedBundle size =
 loadByspel :: FilePath -> IO SourceBundle
 loadByspel relativePath = do
   root <- findRepositoryRoot
-  bookhoard <- readLibraryImports "." >>= either fail pure
-  loaded <- loadProjectFile bookhoard (root </> relativePath)
+  roots <- resolveLibraryRoots (root </> relativePath) >>= either die pure
+  loaded <- loadProjectFile roots (root </> relativePath)
   case loaded of
     Left message -> die ("could not load " ++ relativePath ++ ": " ++ message)
     Right project -> pure (SourceBundle (projectSource project) (projectImports project))
@@ -226,13 +226,13 @@ evaluateAction runnable bundle = do
     else case yielded of
       Nothing -> die "benchmark source yieldeþ no value"
       Just inferred -> pure do
-        result <- runYield host program (inferredTerm inferred) >>= either die pure
+        result <- runYield host program inferred >>= either die pure
         void (Exception.evaluate (length (renderRuntime result)))
 
 compileBundle :: Bool -> SourceBundle -> IO (SourceProgram, Maybe Inferred)
 compileBundle runnable SourceBundle {bundleSource, bundleImports} =
-  case compileYieldWith Map.empty (SourceModule "benchmark.tung") bundleSource bundleImports of
-    Left message -> die ("benchmark compilation failed: " ++ message)
+  case compileSnapshot Map.empty (SourceModule "benchmark.tung") (sourceSnapshot bundleSource) (Map.map sourceSnapshot bundleImports) of
+    Left failure -> die ("benchmark compilation failed: " ++ failureText failure)
     Right compiled@(program, _) -> case if runnable then () <$ requireMain program else Right () of
       Left message -> die message
       Right () -> pure compiled

@@ -1,6 +1,7 @@
 -- induction exerciseþ computation, indexed motives, and the kernel boundary.
 module Test.DependentInductive (group) where
 
+import Data.Either (isLeft)
 import Test.DependentSupport
 import Test.Harness (Test, expectEq)
 import Test.Harness qualified as Harness
@@ -96,6 +97,30 @@ tests =
       inferred <- inferInductive environment (symbol "inferred_box") (symbol "inferred_box_induction") 1 (Pi Implicit (Sort (LMeta 0)) (Sort (LMeta 0))) [(symbol "inferred_box_make", Pi Implicit (Sort (LMeta 0)) (Pi Explicit (Local 0) (Apply Implicit (global "inferred_box" [LMeta 0]) (Local 1))))] []
       result <- infer inferred (global "inferred_box" [level 0])
       validate inferred result,
+    expectEq
+      "inferred field constraints reach the family, constructor, and eliminator"
+      (Right [(name, True, True) | name <- ["universe_field", "universe_field_make", "universe_field_induction"]])
+      $ do
+        environment <-
+          inferInductive
+            emptyEnvironment
+            (symbol "universe_field")
+            (symbol "universe_field_induction")
+            0
+            (Sort (LMeta 0))
+            [(symbol "universe_field_make", Pi Explicit (Sort (LMeta 1)) (global "universe_field" [LMeta 0, LMeta 1]))]
+            []
+        traverse
+          ( \(name, extra) -> do
+              inferred <- infer environment (global name ([LMeta 0, LMeta 1] ++ extra))
+              infer environment (global name ([level 2, level 1] ++ extra)) >>= validate environment
+              pure
+                ( name,
+                  universeEntails (inferredConstraints inferred) (LevelBelow (LSucc (LParam 1)) (LParam 0)),
+                  isLeft (infer environment (global name ([level 1, level 1] ++ extra)))
+                )
+          )
+          [("universe_field", []), ("universe_field_make", []), ("universe_field_induction", [LZero])],
     rejectContaining "inductive inference cannot rewrite concrete self universes" "inference placeholders" $
       inferInductive emptyEnvironment (symbol "concrete") (symbol "concrete_induction") 0 (sort 0) [(symbol "concrete_make", global "concrete" [level 1])] []
   ]

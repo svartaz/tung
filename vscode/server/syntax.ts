@@ -4,7 +4,7 @@ import generatedLanguageNames from "../generated/language-names.json";
 const keywords = new Set(generatedLanguageNames.keywords);
 const primitiveTypes = new Set(generatedLanguageNames.primitiveTypes);
 const specialNameChars = new Set([...generatedLanguageNames.specialNameChars]);
-const declarationKeywords = new Set(["let", "ilk", "flock", "bizen"]);
+const declarationKeywords = new Set(["let", "ilk", "flock", "bizen", "orsend"]);
 const fileDeclarationKeywords = new Set([
   "use",
   "yield",

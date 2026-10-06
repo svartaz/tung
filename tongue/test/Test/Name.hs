@@ -2,10 +2,11 @@
 module Test.Name (group) where
 
 import Data.Map.Strict qualified as Map
+import Test.Compile (compileProject)
 import Test.Harness (Group, Test, expectEq, integerSource, typeErrWith, typeOkWith)
 import Test.Harness qualified as Harness
 import Tung (ModuleId (..))
-import Tung.Dependent.Source (compileProject, typeOfName)
+import Tung.Dependent.Source (typeOfName)
 
 group :: IO Group
 group = Harness.group "name" (resolutionCases ++ [lookupCase])

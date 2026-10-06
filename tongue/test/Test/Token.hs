@@ -95,6 +95,7 @@ keywordToken = \case
   "bizen" -> TInstance
   "match" -> TMatch
   "sorry" -> TSorry
-  "induce" -> TInduce
+  "orsend" -> TOrsend
+  "unbuild" -> TInduce
   "fall" -> TFall
   name -> error ("missing keyword token in test: " ++ name)

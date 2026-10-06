@@ -3,7 +3,6 @@
 -- owneþ at most one algebraic data declaration.
 module Test.Bookhoard (group) where
 
-import Data.Foldable (traverse_)
 import Data.List (intercalate, isPrefixOf, nub, sort, stripPrefix)
 import Data.Map.Strict qualified as Map
 import Data.Maybe (catMaybes, fromMaybe, listToMaybe)
@@ -13,6 +12,7 @@ import System.FilePath (takeBaseName, takeDirectory, takeExtension, (</>))
 import Test.DependentSupport (Library, compileAs, compileWith, loadLibrary, rejectContaining, sameNormalIn)
 import Test.Harness (Group, Test, expectEq)
 import Test.Harness qualified as Harness
+import Test.QuickCheck qualified as QuickCheck
 import Tung
 import Tung.Dependent.Source qualified as Source
 
@@ -24,10 +24,10 @@ group = do
   loaded <- loadedSourcesCase files imports
   equality <- loadLibrary ["equality.tung"]
   theorems <- loadLibrary ["ilk/list_theorem.tung", "ilk/natural.tung"]
+  accessibility <- loadLibrary ["ilk/accessible.tung", "ilk/zero.tung"]
   Harness.group "bookhoard" $
     registry
       : loaded
-      : acyclicCase imports
       : noUmbrellaDependencyCase files
       : groundDeedExportsCase imports
       : systemExplicitCase imports
@@ -36,6 +36,8 @@ group = do
       : classLayoutCase files
       : equalityCases equality
       ++ soundnessCases theorems
+      ++ accessibilityCases accessibility
+      ++ numberCases theorems (Map.findWithDefault "" "ilk/natural.tung" imports)
       ++ map (typeCase imports) (typeCheckRoots files imports)
       ++ map oneDataTypeCase (nub (map fst files))
 
@@ -54,6 +56,53 @@ equalityCases library =
   ]
   where
     compile source = compileWith library "equality_test.tung" ("use equality.tung\n" ++ source)
+
+-- each ℕ host operation computeþ natively on literals and unfoldeþ its
+-- structural model oþerwise; þe two must agree, and proofs may use þe model.
+numberCases :: Library -> String -> [Test]
+numberCases library natural =
+  [ Harness.propertyTest "property: each ℕ model agreeþ wiþ its native operation" $
+      QuickCheck.forAll ((,,) <$> QuickCheck.elements operations <*> QuickCheck.choose (0, 12 :: Int) <*> QuickCheck.choose (0, 12 :: Int)) \(operation, left, right) ->
+        let native = show left ++ " " ++ operation ++ " " ++ show right
+            modelled = show left ++ " " ++ operation ++ "_model " ++ show right
+         in QuickCheck.counterexample modelled ((models >>= \program -> sameNormalIn program modelled native) QuickCheck.=== Right True),
+    expectEq "a modelled operation is proved by computation and by induction" (Right ()) $
+      () <$ compileWith library "natural_proof.tung" proofs
+  ]
+  where
+    operations = ["equal_natural", "less_equal_natural", "add_natural", "subtract_natural", "multiply_natural"]
+    -- þe module's own source seeþ its private models.
+    models = compileWith library "natural_model_test.tung" natural
+    proofs =
+      """
+      use ilk/natural.tung
+      use flock/algebra/arithmetic/add.tung
+      use equality.tung
+      let right_zero: [n: ℕ, (n + 0) = n] ≔ reflect
+      let left_zero: [n: ℕ, (0 + n) = n] ≔
+        match n {
+          0 ^ reflect,
+          k succeed ^ {x: ℕ ^ x succeed} leibnitz (k left_zero)
+        }
+      """
+
+-- a relation wiþ noþing smaller is well-founded, and recursion on it runneþ
+-- þe step once.
+accessibilityCases :: Library -> [Test]
+accessibilityCases library =
+  [ expectEq "well-founded recursion computeþ its step" (Right True) do
+      program <- compileWith library "accessible_test.tung" source
+      sameNormalIn program "answer" "4"
+  ]
+  where
+    source =
+      """
+      use ilk/accessible.tung
+      use ilk/zero.tung
+      let never: [_: ℕ, _: ℕ, *] ≔ 𝟘
+      let founded: ℕ well_founded never ≔ {x ^ {y, impossible ^ impossible ({}: [𝟘, ℕ accessible never y])} access}
+      let answer: ℕ ≔ founded well_founded_recursion {x, _ ^ x succeed} 3
+      """
 
 -- þe list theorems are proved; false or ill-founded statements beside þem
 -- must be rejected for þe stated reason, wiþout `sorry`.
@@ -163,17 +212,6 @@ typeCase imports (path, importName) = do
     "type ok" -> Nothing
     actual -> Just ("type " ++ importName ++ ": " ++ actual)
 
-acyclicCase :: Map.Map String String -> Test
-acyclicCase imports = pure $ case traverse_ (walk []) (Map.keys imports) of
-  Left message -> Just message
-  Right () -> Nothing
-  where
-    walk stack path = do
-      nextStack <- enterImport stack path
-      source <- maybe (Left ("missing use '" ++ path ++ "'")) Right (Map.lookup path imports)
-      declarations <- either (Left . (("parse " ++ path ++ ": ") ++)) Right (Source.parseSource source)
-      traverse_ (walk nextStack) (concatMap importedPaths declarations)
-
 noUmbrellaDependencyCase :: [(FilePath, String)] -> Test
 noUmbrellaDependencyCase files = listToMaybe . catMaybes <$> traverse checkModule files
   where
@@ -221,13 +259,16 @@ primitiveCatalogueCase imports = pure $ case traverse Source.parseSource (Map.el
     let declarations = concat programs
         declaredForeigns = Set.fromList (concatMap foreignNames declarations)
         catalogueForeigns = Set.fromList [hostName | HostBinding {hostName} <- hostBindings]
-     in if catalogueForeigns /= declaredForeigns
-          then Just "host catalogue and fremmed declarations differ"
+     in if Set.size catalogueForeigns /= length hostBindings
+          then Just "host catalogue repeateþ a key"
           else
-            -- þe evaluator performeþ an argumentless binding as a deed.
-            if any (argumentless . hostSignature) hostBindings
-              then Just "host catalogue containeþ an argumentless binding þat is not a deed"
-              else Nothing
+            if catalogueForeigns /= declaredForeigns
+              then Just "host catalogue and fremmed declarations differ"
+              else
+                -- þe evaluator performeþ an argumentless binding as a deed.
+                if any (argumentless . hostSignature) hostBindings
+                  then Just "host catalogue containeþ an argumentless binding þat is not a deed"
+                  else Nothing
   where
     argumentless HostSignature {hostArguments, hostResult} = null hostArguments && not (isDeed hostResult)
     isDeed (HostApp "deed" _) = True

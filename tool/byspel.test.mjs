@@ -55,11 +55,24 @@ function run(args, input = "") {
   return { output: result.stdout, error: result.stderr, status: result.status };
 }
 
+// þese byspels use bookhoard bizens whose laws are still `sorry`, so
+// þeir `main` dependeþ on þat assumption.
+const assuming = new Set([
+  "asynchronous",
+  "fizzbuzz",
+  "lambda",
+  "luck",
+  "scoreboard",
+  "tutorial",
+  "web_server",
+  "word_count",
+]);
+
 for (const byspel of byspels) {
   const file = path.join("byspel", `${byspel}.tung`);
   test(`${byspel} checkeþ`, () => {
     assert.deepEqual(run(["--check", file]), {
-      output: "type ok\n",
+      output: assuming.has(byspel) ? "type ok\nsorry: main\n" : "type ok\n",
       error: "",
       status: 0,
     });

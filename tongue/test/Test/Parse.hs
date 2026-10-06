@@ -67,6 +67,9 @@ accepted =
 rejected :: [(String, String)]
 rejected =
   [ ("bare final expression requireþ yield", "42"),
+    ("'for' nameþ þe equation of one scrutinee", "let bad ≔ match a, b for known { _ ^ a }"),
+    ("'for' requireþ an equation name", "let bad ≔ match a for { _ ^ a }"),
+    ("orsend requireþ a type annotation", "orsend bad"),
     ("type composition requireþ a function", "let bad:* ≔ >{}"),
     ("type composition requireþ two operands", "let bad:* ≔ >{pair, ℤ}"),
     ("type composition requireþ a closing brace", "let bad:* ≔ >{pair, ℤ, text"),
@@ -137,6 +140,8 @@ expressions =
     ("separated left marker remaineþ an ordinary name", "+1 < (+2)", "(< +1 +2)"),
     ("separated right marker remaineþ an ordinary name", "+1 > (+2)", "(> +1 +2)"),
     ("ℤ match pattern", "match +1 { +0 ^ +2, _ ^ +3 }", "match +1 {+0 ^ +2, _ ^ +3}"),
+    ("'for' nameþ a match's equation", "match b flip for known { yea ^ nay, _ ^ yea }", "match (flip b) for known {yea ^ nay, _ ^ yea}"),
+    ("'for' is an ordinary name outside a match header", "for known", "(known for)"),
     ("';' joineþ rows sharing a result", "match +1 { +0; +1 ^ +2, _ ^ +3 }", "match +1 {+0 ^ +2, +1 ^ +2, _ ^ +3}"),
     ("multi-pattern match preserves order", "match +1, +2, +3 { +0, +1, +2 ^ +4 }", "match +1, +2, +3 {+0, +1, +2 ^ +4}"),
     ("text match pattern", "match 'yes' { 'yes' ^ +1, _ ^ +0 }", "match 'yes' {'yes' ^ +1, _ ^ +0}"),

@@ -22,7 +22,7 @@ test("server implementeþ the editor workflow over stdio", async (context) => {
   const depText =
     "show ilk tally: * { zero: tally }\nshow ilk truth: * { yea: truth, nay: truth }\nshow ilk parcel: [a:*, *] { wrap: [a, a parcel] }\nshow let identity:[x: ℤ, ℤ] ≔ x\nshow let answer:ℤ ≔ +42\nshow flock haþ_convert:[a:*, *] { let convert:[a, a] }\n";
   const mainText =
-    "use dep.tung\nlet value:ℤ ≔ answer\nlet count:tally ≔ zero\nlet ratio:float ≔ 1.5\nlet truth_to_text:[truth, text] ≔ { yea ^ 'yea', nay ^ 'nay' }\nlet shipment:ℤ parcel ≔ +1 wrap\nlet same:ℤ ≔ +1 identity # \"unicode 𝟙\\n\"\nlet select:[left: ℤ, middle: ℤ, right: ℤ, ℤ] ≔ middle\nlet picker ≔ { first, second, third ^ second }\nbizen:ℤ haþ_convert { let convert: [x:] ≔ x }\nshow ilk _box: [a:*, *] {\n  box: [a, a _box]\n}\n";
+    "use dep.tung\nlet value:ℤ ≔ answer\nlet count:tally ≔ zero\nlet ratio:float ≔ 1.5\nlet truth_to_text:[truth, text] ≔ { yea ^ 'yea', nay ^ 'nay' }\nlet shipment:ℤ parcel ≔ +1 wrap\nlet same:ℤ ≔ +1 identity # \"unicode 𝟙\\n\"\nlet select:[left: ℤ, middle: ℤ, right: ℤ, ℤ] ≔ middle\nlet picker: [ℤ, ℤ, ℤ, ℤ] ≔ { first, second, third ^ second }\nbizen:ℤ haþ_convert { let convert: [x:] ≔ x }\nshow ilk _box: [a:*, *] {\n  box: [a, a _box]\n}\n";
   fs.writeFileSync(depPath, depText);
   fs.writeFileSync(mainPath, mainText);
   const depUri = pathToFileURL(depPath).href;

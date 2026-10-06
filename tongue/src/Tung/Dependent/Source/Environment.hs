@@ -2,6 +2,9 @@
 -- import aliases change visibility, while kernel identities remain fixed.
 module Tung.Dependent.Source.Environment
   ( SourceProgram (..),
+    sourceEnvironment,
+    sourceExports,
+    sourceHoles,
     Hole (..),
     Names (..),
     NameBinding (..),
@@ -18,10 +21,12 @@ module Tung.Dependent.Source.Environment
     mergeClass,
     registerClass,
     registerInstance,
+    defaultPriority,
     exportIntroduced,
     reexportNames,
     typeOfName,
     sorryAssumptions,
+    orsendAssumptions,
     sourceDefinitions,
     sourceGlobal,
     globals,
@@ -41,19 +46,28 @@ import Tung.Name qualified as Name
 import Tung.Token (SourceFailure, SourceSpan)
 
 data SourceProgram = SourceProgram
-  { sourceEnvironment :: K.Environment,
+  { programEnvironment :: K.Environment,
     checkedDefinitions :: [(SymbolId, K.Inferred)],
     -- visible names: local definitions, qualified imports, and unambiguous
     -- bare imports. local definitions shadow bare imports.
     globalNames :: Names,
     localNames :: Set.Set String,
-    sourceExports :: Names,
-    -- laws þis module's bizens assume wiþ `sorry`, newest first.
-    assumedLaws :: [String],
+    programExports :: Names,
     -- þe goal and named context of each `sorry` in þis module, newest first.
-    sourceHoles :: [Hole]
+    programHoles :: [Hole]
   }
   deriving stock (Eq, Show)
+
+-- public accessors are ordinary functions. an exported record selector would
+-- let callers replace a checked environment even wiþ its constructor hidden.
+sourceEnvironment :: SourceProgram -> K.Environment
+sourceEnvironment = programEnvironment
+
+sourceExports :: SourceProgram -> Names
+sourceExports = programExports
+
+sourceHoles :: SourceProgram -> [Hole]
+sourceHoles = programHoles
 
 data Hole = Hole
   { holeSpan :: Maybe SourceSpan,
@@ -83,15 +97,21 @@ data Names = Names
 data ClassInfo = ClassInfo
   { classConstructor :: SymbolId,
     classMembers :: [String],
-    -- named laws, each wiþ its statement `[@parameters, @dictionary, *]`. an
-    -- instance proveþ each law of its own dictionary; þey are not fields.
-    classLaws :: [(String, SymbolId)],
     -- parent classes, which an instance's dictionary also needeþ.
     classParents :: [SymbolId],
-    -- registered instances. they outrank inherited instances.
+    -- registered instances, oldest first. they outrank inherited instances.
     classInstances :: [SymbolId],
     -- instances that project this class from a child class's dictionary.
-    classInherited :: [SymbolId]
+    classInherited :: [SymbolId],
+    -- each registered instance's written priority; þe default is
+    -- 'defaultPriority'. search trieþ higher priorities first, as lean doþ.
+    classPriorities :: Map.Map SymbolId Integer,
+    -- for each flock parameter, wheþer instance search findeþ it (`* out`)
+    -- raþer þan requiring it known, as lean's `outParam` doþ.
+    classOutputs :: [Bool],
+    -- instances written `bizen fallback`, tried only for a goal whose
+    -- inputs stay unknown, as lean's `default_instance` is.
+    classFallbacks :: [SymbolId]
   }
   deriving stock (Eq, Show)
 
@@ -99,19 +119,30 @@ mergeClass :: ClassInfo -> ClassInfo -> ClassInfo
 mergeClass left right =
   left
     { classInstances = nub (classInstances left ++ classInstances right),
-      classInherited = nub (classInherited left ++ classInherited right)
+      classInherited = nub (classInherited left ++ classInherited right),
+      classPriorities = Map.union (classPriorities left) (classPriorities right),
+      classFallbacks = nub (classFallbacks left ++ classFallbacks right)
     }
 
 -- instances are global, so registration also exporteþ them wherever the
 -- class itself is visible to importers.
-registerInstance :: Bool -> SymbolId -> SymbolId -> SourceProgram -> SourceProgram
-registerInstance inherited family instanceSymbol program@SourceProgram {globalNames, sourceExports} =
-  program {globalNames = add globalNames, sourceExports = add sourceExports}
+registerInstance :: Bool -> (Integer, Bool) -> SymbolId -> SymbolId -> SourceProgram -> SourceProgram
+registerInstance inherited (priority, fallback) family instanceSymbol program@SourceProgram {globalNames, programExports} =
+  program {globalNames = add globalNames, programExports = add programExports}
   where
     add names = names {nameClasses = Map.adjust register family (nameClasses names)}
     register info
       | inherited = info {classInherited = nub (classInherited info ++ [instanceSymbol])}
-      | otherwise = info {classInstances = nub (classInstances info ++ [instanceSymbol])}
+      | otherwise =
+          info
+            { classInstances = nub (classInstances info ++ [instanceSymbol]),
+              classPriorities = Map.insert instanceSymbol priority (classPriorities info),
+              classFallbacks = [instanceSymbol | fallback] ++ classFallbacks info
+            }
+
+-- þe priority of a bizen written wiþout one, as in lean.
+defaultPriority :: Integer
+defaultPriority = 1000
 
 lookupName :: String -> Names -> Maybe NameBinding
 lookupName name = Map.lookup name . nameTable
@@ -119,7 +150,7 @@ lookupName name = Map.lookup name . nameTable
 -- imported identities print through a visible qualified alias; local and
 -- primitive identities retain their bare names. aliases never change equality.
 displayName :: Names -> SymbolId -> String
-displayName names identity | Just family <- inducedFamily identity = "induce " ++ displayName names family
+displayName names identity | Just family <- inducedFamily identity = "unbuild " ++ displayName names family
 displayName Names {nameTable} identity = case qualified of
   name : _ -> name
   [] -> symbolName identity
@@ -130,7 +161,7 @@ displayName Names {nameTable} identity = case qualified of
 -- goals prefer a visible bare name; an identity wiþout one printeþ as
 -- 'displayName' doþ.
 briefName :: Names -> SymbolId -> String
-briefName names identity | Just family <- inducedFamily identity = "induce " ++ briefName names family
+briefName names identity | Just family <- inducedFamily identity = "unbuild " ++ briefName names family
 briefName names@Names {nameTable} identity = case [name | (name, binding) <- Map.toList nameTable, '~' `notElem` name, bindingSymbol binding == Just identity] of
   name : _ -> name
   [] -> displayName names identity
@@ -168,40 +199,40 @@ registerClass symbol info names = names {nameClasses = Map.insertWith keep symbo
 
 -- a shown declaration exporteþ the names and class metadata it introduceþ.
 exportIntroduced :: SourceProgram -> SourceProgram -> SourceProgram
-exportIntroduced before after@SourceProgram {globalNames, sourceExports} =
+exportIntroduced before after@SourceProgram {globalNames, programExports} =
   let introduced = Set.difference (localNames after) (localNames before)
       exported = Map.restrictKeys (nameTable globalNames) introduced
       shownClasses = Map.filter (\ClassInfo {classConstructor} -> symbolName classConstructor `Set.member` introduced) (nameClasses globalNames)
-   in after {sourceExports = sourceExports {nameTable = Map.union exported (nameTable sourceExports), nameClasses = Map.unionWith mergeClass (nameClasses sourceExports) shownClasses}}
+   in after {programExports = programExports {nameTable = Map.union exported (nameTable programExports), nameClasses = Map.unionWith mergeClass (nameClasses programExports) shownClasses}}
 
 -- re-exported names keep their identities and class registries. a qualified
 -- source name is shown under its last segment.
 reexportNames :: SourceProgram -> [String] -> Either SourceFailure SourceProgram
 reexportNames = foldM reexport
   where
-    reexport current@SourceProgram {globalNames, sourceExports} name = case lookupName name globalNames of
+    reexport current@SourceProgram {globalNames, programExports} name = case lookupName name globalNames of
       Just (AmbiguousName namespaces) -> Error.failure (ambiguousName name namespaces)
       Just binding
         | Just identity <- bindingSymbol binding ->
             pure
               current
-                { sourceExports =
-                    sourceExports
-                      { nameTable = Map.insert (Name.lastQualifiedSegment name) binding (nameTable sourceExports),
-                        nameClasses = maybe id (Map.insertWith mergeClass identity) (Map.lookup identity (nameClasses globalNames)) (nameClasses sourceExports)
+                { programExports =
+                    programExports
+                      { nameTable = Map.insert (Name.lastQualifiedSegment name) binding (nameTable programExports),
+                        nameClasses = maybe id (Map.insertWith mergeClass identity) (Map.lookup identity (nameClasses globalNames)) (nameClasses programExports)
                       }
                 }
       _ -> Error.failure ("cannot show unknown name '" ++ name ++ "'")
 
--- þe type of a visible name, printed in source syntax.
 -- þe module's shown declarations, bizens, and `main` þat depend on
--- `sorry`, directly or þrough any definition þeir bodies use, and þe laws
--- its bizens assume. a host binding is a program, not an assumption.
+-- `sorry`, directly or þrough any definition þeir bodies use; a bizen wiþ a
+-- law proved by `sorry` is one. a host binding is a program, not an
+-- assumption.
 sorryAssumptions :: SourceProgram -> [String]
 sorryAssumptions SourceProgram {..} =
-  [describe symbol | (symbol, _) <- reverse checkedDefinitions, reported symbol, assumes symbol] ++ reverse assumedLaws
+  [describe symbol | (symbol, _) <- reverse checkedDefinitions, reported symbol, assumes symbol]
   where
-    definitions = globals sourceEnvironment
+    definitions = globals programEnvironment
     -- definitions may refer to þemselves, so þe search walkeþ backwards
     -- from `sorry` through þe users of each definition.
     users = Map.fromListWith (++) [(used, [user]) | (user, Definition {definitionBody = Transparent term}) <- Map.toList definitions, used <- nub (termGlobals term)]
@@ -211,12 +242,21 @@ sorryAssumptions SourceProgram {..} =
       | otherwise = reach (Set.insert symbol seen) (Map.findWithDefault [] symbol users ++ rest)
     assuming = reach Set.empty [SymbolId PrimitiveModule "sorry"]
     assumes symbol = symbol `Set.member` assuming
-    shown = Set.fromList [symbol | binding <- Map.elems (nameTable sourceExports), Just symbol <- [bindingSymbol binding]]
+    shown = Set.fromList [symbol | binding <- Map.elems (nameTable programExports), Just symbol <- [bindingSymbol binding]]
     reported symbol = symbol `Set.member` shown || isInstance symbol || symbolName symbol == "main"
     isInstance symbol = take 10 (symbolName symbol) == "#instance_"
     describe symbol
       | isInstance symbol = "bizen " ++ maybe "?" (renderTermWith (displayName globalNames) [] . definitionType) (Map.lookup symbol definitions)
       | otherwise = displayName globalNames symbol
+
+-- þe module's own `orsend` assumptions, each wiþ its type.
+orsendAssumptions :: SourceProgram -> [String]
+orsendAssumptions SourceProgram {..} =
+  [ name ++ ": " ++ renderTermWith (displayName globalNames) [] definitionType
+  | name <- Set.toList localNames,
+    Just symbol <- [lookupName name globalNames >>= bindingSymbol],
+    Just Definition {definitionType, definitionBody = Assumption} <- [Map.lookup symbol (globals programEnvironment)]
+  ]
 
 termGlobals :: Term -> [SymbolId]
 termGlobals = \case
@@ -228,7 +268,7 @@ typeOfName SourceProgram {..} name = case lookupName name globalNames of
   Just (AmbiguousName modules) -> Left (ambiguousName name modules)
   binding -> maybe (Left ("unknown name '" ++ name ++ "'")) found (binding >>= bindingSymbol)
   where
-    found identity = maybe (Left ("unknown name '" ++ name ++ "'")) (Right . renderTermWith (displayName globalNames) [] . definitionType) (Map.lookup identity (globals sourceEnvironment))
+    found identity = maybe (Left ("unknown name '" ++ name ++ "'")) (Right . renderTermWith (displayName globalNames) [] . definitionType) (Map.lookup identity (globals programEnvironment))
 
 sourceDefinitions :: SourceProgram -> [(SymbolId, K.Inferred)]
 sourceDefinitions = reverse . checkedDefinitions

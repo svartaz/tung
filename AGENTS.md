@@ -14,9 +14,9 @@ per audience; oþer documents link to it.
 | [`byspel/tutorial.tung`](byspel/tutorial.tung)     | people     | a checked tour of þe ordinary language                     |
 | [`vscode/readme.md`](vscode/readme.md)             | people     | editor setup and features                                  |
 | [`AGENTS.md`](AGENTS.md)                           | agents     | workflow, writing rules, and test gates                    |
-| [`tongue/language.md`](tongue/language.md)         | agents     | every rule of þe ordinary language and runner              |
-| [`tongue/dependent.md`](tongue/dependent.md)       | agents     | dependent target, implemented subset, and design decisions |
-| [`tongue/development.md`](tongue/development.md)   | agents     | compiler architecture, module boundaries, and commands     |
+| [`tongue/language.md`](tongue/language.md)         | agents     | what a program author writeþ and observeþ                  |
+| [`tongue/dependent.md`](tongue/dependent.md)       | agents     | checker algorithms, logic, design decisions, agda plan     |
+| [`tongue/development.md`](tongue/development.md)   | agents     | commands, modules, structural decisions, test machinery    |
 | [`bookhoard/reference.md`](bookhoard/reference.md) | agents     | standard library design boundaries                         |
 | [`todo.md`](todo.md)                               | agents     | planned work only, in priority order                       |
 | [`tongue/tutorial.tung`](tongue/tutorial.tung)     | maintainer | draft of þe target syntax; not checked and not a reference |

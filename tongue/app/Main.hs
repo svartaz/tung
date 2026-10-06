@@ -1,4 +1,5 @@
 {-# LANGUAGE MultilineStrings #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 -- the cli shares one project loader across running, checking, and inspection.
 -- one persistent stdin session remaineþ the stable bridge used by the editor.
@@ -7,6 +8,9 @@ module Main where
 import Control.Concurrent (MVar, ThreadId, forkIO, killThread, modifyMVar, modifyMVar_, newEmptyMVar, newMVar, putMVar, takeMVar, withMVar)
 import Control.Exception qualified as Exception
 import Control.Monad (unless)
+import Data.Aeson (FromJSON (..), Value, eitherDecodeStrict', encode, object, withObject, (.!=), (.:), (.:?), (.=))
+import Data.ByteString.Char8 qualified as ByteString
+import Data.ByteString.Lazy qualified as LazyByteString
 import Data.Foldable (for_)
 import Data.Functor ((<&>))
 import Data.List (intercalate, isPrefixOf)
@@ -16,7 +20,6 @@ import System.Environment (getArgs)
 import System.Exit (ExitCode (..), exitFailure, exitWith)
 import System.FilePath ((</>))
 import System.IO (hFlush, isEOF, stdout)
-import Text.Read (readMaybe)
 import Tung
 import Tung.Dependent.Run qualified as DependentRun
 import Tung.Dependent.Source qualified as Dependent
@@ -44,21 +47,23 @@ main = do
       | not ("-" `isPrefixOf` path) -> runFile strict path programArgs
     _ -> putStr usage >> exitFailure
 
--- a file and þe `use` paths it reacheþ, resolved from þe project's roots and
--- checked togeþer. a failure is reported in þe file þat raised it.
-withProgram :: FilePath -> (Dependent.SourceProgram -> IO ()) -> IO ()
-withProgram path action =
-  resolveLibraryRoots path >>= \case
+-- a project loaded from þe library roots of `base`, and þe `use` paths it
+-- reacheþ, checked togeþer.
+withProject :: FilePath -> ([FilePath] -> IO (Either String Project)) -> (Project -> Diagnostic -> IO ()) -> (Dependent.SourceProgram -> IO ()) -> IO ()
+withProject base load failed action =
+  resolveLibraryRoots base >>= \case
     Left message -> projectFailure message
     Right roots ->
-      loadProjectFileWithRoots Map.empty roots path >>= \case
+      load roots >>= \case
         Left message -> projectFailure message
-        Right project -> checked project action
+        Right project@Project {projectPath, projectSource, projectImports, projectSnapshot, projectImportSnapshots} ->
+          case fst <$> Dependent.compileSnapshot Map.empty (SourceModule projectPath) projectSnapshot projectImportSnapshots of
+            Left failure -> failed project (failureDiagnostic projectSource projectImports failure)
+            Right program -> action program
 
-checked :: Project -> (Dependent.SourceProgram -> IO ()) -> IO ()
-checked project@Project {projectPath, projectSource, projectImports} action = case Dependent.compileProjectDetailed Map.empty (SourceModule projectPath) projectSource projectImports of
-  Left failure -> report project (failureDiagnostic projectSource projectImports failure)
-  Right program -> action program
+-- a file's failure is reported in þe file þat raised it.
+withProgram :: FilePath -> (Dependent.SourceProgram -> IO ()) -> IO ()
+withProgram path = withProject path (`loadProjectFile` path) report
 
 -- a failure in an imported module is reported at þat module's file.
 report :: Project -> Diagnostic -> IO a
@@ -73,7 +78,7 @@ runProgram :: [String] -> Dependent.SourceProgram -> IO ()
 runProgram programArgs program = do
   host <- DependentRun.ioHost programArgs
   case DependentRun.runMain host program of
-    Left message -> putStrLn ("type error: " ++ message) >> exitFailure
+    Left message -> typeFailure message
     Right action ->
       action >>= \case
         Left message -> putStrLn ("runtime error: " ++ message) >> exitFailure
@@ -97,7 +102,7 @@ checkFile :: Bool -> Bool -> FilePath -> IO ()
 checkFile strict runnable path = withProgram path \program -> do
   source <- readFile path
   case (runnable, DependentRun.requireMain program) of
-    (True, Left message) -> putStrLn ("type error: " ++ message) >> exitFailure
+    (True, Left message) -> typeFailure message
     _ -> checkedOk strict path source program
 
 -- a checked program printeþ `type ok`, each declaration or law þat assumeþ
@@ -108,6 +113,7 @@ checkedOk strict path source program = do
   refuseSorry strict program
   putStrLn "type ok"
   mapM_ (putStrLn . ("sorry: " ++)) (Dependent.sorryAssumptions program)
+  mapM_ (putStrLn . ("orsend: " ++)) (Dependent.orsendAssumptions program)
   for_ (reverse (Dependent.sourceHoles program)) \hole@Dependent.Hole {holeSpan} ->
     putStrLn case holeSpan of
       Just span -> renderFileDiagnostic path source (Diagnostic GoalDiagnostic Nothing span (goalMessage hole))
@@ -118,11 +124,10 @@ goalMessage :: Dependent.Hole -> String
 goalMessage Dependent.Hole {holeGoal, holeContext} =
   intercalate "\n" (("goal: " ++ holeGoal) : ["  " ++ name ++ ": " ++ ty | (name, ty) <- holeContext])
 
--- a successful editor check answereþ `tung-ok`, followed by one block per
--- located goal: `tung-goal`, its utf-16 span, and þe goal message.
-checkedGoals :: Dependent.SourceProgram -> String
+-- goals use þe same structured locations as errors; messages remain prose.
+checkedGoals :: Dependent.SourceProgram -> [Diagnostic]
 checkedGoals program =
-  "tung-ok" ++ concat ["\ntung-goal\t" ++ show start ++ "\t" ++ show end ++ "\n" ++ goalMessage hole | hole@Dependent.Hole {holeSpan = Just (SourceSpan start end)} <- reverse (Dependent.sourceHoles program)]
+  [Diagnostic GoalDiagnostic Nothing span (goalMessage hole) | hole@Dependent.Hole {holeSpan = Just span} <- reverse (Dependent.sourceHoles program)]
 
 refuseSorry :: Bool -> Dependent.SourceProgram -> IO ()
 refuseSorry strict program = case Dependent.sorryAssumptions program of
@@ -134,21 +139,15 @@ typeOfFile :: String -> FilePath -> IO ()
 typeOfFile name path = withProgram path \program ->
   case Dependent.typeOfName program name of
     Right ty -> putStrLn ("type: " ++ ty)
-    Left message -> putStrLn ("type error: " ++ message) >> exitFailure
+    Left message -> typeFailure message
 
+-- standard input is checked as a file in þe current directory. it haþ no
+-- file position, so a failure printeþ only its message.
 checkStdin :: Bool -> IO ()
 checkStdin strict = do
   source <- getContents
   current <- getCurrentDirectory
-  let owner = current </> "<stdin>.tung"
-  resolveLibraryRoots current >>= \case
-    Left message -> projectFailure message
-    Right roots ->
-      loadProjectSourceWithRoots Map.empty roots owner source >>= \case
-        Left message -> projectFailure message
-        Right Project {projectImports} -> case Dependent.compileProjectDetailed Map.empty (SourceModule owner) source projectImports of
-          Left failure -> putStrLn (diagnosticMessage (failureDiagnostic source projectImports failure)) >> exitFailure
-          Right program -> checkedOk strict "<stdin>" source program
+  withProject current (\roots -> loadProjectSource roots (current </> "<stdin>.tung") source) (\_ diagnostic -> putStrLn (diagnosticMessage diagnostic) >> exitFailure) (checkedOk strict "<stdin>" source)
 
 listLibraryPaths :: FilePath -> IO ()
 listLibraryPaths path =
@@ -156,33 +155,61 @@ listLibraryPaths path =
     Left message -> projectFailure message
     Right roots -> mapM_ putStrLn roots
 
+typeFailure :: String -> IO a
+typeFailure message = putStrLn ("type error: " ++ message) >> exitFailure
+
 projectFailure :: String -> IO a
 projectFailure message = putStrLn ("project error: " ++ message) >> exitFailure
 
-type EditorRequest = (Int, Int, String, String, (String, [(String, String)]))
+-- each utf-8 line is one json value. the protocol version is independent of
+-- the document version, which identifyeþ the source snapshot being checked.
+data EditorRequest = EditorRequest
+  { requestId :: Int,
+    requestVersion :: Int,
+    requestCommand :: String,
+    requestName :: String,
+    requestSource :: String,
+    requestImports :: Map.Map String String
+  }
+
+instance FromJSON EditorRequest where
+  parseJSON = withObject "editor request" \request -> do
+    protocol <- request .: "protocol"
+    unless (protocol == (1 :: Int)) (fail "unsupported editor protocol")
+    EditorRequest
+      <$> request .: "id"
+      <*> request .: "version"
+      <*> request .: "command"
+      <*> request .:? "name" .!= ""
+      <*> request .: "source"
+      <*> request .: "imports"
 
 -- þe session keepeþ þe modules compiled for þe last set of import sources,
 -- so editing one file doþ not recheck þe library.
-type ImportCache = MVar (Map.Map String String, Map.Map String Dependent.SourceProgram)
+type ImportCache = MVar (Map.Map String String, Map.Map String Dependent.SourceProgram, Maybe (String, Either Dependent.CompileFailure Dependent.SourceProgram))
 
 editorSession :: IO ()
 editorSession = do
   workers <- newMVar Map.empty
   outputLock <- newMVar ()
-  cache <- newMVar (Map.empty, Map.empty)
+  cache <- newMVar (Map.empty, Map.empty, Nothing)
   sessionLoop cache workers outputLock
 
 sessionLoop :: ImportCache -> MVar (Map.Map Int ThreadId) -> MVar () -> IO ()
-sessionLoop cache workers outputLock = do
-  eof <- isEOF
-  unless eof do
-    line <- getLine
-    for_ (readMaybe line) (dispatchEditorRequest cache workers outputLock)
-    sessionLoop cache workers outputLock
+sessionLoop cache workers outputLock = go 0
+  where
+    go previousId = do
+      eof <- isEOF
+      unless eof do
+        line <- ByteString.getLine
+        request@EditorRequest {requestId, requestCommand} <- either (ioError . userError . ("invalid editor request: " ++)) pure (eitherDecodeStrict' line)
+        unless (requestCommand == "cancel" || requestId > previousId) (ioError (userError "editor request ids must increase"))
+        dispatchEditorRequest cache workers outputLock request
+        go (if requestCommand == "cancel" then previousId else requestId)
 
 dispatchEditorRequest :: ImportCache -> MVar (Map.Map Int ThreadId) -> MVar () -> EditorRequest -> IO ()
-dispatchEditorRequest cache workers outputLock request@(requestId, version, command, _, _)
-  | command == "cancel" = cancelEditorRequest workers requestId
+dispatchEditorRequest cache workers outputLock request@EditorRequest {..}
+  | requestCommand == "cancel" = cancelEditorRequest workers outputLock requestId
   | otherwise = do
       gate <- newEmptyMVar
       thread <- forkIO $ do
@@ -192,45 +219,57 @@ dispatchEditorRequest cache workers outputLock request@(requestId, version, comm
       putMVar gate ()
   where
     run =
-      (editorResponse cache request >>= sendEditorResponse outputLock requestId version)
+      (editorResponse cache request >>= sendEditorResponse outputLock requestId requestVersion)
         `Exception.catch` \exception ->
           case Exception.fromException exception of
             Just Exception.ThreadKilled -> pure ()
-            _ -> sendEditorResponse outputLock requestId version ("checker session failed: " ++ Exception.displayException exception)
+            _ -> sendEditorResponse outputLock requestId requestVersion (editorError ("checker session failed: " ++ Exception.displayException exception))
 
-cancelEditorRequest :: MVar (Map.Map Int ThreadId) -> Int -> IO ()
-cancelEditorRequest workers requestId = do
-  thread <- modifyMVar workers \running -> pure (Map.delete requestId running, Map.lookup requestId running)
-  mapM_ killThread thread
+cancelEditorRequest :: MVar (Map.Map Int ThreadId) -> MVar () -> Int -> IO ()
+cancelEditorRequest workers outputLock requestId =
+  -- cancellation must not interrupt a response halfway through its json line.
+  withMVar outputLock \_ -> do
+    thread <- modifyMVar workers \running -> pure (Map.delete requestId running, Map.lookup requestId running)
+    mapM_ killThread thread
 
-editorResponse :: ImportCache -> EditorRequest -> IO String
-editorResponse cache (_, _, command, name, (source, imports)) =
-  let sourceImports = Map.fromList imports
-   in case command of
-        "check" -> either (renderDiagnostic . failureDiagnostic source sourceImports) checkedGoals <$> compiled cache source sourceImports
-        "type" ->
-          compiled cache source sourceImports <&> \case
-            Left failure -> diagnosticMessage (failureDiagnostic source sourceImports failure)
-            Right program -> either ("type error: " ++) ("type: " ++) (Dependent.typeOfName program name)
-        "format" -> pure ("tung-format\n" ++ formatSource source)
-        "highlight" -> pure (highlightSource source)
-        _ -> pure ("checker session failed: unknown command '" ++ command ++ "'")
+editorResponse :: ImportCache -> EditorRequest -> IO Value
+editorResponse cache EditorRequest {requestCommand, requestName, requestSource = source, requestImports = imports} =
+  case requestCommand of
+    "check" ->
+      compiled cache source imports <&> \result ->
+        object ["kind" .= ("check" :: String), "diagnostics" .= either (pure . failureDiagnostic source imports) checkedGoals result]
+    "type" ->
+      compiled cache source imports <&> \case
+        Left failure -> editorError (diagnosticMessage (failureDiagnostic source imports failure))
+        Right program -> either (editorError . ("type error: " ++)) (\ty -> object ["kind" .= ("type" :: String), "type" .= ty]) (Dependent.typeOfName program requestName)
+    "format" -> pure (object ["kind" .= ("format" :: String), "source" .= formatSource source])
+    "highlight" -> pure (object ["kind" .= ("highlight" :: String), "roles" .= highlightSource source])
+    _ -> pure (editorError ("checker session failed: unknown command '" ++ requestCommand ++ "'"))
+
+editorError :: String -> Value
+editorError message = object ["kind" .= ("error" :: String), "message" .= message]
 
 compiled :: ImportCache -> String -> Map.Map String String -> IO (Either Dependent.CompileFailure Dependent.SourceProgram)
-compiled cache source imports = do
-  modules <- modifyMVar cache \(known, done) -> do
-    let start = if known == imports then done else Map.empty
-    case Dependent.compileImportsDetailed start imports (Dependent.sourceImportPaths source) of
-      Left failure -> pure ((known, done), Left failure)
-      Right reached -> pure ((imports, reached), Right reached)
-  pure (modules >>= \reached -> Dependent.compileProjectDetailed reached RootModule source imports)
+compiled cache source imports = modifyMVar cache \previous@(known, done, root) ->
+  case root of
+    Just (text, result) | known == imports && text == source -> pure (previous, result)
+    _ -> do
+      let snapshot = Dependent.sourceSnapshot source
+          modules = Map.map Dependent.sourceSnapshot imports
+          start = if known == imports then done else Map.empty
+      case Dependent.compileImports start modules (Dependent.snapshotImportPaths snapshot) of
+        Left failure -> pure (previous, Left failure)
+        Right reached -> do
+          let result = fst <$> Dependent.compileSnapshot reached RootModule snapshot modules
+          _ <- Exception.evaluate result
+          pure ((imports, reached, Just (source, result)), result)
 
-sendEditorResponse :: MVar () -> Int -> Int -> String -> IO ()
+sendEditorResponse :: MVar () -> Int -> Int -> Value -> IO ()
 sendEditorResponse outputLock requestId version output = do
-  size <- Exception.evaluate (length output)
+  let response = encode (object ["protocol" .= (1 :: Int), "id" .= requestId, "version" .= version, "result" .= output])
+  _ <- Exception.evaluate (LazyByteString.length response)
   withMVar outputLock \_ -> do
-    putStrLn (intercalate "\t" ["tung-response", show requestId, show version, show size])
-    putStr output
+    LazyByteString.hPut stdout response
     putChar '\n'
     hFlush stdout
 

@@ -2,14 +2,15 @@
 module Test.DependentSource (group) where
 
 import Control.Monad (forM_)
+import Test.Compile (compileSource)
 import Test.DependentSupport
 import Test.Harness (Group, Test, expectEq)
 import Test.Harness qualified as Harness
 import Tung.Dependent
-import Tung.Dependent.Source (Hole (..), SourceProgram, compileSource, inferSourceExpression, normaliseSourceExpression, parseSource, sourceDefinitions, sourceEnvironment, sourceHoles, typeOfName)
+import Tung.Dependent.Source (Hole (..), SourceProgram, inferSourceExpression, normaliseSourceExpression, orsendAssumptions, parseSource, sorryAssumptions, sourceDefinitions, sourceEnvironment, sourceHoles, typeOfName)
 
 group :: IO Group
-group = Harness.group "dependent-source" (elaborationTests ++ shadowingTests ++ implicitInferenceTests ++ delayedComputationTests ++ rejectionTests)
+group = Harness.group "dependent-source" (elaborationTests ++ shadowingTests ++ implicitInferenceTests ++ delayedComputationTests ++ assumptionTests ++ rejectionTests)
 
 shadowingTests :: [Test]
 shadowingTests =
@@ -18,10 +19,11 @@ shadowingTests =
       sameNormalIn program actual expected
   | (label, source, actual, expected) <-
       [ ("a header binder may share its declaration's name", "let identity:[identity:ℤ, ℤ] ≔ identity", "+1 identity", "+1"),
-        ("an inferred lambda binder may share its declaration's name", "let identity ≔ {identity ^ identity}", "+1 identity", "+1"),
+        ("a lambda binder may share its declaration's name", "let identity: [@α: *, α, α] ≔ {identity ^ identity}", "+1 identity", "+1"),
         ("a local binding hides its enclosing declaration's name", "let value ≔ (let value ≔ +1 yield value)", "value", "+1"),
         ("a case variable may share its declaration's name", "let predecessor:[ℕ, ℕ] ≔ {0 ^ 0, predecessor succeed ^ predecessor}", "2 predecessor", "1"),
         ("a local function's binder is not a recursive reference", "let outer:[ℤ, ℤ] ≔ {x ^ (let inner ≔ {inner ^ inner} yield x inner)}", "+1 outer", "+1"),
+        ("capture surviveþ records and lets", "let keep: [ℤ, text, ℤ] ≔ {x ^ (let stored ≔ r{value ≔ x} yield {y ^ stored.value})}", "+1 keep 'ignored'", "+1"),
         ("a product parameter may share its alias's name", "let endo ≔ [endo:*, endo, endo]", "endo", "[α:*, α, α]")
       ]
   ]
@@ -123,6 +125,31 @@ delayedComputationTests =
         ++ expected
         ++ ", _:n amount, ℤ] ≔ n\n"
 
+-- an `orsend` is a listed constant wiþout a body, distinct from `sorry`.
+assumptionTests :: [Test]
+assumptionTests =
+  [ expectEq "an orsend is listed and is not a sorry" (Right (["excluded: [two, two]"], [])) do
+      program <- compile (twoSource ++ "orsend excluded: [p: two, two]\nshow let uses: two ≔ yea excluded")
+      pure (orsendAssumptions program, sorryAssumptions program),
+    expectEq "an orsend never unfoldeþ" (Right True) do
+      program <- compile (twoSource ++ "orsend excluded: [p: two, two]\nlet uses: two ≔ yea excluded")
+      sameNormalIn program "uses" "yea excluded",
+    rejectContaining "an orsend annotation must be a type" "annotation is not a type" (compile (twoSource ++ "orsend wrong: yea")),
+    rejectContaining "an orsend cannot enter a let block" "orsend assumptions must be top-level" (compile (twoSource ++ "let value ≔ (let first ≔ yea orsend inner: two yield first)")),
+    rejectContaining "an orsend name is declared once" "repeat" (compile (twoSource ++ "orsend yea: two")),
+    -- `for` giveþ each branch þe equation between þe scrutinee and its pattern.
+    expectEq "a match equation nameþ þe matched constructor" (Right True) do
+      program <- compile (twoSource ++ flipSource ++ "let remembered: [b: two, two] ≔ match b flip for known { yea ^ (let k: (b flip) = yea ≔ known yield nay), nay ^ (let k: (b flip) = nay ≔ known yield yea) }")
+      sameNormalIn program "yea remembered" "yea",
+    rejectContaining "a match equation nameþ only its own branch" "cannot unify yea wiþ nay" (compile (twoSource ++ "let wrong: [b: two, two] ≔ match b for known { yea ^ (let k: b = nay ≔ known yield nay), nay ^ yea }")),
+    expectEq "a match wiþ an equation inferreþ its result" (Right True) do
+      program <- compile (twoSource ++ "let swap ≔ {b: two ^ match b for known { yea ^ nay, nay ^ yea }}")
+      sameNormalIn program "yea swap" "nay"
+  ]
+  where
+    twoSource = "ilk two: * { yea: two, nay: two }\n"
+    flipSource = "let flip: [b: two, two] ≔ match b { yea ^ nay, nay ^ yea }\n"
+
 rejectionTests :: [Test]
 rejectionTests =
   [ reject "types and values cannot redeclare one name" (compile "let shared ≔ *\nlet shared:[α:*, *] ≔ α"),
@@ -135,10 +162,12 @@ rejectionTests =
     reject "anonymous slots create no accessible binding" (compile "let bad:[α:*, _:α, α] ≔ _"),
     reject "local names do not escape their scope" (compile "let local ≔ (let inside ≔ * yield inside)\nlet outside ≔ inside"),
     reject "a shadowing value cannot be resolved as the former type" (compile "let bad:[@α:*, x:α, α] ≔ (let α ≔ x let y:α ≔ x yield y)"),
-    expectEq "an unknown lambda domain is generalised" (Right ()) (checkedIn "let unknown ≔ {x ^ x}" "* unknown"),
-    -- `?f x` is pruned to `?f`, so þe type function generaliseþ.
-    expectEq "a hole drops a local þat its solution cannot see" (Right "[@α: [*, *], @β: *, β α, β α]") $
-      compile "let lift:[@a:*, @f:[*, *], x: a f, a f] ≔ x\nlet twice: [x:] ≔ (x lift) lift" >>= (`typeOfName` "twice"),
+    -- a top-level let is never generalised over its holes.
+    rejectContaining "a let whose type is undetermined is rejected" "write þe polymorphic parameters" (compile "let unknown ≔ {x ^ x}"),
+    rejectContaining "an inferred slot type wiþout a use is rejected" "write þe polymorphic parameters" (compile "let identity: [x:] ≔ x"),
+    -- `?f x` is pruned to `?f`, so þe type function is solved.
+    expectEq "a hole drops a local þat its solution cannot see" (Right "[@α: *, @β: [*, *], α β, α β]") $
+      compile "let lift:[@a:*, @f:[*, *], x: a f, a f] ≔ x\nlet twice:[@a:*, @f:[*, *], x: a f, a f] ≔ (x lift) lift" >>= (`typeOfName` "twice"),
     expectEq "reflect proveþ an equation þat holdeþ by computation" (Right ()) $
       () <$ compile ("let one: ℕ ≔ 1\nlet checked: one = 1 ≔ reflect"),
     rejectContaining "reflect cannot prove unequal values" "cannot unify 1 wiþ 2" $

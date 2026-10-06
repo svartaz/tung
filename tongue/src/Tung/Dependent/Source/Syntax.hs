@@ -17,6 +17,7 @@ module Tung.Dependent.Source.Syntax
     pattern Wildcard,
     pattern Cases,
     pattern Match,
+    pattern MatchFor,
     pattern RecordTypeExpression,
     pattern RecordExpression,
     pattern RecordUpdate,
@@ -33,7 +34,6 @@ module Tung.Dependent.Source.Syntax
     Row (..),
     RecordChange (..),
     FlockMember (..),
-    subexpressions,
     freeNames,
     sketch,
   )
@@ -63,6 +63,8 @@ data Expression
   | -- `{rows}` wiþ more þan one row or a non-variable pattern.
     RawCases [Row]
   | RawMatch [Expression] [Row]
+  | -- `match e for known { rows }`: each row also bindeþ `known: e = pattern`.
+    RawMatchFor Expression String [Row]
   | -- `r{name:type, ...}`, `r{name = value, ...}`, `r{= base, changes}`.
     RawRecordTypeExpression [(String, Expression)]
   | RawRecordExpression [(String, Expression)]
@@ -70,7 +72,7 @@ data Expression
   | RawProjection Expression String
   | -- `sorry` standeþ for an omitted term of any type.
     RawSorry
-  | -- `induce name` is þe eliminator of þe ilk or flock `name`.
+  | -- `unbuild name` is þe eliminator of þe ilk or flock `name`.
     RawInduce String
   | -- `a:` leaveþ a slot type to inference, as doth an omitted result.
     RawInferred
@@ -83,7 +85,7 @@ unlocated = \case
   Located _ expression -> unlocated expression
   expression -> expression
 
-{-# COMPLETE Name, Universe, Product, Lambda, Application, Ascription, Block, LiteralExpression, Wildcard, Cases, Match, RecordTypeExpression, RecordExpression, RecordUpdate, Projection, Sorry, Induce, Inferred #-}
+{-# COMPLETE Name, Universe, Product, Lambda, Application, Ascription, Block, LiteralExpression, Wildcard, Cases, Match, MatchFor, RecordTypeExpression, RecordExpression, RecordUpdate, Projection, Sorry, Induce, Inferred #-}
 
 pattern Name :: String -> Expression
 pattern Name a0 <- (unlocated -> RawName a0)
@@ -139,6 +141,11 @@ pattern Match :: [Expression] -> [Row] -> Expression
 pattern Match a0 a1 <- (unlocated -> RawMatch a0 a1)
   where
     Match a0 a1 = RawMatch a0 a1
+
+pattern MatchFor :: Expression -> String -> [Row] -> Expression
+pattern MatchFor a0 a1 a2 <- (unlocated -> RawMatchFor a0 a1 a2)
+  where
+    MatchFor a0 a1 a2 = RawMatchFor a0 a1 a2
 
 pattern RecordTypeExpression :: [(String, Expression)] -> Expression
 pattern RecordTypeExpression a0 <- (unlocated -> RawRecordTypeExpression a0)
@@ -235,7 +242,11 @@ data Declaration
   | -- `bizen:type { let member = body }` defineþ a registered dictionary. the
     -- type's implicit slots are parameters and requirements; it endeþ in a flock.
     BizenDeclaration
-      { bizenType :: Expression,
+      { -- `bizen 10: …` writeþ a priority; higher is tried first.
+        bizenPriority :: Maybe Integer,
+        -- `bizen fallback: …` is tried only for a goal stuck on an unknown input.
+        bizenFallback :: Bool,
+        bizenType :: Expression,
         bizenMembers :: [Declaration]
       }
   | -- `use path [alias]` importeþ a module's shown names.
@@ -247,11 +258,18 @@ data Declaration
     ShownDeclaration Declaration
   | -- `show a, b` publisheþ visible names, including imported ones.
     ReExportDeclaration [String]
-  | -- a top-level host binding: `let name:type = 'key' fremmed`.
+  | -- `orsend name:type` assumeþ a constant of a type wiþout a proof.
+    AssumptionDeclaration
+      { assumptionName :: String,
+        assumptionAnnotation :: Expression
+      }
+  | -- a top-level host binding: `let name:type ≔ 'key' fremmed`, optionally
+    -- followed by þe name of its model.
     HostDeclaration
       { hostName :: String,
         hostAnnotation :: Expression,
-        hostKey :: String
+        hostKey :: String,
+        hostModel :: Maybe String
       }
   deriving stock (Eq, Show)
 
@@ -277,6 +295,7 @@ subexpressions = \case
   Wildcard -> []
   Cases rows -> map rowBody rows
   Match scrutinees rows -> scrutinees ++ map rowBody rows
+  MatchFor scrutinee _ rows -> scrutinee : map rowBody rows
   RecordTypeExpression fields -> map snd fields
   RecordExpression fields -> map snd fields
   RecordUpdate base changes -> base : [value | SetField _ value <- changes]
@@ -303,6 +322,7 @@ freeNames isConstructor = go
       Block declarations result -> locals bound declarations result
       Cases rows -> Set.unions (map (row bound) rows)
       Match scrutinees rows -> Set.unions (map (go bound) scrutinees ++ map (row bound) rows)
+      MatchFor scrutinee known rows -> Set.unions (go bound scrutinee : map (row (Set.insert known bound)) rows)
       expression -> Set.unions (map (go bound) (subexpressions expression))
     binders bound [] result = go bound result
     -- every annotation and local right-hand side seeþ only earlier binders.
@@ -338,12 +358,13 @@ sketch = \case
   Wildcard -> "_"
   Cases rows -> "{" ++ intercalate ", " (map row rows) ++ "}"
   Match scrutinees rows -> "match " ++ intercalate ", " (map sketch scrutinees) ++ " {" ++ intercalate ", " (map row rows) ++ "}"
+  MatchFor scrutinee known rows -> "match " ++ sketch scrutinee ++ " for " ++ known ++ " {" ++ intercalate ", " (map row rows) ++ "}"
   RecordTypeExpression fields -> "r{" ++ intercalate ", " [name ++ ": " ++ sketch field | (name, field) <- fields] ++ "}"
   RecordExpression fields -> "r{" ++ intercalate ", " [name ++ " ≔ " ++ sketch field | (name, field) <- fields] ++ "}"
   RecordUpdate base changes -> "r{≔ " ++ intercalate ", " (sketch base : map change changes) ++ "}"
   Projection record field -> sketch record ++ "." ++ field
   Sorry -> "sorry"
-  Induce name -> "induce " ++ name
+  Induce name -> "unbuild " ++ name
   Inferred -> "?"
   where
     parameter Parameter {..} = (if parameterPlicity == Implicit then "@" else "") ++ maybe "" (++ ": ") parameterName ++ sketch parameterType

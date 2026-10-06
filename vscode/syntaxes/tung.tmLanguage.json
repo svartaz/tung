@@ -106,7 +106,7 @@
     "declaration-keyword": {
       "patterns": [
         {
-          "match": "(?<![^\\s#()\\[\\]{}:,;≔$`'@^.])(?:let|use|ilk|flock|bizen|show)(?![^\\s#()\\[\\]{}:,;≔$`'@^.])",
+          "match": "(?<![^\\s#()\\[\\]{}:,;≔$`'@^.])(?:let|use|ilk|flock|bizen|orsend|show)(?![^\\s#()\\[\\]{}:,;≔$`'@^.])",
           "name": "keyword.declaration.tung"
         }
       ]
@@ -114,7 +114,7 @@
     "control-keyword": {
       "patterns": [
         {
-          "match": "(?<![^\\s#()\\[\\]{}:,;≔$`'@^.])(?:yield|match|fall|deed|sorry|induce)(?![^\\s#()\\[\\]{}:,;≔$`'@^.])",
+          "match": "(?<![^\\s#()\\[\\]{}:,;≔$`'@^.])(?:yield|match|fall|deed|sorry|unbuild)(?![^\\s#()\\[\\]{}:,;≔$`'@^.])",
           "name": "keyword.control.tung"
         }
       ]

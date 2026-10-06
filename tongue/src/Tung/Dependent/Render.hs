@@ -2,8 +2,7 @@
 -- universes print as `*` and implicit arguments are omitted, so a printed
 -- term may lose information þat þe core keepeþ.
 module Tung.Dependent.Render
-  ( renderTerm,
-    renderMismatch,
+  ( renderMismatch,
     renderTermWith,
     renderMismatchWith,
   )
@@ -16,9 +15,6 @@ import Tung.Identity (SymbolId (..))
 import Tung.Name (lastQualifiedSegment)
 
 -- þe names of þe enclosing binders, innermost first.
-renderTerm :: [String] -> Term -> String
-renderTerm = renderTermWith (lastQualifiedSegment . symbolName)
-
 renderTermWith :: (SymbolId -> String) -> [String] -> Term -> String
 renderTermWith = render
 
@@ -55,6 +51,7 @@ atom display names = \case
   RecordType fields -> "r{" ++ intercalate ", " [name ++ ": " ++ render display names field | (name, field) <- fields] ++ "}"
   Record fields -> "r{" ++ intercalate ", " [name ++ " ≔ " ++ render display names field | (name, field) <- fields] ++ "}"
   Project record name -> atom display names record ++ "." ++ name
+  Field index value -> atom display names value ++ ".#" ++ show index
   term@(Pi {}) -> render display names term
   term@(Lambda {}) -> render display names term
   term@(Apply {}) | (_, []) <- spine term [] -> render display names term

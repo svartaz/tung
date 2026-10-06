@@ -32,6 +32,7 @@ module Tung.Dependent.Check
     convert,
     generalise,
     generaliseTerms,
+    assume,
     defineInferred,
     openObligations,
     Checking (..),
@@ -46,7 +47,7 @@ where
 import Control.Monad (unless, when)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.State.Strict (StateT, get, put, runStateT)
-import Data.Foldable (traverse_)
+import Data.Foldable (foldlM, traverse_)
 import Data.List (nub, sort)
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
@@ -111,6 +112,16 @@ define environment@(Environment globals) name annotation body = do
 
 -- elaboration may infer under source scopes, but insertion always recheckeþ a
 -- closed generalised result. no source declaration can bypass the kernel.
+-- an assumption is a constant whose checked type is all þe kernel knoweþ.
+assume :: Environment -> SymbolId -> Inferred -> Either String Environment
+assume environment@(Environment globals) name signature@Inferred {..} = do
+  when (Map.member name globals) (Left "duplicate definition")
+  validate environment signature
+  N.normalise globals 0 inferredType >>= \case
+    Sort _ -> pure ()
+    _ -> Left "an orsend annotation is not a type"
+  pure (Environment (Map.insert name (Definition inferredUniverses inferredConstraints inferredTerm Assumption) globals))
+
 defineInferred :: Environment -> SymbolId -> Inferred -> Either String Environment
 defineInferred environment@(Environment globals) name result = do
   when (Map.member name globals) (Left "duplicate definition")
@@ -177,7 +188,7 @@ bind Context {..} ty =
   Context (N.VNeutral (N.NLocal (length contextTypes)) : contextValues) (ty : contextTypes)
 
 inferTerm :: Globals -> Context -> Term -> Typing N.Value
-inferTerm globals = inferTermWith (kernelChecking globals) globals
+inferTerm globals = inferTermWith (kernelChecking globals)
 
 -- inference rules are shared with typed metavariable checking. the kernel useþ
 -- fixed conversion and rejecteþ holes; elaboration may only solve typed holes.
@@ -190,7 +201,8 @@ data Checking m = Checking
     forceCheck :: N.Value -> m N.Value,
     convertCheck :: Context -> N.Value -> N.Value -> m (),
     constrainCheck :: Constraint -> m (),
-    inferMetaCheck :: Context -> Int -> [Term] -> m N.Value
+    inferMetaCheck :: Context -> Int -> [Term] -> m N.Value,
+    definitionCheck :: SymbolId -> m (Maybe Definition)
   }
 
 kernelChecking :: Globals -> Checking Typing
@@ -204,82 +216,113 @@ kernelChecking globals =
       forceCheck = pure,
       convertCheck = convert globals,
       constrainCheck = oblige,
-      inferMetaCheck = \_ _ _ -> failure "unresolved term inference hole in core"
+      inferMetaCheck = \_ _ _ -> failure "unresolved term inference hole in core",
+      definitionCheck = pure . (`Map.lookup` globals)
     }
 
-inferTermWith :: (Monad m) => Checking m -> Globals -> Context -> Term -> m N.Value
-inferTermWith operations@Checking {..} globals context@Context {..} = \case
+inferTermWith :: (Monad m) => Checking m -> Context -> Term -> m N.Value
+inferTermWith operations@Checking {..} context@Context {..} = \case
   Local index
     | index >= 0, ty : _ <- drop index contextTypes -> pure ty
     | otherwise -> failCheck "unbound variable"
-  Global name arguments -> case Map.lookup name globals of
-    Nothing -> failCheck "unknown definition"
-    Just Definition {..} -> do
-      unless (length arguments == definitionUniverses) (failCheck "wrong number of universe arguments")
-      constraints <- liftCheck (traverse (U.instantiateConstraint arguments) definitionConstraints)
-      traverse_ constrainCheck constraints
-      annotation <- liftCheck (instantiateLevels arguments definitionType)
-      evaluateCheck context annotation
+  Global name arguments ->
+    definitionCheck name >>= \case
+      Nothing -> failCheck "unknown definition"
+      Just Definition {..} -> do
+        unless (length arguments == definitionUniverses) (failCheck "wrong number of universe arguments")
+        constraints <- liftCheck (traverse (U.instantiateConstraint arguments) definitionConstraints)
+        traverse_ constrainCheck constraints
+        annotation <- liftCheck (instantiateLevels arguments definitionType)
+        evaluateCheck context annotation
   Sort level -> pure (N.VSort (LSucc level))
   Pi _ domain codomain -> do
-    domainLevel <- checkTypeWith operations globals context domain
+    domainLevel <- checkTypeWith operations context domain
     domainValue <- evaluateCheck context domain
-    codomainLevel <- checkTypeWith operations globals (bind context domainValue) codomain
+    codomainLevel <- checkTypeWith operations (bind context domainValue) codomain
     pure (N.VSort (U.normaliseLevel (LMax domainLevel codomainLevel)))
   Lambda plicity domain body -> do
-    checkTypeWith operations globals context domain
+    checkTypeWith operations context domain
     domainValue <- evaluateCheck context domain
-    bodyType <- inferTermWith operations globals (bind context domainValue) body
+    bodyType <- inferTermWith operations (bind context domainValue) body
     codomain <- quoteCheck (length contextTypes + 1) bodyType
     pure (N.VPi plicity domainValue (N.Closure contextValues codomain))
   Apply plicity function argument -> do
-    functionType <- inferTermWith operations globals context function >>= forceCheck
+    functionType <- inferTermWith operations context function >>= forceCheck
     case functionType of
       N.VPi expected domain codomain -> do
         unless (plicity == expected) (failCheck "implicit and explicit arguments do not match")
-        argumentType <- inferTermWith operations globals context argument
+        argumentType <- inferTermWith operations context argument
         convertCheck context argumentType domain
         argumentValue <- evaluateCheck context argument
         instantiateCheck codomain argumentValue
       _ -> failCheck "application requireþ a function"
   Let annotation value body -> do
-    checkTypeWith operations globals context annotation
-    checkTermWith operations globals context value annotation
+    checkTypeWith operations context annotation
+    checkTermWith operations context value annotation
     valueType <- evaluateCheck context annotation
     valueValue <- evaluateCheck context value
-    inferTermWith operations globals (Context (valueValue : contextValues) (valueType : contextTypes)) body
+    inferTermWith operations (Context (valueValue : contextValues) (valueType : contextTypes)) body
   Meta identity arguments -> inferMetaCheck context identity arguments
   RecordType fields -> do
     unless (canonicalFields fields) (failCheck "record fields must be distinct and sorted")
-    levels <- traverse (checkTypeWith operations globals context . snd) fields
+    levels <- traverse (checkTypeWith operations context . snd) fields
     pure (N.VSort (U.normaliseLevel (foldr LMax LZero levels)))
   Record fields -> do
     unless (canonicalFields fields) (failCheck "record fields must be distinct and sorted")
-    N.VRecordType <$> traverse (\(name, field) -> (name,) <$> inferTermWith operations globals context field) fields
+    N.VRecordType <$> traverse (\(name, field) -> (name,) <$> inferTermWith operations context field) fields
   Project record name ->
-    inferTermWith operations globals context record >>= forceCheck >>= \case
+    inferTermWith operations context record >>= forceCheck >>= \case
       N.VRecordType fields | Just ty <- lookup name fields -> pure ty
       N.VRecordType _ -> failCheck ("record hath no field '" ++ name ++ "'")
       _ -> failCheck "projection from a non-record"
+  -- a field's type is þe constructor's field type, wiþ þe family's
+  -- parameters and each earlier field, projected from þe same value.
+  Field index value ->
+    inferTermWith operations context value >>= forceCheck >>= \case
+      N.VNeutral neutral
+        | (N.NGlobal family levels, arguments) <- N.neutralSpine neutral ->
+            definitionCheck family >>= \case
+              Just Definition {definitionBody = TypeConstructor InductiveInfo {inductiveParameterCount, inductiveIndexPlicities = [], inductiveConstructorInfo = [(constructor, fields)]}}
+                | index >= 0,
+                  index < length fields,
+                  length arguments == inductiveParameterCount ->
+                    definitionCheck constructor >>= \case
+                      Just Definition {definitionType} -> do
+                        constructorType <- liftCheck (instantiateLevels levels definitionType) >>= evaluateCheck emptyContext
+                        let parameter ty argument =
+                              forceCheck ty >>= \case
+                                N.VPi _ _ codomain -> instantiateCheck codomain argument
+                                _ -> failCheck "invalid constructor type"
+                            walk ty position =
+                              forceCheck ty >>= \case
+                                N.VPi _ domain codomain
+                                  | position == index -> pure domain
+                                  | otherwise -> evaluateCheck context (Field position value) >>= instantiateCheck codomain >>= (`walk` (position + 1))
+                                _ -> failCheck "invalid constructor type"
+                        afterParameters <- foldlM parameter constructorType (map snd arguments)
+                        walk afterParameters 0
+                      _ -> failCheck "missing constructor"
+              _ -> failCheck "a field projection needeþ a one-constructor family wiþout indices"
+      _ -> failCheck "a field projection needeþ a one-constructor family wiþout indices"
   Literal name value
     | name == literalType value -> evaluateCheck context (Global name [])
     | otherwise -> failCheck ("a literal requireþ the primitive " ++ symbolName (literalType value) ++ " type")
 
 checkType :: Globals -> Context -> Term -> Typing Level
-checkType globals = checkTypeWith (kernelChecking globals) globals
+checkType globals = checkTypeWith (kernelChecking globals)
 
-checkTypeWith :: (Monad m) => Checking m -> Globals -> Context -> Term -> m Level
-checkTypeWith operations@Checking {..} globals context term =
-  inferTermWith operations globals context term >>= forceCheck >>= \case
+checkTypeWith :: (Monad m) => Checking m -> Context -> Term -> m Level
+checkTypeWith operations@Checking {..} context term =
+  inferTermWith operations context term >>= forceCheck >>= \case
     N.VSort level -> pure level
     _ -> failCheck "annotation is not a type"
 
 checkTerm :: Globals -> Context -> Term -> Term -> Typing ()
-checkTerm globals = checkTermWith (kernelChecking globals) globals
+checkTerm globals = checkTermWith (kernelChecking globals)
 
-checkTermWith :: (Monad m) => Checking m -> Globals -> Context -> Term -> Term -> m ()
-checkTermWith operations@Checking {..} globals context term annotation = do
-  actual <- inferTermWith operations globals context term
+checkTermWith :: (Monad m) => Checking m -> Context -> Term -> Term -> m ()
+checkTermWith operations@Checking {..} context term annotation = do
+  actual <- inferTermWith operations context term
   expected <- evaluateCheck context annotation
   convertCheck context actual expected
 
@@ -304,6 +347,7 @@ convert globals Context {contextTypes} actual expected = do
     compareTerms (RecordType left) (RecordType right) | map fst left == map fst right = traverse_ (uncurry compareTerms) (zip (map snd left) (map snd right))
     compareTerms (Record left) (Record right) | map fst left == map fst right = traverse_ (uncurry compareTerms) (zip (map snd left) (map snd right))
     compareTerms (Project left ln) (Project right rn) | ln == rn = compareTerms left right
+    compareTerms (Field li left) (Field ri right) | li == ri = compareTerms left right
     -- η: a function equaleþ þe lambda þat applieþ it.
     compareTerms (Lambda lp _ lb) right = compareTerms lb (Apply lp (shiftTerm 1 right) (Local 0))
     compareTerms left (Lambda rp _ rb) = compareTerms (Apply rp (shiftTerm 1 left) (Local 0)) rb

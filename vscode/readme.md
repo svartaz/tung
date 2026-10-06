@@ -5,23 +5,14 @@ the extension liveþ beside the compiler in `../tongue`.
 
 ## setup
 
-from the repository root, install node dependencies and build the compiler:
+from the repository root, build and install the extension wiþ the `code`
+command available:
 
 ```sh
 npm ci
 make compiler-build
-npm test --workspace tung-vscode
+npm run setup --workspace tung-vscode
 ```
-
-the tests use the compiler built in `../tongue`. set `TUNG_EXECUTABLE` to an
-absolute path to test anoþer compiler. `npm run update:metadata -w tung-vscode`
-refresheth the checked-in language names.
-`npm run check:metadata -w tung-vscode` checketh them.
-
-package the extension with `npm run package --workspace tung-vscode`.
-`npm run install:extension --workspace tung-vscode` installeth it through
-the `code` command. `npm run setup --workspace tung-vscode` runneth the
-tests and install step.
 
 ## configuration
 
@@ -57,5 +48,5 @@ to run a file, open a saved `.tung` file and select the editor's play button.
 ye can also run `Tung: Run Tung File` from the command palette. the command
 saveth the file and useth a dedicated terminal.
 
-the [compiler development guide](https://github.com/jukisima/tung/blob/main/tongue/development.md)
-covereth the language implementation.
+the [development guide](https://github.com/jukisima/tung/blob/main/tongue/development.md)
+covereþ building and testing þe extension.

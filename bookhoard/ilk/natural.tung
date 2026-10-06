@@ -19,12 +19,48 @@ use ilk/two.tung
 
 ## ℕ is a primitive type wiþ arbitrary precision. its operations are host
 ## bindings; þese bizens give it equality, order, and semiring structure.
-let equal_natural: [ℕ, ℕ, 𝟚] ≔ 'equal_natural' fremmed
-let less_equal_natural: [ℕ, ℕ, 𝟚] ≔ 'less_equal_natural' fremmed
-let add_natural: [ℕ, ℕ, ℕ] ≔ 'add_natural' fremmed
+## each modelled binding computeþ natively on literals and, on oþer inputs,
+## unfoldeþ its structural model, so proofs can reason about it.
+let equal_natural_model: [m: ℕ, n: ℕ, 𝟚] ≔
+  match m, n {
+    0,         0         ^ yea,
+    0,         _ succeed ^ nay,
+    _ succeed, 0         ^ nay,
+    a succeed, b succeed ^ a equal_natural_model b
+  }
+
+let less_equal_natural_model: [m: ℕ, n: ℕ, 𝟚] ≔
+  match m, n {
+    0,         _         ^ yea,
+    _ succeed, 0         ^ nay,
+    a succeed, b succeed ^ a less_equal_natural_model b
+  }
+
+let add_natural_model: [m: ℕ, n: ℕ, ℕ] ≔
+  match n {
+    0         ^ m,
+    k succeed ^ (m add_natural_model k) succeed
+  }
+
+let subtract_natural_model: [m: ℕ, n: ℕ, ℕ] ≔
+  match n, m {
+    0,         _         ^ m,
+    _ succeed, 0         ^ 0,
+    k succeed, j succeed ^ j subtract_natural_model k
+  }
+
+let multiply_natural_model: [m: ℕ, n: ℕ, ℕ] ≔
+  match n {
+    0         ^ 0,
+    k succeed ^ (m multiply_natural_model k) add_natural m
+  }
+
+let equal_natural: [ℕ, ℕ, 𝟚] ≔ 'equal_natural' fremmed equal_natural_model
+let less_equal_natural: [ℕ, ℕ, 𝟚] ≔ 'less_equal_natural' fremmed less_equal_natural_model
+let add_natural: [ℕ, ℕ, ℕ] ≔ 'add_natural' fremmed add_natural_model
 ## subtraction stoppeþ at zero.
-let subtract_natural: [ℕ, ℕ, ℕ] ≔ 'subtract_natural' fremmed
-let multiply_natural: [ℕ, ℕ, ℕ] ≔ 'multiply_natural' fremmed
+let subtract_natural: [ℕ, ℕ, ℕ] ≔ 'subtract_natural' fremmed subtract_natural_model
+let multiply_natural: [ℕ, ℕ, ℕ] ≔ 'multiply_natural' fremmed multiply_natural_model
 let divide_remainder_natural: [ℕ, ℕ, (ℕ ∏ ℕ) option] ≔ 'divide_remainder_natural' fremmed
 let natural_to_text: [ℕ, text] ≔ 'natural_to_text' fremmed
 

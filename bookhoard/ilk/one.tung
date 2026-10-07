@@ -1,4 +1,4 @@
-use flock/to_text.tung
+use flock/hath_to_text.tung
 
 show ilk 𝟙: * {
   only: 𝟙
@@ -6,6 +6,6 @@ show ilk 𝟙: * {
 
 show let terminal: [@α: *, _: α, 𝟙] ≔ only
 
-bizen: 𝟙 haþ_to_text {
+bizen: 𝟙 hath_to_text {
   let to_text: [_:] ≔ 'only'
 }

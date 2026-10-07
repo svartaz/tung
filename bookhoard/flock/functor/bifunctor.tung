@@ -1,20 +1,20 @@
-use flock/algebra/partial/category.tung
-use flock/algebra/partial/semigroupoid.tung
+use flock/algebra/half/category.tung
+use flock/algebra/half/semigroupoid.tung
 
-## a binary type constructor covariant in boþ arguments.
+## a binary type constructor covariant in both arguments.
 show flock bifunctor: [φ: [*, *, *], *] {
-  let bimap: [@α: *, @β: *, @γ: *, @δ: *, α φ β, [α, γ], [β, δ], γ φ δ]
+  let biwarp: [@α: *, @β: *, @γ: *, @δ: *, α φ β, [α, γ], [β, δ], γ φ δ]
 
-  let bimap_sameness_sameness: [@α: *, @β: *, þing: α φ β,
-    (þing bimap (sameness: [α, α]) (sameness: [β, β])) = þing]
+  let biwarp_is_is: [@α: *, @β: *, thing: α φ β,
+    (thing biwarp (is: [α, α]) (is: [β, β])) = thing]
 
-  let bimap_bimap: [
+  let biwarp_biwarp: [
     @α₀: *, @α₁: *, @β₀: *, @β₁: *, @γ₀: *, @γ₁: *,
-    þing: α₀ φ α₁,
+    thing: α₀ φ α₁,
     f₀: [α₀, β₀],
     f₁: [α₁, β₁],
     g₀: [β₀, γ₀],
     g₁: [β₁, γ₁],
-    ((þing bimap f₀ f₁) bimap g₀ g₁) = (þing bimap (f₀ ▷ g₀) (f₁ ▷ g₁))
+    ((thing biwarp f₀ f₁) biwarp g₀ g₁) = (thing biwarp (f₀ ▷ g₀) (f₁ ▷ g₁))
   ]
 }

@@ -5,7 +5,7 @@ use flock/order/semilattice_upper.tung
 use flock/order/semilattice_upper_bounded.tung
 use ilk/two.tung
 
-## a bounded lattice wiþ a chosen complement for every value.
+## a bounded lattice with a chosen complement for every value.
 show flock complement: [α: *, @: α lattice_bounded, *] {
   let ¬: [α, α]
   let ∧_¬: [a: α, (a ∧ (a ¬)) = ⟂]
@@ -18,6 +18,6 @@ bizen: 𝟚 complement {
     nay ^ yea
   }
 
-  let ∧_¬ ≔ {yea; nay ^ reflect}
-  let ∨_¬ ≔ {yea; nay ^ reflect}
+  let ∧_¬ ≔ {yea; nay ^ backbend}
+  let ∨_¬ ≔ {yea; nay ^ backbend}
 }

@@ -1,6 +1,6 @@
 -- | core terms printed in source syntax, for type inspection and messages.
 -- universes print as `*` and implicit arguments are omitted, so a printed
--- term may lose information þat þe core keepeþ.
+-- term may lose information that the core keepeth.
 module Tung.Dependent.Render
   ( renderMismatch,
     renderTermWith,
@@ -14,17 +14,17 @@ import Tung.Dependent.Syntax
 import Tung.Identity (SymbolId (..))
 import Tung.Name (lastQualifiedSegment)
 
--- þe names of þe enclosing binders, innermost first.
+-- the names of the enclosing binders, innermost first.
 renderTermWith :: (SymbolId -> String) -> [String] -> Term -> String
 renderTermWith = render
 
--- `cannot unify a wiþ b`, for two terms under þe same `depth` binders, whose
+-- `cannot unify a with b`, for two terms under the same `depth` binders, whose
 -- names are not known here.
 renderMismatch :: Int -> Term -> Term -> String
 renderMismatch = renderMismatchWith (lastQualifiedSegment . symbolName)
 
 renderMismatchWith :: (SymbolId -> String) -> Int -> Term -> Term -> String
-renderMismatchWith display depth left right = "cannot unify " ++ render display names left ++ " wiþ " ++ render display names right
+renderMismatchWith display depth left right = "cannot unify " ++ render display names left ++ " with " ++ render display names right
   where
     names = ["v" ++ show level | level <- [depth - 1, depth - 2 .. 0]] ++ ["v" ++ show index | index <- [depth .. depth + 99]]
 
@@ -40,7 +40,7 @@ render display names = \case
     (function, first : rest) -> unwords (atom display names first : atom display names function : map (atom display names) rest)
   term -> atom display names term
 
--- a term þat needeþ no parentheses as an argument.
+-- a term that needeth no parentheses as an argument.
 atom :: (SymbolId -> String) -> [String] -> Term -> String
 atom display names = \case
   Local index -> if index < length names then names !! index else "?"
@@ -63,7 +63,7 @@ spine (Apply Explicit function argument) arguments = spine function (argument : 
 spine (Apply Implicit function _) arguments = spine function arguments
 spine function arguments = (function, arguments)
 
--- `[@α: *, x: α, α]`. a binder þat noþing mentioneþ printeþ only its type.
+-- `[@α: *, x: α, α]`. a binder that nothing mentioneth printeth only its type.
 bracket :: (SymbolId -> String) -> [String] -> [String] -> Term -> String
 bracket display names items = \case
   Pi plicity domain codomain ->
@@ -94,7 +94,7 @@ sorted = \case
   Pi _ _ codomain -> sorted codomain
   _ -> False
 
--- type binders take greek letters, oþers latin ones; a name in scope is
+-- type binders take greek letters, others latin ones; a name in scope is
 -- never reused.
 fresh :: [String] -> Maybe Term -> String
 fresh names domain = case [name | name <- candidates, name `notElem` names] of

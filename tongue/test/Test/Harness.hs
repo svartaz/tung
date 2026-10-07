@@ -148,8 +148,8 @@ evalOkWith name source imports expected = evaluateSource source imports >>= expe
 evalTypeErrWith :: String -> String -> Map.Map String String -> Test
 evalTypeErrWith name source imports = evaluateSource source imports >>= expectPrefix name "eval error: type error:"
 
--- `type ok`, or þe parse or type error. a runnable source must also define
--- `main`. a test's own modules join þe compiled library.
+-- `type ok`, or the parse or type error. a runnable source must also define
+-- `main`. a test's own modules join the compiled library.
 checkSource :: Bool -> String -> Map.Map String String -> String
 checkSource runnable source imports = case compiled >>= \modules -> either (Left . failureText) Right (compileProjectDetailed modules (SourceModule "main.tung") source (Map.union imports librarySources)) of
   Left message -> message
@@ -160,7 +160,7 @@ checkSource runnable source imports = case compiled >>= \modules -> either (Left
     (librarySources, compiled) = libraryFor imports
     failureText CompileFailure {failureKind, failureText = text} = (if failureKind == ParseFailure then "parse error: " else "type error: ") ++ text
 
--- þe yielded value, printed, or `eval error:` and þe failure.
+-- the yielded value, printed, or `eval error:` and the failure.
 evaluateSource :: String -> Map.Map String String -> IO String
 evaluateSource = evaluateSourceWithArgs []
 
@@ -169,12 +169,12 @@ evaluateSourceWithArgs arguments source imports = do
   let (librarySources, compiled) = libraryFor imports
   case compiled >>= \modules -> compileYieldWith modules (SourceModule "main.tung") source (Map.union imports librarySources) of
     Left message -> pure ("eval error: type error: " ++ message)
-    Right (_, Nothing) -> pure "eval error: noþing is yielded"
+    Right (_, Nothing) -> pure "eval error: nothing is yielded"
     Right (program, Just inferred) -> do
       host <- ioHost arguments
       runYield host program inferred <&> either ("eval error: " ++) (("eval ok: " ++) . renderRuntime)
 
--- `main` performed: `ok` and its exit status, or þe failure.
+-- `main` performed: `ok` and its exit status, or the failure.
 runMainSource :: String -> Map.Map String String -> IO String
 runMainSource source imports = do
   let (librarySources, compiled) = libraryFor imports
@@ -186,15 +186,15 @@ runMainSource source imports = do
         Left message -> pure ("type error: " ++ message)
         Right action -> action <&> either ("runtime error: " ++) (\status -> "ok " ++ show status)
 
--- a test þat replaceþ a bookhoard module cannot reuse þe compiled library.
+-- a test that replaceth a bookhoard module cannot reuse the compiled library.
 libraryFor :: Map.Map String String -> (Map.Map String String, Either String (Map.Map String SourceProgram))
 libraryFor imports =
   let (librarySources, library) = dependentLibrary
       unchanged = and [Map.lookup path librarySources `elem` [Nothing, Just text] | (path, text) <- Map.toList imports]
    in (librarySources, if unchanged then library else Right Map.empty)
 
--- bookhoard, compiled once. a module þat faileþ is left out, so only þe
--- tests þat use it report þe failure.
+-- bookhoard, compiled once. a module that faileth is left out, so only the
+-- tests that use it report the failure.
 {-# NOINLINE dependentLibrary #-}
 dependentLibrary :: (Map.Map String String, Either String (Map.Map String SourceProgram))
 dependentLibrary = unsafePerformIO do

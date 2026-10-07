@@ -1,95 +1,491 @@
 use _foreign.tung
-use flock/algebra/arithmetic/add.tung
-use flock/algebra/arithmetic/divide_remainder.tung
-use flock/algebra/arithmetic/monoid_additive.tung
-use flock/algebra/arithmetic/monoid_multiplicative.tung
-use flock/algebra/arithmetic/multiply.tung
-use flock/algebra/arithmetic/one.tung
+use flock/algebra/arithmetic/hath_deal_remainder.tung
+use flock/algebra/arithmetic/hath_eke.tung
+use flock/algebra/arithmetic/hath_fold.tung
+use flock/algebra/arithmetic/hath_offdraw.tung
+use flock/algebra/arithmetic/hath_one.tung
+use flock/algebra/arithmetic/hath_zero.tung
+use flock/algebra/arithmetic/monoid_eke.tung
+use flock/algebra/arithmetic/monoid_fold.tung
 use flock/algebra/arithmetic/ring.tung
 use flock/algebra/arithmetic/semiring.tung
-use flock/algebra/arithmetic/subtract.tung
-use flock/algebra/arithmetic/zero.tung
-use flock/equal.tung
-use flock/order/less_equal.tung
-use flock/order/order_partial.tung
-use flock/order/order_total.tung
-use flock/to_text.tung
+use flock/hath_same.tung
+use flock/hath_to_text.tung
+use flock/order/hath_at_most.tung
+use flock/order/order_half.tung
+use flock/order/order_whole.tung
+use ilk/maybe.tung
 use ilk/natural.tung
-use ilk/option.tung
 use ilk/two.tung
+use is.tung
+
+## `ℤ` is a primitive type with arbitrary precision whose values are
+## `n overnaught` and `n heir_undernaught`, the latter being `-(n + 1)`. each
+## binding with a body after `fremmed` computeth natively on literals and, on
+## other inputs, unfoldeth that structural model.
+## convert a natural to an integer.
+show let to_ℤ: [ℕ, ℤ] ≔ 'natural_to_integer' fremmed overnaught
 
 ## convert a nonnegative integer to a natural.
-show let to_ℕ: [ℤ, ℕ option] ≔ integer_to_natural
-
-show let to_ℤ: [ℕ, ℤ] ≔ natural_to_integer
-
-bizen: ℤ equal {
-  let ≍ ≔ equal_integer
+show let to_ℕ: [ℤ, ℕ maybe] ≔ 'integer_to_natural' fremmed {
+  n overnaught           ^ n some,
+  _ heir_undernaught ^ none
 }
 
-bizen: ℤ less_equal {
-  let ≤ ≔ less_equal_integer
+## `m - n` for naturals, as an integer.
+## it splits on `n` first, so `m difference 0` is `m overnaught` for any `m`.
+let difference: [ℕ, ℕ, ℤ] ≔ {
+  m, 0         ^ m overnaught,
+  m, k heir ^ match m {
+    0         ^ k heir_undernaught,
+    j heir ^ j difference k
+  }
 }
 
-bizen: ℤ order_partial {
-  let ≤_reflect ≔ sorry
-  let ≤_antisymmetric ≔ sorry
-  let ≤_transit ≔ sorry
+## the negation of a natural, as an integer.
+let negate_ℕ: [ℕ, ℤ] ≔ {
+  0         ^ 0 overnaught,
+  k heir ^ k heir_undernaught
 }
 
-bizen: ℤ order_total {
-  let ≤_total ≔ sorry
+let eking: [ℤ, ℤ, ℤ] ≔ 'eke_integer' fremmed {
+  m overnaught,           n overnaught           ^ (m + n) overnaught,
+  m overnaught,           n heir_undernaught ^ m difference (n heir),
+  m heir_undernaught, n overnaught           ^ n difference (m heir),
+  m heir_undernaught, n heir_undernaught ^ ((m + n) heir) heir_undernaught
 }
 
-bizen: ℤ divide_remainder {
-  let % ≔ divide_remainder_integer
+let offdrawing: [ℤ, ℤ, ℤ] ≔ 'offdraw_integer' fremmed {
+  a, n overnaught           ^ a eking (n negate_ℕ),
+  a, n heir_undernaught ^ a eking ((n heir) overnaught)
 }
 
-## text for people omiteþ þe `+` þat an integer literal requireþ.
-bizen: ℤ haþ_to_text {
+let folding: [ℤ, ℤ, ℤ] ≔ 'fold_integer' fremmed {
+  m overnaught,           n overnaught           ^ (m × n) overnaught,
+  m overnaught,           n heir_undernaught ^ (m × (n heir)) negate_ℕ,
+  m heir_undernaught, n overnaught           ^ ((m heir) × n) negate_ℕ,
+  m heir_undernaught, n heir_undernaught ^ ((m heir) × (n heir)) overnaught
+}
+
+let is_same: [ℤ, ℤ, 𝟚] ≔ 'same_integer' fremmed {
+  m overnaught,           n overnaught           ^ m ≍ n,
+  m heir_undernaught, n heir_undernaught ^ m ≍ n,
+  _,                    _                    ^ nay
+}
+
+let is_at_most: [ℤ, ℤ, 𝟚] ≔ 'at_most_integer' fremmed {
+  m overnaught,           n overnaught           ^ m ≤ n,
+  _ overnaught,           _ heir_undernaught ^ nay,
+  _ heir_undernaught, _ overnaught           ^ yea,
+  m heir_undernaught, n heir_undernaught ^ n ≤ m
+}
+
+bizen: ℤ hath_≍ {
+  let ≍ ≔ is_same
+}
+
+bizen: ℤ hath_≤ {
+  let ≤ ≔ is_at_most
+}
+
+## the laws below are proved by sign cases, using the `ℕ` laws.
+let at_most_backbend: [a: ℤ, (a ≤ a) = yea] ≔
+  match a {
+    n overnaught           ^ n ≤_backbend,
+    n heir_undernaught ^ n ≤_backbend
+  }
+
+## antisymmetry with the comparisons of `ℕ` reversed, as for negative values.
+let antievenmete_reversed: [m: ℕ, n: ℕ, >{≤, n ≤ m, m ≤ n, m ≍ n} = yea] ≔
+  match m, n {
+    0,         0         ^ backbend,
+    0,         _ heir ^ backbend,
+    _ heir, 0         ^ backbend,
+    j heir, k heir ^ j antievenmete_reversed k
+  }
+
+let at_most_antievenmete: [a: ℤ, b: ℤ, >{≤, a ≤ b, b ≤ a, a ≍ b} = yea] ≔
+  match a, b {
+    m overnaught,           n overnaught           ^ m ≤_antievenmete n,
+    _ overnaught,           _ heir_undernaught ^ backbend,
+    _ heir_undernaught, _ overnaught           ^ backbend,
+    m heir_undernaught, n heir_undernaught ^ m antievenmete_reversed n
+  }
+
+## transitivity with the comparisons of `ℕ` reversed.
+let throughgo_reversed: [i: ℕ, j: ℕ, k: ℕ, >{≤, j ≤ i, k ≤ j, k ≤ i} = yea] ≔
+  match i, j, k {
+    _,         _,         0         ^ match j ≤ i { yea; nay ^ backbend },
+    _,         0,         _ heir ^ backbend,
+    0,         _ heir, _ heir ^ backbend,
+    x heir, y heir, z heir ^ x throughgo_reversed y z
+  }
+
+let at_most_throughgo: [a: ℤ, b: ℤ, c: ℤ, >{≤, a ≤ b, b ≤ c, a ≤ c} = yea] ≔
+  match a, b, c {
+    i overnaught,           j overnaught,           k overnaught           ^ i ≤_throughgo j k,
+    i overnaught,           j overnaught,           _ heir_undernaught ^ match i ≤ j { yea; nay ^ backbend },
+    _ overnaught,           _ heir_undernaught, _                    ^ backbend,
+    _ heir_undernaught, j overnaught,           k overnaught           ^ match j ≤ k { yea; nay ^ backbend },
+    _ heir_undernaught, _ overnaught,           _ heir_undernaught ^ backbend,
+    i heir_undernaught, j heir_undernaught, _ overnaught           ^ match j ≤ i { yea; nay ^ backbend },
+    i heir_undernaught, j heir_undernaught, k heir_undernaught ^ i throughgo_reversed j k
+  }
+
+let at_most_whole: [a: ℤ, b: ℤ, (((a ≤ b) ≍ nay) ≤ (b ≤ a)) = yea] ≔
+  match a, b {
+    m overnaught,           n overnaught           ^ m ≤_whole n,
+    _ overnaught,           _ heir_undernaught ^ backbend,
+    _ heir_undernaught, _ overnaught           ^ backbend,
+    m heir_undernaught, n heir_undernaught ^ n ≤_whole m
+  }
+
+let zero_eke: [a: ℤ, (+0 + a) = a] ≔
+  match a {
+    n overnaught           ^ overnaught leibnitz (n zero_+),
+    _ heir_undernaught ^ backbend
+  }
+
+let eke_zero: [a: ℤ, (a + +0) = a] ≔
+  match a {
+    _ overnaught           ^ backbend,
+    _ heir_undernaught ^ backbend
+  }
+
+let eke_commute: [a: ℤ, b: ℤ, (a + b) = (b + a)] ≔
+  match a, b {
+    m overnaught,           n overnaught           ^ overnaught leibnitz (m +_commute n),
+    _ overnaught,           _ heir_undernaught ^ backbend,
+    _ heir_undernaught, _ overnaught           ^ backbend,
+    m heir_undernaught, n heir_undernaught ^ {x: ℕ ^ (x heir) heir_undernaught} leibnitz (m +_commute n)
+  }
+
+let zero_fold: [a: ℤ, (+0 × a) = +0] ≔
+  match a {
+    n overnaught           ^ overnaught leibnitz (n zero_× n: (0 × n) = 0),
+    n heir_undernaught ^ negate_ℕ leibnitz ((n heir) zero_× n: (0 × (n heir)) = 0)
+  }
+
+let fold_zero: [a: ℤ, (a × +0) = +0] ≔
+  match a {
+    _ overnaught           ^ backbend,
+    _ heir_undernaught ^ backbend
+  }
+
+let one_fold: [a: ℤ, (+1 × a) = a] ≔
+  match a {
+    n overnaught           ^ overnaught leibnitz (n one_×),
+    n heir_undernaught ^ negate_ℕ leibnitz ((n heir) one_×)
+  }
+
+let fold_one: [a: ℤ, (a × +1) = a] ≔
+  match a {
+    m overnaught           ^ overnaught leibnitz (m ×_one),
+    m heir_undernaught ^ negate_ℕ leibnitz ((m heir) ×_one)
+  }
+
+let difference_self: [m: ℕ, (m difference m) = +0] ≔
+  match m {
+    0         ^ backbend,
+    k heir ^ k difference_self
+  }
+
+let cancel: [a: ℤ, (a - a) = +0] ≔
+  match a {
+    0 overnaught           ^ backbend,
+    (k heir) overnaught ^ (k heir) difference_self,
+    n heir_undernaught ^ (n heir) difference_self
+  }
+
+## `(a heir) + b` is `(a + b) heir`.
+let heir_eke: [a: ℕ, b: ℕ, ((a heir) + b) = ((a + b) heir)] ≔
+  match b {
+    0         ^ backbend,
+    k heir ^ {x: ℕ ^ x heir} leibnitz (a heir_eke k)
+  }
+
+let eke_overnaught: [p: ℕ, q: ℕ, r: ℕ, ((p difference q) + (r overnaught)) = ((p + r) difference q)] ≔
+  match q, p {
+    0,         _         ^ backbend,
+    t heir, 0         ^ ({x: ℕ ^ x difference (t heir)} leibnitz (r zero_+: (0 + r) = r)) evenmete,
+    t heir, j heir ^ (j eke_overnaught t r) throughgo (({x: ℕ ^ x difference (t heir)} leibnitz (j heir_eke r)) evenmete)
+  }
+
+let eke_undernaught: [p: ℕ, q: ℕ, r: ℕ, ((p difference q) + (r heir_undernaught)) = (p difference (q + (r heir)))] ≔
+  match q, p {
+    0,         _         ^ ({x: ℕ ^ p difference (x heir)} leibnitz (r zero_+: (0 + r) = r)) evenmete,
+    t heir, 0         ^ (heir_undernaught leibnitz (t heir_eke r)) evenmete,
+    t heir, j heir ^ (j eke_undernaught t r) throughgo (({x: ℕ ^ j difference x} leibnitz (t heir_eke r)) evenmete)
+  }
+
+## differences add componentwise.
+let eke_differences: [p: ℕ, q: ℕ, r: ℕ, s: ℕ, ((p difference q) + (r difference s)) = ((p + r) difference (q + s))] ≔
+  match s, r {
+    0,         _         ^ p eke_overnaught q r,
+    u heir, 0         ^ p eke_undernaught q u,
+    u heir, v heir ^ p eke_differences q v u
+  }
+
+let associate_differences: [
+  p₁: ℕ, q₁: ℕ, p₂: ℕ, q₂: ℕ, p₃: ℕ, q₃: ℕ,
+  ((p₁ difference q₁) + ((p₂ difference q₂) + (p₃ difference q₃))) = (((p₁ difference q₁) + (p₂ difference q₂)) + (p₃ difference q₃))
+] ≔ >{throughgo,
+  {x: ℤ ^ (p₁ difference q₁) + x} leibnitz (p₂ eke_differences q₂ p₃ q₃),
+  p₁ eke_differences q₁ (p₂ + p₃) (q₂ + q₃),
+  {x: ℕ ^ x difference (q₁ + (q₂ + q₃))} leibnitz (p₁ +_+ p₂ p₃: (p₁ + (p₂ + p₃)) = ((p₁ + p₂) + p₃)),
+  {x: ℕ ^ ((p₁ + p₂) + p₃) difference x} leibnitz (q₁ +_+ q₂ q₃: (q₁ + (q₂ + q₃)) = ((q₁ + q₂) + q₃)),
+  (p₁ + p₂) eke_differences (q₁ + q₂) p₃ q₃ $ evenmete,
+  {x: ℤ ^ x + (p₃ difference q₃)} leibnitz (p₁ eke_differences q₁ p₂ q₂) $ evenmete
+}
+
+## `ℕ` laws at their `ℕ` statements, so each use needeth no annotation.
+let natural_associate: [a: ℕ, b: ℕ, c: ℕ, (a + (b + c)) = ((a + b) + c)] ≔ a +_+ b c
+let natural_commute: [a: ℕ, b: ℕ, (a + b) = (b + a)] ≔ a +_commute b
+let natural_zero_eke: [a: ℕ, (0 + a) = a] ≔ a zero_+
+let natural_zero_fold: [a: ℕ, (0 × a) = 0] ≔ a zero_× a
+let natural_fold_associate: [a: ℕ, b: ℕ, c: ℕ, (a × (b × c)) = ((a × b) × c)] ≔ a ×_× b c
+let natural_left_distribute: [a: ℕ, b: ℕ, c: ℕ, (a × (b + c)) = ((a × b) + (a × c))] ≔ a ×_+ b c
+let natural_right_distribute: [a: ℕ, b: ℕ, c: ℕ, ((a + b) × c) = ((a × c) + (b × c))] ≔ a +_× b c
+
+## equal summands give equal sums, and equal sides equal differences.
+let natural_sum_both: [@a: ℕ, @a′: ℕ, @b: ℕ, @b′: ℕ, p: a = a′, q: b = b′, (a + b) = (a′ + b′)] ≔
+  ({x: ℕ ^ x + b} leibnitz p) throughgo ({x: ℕ ^ a′ + x} leibnitz q)
+let sum_both: [@a: ℤ, @a′: ℤ, @b: ℤ, @b′: ℤ, p: a = a′, q: b = b′, (a + b) = (a′ + b′)] ≔
+  ({x: ℤ ^ x + b} leibnitz p) throughgo ({x: ℤ ^ a′ + x} leibnitz q)
+let difference_both: [@a: ℕ, @a′: ℕ, @b: ℕ, @b′: ℕ, p: a = a′, q: b = b′, (a difference b) = (a′ difference b′)] ≔
+  ({x: ℕ ^ x difference b} leibnitz p) throughgo ({x: ℕ ^ a′ difference x} leibnitz q)
+
+## (a + b) + (c + d) regroupeth as (a + c) + (b + d).
+let exchange: [a: ℕ, b: ℕ, c: ℕ, d: ℕ, ((a + b) + (c + d)) = ((a + c) + (b + d))] ≔ (
+  let inner: [(b + (c + d)) = (c + (b + d))] ≔
+    >{throughgo,
+      b natural_associate c d,
+      {x: ℕ ^ x + d} leibnitz (b natural_commute c),
+      (c natural_associate b d) evenmete}
+  yield >{throughgo,
+    (a natural_associate b (c + d)) evenmete,
+    {x: ℕ ^ a + x} leibnitz inner,
+    a natural_associate c (b + d)}
+)
+
+## (a + b) + (c + d) regroupeth as (a + d) + (b + c).
+let exchange_outer: [a: ℕ, b: ℕ, c: ℕ, d: ℕ, ((a + b) + (c + d)) = ((a + d) + (b + c))] ≔
+  (backbend natural_sum_both (c natural_commute d)) throughgo (a exchange b d c)
+
+let heir_fold: [a: ℕ, b: ℕ, ((a heir) × b) = ((a × b) + b)] ≔
+  match b {
+    0         ^ backbend,
+    k heir ^ >{throughgo,
+      {x: ℕ ^ (x + a) heir} leibnitz (a heir_fold k),
+      {x: ℕ ^ x heir} leibnitz (
+        >{throughgo,
+          ((a × k) natural_associate k a) evenmete,
+          {x: ℕ ^ (a × k) + x} leibnitz (k natural_commute a),
+          (a × k) natural_associate a k}
+      )
+    }
+  }
+
+## adding the same natural to both sides keepeth a difference.
+let difference_cancel: [x: ℕ, y: ℕ, k: ℕ, ((x + k) difference (y + k)) = (x difference y)] ≔
+  match k {
+    0         ^ backbend,
+    j heir ^ x difference_cancel y j
+  }
+
+let negate_difference: [n: ℕ, (n negate_ℕ) = (0 difference n)] ≔
+  match n {
+    0         ^ backbend,
+    _ heir ^ backbend
+  }
+
+let fold_overnaught: [p: ℕ, q: ℕ, r: ℕ, ((p difference q) × (r overnaught)) = ((p × r) difference (q × r))] ≔
+  match q, p {
+    0,         _         ^ ({x: ℕ ^ (p × r) difference x} leibnitz (r natural_zero_fold)) evenmete,
+    t heir, 0         ^ (((t heir) × r) negate_difference) throughgo (({x: ℕ ^ x difference ((t heir) × r)} leibnitz (r natural_zero_fold)) evenmete),
+    t heir, j heir ^ (j fold_overnaught t r) throughgo (((j heir_fold r) difference_both (t heir_fold r)) throughgo ((j × r) difference_cancel (t × r) r) $ evenmete)
+  }
+
+let fold_undernaught: [p: ℕ, q: ℕ, r: ℕ, ((p difference q) × (r heir_undernaught)) = ((q × (r heir)) difference (p × (r heir)))] ≔
+  match q, p {
+    0,         _         ^ ((p × (r heir)) negate_difference) throughgo (({x: ℕ ^ x difference (p × (r heir))} leibnitz ((r heir) natural_zero_fold)) evenmete),
+    t heir, 0         ^ ({x: ℕ ^ ((t heir) × (r heir)) difference x} leibnitz ((r heir) natural_zero_fold)) evenmete,
+    t heir, j heir ^ (j fold_undernaught t r) throughgo (((t heir_fold (r heir)) difference_both (j heir_fold (r heir))) throughgo ((t × (r heir)) difference_cancel (j × (r heir)) (r heir)) $ evenmete)
+  }
+
+## differences multiply as (p - q) × (r - s) = (pr + qs) - (ps + qr).
+let fold_differences: [p: ℕ, q: ℕ, r: ℕ, s: ℕ, ((p difference q) × (r difference s)) = (((p × r) + (q × s)) difference ((p × s) + (q × r)))] ≔
+  match s, r {
+    0,         _         ^ (p fold_overnaught q r) throughgo (({x: ℕ ^ (p × r) difference x} leibnitz ((q × r) natural_zero_eke)) evenmete),
+    u heir, 0         ^ (p fold_undernaught q u) throughgo (({x: ℕ ^ x difference (p × (u heir))} leibnitz ((q × (u heir)) natural_zero_eke)) evenmete),
+    u heir, v heir ^ (
+      let regrouped ≔ ((p × v) exchange p (q × u) q) difference_both ((p × u) exchange p (q × v) q)
+      let cancelled ≔ ((p × v) + (q × u)) difference_cancel ((p × u) + (q × v)) (p + q)
+      yield (p fold_differences q v u) throughgo ((regrouped throughgo cancelled) evenmete)
+    )
+  }
+
+let fold_associate_differences: [
+  p₁: ℕ, q₁: ℕ, p₂: ℕ, q₂: ℕ, p₃: ℕ, q₃: ℕ,
+  ((p₁ difference q₁) × ((p₂ difference q₂) × (p₃ difference q₃))) = (((p₁ difference q₁) × (p₂ difference q₂)) × (p₃ difference q₃))
+] ≔ (
+  let overnaught_part: [((p₁ × ((p₂ × p₃) + (q₂ × q₃))) + (q₁ × ((p₂ × q₃) + (q₂ × p₃)))) = ((((p₁ × p₂) + (q₁ × q₂)) × p₃) + (((p₁ × q₂) + (q₁ × p₂)) × q₃))] ≔
+    >{throughgo,
+      (p₁ natural_left_distribute (p₂ × p₃) (q₂ × q₃)) natural_sum_both (q₁ natural_left_distribute (p₂ × q₃) (q₂ × p₃)),
+      ((p₁ natural_fold_associate p₂ p₃) natural_sum_both (p₁ natural_fold_associate q₂ q₃)) natural_sum_both ((q₁ natural_fold_associate p₂ q₃) natural_sum_both (q₁ natural_fold_associate q₂ p₃)),
+      ((p₁ × p₂) × p₃) exchange_outer ((p₁ × q₂) × q₃) ((q₁ × p₂) × q₃) ((q₁ × q₂) × p₃),
+      ((p₁ × p₂) natural_right_distribute (q₁ × q₂) p₃) natural_sum_both ((p₁ × q₂) natural_right_distribute (q₁ × p₂) q₃) $ evenmete}
+  let undernaught_part: [((p₁ × ((p₂ × q₃) + (q₂ × p₃))) + (q₁ × ((p₂ × p₃) + (q₂ × q₃)))) = ((((p₁ × p₂) + (q₁ × q₂)) × q₃) + (((p₁ × q₂) + (q₁ × p₂)) × p₃))] ≔
+    >{throughgo,
+      (p₁ natural_left_distribute (p₂ × q₃) (q₂ × p₃)) natural_sum_both (q₁ natural_left_distribute (p₂ × p₃) (q₂ × q₃)),
+      ((p₁ natural_fold_associate p₂ q₃) natural_sum_both (p₁ natural_fold_associate q₂ p₃)) natural_sum_both ((q₁ natural_fold_associate p₂ p₃) natural_sum_both (q₁ natural_fold_associate q₂ q₃)),
+      ((p₁ × p₂) × q₃) exchange_outer ((p₁ × q₂) × p₃) ((q₁ × p₂) × p₃) ((q₁ × q₂) × q₃),
+      ((p₁ × p₂) natural_right_distribute (q₁ × q₂) q₃) natural_sum_both ((p₁ × q₂) natural_right_distribute (q₁ × p₂) p₃) $ evenmete}
+  yield >{throughgo,
+    {x: ℤ ^ (p₁ difference q₁) × x} leibnitz (p₂ fold_differences q₂ p₃ q₃),
+    p₁ fold_differences q₁ ((p₂ × p₃) + (q₂ × q₃)) ((p₂ × q₃) + (q₂ × p₃)),
+    overnaught_part difference_both undernaught_part,
+    ((p₁ × p₂) + (q₁ × q₂)) fold_differences ((p₁ × q₂) + (q₁ × p₂)) p₃ q₃ $ evenmete,
+    {x: ℤ ^ x × (p₃ difference q₃)} leibnitz (p₁ fold_differences q₁ p₂ q₂) $ evenmete}
+)
+
+let left_distribute_differences: [
+  p₁: ℕ, q₁: ℕ, p₂: ℕ, q₂: ℕ, p₃: ℕ, q₃: ℕ,
+  ((p₁ difference q₁) × ((p₂ difference q₂) + (p₃ difference q₃))) = (((p₁ difference q₁) × (p₂ difference q₂)) + ((p₁ difference q₁) × (p₃ difference q₃)))
+] ≔ >{throughgo,
+  {x: ℤ ^ (p₁ difference q₁) × x} leibnitz (p₂ eke_differences q₂ p₃ q₃),
+  p₁ fold_differences q₁ (p₂ + p₃) (q₂ + q₃),
+  (((p₁ natural_left_distribute p₂ p₃) natural_sum_both (q₁ natural_left_distribute q₂ q₃)) throughgo ((p₁ × p₂) exchange (p₁ × p₃) (q₁ × q₂) (q₁ × q₃)))
+  difference_both
+  (((p₁ natural_left_distribute q₂ q₃) natural_sum_both (q₁ natural_left_distribute p₂ p₃)) throughgo ((p₁ × q₂) exchange (p₁ × q₃) (q₁ × p₂) (q₁ × p₃))),
+  ((p₁ × p₂) + (q₁ × q₂)) eke_differences ((p₁ × q₂) + (q₁ × p₂)) ((p₁ × p₃) + (q₁ × q₃)) ((p₁ × q₃) + (q₁ × p₃)) $ evenmete,
+  (p₁ fold_differences q₁ p₂ q₂) sum_both (p₁ fold_differences q₁ p₃ q₃) $ evenmete
+}
+
+let right_distribute_differences: [
+  p₁: ℕ, q₁: ℕ, p₂: ℕ, q₂: ℕ, p₃: ℕ, q₃: ℕ,
+  (((p₁ difference q₁) + (p₂ difference q₂)) × (p₃ difference q₃)) = (((p₁ difference q₁) × (p₃ difference q₃)) + ((p₂ difference q₂) × (p₃ difference q₃)))
+] ≔ >{throughgo,
+  {x: ℤ ^ x × (p₃ difference q₃)} leibnitz (p₁ eke_differences q₁ p₂ q₂),
+  (p₁ + p₂) fold_differences (q₁ + q₂) p₃ q₃,
+  (((p₁ natural_right_distribute p₂ p₃) natural_sum_both (q₁ natural_right_distribute q₂ q₃)) throughgo ((p₁ × p₃) exchange (p₂ × p₃) (q₁ × q₃) (q₂ × q₃)))
+  difference_both
+  (((p₁ natural_right_distribute p₂ q₃) natural_sum_both (q₁ natural_right_distribute q₂ p₃)) throughgo ((p₁ × q₃) exchange (p₂ × q₃) (q₁ × p₃) (q₂ × p₃))),
+  ((p₁ × p₃) + (q₁ × q₃)) eke_differences ((p₁ × q₃) + (q₁ × p₃)) ((p₂ × p₃) + (q₂ × q₃)) ((p₂ × q₃) + (q₂ × p₃)) $ evenmete,
+  (p₁ fold_differences q₁ p₃ q₃) sum_both (p₂ fold_differences q₂ p₃ q₃) $ evenmete
+}
+
+## each integer is the difference of its parts: `m overnaught` is
+## `m difference 0` and `n heir_undernaught` is `0 difference (n heir)`.
+let overnaught_part: [ℤ, ℕ] ≔ {
+  m overnaught           ^ m,
+  _ heir_undernaught ^ 0
+}
+
+let undernaught_part: [ℤ, ℕ] ≔ {
+  _ overnaught           ^ 0,
+  n heir_undernaught ^ n heir
+}
+
+let parts: [a: ℤ, a = ((a overnaught_part) difference (a undernaught_part))] ≔
+  match a {
+    _ overnaught           ^ backbend,
+    _ heir_undernaught ^ backbend
+  }
+
+## equal inputs give equal results of a three-input function.
+let congruence: [@a: ℤ, @a′: ℤ, @b: ℤ, @b′: ℤ, @c: ℤ, @c′: ℤ, f: [ℤ, ℤ, ℤ, ℤ], p: a = a′, q: b = b′, r: c = c′, (a f b c) = (a′ f b′ c′)] ≔
+  >{throughgo,
+    {x: ℤ ^ x f b c} leibnitz p,
+    {y: ℤ ^ a′ f y c} leibnitz q,
+    {z: ℤ ^ a′ f b′ z} leibnitz r}
+
+## a law of differences holdeth for integers by writing each as its parts.
+let through_parts: [
+  left: [ℤ, ℤ, ℤ, ℤ], right: [ℤ, ℤ, ℤ, ℤ], a: ℤ, b: ℤ, c: ℤ,
+  law: (((a overnaught_part) difference (a undernaught_part)) left ((b overnaught_part) difference (b undernaught_part)) ((c overnaught_part) difference (c undernaught_part)))
+  = (((a overnaught_part) difference (a undernaught_part)) right ((b overnaught_part) difference (b undernaught_part)) ((c overnaught_part) difference (c undernaught_part))),
+  (a left b c) = (a right b c)
+] ≔ >{throughgo,
+  left congruence (a parts) (b parts) (c parts),
+  law,
+  right congruence (a parts) (b parts) (c parts) $ evenmete}
+
+let eke_associate: [a: ℤ, b: ℤ, c: ℤ, (a + (b + c)) = ((a + b) + c)] ≔
+  {x, y, z ^ x + (y + z)} through_parts {x, y, z ^ (x + y) + z} a b c
+    ((a overnaught_part) associate_differences (a undernaught_part) (b overnaught_part) (b undernaught_part) (c overnaught_part) (c undernaught_part))
+
+let fold_associate: [a: ℤ, b: ℤ, c: ℤ, (a × (b × c)) = ((a × b) × c)] ≔
+  {x, y, z ^ x × (y × z)} through_parts {x, y, z ^ (x × y) × z} a b c
+    ((a overnaught_part) fold_associate_differences (a undernaught_part) (b overnaught_part) (b undernaught_part) (c overnaught_part) (c undernaught_part))
+
+let left_distribute: [a: ℤ, b: ℤ, c: ℤ, (a × (b + c)) = ((a × b) + (a × c))] ≔
+  {x, y, z ^ x × (y + z)} through_parts {x, y, z ^ (x × y) + (x × z)} a b c
+    ((a overnaught_part) left_distribute_differences (a undernaught_part) (b overnaught_part) (b undernaught_part) (c overnaught_part) (c undernaught_part))
+
+let right_distribute: [a: ℤ, b: ℤ, c: ℤ, ((a + b) × c) = ((a × c) + (b × c))] ≔
+  {x, y, z ^ (x + y) × z} through_parts {x, y, z ^ (x × z) + (y × z)} a b c
+    ((a overnaught_part) right_distribute_differences (a undernaught_part) (b overnaught_part) (b undernaught_part) (c overnaught_part) (c undernaught_part))
+
+bizen: ℤ order_half {
+  let ≤_backbend ≔ at_most_backbend
+  let ≤_antievenmete ≔ at_most_antievenmete
+  let ≤_throughgo ≔ at_most_throughgo
+}
+
+bizen: ℤ order_whole {
+  let ≤_whole ≔ at_most_whole
+}
+
+bizen: ℤ hath_% {
+  let % ≔ deal_remainder_integer
+}
+
+## text for people omiteth the `+` that an integer literal requireth.
+bizen: ℤ hath_to_text {
   let to_text ≔ integer_to_text
 }
 
-bizen: ℤ add {
-  let + ≔ add_integer
+bizen: ℤ hath_+ {
+  let + ≔ eking
 }
 
-bizen: ℤ subtract {
-  let - ≔ subtract_integer
+bizen: ℤ hath_- {
+  let - ≔ offdrawing
 }
 
-bizen: ℤ haþ_zero {
+bizen: ℤ hath_zero {
   let zero ≔ +0
 }
 
-bizen: ℤ multiply {
-  let × ≔ multiply_integer
+bizen: ℤ hath_× {
+  let × ≔ folding
 }
 
-bizen: ℤ haþ_one {
+bizen: ℤ hath_one {
   let one ≔ +1
 }
 
-bizen: ℤ monoid_additive {
-  let +_+ ≔ sorry
-  let zero_+ ≔ sorry
-  let +_zero ≔ sorry
+bizen: ℤ monoid_eke {
+  let +_+ ≔ eke_associate
+  let zero_+ ≔ zero_eke
+  let +_zero ≔ eke_zero
 }
 
-bizen: ℤ monoid_multiplicative {
-  let ×_× ≔ sorry
-  let one_× ≔ sorry
-  let ×_one ≔ sorry
+bizen: ℤ monoid_fold {
+  let ×_× ≔ fold_associate
+  let one_× ≔ one_fold
+  let ×_one ≔ fold_one
 }
 
 bizen: ℤ semiring {
-  let +_commute ≔ sorry
-  let ×_+ ≔ sorry
-  let +_× ≔ sorry
-  let zero_× ≔ sorry
-  let ×_zero ≔ sorry
+  let +_commute ≔ eke_commute
+  let ×_+ ≔ left_distribute
+  let +_× ≔ right_distribute
+  let zero_× ≔ {a, _ ^ a zero_fold}
+  let ×_zero ≔ {a, _ ^ a fold_zero}
 }
 
 bizen: ℤ ring {
-  let -_cancel ≔ sorry
+  let -_cancel ≔ cancel
 }

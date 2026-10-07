@@ -182,7 +182,7 @@ generatedBundle size =
     { bundleSource =
         unlines
           ( ["let value0:ℤ ≔ +0"]
-              ++ ["let value" ++ show index ++ ":ℤ ≔ +" ++ show index | index <- [1 .. size - 1]]
+              ++ ["let worth" ++ show index ++ ":ℤ ≔ +" ++ show index | index <- [1 .. size - 1]]
               ++ ["yield value" ++ show (size - 1)]
           ),
       bundleImports = Map.empty
@@ -222,9 +222,9 @@ evaluateAction runnable bundle = do
   if runnable
     then case runMain host program of
       Left message -> die message
-      Right action -> pure (action >>= either die (\status -> unless (status == 0) (die ("main exited wiþ " ++ show status))))
+      Right action -> pure (action >>= either die (\status -> unless (status == 0) (die ("main exited with " ++ show status))))
     else case yielded of
-      Nothing -> die "benchmark source yieldeþ no value"
+      Nothing -> die "benchmark source yieldeth no value"
       Just inferred -> pure do
         result <- runYield host program inferred >>= either die pure
         void (Exception.evaluate (length (renderRuntime result)))

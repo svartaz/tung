@@ -1,5 +1,5 @@
 // lsp transport and request orchestration. tolerant workspace models serve
-// editor features; the compiler bridge alone supplieþ authoritative diagnostics.
+// editor features; the compiler bridge alone supplieth authoritative diagnostics.
 import * as fs from "node:fs";
 import * as path from "node:path";
 import {
@@ -42,8 +42,8 @@ const connection = createConnection(ProposedFeatures.all);
 const documents = new TextDocuments(TextDocument);
 const compiler = new CompilerBridge();
 const workspace = new WorkspaceIndex(documents, compiler);
-// navigation readeþ models built from compiler roles; missing roles are
-// fetched before þe request is answered.
+// navigation readeth models built from compiler roles; missing roles are
+// fetched before the request is answered.
 const navigation =
   <Arguments extends unknown[], Result>(
     handler: (...parameters: Arguments) => Result,
@@ -56,7 +56,7 @@ const highlights = new HighlightCache(compiler);
 const timers = new Map();
 const checks = new Map();
 const diagnosticReports = new Map();
-// þe goals of þe latest successful check, by document.
+// the goals of the latest successful check, by document.
 const goalReports = new Map();
 const typeCache = new Map<
   string,
@@ -222,7 +222,7 @@ connection.onCompletion(
 );
 connection.onHover(
   navigation(async ({ textDocument, position }, cancellation) => {
-    // a `sorry` showeþ þe goal and context þe latest check found þere.
+    // a `sorry` showeth the goal and context the latest check found there.
     const open = documents.get(textDocument.uri);
     const offset = open?.offsetAt(position);
     const goal = (goalReports.get(textDocument.uri) || []).find(
@@ -513,8 +513,8 @@ documents.onDidClose(({ document }) => {
   refreshDiagnostics(document.uri);
   checkAllOpenDocuments();
 });
-// requests share one compiler parse per buffer version. navigation refineþ only
-// names whose constructor identity requireþ workspace context.
+// requests share one compiler parse per buffer version. navigation refineth only
+// names whose constructor identity requireth workspace context.
 const semanticTokens = async (uri, requestedRange = undefined) => {
   const document = documents.get(uri);
   const builder = new SemanticTokensBuilder();
@@ -573,7 +573,7 @@ const cancelCheck = (uri) => {
 const checkAllOpenDocuments = () => {
   for (const document of documents.all()) scheduleCheck(document, 0);
 };
-// diagnostics are debounced and versioned; cancellation stopeþ obsolete work
+// diagnostics are debounced and versioned; cancellation stopeth obsolete work
 // in the persistent compiler session before a newer request is sent.
 const runCheck = (document) => {
   timers.delete(document.uri);

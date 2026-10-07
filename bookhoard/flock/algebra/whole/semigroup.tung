@@ -1,0 +1,30 @@
+use flock/algebra/whole/hath_magma.tung
+use flock/order/semilattice_lower.tung
+use flock/order/semilattice_upper.tung
+use ilk/lower.tung
+use ilk/upper.tung
+
+show flock semigroup: [α: *, @: α hath_·, *] {
+  let ·_·: [a: α, b: α, c: α, (a · (b · c)) = ((a · b) · c)]
+}
+
+show _lower, _upper
+show lower, upper
+
+bizen: [@β: *, @: β semigroup, @α: *, [α, β] semigroup] {
+  let ·: [f:, g:, α:] ≔ (α f) · (α g)
+
+  let ·_· ≔ sorry
+}
+
+bizen: [@α: *, @: α semilattice_lower, (α _lower) semigroup] {
+  let ·: [a lower:, b lower:] ≔ (a ∧ b) lower
+
+  let ·_· ≔ sorry
+}
+
+bizen: [@α: *, @: α semilattice_upper, (α _upper) semigroup] {
+  let ·: [a upper:, b upper:] ≔ (a ∨ b) upper
+
+  let ·_· ≔ sorry
+}

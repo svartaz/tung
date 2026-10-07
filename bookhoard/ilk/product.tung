@@ -1,72 +1,72 @@
-use flock/algebra/partial/category.tung
-use flock/algebra/total/magma.tung
-use flock/algebra/total/monoid.tung
-use flock/algebra/total/semigroup.tung
+use flock/algebra/half/category.tung
+use flock/algebra/whole/hath_magma.tung
+use flock/algebra/whole/monoid.tung
+use flock/algebra/whole/semigroup.tung
 use flock/functor.tung
 use flock/functor/applicative.tung
 use flock/functor/bifunctor.tung
-use flock/functor/cata.tung
+use flock/functor/hath_cata.tung
+use flock/functor/hath_traverse.tung
 use flock/functor/monad.tung
-use flock/functor/traverse.tung
 use flock/order/lattice.tung
 use flock/order/lattice_distributive.tung
 use flock/order/semilattice_lower.tung
 use flock/order/semilattice_upper.tung
 
 show ilk ∏: [α: *, β: *, *] {
-  boþ: [α, β, α ∏ β]
+  both: [α, β, α ∏ β]
 }
 
-show let project₀: [@α: *, @β: *, α boþ _: α ∏ β, α] ≔ α
+show let forthcast₀: [@α: *, @β: *, α both _: α ∏ β, α] ≔ α
 
-show let project₁: [@α: *, @β: *, α boþ β: α ∏ β, β] ≔ β
+show let forthcast₁: [@α: *, @β: *, α both β: α ∏ β, β] ≔ β
 
-show let swap: [@α: *, @β: *, a boþ b: α ∏ β, β ∏ α] ≔ b boþ a
+show let swap: [@α: *, @β: *, a both b: α ∏ β, β ∏ α] ≔ b both a
 
 bizen: ∏ bifunctor {
-  let bimap: [a boþ b:, f:, g:] ≔ (a f) boþ (b g)
+  let biwarp: [a both b:, f:, g:] ≔ (a f) both (b g)
 
-  let bimap_sameness_sameness ≔ {_ boþ _ ^ reflect}
-  let bimap_bimap ≔ {_ boþ _, _, _, _, _ ^ reflect}
+  let biwarp_is_is ≔ {_ both _ ^ backbend}
+  let biwarp_biwarp ≔ {_ both _, _, _, _, _ ^ backbend}
 }
 
 bizen: [@α: *, (α ∏) functor] {
-  let map: [þing:, f:] ≔ þing bimap sameness f
+  let warp: [thing:, f:] ≔ thing biwarp is f
 
-  let map_sameness ≔ {_ boþ _ ^ reflect}
+  let warp_is ≔ {_ both _ ^ backbend}
 }
 
 bizen: [@α: *, @: α monoid, (α ∏) applicative] {
-  let pure: [b:] ≔ ∅ boþ b
-  let apply: [a₀ boþ b:, a₁ boþ f:] ≔ (a₀ · a₁) boþ (b f)
+  let sheer: [b:] ≔ ∅ both b
+  let apply: [a₀ both b:, a₁ both f:] ≔ (a₀ · a₁) both (b f)
 
-  let apply_sameness_pure ≔ sorry
-  let pure_apply_pure ≔ sorry
+  let apply_is_sheer ≔ sorry
+  let sheer_apply_sheer ≔ sorry
   let apply_apply ≔ sorry
-  let pure_apply ≔ sorry
+  let sheer_apply ≔ sorry
 }
 
 bizen: [@α: *, @: α monoid, (α ∏) monad] {
-  let flat: [α boþ (β boþ γ):] ≔
-    (α · β) boþ γ
+  let flat: [α both (β both γ):] ≔
+    (α · β) both γ
 
-  let pure_map_flat ≔ sorry
-  let map_pure_flat ≔ sorry
+  let sheer_warp_flat ≔ sorry
+  let warp_sheer_flat ≔ sorry
 }
 
-bizen: [@α: *, (α ∏) cata] {
-  let fold₀: [_ boþ a:, b:, f:] ≔ a f b
-  let fold₁: [_ boþ a:, b:, f:] ≔ b f a
+bizen: [@α: *, (α ∏) hath_cata] {
+  let gather₀: [_ both a:, b:, f:] ≔ a f b
+  let gather₁: [_ both a:, b:, f:] ≔ b f a
 }
 
-bizen: [@α: *, (α ∏) haþ_traverse] {
-  let traverse: [a boþ b:, f:] ≔
-    (b f) map (a boþ)
+bizen: [@α: *, (α ∏) hath_traverse] {
+  let traverse: [a both b:, f:] ≔
+    (b f) warp (a both)
 }
 
 bizen: [@α: *, @: α semilattice_lower,
   @β: *, @: β semilattice_lower, (α ∏ β) semilattice_lower] {
-  let ∧: [a₀ boþ b₀:, a₁ boþ b₁:] ≔ (a₀ ∧ a₁) boþ (b₀ ∧ b₁)
+  let ∧: [a₀ both b₀:, a₁ both b₁:] ≔ (a₀ ∧ a₁) both (b₀ ∧ b₁)
 
   let ∧_absorb ≔ sorry
   let ∧_commute ≔ sorry
@@ -75,7 +75,7 @@ bizen: [@α: *, @: α semilattice_lower,
 
 bizen: [@α: *, @: α semilattice_upper,
   @β: *, @: β semilattice_upper, (α ∏ β) semilattice_upper] {
-  let ∨: [a₀ boþ b₀:, a₁ boþ b₁:] ≔ (a₀ ∨ a₁) boþ (b₀ ∨ b₁)
+  let ∨: [a₀ both b₀:, a₁ both b₁:] ≔ (a₀ ∨ a₁) both (b₀ ∨ b₁)
 
   let ∨_absorb ≔ sorry
   let ∨_commute ≔ sorry
@@ -93,11 +93,11 @@ bizen: [@α: *, @: α lattice_distributive,
   let ∨_∧ ≔ sorry
 }
 
-show let uncurry: [@α: *, @β: *, @γ: *, a boþ b: α ∏ β, f: [α, β, γ], γ] ≔
+show let uncurry: [@α: *, @β: *, @γ: *, a both b: α ∏ β, f: [α, β, γ], γ] ≔
   a f b
 
 show let uncurry₃: [
   @α: *, @β: *, @γ: *, @δ: *,
-  a boþ (b boþ c): α ∏ (β ∏ γ),
+  a both (b both c): α ∏ (β ∏ γ),
   f: [α, β, γ, δ], δ
 ] ≔ a f b c

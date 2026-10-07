@@ -1,4 +1,4 @@
--- | the dependent source boundary useþ one syntax and namespace for types and
+-- | the dependent source boundary useth one syntax and namespace for types and
 -- values. only closed, kernel-checked definitions enter a source program.
 module Tung.Dependent.Source
   ( SourceProgram,
@@ -52,16 +52,16 @@ import Tung.Dependent.Syntax hiding (Lambda, Literal)
 import Tung.Identity (ModuleId (..))
 import Tung.Token (SourceFailure (..))
 
--- a root module and þe modules it useþ, keyed by `use` path. each is checked
+-- a root module and the modules it useth, keyed by `use` path. each is checked
 -- once, in dependency order, and modules already compiled are reused
--- unchanged; a cycle is an error. a root þat endeþ in `yield` returneþ þe
--- yielded expression, checked against þe finished module.
+-- unchanged; a cycle is an error. a root that endeth in `yield` returneth the
+-- yielded expression, checked against the finished module.
 compileSnapshot :: Map.Map String SourceProgram -> ModuleId -> SourceSnapshot -> Map.Map String SourceSnapshot -> Either CompileFailure (SourceProgram, Maybe K.Inferred)
 compileSnapshot compiled owner source modules = do
   (program, yielded) <- Modules.compileProject insertDeclaration compiled owner source modules
   (program,) <$> traverse (Error.compilationFailure CheckFailure . inferIn program) yielded
 
--- þe named modules and everyþing þey use.
+-- the named modules and everything they use.
 compileImports :: Map.Map String SourceProgram -> Map.Map String SourceSnapshot -> [String] -> Either CompileFailure (Map.Map String SourceProgram)
 compileImports = Modules.compileImports insertDeclaration
 
@@ -77,5 +77,5 @@ inferIn program@SourceProgram {..} expression = do
 normaliseSourceExpression :: SourceProgram -> String -> Either String Term
 normaliseSourceExpression program@SourceProgram {..} source = do
   result <- inferSourceExpression program source
-  -- source inference recheckeþ the generalised term before raw NBE can see it.
+  -- source inference rechecketh the generalised term before raw NBE can see it.
   N.normalise (globals programEnvironment) 0 (K.inferredTerm result)

@@ -1,0 +1,75 @@
+use flock/hath_same.tung
+use flock/order/hath_at_most.tung
+use ilk/three.tung
+use ilk/two.tung
+
+## a decidable partial order.
+show flock order_half: [α: *, @: α hath_≤, *] {
+  let ≤_backbend: [a: α, (a ≤ a) = yea]
+  let ≤_antievenmete: [a: α, b: α, >{≤, a ≤ b, b ≤ a, a ≍ b} = yea]
+  let ≤_throughgo: [a: α, b: α, c: α, >{≤, a ≤ b, b ≤ c, a, c} = yea]
+}
+
+bizen: 𝟚 order_half {
+  let ≤_backbend ≔ {
+    yea;
+    nay ^ backbend
+  }
+  let ≤_antievenmete ≔ {
+    yea, yea;
+    yea, nay;
+    nay, yea;
+    nay, nay ^ backbend
+  }
+  let ≤_throughgo ≔ {
+    yea, nay, _;
+    yea, yea, yea;
+    yea, yea, nay;
+    nay, yea, yea;
+    nay, yea, nay;
+    nay, nay, yea;
+    nay, nay, nay ^ backbend
+  }
+}
+
+bizen: 𝟛 order_half {
+  let ≤_backbend ≔ {
+    fore;
+    mid;
+    aft ^ backbend
+  }
+  let ≤_antievenmete ≔ {
+    fore, fore;
+    fore, mid;
+    fore, aft;
+    mid, fore;
+    mid, mid;
+    mid, aft;
+    aft, fore;
+    aft, mid;
+    aft, aft ^ backbend
+  }
+  let ≤_throughgo ≔ {
+    mid, fore, _;
+    aft, fore, _;
+    aft, mid, _;
+    fore, fore, fore;
+    fore, fore, mid;
+    fore, fore, aft;
+    fore, mid, fore;
+    fore, mid, mid;
+    fore, mid, aft;
+    fore, aft, fore;
+    fore, aft, mid;
+    fore, aft, aft;
+    mid, mid, fore;
+    mid, mid, mid;
+    mid, mid, aft;
+    mid, aft, fore;
+    mid, aft, mid;
+    mid, aft, aft;
+    aft, aft, fore;
+    aft, aft, mid;
+    aft, aft, aft ^ backbend
+  }
+}

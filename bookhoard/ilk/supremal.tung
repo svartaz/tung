@@ -1,3 +1,0 @@
-show ilk _supremal: [a: *, *] {
-  supremal: [a, a _supremal]
-}

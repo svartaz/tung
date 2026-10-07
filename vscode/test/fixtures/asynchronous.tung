@@ -1,14 +1,14 @@
 use ground.tung
-use ilk/option.tung
+use ilk/maybe.tung
 
-let total: [left: ℤ option, right: ℤ option, ℤ] ≔ match left, right {
+let whole: [left: ℤ maybe, right: ℤ maybe, ℤ] ≔ match left, right {
   l some, r some ^ l + r,
   _, _ ^ +0
 }
 
-let answer: ℤ deed ≔ (1000 sleep) þen ((+20 pure) fork $ map_flat { left ^
-    (+22 pure) fork $ map_flat { right ^ (left wait) lift₂ (right wait) total }
+let answer: ℤ deed ≔ (1000 sleep) then ((+20 sheer) fork $ warp_flat { left ^
+    (+22 sheer) fork $ warp_flat { right ^ (left wait) lift₂ (right wait) whole }
 })
 
 let main: 𝟙 deed ≔
-  ('async' write_line) þen (answer map to_text $ map_flat write_line)
+  ('async' write_line) then (answer warp to_text $ warp_flat write_line)

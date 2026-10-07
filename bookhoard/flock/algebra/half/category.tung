@@ -1,0 +1,16 @@
+use combinator.tung
+use flock/algebra/half/semigroupoid.tung
+
+show flock category: [⇨: [*, *, *], @: ⇨ semigroupoid, *] {
+  let is: [@α: *, α ⇨ α]
+
+  let is_▷: [@α: *, @β: *, f: α ⇨ β, (is ▷ f) = f]
+  let ▷_is: [@α: *, @β: *, f: α ⇨ β, (f ▷ is) = f]
+}
+
+bizen fallback: → category {
+  let is: [a:] ≔ a
+
+  let is_▷ ≔ {_ ^ backbend}
+  let ▷_is ≔ {_ ^ backbend}
+}

@@ -37,7 +37,7 @@ group =
 
 nestedImports :: Test
 nestedImports = withProject files "main.tung" \result ->
-  expectEq "loadeþ nested relative imports" (Right expected) (projectContents <$> result)
+  expectEq "loadeth nested relative imports" (Right expected) (projectContents <$> result)
   where
     files =
       [ ("main.tung", "use lib/a.tung let main: [_:] ≔ only"),
@@ -55,21 +55,21 @@ nestedImports = withProject files "main.tung" \result ->
     projectContents project = (projectSource project, projectImports project)
 
 preparedProject :: Test
-preparedProject = withProject [("main.tung", "use dep.tung let answer ≔ value"), ("dep.tung", "show let value ≔ +41")] "main.tung" \case
+preparedProject = withProject [("main.tung", "use dep.tung let answer ≔ worth"), ("dep.tung", "show let worth ≔ +41")] "main.tung" \case
   Left message -> pure (Just message)
   Right Project {projectPath, projectSource, projectImports} ->
-    expectEq "prepared project checkeþ and inspecteþ a type" (Right "ℤ") (compileProject (SourceModule projectPath) projectSource projectImports >>= (`typeOfName` "answer"))
+    expectEq "prepared project checketh and inspecteth a type" (Right "ℤ") (compileProject (SourceModule projectPath) projectSource projectImports >>= (`typeOfName` "answer"))
 
 localImportPaths :: Test
 localImportPaths = withDirectory \root -> do
   let mainPath = root </> "main.tung"
       depPath = root </> "dep.tung"
-  writeProject root [("main.tung", "use dep.tung"), ("dep.tung", "show let value ≔ +1")]
+  writeProject root [("main.tung", "use dep.tung"), ("dep.tung", "show let worth ≔ +1")]
   canonicalMain <- canonicalizePath mainPath
   canonicalDep <- canonicalizePath depPath
   result <- loadProjectFile [] mainPath
   expectEq
-    "retaineþ owning filesystem paths"
+    "retaineth owning filesystem paths"
     (Just (canonicalMain, canonicalDep))
     ( either
         (const Nothing)
@@ -79,48 +79,48 @@ localImportPaths = withDirectory \root -> do
 
 moduleRootImport :: Test
 moduleRootImport = withDirectory \root -> do
-  let project = root </> "project"
+  let project = root </> "forthcast"
       modules = root </> "modules"
       source = "show let shared ≔ +7"
-  writeProject root [("project/main.tung", "use shared.tung"), ("modules/shared.tung", source)]
+  writeProject root [("forthcast/main.tung", "use shared.tung"), ("modules/shared.tung", source)]
   result <- loadProjectFile [modules] (project </> "main.tung")
-  expectEq "loadeþ an import from a module root" (Just source) (either (const Nothing) (Map.lookup "shared.tung" . projectImports) result)
+  expectEq "loadeth an import from a module root" (Just source) (either (const Nothing) (Map.lookup "shared.tung" . projectImports) result)
 
 localShadowsModuleRoot :: Test
 localShadowsModuleRoot = withDirectory \root -> do
-  let project = root </> "project"
+  let project = root </> "forthcast"
       modules = root </> "modules"
       localSource = "show let shared ≔ +2"
   writeProject
     root
-    [ ("project/main.tung", "use shared.tung"),
-      ("project/shared.tung", localSource),
+    [ ("forthcast/main.tung", "use shared.tung"),
+      ("forthcast/shared.tung", localSource),
       ("modules/shared.tung", "show let shared ≔ +1")
     ]
   result <- loadProjectFile [modules] (project </> "main.tung")
-  expectEq "local use precedeþ a module root" (Just localSource) (either (const Nothing) (Map.lookup "shared.tung" . projectImports) result)
+  expectEq "local use precedeth a module root" (Just localSource) (either (const Nothing) (Map.lookup "shared.tung" . projectImports) result)
 
 ambiguousModuleRoots :: Test
 ambiguousModuleRoots = withDirectory \root -> do
-  let project = root </> "project"
+  let project = root </> "forthcast"
       left = root </> "left"
       right = root </> "right"
   writeProject
     root
-    [ ("project/main.tung", "use shared.tung"),
+    [ ("forthcast/main.tung", "use shared.tung"),
       ("left/shared.tung", "show let left ≔ +1"),
       ("right/shared.tung", "show let right ≔ +2")
     ]
   result <- loadProjectFile [left, right] (project </> "main.tung")
-  expect "rejecteþ duplicate module-root matches" (either (isInfixOf "ambiguous use 'shared.tung'") (const False) result)
+  expect "rejecteth duplicate module-root matches" (either (isInfixOf "ambiguous use 'shared.tung'") (const False) result)
 
 missingImport :: Test
 missingImport = withProject [("main.tung", "use absent.tung")] "main.tung" \result ->
-  expect "reporteþ the owner of a missing use" (either (isInfixOf "from '") (const False) result)
+  expect "reporteth the owner of a missing use" (either (isInfixOf "from '") (const False) result)
 
 ambiguousRelativeImport :: Test
 ambiguousRelativeImport = withProject files "main.tung" \result ->
-  expect "rejecteþ one use spelling for two files" (either (isInfixOf "ambiguous use 'shared.tung'") (const False) result)
+  expect "rejecteth one use spelling for two files" (either (isInfixOf "ambiguous use 'shared.tung'") (const False) result)
   where
     files =
       [ ("main.tung", "use left/a.tung use right/b.tung"),
@@ -138,13 +138,13 @@ canonicalAlias = withDirectory \root -> do
   writeProject
     root
     [ ("main.tung", "use source.tung use alias.tung"),
-      ("source.tung", "show let value ≔ +1")
+      ("source.tung", "show let worth ≔ +1")
     ]
   createFileLink sourcePath aliasPath
   result <- loadProjectFile [] mainPath
   expect
-    "rejecteþ two import paths for one canonical file"
-    (either (isInfixOf "resolveþ to the same file") (const False) result)
+    "rejecteth two import paths for one canonical file"
+    (either (isInfixOf "resolveth to the same file") (const False) result)
 
 withProject :: [(FilePath, String)] -> FilePath -> (Either String Project -> Test) -> Test
 withProject files entry assertion =

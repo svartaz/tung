@@ -53,14 +53,14 @@ data Recursion = Recursion
     recursionQuantified :: [(Int, Plicity)],
     -- direct children of the matched value and their induction hypotheses.
     recursionHypotheses :: [(Int, Int)],
-    -- present when a call reacheþ past a direct child.
+    -- present when a call reacheth past a direct child.
     recursionMemo :: Maybe Memo
   }
 
--- course-of-values recursion, as lean's `brecOn`: þe motive is
--- `r{below: Below x, now: P x}`, where `Below x` holdeþ þe records of every
--- recursive descendant. each known descendant value mapeþ to a local and þe
--- projections þat reach its record.
+-- course-of-values recursion, as lean's `brecOn`: the motive is
+-- `r{below: Below x, now: P x}`, where `Below x` holdeth the records of every
+-- recursive descendant. each known descendant value mapeth to a local and the
+-- projections that reach its record.
 data Memo = Memo
   { memoType :: N.Value,
     memoEntries :: [(N.Value, (Int, [String]))]
@@ -98,7 +98,7 @@ requireUniverse Scope {scopeContext} value =
       pure level
     _ -> E.failure "annotation is not a type"
 
--- a let-bound local carrieþ its value, so conversion seeþ through it.
+-- a let-bound local carrieth its value, so conversion seeth through it.
 define :: Scope -> Maybe String -> N.Value -> N.Value -> Scope
 define Scope {..} name value ty =
   Scope (K.Context (value : K.contextValues scopeContext) (ty : K.contextTypes scopeContext)) (bindingName name : scopeNames) scopeRecursions

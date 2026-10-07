@@ -23,7 +23,7 @@ let constant₁: [@α: *, @β: *, a: α, _: β, α] ≔ a
 let constant₂: [@α: *, @β: *, α, β, α] ≔ {a, _ ^ a}
 let constant₃ ≔ fall @α: *, @β: *, a: α, b: β, α ^ a
 
-# infer type inputs or supply þem with `@`
+# infer type inputs or supply them with `@`
 let greeting: text ≔ 'hello' constant₁ 42
 let explicit-greeting: text ≔ 'hello' constant₁ @text @ℤ 42
 # combine a positional argument with a typed argument and result
@@ -55,9 +55,9 @@ ilk 𝟚: * {
   yea: 𝟚,
   nay: 𝟚
 }
-ilk option: [α: *, *] {
-  empty: α option,
-  some: [a: α, α option]
+ilk maybe: [α: *, *] {
+  empty: α maybe,
+  some: [a: α, α maybe]
 }
 
 # match a value
@@ -79,21 +79,21 @@ let age ≔ older.age
 
 # define a type class
 show flock functor: [ϝ: [*, *], *] {
-  let map: [@α: *, @β: * α ϝ, [α, β], β ϝ]
+  let warp: [@α: *, @β: * α ϝ, [α, β], β ϝ]
 
-  let map_sameness: [@α: *, b: α ϝ, (b map sameness) = b]
+  let warp_is: [@α: *, b: α ϝ, (b warp is) = b]
 }
 
 show flock applicative: [ϝ: [*, *], @: ϝ functor, *] {
-  let pure: [@α: *, α, α f]
+  let sheer: [@α: *, α, α f]
   let apply: [@α: *, @β: *, a f, [a, β] f, β f]
 
   # omitted laws
 }
 
 # implement a type class
-bizen: option functor {
-  let map ≔ {
+bizen: maybe functor {
+  let warp ≔ {
     none,   _ ^ none,
     a some, f ^ a f $ some
   }

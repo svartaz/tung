@@ -2,7 +2,7 @@ ilk bool: * { no: bool, yes: bool }
 
 ilk nat: * {
   zero: nat,
-  succeed: [nat, nat]
+  heir: [nat, nat]
 }
 
 ilk list: [α: *, *] {
@@ -10,59 +10,59 @@ ilk list: [α: *, *] {
   ‥: [head: α, tail: α list, α list]
 }
 
-## a case function matcheþ its inputs in order.
+## a case function matcheth its inputs in order.
 let not: [bool, bool] ≔ { no ^ yes, yes ^ no }
 
-## `;` joineþ rows þat share a result.
+## `;` joineth rows that share a result.
 let both: [bool, bool, bool] ≔ {
   yes, yes ^ yes,
   yes, no;
   no,  _   ^ no
 }
 
-## recursion passeþ a direct child of þe matched input.
-let plus: [x: nat, y: nat, nat] ≔ match x {
-  zero      ^ y,
-  n succeed ^ (n plus y) succeed
+## recursion passeth a direct child of the matched input.
+let plus: [nat, nat, nat] ≔ {
+  zero,   y ^ y,
+  n heir, y ^ (n plus y) heir
 }
 
-let length: [@α: *, l: α list, nat] ≔ match l {
+let length: [@α: *, α list, nat] ≔ {
   ∅        ^ zero,
-  _ ‥ tail ^ (tail length) succeed
+  _ ‥ tail ^ (tail length) heir
 }
 
-## oþer inputs may change, as an accumulator doth.
-let reverse_onto: [@α: *, l: α list, done: α list, α list] ≔ match l {
-  ∅           ^ done,
-  head ‥ tail ^ tail reverse_onto (head ‥ done)
+## other inputs may change, as an accumulator doth.
+let reverse_onto: [@α: *, α list, α list, α list] ≔ {
+  ∅,           done ^ done,
+  head ‥ tail, done ^ tail reverse_onto (head ‥ done)
 }
 
-let map: [@α: *, @β: *, l: α list, f: [α, β], β list] ≔ match l {
-  ∅           ^ ∅,
-  head ‥ tail ^ (head f) ‥ (tail map f)
+let warp: [@α: *, @β: *, α list, [α, β], β list] ≔ {
+  ∅,           _ ^ ∅,
+  head ‥ tail, f ^ (head f) ‥ (tail warp f)
 }
 
 ## several columns and nested patterns.
-let equal: [nat, nat, bool] ≔ {
+let same: [nat, nat, bool] ≔ {
   zero,      zero       ^ yes,
-  zero,      _ succeed;
-  _ succeed, zero       ^ no,
-  m succeed, n succeed  ^ m equal n
+  zero,      _ heir;
+  _ heir, zero       ^ no,
+  m heir, n heir  ^ m same n
 }
 
 let at_least_two: [nat, bool] ≔ {
-  (_ succeed) succeed ^ yes,
+  (_ heir) heir ^ yes,
   _                   ^ no
 }
 
-## a call may pass any descendant of þe matched input, as in agda.
+## a call may pass any descendant of the matched input, as in agda.
 let fibonacci: [nat, nat] ≔ {
   zero                ^ zero,
-  zero succeed        ^ zero succeed,
-  (n succeed) succeed ^ ((n succeed) fibonacci) plus (n fibonacci)
+  zero heir        ^ zero heir,
+  (n heir) heir ^ ((n heir) fibonacci) plus (n fibonacci)
 }
 
 let pairs: [@α: *, l: α list, count: nat, nat] ≔ match l {
-  _ ‥ (_ ‥ tail) ^ tail pairs (count succeed),
+  _ ‥ (_ ‥ tail) ^ tail pairs (count heir),
   _              ^ count
 }

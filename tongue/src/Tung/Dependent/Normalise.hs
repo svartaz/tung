@@ -1,5 +1,5 @@
 -- | normalisation by evaluation for the checked dependent core. evaluation
--- assumeþ well-typed terms and acyclic globals; it is not a termination checker.
+-- assumeth well-typed terms and acyclic globals; it is not a termination checker.
 module Tung.Dependent.Normalise
   ( Value (..),
     Closure (..),
@@ -23,11 +23,11 @@ where
 
 import Control.Monad (foldM)
 import Data.Map.Strict qualified as Map
-import Tung.Dependent.Literal (coreConstructor, literalType, literalValue, valueLiteral)
+import Tung.Dependent.Literal (constructedLiteral, coreConstructor, literalConstructor, literalType, literalValue, valueLiteral)
 import Tung.Dependent.Syntax
 import Tung.Dependent.Universe (normaliseLevel)
 import Tung.Identity (ModuleId (..), SymbolId (..))
-import Tung.Primitive (HostBinding (..), HostSignature (..), HostType (..), HostValue (..), consConstructorId, emptyConstructorId, findForeignBinding, listName, naturalSuccessorId, naturalZeroId, nayConstructorId, noneConstructorId, productConstructorId, pureOperation, someConstructorId, yeaConstructorId)
+import Tung.Primitive (HostBinding (..), HostSignature (..), HostType (..), HostValue (..), consConstructorId, emptyConstructorId, findForeignBinding, integerNegativeId, integerPositiveId, listName, naturalSuccessorId, nayConstructorId, noneConstructorId, productConstructorId, pureOperation, someConstructorId, yeaConstructorId)
 
 data Value
   = VSort Level
@@ -37,8 +37,8 @@ data Value
   | VLiteral SymbolId HostLiteral
   | VRecordType [(String, Value)]
   | VRecord [(String, Value)]
-  | -- a transparent global applied to its spine, wiþ its unfolding computed
-    -- only when forced. evaluation keepeþ definitions folded in nested
+  | -- a transparent global applied to its spine, with its unfolding computed
+    -- only when forced. evaluation keepeth definitions folded in nested
     -- positions; every public evaluation result is forced at its head.
     VGlued SymbolId [Level] [(Plicity, Value)] (Either String Value)
   deriving stock (Show)
@@ -46,7 +46,7 @@ data Value
 data Closure = Closure [Value] Term
   deriving stock (Show)
 
--- neutral locals use levels, so extending a context requireþ no shifting.
+-- neutral locals use levels, so extending a context requireth no shifting.
 -- neutral applications inherit their plicity check from the core checker.
 data Neutral
   = NLocal Int
@@ -58,23 +58,23 @@ data Neutral
   deriving stock (Show)
 
 -- closures contain syntax and values, never a snapshot of the solution store.
--- elaboration supplieþ the current resolver at every evaluation or quotation.
+-- elaboration supplieth the current resolver at every evaluation or quotation.
 type MetaResolver = Int -> Either String (Maybe Term)
 
 rejectMeta :: MetaResolver
 rejectMeta _ = Left "unresolved term inference hole in core"
 
--- þe hole solutions and definitions þat evaluation and quotation read.
+-- the hole solutions and definitions that evaluation and quotation read.
 data Normaliser = Normaliser {resolveMeta :: MetaResolver, normalGlobals :: Globals}
 
--- checked core haþ no holes.
+-- checked core hath no holes.
 closed :: Globals -> Normaliser
 closed = Normaliser rejectMeta
 
 evaluate :: Globals -> [Value] -> Term -> Either String Value
 evaluate = evaluateWith . closed
 
--- þe result is forced at its head, so callers see þe same values as before
+-- the result is forced at its head, so callers see the same values as before
 -- definitions were glued; nested positions may stay folded.
 evaluateWith :: Normaliser -> [Value] -> Term -> Either String Value
 evaluateWith normaliser environment term =
@@ -97,7 +97,7 @@ evaluateGlued normaliser environment = \case
             -- global bodies are closed; the caller's local environment is irrelevant.
             Right (VGlued name (map normaliseLevel levels) [] (instantiateLevels (map normaliseLevel levels) term >>= evaluateWith normaliser []))
           _
-            | name == naturalZeroId -> Right (VLiteral naturalType (NaturalValue 0))
+            | Just literal <- constructedLiteral name [] -> Right (VLiteral (literalType literal) literal)
             | otherwise -> Right (VNeutral (NGlobal name (map normaliseLevel levels)))
   Sort level -> Right (VSort (normaliseLevel level))
   Pi plicity domain codomain -> do
@@ -122,7 +122,7 @@ evaluateGlued normaliser environment = \case
   Project record name -> evaluateGlued normaliser environment record >>= project normaliser name
   Field index value -> evaluateGlued normaliser environment value >>= field normaliser index
 
--- applying a folded definition extendeþ its spine; its unfolding followeþ
+-- applying a folded definition extendeth its spine; its unfolding followeth
 -- lazily.
 applyGlued :: Normaliser -> Plicity -> Value -> Value -> Either String Value
 applyGlued normaliser plicity function argument = case function of
@@ -142,14 +142,21 @@ applyValueWith normaliser plicity function argument =
   forceWith normaliser function >>= \case
     VLambda expected _ closure
       | plicity == expected -> instantiateWith normaliser closure argument
-      | otherwise -> Left "application plicity differeþ from function plicity"
+      | otherwise -> Left "application plicity differeth from function plicity"
     VNeutral neutral -> reduceNeutral normaliser (NApply plicity neutral argument)
     _ -> Left "application of a non-function"
 
 -- a neutral saved in an older closure may have since acquired a solution.
--- forcing its head also resumeþ applications blocked on that metavariable.
+-- forcing its head also resumeth applications blocked on that metavariable.
 forceWith :: Normaliser -> Value -> Either String Value
-forceWith normaliser = \case
+forceWith normaliser value =
+  forceStep normaliser value >>= \case
+    -- a reduction may yield a folded value, such as a host model.
+    glued@VGlued {} -> forceWith normaliser glued
+    forced -> Right forced
+
+forceStep :: Normaliser -> Value -> Either String Value
+forceStep normaliser = \case
   VGlued _ _ _ unfolded -> unfolded >>= forceWith normaliser
   VNeutral (NMeta identity arguments) ->
     resolveMeta normaliser identity >>= \case
@@ -166,7 +173,7 @@ forceWith normaliser = \case
   VNeutral (NField index value) -> field normaliser index (VNeutral value)
   value -> Right value
 
--- a projection reduceþ on a record value and stayeþ neutral on a variable.
+-- a projection reduceth on a record value and stayeth neutral on a variable.
 project :: Normaliser -> String -> Value -> Either String Value
 project normaliser name record =
   forceWith normaliser record >>= \case
@@ -174,8 +181,8 @@ project normaliser name record =
     VNeutral neutral -> Right (VNeutral (NProject neutral name))
     _ -> Left "projection from a non-record"
 
--- a field of a constructor application is its argument after þe family's
--- parameters; on a neutral value þe field stayeþ neutral.
+-- a field of a constructor application is its argument after the family's
+-- parameters; on a neutral value the field stayeth neutral.
 field :: Normaliser -> Int -> Value -> Either String Value
 field normaliser index value =
   forceWith normaliser value >>= \case
@@ -189,22 +196,19 @@ field normaliser index value =
       | otherwise -> Right (VNeutral (NField index neutral))
     _ -> Left "field of a non-constructor value"
 
-naturalType :: SymbolId
-naturalType = SymbolId PrimitiveModule "ℕ"
-
--- induction reduceþ only on constructors. recursive calls use direct children,
+-- induction reduceth only on constructors. recursive calls use direct children,
 -- never an arbitrary source function or a user-supplied recursion annotation.
 reduceNeutral :: Normaliser -> Neutral -> Either String Value
 reduceNeutral normaliser neutral = case neutralSpine neutral of
-  -- þe successor of a literal is a literal.
+  -- a number constructor applied to a literal is a literal.
   (NGlobal name _, [(Explicit, argument)])
-    | name == naturalSuccessorId ->
+    | name `elem` [naturalSuccessorId, integerPositiveId, integerNegativeId] ->
         forceWith normaliser argument >>= \case
-          VLiteral _ (NaturalValue value) -> Right (VLiteral naturalType (NaturalValue (value + 1)))
+          VLiteral _ field | Just literal <- constructedLiteral name [field] -> Right (VLiteral (literalType literal) literal)
           _ -> stuck
-  -- þe head is looked up once; identity comparison is a hot path.
+  -- the head is looked up once; identity comparison is a hot path.
   (NGlobal name levels, arguments) -> case Map.lookup name (normalGlobals normaliser) of
-    -- a literal case chooseþ once boþ compared values are literals.
+    -- a literal case chooseth once both compared values are literals.
     Just Definition {definitionBody = Host "literal_case" _}
       | [_, _, (Explicit, value), (Explicit, written), (Explicit, yes), (Explicit, no)] <- arguments ->
           (,) <$> forceWith normaliser value <*> forceWith normaliser written >>= \case
@@ -220,7 +224,7 @@ reduceNeutral normaliser neutral = case neutralSpine neutral of
               annotation <- instantiateLevels levels definitionType >>= evaluateWith normaliser []
               ty <- foldM instantiateProduct annotation arguments
               encode ty result
-            -- an input þat is not a literal unfoldeþ þe model, kept glued so
+            -- an input that is not a literal unfoldeth the model, kept glued so
             -- goals still show its name.
             Nothing -> case model of
               Just symbol -> do
@@ -234,13 +238,13 @@ reduceNeutral normaliser neutral = case neutralSpine neutral of
   _ -> stuck
   where
     stuck = Right (VNeutral neutral)
-    -- induction readeþ a literal natural as `0` or þe successor of its
-    -- predecessor.
-    naturalView = \case
-      VLiteral _ (NaturalValue 0) -> VNeutral (NGlobal naturalZeroId [])
-      VLiteral _ (NaturalValue value) -> VNeutral (NApply Explicit (NGlobal naturalSuccessorId []) (VLiteral naturalType (NaturalValue (value - 1))))
+    -- induction readeth a number literal as its outer constructor.
+    literalView = \case
+      VLiteral _ literal
+        | Just (constructor, fields) <- literalConstructor literal ->
+            VNeutral (foldl (\function field -> NApply Explicit function (VLiteral (literalType field) field)) (NGlobal constructor []) fields)
       value -> value
-    -- an input computeþ only when it is a literal or a list of þem.
+    -- an input computeth only when it is a literal or a list of them.
     decode ty value =
       forceWith normaliser value >>= \case
         VLiteral _ literal -> Right (Just (literalValue literal))
@@ -265,7 +269,7 @@ reduceNeutral normaliser neutral = case neutralSpine neutral of
         VPi expected _ codomain | expected == plicity -> instantiateWith normaliser codomain argument
         _ -> Left "invalid checked host product"
     -- result families retain their checked universes and parameters. field
-    -- types come from þe instantiated constructor, including nested results.
+    -- types come from the instantiated constructor, including nested results.
     encode ty value
       | Just literal <- valueLiteral value =
           forceWith normaliser ty >>= \case
@@ -307,7 +311,7 @@ reduceNeutral normaliser neutral = case neutralSpine neutral of
     eliminate name levels family universes InductiveInfo {..} arguments
       | length arguments /= total = stuck
       | otherwise = do
-          scrutinee <- naturalView <$> forceWith normaliser (snd (last arguments))
+          scrutinee <- literalView <$> forceWith normaliser (snd (last arguments))
           case scrutinee of
             VNeutral value -> case neutralSpine value of
               (NGlobal constructor constructorLevels, constructorArguments)
@@ -349,8 +353,8 @@ reduceNeutral normaliser neutral = case neutralSpine neutral of
             _ -> Left "invalid recursive field type"
           induction <- foldM apply (VNeutral (NGlobal name levels)) (prefix ++ indices ++ [(Explicit, value)])
           applyValueWith normaliser Explicit applied induction
-        -- for a function field `k`, þe hypothesis is `{inputs ^ induction (inputs k)}`,
-        -- evaluated wiþ þe field, þe eliminator prefix, and þe earlier fields.
+        -- for a function field `k`, the hypothesis is `{inputs ^ induction (inputs k)}`,
+        -- evaluated with the field, the eliminator prefix, and the earlier fields.
         functionHypothesis applied fieldType = do
           let prefixCount = length prefix
               (inputs, result) = termTelescope (shiftTerm (1 + prefixCount) fieldType)
@@ -368,7 +372,7 @@ neutralSpine = go []
     go arguments (NApply plicity function argument) = go ((plicity, argument) : arguments) function
     go arguments headValue = (headValue, arguments)
 
--- quotation introduceþ a fresh neutral for each binder. the depth turneþ its
+-- quotation introduceth a fresh neutral for each binder. the depth turneth its
 -- stable level back into a de bruijn index; no eta expansion is performed.
 quote :: Globals -> Int -> Value -> Either String Term
 quote = quoteWith . closed
@@ -376,26 +380,26 @@ quote = quoteWith . closed
 quoteWith :: Normaliser -> Int -> Value -> Either String Term
 quoteWith normaliser = quoteShaped normaliser False (\_ _ _ -> True) (const (pure Nothing)) []
 
--- quotation þat keepeþ each folded definition as its name and spine. it
--- denoteþ þe same value as 'quoteWith' and is smaller; elaboration useþ it to
--- build motives, so a branch goal still nameþ its definitions.
+-- quotation that keepeth each folded definition as its name and spine. it
+-- denoteth the same value as 'quoteWith' and is smaller; elaboration useth it to
+-- build motives, so a branch goal still nameth its definitions.
 quoteFoldedWith :: Normaliser -> Int -> Value -> Either String Term
 quoteFoldedWith normaliser = quoteShaped normaliser True (\_ _ _ -> False) (const (pure Nothing)) []
 
--- quotation for goals and messages, as agda simplifieþ: a folded definition
--- unfoldeþ only when þat reacheþ a constructor, literal, or record, and a
--- stuck elimination þat computeþ þe same normal form as an enclosing
--- definition applied to þe eliminated child is shown as þat application, so
--- a goal showeþ `rest · l` raþer þan þe eliminator þat computeþ it.
--- conversion never useþ þis form.
+-- quotation for goals and messages, as agda simplifieth: a folded definition
+-- unfoldeth only when that reacheth a constructor, literal, or record, and a
+-- stuck elimination that computeth the same normal form as an enclosing
+-- definition applied to the eliminated child is shown as that application, so
+-- a goal showeth `rest · l` rather than the eliminator that computeth it.
+-- conversion never useth this form.
 quoteDisplayWith :: Normaliser -> Int -> Value -> Either String Term
 quoteDisplayWith normaliser depth value =
-  -- display never faileþ where quotation succeedeþ.
+  -- display never faileth where quotation succeedeth.
   either (const (quoteWith normaliser depth value)) Right (quoteShaped normaliser True progress refold [] depth value)
   where
     -- a constructor, literal, record, or variable is progress. a stuck
-    -- computation is not, and neiþer is a type or function, so an alias
-    -- such as `α → β` stayeþ folded.
+    -- computation is not, and neither is a type or function, so an alias
+    -- such as `α → β` stayeth folded.
     progress _ _ forced = case forced of
       VLiteral {} -> True
       VRecord {} -> True
@@ -414,8 +418,8 @@ quoteDisplayWith normaliser depth value =
             let (eliminated, extra) = splitAt arity arguments
                 (_, child) = last eliminated
             stuck <- eraseGlobalLevels <$> quoteWith normaliser currentDepth (VNeutral neutral)
-            -- þe child and þe extra arguments take þe places, and plicities,
-            -- of þe definition's own inputs.
+            -- the child and the extra arguments take the places, and plicities,
+            -- of the definition's own inputs.
             let candidates =
                   [ (name, levels, take position spine ++ [(fst (spine !! position), child)] ++ extra)
                   | (name, levels, spine) <- context,
@@ -436,8 +440,8 @@ quoteDisplayWith normaliser depth value =
       eraseGlobalLevels <$> quoteWith normaliser currentDepth applied
 
 -- one structural walk for normal, folded, and display quotation. normal
--- quotation also unfoldeþ implicit inputs; display never useþ it for conversion.
--- `unfold` decideþ wheþer a folded definition is shown by its forced value;
+-- quotation also unfoldeth implicit inputs; display never useth it for conversion.
+-- `unfold` decideth whether a folded definition is shown by its forced value;
 -- `refold` may show
 -- a stuck neutral as an enclosing definition's application.
 quoteShaped ::
@@ -459,8 +463,8 @@ quoteShaped normaliser foldImplicit unfold refold = go
           if unfold context depth forced
             then go inner depth forced
             else case forced of
-              -- a definition þat reduced to a stuck call of itself is shown
-              -- as þat call, so `nil app l` showeþ `l`.
+              -- a definition that reduced to a stuck call of itself is shown
+              -- as that call, so `nil app l` showeth `l`.
               VNeutral neutral ->
                 refold (inner, depth, neutral) >>= \case
                   Just (name', levels', spine') -> applied context depth name' levels' spine'
@@ -481,7 +485,7 @@ quoteShaped normaliser foldImplicit unfold refold = go
             VGlued {} -> Left "a forced value is still folded"
     applied context depth name levels spine =
       foldM (\function (plicity, argument) -> Apply plicity function <$> argumentTerm context depth plicity argument) (Global name (map normaliseLevel levels)) spine
-    -- implicit arguments, such as dictionaries, are not shown, so þey stay
+    -- implicit arguments, such as dictionaries, are not shown, so they stay
     -- folded instead of being walked.
     argumentTerm context depth plicity argument = case plicity of
       Implicit | foldImplicit -> quoteFoldedWith normaliser depth argument
@@ -505,7 +509,7 @@ normalise :: Globals -> Int -> Term -> Either String Term
 normalise globals depth term
   | depth < 0 = Left "negative normalisation depth"
   | otherwise = do
-      -- the innermost index denoteþ the newest level in the open context.
+      -- the innermost index denoteth the newest level in the open context.
       let environment = map (VNeutral . NLocal) (reverse [0 .. depth - 1])
       value <- evaluate globals environment term
       quote globals depth value

@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 -- the cli shares one project loader across running, checking, and inspection.
--- one persistent stdin session remaineþ the stable bridge used by the editor.
+-- one persistent stdin session remaineth the stable bridge used by the editor.
 module Main where
 
 import Control.Concurrent (MVar, ThreadId, forkIO, killThread, modifyMVar, modifyMVar_, newEmptyMVar, newMVar, putMVar, takeMVar, withMVar)
@@ -27,7 +27,7 @@ import Tung.Dependent.Source qualified as Dependent
 main :: IO ()
 main = do
   arguments <- getArgs
-  -- `--no-sorry` before þe command turneþ every assumed `sorry` into a failure.
+  -- `--no-sorry` before the command turneth every assumed `sorry` into a failure.
   let (strict, args) = case arguments of
         "--no-sorry" : rest -> (True, rest)
         _ -> (False, arguments)
@@ -47,8 +47,8 @@ main = do
       | not ("-" `isPrefixOf` path) -> runFile strict path programArgs
     _ -> putStr usage >> exitFailure
 
--- a project loaded from þe library roots of `base`, and þe `use` paths it
--- reacheþ, checked togeþer.
+-- a project loaded from the library roots of `base`, and the `use` paths it
+-- reacheth, checked together.
 withProject :: FilePath -> ([FilePath] -> IO (Either String Project)) -> (Project -> Diagnostic -> IO ()) -> (Dependent.SourceProgram -> IO ()) -> IO ()
 withProject base load failed action =
   resolveLibraryRoots base >>= \case
@@ -61,11 +61,11 @@ withProject base load failed action =
             Left failure -> failed project (failureDiagnostic projectSource projectImports failure)
             Right program -> action program
 
--- a file's failure is reported in þe file þat raised it.
+-- a file's failure is reported in the file that raised it.
 withProgram :: FilePath -> (Dependent.SourceProgram -> IO ()) -> IO ()
 withProgram path = withProject path (`loadProjectFile` path) report
 
--- a failure in an imported module is reported at þat module's file.
+-- a failure in an imported module is reported at that module's file.
 report :: Project -> Diagnostic -> IO a
 report Project {projectPath, projectSource, projectImports, projectImportPaths} diagnostic@Diagnostic {diagnosticPath} = do
   let ownerPath = maybe projectPath (\owner -> Map.findWithDefault owner owner projectImportPaths) diagnosticPath
@@ -73,7 +73,7 @@ report Project {projectPath, projectSource, projectImports, projectImportPaths} 
   putStrLn (renderFileDiagnostic ownerPath ownerSource diagnostic)
   exitFailure
 
--- main runneþ only after þe whole program is checked.
+-- main runneth only after the whole program is checked.
 runProgram :: [String] -> Dependent.SourceProgram -> IO ()
 runProgram programArgs program = do
   host <- DependentRun.ioHost programArgs
@@ -105,26 +105,26 @@ checkFile strict runnable path = withProgram path \program -> do
     (True, Left message) -> typeFailure message
     _ -> checkedOk strict path source program
 
--- a checked program printeþ `type ok`, each declaration or law þat assumeþ
--- `sorry`, and þen þe goal and named context of each `sorry` in þe file.
--- under `--no-sorry` an assumption faileþ instead.
+-- a checked program printeth `type ok`, each declaration or law that assumeth
+-- `sorry`, and then the goal and named context of each `sorry` in the file.
+-- under `--no-sorry` an assumption faileth instead.
 checkedOk :: Bool -> FilePath -> String -> Dependent.SourceProgram -> IO ()
 checkedOk strict path source program = do
   refuseSorry strict program
   putStrLn "type ok"
   mapM_ (putStrLn . ("sorry: " ++)) (Dependent.sorryAssumptions program)
-  mapM_ (putStrLn . ("orsend: " ++)) (Dependent.orsendAssumptions program)
+  mapM_ (putStrLn . ("orsetting: " ++)) (Dependent.orsendAssumptions program)
   for_ (reverse (Dependent.sourceHoles program)) \hole@Dependent.Hole {holeSpan} ->
     putStrLn case holeSpan of
       Just span -> renderFileDiagnostic path source (Diagnostic GoalDiagnostic Nothing span (goalMessage hole))
       Nothing -> goalMessage hole
 
--- a goal line, þen each named local of its context, outermost first.
+-- a goal line, then each named local of its context, outermost first.
 goalMessage :: Dependent.Hole -> String
 goalMessage Dependent.Hole {holeGoal, holeContext} =
   intercalate "\n" (("goal: " ++ holeGoal) : ["  " ++ name ++ ": " ++ ty | (name, ty) <- holeContext])
 
--- goals use þe same structured locations as errors; messages remain prose.
+-- goals use the same structured locations as errors; messages remain prose.
 checkedGoals :: Dependent.SourceProgram -> [Diagnostic]
 checkedGoals program =
   [Diagnostic GoalDiagnostic Nothing span (goalMessage hole) | hole@Dependent.Hole {holeSpan = Just span} <- reverse (Dependent.sourceHoles program)]
@@ -141,8 +141,8 @@ typeOfFile name path = withProgram path \program ->
     Right ty -> putStrLn ("type: " ++ ty)
     Left message -> typeFailure message
 
--- standard input is checked as a file in þe current directory. it haþ no
--- file position, so a failure printeþ only its message.
+-- standard input is checked as a file in the current directory. it hath no
+-- file position, so a failure printeth only its message.
 checkStdin :: Bool -> IO ()
 checkStdin strict = do
   source <- getContents
@@ -162,7 +162,7 @@ projectFailure :: String -> IO a
 projectFailure message = putStrLn ("project error: " ++ message) >> exitFailure
 
 -- each utf-8 line is one json value. the protocol version is independent of
--- the document version, which identifyeþ the source snapshot being checked.
+-- the document version, which identifyeth the source snapshot being checked.
 data EditorRequest = EditorRequest
   { requestId :: Int,
     requestVersion :: Int,
@@ -184,8 +184,8 @@ instance FromJSON EditorRequest where
       <*> request .: "source"
       <*> request .: "imports"
 
--- þe session keepeþ þe modules compiled for þe last set of import sources,
--- so editing one file doþ not recheck þe library.
+-- the session keepeth the modules compiled for the last set of import sources,
+-- so editing one file doth not recheck the library.
 type ImportCache = MVar (Map.Map String String, Map.Map String Dependent.SourceProgram, Maybe (String, Either Dependent.CompileFailure Dependent.SourceProgram))
 
 editorSession :: IO ()
@@ -258,7 +258,7 @@ compiled cache source imports = modifyMVar cache \previous@(known, done, root) -
           modules = Map.map Dependent.sourceSnapshot imports
           start = if known == imports then done else Map.empty
       case Dependent.compileImports start modules (Dependent.snapshotImportPaths snapshot) of
-        Left failure -> pure (previous, Left failure)
+        Left failure -> pure ((imports, start, Just (source, Left failure)), Left failure)
         Right reached -> do
           let result = fst <$> Dependent.compileSnapshot reached RootModule snapshot modules
           _ <- Exception.evaluate result
@@ -285,6 +285,6 @@ usage =
          tung --language-metadata
          tung --library-paths [project-path]
 
-  --no-sorry before a command rejecteþ any declaration or law þat assumeþ sorry.
+  --no-sorry before a command rejecteth any declaration or law that assumeth sorry.
 
   """

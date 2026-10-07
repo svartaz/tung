@@ -1,6 +1,6 @@
 -- | pattern matrices and total recursion lower to dependent eliminators.
--- this module lowereþ structural and course-of-values recursion and
--- re-exporteþ þe match api from `Pattern.Match`. general expressions are
+-- this module lowereth structural and course-of-values recursion and
+-- re-exporteth the match api from `Pattern.Match`. general expressions are
 -- delegated to the supplied checking operations.
 module Tung.Dependent.Source.Pattern
   ( ExpressionChecker (..),
@@ -42,8 +42,8 @@ gatherClauses checker@ExpressionChecker {checkerEnvironment = environment, check
                 E.unify (scopeContext scope) written domain
               bind plicity binderName domain codomain (Lambda rest inner) [maybe Wildcard Name binderName | plicity == Explicit]
           | Lambda [] inner <- source -> go scope ty inner inputs columnNames
-          -- an unwritten implicit input belongeþ to a following lambda or case
-          -- function. a match keepeþ the rest of the type as its result.
+          -- an unwritten implicit input belongeth to a following lambda or case
+          -- function. a match keepeth the rest of the type as its result.
           | plicity == Implicit,
             bindsInputs source ->
               bind Implicit Nothing domain codomain source []
@@ -90,7 +90,7 @@ gatherClauses checker@ExpressionChecker {checkerEnvironment = environment, check
       Name name -> lookup (Name name) (zip columnNames [0 :: Int ..]) >>= \position -> if name == "_" then Nothing else Just position
       _ -> Nothing
 
--- `let f:annotation ≔ body` whose body nameþ `f`. the recursion is compiled
+-- `let f:annotation ≔ body` whose body nameth `f`. the recursion is compiled
 -- to the eliminator of one structurally decreasing input.
 elaborateRecursive :: ExpressionChecker -> Scope -> String -> N.Value -> Expression -> Elaboration Term
 elaborateRecursive checker@ExpressionChecker {checkerEnvironment = environment} start name annotation body = do
@@ -104,7 +104,7 @@ elaborateRecursive checker@ExpressionChecker {checkerEnvironment = environment} 
         | (position, Just Split {splitInfo}) <- zip [0 ..] families,
           null (inductiveIndexPlicities splitInfo)
         ]
-      -- candidate checking useþ the same local bindings and induction evidence
+      -- candidate checking useth the same local bindings and induction evidence
       -- as expression checking. failed trials cannot influence later choices.
       select previous [] = maybe (E.failure ("'" ++ name ++ "' needs a structurally decreasing input")) E.raise previous
       select previous ((position, deep) : rest) =
@@ -119,7 +119,7 @@ elaborateRecursive checker@ExpressionChecker {checkerEnvironment = environment} 
             roles = [if level == structuralLevel then Structural else if fixed level Explicit then Fixed level else Quantified | (level, _) <- explicitInputs]
             quantified = [(level, plicity) | (level, plicity, _) <- clauseInputs, level /= structuralLevel, not (fixed level plicity)]
             columnOf level = length [() | (other, Explicit, _) <- clauseInputs, other < level]
-        -- the motive rebindeþ quantified inputs in order after the matched value.
+        -- the motive rebindeth quantified inputs in order after the matched value.
         resultMotive <- recursiveMotive scope annotation clauseInputs structuralLevel (map fst quantified)
         (motive, memo) <-
           if deep
@@ -140,7 +140,7 @@ elaborateRecursive checker@ExpressionChecker {checkerEnvironment = environment} 
         wrapInputs clauseInputs applied
   select Nothing [(position, deep) | deep <- [False, True], position <- positions]
 
--- walk the annotation again wiþ the matched input and quantified inputs
+-- walk the annotation again with the matched input and quantified inputs
 -- replaced by fresh binders; fixed inputs keep their outer locals.
 recursiveMotive :: Scope -> N.Value -> [(Int, Plicity, N.Value)] -> Int -> [Int] -> Elaboration Term
 recursiveMotive scope annotation inputs structuralLevel quantified = do
@@ -170,8 +170,8 @@ recursiveMotive scope annotation inputs structuralLevel quantified = do
               walk continue rest next domain binders
         _ -> E.failure "invalid recursive annotation"
 
--- `[x: T, r{below: Below x, now: P x}]`. `Below` eliminateþ into types: each
--- constructor's record holdeþ, per recursive field, þat field's own record.
+-- `[x: T, r{below: Below x, now: P x}]`. `Below` eliminateth into types: each
+-- constructor's record holdeth, per recursive field, that field's own record.
 -- function fields contribute no entry.
 memoisedMotive :: K.Environment -> Scope -> N.Value -> Term -> Elaboration Term
 memoisedMotive environment scope structuralType resultMotive = do
@@ -195,7 +195,7 @@ memoisedMotive environment scope structuralType resultMotive = do
   _ <- inferCore scope motive
   pure motive
   where
-    -- bind þe fields and þeir type-valued hypotheses, þen build þe record.
+    -- bind the fields and their type-valued hypotheses, then build the record.
     belowMethod current _ [] children = do
       entries <- forM (zip [0 :: Int ..] (reverse children)) \(index, (field, hypothesis)) -> do
         now <- applyResult (N.VNeutral (N.NLocal field))
@@ -204,7 +204,7 @@ memoisedMotive environment scope structuralType resultMotive = do
       pure (Core.RecordType entries)
     belowMethod current ty (field@(_, annotation, _) : rest) children = do
       (fieldLevel, hypothesis, inner, next, wrap) <- methodField current ty field
-      -- only a direct recursive field haþ a record of its own.
+      -- only a direct recursive field hath a record of its own.
       let direct = case annotation of
             Pi {} -> False
             _ -> True
@@ -214,7 +214,7 @@ memoisedMotive environment scope structuralType resultMotive = do
         N.VLambda _ _ closure -> E.instantiate closure argument
         _ -> E.failure "invalid recursive motive"
 
--- `children f arguments` becomeþ the hypothesis applied to quantified inputs.
+-- `children f arguments` becometh the hypothesis applied to quantified inputs.
 recursiveCall :: ExpressionChecker -> Scope -> Recursion -> [Argument] -> Elaboration (Term, N.Value)
 recursiveCall checker scope Recursion {..} arguments = do
   unless (all ((== Explicit) . argumentPlicity) arguments) (E.failure "a recursive call cannot supply implicit arguments")
@@ -258,7 +258,7 @@ recursiveCall checker scope Recursion {..} arguments = do
             Just hypothesis <- lookup level recursionHypotheses ->
               pure (hypothesis, arguments)
         _ -> E.failure "a recursive call must pass a direct child of the matched input"
-      -- a function child's hypothesis first takeþ þe child's inputs.
+      -- a function child's hypothesis first taketh the child's inputs.
       arguments <- traverse (\(plicity, value) -> (plicity,) <$> quote scope value) childArguments
       let term = applyArguments (Local (depth scope - hypothesis - 1)) arguments
       ty <- inferCore scope term

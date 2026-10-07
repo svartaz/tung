@@ -13,13 +13,13 @@ let number: ℤ ≔ +42
 let message ≔ 'hello!'
 
 # define functions
-let sameness: [@α: *, a: α, α] ≔ a
+let is: [@α: *, a: α, α] ≔ a
 let constant: [@α: *, @β: *, a: α, b: β, α] ≔ a
-# infer type inputs or supply þem with `@`
+# infer type inputs or supply them with `@`
 let greeting: text ≔ 'hello' constant +42
 let explicit_greeting: text ≔ 'hello' constant @text @ℤ +42
 # combine a positional argument with a typed argument and result
-let add_after: [x:, y: ℤ, ℤ] ≔ x + y
+let eke_after: [x:, y: ℤ, ℤ] ≔ x + y
 
 # `yield` a value from a local block
 let seven ≔ (
@@ -36,9 +36,9 @@ ilk 𝟚: * {
   yea: 𝟚,
   nay: 𝟚
 }
-ilk option: [a: *, *] {
-  empty: a option,
-  some: [a, a option]
+ilk maybe: [a: *, *] {
+  empty: a maybe,
+  some: [a, a maybe]
 }
 
 # match a value
@@ -51,7 +51,7 @@ let ¬′: [x: 𝟚, 𝟚] ≔ match x {
   yea ^ nay,
   nay ^ yea
 }
-# `;` joineþ rows þat share a result
+# `;` joineth rows that share a result
 let both: [𝟚, 𝟚, 𝟚] ≔ {
   yea, yea ^ yea,
   yea, nay;
@@ -65,26 +65,26 @@ let older ≔ r{≔ someone, age ≔ +2}
 let age ≔ older.age
 
 # define a type class
-flock haþ_describe: [a: *, *] {
+flock hath_describe: [a: *, *] {
   let describe: [a, text]
 }
 
 # implement a type class
-bizen: 𝟚 haþ_describe {
+bizen: 𝟚 hath_describe {
   let describe ≔ {
     yea ^ 'yea',
     nay ^ 'nay'
   }
 }
 
-# a deed is an action þat þe runner performeþ. `þen` sequenceþ deeds
-let greet: [name: text, 𝟙 deed] ≔ ('hello, ' write) þen (name write_line)
+# a deed is an action that the runner performeth. `then` sequenceth deeds
+let greet: [name: text, 𝟙 deed] ≔ ('hello, ' write) then (name write_line)
 
-# `map_flat` passeþ a deed's result to þe next deed
-let roll: 𝟙 deed ≔ random map_flat { luck ^ luck to_text $ write_line }
+# `warp_flat` passeth a deed's result to the next deed
+let roll: 𝟙 deed ≔ random warp_flat { luck ^ luck to_text $ write_line }
 
-# `main` is þe entry point
-let main: 𝟙 deed ≔ >{þen,
+# `main` is the entry point
+let main: 𝟙 deed ≔ >{then,
   'tung' greet,
   seven to_text $ write_line,
   message write_line,

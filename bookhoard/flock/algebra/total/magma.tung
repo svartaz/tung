@@ -1,3 +1,0 @@
-show flock magma: [α: *, *] {
-  let ·: [α, α, α]
-}

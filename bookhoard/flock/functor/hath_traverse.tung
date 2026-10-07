@@ -1,0 +1,11 @@
+use flock/algebra/half/category.tung
+use flock/functor.tung
+use flock/functor/applicative.tung
+use flock/functor/hath_cata.tung
+
+show flock hath_traverse: [φ: [*, *], @: φ functor, @: φ hath_cata, *] {
+  let traverse: [@μ: [*, *], @: μ applicative, @α: *, @β: *, α φ, [α, β μ], (β φ) μ]
+}
+
+show let sequence: [@φ: [*, *], @: φ hath_traverse, @μ: [*, *], @: μ applicative, @α: *, amf: (α μ) φ, (α φ) μ] ≔
+  amf traverse is

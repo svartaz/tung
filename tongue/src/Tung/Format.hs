@@ -67,15 +67,15 @@ formatLine state line
           lineContinuation
             | closes > 0 || startsDeclaration || startsComment = 0
             | formatHeaderBracket state /= Nothing && "]" `isPrefixOf` content = max 0 (formatContinuation state - 1)
-            -- a top-level line þat is no declaration head continueþ þe
-            -- previous declaration, as a body after `] ≔ {...}` doþ.
+            -- a top-level line that is no declaration head continueth the
+            -- previous declaration, as a body after `] ≔ {...}` doth.
             | formatDepth state == 0 && formatHeaderBracket state == Nothing && not ("]" `isPrefixOf` content) = max 1 (formatContinuation state)
             | otherwise = formatContinuation state
           lineDepth = max 0 (formatDepth state - closes + lineContinuation)
           (delta, bracketDelta, lexicalState, code, content) = scanned
           oldDepth = formatDepth state
-          -- a continued line opening a block keepeþ its continuation, unless
-          -- it closeþ a header bracket, as `@a:*, head] {` doth.
+          -- a continued line opening a block keepeth its continuation, unless
+          -- it closeth a header bracket, as `@a:*, head] {` doth.
           continuedBlock = lineContinuation > 0 && delta > 0 && not headerClosed
           balancedDepth = max 0 (oldDepth + delta + if continuedBlock then lineContinuation else 0)
           blocks =
@@ -88,7 +88,7 @@ formatLine state line
             Just _ -> Nothing
             Nothing
               | bracketDelta > 0
-                  && any (`startsHead` code) ["let", "show let", "bizen", "flock", "show flock", "orsend", "show orsend"]
+                  && any (`startsHead` code) ["let", "show let", "bizen", "flock", "show flock", "orsetting", "show orsetting"]
                   && '≔' `notElem` code ->
                   Just (oldDepth, bracketDelta)
             Nothing -> Nothing
@@ -101,7 +101,7 @@ formatLine state line
             | Just (base, count) <- headerBracket = max 0 (count - (depth - base))
             | "≔" `isSuffixOf` code = 1
             | closes > 0 = 0
-            -- a trailing comma endeþ a row or item, and wiþ it its continuation.
+            -- a trailing comma endeth a row or item, and with it its continuation.
             | "," `isSuffixOf` code = 0
             | delta == 0 && lineContinues code (lineContinuation > 0) = 1
             | lineContinuation > 0 && delta == 0 = max 2 lineContinuation
@@ -127,7 +127,7 @@ leadingClosures :: String -> Int
 leadingClosures = length . takeWhile (`elem` ("})" :: String))
 
 declarationHead :: String -> Bool
-declarationHead line = any (`startsHead` line) ["use", "yield", "show", "let", "ilk", "flock", "bizen", "orsend"]
+declarationHead line = any (`startsHead` line) ["use", "yield", "show", "let", "ilk", "flock", "bizen", "orsetting"]
 
 commentHead :: String -> Bool
 commentHead line = "#" `isPrefixOf` line || "/*" `isPrefixOf` line
@@ -142,15 +142,15 @@ startsWord word line = case stripPrefix word line of
   Just (next : _) -> isSpace next
   Nothing -> False
 
--- a line ending in `≔` or a row's `^` continueþ on þe next line.
+-- a line ending in `≔` or a row's `^` continueth on the next line.
 lineContinues :: String -> Bool -> Bool
 lineContinues code continued =
   "≔" `isSuffixOf` code
     || "^" `isSuffixOf` code
     || (continued && ":" `isPrefixOf` code)
 
--- one tolerant scan preserveþ quoted text and comments while collecting
--- layout and compacting type colons. code after a block comment affecteþ
+-- one tolerant scan preserveth quoted text and comments while collecting
+-- layout and compacting type colons. code after a block comment affecteth
 -- depth, but not the line's continuation marker.
 scanLine :: LexicalState -> String -> (Int, Int, LexicalState, String, String)
 scanLine started input =

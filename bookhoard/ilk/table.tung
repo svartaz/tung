@@ -1,15 +1,15 @@
-use equality.tung
-use flock/algebra/partial/category.tung
-use flock/equal.tung
+use flock/algebra/half/category.tung
 use flock/functor.tung
-use flock/functor/cata.tung
-use flock/functor/filter.tung
-use flock/inhold.tung
-use flock/size.tung
+use flock/functor/hath_cata.tung
+use flock/functor/hath_filter.tung
+use flock/hath_inhold.tung
+use flock/hath_same.tung
+use flock/hath_size.tung
 use ilk/list.tung
-use ilk/option.tung
+use ilk/maybe.tung
 use ilk/product.tung
 use ilk/two.tung
+use is.tung
 
 ## a list-backed finite association table.
 show ilk table: [α: *, β: *, *] {
@@ -18,73 +18,73 @@ show ilk table: [α: *, β: *, *] {
 
 show let empty: [@α: *, @β: *, α table β] ≔ list~empty from_list
 
-show let singleton: [@α: *, @β: *, key: α, value: β, α table β] ≔
-  key boþ value $ ‥ list~empty $ from_list
+show let singleton: [@α: *, @β: *, key: α, worth: β, α table β] ≔
+  key both worth $ ‥ list~empty $ from_list
 
 show let entries: [@α: *, @β: *, l from_list: α table β, (α ∏ β) list] ≔
   l
 
-show let lookup: [@α: *, @: α equal, @β: *, l from_list: α table β, key: α, β option] ≔
-  l find { pair ^ key ≍ (pair project₀) } $ map project₁
+show let lookup: [@α: *, @: α hath_≍, @β: *, l from_list: α table β, key: α, β maybe] ≔
+  l find { pair ^ key ≍ (pair forthcast₀) } $ warp forthcast₁
 
-show let put: [@α: *, @: α equal, @β: *,
+show let put: [@α: *, @: α hath_≍, @β: *,
   l from_list: α table β,
   key: α,
-  value: β,
+  worth: β,
   α table β
-] ≔ (key boþ value) ‥ (l filter { pair ^ key ≭ (pair project₀) }) $ from_list
+] ≔ (key both worth) ‥ (l filter { pair ^ key ≭ (pair forthcast₀) }) $ from_list
 
-show let rid: [@α: *, @: α equal, @β: *, l from_list: α table β, key: α, α table β] ≔
-  l filter { pair ^ key ≭ (pair project₀) } $ from_list
+show let rid: [@α: *, @: α hath_≍, @β: *, l from_list: α table β, key: α, α table β] ≔
+  l filter { pair ^ key ≭ (pair forthcast₀) } $ from_list
 
 show let keys: [@α: *, @β: *, l from_list: α table β, α list] ≔
-  l map project₀
+  l warp forthcast₀
 
 show let values: [@α: *, @β: *, l from_list: α table β, β list] ≔
-  l map project₁
+  l warp forthcast₁
 
-bizen: [@α: *, @: α equal, @β: *, (α table β) inhold α] {
+bizen: [@α: *, @: α hath_≍, @β: *, (α table β) hath_∋ α] {
   let ∋: [t:, key:] ≔ (t lookup key) is_some
 }
 
 bizen: [@α: *, (α table) functor] {
-  let map: [l from_list:, f:] ≔
-    l map { pair ^ pair map f } $ from_list
+  let warp: [l from_list:, f:] ≔
+    l warp { pair ^ pair warp f } $ from_list
 
-  let map_sameness ≔ {@β ^ {entries from_list ^
+  let warp_is ≔ {@β ^ {entries from_list ^
       from_list leibnitz (
-        {l: (α ∏ β) list ^ (l map {pair ^ pair map sameness}) = l}
-        unbuild list reflect {first, _, proof ^ match first {
-            a boþ b ^ ((a boþ b) ‥) leibnitz proof
+        {l: (α ∏ β) list ^ (l warp {pair ^ pair warp is}) = l}
+        unbuild list backbend {first, _, proof ^ match first {
+            a both b ^ ((a both b) ‥) leibnitz proof
         }} entries
       )
   }}
 }
 
-bizen: [@α: *, (α table) haþ_filter] {
+bizen: [@α: *, (α table) hath_filter] {
   let filter: [l from_list:, predicate:] ≔
     l filter {
-      pair ^ (pair project₁) predicate
+      pair ^ (pair forthcast₁) predicate
     } $ from_list
 }
 
-bizen: [@α: *, @β: *, (α table β) haþ_size] {
+bizen: [@α: *, @β: *, (α table β) hath_size] {
   let size: [t:] ≔ (t entries) size
 }
 
 show let merge: [
-  @α: *, @: α equal, @β: *,
-  first: α table β, oþer: α table β, α table β
-] ≔ (oþer entries) fold₁ first {
-  t, pair ^ t put (pair project₀) (pair project₁)
+  @α: *, @: α hath_≍, @β: *,
+  first: α table β, other: α table β, α table β
+] ≔ (other entries) gather₁ first {
+  t, pair ^ t put (pair forthcast₀) (pair forthcast₁)
 }
 
-show let adjust: [@α: *, @: α equal, @β: *,
+show let adjust: [@α: *, @: α hath_≍, @β: *,
   l from_list: α table β,
   key: α,
   change: [β, β],
   α table β
-] ≔ l map { pair ^ match key ≍ (pair project₀) {
+] ≔ l warp { pair ^ match key ≍ (pair forthcast₀) {
     nay ^ pair,
-    yea ^ pair map change
+    yea ^ pair warp change
   } } $ from_list

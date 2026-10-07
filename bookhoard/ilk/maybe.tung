@@ -1,0 +1,137 @@
+use flock/algebra/whole/hath_magma.tung
+use flock/algebra/whole/monoid.tung
+use flock/algebra/whole/semigroup.tung
+use flock/functor.tung
+use flock/functor/applicative.tung
+use flock/functor/hath_cata.tung
+use flock/functor/hath_filter.tung
+use flock/functor/hath_traverse.tung
+use flock/functor/monad.tung
+use flock/order/complement.tung
+use ilk/one.tung
+use ilk/two.tung
+
+## optional value.
+show ilk maybe: [α: *, *] {
+  none: α maybe,
+  some: [α, α maybe]
+}
+
+bizen: [@α: *, @: α semigroup, (α maybe) semigroup] {
+  let · ≔ {
+    none,   b      ^ b,
+    a,      none   ^ a,
+    a some, b some ^ a · b $ some
+  }
+
+  let ·_· ≔ sorry
+}
+
+bizen: [@α: *, @: α semigroup, (α maybe) monoid] {
+  let ∅ ≔ none
+
+  let ∅_· ≔ {_ ^ backbend}
+  let ·_∅ ≔ {
+    none   ^ backbend,
+    _ some ^ backbend
+  }
+}
+
+bizen: maybe functor {
+  let warp ≔ {
+    none,   _ ^ none,
+    a some, f ^ a f $ some
+  }
+
+  let warp_is ≔ {
+    none   ^ backbend,
+    _ some ^ backbend
+  }
+}
+
+bizen: maybe applicative {
+  let sheer ≔ some
+  let apply ≔ {
+    a some, f some ^ a f $ some,
+    _,      _      ^ none
+  }
+
+  let apply_is_sheer ≔ {
+    none   ^ backbend,
+    _ some ^ backbend
+  }
+  let sheer_apply_sheer ≔ {a, f ^ backbend}
+  let apply_apply ≔ {
+    none,   _, _ ^ backbend,
+    _ some, _, _ ^ backbend
+  }
+  let sheer_apply ≔ {
+    _, none   ^ backbend,
+    _, _ some ^ backbend
+  }
+}
+
+bizen: maybe monad {
+  let flat ≔ {
+    none   ^ none,
+    a some ^ a
+  }
+
+  let sheer_warp_flat ≔ {a, f ^ backbend}
+  let warp_sheer_flat ≔ {
+    none   ^ backbend,
+    _ some ^ backbend
+  }
+}
+
+bizen: maybe hath_filter {
+  let filter ≔ {
+    none,   _ ^ none,
+    a some, f ^ a f $ if (a some) none
+  }
+}
+
+bizen: maybe hath_cata {
+  let gather₀ ≔ {
+    none,   b, _ ^ b,
+    a some, b, f ^ a f b
+  }
+  let gather₁ ≔ {
+    none,   b, _ ^ b,
+    a some, b, f ^ b f a
+  }
+}
+
+bizen: maybe hath_traverse {
+  let traverse ≔ {
+    none,   _ ^ none sheer,
+    a some, f ^ (a f) warp some
+  }
+}
+
+## extract an option with a fallback value.
+show let fallback: [@α: *, α maybe, α, α] ≔ {
+  none,   b ^ b,
+  a some, _ ^ a
+}
+
+## consume an option with a fallback and a present-value branch.
+show let handle: [@α: *, @β: *, α maybe, β, [α, β], β] ≔ {
+  none,   b, _ ^ b,
+  a some, _, f ^ a f
+}
+
+## true when an option containeth a value.
+show let is_some: [@α: *, α maybe, 𝟚] ≔ {
+  none   ^ nay,
+  _ some ^ yea
+}
+
+## true when an option is empty.
+show let is_none: [@α: *, o: α maybe, 𝟚] ≔ o is_some $ ¬
+
+## extract an option or run a fallback computation.
+show let or_else: [@α: *, α maybe, [𝟙, α], α] ≔ {
+  none,   fallback ^ only fallback,
+  a some, _        ^ a
+}

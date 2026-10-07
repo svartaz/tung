@@ -14,15 +14,15 @@ import {
 // lsp results are deliberately heterogeneous in this integration harness.
 // deno-lint-ignore no-explicit-any
 type LspTestResult = any;
-test("server implementeþ the editor workflow over stdio", async (context) => {
+test("server implementeth the editor workflow over stdio", async (context) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-lsp-"));
   context.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const depPath = path.join(root, "dep.tung");
   const mainPath = path.join(root, "main.tung");
   const depText =
-    "show ilk tally: * { zero: tally }\nshow ilk truth: * { yea: truth, nay: truth }\nshow ilk parcel: [a:*, *] { wrap: [a, a parcel] }\nshow let identity:[x: ℤ, ℤ] ≔ x\nshow let answer:ℤ ≔ +42\nshow flock haþ_convert:[a:*, *] { let convert:[a, a] }\n";
+    "show ilk tally: * { zero: tally }\nshow ilk truth: * { yea: truth, nay: truth }\nshow ilk parcel: [a:*, *] { wrap: [a, a parcel] }\nshow let selfness:[x: ℤ, ℤ] ≔ x\nshow let answer:ℤ ≔ +42\nshow flock hath_convert:[a:*, *] { let convert:[a, a] }\n";
   const mainText =
-    "use dep.tung\nlet value:ℤ ≔ answer\nlet count:tally ≔ zero\nlet ratio:float ≔ 1.5\nlet truth_to_text:[truth, text] ≔ { yea ^ 'yea', nay ^ 'nay' }\nlet shipment:ℤ parcel ≔ +1 wrap\nlet same:ℤ ≔ +1 identity # \"unicode 𝟙\\n\"\nlet select:[left: ℤ, middle: ℤ, right: ℤ, ℤ] ≔ middle\nlet picker: [ℤ, ℤ, ℤ, ℤ] ≔ { first, second, third ^ second }\nbizen:ℤ haþ_convert { let convert: [x:] ≔ x }\nshow ilk _box: [a:*, *] {\n  box: [a, a _box]\n}\n";
+    "use dep.tung\nlet worth:ℤ ≔ answer\nlet count:tally ≔ zero\nlet ratio:float ≔ 1.5\nlet truth_to_text:[truth, text] ≔ { yea ^ 'yea', nay ^ 'nay' }\nlet shipment:ℤ parcel ≔ +1 wrap\nlet hath_≍:ℤ ≔ +1 selfness # \"unicode 𝟙\\n\"\nlet select:[left: ℤ, middle: ℤ, right: ℤ, ℤ] ≔ middle\nlet picker: [ℤ, ℤ, ℤ, ℤ] ≔ { first, second, third ^ second }\nbizen:ℤ hath_convert { let convert: [x:] ≔ x }\nshow ilk _box: [a:*, *] {\n  box: [a, a _box]\n}\n";
   fs.writeFileSync(depPath, depText);
   fs.writeFileSync(mainPath, mainText);
   const depUri = pathToFileURL(depPath).href;
@@ -143,7 +143,7 @@ test("server implementeþ the editor workflow over stdio", async (context) => {
     );
   }
   assert.equal(
-    semanticAt.get(positionKey(positionOf(mainText, "identity"))),
+    semanticAt.get(positionKey(positionOf(mainText, "selfness"))),
     "call",
   );
   assert.equal(
@@ -159,7 +159,7 @@ test("server implementeþ the editor workflow over stdio", async (context) => {
   }
   assert.notEqual(
     semanticAt.get(positionKey(positionOf(mainText, "tally"))),
-    semanticAt.get(positionKey(positionOf(mainText, "identity"))),
+    semanticAt.get(positionKey(positionOf(mainText, "selfness"))),
   );
   assert.equal(
     semanticAt.get(positionKey(positionOf(mainText, "convert", 1))),
@@ -205,7 +205,7 @@ test("server implementeþ the editor workflow over stdio", async (context) => {
   });
   assert(moduleCompletion.some(({ label }) => label === "dep.tung"));
   const answerPosition = positionOf(mainText, "answer");
-  const identityPosition = positionOf(mainText, "identity");
+  const identityPosition = positionOf(mainText, "selfness");
   const completion = await request("textDocument/completion", {
     textDocument: { uri: mainUri },
     position: answerPosition,
@@ -257,7 +257,7 @@ test("server implementeþ the editor workflow over stdio", async (context) => {
   const symbols = await request("textDocument/documentSymbol", {
     textDocument: { uri: mainUri },
   });
-  assert(symbols.some(({ name }) => name === "value"));
+  assert(symbols.some(({ name }) => name === "worth"));
   assert(symbols.some(({ name }) => name === "_box"));
   const workspaceSymbols = await request("workspace/symbol", {
     query: "answer",
@@ -293,10 +293,10 @@ test("server implementeþ the editor workflow over stdio", async (context) => {
     textDocument: { uri: mainUri },
     position: {
       line: identityPosition.line,
-      character: identityPosition.character + "identity".length,
+      character: identityPosition.character + "selfness".length,
     },
   });
-  assert.match(signature.signatures[0].label, /identity/);
+  assert.match(signature.signatures[0].label, /selfness/);
   const formatted = await request("textDocument/formatting", {
     textDocument: { uri: mainUri },
     options: { tabSize: 2, insertSpaces: true },
@@ -353,8 +353,8 @@ test("server implementeþ the editor workflow over stdio", async (context) => {
     ({ diagnostics }) => diagnostics.length > 0,
   );
   const badText = mainText.replace(
-    "let value:ℤ ≔ answer",
-    "let value:text ≔ answer",
+    "let worth:ℤ ≔ answer",
+    "let worth:text ≔ answer",
   );
   connection.sendNotification("textDocument/didChange", {
     textDocument: { uri: mainUri, version: 2 },
@@ -405,16 +405,16 @@ test("server implementeþ the editor workflow over stdio", async (context) => {
   connection.dispose();
   assert.equal(stderr, "");
 });
-test("server resolveþ a nested project's git-pinned library", async (context) => {
+test("server resolveth a nested forthcast's git-pinned library", async (context) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-lsp-library-"));
   context.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const repository = path.join(root, "library");
-  const project = path.join(root, "project");
+  const project = path.join(root, "forthcast");
   fs.mkdirSync(repository);
   fs.mkdirSync(project);
   fs.writeFileSync(
-    path.join(repository, "value.tung"),
-    "show let value:ℤ ≔ +42",
+    path.join(repository, "worth.tung"),
+    "show let worth:ℤ ≔ +42",
   );
   const git = (...args: string[]) =>
     childProcess.execFileSync("git", args, { encoding: "utf8" }).trim();
@@ -438,7 +438,7 @@ test("server resolveþ a nested project's git-pinned library", async (context) =
     `dependencies:\n  sample:\n    repo: ../library\n    hash: "${commit}"\n`,
   );
   const mainPath = path.join(project, "main.tung");
-  const source = "use value.tung let answer:ℤ ≔ value";
+  const source = "use worth.tung let answer:ℤ ≔ worth";
   fs.writeFileSync(mainPath, source);
   const uri = pathToFileURL(mainPath).href;
   const server = childProcess.spawn(
@@ -468,7 +468,7 @@ test("server resolveþ a nested project's git-pinned library", async (context) =
   assert.equal(await connection.sendRequest("tung/libraryPath"), "");
   const definition = await connection.sendRequest<LspTestResult>(
     "textDocument/definition",
-    { textDocument: { uri }, position: positionOf(source, "value", 1) },
+    { textDocument: { uri }, position: positionOf(source, "worth", 1) },
   );
   assert.equal(
     definition.uri,
@@ -480,7 +480,7 @@ test("server resolveþ a nested project's git-pinned library", async (context) =
           "libraries",
           "sample",
           commit,
-          "value.tung",
+          "worth.tung",
         ),
       ),
     ).href,

@@ -44,7 +44,7 @@ import Tung.Primitive (naturalSuccessorId, naturalZeroId)
 
 type Elaboration = E.Elaboration
 
--- þe names a column pattern bindeþ to þe whole value, and þe pattern beneaþ.
+-- the names a column pattern bindeth to the whole value, and the pattern beneath.
 unnamed :: PatternTree -> ([String], PatternTree)
 unnamed = \case
   PNamed name pattern -> let (names, inner) = unnamed pattern in (name : names, inner)
@@ -61,13 +61,13 @@ constructorNamed environment names name = do
   Definition {definitionBody = DataConstructor _ _} <- Map.lookup identity (globals environment)
   pure identity
 
--- a name that is not a constructor bindeþ a variable, even when it shadoweþ
+-- a name that is not a constructor bindeth a variable, even when it shadoweth
 -- a local or global value.
 resolvePattern :: K.Environment -> Names -> Expression -> Elaboration PatternTree
 resolvePattern environment names = \case
   Name name | Just (AmbiguousName modules) <- lookupName name names -> E.failure (ambiguousName name modules)
   Wildcard -> pure (PVariable Nothing)
-  -- a natural literal is `0` or þe successor of its predecessor.
+  -- a natural literal is `0` or the successor of its predecessor.
   LiteralExpression (NaturalValue value) -> pure (naturalPattern value)
   LiteralExpression literal -> pure (PLiteral literal)
   Name name -> pure (maybe (PVariable (bindingName (Just name))) (`PConstructor` []) (constructorNamed environment names name))
@@ -91,7 +91,7 @@ matchRows :: K.Environment -> Names -> [Row] -> Elaboration [MatchRow]
 matchRows environment names rows = do
   requireRowArity rows
   resolved <- sequence [MatchRow index <$> traverse (resolvePattern environment names) rowPatterns <*> pure [] <*> pure rowBody | (index, Row {..}) <- zip [0 ..] rows]
-  -- a row bindeþ each name once.
+  -- a row bindeth each name once.
   forM_ resolved \MatchRow {matchPatterns} ->
     let bound = concatMap variables matchPatterns
      in case [name | (index, name) <- zip [0 :: Int ..] bound, name `elem` take index bound] of
@@ -115,7 +115,7 @@ requireMatchArity :: [Expression] -> [Row] -> Elaboration ()
 requireMatchArity scrutinees rows =
   unless (null rows || length scrutinees == rowArity rows) (E.failure "a match needs one pattern per scrutinee")
 
--- each group containeþ all written columns that denote one input. their
+-- each group containeth all written columns that denote one input. their
 -- patterns intersect; aliases retain every binder and impossible rows retain
 -- their original identity for the caller's redundancy check.
 projectRows :: K.Environment -> [[Int]] -> [PatternTree] -> [MatchRow] -> Elaboration [MatchRow]
@@ -176,8 +176,8 @@ assignFields fields subpatterns = do
     distribute ((Implicit, _, _) : rest) explicitPatterns (pattern : implicitPatterns) = pattern : distribute rest explicitPatterns implicitPatterns
     distribute (_ : rest) explicitPatterns implicitPatterns = PVariable Nothing : distribute rest explicitPatterns implicitPatterns
 
--- explicit inputs become columns; an implicit product before them gaineþ an
--- unnamed binder, as wiþ an ordinary lambda.
+-- explicit inputs become columns; an implicit product before them gaineth an
+-- unnamed binder, as with an ordinary lambda.
 checkCases :: ExpressionChecker -> Scope -> [Row] -> N.Value -> Elaboration Term
 checkCases checker@ExpressionChecker {checkerEnvironment = environment, checkerNames = names} scope rows expected = do
   resolved <- matchRows environment names rows
@@ -209,10 +209,10 @@ bindCaseInputs start count expected = go start count expected []
               remaining' = if plicity == Explicit then remaining - 1 else remaining
           resultType <- E.instantiate codomain (N.VNeutral (N.NLocal level))
           go (extend current Nothing domain) remaining' resultType ((level, plicity, domain) : inputs)
-        _ -> E.failure "a case function needs a function type wiþ one input per pattern"
+        _ -> E.failure "a case function needs a function type with one input per pattern"
 
 -- a scrutinee that is already a local is matched in place, so the result
--- type may depend on it. oþer scrutinees are bound first.
+-- type may depend on it. other scrutinees are bound first.
 checkMatch :: ExpressionChecker -> Scope -> [Expression] -> [Row] -> N.Value -> Elaboration Term
 checkMatch checker@ExpressionChecker {checkerEnvironment = environment, checkerNames = names} scope scrutinees rows expected = do
   resolved <- matchRows environment names rows
@@ -236,17 +236,17 @@ checkMatch checker@ExpressionChecker {checkerEnvironment = environment, checkerN
         N.VNeutral (N.NLocal local) -> bindScrutinees current remaining (Column local ty : columns) goal continue
         _ ->
           generalise current value ty goal >>= \case
-            -- þe computed scrutinee becomeþ an input, so each row seeþ its
-            -- constructor in þe goal, as agda's `with` doþ.
+            -- the computed scrutinee becometh an input, so each row seeth its
+            -- constructor in the goal, as agda's `with` doth.
             Just abstracted -> do
               body <- bindScrutinees (extend current Nothing ty) remaining (Column level ty : columns) abstracted continue
               pure (Apply Explicit (Core.Lambda Explicit annotation body) term)
             Nothing -> Let annotation term <$> bindScrutinees (define current Nothing value ty) remaining (Column level ty : columns) goal continue
-    -- þe goal over a new input in place of each occurrence of a stuck
+    -- the goal over a new input in place of each occurrence of a stuck
     -- computation. constructors and literals are not abstracted, nor is a
-    -- goal þat doþ not mention þe value or would be ill-typed wiþout it.
-    -- occurrences match up to universe levels; reinstating þe scrutinee
-    -- equateþ þose levels and confirmeþ þat þe goal is unchanged.
+    -- goal that doth not mention the value or would be ill-typed without it.
+    -- occurrences match up to universe levels; reinstating the scrutinee
+    -- equateth those levels and confirmeth that the goal is unchanged.
     generalise current value ty goal = do
       stuck <- computation value
       if not stuck
@@ -280,7 +280,7 @@ requireUsed rows used = case [matchRowId row | row <- rows, matchRowId row `Set.
   [] -> pure ()
   index : _ -> E.failure ("case " ++ show (index + 1) ++ " is redundant")
 
--- wiþout rows, only a column of an empty family can still be split.
+-- without rows, only a column of an empty family can still be split.
 compileMatch :: ExpressionChecker -> Scope -> [Column] -> [MatchRow] -> N.Value -> Elaboration (Term, Set.Set Int)
 compileMatch checker@ExpressionChecker {checkerEnvironment = environment} scope columns [] expected = do
   empty <- filterM (emptyColumn . columnType . snd) (zip [0 ..] columns)
@@ -288,7 +288,7 @@ compileMatch checker@ExpressionChecker {checkerEnvironment = environment} scope 
     (index, _) : _ -> splitColumn checker scope columns [] expected index Nothing
     [] -> E.failure "the match is not exhaustive"
   where
-    -- a column is empty when its family haþ no constructor, or when its
+    -- a column is empty when its family hath no constructor, or when its
     -- indices rule out every constructor.
     emptyColumn ty =
       familyOf environment ty >>= \case
@@ -333,8 +333,8 @@ compileMatch checker scope columns rows@(row : _) expected =
       valueTerm <- quote current value
       Let annotation valueTerm <$> bindAll (define current (Just name) value ty) rest
 
--- a literal row splitteþ its column in two: rows þat accept þe literal, and
--- rows þat accept any oþer value. `literal_case` chooseþ between þem.
+-- a literal row splitteth its column in two: rows that accept the literal, and
+-- rows that accept any other value. `literal_case` chooseth between them.
 splitLiteral :: ExpressionChecker -> Scope -> [Column] -> [MatchRow] -> N.Value -> Int -> HostLiteral -> Elaboration (Term, Set.Set Int)
 splitLiteral checker scope columns rows expected index literal = do
   let Column level ty = columns !! index
@@ -343,7 +343,7 @@ splitLiteral checker scope columns rows expected index literal = do
   E.unify (scopeContext scope) ty literalTy
   kind <- inferCore scope =<< quote scope expected
   resultLevel <- requireUniverse scope kind
-  -- an accepting row's names bind þe column; þe column becomeþ a wildcard.
+  -- an accepting row's names bind the column; the column becometh a wildcard.
   let accept row@MatchRow {..} = case unnamed (matchPatterns !! index) of
         (aliases, PLiteral written)
           | written == literal -> Just (settle row aliases)
@@ -363,17 +363,17 @@ splitLiteral checker scope columns rows expected index literal = do
   let chosen = applyArguments (Global H.literalCaseSymbol [resultLevel]) [(Implicit, typeTerm), (Implicit, result), (Explicit, Local (depth scope - level - 1)), (Explicit, Core.Literal (literalType literal) literal), (Explicit, yes), (Explicit, no)]
   pure (chosen, Set.union yesUsed noUsed)
 
--- the motive abstracteþ the split column from the expected type. recursion
--- supplieþ its own motive and records induction hypotheses for children.
+-- the motive abstracteth the split column from the expected type. recursion
+-- supplieth its own motive and records induction hypotheses for children.
 splitColumn :: ExpressionChecker -> Scope -> [Column] -> [MatchRow] -> N.Value -> Int -> Maybe (Term, Scope -> [(Int, Int)] -> Scope) -> Elaboration (Term, Set.Set Int)
 splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope columns rows expected index recursive = do
   let Column level ty = columns !! index
   Split {..} <- columnFamily environment ty
   levels <- E.freshUniverses splitEliminator
   parameterTerms <- traverse (quote scope) splitParameters
-  -- indices þat are distinct locals are abstracted in place. oþerwise each
+  -- indices that are distinct locals are abstracted in place. otherwise each
   -- index is a constructor pattern over distinct locals, unified by large
-  -- elimination: þe motive computeþ þe goal where þe constructors agree.
+  -- elimination: the motive computeth the goal where the constructors agree.
   patterns <- traverse (indexPattern environment) splitIndices
   parameterLevels <- concat <$> traverse (\parameter -> map (\index -> depth scope - index - 1) . freeIndices <$> quote scope parameter) splitParameters
   let simple = [indexLevel | Just (IndexVariable indexLevel) <- patterns]
@@ -385,24 +385,24 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
         Nothing -> E.failure "matching needs each index of an indexed family to be a variable or a constructor applied to variables"
         Just indexPatterns -> do
           let leaves = concatMap patternLeaves indexPatterns
-          unless (length (nub leaves) == length leaves && level `notElem` leaves) (E.failure "matching needs þe variables in þe indices of an indexed family to be distinct")
+          unless (length (nub leaves) == length leaves && level `notElem` leaves) (E.failure "matching needs the variables in the indices of an indexed family to be distinct")
           bound <- allM (\leaf -> E.force (columnValue scope leaf) <&> \case N.VNeutral (N.NLocal same) -> same == leaf; _ -> False) leaves
-          unless bound (E.failure "matching needs þe variables in þe indices of an indexed family to be inputs")
+          unless bound (E.failure "matching needs the variables in the indices of an indexed family to be inputs")
           when (maybe False (const True) recursive) (E.failure "recursion cannot yet match a value whose indices are constructors")
           pure (Just indexPatterns)
   let indexLevels = maybe simple (concatMap patternLeaves) unified
-  -- an index variable þat a parameter also useþ would need axiom K, which
-  -- stayeþ unprovable.
-  when (any (`elem` parameterLevels) indexLevels) (E.failure "matching would equate an index wiþ a parameter, which needeþ axiom K")
+  -- an index variable that a parameter also useth would need axiom K, which
+  -- stayeth unprovable.
+  when (any (`elem` parameterLevels) indexLevels) (E.failure "matching would equate an index with a parameter, which needeth axiom K")
   generalised <- case recursive of
     Nothing -> fmap catMaybes . forM (scopeRecursions scope) $ \Recursion {..} -> case recursionMemo of
       Just memo -> memoRecord scope memo (columnValue scope level) <&> fmap (recursionName,memo,)
       Nothing -> pure Nothing
     Just _ -> pure []
-  -- inputs whose types mention þe indices or þe value are reverted into þe
-  -- motive and rebound in each branch at þeir refined types, as `known` in
-  -- `{yea, known ^ ...}` wiþ `known: (x p) = b` seeþ `(x p) = yea`. a split
-  -- þat also carrieþ course-of-values records revertþ noþing.
+  -- inputs whose types mention the indices or the value are reverted into the
+  -- motive and rebound in each branch at their refined types, as `known` in
+  -- `{yea, known ^ ...}` with `known: (x p) = b` seeth `(x p) = yea`. a split
+  -- that also carrieth course-of-values records revertth nothing.
   dependents <-
     if maybe False (const True) recursive || (null indexLevels && not (null generalised))
       then pure []
@@ -423,8 +423,8 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
     Just (motive, _) -> pure motive
     Nothing -> do
       domain <- quote scope ty
-      -- þe motive keepeþ definitions by name, so each branch goal still
-      -- nameþ þem.
+      -- the motive keepeth definitions by name, so each branch goal still
+      -- nameth them.
       result <- quoteFolded scope expected
       if maybe False (const True) unified
         then do
@@ -444,8 +444,8 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
               pure (foldr (\(plicity, binderDomain) -> Core.Lambda plicity binderDomain) (foldr (Pi Explicit) abstracted piDomains) (zip plicities lambdaDomains))
             else do
               let abstracted = abstractLevels (depth scope) [level] result
-              -- every enclosing recursion whose memo containeþ the matched value
-              -- contributeþ a record binder; nested recursion needeþ all of them.
+              -- every enclosing recursion whose memo containeth the matched value
+              -- contributeth a record binder; nested recursion needeth all of them.
               let bindRecords _ [] = pure (shiftTerm (length generalised) abstracted)
                   bindRecords current ((_, memo, _) : rest) = do
                     record <- applyMemo current memo (N.VNeutral (N.NLocal (depth scope)))
@@ -462,7 +462,7 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
       )
       ((prefix, prefixType), Set.empty)
       (inductiveConstructorInfo splitInfo)
-  -- þe eliminator takeþ þe indices, þen þe matched value.
+  -- the eliminator taketh the indices, then the matched value.
   let indexTargets = case unified of
         Just _ -> zip (inductiveIndexPlicities splitInfo) splitIndices
         Nothing -> zip (inductiveIndexPlicities splitInfo) (map (columnValue scope) indexLevels)
@@ -492,8 +492,8 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
   case recursive of
     Nothing -> E.unify (scopeContext scope) resultType expected
     Just _ -> pure ()
-  -- written index targets carry þeir own universe holes; checking þe whole
-  -- application relateþ þem to þe family's parameters.
+  -- written index targets carry their own universe holes; checking the whole
+  -- application relateth them to the family's parameters.
   when (maybe False (const True) unified) (() <$ inferCore scope term)
   pure (term, used)
   where
@@ -509,7 +509,7 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
           Just indexPatterns -> constructorPossible environment Split {..} indexPatterns constructor fieldValues
           Nothing -> pure True
         if not possible
-          then -- þe motive computeþ þe trivial `[goal, goal]` here.
+          then -- the motive computeth the trivial `[goal, goal]` here.
             E.force branchType >>= \case
               N.VPi Explicit trivial _ -> do
                 trivialTerm <- quote current trivial
@@ -526,8 +526,8 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
             let directHypotheses = [hypothesis | ((_, annotation, _), hypothesis) <- zip [field | field@(_, _, True) <- fields] hypotheses, direct annotation]
             case recursive of
               Just (_, enter) -> do
-                -- recursion rebindeþ quantified inputs after the fields. þeir
-                -- columns move by þe number of fields þat replaced þe split column.
+                -- recursion rebindeth quantified inputs after the fields. their
+                -- columns move by the number of fields that replaced the split column.
                 let inner = enter current hypotheses
                     moved position = if position < index then position else position + length fields - 1
                     quantified = case scopeRecursions inner of
@@ -547,7 +547,7 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
                   _ -> rebind inner branchType
               Nothing -> case generalised of
                 [] -> revert current branchType dependents columns' rows'
-                -- þe carried record of þe split value now nameþ þe record of
+                -- the carried record of the split value now nameth the record of
                 -- each recursive field.
                 records ->
                   let bindRecords entered ty [] = compileMatch checker entered columns' rows' ty
@@ -571,7 +571,7 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
     remember name entries current =
       current {scopeRecursions = [if recursionName recursion == name then recursion {recursionMemo = (\memo -> memo {memoEntries = entries ++ memoEntries memo}) <$> recursionMemo recursion} else recursion | recursion <- scopeRecursions current]}
     -- each reverted input is rebound under its name at its refined type; a
-    -- column þat was þat input followeþ it.
+    -- column that was that input followeth it.
     revert current ty [] columns' rows' = compileMatch checker current columns' rows' ty
     revert current ty (dependent : rest) columns' rows' = do
       let name = scopeNames scope !! (depth scope - dependent - 1)
@@ -581,7 +581,7 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
     bindQuantified current ty [] columns' rows' = compileMatch checker current columns' rows' ty
     bindQuantified current ty ((column, plicity) : rest) columns' rows' = do
       (domainTerm, domain, inner, resultType) <- bindInput "invalid recursive motive" plicity Nothing current ty
-      -- the column index shifteþ when the split column became fields.
+      -- the column index shifteth when the split column became fields.
       let replaced = [if position == column then Column (depth current) domain else existing | (position, existing) <- zip [0 ..] columns']
       first (Core.Lambda plicity domainTerm) <$> bindQuantified inner resultType rest replaced rows'
     fieldPlicity (plicity, _, _) = plicity

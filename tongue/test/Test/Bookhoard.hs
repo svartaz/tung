@@ -1,19 +1,21 @@
 -- bookhoard registry, dependency, ownership, export, and type-checking invariants.
 -- the graph must be acyclic, dependencies may not import ground, and each source
--- owneþ at most one algebraic data declaration.
+-- owneth at most one algebraic data declaration.
 module Test.Bookhoard (group) where
 
-import Data.List (intercalate, isPrefixOf, nub, sort, stripPrefix)
+import Data.Char (isAscii)
+import Data.List (intercalate, isPrefixOf, nub, sort)
 import Data.Map.Strict qualified as Map
-import Data.Maybe (catMaybes, fromMaybe, listToMaybe)
+import Data.Maybe (catMaybes, listToMaybe)
 import Data.Set qualified as Set
 import System.Directory (doesDirectoryExist, listDirectory)
 import System.FilePath (takeBaseName, takeDirectory, takeExtension, (</>))
-import Test.DependentSupport (Library, compileAs, compileWith, loadLibrary, rejectContaining, sameNormalIn)
+import Test.DependentSupport (Library, compileAs, compileWith, eraseLevels, loadLibrary, rejectContaining, sameNormalIn)
 import Test.Harness (Group, Test, expectEq)
 import Test.Harness qualified as Harness
 import Test.QuickCheck qualified as QuickCheck
 import Tung
+import Tung.Dependent qualified as Kernel
 import Tung.Dependent.Source qualified as Source
 
 group :: IO Group
@@ -22,8 +24,8 @@ group = do
   imports <- readLibraryImports "." >>= either fail pure
   registry <- registryCase files
   loaded <- loadedSourcesCase files imports
-  equality <- loadLibrary ["equality.tung"]
-  theorems <- loadLibrary ["ilk/list_theorem.tung", "ilk/natural.tung"]
+  equality <- loadLibrary ["is.tung"]
+  theorems <- loadLibrary ["ilk/list_setting.tung", "ilk/natural.tung"]
   accessibility <- loadLibrary ["ilk/accessible.tung", "ilk/zero.tung"]
   Harness.group "bookhoard" $
     registry
@@ -37,60 +39,74 @@ group = do
       : equalityCases equality
       ++ soundnessCases theorems
       ++ accessibilityCases accessibility
-      ++ numberCases theorems (Map.findWithDefault "" "ilk/natural.tung" imports)
+      ++ numberCases theorems (Map.findWithDefault "" "ilk/natural.tung" imports) (Map.findWithDefault "" "ilk/integer.tung" imports)
       ++ map (typeCase imports) (typeCheckRoots files imports)
       ++ map oneDataTypeCase (nub (map fst files))
 
 equalityCases :: Library -> [Test]
 equalityCases library =
-  [ expectEq "equality helpers compute on reflection" (Right [True, True, True]) do
+  [ expectEq "is helpers compute on reflection" (Right [True, True, True]) do
       program <- compile "let same:[x:ℤ, ℤ] ≔ x"
       traverse
-        (\expression -> sameNormalIn program expression "reflect @ℤ @+1")
-        [ "same leibnitz (reflect @ℤ @+1)",
-          "(reflect @ℤ @+1) symmetry",
-          "(reflect @ℤ @+1) transitivity (reflect @ℤ @+1)"
+        (\expression -> sameNormalIn program expression "backbend @ℤ @+1")
+        [ "same leibnitz (backbend @ℤ @+1)",
+          "(backbend @ℤ @+1) evenmete",
+          "(backbend @ℤ @+1) throughgo (backbend @ℤ @+1)"
         ],
-    rejectContaining "transitivity requireþ matching middle endpoints" "cannot unify" $
-      compile "let bad ≔ (reflect @ℤ @+1) transitivity (reflect @ℤ @+2)"
+    rejectContaining "throughgo requireth matching middle endpoints" "cannot unify" $
+      compile "let bad ≔ (backbend @ℤ @+1) throughgo (backbend @ℤ @+2)"
   ]
   where
-    compile source = compileWith library "equality_test.tung" ("use equality.tung\n" ++ source)
+    compile source = compileWith library "is_test.tung" ("use is.tung\n" ++ source)
 
--- each ℕ host operation computeþ natively on literals and unfoldeþ its
--- structural model oþerwise; þe two must agree, and proofs may use þe model.
-numberCases :: Library -> String -> [Test]
-numberCases library natural =
-  [ Harness.propertyTest "property: each ℕ model agreeþ wiþ its native operation" $
-      QuickCheck.forAll ((,,) <$> QuickCheck.elements operations <*> QuickCheck.choose (0, 12 :: Int) <*> QuickCheck.choose (0, 12 :: Int)) \(operation, left, right) ->
-        let native = show left ++ " " ++ operation ++ " " ++ show right
-            modelled = show left ++ " " ++ operation ++ "_model " ++ show right
-         in QuickCheck.counterexample modelled ((models >>= \program -> sameNormalIn program modelled native) QuickCheck.=== Right True),
+-- each ℕ host operation computeth natively on literals and unfoldeth its
+-- structural model otherwise; the two must agree, and proofs may use the model.
+numberCases :: Library -> String -> String -> [Test]
+numberCases library natural integer =
+  [ agreement "ℕ" (compileWith library "natural_model_test.tung" natural) ["is_same", "is_at_most", "eking", "offdrawing", "folding"] (0, 12) (show :: Int -> String),
+    agreement "ℤ" (compileWith library "integer_model_test.tung" integer) ["is_same", "is_at_most", "eking", "offdrawing", "folding"] (-12, 12) signed,
     expectEq "a modelled operation is proved by computation and by induction" (Right ()) $
       () <$ compileWith library "natural_proof.tung" proofs
   ]
   where
-    operations = ["equal_natural", "less_equal_natural", "add_natural", "subtract_natural", "multiply_natural"]
-    -- þe module's own source seeþ its private models.
-    models = compileWith library "natural_model_test.tung" natural
+    agreement label models operations range literal =
+      Harness.propertyTest ("property: each " ++ label ++ " model agreeth with its native operation") $
+        QuickCheck.forAll ((,,) <$> QuickCheck.elements operations <*> QuickCheck.choose range <*> QuickCheck.choose range) \(operation, left, right) ->
+          let native = literal left ++ " " ++ operation ++ " " ++ literal right
+           in QuickCheck.counterexample native ((models >>= \program -> agrees program operation (literal left) (literal right) native) QuickCheck.=== Right True)
+    signed :: Int -> String
+    signed value = (if value < 0 then "" else "+") ++ show value
+    -- on literals, source checking computeth natively, so the hidden model is
+    -- applied in the kernel.
+    agrees program operation left right native = do
+      -- a host binding and its model share universe parameters.
+      (symbol, levels) <-
+        Source.normaliseSourceExpression program operation >>= \case
+          Kernel.Global symbol levels -> Right (symbol, levels)
+          other -> Left ("not a global: " ++ show other)
+      m <- Source.normaliseSourceExpression program left
+      n <- Source.normaliseSourceExpression program right
+      modelled <- Kernel.normalise (Source.sourceEnvironment program) (Kernel.Apply Kernel.Explicit (Kernel.Apply Kernel.Explicit (Kernel.Global (modelSymbol symbol) levels) m) n)
+      expected <- Source.normaliseSourceExpression program native
+      pure (eraseLevels modelled == eraseLevels expected)
     proofs =
       """
       use ilk/natural.tung
-      use flock/algebra/arithmetic/add.tung
-      use equality.tung
-      let right_zero: [n: ℕ, (n + 0) = n] ≔ reflect
+      use flock/algebra/arithmetic/hath_eke.tung
+      use is.tung
+      let right_zero: [n: ℕ, (n + 0) = n] ≔ backbend
       let left_zero: [n: ℕ, (0 + n) = n] ≔
         match n {
-          0 ^ reflect,
-          k succeed ^ {x: ℕ ^ x succeed} leibnitz (k left_zero)
+          0 ^ backbend,
+          k heir ^ {x: ℕ ^ x heir} leibnitz (k left_zero)
         }
       """
 
--- a relation wiþ noþing smaller is well-founded, and recursion on it runneþ
--- þe step once.
+-- a relation with nothing smaller is well-founded, and recursion on it runneth
+-- the step once.
 accessibilityCases :: Library -> [Test]
 accessibilityCases library =
-  [ expectEq "well-founded recursion computeþ its step" (Right True) do
+  [ expectEq "well-founded selfcalling computeth its step" (Right True) do
       program <- compileWith library "accessible_test.tung" source
       sameNormalIn program "answer" "4"
   ]
@@ -100,63 +116,63 @@ accessibilityCases library =
       use ilk/accessible.tung
       use ilk/zero.tung
       let never: [_: ℕ, _: ℕ, *] ≔ 𝟘
-      let founded: ℕ well_founded never ≔ {x ^ {y, impossible ^ impossible ({}: [𝟘, ℕ accessible never y])} access}
-      let answer: ℕ ≔ founded well_founded_recursion {x, _ ^ x succeed} 3
+      let founded: ℕ wellgrounded never ≔ {x ^ {y, impossible ^ impossible ({}: [𝟘, ℕ accessible never y])} access}
+      let answer: ℕ ≔ founded wellgrounded_selfcalling {x, _ ^ x heir} 3
       """
 
--- þe list theorems are proved; false or ill-founded statements beside þem
--- must be rejected for þe stated reason, wiþout `sorry`.
+-- the list theorems are proved; false or ill-founded statements beside them
+-- must be rejected for the stated reason, without `sorry`.
 soundnessCases :: Library -> [Test]
 soundnessCases library =
-  [ expectEq "a closed instance of a proved theorem computeþ to reflect" (Right True) do
+  [ expectEq "a closed instance of a proved setting computeth to backbend" (Right True) do
       program <-
         compile
           """
           let closed: ((1 ‥ (2 ‥ empty)) reverse $ reverse) = (1 ‥ (2 ‥ empty)) ≔ (1 ‥ (2 ‥ empty)) reverse_reverse
-          let direct: ((1 ‥ (2 ‥ empty)) reverse $ reverse) = (1 ‥ (2 ‥ empty)) ≔ reflect
+          let direct: ((1 ‥ (2 ‥ empty)) reverse $ reverse) = (1 ‥ (2 ‥ empty)) ≔ backbend
           """
       sameNormalIn program "closed" "direct",
     rejectContaining "a list is not its own double" "cannot unify" $
-      compile "let bad: [l: ℕ list, (l · l) = l] ≔ reflect",
+      compile "let bad: [l: ℕ list, (l · l) = l] ≔ backbend",
     rejectContaining "appending is not commutative" "cannot unify" $
-      compile "let bad: [a: ℕ list, b: ℕ list, (a · b) = (b · a)] ≔ match a { empty ^ (b ·_empty) symmetry, first ‥ rest ^ (first ‥) leibnitz (rest bad b) }",
-    rejectContaining "distinct lists are not equal" "cannot unify 1 wiþ 2" $
-      compile "let bad: (1 ‥ empty) = (2 ‥ empty) ≔ reflect",
-    rejectContaining "reversing is not þe identity" "cannot unify" $
-      compile "let bad: [l: ℕ list, (l reverse) = l] ≔ match l { empty ^ reflect, first ‥ rest ^ (first ‥) leibnitz (rest bad) }",
-    rejectContaining "recursion on þe same list cannot prove þe empty type" "a recursive call must pass a direct child" $
+      compile "let bad: [a: ℕ list, b: ℕ list, (a · b) = (b · a)] ≔ match a { empty ^ (b ·_empty) evenmete, first ‥ rest ^ (first ‥) leibnitz (rest bad b) }",
+    rejectContaining "distinct lists are not same" "cannot unify 1 with 2" $
+      compile "let bad: (1 ‥ empty) = (2 ‥ empty) ≔ backbend",
+    rejectContaining "reversing is not the selfness" "cannot unify" $
+      compile "let bad: [l: ℕ list, (l reverse) = l] ≔ match l { empty ^ backbend, first ‥ rest ^ (first ‥) leibnitz (rest bad) }",
+    rejectContaining "selfcalling on the same list cannot prove the empty type" "a recursive call must pass a direct child" $
       compile "let bad: [l: ℕ list, 𝟘] ≔ l bad",
-    rejectContaining "recursion on a larger list cannot prove þe empty type" "a recursive call must pass a direct child" $
+    rejectContaining "selfcalling on a larger list cannot prove the empty type" "a recursive call must pass a direct child" $
       compile "let bad: [l: ℕ list, 𝟘] ≔ (0 ‥ l) bad",
     rejectContaining "a branch cannot recurse on its own input" "a recursive call must pass a direct child" $
       compile "let bad: [l: ℕ list, 𝟘] ≔ match l { empty ^ sorry, first ‥ rest ^ (first ‥ rest) bad }",
-    rejectContaining "a partial match proveþ noþing" "the match is not exhaustive: missing ‥" $
-      compile "let bad: [l: ℕ list, l = empty] ≔ match l { empty ^ reflect }",
-    rejectContaining "an empty function needeþ an impossible input" "the match is not exhaustive" $
+    rejectContaining "a half match proveth nothing" "the match is not exhaustive: missing ‥" $
+      compile "let bad: [l: ℕ list, l = empty] ≔ match l { empty ^ backbend }",
+    rejectContaining "an empty function needeth an impossible input" "the match is not exhaustive" $
       compile "let bad: [(1 ‥ empty) = (1 ‥ empty), 𝟘] ≔ {}",
-    rejectContaining "pointwise equal functions are not provably equal" "cannot unify" $
-      compile "let bad: [f: [ℕ, ℕ], g: [ℕ, ℕ], [n: ℕ, (n f) = (n g)], f = g] ≔ {_ ^ reflect}",
-    rejectContaining "a list of one type is not a list of anoþer" "cannot unify ℕ wiþ" $
+    rejectContaining "pointwise same functions are not provably same" "cannot unify" $
+      compile "let bad: [f: [ℕ, ℕ], g: [ℕ, ℕ], [n: ℕ, (n f) = (n g)], f = g] ≔ {_ ^ backbend}",
+    rejectContaining "a list of one type is not a list of another" "cannot unify ℕ with" $
       compile "let bad: [ℕ list, 𝟚 list] ≔ {l ^ l}",
-    rejectContaining "a host binding cannot inhabit an empty type" "requireþ a different type" $
-      compileAs "soundness_host.tung" "ilk void: * {}\nlet bad: void ≔ 'add_natural' fremmed"
+    rejectContaining "a host binding cannot inhabit an empty type" "requireth a different type" $
+      compileAs "soundness_host.tung" "ilk void: * {}\nlet bad: void ≔ 'eke_natural' fremmed"
   ]
   where
     compile source =
       compileWith library "soundness_test.tung" $
         unlines
-          [ "use equality.tung",
-            "use flock/algebra/total/magma.tung",
+          [ "use is.tung",
+            "use flock/algebra/whole/hath_magma.tung",
             "use ilk/list.tung",
-            "use ilk/list_theorem.tung",
+            "use ilk/list_setting.tung",
             "use ilk/natural.tung",
             "use ilk/two.tung",
             "use ilk/zero.tung"
           ]
           ++ source
 
--- checking a root also checkeþ every module it importeth, so each module
--- needeþ one reachable path through the import graph.
+-- checking a root also checketh every module it importeth, so each module
+-- needeth one reachable path through the import graph.
 typeCheckRoots :: [(FilePath, String)] -> Map.Map String String -> [(FilePath, String)]
 typeCheckRoots files imports = filter (\(_, name) -> name `Set.notMember` referenced) files
   where
@@ -232,8 +248,8 @@ groundDeedExportsCase imports =
   where
     source =
       "use ground.tung "
-        ++ "let echo:𝟙 deed ≔ read map_flat { _ ^ >{þen, 'a' write_line, random, 0 sleep, 'x' read_file, only pure} } "
-        ++ "let task:(ℤ task) deed ≔ (+1 pure) fork"
+        ++ "let echo:𝟙 deed ≔ read warp_flat { _ ^ >{then, 'a' write_line, random, 0 sleep, only sheer} } "
+        ++ "let task:(ℤ task) deed ≔ (+1 sheer) fork"
 
 systemExplicitCase :: Map.Map String String -> Test
 systemExplicitCase imports =
@@ -248,9 +264,9 @@ runnerDeedsCase imports =
     actual -> Just ("runner deeds: " ++ actual)
   where
     source =
-      "use ground.tung use deed/clock.tung use deed/process.tung use deed/system.tung use web/server.tung use ilk/list.tung use ilk/option.tung "
-        ++ "let route:[_: _request, _response deed] ≔ 'ok' ok $ pure "
-        ++ "let main:𝟙 deed ≔ >{þen, arguments, 'TUNG_SETTING' environment, unix_time, 'true' run_process empty, 8080 serve route $ void}"
+      "use ground.tung use deed/clock.tung use deed/process.tung use deed/system.tung use web/server.tung use ilk/list.tung use ilk/maybe.tung "
+        ++ "let route:[_: _request, _response deed] ≔ 'ok' ok $ sheer "
+        ++ "let main:𝟙 deed ≔ >{then, arguments, 'TUNG_SETTING' environment, unix_time, 'true' process~run empty, 8080 serve route $ void}"
 
 primitiveCatalogueCase :: Map.Map String String -> Test
 primitiveCatalogueCase imports = pure $ case traverse Source.parseSource (Map.elems imports) of
@@ -260,14 +276,14 @@ primitiveCatalogueCase imports = pure $ case traverse Source.parseSource (Map.el
         declaredForeigns = Set.fromList (concatMap foreignNames declarations)
         catalogueForeigns = Set.fromList [hostName | HostBinding {hostName} <- hostBindings]
      in if Set.size catalogueForeigns /= length hostBindings
-          then Just "host catalogue repeateþ a key"
+          then Just "host catalogue repeateth a key"
           else
             if catalogueForeigns /= declaredForeigns
               then Just "host catalogue and fremmed declarations differ"
               else
-                -- þe evaluator performeþ an argumentless binding as a deed.
+                -- the evaluator performeth an argumentless binding as a deed.
                 if any (argumentless . hostSignature) hostBindings
-                  then Just "host catalogue containeþ an argumentless binding þat is not a deed"
+                  then Just "host catalogue containeth an argumentless binding that is not a deed"
                   else Nothing
   where
     argumentless HostSignature {hostArguments, hostResult} = null hostArguments && not (isDeed hostResult)
@@ -285,7 +301,7 @@ oneDataTypeCase path = do
     Left message -> Just ("parse " ++ path ++ ": " ++ message)
     Right declarations ->
       let count = length [() | declaration <- declarations, isDataDecl declaration]
-       in if count <= 1 then Nothing else Just (path ++ " owneþ " ++ show count ++ " data types")
+       in if count <= 1 then Nothing else Just (path ++ " owneth " ++ show count ++ " data types")
 
 importedPaths :: Source.Declaration -> [String]
 importedPaths (Source.ImportDeclaration path _) = [path]
@@ -307,12 +323,14 @@ classLayoutCase files = listToMaybe . catMaybes <$> traverse checkModule files
         Right declarations -> checkClasses path name (concatMap classNames declarations)
     checkClasses path name names
       | classPrefix `isPrefixOf` name = case names of
-          -- a `haþ_` prefix separateþ a flock from its member of þe same name.
-          [name] | fromMaybe name (stripPrefix "haþ_" name) == takeBaseName path -> Nothing
-          [name] -> Just (path ++ " defineþ class '" ++ name ++ "'")
-          _ -> Just (path ++ " owneþ " ++ show (length names) ++ " classes")
+          -- a symbol flock such as `hath_+` liveth in an ascii file, `hath_eke.tung`.
+          [name]
+            | name == takeBaseName path -> Nothing
+            | "hath_" `isPrefixOf` name, any (not . isAscii) name || any (`elem` ("+-%·" :: String)) name, "hath_" `isPrefixOf` takeBaseName path -> Nothing
+          [name] -> Just (path ++ " defineth class '" ++ name ++ "'")
+          _ -> Just (path ++ " owneth " ++ show (length names) ++ " classes")
       | null names = Nothing
-      | otherwise = Just (path ++ " defineþ a class outside the flock directory")
+      | otherwise = Just (path ++ " defineth a class outside the flock directory")
     classPrefix = "flock/"
 
 classNames :: Source.Declaration -> [String]

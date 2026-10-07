@@ -1,6 +1,6 @@
 {-# LANGUAGE PatternSynonyms #-}
 
--- | source lexer. a name containeþ any non-space character not reserved by
+-- | source lexer. a name containeth any non-space character not reserved by
 -- 'specialNameChars'; literals and comments are consumed before name parsing.
 module Tung.Token
   ( Token (TIdent, TNatural, TInteger, TFloat, TUnicode, TText, TBraceKeyword, TLet, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TOrsend, TInduce, TFall, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TEquals, TKindStar, TDollar, TAt),
@@ -43,7 +43,7 @@ data SourceFailure = SourceFailure
   }
   deriving (Eq, Show)
 
--- every suffix of the token stream carrieþ its cursor boundary. span recovery
+-- every suffix of the token stream carrieth its cursor boundary. span recovery
 -- never walks the remaining input, including at end of input.
 data TokenCursor = TokenCursor SourceSpan Int Int
 
@@ -388,7 +388,7 @@ keywordTokens =
     ("bizen", TInstance),
     ("match", TMatch),
     ("sorry", TSorry),
-    ("orsend", TOrsend),
+    ("orsetting", TOrsend),
     ("unbuild", TInduce),
     ("fall", TFall)
   ]

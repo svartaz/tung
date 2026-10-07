@@ -1,0 +1,6 @@
+use flock/functor.tung
+use ilk/two.tung
+
+show flock hath_filter: [φ: [*, *], @: φ functor, *] {
+  let filter: [@α: *, α φ, [α, 𝟚], α φ]
+}

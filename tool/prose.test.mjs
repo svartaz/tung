@@ -34,7 +34,7 @@ test("prose and source comments use british spelling", () => {
   );
   assert.deepEqual(failures, []);
 });
-test("prose and source comments use third-person -eþ forms", () => {
+test("prose and source comments use third-person -eth forms", () => {
   const failures = proseFiles(root).flatMap((file) =>
     proseFragments(file).flatMap((fragment) => {
       const prose = fragment.text.replace(/`[^`]*`/g, "");
@@ -44,7 +44,25 @@ test("prose and source comments use third-person -eþ forms", () => {
   );
   assert.deepEqual(failures, []);
 });
-test("prose distinguisheþ second-person number and case", () => {
+test("prose and source comments write th, not thorn", () => {
+  const failures = proseFiles(root).flatMap((file) =>
+    proseFragments(file).flatMap((fragment) =>
+      /[þÞ]/.test(fragment.text) ? [`${path.relative(root, file)}:${fragment.line}`] : [],
+    ),
+  );
+  assert.deepEqual(failures, []);
+});
+test("prose giveth thou a -st verb", () => {
+  const failures = proseFiles(root).flatMap((file) =>
+    proseFragments(file).flatMap((fragment) => {
+      const prose = fragment.text.replace(/`[^`]*`/g, "");
+      const match = /\bthou\s+(?:has|have|does|do|are|is|was|can|will|shall|may|must|[a-z]+eth)\b/i.exec(prose);
+      return match ? [`${path.relative(root, file)}:${fragment.line}: ${match[0]}`] : [];
+    }),
+  );
+  assert.deepEqual(failures, []);
+});
+test("prose distinguisheth second-person number and case", () => {
   const failures = proseFiles(root).flatMap((file) =>
     proseFragments(file).flatMap((fragment) => {
       const prose = fragment.text.replace(/`[^`]*`/g, "");

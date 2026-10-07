@@ -1,18 +1,18 @@
 use ilk/table.tung
 use ilk/text/structure.tung
 
-## an http response wiþ its status, headers, and utf-8 body.
+## an http response with its status, headers, and utf-8 body.
 show ilk _response: * {
   response: [ℕ, text table text, text, _response]
 }
 
-show let response_status: [status response _ _: _response, ℕ] ≔
+show let status: [status response _ _: _response, ℕ] ≔
   status
 
-show let response_headers: [_ response headers _: _response, text table text] ≔
+show let headers: [_ response headers _: _response, text table text] ≔
   headers
 
-show let response_body: [_ response _ body: _response, text] ≔
+show let body: [_ response _ body: _response, text] ≔
   body
 
 show let respond: [status: ℕ, body: text, _response] ≔
@@ -22,9 +22,9 @@ show let ok: [body: text, _response] ≔ 200 respond body
 
 show let not_found: [body: text, _response] ≔ 404 respond body
 
-show let wiþ_header: [
+show let with_header: [
   status response headers body: _response,
   name: text,
-  value: text,
+  worth: text,
   _response] ≔
-  status response (headers put name value) body
+  status response (headers put name worth) body

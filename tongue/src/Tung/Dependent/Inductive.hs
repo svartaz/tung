@@ -1,6 +1,8 @@
+{-# LANGUAGE ViewPatterns #-}
+
 -- | checked inductive families and their generated induction principles.
 -- only direct recursive fields are supported; all other occurrences are
--- rejected before any recursive computation rule entereþ the environment.
+-- rejected before any recursive computation rule entereth the environment.
 module Tung.Dependent.Inductive
   ( InductiveDeclaration (..),
     defineInductive,
@@ -46,11 +48,11 @@ data Constructor = Constructor
 defineInductive :: K.Environment -> InductiveDeclaration -> Either String K.Environment
 defineInductive environment declaration@InductiveDeclaration {..} = do
   validateSyntax (Just inductiveUniverses) False declaration
-  (result, obligations) <- runStateT (build environment declaration) inductiveConstraints
+  (result, U.universeConstraints -> obligations) <- runStateT (build environment declaration) (U.universes inductiveConstraints)
   unless (all (U.entails inductiveConstraints) (K.openObligations inductiveConstraints obligations)) (Left "unproved universe constraint in inductive declaration")
   pure result
 
--- source staging useþ one fixed vector of distinct universe placeholders for
+-- source staging useth one fixed vector of distinct universe placeholders for
 -- self references. explicit universe arguments belong to 'defineInductive'.
 -- joint generalisation can introduce constructor-only parameters, so each
 -- placeholder vector is then widened to the group's complete canonical vector.
@@ -74,22 +76,22 @@ inferInductive environment name eliminator parameters annotation constructors co
               assumptions
               (replaceSelfUniverses name canonical family)
               (zip (map fst constructors) (map (replaceSelfUniverses name canonical) constructorTypes))
-      (K.Environment built, obligations) <- runStateT (build environment declaration) assumptions
+      (K.Environment built, U.universeConstraints -> obligations) <- runStateT (build environment declaration) (U.universes assumptions)
       let constraints = nub obligations
           updated = declaration {inductiveConstraints = constraints}
           names = name : eliminator : map fst constructors
           final = foldr (Map.adjust (\definition -> definition {definitionConstraints = constraints})) built names
       validateSyntax (Just universes) False updated
       -- adding inferred assumptions cannot alter positivity or the generated
-      -- eliminator. recheck final signatures rigidly, wiþout rebuilding them.
-      (_, rigid) <- runStateT (traverse_ (K.checkType final K.emptyContext . definitionType . (final Map.!)) names) constraints
+      -- eliminator. recheck final signatures rigidly, without rebuilding them.
+      (_, U.universeConstraints -> rigid) <- runStateT (traverse_ (K.checkType final K.emptyContext . definitionType . (final Map.!)) names) (U.universes constraints)
       unless (all (U.entails constraints) (K.openObligations constraints rigid)) (Left "unproved universe constraint in inductive declaration")
       pure (K.Environment final)
     [] -> Left "missing inductive family signature"
   where
     checkPlaceholders levels = do
       let identities = [identity | LMeta identity <- levels]
-      unless (length identities == length levels && length identities == length (nub identities)) (Left "inductive self references requireþ distinct inference placeholders")
+      unless (length identities == length levels && length identities == length (nub identities)) (Left "inductive self references requireth distinct inference placeholders")
 
 validateSyntax :: Maybe Int -> Bool -> InductiveDeclaration -> Either String ()
 validateSyntax bound holes InductiveDeclaration {..} = do
@@ -152,8 +154,8 @@ checkConstructor globals declaration@InductiveDeclaration {..} parameters indice
     checkFields context ((plicity, domain) : rest) = do
       level <- K.checkType globals context domain
       K.oblige (LevelBelow level targetLevel)
-      -- a recursive field is þe family or a function ending in it, whose
-      -- inputs do not mention þe family: strictly positive.
+      -- a recursive field is the family or a function ending in it, whose
+      -- inputs do not mention the family: strictly positive.
       recursive <-
         if containsFamily inductiveName domain
           then do
@@ -167,7 +169,7 @@ checkConstructor globals declaration@InductiveDeclaration {..} parameters indice
       (ending, remaining) <- checkFields (K.bind context value) rest
       pure (ending, (plicity, domain, recursive) : remaining)
 
--- a family occurrence is a saturated application of þe family, never inside
+-- a family occurrence is a saturated application of the family, never inside
 -- its own parameters or indices.
 familyApplication :: Globals -> InductiveDeclaration -> Telescope -> Telescope -> K.Context -> Term -> K.Typing [(Plicity, Term)]
 familyApplication globals InductiveDeclaration {..} parameters indices context term = do
@@ -179,7 +181,7 @@ familyApplication globals InductiveDeclaration {..} parameters indices context t
     _ -> K.failure "inductive occurrence must be a direct saturated family application"
   unless (length levels == inductiveUniverses) (K.failure "wrong number of inductive universe arguments")
   traverse_ (K.oblige . uncurry LevelEqual) (zip levels (map LParam [0 .. inductiveUniverses - 1]))
-  unless (length arguments == length expectedPlicities && map fst arguments == expectedPlicities) (K.failure "inductive result requireþ every parameter and index")
+  unless (length arguments == length expectedPlicities && map fst arguments == expectedPlicities) (K.failure "inductive result requireth every parameter and index")
   unless (all (not . containsFamily inductiveName . snd) arguments) (K.failure "inductive family cannot occur inside its arguments")
   let (actualParameters, resultIndices) = splitAt inductiveParameters arguments
   traverse_
@@ -232,7 +234,7 @@ generateRecursor InductiveDeclaration {..} parameters indices constructors = par
           remainder <-
             if recursive
               then do
-                -- þe hypothesis for a function field `k` is `[inputs, motive (inputs k)]`.
+                -- the hypothesis for a function field `k` is `[inputs, motive (inputs k)]`.
                 movedField <- renameTerm mapping (current + 1) domain
                 let (inputs, result) = termTelescope movedField
                     inputCount = length inputs

@@ -38,8 +38,8 @@ instance ToJSON Diagnostic where
           ++ maybe [] (\path -> ["path" .= path]) diagnosticPath
       )
 
--- a dependent compile failure, located in þe module þat raised it. an
--- unlocated infrastructure failure useþ þe start of þat module's source.
+-- a dependent compile failure, located in the module that raised it. an
+-- unlocated infrastructure failure useth the start of that module's source.
 failureDiagnostic :: String -> Map.Map String String -> CompileFailure -> Diagnostic
 failureDiagnostic source imports CompileFailure {failureKind, failurePath, failureSpan, failureText} =
   let owner = maybe source (\path -> Map.findWithDefault source path imports) failurePath
@@ -73,6 +73,6 @@ renderKind GoalDiagnostic = "goal"
 utf16Length :: String -> Int
 utf16Length = sum . map utf16Width
 
--- a character outside þe basic plane is a surrogate pair.
+-- a character outside the basic plane is a surrogate pair.
 utf16Width :: Char -> Int
 utf16Width character = if fromEnum character > 0xffff then 2 else 1

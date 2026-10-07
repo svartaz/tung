@@ -1,15 +1,16 @@
-use flock/algebra/total/magma.tung
+use flock/algebra/whole/hath_magma.tung
 use ground.tung
+use web/request.tung
 use web/server.tung
 
 let respond: [r: _request, _response] ≔
-  match (r request_target) ≍ '/' {
+  match (r request~target) ≍ '/' {
     yea ^ 'hello tung\n' ok,
     nay ^ 'not found\n' not_found
   }
 
 let route: [r: _request, _response deed] ≔
-  ('request:' · (r request_target) $ write_line) þen (r respond $ pure)
+  ('request:' · (r request~target) $ write_line) then (r respond $ sheer)
 
 let main: 𝟙 deed ≔
-  8080 serve route $ map_flat { message ^ 'web server:' · message $ write_line }
+  8080 serve route $ warp_flat { message ^ 'web server:' · message $ write_line }

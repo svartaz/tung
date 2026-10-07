@@ -1,11 +1,11 @@
 # tung language support
 
-this page helpeþ thee set up and use the VS Code extension for `.tung` files.
-the extension liveþ beside the compiler in `../tongue`.
+this page helpeth thee set up and use the VS Code extension for `.tung` files.
+the extension liveth beside the compiler in `../tongue`.
 
 ## setup
 
-from the repository root, build and install the extension wiþ the `code`
+from the repository root, build and install the extension with the `code`
 command available:
 
 ```sh
@@ -16,9 +16,9 @@ npm run setup --workspace tung-vscode
 
 ## configuration
 
-the extension useþ `tung.executablePath` when set. otherwise, it seekeþ a
+the extension useth `tung.executablePath` when set. otherwise, it seeketh a
 built compiler in `tung.tonguePath` or the repository's `tongue` folder,
-þen `tung` on `PATH`. `tung.tonguePath` accepteth either the repository root
+then `tung` on `PATH`. `tung.tonguePath` accepteth either the repository root
 or its `tongue` folder.
 
 the extension useth the workspace's `tung.yaml` for pinned libraries.
@@ -49,4 +49,4 @@ ye can also run `Tung: Run Tung File` from the command palette. the command
 saveth the file and useth a dedicated terminal.
 
 the [development guide](https://github.com/jukisima/tung/blob/main/tongue/development.md)
-covereþ building and testing þe extension.
+covereth building and testing the extension.

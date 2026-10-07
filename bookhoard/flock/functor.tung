@@ -1,11 +1,11 @@
-use flock/algebra/partial/category.tung
+use flock/algebra/half/category.tung
 use ilk/one.tung
 
 show flock functor: [φ: [*, *], *] {
-  let map: [@α: *, @β: *, α φ, [α, β], β φ]
+  let warp: [@α: *, @β: *, α φ, [α, β], β φ]
 
-  let map_sameness: [@α: *, af: α φ, (af map sameness) = af]
+  let warp_is: [@α: *, af: α φ, (af warp is) = af]
 }
 
 show let void: [@φ: [*, *], @: φ functor, @α: *, af: α φ, 𝟙 φ] ≔
-  af map {_ ^ only}
+  af warp {_ ^ only}

@@ -1,5 +1,5 @@
 // workspace-wide import and visibility index over document models. models
-// take þeir roles from þe compiler: `ready` fetcheþ missing roles before a
+// take their roles from the compiler: `ready` fetcheth missing roles before a
 // request, and text and file changes invalidate models and derived caches.
 import * as fs from "node:fs";
 import * as path from "node:path";
@@ -40,7 +40,7 @@ class WorkspaceIndex {
   resolveImportCache: Map<string, DocumentModel | undefined>;
   publicDefinitionsCache: Map<string, Definition[]>;
   compiler: RoleSource | undefined;
-  // þe latest compiler roles of each uri, wiþ þe text þey describe.
+  // the latest compiler roles of each uri, with the text they describe.
   roleCache: Map<string, { text: string; roles: SourceRole[] }>;
   constructor(documents: DocumentStore, compiler?: RoleSource) {
     this.documents = documents;
@@ -173,7 +173,7 @@ class WorkspaceIndex {
     return model;
   }
   // public definitions follow shown declarations, shown imports, and explicit
-  // re-exports while the seen set preventeþ import cycles.
+  // re-exports while the seen set preventeth import cycles.
   publicDefinitions(model, seen = new Set()) {
     if (!model || seen.has(model.uri)) return [];
     if (seen.size === 0 && this.publicDefinitionsCache.has(model.uri)) {
@@ -186,7 +186,7 @@ class WorkspaceIndex {
       .flatMap((imported) =>
         this.publicDefinitions(this.resolveImport(model, imported), nextSeen),
       );
-    // `show name` re-exporteþ every visible role wiþ þat name.
+    // `show name` re-exporteth every visible role with that name.
     const reexported = model.reexports.flatMap(({ name }) =>
       this.resolveVisible(model, name, nextSeen),
     );
@@ -288,7 +288,7 @@ class WorkspaceIndex {
       return { model, token, definition: local };
     }
     const visible = this.resolveVisible(model, token.text);
-    // a name in type position wiþout a local binder nameþ a visible type.
+    // a name in type position without a local binder nameth a visible type.
     const tokenRole = model.roles.get(token.index)?.type;
     const role = tokenRole === "typeParameter" ? "type" : tokenRole;
     const matching = role

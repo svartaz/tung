@@ -3,7 +3,7 @@
 {-# LANGUAGE ViewPatterns #-}
 
 -- | the dependent runner. checked core terms are evaluated with types and
--- universe levels erased; deeds are inert values until 'runMain' executeþ them
+-- universe levels erased; deeds are inert values until 'runMain' executeth them
 -- through a replaceable host interface.
 module Tung.Dependent.Run
   ( HostIO (..),
@@ -41,7 +41,7 @@ import System.Process (readProcessWithExitCode)
 import System.Timeout (timeout)
 import Tung.Dependent.Check qualified as K
 import Tung.Dependent.Host (matchMain)
-import Tung.Dependent.Literal (coreConstructor, literalTypeNames, literalValue, renderLiteral, valueLiteral)
+import Tung.Dependent.Literal (constructedLiteral, coreConstructor, literalConstructor, literalTypeNames, literalValue, renderLiteral, valueLiteral)
 import Tung.Dependent.Source (SourceProgram, sourceEnvironment, sourceGlobal)
 import Tung.Dependent.Syntax
 import Tung.Identity (SymbolId (..))
@@ -53,9 +53,10 @@ import Tung.Primitive
     consConstructorId,
     emptyConstructorId,
     findForeignBinding,
+    integerNegativeId,
+    integerPositiveId,
     leftConstructorId,
     naturalSuccessorId,
-    naturalZeroId,
     nayConstructorId,
     noneConstructorId,
     onlyConstructorId,
@@ -72,7 +73,7 @@ import Tung.Primitive
 import Tung.Primitive qualified as Primitive
 import Tung.Web qualified as Web
 
--- the trusted operations a deed may perform. a failed console operation endeþ
+-- the trusted operations a deed may perform. a failed console operation endeth
 -- the run; other failures reach the program's failure continuation. tests
 -- supply a simulated host.
 data HostIO m = HostIO
@@ -89,18 +90,18 @@ data HostIO m = HostIO
     hostEnvironment :: String -> m (Maybe String),
     -- status, standard output, and standard error.
     hostRunProcess :: String -> [String] -> m (Either String (Integer, String, String)),
-    -- a task runneþ its action, possibly concurrently, under a fresh handle.
+    -- a task runneth its action, possibly concurrently, under a fresh handle.
     hostFork :: m (Either String Runtime) -> m Int,
     hostWait :: Int -> m (Either String Runtime),
     -- milliseconds; nothing when the task hath not finished in time.
     hostWaitFor :: Int -> Integer -> m (Maybe (Either String Runtime)),
     hostCancel :: Int -> m (),
     hostSleep :: Integer -> m (),
-    -- serve until the transport faileþ, as left, or a response stopþ it, as right.
+    -- serve until the transport faileth, as left, or a response stopth it, as right.
     hostServe :: forall stop. Integer -> (Web.Request -> m (Either stop Web.Response)) -> m (Either String stop)
   }
 
--- the process host. tasks run on threads; a cancelled task faileþ.
+-- the process host. tasks run on threads; a cancelled task faileth.
 ioHost :: [String] -> IO (HostIO IO)
 ioHost arguments = do
   tasks <- newIORef (0 :: Int, Map.empty)
@@ -155,26 +156,26 @@ data Runtime
   | RLiteral HostLiteral
   | RRecord [(String, Runtime)]
   | RErased
-  | -- a failed computation, such as `sorry`, standeþ
-    -- unused until someþing inspecteþ it.
+  | -- a failed computation, such as `sorry`, standeth
+    -- unused until something inspecteth it.
     RFailure String
   | RDeed Deed
   | RTask Int
 
--- a deed describeþ an action. building or composing one performeþ nothing.
+-- a deed describeth an action. building or composing one performeth nothing.
 data Deed
   = DPure Runtime
   | DBind Runtime Runtime
   | DFix Runtime
-  | -- a catalogue deed wiþ its explicit inputs.
+  | -- a catalogue deed with its explicit inputs.
     DHost String [Runtime]
 
--- execution stopþ on a failure or an `exit`.
+-- execution stopth on a failure or an `exit`.
 data Stop = Failure String | Exit Integer
 
 type Execution m = ExceptT Stop m
 
--- a runnable program defineþ `main: 𝟙 deed`.
+-- a runnable program defineth `main: 𝟙 deed`.
 requireMain :: SourceProgram -> Either String ()
 requireMain = void . checkedMain "a runnable file"
 
@@ -182,7 +183,7 @@ requireMain = void . checkedMain "a runnable file"
 checkedMain :: String -> SourceProgram -> Either String (Globals, SymbolId)
 checkedMain caller program = do
   let K.Environment globals = sourceEnvironment program
-  name <- maybe (Left (caller ++ " requireþ a top-level main")) pure (sourceGlobal program "main")
+  name <- maybe (Left (caller ++ " requireth a top-level main")) pure (sourceGlobal program "main")
   Definition {definitionType, definitionBody} <- maybe (Left "main is not a checked definition") pure (Map.lookup name globals)
   case definitionBody of
     Transparent _ -> pure ()
@@ -215,11 +216,11 @@ runYield host program inferred = do
       runExceptT (execute host value) <&> \case
         Right result -> Right result
         Left (Failure message) -> Left message
-        Left (Exit status) -> Left ("exited wiþ status " ++ show status)
+        Left (Exit status) -> Left ("exited with status " ++ show status)
     Right value -> pure (settled value)
 
--- haskell shareþ each delayed computation. a failed one keepeþ its failure
--- until inspected, just as an unused argument keepeþ its value unevaluated.
+-- haskell shareth each delayed computation. a failed one keepeth its failure
+-- until inspected, just as an unused argument keepeth its value unevaluated.
 delayed :: Either String Runtime -> Runtime
 delayed = either RFailure id
 
@@ -237,7 +238,7 @@ settled =
     RLiteral literal -> rnf literal `seq` pure (RLiteral literal)
     value -> pure value
 
--- values print as þe ordinary evaluator printeþ þem. erased inputs, such as
+-- values print as the ordinary evaluator printeth them. erased inputs, such as
 -- implicit constructor fields, are not shown.
 renderRuntime :: Runtime -> String
 renderRuntime = \case
@@ -261,8 +262,8 @@ execute :: (Monad m) => HostIO m -> Runtime -> Execution m Runtime
 execute host = \case
   RDeed deed -> case deed of
     -- producers compute data fully, including literal payloads, before a
-    -- continuation receiveþ it. bind and fix stay in tail position, so a
-    -- loop retaineþ neither pending arithmetic nor return frames.
+    -- continuation receiveth it. bind and fix stay in tail position, so a
+    -- loop retaineth neither pending arithmetic nor return frames.
     DPure value -> runtime (settled value)
     DBind action continuation -> do
       value <- execute host action
@@ -276,8 +277,8 @@ execute host = \case
   where
     continue function arguments = runtime (foldM apply function arguments) >>= execute host
 
--- each case followeþ the catalogue type of its key. a fallible deed returneþ
--- an option or `text ∑ α`, as in þe ordinary runner.
+-- each case followeth the catalogue type of its key. a fallible deed returneth
+-- an option or `text ∑ α`, as in the ordinary runner.
 perform :: (Monad m) => HostIO m -> String -> [Runtime] -> Execution m Runtime
 perform host key arguments = case (key, arguments) of
   ("write", [text -> Just value]) -> lift (hostWrite host value) >>= runtime >> pure only
@@ -300,7 +301,7 @@ perform host key arguments = case (key, arguments) of
     texts <- runtime (maybe (Left "process arguments must be text") Right (listed inputs >>= traverse text))
     outcome (\(status, output, errors) -> RConstructor (coreConstructor processResultConstructorId) [RLiteral (IntegerValue status), textValue output, textValue errors])
       <$> lift (hostRunProcess host command texts)
-  -- serving endeþ wiþ a message when the transport or a handler faileþ.
+  -- serving endeth with a message when the transport or a handler faileth.
   ("serve", [natural -> Just port, handler]) ->
     lift (hostServe host port (runExceptT . respond)) >>= \case
       Left message -> pure (textValue message)
@@ -315,7 +316,7 @@ perform host key arguments = case (key, arguments) of
     taskOutcome = \case
       Right value -> Right value
       Left (Failure message) -> Left message
-      Left (Exit status) -> Left ("task exited wiþ status " ++ show status)
+      Left (Exit status) -> Left ("task exited with status " ++ show status)
     outcome success = either (\message -> RConstructor (coreConstructor leftConstructorId) [textValue message]) (\value -> RConstructor (coreConstructor rightConstructorId) [success value])
 
 runtime :: (Monad m) => Either String a -> Execution m a
@@ -354,7 +355,7 @@ listed = \case
 pair :: Runtime -> Runtime -> Runtime
 pair left right = RConstructor (coreConstructor productConstructorId) [left, right]
 
--- headers cross þe boundary as a text table of pairs.
+-- headers cross the boundary as a text table of pairs.
 headerTable :: [(Text.Text, Text.Text)] -> Runtime
 headerTable headers = RConstructor (coreConstructor tableConstructorId) [list [pair (textValue (Text.unpack name)) (textValue (Text.unpack value)) | (name, value) <- headers]]
 
@@ -373,14 +374,14 @@ responseOf = \case
   RConstructor constructor [natural -> Just status, RConstructor table [rows], text -> Just body]
     | constructor == coreConstructor responseConstructorId,
       table == coreConstructor tableConstructorId -> do
-        pairs <- maybe (Left "web response containeþ a non-text header") pure do
+        pairs <- maybe (Left "web response containeth a non-text header") pure do
           entries <- listed rows
           traverse (\case RConstructor product [text -> Just name, text -> Just value] | product == coreConstructor productConstructorId -> Just (Text.pack name, Text.pack value); _ -> Nothing) entries
         unless (all (\(name, value) -> Web.validHeaderName name && Web.validHeaderValue value) pairs) (Left "invalid response header")
         pure (Web.Response status pairs (Text.pack body))
   _ -> Left "web handler returned an invalid response"
 
--- pure host values cross by þe catalogue's shared shape.
+-- pure host values cross by the catalogue's shared shape.
 toHostValue :: Runtime -> Maybe HostValue
 toHostValue = \case
   RLiteral literal -> Just (literalValue literal)
@@ -394,7 +395,7 @@ fromHostValue = \case
   HostList values -> list (map fromHostValue values)
   value -> maybe RErased RLiteral (valueLiteral value)
 
--- globals are acyclic, so this lazy table evaluateþ each one at most once.
+-- globals are acyclic, so this lazy table evaluateth each one at most once.
 runtimeGlobals :: Globals -> Lazy.Map SymbolId (Either String Runtime)
 runtimeGlobals globals = table
   where
@@ -402,15 +403,16 @@ runtimeGlobals globals = table
     global name Definition {definitionBody} = case definitionBody of
       Transparent term -> evaluate table [] term
       TypeConstructor _ -> pure RErased
-      -- natural constructors work on literals.
+      -- number constructors work on literals.
       DataConstructor _ _
-        | name == naturalZeroId -> pure (RLiteral (NaturalValue 0))
-        | name == naturalSuccessorId -> pure (RFunction \case RLiteral (NaturalValue value) -> pure (RLiteral (NaturalValue (value + 1))); RFailure message -> Left message; _ -> Left "successor of a non-natural")
+        | Just literal <- constructedLiteral name [] -> pure (RLiteral literal)
+        | name `elem` [naturalSuccessorId, integerPositiveId, integerNegativeId] ->
+            pure (RFunction \case RLiteral field | Just literal <- constructedLiteral name [field] -> pure (RLiteral literal); RFailure message -> Left message; _ -> Left "a number constructor of a non-literal")
       DataConstructor owner index -> constructor name owner index
       Eliminator family -> eliminator name family
       Host key _ | key `elem` Primitive.opaqueTypeFamilyNames ++ literalTypeNames -> pure RErased
       Host "sorry" _ -> pure (RFunction \_ -> pure (RFailure "reached sorry"))
-      Assumption -> pure (RFailure ("reached orsend '" ++ symbolName name ++ "'"))
+      Assumption -> pure (RFailure ("reached orsetting '" ++ symbolName name ++ "'"))
       Host "literal_case" _ -> curried 6 \case
         [_, _, actual, expected, yes, no] ->
           traverse inspected [actual, expected] >>= \case
@@ -425,9 +427,9 @@ runtimeGlobals globals = table
       Just (TypeConstructor InductiveInfo {inductiveParameterCount, inductiveConstructorInfo})
         | (_, fields) : _ <- drop index inductiveConstructorInfo -> pure (inductiveParameterCount, fields)
       _ -> Left "invalid runtime constructor metadata"
-    -- induction receiveþ parameters, motive, methods, indices, and scrutinee.
+    -- induction receiveth parameters, motive, methods, indices, and scrutinee.
     -- recursive hypotheses reuse the prefix; erased indices never compute.
-    -- þe chosen method computeþ at once; a hypothesis computeþ when used.
+    -- the chosen method computeth at once; a hypothesis computeth when used.
     eliminator name family = case definitionBody <$> Map.lookup family globals of
       Just (TypeConstructor InductiveInfo {..}) -> do
         let prefixSize = inductiveParameterCount + 1 + length inductiveConstructorInfo
@@ -438,7 +440,7 @@ runtimeGlobals globals = table
               scrutinee <- case drop indexCount rest of
                 [value] -> pure value
                 _ -> Left "invalid runtime induction arguments"
-              case naturalView scrutinee of
+              case literalView scrutinee of
                 RConstructor constructorName values
                   | Just Definition {definitionBody = DataConstructor owner index} <- Map.lookup constructorName globals,
                     owner == family,
@@ -448,7 +450,7 @@ runtimeGlobals globals = table
                       foldM (field prefix) method (zip fields values)
                 RFailure message -> Left message
                 _ -> Left ("induction " ++ show name ++ " received a non-constructor")
-            -- a function field's hypothesis takeþ þe field's inputs first.
+            -- a function field's hypothesis taketh the field's inputs first.
             field prefix method ((_, annotation, recursive), value) = do
               applied <- apply method value
               let recurse child = induct (prefix ++ replicate indexCount RErased ++ [child])
@@ -460,9 +462,8 @@ runtimeGlobals globals = table
             inputCount = length . fst . termTelescope
         curried (prefixSize + indexCount + 1) induct
       _ -> Left "invalid runtime eliminator metadata"
-    naturalView = \case
-      RLiteral (NaturalValue 0) -> RConstructor naturalZeroId []
-      RLiteral (NaturalValue value) -> RConstructor naturalSuccessorId [RLiteral (NaturalValue (value - 1))]
+    literalView = \case
+      RLiteral literal | Just (constructor, fields) <- literalConstructor literal -> RConstructor constructor (map RLiteral fields)
       value -> value
     -- type inputs arrive erased before the explicit inputs.
     host key = do
@@ -473,12 +474,12 @@ runtimeGlobals globals = table
           (Just operation, _, _) -> do
             values <- traverse settled arguments
             maybe (Left ("invalid runtime host call '" ++ key ++ "'")) (pure . fromHostValue) (traverse toHostValue values >>= operation)
-          (_, "deed_pure", [value]) -> pure (RDeed (DPure value))
+          (_, "deed_sheer", [value]) -> pure (RDeed (DPure value))
           (_, "deed_bind", [action, continuation]) -> pure (RDeed (DBind action continuation))
           (_, "deed_fix", [step]) -> pure (RDeed (DFix step))
           _ -> pure (RDeed (DHost key arguments))
 
--- inputs arrive in order; the body receiveþ them once all are present.
+-- inputs arrive in order; the body receiveth them once all are present.
 curried :: Int -> ([Runtime] -> Either String Runtime) -> Either String Runtime
 curried arity body = go arity []
   where
@@ -496,7 +497,7 @@ evaluate table environment = \case
   Lambda _ _ body -> pure (RFunction \argument -> evaluate table (argument : environment) body)
   Apply _ function argument -> evaluate table environment function >>= \functionValue -> apply functionValue (delayed (evaluate table environment argument))
   Let _ value body -> evaluate table (delayed (evaluate table environment value) : environment) body
-  Meta {} -> Left "runtime term containeþ an inference hole"
+  Meta {} -> Left "runtime term containeth an inference hole"
   Literal _ value -> pure (RLiteral value)
   RecordType _ -> pure RErased
   Record fields -> pure (RRecord [(name, delayed (evaluate table environment field)) | (name, field) <- fields])

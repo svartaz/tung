@@ -1,9 +1,10 @@
+use deed/file.tung
 use deed/system.tung
-use flock/algebra/total/magma.tung
-use flock/functor/cata.tung
+use flock/algebra/whole/hath_magma.tung
+use flock/functor/hath_cata.tung
 use ground.tung
 use ilk/list.tung
-use ilk/option.tung
+use ilk/maybe.tung
 use ilk/product.tung
 use ilk/sum.tung
 use ilk/table.tung
@@ -17,19 +18,19 @@ let count_word: [counts: text table ℤ, word: text, text table ℤ] ≔
 
 let count_words: [content: text, text table ℤ] ≔ (
   let words ≔ content words_text
-  yield words fold₁ table~empty count_word
+  yield words gather₁ table~empty count_word
 )
 
-let write_count: [entry: text ∏ ℤ, 𝟙 deed] ≔ >{þen,
-  (entry project₀) write,
-  ':' write,
-  (entry project₁) to_text $ write_line
+let write_count: [entry: text ∏ ℤ, 𝟙 deed] ≔ >{then,
+  (entry forthcast₀) ground~write,
+  ':' ground~write,
+  (entry forthcast₁) to_text $ write_line
 }
 
-let main: 𝟙 deed ≔ arguments map_flat {
+let main: 𝟙 deed ≔ arguments warp_flat {
   list~empty ^ 'usage: tung word_count.tung <file>' write_line,
-  paþ ‥ _ ^ paþ read_file $ map_flat {
-    message inject₀ ^ 'error:' · message $ write_line,
-    content inject₁ ^ content count_words $ entries $ each write_count
+  path ‥ _ ^ path file~read $ warp_flat {
+    message incast₀ ^ 'error:' · message $ write_line,
+    content incast₁ ^ content count_words $ entries $ each write_count
   }
 }

@@ -6,7 +6,7 @@ import * as path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
-// every byspel checkeþ as a runnable file. predictable output is compared
+// every byspel checketh as a runnable file. predictable output is compared
 // exactly, including examples whose task delays are random.
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const executable = process.env.TUNG_EXECUTABLE;
@@ -30,21 +30,21 @@ const outputs = {
   scoreboard: `launching match jobs
 
 results
-norþ 3 - 1 souþ
+north 3 - 1 south
 east 2 - 2 west
-souþ - east:cancelled:a score cannot be negative
-west 1 - 2 norþ
+south - east:cancelled:a score cannot be negative
+west 1 - 2 north
 
 standings
-norþ:6 points from 2 games
-souþ:0 points from 1 game
+north:6 points from 2 games
+south:0 points from 1 game
 east:1 points from 1 game
 west:1 points from 2 games
 `,
 };
 
 function run(args, input = "") {
-  assert.ok(executable, "TUNG_EXECUTABLE nameþ þe built compiler");
+  assert.ok(executable, "TUNG_EXECUTABLE nameth the built compiler");
   const result = spawnSync(executable, args, {
     cwd: root,
     input,
@@ -55,8 +55,8 @@ function run(args, input = "") {
   return { output: result.stdout, error: result.stderr, status: result.status };
 }
 
-// þese byspels use bookhoard bizens whose laws are still `sorry`, so
-// þeir `main` dependeþ on þat assumption.
+// these byspels use bookhoard bizens whose laws are still `sorry`, so
+// their `main` dependeth on that assumption.
 const assuming = new Set([
   "asynchronous",
   "fizzbuzz",
@@ -70,7 +70,7 @@ const assuming = new Set([
 
 for (const byspel of byspels) {
   const file = path.join("byspel", `${byspel}.tung`);
-  test(`${byspel} checkeþ`, () => {
+  test(`${byspel} checketh`, () => {
     assert.deepEqual(run(["--check", file]), {
       output: assuming.has(byspel) ? "type ok\nsorry: main\n" : "type ok\n",
       error: "",
@@ -78,7 +78,7 @@ for (const byspel of byspels) {
     });
   });
   if (Object.hasOwn(outputs, byspel)) {
-    test(`${byspel} printeþ its result`, () => {
+    test(`${byspel} printeth its result`, () => {
       assert.deepEqual(run([file]), {
         output: outputs[byspel],
         error: "",
@@ -88,7 +88,7 @@ for (const byspel of byspels) {
   }
 }
 
-test("word_count readeþ its file and counteþ repeated words", (context) => {
+test("word_count readeth its file and counteth repeated words", (context) => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "tung-word-count-"));
   context.after(() => fs.rmSync(directory, { recursive: true, force: true }));
   const file = path.join(directory, "words.txt");
@@ -100,7 +100,7 @@ test("word_count readeþ its file and counteþ repeated words", (context) => {
   });
 });
 
-test("checking listeþ shown declarations þat assume sorry", () => {
+test("checking listeth shown declarations that assume sorry", () => {
   const source =
     "show let assumed:ℤ ≔ sorry\nshow let built:ℤ ≔ assumed\nlet hidden:ℤ ≔ sorry\nshow let proved:ℤ ≔ +1";
   assert.deepEqual(run(["--check-stdin"], source), {
@@ -116,13 +116,13 @@ test("checking listeþ shown declarations þat assume sorry", () => {
   });
 });
 
-test("stdin checking reporteþ success and rejection through its exit status", () => {
+test("stdin checking reporteth success and rejection through its exit status", () => {
   for (const [source, output, status] of [
-    ["let value:ℤ ≔ +1", "type ok\n", 0],
-    ["let value ≔", "parse error: expected an expression\n", 1],
+    ["let worth:ℤ ≔ +1", "type ok\n", 0],
+    ["let worth ≔", "parse error: expected an expression\n", 1],
     [
-      "let value:ℤ ≔ 'text'",
-      "type error: in let 'value': cannot unify text wiþ ℤ\n",
+      "let worth:ℤ ≔ 'text'",
+      "type error: in let 'worth': cannot unify text with ℤ\n",
       1,
     ],
   ]) {

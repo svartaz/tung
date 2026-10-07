@@ -1,4 +1,4 @@
-## one list family storeþ values, types, or type constructors.
+## one list family storeth values, types, or type constructors.
 ilk list: [α: *, *] {
   ∅: α list,
   ‥: [head: α, tail: α list, α list]
@@ -9,11 +9,11 @@ let ·: [@α: *, left: α list, right: α list, α list] ≔
   {_: α list ^ α list} unbuild list @α right
     {head, _, rest ^ head ‥ @α rest} left
 
-let map: [@α: *, @β: *, l: α list, f: [α, β], β list] ≔
+let warp: [@α: *, @β: *, l: α list, f: [α, β], β list] ≔
   {_: α list ^ β list} unbuild list @α (∅ @β)
     {head, _, rest ^ (head f) ‥ @β rest} l
 
-## fold replaceþ ∅ with empty and ‥ with step, from right to left.
-let fold: [@α: *, @β: *, l: α list, empty: β, step: [α, β, β], β] ≔
+## fold replaceth ∅ with empty and ‥ with step, from right to left.
+let gather: [@α: *, @β: *, l: α list, empty: β, step: [α, β, β], β] ≔
   {_: α list ^ β} unbuild list @α empty
     {head, _, rest ^ head step rest} l

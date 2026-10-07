@@ -1,69 +1,68 @@
-use flock/algebra/partial/category.tung
-use flock/algebra/partial/semigroupoid.tung
+use flock/algebra/half/category.tung
+use flock/algebra/half/semigroupoid.tung
 use flock/functor.tung
 use flock/functor/applicative.tung
 use flock/functor/monad.tung
 
-## a computation: eiþer a result, or one request and þe continuation þat
-## receiveþ its answer. a request `ξ φ` asketh for a `ξ`; φ need not be a
-## functor, and þe type stayeþ strictly positive, so every function below
-## recurseþ structurally.
+## a computation: either a result, or one request and the continuation that
+## receiveth its answer. a request `ξ φ` asketh for a `ξ`; φ need not be a
+## functor, and the type stayeth strictly positive, so every function below
+## recurseth structurally.
 show ilk freer: [φ: [*, *], α: *, *] {
   done: [α, φ freer α],
   more: [@ξ: *, ξ φ, [ξ, φ freer α], φ freer α]
 }
 
-## run þe continuation on þe result, after every request.
-show let bind: [@φ: [*, *], @α: *, @β: *, program: φ freer α, next: [α, φ freer β], φ freer β] ≔
-  match program {
-    value done ^ value next,
-    request more continue ^ request more { answer ^ (answer continue) bind next }
-  }
+## run the continuation on the result, after every request.
+show let bind: [@φ: [*, *], @α: *, @β: *, φ freer α, [α, φ freer β], φ freer β] ≔ {
+  worth done,            next ^ worth next,
+  request more continue, next ^ request more { answer ^ (answer continue) bind next }
+}
 
 ## a program of one request, whose answer is its result.
 show let lift: [@φ: [*, *], @α: *, request: α φ, φ freer α] ≔
   request more done
 
-show let map_freer: [@φ: [*, *], @α: *, @β: *, program: φ freer α, change: [α, β], φ freer β] ≔
-  program bind { value ^ (value change) done }
+show let warp: [@φ: [*, *], @α: *, @β: *, forewrit: φ freer α, change: [α, β], φ freer β] ≔
+  forewrit bind { worth ^ (worth change) done }
 
-show let flat_freer: [@φ: [*, *], @α: *, program: φ freer (φ freer α), φ freer α] ≔
-  program bind sameness
+show let flat: [@φ: [*, *], @α: *, forewrit: φ freer (φ freer α), φ freer α] ≔
+  forewrit bind is
 
-## interpret a program: `handle` answereþ each request by calling its
-## continuation, and `leaf` turneþ þe result into þe answer.
-show let fold: [
+## interpret a program: `handle` answereth each request by calling its
+## continuation, and `leaf` turneth the result into the answer.
+show let gather: [
   @φ: [*, *], @α: *, @β: *,
-  leaf: [α, β],
-  handle: [@ξ: *, ξ φ, [ξ, β], β],
-  program: φ freer α,
+  [α, β],
+  [@ξ: *, ξ φ, [ξ, β], β],
+  φ freer α,
   β
-] ≔ match program {
-  value done ^ value leaf,
-  request more continue ^ request handle { answer ^ leaf fold handle (answer continue) }
+] ≔ {
+  leaf, _,      worth done            ^ worth leaf,
+  leaf, handle, request more continue ^ request handle { answer ^ leaf gather handle (answer continue) }
 }
 
 ## general mapping and right-identity proofs need function extensionality
 ## to turn pointwise continuation proofs into equality of `more` programs.
 bizen: [@φ: [*, *], (φ freer) functor] {
-  let map: [program:, change:] ≔ program map_freer change
+  let warp: [forewrit:, change:] ≔ forewrit warp change
 
-  let map_sameness ≔ sorry
+  let warp_is ≔ sorry
 }
 
 bizen: [@φ: [*, *], (φ freer) applicative] {
-  let pure ≔ done
-  let apply: [program:, changes:] ≔ changes bind { change ^ program map_freer change }
+  let sheer ≔ done
+  let apply: [forewrit:, changes:] ≔ changes bind { change ^ forewrit warp change }
 
-  let apply_sameness_pure ≔ sorry
-  let pure_apply_pure ≔ {_, _ ^ reflect}
+  let apply_is_sheer ≔ sorry
+  let sheer_apply_sheer ≔ {_, _ ^ backbend}
   let apply_apply ≔ sorry
-  let pure_apply ≔ {_, _ ^ reflect}
+  let sheer_apply ≔ {_, _ ^ backbend}
 }
 
 bizen: [@φ: [*, *], (φ freer) monad] {
-  let flat: [program:] ≔ program flat_freer
+  let flat: [forewrit:] ≔ forewrit flat
 
-  let pure_map_flat ≔ {_, _ ^ reflect}
-  let map_pure_flat ≔ sorry
+  let sheer_warp_flat ≔ {_, _ ^ backbend}
+  let warp_sheer_flat ≔ sorry
 }

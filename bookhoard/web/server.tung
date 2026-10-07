@@ -5,21 +5,14 @@ use web/response.tung
 
 show _request
 show request
-show request_meþod
-show request_target
-show request_headers
-show request_body
 
 show _response
 show response
-show response_status
-show response_headers
-show response_body
 show respond
 show ok
 show not_found
-show wiþ_header
+show with_header
 
-## serve http/1.1 over ipv4 wiþ one request per connection. þe deed endeþ
-## only when serving stopþ, wiþ a message saying why.
+## serve http/1.1 over ipv4 with one request per connection. the deed endeth
+## only when serving stopth, with a message saying why.
 show let serve: [ℕ, [_request, _response deed], text deed] ≔ 'serve' fremmed

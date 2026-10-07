@@ -13,7 +13,7 @@ test("requirements resolve imported types and declared parameters", async (conte
   const main = path.join(root, "main.tung");
   fs.writeFileSync(
     main,
-    "use dep.tung flock child:[@:box same, a:*, @:a same, *] {let f:[a, a]}",
+    "use dep.tung flock child:[@:box hath_≍, a:*, @:a hath_≍, *] {let f:[a, a]}",
   );
   const workspace = new WorkspaceIndex(
     { get: () => undefined, all: () => [] },
@@ -36,13 +36,13 @@ test("requirements resolve imported types and declared parameters", async (conte
   }).definition;
   assert.equal(binder?.token.offset, uses[0].offset);
 });
-test("workspace resolveþ only shown names across an import", async (context) => {
+test("workspace resolveth only shown names across an import", async (context) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-workspace-"));
   context.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const dep = path.join(root, "dep.tung");
   const main = path.join(root, "main.tung");
   fs.writeFileSync(dep, "show let answer:ℤ ≔ +42 let hidden ≔ +0");
-  fs.writeFileSync(main, "use dep.tung let value:ℤ ≔ answer");
+  fs.writeFileSync(main, "use dep.tung let worth:ℤ ≔ answer");
   const documents = { get: () => undefined, all: () => [] };
   const workspace = new WorkspaceIndex(documents, compiler);
   workspace.configure([root]);
@@ -56,7 +56,7 @@ test("workspace resolveþ only shown names across an import", async (context) =>
     pathToFileURL(dep).href,
   );
 });
-test("workspace explicit import alias replaceeþ the default namespace", async (context) => {
+test("workspace explicit import alias replaceth the default namespace", async (context) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-use-alias-"));
   context.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const dep = path.join(root, "data", "dep.tung");
@@ -81,7 +81,7 @@ test("workspace explicit import alias replaceeþ the default namespace", async (
   assert(labels.has("d~answer"));
   assert(!labels.has("dep~answer"));
 });
-test("workspace resolveþ and completeþ a default basename alias", async (context) => {
+test("workspace resolveth and completeth a default basename alias", async (context) => {
   const root = fs.mkdtempSync(
     path.join(os.tmpdir(), "tung-default-use-alias-"),
   );
@@ -108,7 +108,7 @@ test("workspace resolveþ and completeþ a default basename alias", async (conte
   assert(labels.has("dep~answer"));
   assert(!labels.has("ilk/dep~answer"));
 });
-test("workspace default alias ignoreþ dots in import directories", async (context) => {
+test("workspace default alias ignoreth dots in import directories", async (context) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-dotted-use-"));
   context.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const dep = path.join(root, "pkg.one", "query.tung");
@@ -126,13 +126,13 @@ test("workspace default alias ignoreþ dots in import directories", async (conte
   assert.equal(workspace.resolveVisible(model, "query~answer").length, 1);
   assert.equal(workspace.resolveVisible(model, "pkg~answer").length, 0);
 });
-test("workspace leaveþ duplicate imported bare names ambiguous", async (context) => {
+test("workspace leaveth duplicate imported bare names ambiguous", async (context) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-ambiguous-"));
   context.after(() => fs.rmSync(root, { recursive: true, force: true }));
-  fs.writeFileSync(path.join(root, "left.tung"), "show let value ≔ +1");
-  fs.writeFileSync(path.join(root, "right.tung"), "show let value ≔ +2");
+  fs.writeFileSync(path.join(root, "left.tung"), "show let worth ≔ +1");
+  fs.writeFileSync(path.join(root, "right.tung"), "show let worth ≔ +2");
   const main = path.join(root, "main.tung");
-  fs.writeFileSync(main, "use left.tung use right.tung let answer ≔ value");
+  fs.writeFileSync(main, "use left.tung use right.tung let answer ≔ worth");
   const workspace = new WorkspaceIndex(
     { get: () => undefined, all: () => [] },
     compiler,
@@ -140,8 +140,8 @@ test("workspace leaveþ duplicate imported bare names ambiguous", async (context
   workspace.configure([root]);
   await workspace.ready();
   const model = workspace.model(pathToFileURL(main).href);
-  assert.equal(workspace.resolveVisible(model, "value").length, 2);
-  assert.equal(workspace.resolveVisible(model, "left~value").length, 1);
+  assert.equal(workspace.resolveVisible(model, "worth").length, 2);
+  assert.equal(workspace.resolveVisible(model, "left~worth").length, 1);
 });
 test("workspace re-exports every same-spelled role", async (context) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-namespaces-"));
@@ -191,7 +191,7 @@ test("library module paths keep their exact file names", async (context) => {
   context.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const library = path.join(root, "library");
   fs.mkdirSync(library, { recursive: true });
-  fs.writeFileSync(path.join(library, "_foreign.tung"), "show let value ≔ +1");
+  fs.writeFileSync(path.join(library, "_foreign.tung"), "show let worth ≔ +1");
   const main = path.join(root, "main.tung");
   fs.writeFileSync(main, "use foreign.tung");
   const workspace = new WorkspaceIndex(
@@ -208,14 +208,14 @@ test("library module paths keep their exact file names", async (context) => {
 test("library roots resolve exact paths and duplicate names stay ambiguous", async (context) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-library-roots-"));
   context.after(() => fs.rmSync(root, { recursive: true, force: true }));
-  const project = path.join(root, "project");
+  const project = path.join(root, "forthcast");
   const first = path.join(root, "first");
   const second = path.join(root, "second");
   for (const directory of [project, first, second]) fs.mkdirSync(directory);
   const main = path.join(project, "main.tung");
   const module = path.join(first, "extra.tung");
-  fs.writeFileSync(main, "use extra.tung yield extra~value");
-  fs.writeFileSync(module, "show let value ≔ +1");
+  fs.writeFileSync(main, "use extra.tung yield extra~worth");
+  fs.writeFileSync(module, "show let worth ≔ +1");
   const workspace = new WorkspaceIndex(
     { get: () => undefined, all: () => [] },
     compiler,
@@ -228,10 +228,10 @@ test("library roots resolve exact paths and duplicate names stay ambiguous", asy
     pathToFileURL(module).href,
   );
   assert(workspace.modulePaths(model.uri).includes("extra.tung"));
-  fs.writeFileSync(path.join(second, "extra.tung"), "show let value ≔ +2");
+  fs.writeFileSync(path.join(second, "extra.tung"), "show let worth ≔ +2");
   workspace.invalidateFiles();
   assert.equal(workspace.resolveImport(model, model.imports[0]), undefined);
-  fs.writeFileSync(path.join(project, "extra.tung"), "show let value ≔ +3");
+  fs.writeFileSync(path.join(project, "extra.tung"), "show let worth ≔ +3");
   workspace.invalidateFiles();
   assert.equal(
     workspace.resolveImport(model, model.imports[0])?.uri,

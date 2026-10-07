@@ -3,7 +3,7 @@
 {-# LANGUAGE ViewPatterns #-}
 
 -- | types and values share this source syntax. names remain readable until
--- elaboration resolveþ them to checked global identities or local indices.
+-- elaboration resolveth them to checked global identities or local indices.
 module Tung.Dependent.Source.Syntax
   ( Expression (Located),
     pattern Name,
@@ -45,9 +45,9 @@ import Tung.Dependent.Literal (renderLiteral)
 import Tung.Dependent.Syntax (HostLiteral (..), Plicity (..))
 import Tung.Token (SourceSpan)
 
--- an expression's constructors are written wiþout þeir `Raw` prefix: each
--- name below is a pattern þat lookeþ þrough `Located`, so a span never
--- changeþ what a match seeþ. only elaboration's entry points read spans.
+-- an expression's constructors are written without their `Raw` prefix: each
+-- name below is a pattern that looketh through `Located`, so a span never
+-- changeth what a match seeth. only elaboration's entry points read spans.
 data Expression
   = RawName String
   | RawUniverse
@@ -57,26 +57,26 @@ data Expression
   | RawAscription Expression Expression
   | RawBlock [Declaration] Expression
   | RawLiteralExpression HostLiteral
-  | -- patterns reuse expression syntax; elaboration decideþ which names are
+  | -- patterns reuse expression syntax; elaboration decideth which names are
     -- constructors. `_` is valid only inside a pattern.
     RawWildcard
-  | -- `{rows}` wiþ more þan one row or a non-variable pattern.
+  | -- `{rows}` with more than one row or a non-variable pattern.
     RawCases [Row]
   | RawMatch [Expression] [Row]
-  | -- `match e for known { rows }`: each row also bindeþ `known: e = pattern`.
+  | -- `match e for known { rows }`: each row also bindeth `known: e = pattern`.
     RawMatchFor Expression String [Row]
   | -- `r{name:type, ...}`, `r{name = value, ...}`, `r{= base, changes}`.
     RawRecordTypeExpression [(String, Expression)]
   | RawRecordExpression [(String, Expression)]
   | RawRecordUpdate Expression [RecordChange]
   | RawProjection Expression String
-  | -- `sorry` standeþ for an omitted term of any type.
+  | -- `sorry` standeth for an omitted term of any type.
     RawSorry
-  | -- `unbuild name` is þe eliminator of þe ilk or flock `name`.
+  | -- `unbuild name` is the eliminator of the ilk or flock `name`.
     RawInduce String
-  | -- `a:` leaveþ a slot type to inference, as doth an omitted result.
+  | -- `a:` leaveth a slot type to inference, as doth an omitted result.
     RawInferred
-  | -- þe source span of þe expression inside.
+  | -- the source span of the expression inside.
     Located SourceSpan Expression
   deriving stock (Eq, Show)
 
@@ -182,15 +182,15 @@ pattern Inferred <- (unlocated -> RawInferred)
   where
     Inferred = RawInferred
 
--- a flock requireþ members and stateþ named laws. a law is a member whose type
--- endeþ in an equation; it is checked documentation, not a proof obligation,
+-- a flock requireth members and stateth named laws. a law is a member whose type
+-- endeth in an equation; it is checked documentation, not a proof obligation,
 -- during migration.
 data FlockMember
   = FlockMember String Expression
   | FlockLaw String [Parameter] Expression Expression
   deriving stock (Eq, Show)
 
--- an update setþ a field, adding it when absent, or removeþ one.
+-- an update setth a field, adding it when absent, or removeth one.
 data RecordChange = SetField String Expression | RemoveField String
   deriving stock (Eq, Show)
 
@@ -239,41 +239,41 @@ data Declaration
         flockParameters :: [Parameter],
         flockMembers :: [FlockMember]
       }
-  | -- `bizen:type { let member = body }` defineþ a registered dictionary. the
-    -- type's implicit slots are parameters and requirements; it endeþ in a flock.
+  | -- `bizen:type { let member = body }` defineth a registered dictionary. the
+    -- type's implicit slots are parameters and requirements; it endeth in a flock.
     BizenDeclaration
-      { -- `bizen 10: …` writeþ a priority; higher is tried first.
+      { -- `bizen 10: …` writeth a priority; higher is tried first.
         bizenPriority :: Maybe Integer,
         -- `bizen fallback: …` is tried only for a goal stuck on an unknown input.
         bizenFallback :: Bool,
         bizenType :: Expression,
         bizenMembers :: [Declaration]
       }
-  | -- `use path [alias]` importeþ a module's shown names.
+  | -- `use path [alias]` importeth a module's shown names.
     ImportDeclaration
       { importPath :: String,
         importAlias :: Maybe String
       }
-  | -- `show declaration` publisheþ its names to importing modules.
+  | -- `show declaration` publisheth its names to importing modules.
     ShownDeclaration Declaration
-  | -- `show a, b` publisheþ visible names, including imported ones.
+  | -- `show a, b` publisheth visible names, including imported ones.
     ReExportDeclaration [String]
-  | -- `orsend name:type` assumeþ a constant of a type wiþout a proof.
+  | -- `orsetting name:type` assumeth a constant of a type without a proof.
     AssumptionDeclaration
       { assumptionName :: String,
         assumptionAnnotation :: Expression
       }
   | -- a top-level host binding: `let name:type ≔ 'key' fremmed`, optionally
-    -- followed by þe name of its model.
+    -- followed by its model, a definition that may call the binding itself.
     HostDeclaration
       { hostName :: String,
         hostAnnotation :: Expression,
         hostKey :: String,
-        hostModel :: Maybe String
+        hostModel :: Maybe Expression
       }
   deriving stock (Eq, Show)
 
--- every constructor stateþ its type, as in a GADT.
+-- every constructor stateth its type, as in a GADT.
 data ConstructorDeclaration = ConstructorDeclaration
   { constructorName :: String,
     constructorAnnotation :: Expression
@@ -308,8 +308,8 @@ subexpressions = \case
       Declaration {..} -> maybe [] pure declarationAnnotation ++ [declarationBody]
       _ -> []
 
--- names an expression useþ but doth not bind. in a pattern, a name is a use
--- only when þe supplied predicate recogniseþ a constructor; any oþer name bindeþ.
+-- names an expression useth but doth not bind. in a pattern, a name is a use
+-- only when the supplied predicate recogniseth a constructor; any other name bindeth.
 freeNames :: (String -> Bool) -> Set.Set String -> Expression -> Set.Set String
 freeNames isConstructor = go
   where
@@ -325,7 +325,7 @@ freeNames isConstructor = go
       MatchFor scrutinee known rows -> Set.unions (go bound scrutinee : map (row (Set.insert known bound)) rows)
       expression -> Set.unions (map (go bound) (subexpressions expression))
     binders bound [] result = go bound result
-    -- every annotation and local right-hand side seeþ only earlier binders.
+    -- every annotation and local right-hand side seeth only earlier binders.
     binders bound ((name, annotations) : rest) result =
       Set.unions (map (go bound) annotations ++ [binders (maybe bound (`Set.insert` bound) name) rest result])
     locals bound [] result = go bound result
@@ -343,8 +343,8 @@ freeNames isConstructor = go
       Application function arguments -> foldMap patternNames (function : map argumentExpression arguments)
       _ -> (Set.empty, Set.empty)
 
--- a fully parenþesised, location-free rendering for tests: an application
--- printeþ its function first, as `(f a @t b)`.
+-- a fully parenthesised, location-free rendering for tests: an application
+-- printeth its function first, as `(f a @t b)`.
 sketch :: Expression -> String
 sketch = \case
   Name name -> name

@@ -1,9 +1,9 @@
 use combinator.tung
-use flock/order/less_equal.tung
-use flock/order/order_total.tung
+use flock/order/hath_at_most.tung
+use flock/order/order_whole.tung
 use ilk/two.tung
 
-## a carrier whose every pair haþ an infimum.
+## a carrier whose every pair hath an infimum.
 show flock semilattice_lower: [α: *, *] {
   let ∧: [α, α, α]
   let ∧_absorb: [a: α, (a ∧ a) = a]
@@ -19,11 +19,11 @@ bizen: [@β: *, @: β semilattice_lower, @α: *, (α → β) semilattice_lower] 
   let ∧_∧ ≔ sorry
 }
 
-bizen: [@α: *, @: α order_total, α semilattice_lower] {
+bizen: [@α: *, @: α order_whole, α semilattice_lower] {
   let ∧: [a:, b:] ≔ (a ≤ b) if a b
 
-  # each comparison result chooseþ a, so matching on it proveþ the law.
-  let ∧_absorb ≔ {a ^ match a ≤ a {yea ^ reflect, nay ^ reflect}}
+  # each comparison result chooseth a, so matching on it proveth the law.
+  let ∧_absorb ≔ {a ^ match a ≤ a {yea ^ backbend, nay ^ backbend}}
   let ∧_commute ≔ sorry
   let ∧_∧ ≔ sorry
 }

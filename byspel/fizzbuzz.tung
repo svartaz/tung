@@ -1,12 +1,12 @@
-use flock/algebra/partial/semigroupoid.tung
+use flock/algebra/half/semigroupoid.tung
 use ground.tung
 use ilk/list.tung
-use ilk/option.tung
+use ilk/maybe.tung
 use ilk/product.tung
 
-let can_divide: [@α: *, @: α divide_remainder, @: α haþ_zero, @: α equal, divisor: α, dividend: α, 𝟚] ≔
+let can_deal: [@α: *, @: α hath_%, @: α hath_zero, @: α hath_≍, divisor: α, dividend: α, 𝟚] ≔
   match dividend % divisor {
-    (_ boþ rest) some ^ rest ≍ zero,
+    (_ both rest) some ^ rest ≍ zero,
     none ^ nay
   }
 
@@ -17,7 +17,7 @@ ilk _fizzbuzz: * {
   raw: [ℤ, _fizzbuzz]
 }
 
-bizen: _fizzbuzz haþ_to_text {
+bizen: _fizzbuzz hath_to_text {
   let to_text ≔ {
     fizz ^ 'fizz',
     buzz ^ 'buzz',
@@ -27,7 +27,7 @@ bizen: _fizzbuzz haþ_to_text {
 }
 
 let to_fizzbuzz: [integer: ℤ, _fizzbuzz] ≔
-  match +3 can_divide integer, +5 can_divide integer {
+  match +3 can_deal integer, +5 can_deal integer {
     yea, yea ^ fizzbuzz,
     yea, nay ^ fizz,
     nay, yea ^ buzz,
@@ -35,4 +35,4 @@ let to_fizzbuzz: [integer: ℤ, _fizzbuzz] ≔
   }
 
 let main: 𝟙 deed ≔
-  +0 till +32 $ map (to_fizzbuzz ▷ to_text) $ each write_line
+  +0 till +32 $ warp (to_fizzbuzz ▷ to_text) $ each write_line

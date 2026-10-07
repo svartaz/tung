@@ -16,9 +16,9 @@ import Control.Applicative ((<|>))
 import Data.Bifunctor (first)
 import Tung.Token qualified as Token
 
--- a failure names þe module it arose in, by `use` path, and þe span of þe
--- token or declaration at fault. its message includeþ þe chain of `use`
--- paths þat led to þat module.
+-- a failure names the module it arose in, by `use` path, and the span of the
+-- token or declaration at fault. its message includeth the chain of `use`
+-- paths that led to that module.
 data CompileFailure = CompileFailure
   { failureKind :: FailureKind,
     failurePath :: Maybe String,
@@ -42,8 +42,8 @@ failure = Left . Token.SourceFailure Nothing
 inContext :: String -> Either Token.SourceFailure a -> Either Token.SourceFailure a
 inContext prefix = first (\failure -> failure {Token.failureMessage = prefix ++ Token.failureMessage failure})
 
--- an inner expression's location outrankeþ its surrounding expression or
--- declaration. adding context never changeþ that location.
+-- an inner expression's location outranketh its surrounding expression or
+-- declaration. adding context never changeth that location.
 atSpan :: Token.SourceSpan -> Either Token.SourceFailure a -> Either Token.SourceFailure a
 atSpan span = first (\failure -> failure {Token.failureSpan = Token.failureSpan failure <|> Just span})
 

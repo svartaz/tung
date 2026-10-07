@@ -1,9 +1,0 @@
-use flock/algebra/partial/category.tung
-use flock/algebra/partial/semigroupoid.tung
-
-show flock groupoid: [⇨: [*, *, *], @: ⇨ category, *] {
-  let invert: [@α: *, @β: *, α ⇨ β, β ⇨ α]
-
-  let ▷_invert: [@α: *, @β: *, f: α ⇨ β, (f ▷ (f invert)) = sameness]
-  let invert_▷: [@α: *, @β: *, f: α ⇨ β, ((f invert) ▷ f) = sameness]
-}

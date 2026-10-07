@@ -1,0 +1,38 @@
+# lemmas about the primitive identity type `=`, whose only proof is `backbend`.
+# matching on `backbend` replaceth one side of an equation with the other.
+
+## equality is preserved by applying a function.
+show let leibnitz: [
+  @α: *, @β: *,
+  @a: α, @b: α,
+  f: [α, β], backbend: a = b, (a f) = (b f)
+] ≔ backbend
+
+## reverse an equality proof.
+show let evenmete: [
+  @α: *, @a: α, @b: α,
+  backbend: a = b, b = a
+] ≔ backbend
+
+## join two equality proofs.
+show let throughgo: [
+  @α: *, @a: α, @b: α, @c: α,
+  backbend: a = b, q: b = c, a = c
+] ≔ q
+
+## a property of one side holdeth for the other. the property is found by
+## abstracting each occurrence of `b` in the expected type, or without one,
+## each occurrence of `a` in the type of the second input.
+show let transport: [
+  @α: *, @a: α, @b: α, @property: [α, *],
+  backbend: a = b, a property, b property
+] ≔ {x ^ x}
+
+## a computed value with the proof of what it is, so that a case function can
+## match the value and still know it: in
+## `e inspect { yea, known ^ …, nay, known ^ … }` each case seeth `known`
+## as `e = yea` or `e = nay`. the property is found as for `transport`.
+show let inspect: [
+  @α: *, @property: [α, *],
+  a: α, f: [b: α, a = b, b property], a property
+] ≔ a f backbend

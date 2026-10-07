@@ -50,7 +50,7 @@ runnableFileCase imports path = do
 
 mainEntry :: Imports -> Test
 mainEntry imports = do
-  actual <- runMainSource "use ground.tung let main:𝟙 deed ≔ only pure" imports
+  actual <- runMainSource "use ground.tung let main:𝟙 deed ≔ only sheer" imports
   pure $ if actual == "ok 0" then Nothing else Just ("main entry: " ++ actual)
 
 rejectedMain :: Imports -> Test
@@ -69,16 +69,16 @@ fileRoundTrip imports = do
   directory <- getTemporaryDirectory
   let path = directory ++ "/tung-file-deed-test~txt"
       file = "'" ++ path ++ "'"
-      -- `each` appendeþ in list order.
+      -- `each` appendeth in list order.
       source =
-        "use ground.tung use ilk/list.tung yield >{þen, "
-          ++ (file ++ " write_file 'hello', ")
-          ++ ("(' ' ‥ ('world' ‥ empty)) each { part ^ " ++ file ++ " append_file part $ void }, ")
-          ++ (file ++ " read_file}")
+        "use ground.tung use deed/file.tung use ilk/list.tung yield >{then, "
+          ++ (file ++ " file~write 'hello', ")
+          ++ ("(' ' ‥ ('world' ‥ empty)) each { part ^ " ++ file ++ " file~append part $ void }, ")
+          ++ (file ++ " file~read}")
   removeIfPresent path
   actual <- evaluateSource source imports
   removeIfPresent path
-  pure $ if actual == "eval ok: ('hello world' inject₁)" then Nothing else Just ("file round trip: " ++ actual)
+  pure $ if actual == "eval ok: ('hello world' incast₁)" then Nothing else Just ("file round trip: " ++ actual)
 
 webServerRoundTrip :: Imports -> Test
 webServerRoundTrip imports = do
@@ -87,15 +87,16 @@ webServerRoundTrip imports = do
         """
         use ground.tung
         use deed/clock.tung
-        use ilk/option.tung
+        use ilk/maybe.tung
         use ilk/table.tung
+        use web/request.tung
         use web/server.tung
 
-        let route:[incoming: _request, _response deed] ≔ unix_time map { _ ^
-          match ((incoming request_meþod) ≍ 'POST') ∧ ((incoming request_target) ≍ '/echo') {
-            yea ^ match ((incoming request_headers) table~lookup 'Host') {
-              host option~some ^ match host ≍ 'localhost' {
-                yea ^ ((((incoming request_body) ok) wiþ_header 'Transfer-Encoding' 'chunked') wiþ_header 'X-Tung' 'old') wiþ_header 'X-Tung' 'yea',
+        let route:[incoming: _request, _response deed] ≔ unix_time warp { _ ^
+          match ((incoming request~method) ≍ 'POST') ∧ ((incoming request~target) ≍ '/echo') {
+            yea ^ match ((incoming request~headers) table~lookup 'Host') {
+              host maybe~some ^ match host ≍ 'localhost' {
+                yea ^ ((((incoming request~body) ok) with_header 'Transfer-Encoding' 'chunked') with_header 'X-Tung' 'old') with_header 'X-Tung' 'yea',
                 nay ^ 'not found\\n' not_found
               },
               _ ^ 'not found\\n' not_found

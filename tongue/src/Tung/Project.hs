@@ -1,6 +1,6 @@
 -- | filesystem project loading is kept outside parsing and import semantics.
--- the loader resolveþ relative imports into the flat source bundle consumed by the
--- checker, and rejecteþ path collisions instead of silently choosing one file.
+-- the loader resolveth relative imports into the flat source bundle consumed by the
+-- checker, and rejecteth path collisions instead of silently choosing one file.
 module Tung.Project
   ( Project (..),
     loadProjectFile,
@@ -22,7 +22,7 @@ import System.FilePath (normalise, takeDirectory, (</>))
 import System.IO.Error (tryIOError)
 import Tung.Dependent.Source (SourceSnapshot, snapshotImportPaths, snapshotText, sourceSnapshot)
 
--- a root source and every source it reacheþ, keyed by `use` path, wiþ þe
+-- a root source and every source it reacheth, keyed by `use` path, with the
 -- file each `use` path resolved to.
 data Project = Project
   { projectPath :: FilePath,
@@ -84,7 +84,7 @@ loadImport roots owner base importPath = do
               failLoader
                 ( "ambiguous use '"
                     ++ importPath
-                    ++ "' resolveþ to both '"
+                    ++ "' resolveth to both '"
                     ++ other
                     ++ "' and '"
                     ++ absolute
@@ -100,7 +100,7 @@ loadImport roots owner base importPath = do
                     ++ other
                     ++ "' and '"
                     ++ importPath
-                    ++ "' resolveþ to the same file '"
+                    ++ "' resolveth to the same file '"
                     ++ absolute
                     ++ "'"
                 )

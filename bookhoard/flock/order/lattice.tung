@@ -1,8 +1,8 @@
-use flock/order/order_total.tung
+use flock/order/order_whole.tung
 use flock/order/semilattice_lower.tung
 use flock/order/semilattice_upper.tung
 
-## a carrier wiþ compatible infimum and supremum semilattices.
+## a carrier with compatible infimum and supremum semilattices.
 show flock lattice: [α: *, @: α semilattice_lower, @: α semilattice_upper, *] {
   let ∧_∨_absorption: [a: α, b: α, (a ∧ (a ∨ b)) = a]
   let ∨_∧_absorption: [a: α, b: α, (a ∨ (a ∧ b)) = a]
@@ -13,7 +13,7 @@ bizen: [@β: *, @: β lattice, @α: *, [α, β] lattice] {
   let ∨_∧_absorption ≔ sorry
 }
 
-bizen: [@α: *, @: α order_total, α lattice] {
+bizen: [@α: *, @: α order_whole, α lattice] {
   let ∧_∨_absorption ≔ sorry
   let ∨_∧_absorption ≔ sorry
 }

@@ -5,16 +5,16 @@ import { analyzed } from "./compiler.ts";
 test("declaration annotations expose definitions and scoped parameters in incomplete buffers", async () => {
   const source = [
     "show let count:* ≔ ℤ",
-    "show let identity:[@α:*, x:α, α] ≔ x",
-    "let add: [x:, y:ℤ, ℤ] ≔ x + y",
+    "show let selfness:[@α:*, x:α, α] ≔ x",
+    "let hath_+: [x:, y:ℤ, ℤ] ≔ x + y",
     "let answer:count ≔ +42",
     "let outside ≔ x",
   ].join("\n");
   const model = await analyzed(source, "file:///annotations.tung");
   for (const [name, role] of [
     ["count", "type"],
-    ["identity", "function"],
-    ["add", "function"],
+    ["selfness", "function"],
+    ["hath_+", "function"],
     ["answer", "variable"],
   ]) {
     assert(
@@ -35,9 +35,9 @@ test("declaration annotations expose definitions and scoped parameters in incomp
   );
   assert.equal(findDefinition(model, occurrences.at(-1)), undefined);
 });
-test("analysis recordeþ shown owners, members, parameters, and imports", async () => {
+test("analysis recordeth shown owners, members, parameters, and imports", async () => {
   const source =
-    "use ground.tung show flock order_partial:[a:*, @:a equal, *] { let ≤:[a, a, 𝟚] } let <: [a:, b:] ≔ a ≤ b";
+    "use ground.tung show flock order_half:[a:*, @:a hath_≍, *] { let ≤:[a, a, 𝟚] } let <: [a:, b:] ≔ a ≤ b";
   const model = await analyzed(source, "file:///model.tung");
   assert.deepEqual(
     model.imports.map(({ path }) => path),
@@ -46,7 +46,7 @@ test("analysis recordeþ shown owners, members, parameters, and imports", async 
   assert(
     model.definitions.some(
       ({ name, role, exported }) =>
-        name === "order_partial" && role === "class" && exported,
+        name === "order_half" && role === "class" && exported,
     ),
   );
   assert(
@@ -55,7 +55,7 @@ test("analysis recordeþ shown owners, members, parameters, and imports", async 
         name === "≤" &&
         role === "method" &&
         exported &&
-        containerName === "order_partial",
+        containerName === "order_half",
     ),
   );
   assert(
@@ -65,7 +65,7 @@ test("analysis recordeþ shown owners, members, parameters, and imports", async 
   );
 });
 test("class parameters resolve inside the braced body", async () => {
-  const source = "flock add:[a:*, *] { let +:[a, a, a] } let outside ≔ a";
+  const source = "flock hath_+:[a:*, *] { let +:[a, a, a] } let outside ≔ a";
   const model = await analyzed(source, "file:///flock.tung");
   const occurrences = model.tokens.filter(({ text }) => text === "a");
   const inside = findDefinition(model, occurrences[1], occurrences[1].offset);
@@ -78,8 +78,8 @@ test("class parameters resolve inside the braced body", async () => {
 });
 test("instance parameters resolve in requirements, the head, and members", async () => {
   const source = [
-    "bizen:[@a:*, @:a parent, [a, a] identity] {",
-    "  let identity:[[a, a], [a, a]] ≔ { x ^ x }",
+    "bizen:[@a:*, @:a parent, [a, a] selfness] {",
+    "  let selfness:[[a, a], [a, a]] ≔ { x ^ x }",
     "}",
     "let outside ≔ a",
   ].join("\n");
@@ -93,10 +93,10 @@ test("instance parameters resolve in requirements, the head, and members", async
   assert.equal(findDefinition(model, occurrences.at(-1)), undefined);
   assert.deepEqual(
     model.instances.map(({ className }) => className),
-    ["identity"],
+    ["selfness"],
   );
   assert.equal(
-    model.definitions.find(({ name }) => name === "identity")?.role,
+    model.definitions.find(({ name }) => name === "selfness")?.role,
     "method",
   );
 });
@@ -116,7 +116,7 @@ test("instances without parameter brackets retain their class and members", asyn
 });
 test("requirement parameters respect nested types and owner scope", async () => {
   const source =
-    "flock child:[a:*, b:*, @:[a, b] parent, *] { let f:[@:a same, a, b] }";
+    "flock child:[a:*, b:*, @:[a, b] parent, *] { let f:[@:a hath_≍, a, b] }";
   const model = await analyzed(source);
   for (const name of ["a", "b"]) {
     const uses = model.tokens.filter((token) => token.text === name);
@@ -128,7 +128,7 @@ test("requirement parameters respect nested types and owner scope", async () => 
       assert.equal(findDefinition(model, token)?.token.offset, uses[0].offset);
   }
 });
-test("analysis recordeþ foreign import paths", async () => {
+test("analysis recordeth foreign import paths", async () => {
   const source = "use _foreign.tung\nuse flock/algebra/arithmetic/field.tung";
   const model = await analyzed(source, "file:///imports.tung");
   assert.deepEqual(
@@ -136,7 +136,7 @@ test("analysis recordeþ foreign import paths", async () => {
     ["_foreign.tung", "flock/algebra/arithmetic/field.tung"],
   );
 });
-test("analysis recordeþ an optional import alias separately from its path", async () => {
+test("analysis recordeth an optional import alias separately from its path", async () => {
   const model = await analyzed(
     "use ilk/list.tung list yield list~empty",
     "file:///imports.tung",
@@ -156,7 +156,7 @@ test("analysis recordeþ an optional import alias separately from its path", asy
     ],
   );
 });
-test("analysis defaulteþ an import namespace to its last path segment", async () => {
+test("analysis defaulteth an import namespace to its last path segment", async () => {
   const model = await analyzed(
     "use ilk/list.tung yield list~empty",
     "file:///imports.tung",
@@ -171,21 +171,21 @@ test("analysis defaulteþ an import namespace to its last path segment", async (
     ],
   );
 });
-test("analysis ignoreþ dots in directories when defaulting a namespace", async () => {
+test("analysis ignoreth dots in directories when defaulting a namespace", async () => {
   const model = await analyzed(
     "use pkg.one/query.tung yield query~answer",
     "file:///imports.tung",
   );
   assert.equal(model.imports[0].namespace, "query");
 });
-test("analysis recordeþ each re-exported name", async () => {
+test("analysis recordeth each re-exported name", async () => {
   const model = await analyzed("show first, second", "file:///exports.tung");
   assert.deepEqual(model.reexports, [{ name: "first" }, { name: "second" }]);
 });
-test("analysis attacheþ doc comments to following shown declarations", async () => {
+test("analysis attacheth doc comments to following shown declarations", async () => {
   const source = [
-    "## identity value.",
-    "show let identity:[@a:*, @:a equal, x: a, a] ≔ x",
+    "## selfness worth.",
+    "show let selfness:[@a:*, @:a hath_≍, x: a, a] ≔ x",
     "",
     "/**",
     " * boxed data.",
@@ -194,8 +194,8 @@ test("analysis attacheþ doc comments to following shown declarations", async ()
   ].join("\n");
   const model = await analyzed(source, "file:///docs.tung");
   assert.equal(
-    model.definitions.find(({ name }) => name === "identity").documentation,
-    "identity value.",
+    model.definitions.find(({ name }) => name === "selfness").documentation,
+    "selfness worth.",
   );
   assert.equal(
     model.definitions.find(
@@ -204,7 +204,7 @@ test("analysis attacheþ doc comments to following shown declarations", async ()
     "boxed data.",
   );
 });
-test("local resolution preferreþ the narrowest binder scope", async () => {
+test("local resolution preferreth the narrowest binder scope", async () => {
   const source = "let keep:[x: ℤ, ℤ] ≔ match x { x ^ x }";
   const model = await analyzed(source, "file:///scope.tung");
   const use = model.tokens.filter(({ text }) => text === "x").at(-1);
@@ -216,7 +216,7 @@ test("local resolution preferreþ the narrowest binder scope", async () => {
   );
 });
 test("inferred and annotated slots resolve in one function body", async () => {
-  const source = "let add: [a:, b: ℤ, ℤ] ≔ a + b";
+  const source = "let hath_+: [a:, b: ℤ, ℤ] ≔ a + b";
   const model = await analyzed(source, "file:///mixed_header.tung");
   for (const name of ["a", "b"]) {
     const occurrences = model.tokens.filter(({ text }) => text === name);
@@ -226,7 +226,7 @@ test("inferred and annotated slots resolve in one function body", async () => {
     assert.equal(definition.token.offset, occurrences[0].offset);
   }
 });
-test("an unfinished lambda scopeþ its binders to the end of the buffer", async () => {
+test("an unfinished lambda scopeth its binders to the end of the buffer", async () => {
   const source = "let choose ≔ { left, right ^ right";
   const model = await analyzed(source, "file:///incomplete_pattern.tung");
   const occurrences = model.tokens.filter(({ text }) => text === "right");
@@ -251,7 +251,7 @@ test("an unmatched inner delimiter doth not leak a pattern scope", async () => {
     undefined,
   );
 });
-test("token lookup excludeþ the character after a token", async () => {
+test("token lookup excludeth the character after a token", async () => {
   const model = await analyzed("let answer ≔ +42", "file:///token.tung");
   assert.equal(
     tokenAtPosition(model, { line: 0, character: 4 }).text,

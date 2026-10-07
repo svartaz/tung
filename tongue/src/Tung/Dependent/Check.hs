@@ -1,6 +1,7 @@
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ViewPatterns #-}
 
--- | kernel checking and universe generalisation. source elaboration reuseþ
+-- | kernel checking and universe generalisation. source elaboration reuseth
 -- these scoped operations; every completed term is independently rechecked.
 module Tung.Dependent.Check
   ( Level (..),
@@ -74,7 +75,7 @@ data Inferred = Inferred
   }
   deriving stock (Eq, Show)
 
-type Typing = StateT [Constraint] (Either String)
+type Typing = StateT U.Universes (Either String)
 
 data Context = Context
   { contextValues :: [N.Value],
@@ -88,7 +89,7 @@ infer :: Environment -> Term -> Either String Inferred
 infer environment@(Environment globals) term = do
   rejectMetas term
   traverse_ (validLevel Nothing True) (termLevels term)
-  (ty, constraints) <- runStateT (inferTerm globals emptyContext term) []
+  (ty, U.universeConstraints -> constraints) <- runStateT (inferTerm globals emptyContext term) (U.universes [])
   annotation <- N.quote globals 0 ty
   result <- generalise term annotation constraints
   validate environment result
@@ -99,7 +100,7 @@ check environment@(Environment globals) term annotation = do
   rejectMetas term
   rejectMetas annotation
   traverse_ (validLevel Nothing True) (termLevels term ++ termLevels annotation)
-  (_, constraints) <- runStateT (checkType globals emptyContext annotation >> checkTerm globals emptyContext term annotation) []
+  (_, U.universeConstraints -> constraints) <- runStateT (checkType globals emptyContext annotation >> checkTerm globals emptyContext term annotation) (U.universes [])
   result <- generalise term annotation constraints
   validate environment result
   pure result
@@ -110,16 +111,16 @@ define environment@(Environment globals) name annotation body = do
   result <- maybe (infer environment body) (check environment body) annotation
   pure (insertChecked globals name result)
 
--- elaboration may infer under source scopes, but insertion always recheckeþ a
+-- elaboration may infer under source scopes, but insertion always rechecketh a
 -- closed generalised result. no source declaration can bypass the kernel.
--- an assumption is a constant whose checked type is all þe kernel knoweþ.
+-- an assumption is a constant whose checked type is all the kernel knoweth.
 assume :: Environment -> SymbolId -> Inferred -> Either String Environment
 assume environment@(Environment globals) name signature@Inferred {..} = do
   when (Map.member name globals) (Left "duplicate definition")
   validate environment signature
   N.normalise globals 0 inferredType >>= \case
     Sort _ -> pure ()
-    _ -> Left "an orsend annotation is not a type"
+    _ -> Left "an orsetting annotation is not a type"
   pure (Environment (Map.insert name (Definition inferredUniverses inferredConstraints inferredTerm Assumption) globals))
 
 defineInferred :: Environment -> SymbolId -> Inferred -> Either String Environment
@@ -132,7 +133,7 @@ insertChecked :: Globals -> SymbolId -> Inferred -> Environment
 insertChecked globals name Inferred {..} =
   Environment (Map.insert name (Definition inferredUniverses inferredConstraints inferredType (Transparent inferredTerm)) globals)
 
--- the kernel recheckeþ final terms with rigid universe parameters. inference
+-- the kernel rechecketh final terms with rigid universe parameters. inference
 -- constraints are accepted only when the exported assumptions entail them.
 validate :: Environment -> Inferred -> Either String ()
 validate (Environment globals) Inferred {..} = do
@@ -142,11 +143,11 @@ validate (Environment globals) Inferred {..} = do
   let levels = termLevels inferredTerm ++ termLevels inferredType ++ concatMap constraintLevels inferredConstraints
   traverse_ (validLevel (Just inferredUniverses) False) levels
   unless (U.satisfiable inferredConstraints) (Left "inconsistent universe constraints")
-  (_, obligations) <- runStateT (checkType globals emptyContext inferredType >> checkTerm globals emptyContext inferredTerm inferredType) inferredConstraints
+  (_, U.universeConstraints -> obligations) <- runStateT (checkType globals emptyContext inferredType >> checkTerm globals emptyContext inferredTerm inferredType) (U.universes inferredConstraints)
   unless (all (U.entails inferredConstraints) (openObligations inferredConstraints obligations)) (Left "unproved universe constraint in core")
 
--- þe obligations a search must still prove. a repeated, trivially true, or
--- assumed constraint needeþ no search.
+-- the obligations a search must still prove. a repeated, trivially true, or
+-- assumed constraint needeth no search.
 openObligations :: [Constraint] -> [Constraint] -> [Constraint]
 openObligations assumptions obligations = [obligation | obligation <- nub obligations, not (U.trivial obligation), obligation `notElem` assumptions]
 
@@ -171,14 +172,12 @@ failure = lift . Left
 
 oblige :: Constraint -> Typing ()
 oblige constraint = do
-  constraints <- get
-  let next = constraint : constraints
+  current <- get
   -- conversion may evaluate types. reject inconsistent universes before NBE,
   -- rather than provisionally typing a non-normalising type-in-type calculus.
   -- a repeated or trivially true constraint cannot change satisfiability.
-  unless (constraint `elem` constraints || U.trivial constraint) do
-    unless (U.satisfiable next) (failure "inconsistent universe constraints")
-    put next
+  unless (constraint `elem` U.universeConstraints current || U.trivial constraint) do
+    maybe (failure "inconsistent universe constraints") put (U.constrain constraint current)
 
 evaluate :: Globals -> Context -> Term -> Typing N.Value
 evaluate globals Context {contextValues} = lift . N.evaluate globals contextValues
@@ -190,8 +189,8 @@ bind Context {..} ty =
 inferTerm :: Globals -> Context -> Term -> Typing N.Value
 inferTerm globals = inferTermWith (kernelChecking globals)
 
--- inference rules are shared with typed metavariable checking. the kernel useþ
--- fixed conversion and rejecteþ holes; elaboration may only solve typed holes.
+-- inference rules are shared with typed metavariable checking. the kernel useth
+-- fixed conversion and rejecteth holes; elaboration may only solve typed holes.
 data Checking m = Checking
   { failCheck :: forall a. String -> m a,
     liftCheck :: forall a. Either String a -> m a,
@@ -255,7 +254,7 @@ inferTermWith operations@Checking {..} context@Context {..} = \case
         convertCheck context argumentType domain
         argumentValue <- evaluateCheck context argument
         instantiateCheck codomain argumentValue
-      _ -> failCheck "application requireþ a function"
+      _ -> failCheck "application requireth a function"
   Let annotation value body -> do
     checkTypeWith operations context annotation
     checkTermWith operations context value annotation
@@ -275,8 +274,8 @@ inferTermWith operations@Checking {..} context@Context {..} = \case
       N.VRecordType fields | Just ty <- lookup name fields -> pure ty
       N.VRecordType _ -> failCheck ("record hath no field '" ++ name ++ "'")
       _ -> failCheck "projection from a non-record"
-  -- a field's type is þe constructor's field type, wiþ þe family's
-  -- parameters and each earlier field, projected from þe same value.
+  -- a field's type is the constructor's field type, with the family's
+  -- parameters and each earlier field, projected from the same value.
   Field index value ->
     inferTermWith operations context value >>= forceCheck >>= \case
       N.VNeutral neutral
@@ -302,11 +301,11 @@ inferTermWith operations@Checking {..} context@Context {..} = \case
                         afterParameters <- foldlM parameter constructorType (map snd arguments)
                         walk afterParameters 0
                       _ -> failCheck "missing constructor"
-              _ -> failCheck "a field projection needeþ a one-constructor family wiþout indices"
-      _ -> failCheck "a field projection needeþ a one-constructor family wiþout indices"
+              _ -> failCheck "a field projection needeth a one-constructor family without indices"
+      _ -> failCheck "a field projection needeth a one-constructor family without indices"
   Literal name value
     | name == literalType value -> evaluateCheck context (Global name [])
-    | otherwise -> failCheck ("a literal requireþ the primitive " ++ symbolName (literalType value) ++ " type")
+    | otherwise -> failCheck ("a literal requireth the primitive " ++ symbolName (literalType value) ++ " type")
 
 checkType :: Globals -> Context -> Term -> Typing Level
 checkType globals = checkTypeWith (kernelChecking globals)
@@ -348,7 +347,7 @@ convert globals Context {contextTypes} actual expected = do
     compareTerms (Record left) (Record right) | map fst left == map fst right = traverse_ (uncurry compareTerms) (zip (map snd left) (map snd right))
     compareTerms (Project left ln) (Project right rn) | ln == rn = compareTerms left right
     compareTerms (Field li left) (Field ri right) | li == ri = compareTerms left right
-    -- η: a function equaleþ þe lambda þat applieþ it.
+    -- η: a function equaleth the lambda that applieth it.
     compareTerms (Lambda lp _ lb) right = compareTerms lb (Apply lp (shiftTerm 1 right) (Local 0))
     compareTerms left (Lambda rp _ rb) = compareTerms (Apply rp (shiftTerm 1 left) (Local 0)) rb
     compareTerms a b = failure (renderMismatch (length contextTypes) a b)
@@ -380,14 +379,14 @@ generalise term annotation constraints = do
     [body, ty] -> pure (Inferred universes assumptions body ty)
     _ -> Left "invalid universe generalisation result"
 
--- a mutually scoped declaration group shareþ one universe substitution. this
+-- a mutually scoped declaration group shareth one universe substitution. this
 -- keepeth family signatures, constructor fields, and self references aligned.
 generaliseTerms :: [Term] -> [Constraint] -> Either String (Int, [Constraint], [Term])
 generaliseTerms terms constraints = do
   unless (U.satisfiable constraints) (Left "inconsistent universe constraints")
   let substitution = solve Map.empty constraints
       resolve = U.normaliseLevel . replace substitution
-      solved = nub [constraint | original <- constraints, let constraint = mapConstraint resolve original, not (U.entails [] constraint)]
+      solved = nub [constraint | original <- constraints, let constraint = mapConstraint resolve original, not (U.trivial constraint)]
       levels = map resolve (concatMap termLevels terms) ++ concatMap constraintLevels solved
       atoms = Set.unions (map levelAtoms levels)
       parameters = [index | LParam index <- Set.toList atoms]

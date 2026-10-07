@@ -3,7 +3,7 @@ use flock/order/semilattice_lower.tung
 use ilk/three.tung
 use ilk/two.tung
 
-## an infimum semilattice wiþ a greatest value.
+## an infimum semilattice with a greatest value.
 show flock semilattice_bounded_upper: [α: *, @: α semilattice_lower, *] {
   let ⊤: α
 
@@ -19,11 +19,11 @@ bizen: [@β: *, @: β semilattice_bounded_upper, @α: *, (α → β) semilattice
 bizen: 𝟚 semilattice_bounded_upper {
   let ⊤ ≔ yea
 
-  let ⊤_∧ ≔ {yea; nay ^ reflect}
+  let ⊤_∧ ≔ {yea; nay ^ backbend}
 }
 
 bizen: 𝟛 semilattice_bounded_upper {
   let ⊤ ≔ aft
 
-  let ⊤_∧ ≔ {fore; mid; aft ^ reflect}
+  let ⊤_∧ ≔ {fore; mid; aft ^ backbend}
 }

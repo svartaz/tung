@@ -45,8 +45,8 @@ const labels = async (source: string, name: string) => {
 test("compiler roles keep types, header binders and application positions consistent", async () => {
   const source =
     "show let constant:[@a:*, @b:*, x:a, _:b, a] ≔ x\n" +
-    "show let read_paþ:[text paþ:_paþ, (text ∑ text) deed] ≔ text read_file\n" +
-    "show let join_paþ:[text₀ paþ:_paþ, text₁ paþ:_paþ, _paþ] ≔ text₀ · '/' $ · text₁ $ paþ";
+    "show let read:[text path:_path, (text ∑ text) deed] ≔ text read_file\n" +
+    "show let join:[text₀ path:_path, text₁ path:_path, _path] ≔ text₀ · '/' $ · text₁ $ path";
   assert.deepEqual(await labels(source, "a"), [
     "typeParameter:declaration",
     "type:",
@@ -66,10 +66,10 @@ test("compiler roles keep types, header binders and application positions consis
   assert.deepEqual(await labels(source, "*"), ["keyword:", "keyword:"]);
   assert((await labels(source, ":")).every((label) => label === undefined));
 });
-test("names bound by value slots stay terms inside later types", async () => {
+test("names bound by worth slots stay terms inside later types", async () => {
   const source =
-    "ilk =:[@α:*, a:α, α, *] { reflect:a = a }\n" +
-    "let leibnitz:[@α:*, @β:*, @a:α, @b:α, f:[α, β], reflect:a = b, (a f) = (b f)] ≔ reflect\n" +
+    "ilk =:[@α:*, a:α, α, *] { backbend:a = a }\n" +
+    "let leibnitz:[@α:*, @β:*, @a:α, @b:α, f:[α, β], backbend:a = b, (a f) = (b f)] ≔ reflect\n" +
     "let other:[@a:*, a] ≔ sorry";
   assert.deepEqual(await labels(source, "a"), [
     undefined,
@@ -112,8 +112,8 @@ test("ilk-returning let declarations have type roles", async () => {
 test("declaration annotations retain compiler roles for prefixed names and greek parameters", async () => {
   const source =
     "let count:* ≔ ℤ\n" +
-    "let identity:[@α:*, x:α, α] ≔ x\n" +
-    "let answer:count ≔ +42 identity @count";
+    "let selfness:[@α:*, x:α, α] ≔ x\n" +
+    "let answer:count ≔ +42 selfness @count";
   assert.deepEqual(await labels(source, "count"), [
     "type:declaration",
     "type:",
@@ -130,12 +130,12 @@ test("declaration annotations retain compiler roles for prefixed names and greek
     undefined,
     undefined,
   ]);
-  assert.deepEqual(await labels(source, "identity"), [
+  assert.deepEqual(await labels(source, "selfness"), [
     "function:declaration.applied",
     "call:applied",
   ]);
 });
-test("right composition useþ ordinary function roles", async () => {
+test("right composition useth ordinary function roles", async () => {
   const source = "let values:ℤ list ≔ >{cons, +1, empty}";
   assert.deepEqual(await labels(source, "values"), ["variable:declaration"]);
   assert.deepEqual(await labels(source, "list"), ["type:applied"]);
@@ -153,7 +153,7 @@ test("nested polymorphic binders use compiler type roles", async () => {
   assert.deepEqual(await labels(source, "@"), ["keyword:"]);
   assert.deepEqual(await labels(source, "f"), [undefined, "call:applied"]);
 });
-test("explicit type arguments retain type roles among value arguments", async () => {
+test("explicit type arguments retain type roles among worth arguments", async () => {
   const source =
     "let f:[@a:*, @b:*, x:a, _:b, a] ≔ x\nyield 'x' f @text @(text list) empty";
   assert.deepEqual(await labels(source, "text"), ["type:", "type:"]);
@@ -172,8 +172,8 @@ test("explicit type arguments retain type roles among value arguments", async ()
 test("compiler roles use GADT, flock and pattern grammar", async () => {
   const source =
     "show ilk tag: [a:*, *] { integer: ℤ tag, boolean: 𝟚 tag }\n" +
-    "show flock functor:[f:[*, *], *] { let map:[@a:*, @b:*, a f, [a, b], b f] let map_sameness:[@a:*, af:a f, (af map sameness) = af] }\n" +
-    "show let void:[@f:[*, *], @:f functor, @a:*, af:a f, 𝟙 f] ≔ af map {_ ^ only}\n" +
+    "show flock functor:[f:[*, *], *] { let warp:[@a:*, @b:*, a f, [a, b], b f] let warp_is:[@a:*, af:a f, (af warp is) = af] }\n" +
+    "show let void:[@f:[*, *], @:f functor, @a:*, af:a f, 𝟙 f] ≔ af warp {_ ^ only}\n" +
     "let read:[ℤ tag, ℤ] ≔ { x integer ^ x }";
   assert.deepEqual(await labels(source, "tag"), [
     "type:declaration.typeFunction",
@@ -190,7 +190,7 @@ test("compiler roles use GADT, flock and pattern grammar", async () => {
     "enumMember:",
   ]);
   assert.deepEqual(await labels(source, "_"), [undefined]);
-  assert.deepEqual(await labels(source, "map"), [
+  assert.deepEqual(await labels(source, "warp"), [
     "call:declaration.applied",
     "call:applied",
     "call:applied",
@@ -199,8 +199,8 @@ test("compiler roles use GADT, flock and pattern grammar", async () => {
 test("local polymorphic binders have compiler roles in declarations", async () => {
   const source =
     "ilk packed: * { pack: [@a:*, a, packed] }\n" +
-    "flock same:[a:*, *] { let rule:[@b:*, x:b, x = x] }\n" +
-    "bizen:[@a:*, a same] {}";
+    "flock hath_≍:[a:*, *] { let rule:[@b:*, x:b, x = x] }\n" +
+    "bizen:[@a:*, a hath_≍] {}";
   assert.deepEqual(await labels(source, "@"), [
     "keyword:",
     "keyword:",
@@ -213,12 +213,12 @@ test("local polymorphic binders have compiler roles in declarations", async () =
     "typeParameter:declaration",
     "type:",
   ]);
-  assert.deepEqual(await labels(source, "same"), [
+  assert.deepEqual(await labels(source, "hath_≍"), [
     "class:declaration.typeFunction",
     "class:applied",
   ]);
 });
-test("compiler highlighting recovereþ incomplete syntax without accepting it", async () => {
+test("compiler highlighting recovereth incomplete syntax without accepting it", async () => {
   const source = "let before:ℤ ≔ +1\nlet broken [x:ℤ\nlet after:text ≔ 'ok'";
   assert.deepEqual(await labels(source, "ℤ"), ["type:", undefined]);
   assert.deepEqual(await labels(source, "text"), ["type:"]);
@@ -231,7 +231,7 @@ test("compiler highlighting recovereþ incomplete syntax without accepting it", 
   if (result.kind === "check")
     assert.equal(result.diagnostics[0]?.kind, "parse");
 });
-test("compiler spans map unicode and line endings without eager name resolution", () => {
+test("compiler spans warp unicode and line endings without eager name resolution", () => {
   const resolve = () => {
     throw new Error("navigation analysis was unnecessary");
   };
@@ -261,7 +261,7 @@ test("compiler spans map unicode and line endings without eager name resolution"
     [{ line: 0, char: 0, length: 1, type: "call", modifiers: ["applied"] }],
   );
 });
-test("highlight cache shareþ requests and discardeth obsolete results", async () => {
+test("highlight cache shareth requests and discardeth obsolete results", async () => {
   const requests = [];
   const cache = new HighlightCache({
     highlight: (text, version) => {

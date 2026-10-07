@@ -11,6 +11,8 @@ module Tung.Dependent.Literal
     hostTypeSymbol,
     coreConstructor,
     renderLiteral,
+    literalConstructor,
+    constructedLiteral,
   )
 where
 
@@ -20,7 +22,7 @@ import Data.Word (Word64)
 import GHC.Float (castDoubleToWord64, castWord64ToDouble)
 import GHC.TypeLits (Natural)
 import Tung.Identity (ModuleId (..), SymbolId (..))
-import Tung.Primitive (HostValue (..), hostTypeId, primitiveTypeNames)
+import Tung.Primitive (HostValue (..), hostTypeId, integerNegativeId, integerPositiveId, naturalSuccessorId, naturalZeroId, primitiveTypeNames)
 
 -- floats are stored by bit pattern, so equality is reflexive even for NaN.
 data HostLiteral
@@ -39,7 +41,7 @@ instance NFData HostLiteral where
     FloatBits x -> rnf x
     UnicodeValue x -> rnf x
 
--- each literal inhabiteþ a primitive type of þe same name in every module.
+-- each literal inhabiteth a primitive type of the same name in every module.
 literalType :: HostLiteral -> SymbolId
 literalType =
   SymbolId PrimitiveModule . \case
@@ -48,6 +50,26 @@ literalType =
     IntegerValue _ -> "ℤ"
     FloatBits _ -> "float"
     UnicodeValue _ -> "unicode"
+
+-- a structural literal readeth as its outer constructor and that
+-- constructor's literal fields; 'constructedLiteral' is the inverse.
+literalConstructor :: HostLiteral -> Maybe (SymbolId, [HostLiteral])
+literalConstructor = \case
+  NaturalValue 0 -> Just (naturalZeroId, [])
+  NaturalValue value -> Just (naturalSuccessorId, [NaturalValue (value - 1)])
+  IntegerValue value
+    | value >= 0 -> Just (integerPositiveId, [NaturalValue (fromInteger value)])
+    | otherwise -> Just (integerNegativeId, [NaturalValue (fromInteger (negate value - 1))])
+  _ -> Nothing
+
+constructedLiteral :: SymbolId -> [HostLiteral] -> Maybe HostLiteral
+constructedLiteral constructor fields = case fields of
+  [] | constructor == naturalZeroId -> Just (NaturalValue 0)
+  [NaturalValue value]
+    | constructor == naturalSuccessorId -> Just (NaturalValue (value + 1))
+    | constructor == integerPositiveId -> Just (IntegerValue (toInteger value))
+    | constructor == integerNegativeId -> Just (IntegerValue (negate (toInteger value) - 1))
+  _ -> Nothing
 
 literalTypeNames :: [String]
 literalTypeNames = ["text", "ℕ", "ℤ", "float", "unicode"]
@@ -70,18 +92,18 @@ valueLiteral = \case
   HostUnicode x -> Just (UnicodeValue x)
   _ -> Nothing
 
--- a catalogue type name nameþ a primitive type or a declared host data type.
+-- a catalogue type name nameth a primitive type or a declared host data type.
 hostTypeSymbol :: String -> Maybe SymbolId
 hostTypeSymbol name
   | name `elem` primitiveTypeNames = Just (SymbolId PrimitiveModule name)
   | otherwise = hostTypeId name
 
--- þe ordinary checker qualifieþ a constructor wiþ its type, as `option@some`;
--- þe core nameþ it alone. names never contain `@`.
+-- the ordinary checker qualifieth a constructor with its type, as `maybe@some`;
+-- the core nameth it alone. names never contain `@`.
 coreConstructor :: SymbolId -> SymbolId
 coreConstructor (SymbolId owner name) = SymbolId owner (drop 1 (dropWhile (/= '@') name))
 
--- a literal as source spelleþ it.
+-- a literal as source spelleth it.
 renderLiteral :: HostLiteral -> String
 renderLiteral = \case
   TextValue x -> "'" ++ concatMap (\character -> maybe [character] id (escaped character)) x ++ "'"

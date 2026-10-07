@@ -1,8 +1,8 @@
-use flock/algebra/arithmetic/divide.tung
-use flock/algebra/arithmetic/multiply.tung
+use flock/algebra/arithmetic/hath_deal.tung
+use flock/algebra/arithmetic/hath_fold.tung
 use flock/algebra/arithmetic/ring.tung
 
-show flock field: [α: *, @: α ring, @: α divide, *] {
+show flock field: [α: *, @: α ring, @: α hath_÷, *] {
   let ÷_×: [dividend: α, divisor: α,
     ((dividend ÷ divisor) × divisor) = dividend]
 }

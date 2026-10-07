@@ -24,7 +24,7 @@ const samples = [
       `${size} ${broken ? "incomplete" : "complete"}`,
       Array.from(
         { length: size },
-        (_, i) => `let value${i}${broken ? ":[ℤ" : ":ℤ = +1"}`,
+        (_, i) => `let worth${i}${broken ? ":[ℤ" : ":ℤ = +1"}`,
       ).join("\n"),
     ]),
   ),

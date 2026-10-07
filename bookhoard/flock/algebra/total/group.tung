@@ -1,8 +1,0 @@
-use flock/algebra/total/monoid.tung
-use flock/algebra/total/semigroup.tung
-
-show flock group: [α: *, @: α monoid, *] {
-  let /: [α, α, α]
-
-  let /_cancel: [a: α, (a / a) = ∅]
-}

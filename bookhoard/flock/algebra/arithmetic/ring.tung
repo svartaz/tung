@@ -1,9 +1,9 @@
+use flock/algebra/arithmetic/hath_offdraw.tung
+use flock/algebra/arithmetic/hath_zero.tung
 use flock/algebra/arithmetic/semiring.tung
-use flock/algebra/arithmetic/subtract.tung
-use flock/algebra/arithmetic/zero.tung
 use ilk/two.tung
 
-show flock ring: [α: *, @: α semiring, @: α subtract, *] {
+show flock ring: [α: *, @: α semiring, @: α hath_-, *] {
   let -_cancel: [a: α, (a - a) = zero]
 }
 
@@ -14,5 +14,5 @@ bizen: [@β: *, @: β ring, @α: *, [α, β] ring] {
 }
 
 bizen: 𝟚 ring {
-  let -_cancel ≔ {nay; yea ^ reflect}
+  let -_cancel ≔ {nay; yea ^ backbend}
 }

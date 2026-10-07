@@ -1,7 +1,7 @@
 {-# LANGUAGE RankNTypes #-}
 
 -- | typed contextual inference holes. solutions abstract a rigid telescope;
--- the independent kernel never accepteþ these temporary terms.
+-- the independent kernel never accepteth these temporary terms.
 module Tung.Dependent.Elaboration
   ( Elaboration,
     runElaboration,
@@ -57,6 +57,7 @@ import Tung.Dependent.Normalise qualified as N
 import Tung.Dependent.Render (renderMismatchWith)
 import Tung.Dependent.Source.Error qualified as Error
 import Tung.Dependent.Syntax
+import Tung.Dependent.Universe qualified as U
 import Tung.Identity (SymbolId)
 import Tung.Primitive (HostBinding (..), HostSignature (..), findForeignBinding, pureOperation)
 import Tung.Token (SourceFailure, SourceSpan)
@@ -78,7 +79,7 @@ data Equation = Equation Int K.Context N.Value N.Value
 
 data Inference = Inference
   { displaySymbol :: SymbolId -> String,
-    -- þe definitions in scope.
+    -- the definitions in scope.
     inferenceGlobals :: Globals,
     nextLevel :: Int,
     nextMeta :: Int,
@@ -87,20 +88,20 @@ data Inference = Inference
     pendingEquations :: [Equation],
     checkingSolutions :: Set.Set Int,
     solutionVersion :: Int,
-    -- every pending equation was attempted after þis solution version.
+    -- every pending equation was attempted after this solution version.
     retriedVersion :: Int,
-    -- a candidate þat could not settle, and þe unsolved holes it waiteþ on.
+    -- a candidate that could not settle, and the unsolved holes it waiteth on.
     unsettled :: Map.Map Int (Term, Set.Set Int),
     retryingEquations :: Bool,
     instanceGoals :: [InstanceGoal],
-    -- holes þat an instance goal mentioned, such as a flock carrier `?φ`.
-    -- instance search and approximation solve þem, not abstraction.
+    -- holes that an instance goal mentioned, such as a flock carrier `?φ`.
+    -- instance search and approximation solve them, not abstraction.
     carriers :: Set.Set Int,
     -- each `sorry` checked so far, newest first, for goal display.
     holeSites :: [HoleSite]
   }
 
--- a `sorry` wiþ its source span, context, local names (innermost first),
+-- a `sorry` with its source span, context, local names (innermost first),
 -- and expected type.
 data HoleSite = HoleSite
   { holeSpan :: Maybe SourceSpan,
@@ -110,19 +111,19 @@ data HoleSite = HoleSite
   }
 
 -- an implicit input whose type is a flock is solved by instance search. the
--- hole stayeþ open until the caller's search assigneþ it.
+-- hole stayeth open until the caller's search assigneth it.
 data InstanceGoal = InstanceGoal
   { goalHole :: N.Value,
     goalContext :: K.Context,
     goalType :: N.Value
   }
 
-type Elaboration = StateT Inference (StateT [Constraint] (Either SourceFailure))
+type Elaboration = StateT Inference (StateT U.Universes (Either SourceFailure))
 
 runElaboration :: (SymbolId -> String) -> Globals -> Elaboration a -> Either SourceFailure (a, [Constraint])
 runElaboration display globals action = do
-  ((result, _), constraints) <- runStateT (runStateT action initial) []
-  pure (result, constraints)
+  ((result, _), constraints) <- runStateT (runStateT action initial) (U.universes [])
+  pure (result, U.universeConstraints constraints)
   where
     initial = Inference display globals 0 0 0 Map.empty [] Set.empty 0 0 Map.empty False [] Set.empty []
 
@@ -132,7 +133,7 @@ kernel = lift . mapStateT Error.fromString
 addInstanceGoal :: InstanceGoal -> Elaboration ()
 addInstanceGoal goal = modify' (\state -> state {instanceGoals = goal : instanceGoals state})
 
--- þe unsolved holes in a new instance goal's type are carriers.
+-- the unsolved holes in a new instance goal's type are carriers.
 markCarriers :: K.Context -> N.Value -> Elaboration ()
 markCarriers context ty = do
   term <- quote (length (K.contextTypes context)) ty
@@ -141,7 +142,7 @@ markCarriers context ty = do
 recordHole :: HoleSite -> Elaboration ()
 recordHole site = modify' (\state -> state {holeSites = site : holeSites state})
 
--- þe holes recorded so far, oldest first.
+-- the holes recorded so far, oldest first.
 takeHoles :: Elaboration [HoleSite]
 takeHoles = do
   sites <- holeSites <$> get
@@ -152,25 +153,25 @@ takeInstanceGoals :: Elaboration [InstanceGoal]
 takeInstanceGoals = do
   goals <- instanceGoals <$> get
   modify' (\state -> state {instanceGoals = []})
-  -- goals are stored in reverse, so adding one takeþ constant time.
+  -- goals are stored in reverse, so adding one taketh constant time.
   pure (reverse goals)
 
 -- retain the innermost failing expression's location through source context
--- and speculative checking. the kernel needeþ no source-location dependency.
+-- and speculative checking. the kernel needeth no source-location dependency.
 located :: SourceSpan -> Elaboration a -> Elaboration a
 located span = mapStateT (mapStateT (Error.atSpan span))
 
--- run an action and keep its effects only if it succeedeþ. instance search
--- useþ this to try candidates wiþout leaking a failed unification.
+-- run an action and keep its effects only if it succeedeth. instance search
+-- useth this to try candidates without leaking a failed unification.
 attempt :: Elaboration a -> Elaboration (Maybe a)
 attempt action = trial action >>= either (const (pure Nothing)) (\(result, commit) -> commit >> pure (Just result))
 
--- run an action wiþout keeping its effects. a success returneþ þe result and
--- an action þat keepeþ þem, so a search runneþ each candidate once.
+-- run an action without keeping its effects. a success returneth the result and
+-- an action that keepeth them, so a search runneth each candidate once.
 speculate :: Elaboration a -> Elaboration (Maybe (a, Elaboration ()))
 speculate action = either (const Nothing) Just <$> trial action
 
--- retain a rejected candidate's reason for source diagnostics, wiþout
+-- retain a rejected candidate's reason for source diagnostics, without
 -- committing its metavariable or universe state.
 trial :: Elaboration a -> Elaboration (Either SourceFailure (a, Elaboration ()))
 trial action = do
@@ -180,12 +181,12 @@ trial action = do
     Left message -> Left message
     Right ((result, inference'), constraints') -> Right (result, put inference' >> lift (put constraints'))
 
--- shared fixed-point scheduling. each phase retaineþ its own queue and
+-- shared fixed-point scheduling. each phase retaineth its own queue and
 -- progress rule; no last-resort search is moved before ordinary constraints.
 repeatProgress :: (Monad m) => m Bool -> m ()
 repeatProgress step = step >>= \progressed -> when progressed (repeatProgress step)
 
--- report whether an action would succeed, wiþout keeping its effects.
+-- report whether an action would succeed, without keeping its effects.
 probe :: Elaboration a -> Elaboration Bool
 probe action = either (const False) (const True) <$> trial action
 
@@ -228,7 +229,7 @@ resolver = do
 currentGlobals :: Elaboration Globals
 currentGlobals = inferenceGlobals <$> get
 
--- þe hole solutions and definitions þat normalisation readeþ.
+-- the hole solutions and definitions that normalisation readeth.
 normaliser :: Elaboration N.Normaliser
 normaliser = N.Normaliser <$> resolver <*> currentGlobals
 
@@ -247,7 +248,7 @@ quote depth value = do
   normal <- normaliser
   fromEither (N.quoteWith normal depth value)
 
--- þe same value wiþ definitions kept by name, for terms þat are evaluated
+-- the same value with definitions kept by name, for terms that are evaluated
 -- again, such as motives.
 quoteFolded :: Int -> N.Value -> Elaboration Term
 quoteFolded depth value = do
@@ -282,8 +283,8 @@ infer = K.inferTermWith operations
 newMeta :: K.Context -> N.Value -> Elaboration (Term, N.Value)
 newMeta context = newMetaWithout context []
 
--- a hole þat cannot depend on þe given locals, such as a match's result
--- type, which must not mention þe values it matcheþ.
+-- a hole that cannot depend on the given locals, such as a match's result
+-- type, which must not mention the values it matcheth.
 newMetaWithout :: K.Context -> [Int] -> N.Value -> Elaboration (Term, N.Value)
 newMetaWithout K.Context {..} excluded expected = do
   captures <- forM (zip contextValues contextTypes) \(value, ty) -> do
@@ -304,7 +305,7 @@ newMetaWithout K.Context {..} excluded expected = do
   kind <- infer K.emptyContext fullType >>= force
   case kind of
     N.VSort _ -> pure ()
-    _ -> failure "term inference hole requireþ a type"
+    _ -> failure "term inference hole requireth a type"
   identity <- nextMeta <$> get
   modify' (\state -> state {nextMeta = identity + 1, metaEntries = Map.insert identity (MetaEntry domains annotation Nothing) (metaEntries state)})
   arguments <- traverse (quote originalDepth) values
@@ -339,7 +340,7 @@ ensurePi _ plicity value =
       meta@MetaEntry {..} <- entry identity
       unless (length arguments == metaArity meta) (failure "wrong term inference telescope arity")
       pattern <- rigidLevels arguments
-      when (isNothing pattern) (failure "nonpattern function type inference requireþ an annotation")
+      when (isNothing pattern) (failure "nonpattern function type inference requireth an annotation")
       (context, domains) <- telescope metaDomains K.emptyContext
       kind <- evaluate context metaTarget
       force kind >>= \case
@@ -355,7 +356,7 @@ ensurePi _ plicity value =
       force value >>= \case
         N.VPi _ actualDomain actualCodomain -> pure (actualDomain, actualCodomain)
         _ -> failure "function inference did not produce a product"
-    _ -> failure "application requireþ a function"
+    _ -> failure "application requireth a function"
   where
     telescope [] context = pure (context, [])
     telescope (annotation : rest) context = do
@@ -375,6 +376,25 @@ postpone context left right = modify' (\state -> state {nextEquation = nextEquat
 
 unifyNow :: K.Context -> N.Value -> N.Value -> Elaboration Bool
 unifyNow context left right = do
+  -- two applications of one constant with the same folded arguments are
+  -- equal without unfolding either, which mattereth for a host operation
+  -- whose model unfoldeth deeply.
+  same <- case (constantHead left, constantHead right) of
+    (Just one, Just other) | one == other -> do
+      let depth = length (K.contextTypes context)
+      (==) <$> quoteFolded depth left <*> quoteFolded depth right
+    _ -> pure False
+  if same then pure True else unifyForced context left right
+
+-- the constant at the head of a folded definition or a neutral application.
+constantHead :: N.Value -> Maybe (SymbolId, [Level])
+constantHead = \case
+  N.VGlued name levels _ _ -> Just (name, levels)
+  N.VNeutral neutral | (N.NGlobal name levels, _) <- N.neutralSpine neutral -> Just (name, levels)
+  _ -> Nothing
+
+unifyForced :: K.Context -> N.Value -> N.Value -> Elaboration Bool
+unifyForced context left right = do
   actual <- force left
   expected <- force right
   case (actual, expected) of
@@ -383,11 +403,11 @@ unifyNow context left right = do
       pure True
     (N.VPi p domain body, N.VPi q otherDomain otherBody) | p == q -> binders domain body otherDomain otherBody
     (N.VLambda p domain body, N.VLambda q otherDomain otherBody) | p == q -> binders domain body otherDomain otherBody
-    -- η: a lambda equaleþ a rigid function applied to þe same input.
+    -- η: a lambda equaleth a rigid function applied to the same input.
     (N.VLambda p domain body, other) | rigid other -> eta p domain body other False
     (other, N.VLambda p domain body) | rigid other -> eta p domain body other True
-    -- rigid neutrals are compared by congruence, which recurseþ once per
-    -- node; quoting boþ sides at every level would be quadratic. only
+    -- rigid neutrals are compared by congruence, which recurseth once per
+    -- node; quoting both sides at every level would be quadratic. only
     -- applications of one hole are compared whole.
     (N.VNeutral _, N.VNeutral _)
       | Just (left, _) <- metaSpine actual,
@@ -425,17 +445,19 @@ unifyNow context left right = do
       second <- unifyNow current a b
       unless second (postpone current a b)
       pure True
+    -- a hole is solved by the unforced other side, so the solution keepeth
+    -- its definitions folded.
     flexible actual expected = case (metaSpine actual, metaSpine expected) of
       (Just (leftId, _), Just (rightId, _)) | leftId == rightId -> pure False
       (Just (identity, arguments), other) -> do
-        solved <- solvePattern context identity arguments expected
+        solved <- solvePattern context identity arguments right
         if solved
           then pure True
           else case other of
-            Just (otherIdentity, otherArguments) -> solvePattern context otherIdentity otherArguments actual
+            Just (otherIdentity, otherArguments) -> solvePattern context otherIdentity otherArguments left
             Nothing -> abstracted identity arguments expected actual expected
       (Nothing, Just (identity, arguments)) -> do
-        solved <- solvePattern context identity arguments actual
+        solved <- solvePattern context identity arguments left
         if solved then pure True else abstracted identity arguments actual actual expected
       _ -> do
         blocked <- (||) <$> blockedComputation context actual <*> blockedComputation context expected
@@ -444,7 +466,7 @@ unifyNow context left right = do
             let depth = length (K.contextTypes context)
             (==) <$> quote depth actual <*> quote depth expected
           else congruent actual expected
-    -- occurrences are abstracted up to universe levels, so þe solved sides
+    -- occurrences are abstracted up to universe levels, so the solved sides
     -- are equated again.
     abstracted identity arguments rigidSide actual expected = do
       solved <- solveAbstraction context identity arguments rigidSide
@@ -537,7 +559,8 @@ solvePattern context identity arguments right = do
     Just levels -> do
       let depth = length (K.contextTypes context)
           mapping = Map.fromList (zip levels [0 ..])
-      body <- quote depth right >>= prune depth mapping
+      -- a folded solution nameth its definitions, so it stayeth small.
+      body <- quoteFolded depth right >>= prune depth mapping
       cyclic <- occurs identity Set.empty body
       when cyclic (failure "occurs check failed for term inference hole")
       case rename depth (length levels) mapping body of
@@ -552,13 +575,13 @@ solvePattern context identity arguments right = do
               settle identity candidate
     _ -> pure False
 
--- a hole of function type applied to inputs þat are not all distinct
--- locals, as a property `?p b` meeting þe goal of `transport`, is solved by
--- abstracting þose inputs from þe oþer side, as lean's `▸` doþ. þe side
+-- a hole of function type applied to inputs that are not all distinct
+-- locals, as a property `?p b` meeting the goal of `transport`, is solved by
+-- abstracting those inputs from the other side, as lean's `▸` doth. the side
 -- is searched as written first and as a normal form second, so `first p`
 -- is found inside `(first ‥ rest) filter p`. every abstracted input must
--- occur, neiþer side may hold an unsolved hole, and a carrier is left to
--- instance search. a candidate þat þe kernel rejecteþ is no solution.
+-- occur, neither side may hold an unsolved hole, and a carrier is left to
+-- instance search. a candidate that the kernel rejecteth is no solution.
 solveAbstraction :: K.Context -> Int -> [(Plicity, N.Value)] -> N.Value -> Elaboration Bool
 solveAbstraction context identity arguments right = do
   meta@MetaEntry {..} <- entry identity
@@ -571,7 +594,7 @@ solveAbstraction context identity arguments right = do
       | not carrier,
         isNothing metaSolution,
         not (null extra) -> do
-          -- a local not seen before is a pattern variable; any oþer input is
+          -- a local not seen before is a pattern variable; any other input is
           -- abstracted.
           let classify (seen, targets) (position, value) = case value of
                 N.VNeutral (N.NLocal level) | Map.notMember level seen -> (Map.insert level position seen, targets)
@@ -606,7 +629,7 @@ solveAbstraction context identity arguments right = do
                 _ -> pure False
         _ -> pure False
 
--- þe first domains of a closed type, each over þe binders before it.
+-- the first domains of a closed type, each over the binders before it.
 telescopeDomains :: Int -> N.Value -> Elaboration (Maybe [(Plicity, Term)])
 telescopeDomains count = go 0
   where
@@ -620,11 +643,11 @@ telescopeDomains count = go 0
               pure (((plicity, domainTerm) :) <$> rest)
             _ -> pure Nothing
 
--- a hole in a solution may capture a local þat þe solved hole cannot see,
--- as `?f x` in `?t := ?f x` when `?t` haþ no `x`. if þe hole's type doþ
--- not need þat input, it is replaced by a fresh hole wiþout it, and þe
--- solution is quoted again. þe body is quoted at `depth`; `mapping` holdeþ
--- þe levels þe solution may mention.
+-- a hole in a solution may capture a local that the solved hole cannot see,
+-- as `?f x` in `?t := ?f x` when `?t` hath no `x`. if the hole's type doth
+-- not need that input, it is replaced by a fresh hole without it, and the
+-- solution is quoted again. the body is quoted at `depth`; `mapping` holdeth
+-- the levels the solution may mention.
 prune :: Int -> Map.Map Int Int -> Term -> Elaboration Term
 prune depth mapping body = case [(target, keeps) | (target, keeps) <- candidates body, not (and keeps)] of
   [] -> pure body
@@ -633,7 +656,7 @@ prune depth mapping body = case [(target, keeps) | (target, keeps) <- candidates
       True -> requote
       False -> pure body
   where
-    -- holes applied only to locals, each wiþ which of its inputs may stay.
+    -- holes applied only to locals, each with which of its inputs may stay.
     candidates = getConst . traverseScoped collect
     collect bound (Meta target arguments) _
       | Just keeps <- traverse (allowed bound) arguments = Const [(target, keeps)]
@@ -662,13 +685,13 @@ prune depth mapping body = case [(target, keeps) | (target, keeps) <- candidates
               pure True
         _ -> pure False
 
--- a telescope wiþout þe inputs not kept, if noþing kept mentioneþ þem.
+-- a telescope without the inputs not kept, if nothing kept mentioneth them.
 strengthened :: [Bool] -> [Term] -> Term -> Maybe ([Term], Term)
 strengthened keeps domains result = do
   kept <- sequence [dropInputs (reverse (take position keeps)) domain | (position, (True, domain)) <- zip [0 ..] (zip keeps domains)]
   (kept,) <$> dropInputs (reverse keeps) result
   where
-    -- `flags` mark þe enclosing inputs, innermost first.
+    -- `flags` mark the enclosing inputs, innermost first.
     dropInputs flags = traverseScoped dropLocal
       where
         dropLocal bound (Local index) _
@@ -693,12 +716,12 @@ commit identity candidate =
   assign identity candidate >>= \case
     Right () -> pure ()
     Left (_, Just problem) -> raise problem
-    Left (_, Nothing) -> failure "inference solution typing requireþ an annotation"
+    Left (_, Nothing) -> failure "inference solution typing requireth an annotation"
 
--- a candidate whose typing waiteþ on anoþer hole, such as a dictionary
+-- a candidate whose typing waiteth on another hole, such as a dictionary
 -- projection before instance search, is not assigned. its check is undone
--- and þe caller keepeþ þe equation postponed until þat hole is solved.
--- þe same candidate is not checked again until one of þose holes is solved.
+-- and the caller keepeth the equation postponed until that hole is solved.
+-- the same candidate is not checked again until one of those holes is solved.
 settle :: Int -> Term -> Elaboration Bool
 settle identity candidate = do
   waiting <- Map.lookup identity . unsettled <$> get
@@ -717,10 +740,10 @@ settle identity candidate = do
   where
     allM predicate = fmap and . traverse predicate
 
--- assigneþ þe candidate if checking it leaveþ no new postponed equation.
--- oþerwise it returneþ þe unsolved holes in þose equations. a kernel failure
--- is returned wiþ þe candidate's unsolved holes, since solving þem may
--- give an application its function type; wiþout any, it is raised.
+-- assigneth the candidate if checking it leaveth no new postponed equation.
+-- otherwise it returneth the unsolved holes in those equations. a kernel failure
+-- is returned with the candidate's unsolved holes, since solving them may
+-- give an application its function type; without any, it is raised.
 assign :: Int -> Term -> Elaboration (Either (Set.Set Int, Maybe SourceFailure) ())
 assign identity candidate = do
   meta@MetaEntry {metaSolution = solution} <- entry identity
@@ -750,11 +773,11 @@ assign identity candidate = do
       let depth = length (K.contextTypes context)
       (<>) <$> (quote depth left >>= openHoles) <*> (quote depth right >>= openHoles)
 
--- þe holes in a term þat are still unsolved.
+-- the holes in a term that are still unsolved.
 openHoles :: Term -> Elaboration (Set.Set Int)
 openHoles term = Set.fromList <$> filterM (fmap (isNothing . metaSolution) . entry) (termHoles term)
 
--- þe holes a term mentioneþ. a quoted term mentioneþ only unsolved ones.
+-- the holes a term mentioneth. a quoted term mentioneth only unsolved ones.
 termHoles :: Term -> [Int]
 termHoles = \case
   Meta target arguments -> target : concatMap termHoles arguments
@@ -774,7 +797,7 @@ patternDomains depth mapping = go 0
               result <- instantiate codomain argument
               remaining <- go (position + 1) result rest
               pure (((plicity, renamed) :) <$> remaining)
-        _ -> failure "term inference pattern differeþ from its type"
+        _ -> failure "term inference pattern differeth from its type"
 
 -- indirect solutions are followed as well; an inference hole cannot conceal
 -- a cycle behind another assigned hole or one of its contextual arguments.
@@ -812,8 +835,8 @@ rename sourceDepth targetDepth mapping = traverseScoped renameLocal
                 Nothing -> Left "term inference solution would escape its scope"
     renameLocal _ _ descend = descend
 
--- an equation is postponed only after an attempt, and its outcome changeþ
--- only when a hole is solved. so a retry wiþout a new solution is skipped.
+-- an equation is postponed only after an attempt, and its outcome changeth
+-- only when a hole is solved. so a retry without a new solution is skipped.
 retry :: Elaboration ()
 retry = do
   Inference {..} <- get
@@ -834,15 +857,15 @@ retry = do
       unless solved (postpone context left right)
 
 -- a last resort for a stuck equation between an applied hole and a rigid
--- application: `?f a = g b` becomeþ `?f = g` and `a = b`, as in agda and
+-- application: `?f a = g b` becometh `?f = g` and `a = b`, as in agda and
 -- lean. it may miss a non-first-order solution, so it runs only when
--- noþing else can progress. þe result reporteþ whether an equation was split.
+-- nothing else can progress. the result reporteth whether an equation was split.
 approximate :: Elaboration Bool
 approximate = approximateWith False
 
 -- like 'approximate', and also between two applied holes. let
--- generalisation useþ it last, as hindley-milner unification of type
--- applications doþ.
+-- generalisation useth it last, as hindley-milner unification of type
+-- applications doth.
 approximateFlexible :: Elaboration Bool
 approximateFlexible = approximateWith True
 
@@ -864,10 +887,10 @@ approximateWith both = do
               modify' (\state -> state {pendingEquations = reverse kept ++ rest})
               unify context function otherFunction
               unify context argument otherArgument
-              -- þe postponed parts are split at once, as `?φ ?a x = ∏ α x`
-              -- needeþ two splits to reach `?φ = ∏`; each split shorteneþ
-              -- a spine, so þis endeþ. a split þat only postponeþ its parts
-              -- is no progress, so a caller þat retrieþ on progress stopeþ.
+              -- the postponed parts are split at once, as `?φ ?a x = ∏ α x`
+              -- needeth two splits to reach `?φ = ∏`; each split shorteneth
+              -- a spine, so this endeth. a split that only postponeth its parts
+              -- is no progress, so a caller that retrieth on progress stopeth.
               deeper <- approximateWith both
               Inference {solutionVersion = after, pendingEquations = now} <- get
               pure (deeper || after > before || length now < length waiting)
@@ -878,22 +901,22 @@ approximateWith both = do
     flexible value = maybe False (const True) (metaSpine value)
 
 -- holes still open after every postponed equation is retried, oldest first,
--- wiþ þe type each hole haþ beneaþ its telescope.
+-- with the type each hole hath beneath its telescope.
 unsolved :: Elaboration [(Int, Term)]
 unsolved = do
   retry
   Inference {metaEntries} <- get
   pure [(identity, metaTarget) | (identity, MetaEntry {..}) <- Map.toAscList metaEntries, isNothing metaSolution]
 
--- assign a hole a value þat ignoreþ its telescope, as let generalisation doþ
--- wiþ a constant standing for a new input.
+-- assign a hole a value that ignoreth its telescope, as let generalisation doth
+-- with a constant standing for a new input.
 assignConstant :: Int -> Term -> Elaboration ()
 assignConstant identity value = do
   MetaEntry {metaDomains} <- entry identity
   commit identity (foldr (Lambda Explicit) value metaDomains)
 
--- the boundary rejecteþ unresolved holes even when a discarded result no
--- longer mentioneþ them. no arbitrary inhabitants or defaults are inserted.
+-- the boundary rejecteth unresolved holes even when a discarded result no
+-- longer mentioneth them. no arbitrary inhabitants or defaults are inserted.
 zonk :: Term -> Elaboration Term
 zonk term = do
   retry
@@ -906,5 +929,7 @@ zonk term = do
       normal <- normaliser
       let environment = map (N.VNeutral . N.NLocal) (reverse [0 .. depth - 1])
       value <- fromEither (N.evaluateWith normal environment meta)
-      quote depth value
+      -- a folded solution keepeth definitions by name; normalising it would
+      -- inline every dictionary and proof it reacheth.
+      quoteFolded depth value
     expand _ _ descend = descend

@@ -3,7 +3,7 @@ use flock/order/semilattice_upper.tung
 use ilk/three.tung
 use ilk/two.tung
 
-## a supremum semilattice wiþ a least value.
+## a supremum semilattice with a least value.
 show flock semilattice_upper_bounded: [α: *, @: α semilattice_upper, *] {
   let ⟂: α
   let ⟂_∨: [a: α, (⟂ ∨ a) = a]
@@ -18,11 +18,11 @@ bizen: [@β: *, @: β semilattice_upper_bounded, @α: *, (α → β) semilattice
 bizen: 𝟚 semilattice_upper_bounded {
   let ⟂ ≔ nay
 
-  let ⟂_∨ ≔ {yea; nay ^ reflect}
+  let ⟂_∨ ≔ {yea; nay ^ backbend}
 }
 
 bizen: 𝟛 semilattice_upper_bounded {
   let ⟂ ≔ fore
 
-  let ⟂_∨ ≔ {fore; mid; aft ^ reflect}
+  let ⟂_∨ ≔ {fore; mid; aft ^ backbend}
 }

@@ -21,8 +21,8 @@ test("checker requests preserve unicode, quotes, slashes, and control characters
     imports: { "dep.tung": source },
   });
 });
-test("a successful check carrieþ each sorry goal wiþ its span and context", async () => {
-  const source = "# 𝟙\nlet twice:[x:ℤ, ℤ] ≔ sorry\nlet value:ℤ ≔ +1";
+test("a successful check carrieth each sorry goal with its span and context", async () => {
+  const source = "# 𝟙\nlet twice:[x:ℤ, ℤ] ≔ sorry\nlet worth:ℤ ≔ +1";
   const output = await compiler.check({ text: source }, []).result;
   const start = source.indexOf("sorry");
   assert.deepEqual(output, {
@@ -32,7 +32,7 @@ test("a successful check carrieþ each sorry goal wiþ its span and context", as
     ],
   });
 });
-test("checker findeþ a built executable without cabal list-bin", (context) => {
+test("checker findeth a built executable without cabal list-bin", (context) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-checker-"));
   context.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const executable = path.join(
@@ -55,7 +55,7 @@ test("checker findeþ a built executable without cabal list-bin", (context) => {
   bridge.findCabalExecutable = () => undefined;
   assert.equal(bridge.findExecutable(), executable);
 });
-test("checker useþ a configured executable without a compiler checkout", (context) => {
+test("checker useth a configured executable without a compiler checkout", (context) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-checker-"));
   context.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const executable = path.join(root, "tung");
@@ -66,14 +66,14 @@ test("checker useþ a configured executable without a compiler checkout", (conte
   bridge.configure(undefined, [], path.join(root, "missing"));
   assert.equal(bridge.findExecutable(), undefined);
 });
-test("checker reuseþ one versioned session and cancellable requests", async (context) => {
+test("checker reuseth one versioned session and cancellable requests", async (context) => {
   const bridge = new CompilerBridge();
   bridge.configure(undefined, [], process.env.TUNG_EXECUTABLE);
   context.after(() => bridge.dispose());
   assert(bridge.findExecutable(), "install tung or set TUNG_EXECUTABLE");
-  const model = { text: "let value:ℤ ≔ +1" };
+  const model = { text: "let worth:ℤ ≔ +1" };
   const checked = bridge.check(model, [], 3);
-  const typed = bridge.typeOf(model, [], "value", 3);
+  const typed = bridge.typeOf(model, [], "worth", 3);
   const formatted = bridge.format("show ilk box: [a:*, *] { box: a box }\n", 3);
   assert.equal(checked.process, typed.process);
   assert.equal(checked.process, formatted.process);
@@ -97,23 +97,49 @@ test("checker reuseþ one versioned session and cancellable requests", async (co
 });
 
 test("source and unsaved import changes invalidate the compiled cache", async () => {
-  const imported = "use dep.tung\nlet value ≔ exported";
+  const imported = "use dep.tung\nlet worth ≔ exported";
   for (const [source, annotation, value, expected] of [
     [imported, "ℤ", "+1", "ℤ"],
     [imported, "text", "'new'", "text"],
-    ["use dep.tung\nlet value ≔ +2", "text", "'new'", "ℤ"],
+    ["use dep.tung\nlet worth ≔ +2", "text", "'new'", "ℤ"],
   ]) {
     const imports = [
       ["dep.tung", `show let exported:${annotation} ≔ ${value}`],
     ];
     assert.deepEqual(
-      await compiler.typeOf({ text: source }, imports, "value").result,
+      await compiler.typeOf({ text: source }, imports, "worth").result,
       {
         kind: "type",
         type: expected,
       },
     );
   }
+});
+
+test("a corrected import cleareth a cached failure", async () => {
+  const source = "use dep.tung\nlet worth ≔ exported";
+  const broken = [["dep.tung", "show let exported ≔ missing"]];
+  const first = await compiler.check({ text: source }, broken).result;
+  assert(first.kind === "check");
+  assert.equal(first.diagnostics.length, 1);
+  assert.equal(first.diagnostics[0].path, "dep.tung");
+  assert.match(first.diagnostics[0].message, /unknown name 'missing'/);
+  assert.deepEqual(
+    await compiler.check({ text: source }, broken).result,
+    first,
+  );
+  const corrected = [["dep.tung", "show let exported:ℤ ≔ +3"]];
+  assert.deepEqual(
+    await compiler.typeOf({ text: source }, corrected, "worth").result,
+    { kind: "type", type: "ℤ" },
+  );
+  const edited = await compiler.check(
+    { text: "use dep.tung\nlet worth ≔ absent" },
+    corrected,
+  ).result;
+  assert(edited.kind === "check");
+  assert.equal(edited.diagnostics[0].path, undefined);
+  assert.match(edited.diagnostics[0].message, /unknown name 'absent'/);
 });
 
 // actual subprocesses exercise stream decoding and session teardown together.

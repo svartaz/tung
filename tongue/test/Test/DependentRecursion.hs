@@ -1,4 +1,4 @@
--- recursion selection useþ checked bindings, including aliases and shadowing.
+-- recursion selection useth checked bindings, including aliases and shadowing.
 module Test.DependentRecursion (group) where
 
 import Test.DependentSupport
@@ -17,41 +17,41 @@ positiveTests =
   | (label, source, actual, expected) <-
       [ ("a lambda may shadow the recursive binding", count "(n count) keep ({z ^ z} {count:[nat,nat] ^ zero count})", two ++ " count", two),
         ("a case variable may shadow the recursive binding", count "(n count) keep (zero {count ^ count})", two ++ " count", two),
-        ("a local binding may shadow the recursive binding", count "(let value ≔ n count let count ≔ zero yield value keep count)", two ++ " count", two),
-        ("a local initialiser still seeþ the outer recursive binding", count "(let count ≔ n count yield count)", two ++ " count", two),
-        ("a direct child's alias denoteþ the same recursive input", count "(let smaller ≔ n yield smaller count)", two ++ " count", two),
-        ( "a rebound first child leaveþ the second input structural",
+        ("a local binding may shadow the recursive binding", count "(let worth ≔ n count let count ≔ zero yield worth keep count)", two ++ " count", two),
+        ("a local initialiser still seeth the outer recursive binding", count "(let count ≔ n count yield count)", two ++ " count", two),
+        ("a direct child's alias denoteth the same recursive input", count "(let smaller ≔ n yield smaller count)", two ++ " count", two),
+        ( "a rebound first child leaveth the second input structural",
           """
           let right:[x:nat, y:nat, nat] ≔ match x,y {
             zero,_ ^ zero,
-            n successor,zero ^ zero,
-            n successor,m successor ^ (let n ≔ n successor yield n right m) successor
+            n heir,zero ^ zero,
+            n heir,m heir ^ (let n ≔ n heir yield n right m) heir
           }
           """,
           two ++ " right " ++ three,
           three
         ),
-        ( "nested recursion retaineþ an outer induction hypothesis",
+        ( "nested selfcalling retaineth an outer induction hypothesis",
           count
             """
             (let local:[nat,nat] ≔ {
               zero ^ n count,
-              m successor ^ m local
+              m heir ^ m local
             } yield n local)
             """,
           two ++ " count",
           two
         ),
-        ( "nested deep recursion retaineþ an outer memoised hypothesis",
+        ( "nested deep selfcalling retaineth an outer memoised hypothesis",
           """
           let deep:[nat,nat] ≔ {
             zero ^ zero,
-            zero successor ^ zero successor,
-            (n successor) successor ^ (let local:[nat,nat] ≔ {
-              zero ^ (n successor) deep,
-              zero successor ^ (n successor) deep,
-              (m successor) successor ^ (m successor) local
-            } yield n local) successor
+            zero heir ^ zero heir,
+            (n heir) heir ^ (let local:[nat,nat] ≔ {
+              zero ^ (n heir) deep,
+              zero heir ^ (n heir) deep,
+              (m heir) heir ^ (m heir) local
+            } yield n local) heir
           }
           """,
           four ++ " deep",
@@ -61,28 +61,28 @@ positiveTests =
           """
           let deep:[nat,nat] ≔ {
             zero ^ zero,
-            zero successor ^ zero successor,
-            (n successor) successor ^ match n {
+            zero heir ^ zero heir,
+            (n heir) heir ^ match n {
               zero ^ (let inner:[nat,nat] ≔ {
-                zero ^ zero successor,
-                zero successor ^ zero successor,
-                (m successor) successor ^ match m {
+                zero ^ zero heir,
+                zero heir ^ zero heir,
+                (m heir) heir ^ match m {
                   zero ^ match zero {
                     zero ^ (zero deep) keep (zero inner),
-                    _ successor ^ zero
+                    _ heir ^ zero
                   },
-                  k successor ^ (k inner) successor
+                  k heir ^ (k inner) heir
                 }
-              } yield ((zero successor) successor) inner) successor,
-              k successor ^ (k deep) successor
+              } yield ((zero heir) heir) inner) heir,
+              k heir ^ (k deep) heir
             }
           }
           """,
           two ++ " deep",
-          "zero successor"
+          "zero heir"
         ),
-        ( "a recursive lambda retaineþ its binder annotation",
-          "let count:[nat,nat] ≔ {x:nat ^ match x {zero ^ zero, n successor ^ (n count) successor}}",
+        ( "a recursive lambda retaineth its binder annotation",
+          "let count:[nat,nat] ≔ {x:nat ^ match x {zero ^ zero, n heir ^ (n count) heir}}",
           two ++ " count",
           two
         )
@@ -93,15 +93,15 @@ rejectionTests :: [Test]
 rejectionTests =
   [ reject label (compile source)
   | (label, source) <-
-      [ ("a shadowing value is not the former child", count "(let n ≔ zero yield n count)"),
-        ("a recursive lambda cannot ignore a wrong binder annotation", "let count:[nat,nat] ≔ {x:text ^ match x {zero ^ zero, n successor ^ (n count) successor}}"),
-        ("a rebuilt matched input is not a descendant", count "(n successor) count"),
+      [ ("a shadowing worth is not the former child", count "(let n ≔ zero yield n count)"),
+        ("a recursive lambda cannot ignore a wrong binder annotation", "let count:[nat,nat] ≔ {x:text ^ match x {zero ^ zero, n heir ^ (n count) heir}}"),
+        ("a rebuilt matched input is not a descendant", count "(n heir) count"),
         ( "an inner child is not an outer induction hypothesis",
           count
             """
             (let local:[nat,nat] ≔ {
               zero ^ zero,
-              m successor ^ (m count) keep (m local)
+              m heir ^ (m count) keep (m local)
             } yield n local)
             """
         )
@@ -109,19 +109,19 @@ rejectionTests =
   ]
 
 count :: String -> String
-count body = "let count:[x:nat,nat] ≔ match x { zero ^ zero, n successor ^ (" ++ body ++ ") successor }"
+count body = "let count:[x:nat,nat] ≔ match x { zero ^ zero, n heir ^ (" ++ body ++ ") heir }"
 
 two, three, four :: String
-two = "((zero successor) successor)"
-three = "(" ++ two ++ " successor)"
-four = "(" ++ three ++ " successor)"
+two = "((zero heir) heir)"
+three = "(" ++ two ++ " heir)"
+four = "(" ++ three ++ " heir)"
 
 compile :: String -> Either String SourceProgram
-compile = compileAs "dependent_recursion.tung" . (prefix ++)
+compile = compileAs "dependent_selfcalling.tung" . (prefix ++)
   where
     prefix =
       """
-      ilk nat:* { zero:nat, successor:[nat,nat] }
+      ilk nat:* { zero:nat, heir:[nat,nat] }
       let keep:[x:nat,y:nat,nat] ≔ x
 
       """

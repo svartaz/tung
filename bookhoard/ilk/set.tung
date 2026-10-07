@@ -1,18 +1,18 @@
-use flock/algebra/total/monoid.tung
-use flock/algebra/total/semigroup.tung
-use flock/equal.tung
-use flock/functor/cata.tung
-use flock/functor/filter.tung
-use flock/inhold.tung
+use flock/algebra/whole/monoid.tung
+use flock/algebra/whole/semigroup.tung
+use flock/functor/hath_cata.tung
+use flock/functor/hath_filter.tung
+use flock/hath_inhold.tung
+use flock/hath_same.tung
+use flock/hath_size.tung
 use flock/order/complement.tung
+use flock/order/hath_at_most.tung
 use flock/order/lattice.tung
 use flock/order/lattice_distributive.tung
-use flock/order/less_equal.tung
-use flock/order/order_partial.tung
+use flock/order/order_half.tung
 use flock/order/semilattice_lower.tung
 use flock/order/semilattice_upper.tung
 use flock/order/semilattice_upper_bounded.tung
-use flock/size.tung
 use ilk/list.tung
 use ilk/powerset.tung
 use ilk/two.tung
@@ -29,12 +29,12 @@ show let singleton: [@α: *, a: α, α set] ≔
 
 show let to_list: [@α: *, l from_list: α set, α list] ≔ l
 
-bizen: [@α: *, @: (α list) inhold α, (α set) inhold α] {
+bizen: [@α: *, @: (α list) hath_∋ α, (α set) hath_∋ α] {
   let ∋: [l from_list:, a:] ≔ l ∋ a
 }
 
 show let put: [
-  @α: *, @: (α list) inhold α,
+  @α: *, @: (α list) hath_∋ α,
   l from_list: α set, a: α, α set
 ] ≔ (l ∋ a) if (l from_list) ((a ‥ l) from_list)
 
@@ -45,86 +45,86 @@ show let keep: [
   α set
 ] ≔ (l filter predicate) from_list
 
-show let rid: [@α: *, @: α equal, s: α set, x: α, α set] ≔
+show let rid: [@α: *, @: α hath_≍, s: α set, x: α, α set] ≔
   s keep { b ^ x ≭ b }
 
-show let ∖: [@α: *, @: (α set) inhold α, set₀: α set, set₁: α set, α set] ≔
-  set₀ keep { value ^ (set₁ ∋ value) ¬ }
+show let ∖: [@α: *, @: (α set) hath_∋ α, set₀: α set, set₁: α set, α set] ≔
+  set₀ keep { worth ^ (set₁ ∋ worth) ¬ }
 
-show let to_powerset: [@α: *, @: (α list) inhold α, l from_list: α set, α powerset] ≔ l ∋
+show let to_powerset: [@α: *, @: (α list) hath_∋ α, l from_list: α set, α powerset] ≔ l ∋
 
-bizen: [@α: *, (α set) haþ_size] {
+bizen: [@α: *, (α set) hath_size] {
   let size: [l from_list:] ≔ l size
 }
 
-let included: [@α: *, @: (α list) inhold α, l₀: α list, l₁: α list, 𝟚] ≔
-  l₀ fold₀ yea { value, all_included ^
-    all_included ∧ (l₁ ∋ value)
+let included: [@α: *, @: (α list) hath_∋ α, l₀: α list, l₁: α list, 𝟚] ≔
+  l₀ gather₀ yea { worth, all_included ^
+    all_included ∧ (l₁ ∋ worth)
   }
 
-bizen: [@α: *, @: (α list) inhold α, (α set) equal] {
+bizen: [@α: *, @: (α list) hath_∋ α, (α set) hath_≍] {
   let ≍: [l₀ from_list:, l₁ from_list:] ≔
     (l₀ included l₁) ∧ (l₁ included l₀)
 }
 
-bizen: [@α: *, @: (α list) inhold α, (α set) less_equal] {
+bizen: [@α: *, @: (α list) hath_∋ α, (α set) hath_≤] {
   let ≤: [l₀ from_list:, l₁ from_list:] ≔ l₀ included l₁
 }
 
-bizen: [@α: *, @: (α list) inhold α, (α set) order_partial] {
-  let ≤_reflect ≔ sorry
-  let ≤_antisymmetric ≔ {l₀ from_list, l₁ from_list ^
+bizen: [@α: *, @: (α list) hath_∋ α, (α set) order_half] {
+  let ≤_backbend ≔ sorry
+  let ≤_antievenmete ≔ {l₀ from_list, l₁ from_list ^
     (let conjunction: [p: 𝟚, q: 𝟚, (p ≤ (q ≤ (p ∧ q))) = yea] ≔ match p, q {
         yea, yea;
         yea, nay;
-        nay, _ ^ reflect
+        nay, _ ^ backbend
       }
       yield (l₀ included l₁) conjunction (l₁ included l₀))
   }
-  let ≤_transit ≔ sorry
+  let ≤_throughgo ≔ sorry
 }
 
-bizen: [@α: *, @: (α list) inhold α, (α set) semigroup] {
+bizen: [@α: *, @: (α list) hath_∋ α, (α set) semigroup] {
   let · ≔ ∨
 
   let ·_· ≔ sorry
 }
 
-bizen: [@α: *, @: (α list) inhold α, (α set) monoid] {
+bizen: [@α: *, @: (α list) hath_∋ α, (α set) monoid] {
   let ∅ ≔ empty
 
   let ∅_· ≔ sorry
-  let ·_∅ ≔ {_ from_list ^ reflect}
+  let ·_∅ ≔ {_ from_list ^ backbend}
 }
 
-bizen: [@α: *, @: (α set) inhold α, (α set) semilattice_lower] {
-  let ∧: [set₀:, set₁:] ≔ set₀ keep { value ^ set₁ ∋ value }
+bizen: [@α: *, @: (α set) hath_∋ α, (α set) semilattice_lower] {
+  let ∧: [set₀:, set₁:] ≔ set₀ keep { worth ^ set₁ ∋ worth }
 
   let ∧_absorb ≔ sorry
   let ∧_commute ≔ sorry
   let ∧_∧ ≔ sorry
 }
 
-bizen: [@α: *, @: (α list) inhold α, (α set) semilattice_upper] {
+bizen: [@α: *, @: (α list) hath_∋ α, (α set) semilattice_upper] {
   let ∨: [l₀ from_list:, l₁ from_list:] ≔
-    l₁ fold₁ (l₀ from_list) put
+    l₁ gather₁ (l₀ from_list) put
 
   let ∨_absorb ≔ sorry
   let ∨_commute ≔ sorry
   let ∨_∨ ≔ sorry
 }
 
-bizen: [@α: *, @: (α list) inhold α, (α set) lattice] {
+bizen: [@α: *, @: (α list) hath_∋ α, (α set) lattice] {
   let ∧_∨_absorption ≔ sorry
   let ∨_∧_absorption ≔ sorry
 }
 
-bizen: [@α: *, @: (α list) inhold α, (α set) lattice_distributive] {
+bizen: [@α: *, @: (α list) hath_∋ α, (α set) lattice_distributive] {
   let ∧_∨ ≔ sorry
   let ∨_∧ ≔ sorry
 }
 
-bizen: [@α: *, @: (α list) inhold α, (α set) semilattice_upper_bounded] {
+bizen: [@α: *, @: (α list) hath_∋ α, (α set) semilattice_upper_bounded] {
   let ⟂ ≔ empty
 
   let ⟂_∨ ≔ sorry

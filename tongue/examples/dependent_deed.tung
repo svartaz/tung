@@ -1,31 +1,31 @@
-## host deeds come from bookhoard. þe catalogue checkeþ each binding's type.
+## host deeds come from bookhoard. the catalogue checketh each binding's type.
 use _foreign.tung
+use ilk/maybe.tung
 use ilk/one.tung
-use ilk/option.tung
 
-## sequencing discardeþ þe first result.
-let þen: [@α: *, @β: *, first: α deed, next: β deed, β deed] ≔ first deed_bind {_ ^ next}
+## sequencing discardeth the first result.
+let then: [@α: *, @β: *, first: α deed, next: β deed, β deed] ≔ first deed_bind {_ ^ next}
 
 ilk nat: * {
   zero: nat,
-  succeed: [nat, nat]
+  heir: [nat, nat]
 }
 
 ## bounded repetition is ordinary structural induction producing a deed.
 let times: [action: 𝟙 deed, count: nat, 𝟙 deed] ≔
-  {_: nat ^ 𝟙 deed} unbuild nat (only deed_pure) {_, rest ^ action þen rest} count
+  {_: nat ^ 𝟙 deed} unbuild nat (only deed_sheer) {_, rest ^ action then rest} count
 
-## an unbounded loop useþ þe deed fixed point. it endeþ when input endeþ.
+## an unbounded loop useth the deed fixed point. it endeth when input endeth.
 let echo: 𝟙 deed ≔ {again ^ read deed_bind {
-    none ^ only deed_pure,
-    line some ^ >{þen, line write, '\n' write, again}
+    none ^ only deed_sheer,
+    line some ^ >{then, line write, '\n' write, again}
 }} deed_fix
 
 let main: 𝟙 deed ≔
-  >{þen,
-    ('tung ' write) times ((zero succeed) succeed),
+  >{then,
+    ('tung ' write) times ((zero heir) heir),
     '\nwhat is thy name? ' write,
     read deed_bind {
       none ^ 'nobody\n' write,
-      name some ^ >{þen, 'hail, ' write, name write, '!\n' write}
+      name some ^ >{then, 'hail, ' write, name write, '!\n' write}
   }}

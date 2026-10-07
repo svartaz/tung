@@ -1,5 +1,5 @@
-// structural model for incomplete buffers. it joineþ þe compiler's source
-// roles wiþ declaration regions, docs, imports, and scopes; it never checkeþ
+// structural model for incomplete buffers. it joineth the compiler's source
+// roles with declaration regions, docs, imports, and scopes; it never checketh
 // types.
 import type { SourceRole } from "./checker.ts";
 import {
@@ -18,21 +18,21 @@ import {
 const ownedKinds = new Set(["ilk", "flock"]);
 const localRoles = new Set(["parameter", "typeParameter"]);
 const keywordHelp = {
-  use: "import a tung file; its last path segment is the default namespace, and an optional alias overrideeþ it.",
-  show: "publish a declaration, or re-export every visible term, type, and flock wiþ a name.",
+  use: "import a tung file; its last path segment is the default namespace, and an optional alias overrideth it.",
+  show: "publish a declaration, or re-export every visible term, type, and flock with a name.",
   yield: "introduce a block result.",
   sorry:
     "stand for an omitted proof or definition of any type; performing it is a runtime error.",
-  orsend:
+  orsetting:
     "assume a named constant of a type without a proof; `--check` lists it and `--no-sorry` allows it.",
   unbuild:
-    "name the eliminator of an ilk or flock: `motive unbuild name methods target` performeþ structural induction.",
+    "name the eliminator of an ilk or flock: `motive unbuild name methods target` performeth structural induction.",
   flock: "declare a flock and its members.",
   fremmed:
     "bind an annotated file-level let to the host function named by a preceding text key.",
   bizen: "provide evidence and member definitions for a flock.",
   match:
-    "match one or more values against exhaustive pattern rows; `;` joineþ rows that share a result.",
+    "match one or more values against exhaustive pattern rows; `;` joineth rows that share a result.",
   fall: "write a typed function: inputs, a final result type, `^`, and the body.",
   let: "bind a value, curried function, or type alias.",
   ilk: "declare an algebraic data type.",
@@ -82,10 +82,10 @@ const analyzeDocument = (
       .filter(({ startLine, endLine }) => endLine > startLine),
   };
 };
-// compiler roles become þe model's token roles. a header binder arriveþ as
+// compiler roles become the model's token roles. a header binder arriveth as
 // `headerPattern`, since only name resolution can tell a binder from a
-// constructor: it is a parameter here, and resolution prefereþ a visible
-// constructor of þe same name. a declaration in a flock or bizen body is a
+// constructor: it is a parameter here, and resolution prefereth a visible
+// constructor of the same name. a declaration in a flock or bizen body is a
 // method.
 const compilerSemantic = (tokens, sourceRoles: SourceRole[], regions) => {
   const byOffset = new Map<number, ReturnType<typeof tokenize>[number]>(

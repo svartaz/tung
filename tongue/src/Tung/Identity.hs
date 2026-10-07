@@ -4,6 +4,8 @@ module Tung.Identity
     SymbolId (..),
     inductionSymbol,
     inducedFamily,
+    modelSymbol,
+    modelledHost,
   )
 where
 
@@ -25,8 +27,8 @@ instance Eq SymbolId where
 instance Ord SymbolId where
   compare (SymbolId leftModule leftName) (SymbolId rightModule rightName) = compare leftName rightName <> compare leftModule rightModule
 
--- þe eliminator of an ilk or flock, written `unbuild name`. its spelling
--- containeþ a space, so no source name can collide wiþ it or name it.
+-- the eliminator of an ilk or flock, written `unbuild name`. its spelling
+-- containeth a space, so no source name can collide with it or name it.
 inductionSymbol :: SymbolId -> SymbolId
 inductionSymbol family = family {symbolName = inductionPrefix ++ symbolName family}
 
@@ -34,6 +36,19 @@ inducedFamily :: SymbolId -> Maybe SymbolId
 inducedFamily symbol = case splitAt (length inductionPrefix) (symbolName symbol) of
   (prefix, name) | prefix == inductionPrefix, not (null name) -> Just symbol {symbolName = name}
   _ -> Nothing
+
+-- the structural model of a host binding. it is the same function, so goals
+-- print it under the binding's name; the space keepeth it out of source.
+modelSymbol :: SymbolId -> SymbolId
+modelSymbol host = host {symbolName = modelPrefix ++ symbolName host}
+
+modelledHost :: SymbolId -> Maybe SymbolId
+modelledHost symbol = case splitAt (length modelPrefix) (symbolName symbol) of
+  (prefix, name) | prefix == modelPrefix, not (null name) -> Just symbol {symbolName = name}
+  _ -> Nothing
+
+modelPrefix :: String
+modelPrefix = "model "
 
 inductionPrefix :: String
 inductionPrefix = "unbuild "

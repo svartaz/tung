@@ -61,7 +61,7 @@ class HighlightCache {
   }
 }
 
-// parser roles identify syntax. workspace resolution only refineþ names whose
+// parser roles identify syntax. workspace resolution only refineth names whose
 // constructor identity cannot be decided from syntax alone.
 const buildHighlightRanges = (
   source: string,

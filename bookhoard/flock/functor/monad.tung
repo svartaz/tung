@@ -6,15 +6,15 @@ use ilk/one.tung
 show flock monad: [φ: [*, *], @: φ applicative, *] {
   let flat: [@α: *, (α φ) φ, α φ]
 
-  let pure_map_flat: [@α: *, @β: *, a: α, f: [α, β φ],
-    ((a pure) map f $ flat) = (a f)]
+  let sheer_warp_flat: [@α: *, @β: *, a: α, f: [α, β φ],
+    ((a sheer) warp f $ flat) = (a f)]
 
-  let map_pure_flat: [@α: *, a: α φ,
-    (a map pure $ flat) = a]
+  let warp_sheer_flat: [@α: *, a: α φ,
+    (a warp sheer $ flat) = a]
 }
 
-show let map_flat: [@φ: [*, *], @: φ functor, @: φ monad, @α: *, @β: *, a: α φ, f: [α, β φ], β φ] ≔
-  a map f $ flat
+show let warp_flat: [@φ: [*, *], @: φ functor, @: φ monad, @α: *, @β: *, a: α φ, f: [α, β φ], β φ] ≔
+  a warp f $ flat
 
-show let þen: [@φ: [*, *], @: φ monad, @α: *, @β: *, a: α φ, b: β φ, β φ] ≔
-  a map_flat (b constant)
+show let then: [@φ: [*, *], @: φ monad, @α: *, @β: *, a: α φ, b: β φ, β φ] ≔
+  a warp_flat (b constant)

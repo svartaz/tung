@@ -8,12 +8,12 @@ import {
 } from "../server/syntax.ts";
 
 test("token depths recover from an unmatched close", () => {
-  const tokens = tokenize("} { (value) }");
+  const tokens = tokenize("} { (worth) }");
   assert.deepEqual(tokenDepths(tokens), [0, 0, 1, 2, 2, 1]);
 });
 
-test("right composition participateþ in delimiter navigation", () => {
-  const tokens = tokenize(">{cons, >{cons, value, empty}, empty}");
+test("right composition participateth in delimiter navigation", () => {
+  const tokens = tokenize(">{cons, >{cons, worth, empty}, empty}");
   const opening = tokens.filter(({ text }) => text === ">{");
   const closing = tokens.filter(({ text }) => text === "}");
   assert.deepEqual(
@@ -27,7 +27,7 @@ test("right composition participateþ in delimiter navigation", () => {
 });
 
 test("bracket lookups agree for nested and unmatched delimiters", () => {
-  const tokens = tokenize("(r{value} { unmatched ) } )");
+  const tokens = tokenize("(r{worth} { unmatched ) } )");
   const opening = tokens.filter(({ text }) => ["(", "r{", "{"].includes(text));
   const closing = tokens.filter(({ text }) => [")", "}"].includes(text));
 

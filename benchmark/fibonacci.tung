@@ -3,7 +3,7 @@ use ground.tung
 let fibonacci: [ℕ, ℕ] ≔ {
   0 ^ 0,
   1 ^ 1,
-  (n succeed) succeed ^ (n fibonacci) + ((n succeed) fibonacci)
+  (n heir) heir ^ (n fibonacci) + ((n heir) fibonacci)
 }
 
 let main: 𝟙 deed ≔

@@ -37,7 +37,7 @@ recordFields :: N.Value -> Elaboration [(String, N.Value)]
 recordFields ty =
   E.force ty >>= \case
     N.VRecordType fields -> pure fields
-    _ -> E.failure "a record operation requireþ a record"
+    _ -> E.failure "a record operation requireth a record"
 
 -- record fields are sorted; a repeated name is an error.
 canonicalFields :: [(String, a)] -> Elaboration [(String, a)]
@@ -48,7 +48,7 @@ canonicalFields fields = do
     name : _ -> E.failure ("record field '" ++ name ++ "' is repeated")
     [] -> pure sorted
 
--- the pattern compiler reuseþ these operations for row bodies and scrutinees.
+-- the pattern compiler reuseth these operations for row bodies and scrutinees.
 patternChecker :: K.Environment -> Names -> Patterns.ExpressionChecker
 patternChecker environment names =
   Patterns.ExpressionChecker environment names (inferExpression environment names) (\scope annotation -> snd <$> inferAnnotation environment names scope annotation) (checkExpression environment names) (\scope -> applyTo environment names scope Nothing) (solveDeterminedInstances environment names)
@@ -58,7 +58,7 @@ holes = \case
   Meta {} -> True
   term -> any (holes . snd) (children term)
 
--- in a type position, `r{}` is þe empty record type raþer þan þe empty record.
+-- in a type position, `r{}` is the empty record type rather than the empty record.
 inferType :: K.Environment -> Names -> Scope -> Expression -> Elaboration (Term, N.Value)
 inferType environment names scope expression = inferExpression environment names scope case expression of
   RecordExpression [] -> RecordTypeExpression []
@@ -143,7 +143,7 @@ inferExpression environment names scope@Scope {scopeContext = context, scopeName
   LiteralExpression value -> do
     let term = Core.Literal (literalType value) value
     (term,) <$> inferCore scope term
-  -- `sorry` is þe primitive assumption at a type inferred from its use.
+  -- `sorry` is the primitive assumption at a type inferred from its use.
   Sorry -> do
     level <- E.freshLevel
     (ty, tyValue) <- E.newMeta context (N.VSort level)
@@ -173,11 +173,11 @@ inferExpression environment names scope@Scope {scopeContext = context, scopeName
     let removed = [name | RemoveField name <- changes]
         set = [(name, value) | SetField name value <- changes]
         changed = removed ++ map fst set
-    unless (length changed == Set.size (Set.fromList changed)) (E.failure "a record update changeþ each field at most once")
+    unless (length changed == Set.size (Set.fromList changed)) (E.failure "a record update changeth each field at most once")
     case [name | name <- removed, name `notElem` map fst fields] of
       name : _ -> E.failure ("record hath no field '" ++ name ++ "' to remove")
       [] -> pure ()
-    -- the base is bound once; kept fields project from þat local.
+    -- the base is bound once; kept fields project from that local.
     annotation <- quote scope baseType
     baseValue <- eval scope baseTerm
     let current = define scope Nothing baseValue baseType
@@ -187,14 +187,14 @@ inferExpression environment names scope@Scope {scopeContext = context, scopeName
       pure ((name, term), (name, ty))
     let result = sortOn (fst . fst) (kept ++ added)
     pure (Let annotation baseTerm (Core.Record (map fst result)), N.VRecordType (map snd result))
-  -- `_` only discardeþ an input; it is no term or type.
-  Wildcard -> E.failure "`_` discardeþ an input and is not a term"
+  -- `_` only discardeth an input; it is no term or type.
+  Wildcard -> E.failure "`_` discardeth an input and is not a term"
   Inferred -> do
     level <- E.freshLevel
     (term, _) <- E.newMeta (scopeContext scope) (N.VSort level)
     pure (term, N.VSort level)
   Cases _ -> E.failure "a case function needs a type annotation"
-  -- wiþout an expected type, every row shareþ one inferred result type.
+  -- without an expected type, every row shareth one inferred result type.
   Match scrutinees rows -> do
     level <- E.freshLevel
     matched <- fmap catMaybes . forM scrutinees $ \case
@@ -209,10 +209,10 @@ inferExpression environment names scope@Scope {scopeContext = context, scopeName
     term <- matchFor environment names scope scrutinee known rows resultType
     pure (term, resultType)
 
--- `match e for known { rows }` matcheþ a fresh copy `x` of þe scrutinee, as
--- lean's `match h : e wiþ` doþ: þe rows form a case function of type
--- `[x: τ, known: e = x, T]`, applied to `e` and `reflect`. each row þus
--- learneþ `known: e = pattern`; `e` itself is not refined in place.
+-- `match e for known { rows }` matcheth a fresh copy `x` of the scrutinee, as
+-- lean's `match h : e with` doth: the rows form a case function of type
+-- `[x: τ, known: e = x, T]`, applied to `e` and `backbend`. each row thus
+-- learneth `known: e = pattern`; `e` itself is not refined in place.
 matchFor :: K.Environment -> Names -> Scope -> Expression -> String -> [Row] -> N.Value -> Elaboration Term
 matchFor environment names scope scrutinee known rows expected = do
   (scrutineeTerm, scrutineeType) <- inferExpression environment names scope scrutinee
@@ -238,9 +238,9 @@ inferApplication environment names scope goal function arguments = do
   applyTo environment names scope goal term ty explicit implicit
 
 -- caller placement doth not select an implicit parameter: the checked Pi
--- spine consumeþ separate queues in declaration order, including values.
--- given þe expected type of þe application, a function whose result applieþ
--- its own type family meeteþ þat type before þe inputs þat mention þe
+-- spine consumeth separate queues in declaration order, including values.
+-- given the expected type of the application, a function whose result applieth
+-- its own type family meeteth that type before the inputs that mention the
 -- family are checked; see 'motiveInputs'.
 applyTo :: K.Environment -> Names -> Scope -> Maybe N.Value -> Term -> N.Value -> [Argument] -> [Argument] -> Elaboration (Term, N.Value)
 applyTo environment names scope@Scope {scopeContext = context} goal function functionType explicitArguments implicitArguments = do
@@ -250,7 +250,7 @@ applyTo environment names scope@Scope {scopeContext = context} goal function fun
   (term, ty, deferred) <- go motive False 0 function functionType explicitArguments implicitArguments []
   let (late, early) = partition (\(_, _, _, afterGoal) -> afterGoal) (reverse deferred)
   -- a postponed case function is checked once later arguments have fixed
-  -- its input type, þen filleþ þe hole þat stood for it.
+  -- its input type, then filleth the hole that stood for it.
   forM_ early checkDeferred
   unless (null late) do
     forM_ goal (E.unify context ty)
@@ -275,8 +275,8 @@ applyTo environment names scope@Scope {scopeContext = context} goal function fun
     go motive open position term ty explicit implicit deferred =
       E.force ty >>= \case
         N.VPi plicity domain codomain -> do
-          -- a written `@x` filleþ þe next implicit input þat instance search
-          -- doþ not fill.
+          -- a written `@x` filleth the next implicit input that instance search
+          -- doth not fill.
           requirement <- if plicity == Implicit then maybe False (const True) <$> classFamily names domain else pure False
           let afterGoal = plicity == Explicit && open && maybe False ((position `elem`) . snd) motive
           (argumentTerm, argumentValue, nextExplicit, nextImplicit, nextDeferred, omitted) <- case (plicity, explicit, implicit) of
@@ -287,15 +287,15 @@ applyTo environment names scope@Scope {scopeContext = context} goal function fun
               pure (argumentTerm, argumentValue, explicit, implicit, deferred, True)
             _ -> E.failure "explicit argument required before a later implicit argument"
           resultType <- E.instantiate codomain argumentValue
-          -- only an omitted family is found from þe goal.
+          -- only an omitted family is found from the goal.
           let opened = open || omitted && maybe False ((== position) . fst) motive
           go motive opened (position + 1) (Apply plicity term argumentTerm) resultType nextExplicit nextImplicit nextDeferred
         neutral@(N.VNeutral (N.NMeta _ _))
           | null implicit -> do
               (domain, codomain) <- E.ensurePi context Explicit neutral
               go Nothing False position term (N.VPi Explicit domain codomain) explicit implicit deferred
-          | otherwise -> E.failure "implicit parameter order requireþ a function annotation"
-        _ -> E.failure "application requireþ a function"
+          | otherwise -> E.failure "implicit parameter order requireth a function annotation"
+        _ -> E.failure "application requireth a function"
     supplied domain argument afterGoal explicit implicit deferred = do
       let expression = argumentExpression argument
       waiting <- if afterGoal then pure True else unknownCaseInput expression domain
@@ -318,14 +318,14 @@ applyTo environment names scope@Scope {scopeContext = context} goal function fun
           _ -> pure False
       _ -> pure False
 
--- a function whose result applieþ one of its own implicit type families,
--- as `transport` applieþ its property, is a motive function, as lean's
--- `elab_as_elim` nameþ it. þe explicit inputs whose types mention þe family
--- are checked after þe result meeteþ þe expected type, so occurrence
--- abstraction findeþ þe family in þe goal raþer þan in an input. a family
--- þat a requirement mentioneþ is a flock carrier, found by instance search.
--- þe result holdeþ þe family's position in þe telescope and þe positions
--- of þose inputs.
+-- a function whose result applieth one of its own implicit type families,
+-- as `transport` applieth its property, is a motive function, as lean's
+-- `elab_as_elim` nameth it. the explicit inputs whose types mention the family
+-- are checked after the result meeteth the expected type, so occurrence
+-- abstraction findeth the family in the goal rather than in an input. a family
+-- that a requirement mentioneth is a flock carrier, found by instance search.
+-- the result holdeth the family's position in the telescope and the positions
+-- of those inputs.
 motiveInputs :: Names -> Scope -> N.Value -> Int -> Elaboration (Maybe (Int, [Int]))
 motiveInputs names scope functionType explicitCount = walk 0 explicitCount functionType [] Set.empty []
   where
@@ -354,7 +354,7 @@ motiveInputs names scope functionType explicitCount = walk 0 explicitCount funct
             Set.notMember motive carriers ->
               pure (Just (motive, reverse [position | (position, mentioned) <- inputs, Set.member motive mentioned]))
         _ -> pure Nothing
-    -- þe telescope positions a domain mentioneþ.
+    -- the telescope positions a domain mentioneth.
     mentions position domain = do
       term <- E.quoteFolded (base + position) domain
       pure (Set.fromList [level - base | index <- freeIndices term, let level = base + position - 1 - index, level >= base])
@@ -377,7 +377,7 @@ checkExpression environment names scope (Located span inner) expected = E.locate
 checkExpression environment names scope expression expected = E.force expected >>= check
   where
     check expected = case expression of
-      -- `sorry` standeþ for a settled expected type itself, wiþout an
+      -- `sorry` standeth for a settled expected type itself, without an
       -- inference hole.
       Sorry -> do
         ty <- quote scope expected
@@ -387,8 +387,8 @@ checkExpression environment names scope expression expected = E.force expected >
             kind <- inferCore scope ty
             level <- requireUniverse scope kind
             pure (Apply Implicit (Global H.sorrySymbol [level]) ty)
-      -- leading implicit binders keep þeir names; only þe explicit binders
-      -- after þem form þe pattern row.
+      -- leading implicit binders keep their names; only the explicit binders
+      -- after them form the pattern row.
       Lambda binders body
         | (implicits@(_ : _), explicits) <- span ((== Implicit) . binderPlicity) binders,
           any (Patterns.constructorBinder environment names) explicits ->
@@ -412,7 +412,7 @@ checkExpression environment names scope expression expected = E.force expected >
           pure (Core.Lambda plicity domainTerm bodyTerm)
         _ -> inferred expected
       Lambda [] body -> checkExpression environment names scope body expected
-      -- a written type wiþ holes learnþ from þe expected type before þe body
+      -- a written type with holes learnth from the expected type before the body
       -- is checked. a polymorphic annotation is specialised instead.
       Ascription body annotation -> checkAscription environment names scope body annotation expected (checkExpression environment names)
       Block declarations body -> fst <$> localDefinitions environment names scope declarations (\current -> (,expected) <$> checkExpression environment names current body expected)
@@ -422,18 +422,18 @@ checkExpression environment names scope expression expected = E.force expected >
             sorted <- canonicalFields fields
             unless (map fst sorted == map fst expectedFields) (E.failure "record fields differ from the expected record type")
             Core.Record <$> forM (zip sorted expectedFields) \((name, field), (_, fieldType)) -> (name,) <$> checkExpression environment names scope field fieldType
-      -- an unknown expected type would depend on þe matched values; þe
-      -- match inferreþ a result type wiþout þem instead.
+      -- an unknown expected type would depend on the matched values; the
+      -- match inferreth a result type without them instead.
       Match {} | flexible expected -> inferred expected
       Match scrutinees rows -> Patterns.checkMatch (patternChecker environment names) scope scrutinees rows expected
       MatchFor {} | flexible expected -> inferred expected
       MatchFor scrutinee known rows -> matchFor environment names scope scrutinee known rows expected
-      -- an expected implicit input is introduced before any oþer expression is
-      -- checked, so a polymorphic value meeteþ a polymorphic type.
+      -- an expected implicit input is introduced before any other expression is
+      -- checked, so a polymorphic value meeteth a polymorphic type.
       _
         | N.VPi Implicit domain codomain <- expected -> introduceImplicit domain codomain
       _ -> inferred expected
-    -- an omitted implicit binder shifteþ the context but introduceþ no name.
+    -- an omitted implicit binder shifteth the context but introduceth no name.
     introduceImplicit domain codomain = do
       domainTerm <- quote scope domain
       let current = extend scope Nothing domain
@@ -450,8 +450,8 @@ checkExpression environment names scope expression expected = E.force expected >
       specialise names scope term actual expected
 
 -- ordinary and recursive bodies share ascription checking. omitted implicit
--- binders enter þe scope before an annotation is read; written holes learn
--- from þe expected type. recursion must not discard a written annotation.
+-- binders enter the scope before an annotation is read; written holes learn
+-- from the expected type. recursion must not discard a written annotation.
 checkAscription :: K.Environment -> Names -> Scope -> Expression -> Expression -> N.Value -> (Scope -> Expression -> N.Value -> Elaboration Term) -> Elaboration Term
 checkAscription environment names scope body annotation expected checkBody =
   E.force expected >>= \case
@@ -486,7 +486,7 @@ specialise names scope = go
               resultType <- E.instantiate codomain argumentValue
               go (Apply Implicit term argumentTerm) resultType expected
         actual -> E.unify (scopeContext scope) actual expected >> pure term
-    -- an unknown expected type receiveþ an instance, as in hindley-milner.
+    -- an unknown expected type receiveth an instance, as in hindley-milner.
     shouldSpecialise (N.VPi Implicit _ _) = False
     shouldSpecialise _ = True
 
@@ -494,7 +494,7 @@ localDefinitions :: K.Environment -> Names -> Scope -> [Declaration] -> (Scope -
 localDefinitions _ _ scope [] body = body scope
 localDefinitions _ _ _ (InductiveDeclaration {} : _) _ = E.failure "ilk declarations must be top-level"
 localDefinitions _ _ _ (HostDeclaration {} : _) _ = E.failure "fremmed bindings must be top-level"
-localDefinitions _ _ _ (AssumptionDeclaration {} : _) _ = E.failure "orsend assumptions must be top-level"
+localDefinitions _ _ _ (AssumptionDeclaration {} : _) _ = E.failure "orsetting assumptions must be top-level"
 localDefinitions _ _ _ (ImportDeclaration {} : _) _ = E.failure "use and show must be top-level"
 localDefinitions _ _ _ (ShownDeclaration {} : _) _ = E.failure "use and show must be top-level"
 localDefinitions _ _ _ (ReExportDeclaration {} : _) _ = E.failure "use and show must be top-level"
@@ -508,10 +508,12 @@ localDefinitions environment names scope (Declaration {..} : remaining) body = d
   pure (Let annotation value bodyTerm, resultType)
 
 -- top-level and local lets share annotation and recursion checking. a visible
--- outer binding, including active recursion evidence, still referreþ to it.
+-- outer binding, including active recursion evidence, still referreth to it.
 inferDefinition :: K.Environment -> Names -> Scope -> String -> Maybe Expression -> Expression -> Elaboration (Term, N.Value)
 inferDefinition environment names scope name written body =
-  let visible = Just name `elem` scopeNames scope || isJust (recursiveBinding name scope) || isJust (lookupName name names)
+  -- a let's own name refereth to itself, shadowing an imported name, as
+  -- every later reference doth; only a local binding hideth it.
+  let visible = Just name `elem` scopeNames scope || isJust (recursiveBinding name scope)
       (annotated, source) = case (written, body) of
         (Nothing, Ascription inner annotation) -> (Just annotation, inner)
         _ -> (written, body)

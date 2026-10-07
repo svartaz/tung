@@ -58,7 +58,7 @@ eraseLevels = \case
 compileAs :: FilePath -> String -> Either String SourceProgram
 compileAs = compileSource . SourceModule
 
--- bookhoard sources and þe modules a group useþ, compiled once.
+-- bookhoard sources and the modules a group useth, compiled once.
 data Library = Library (Map.Map String String) (Map.Map String SourceProgram)
 
 loadLibrary :: [String] -> IO Library
@@ -67,8 +67,8 @@ loadLibrary paths = do
   compiled <- either fail pure (compileModules sources paths)
   pure (Library sources compiled)
 
--- furþer sources beside bookhoard, keyed by use path. a changed source
--- invalidateþ every cached module, including its transitive dependants.
+-- further sources beside bookhoard, keyed by use path. a changed source
+-- invalidateth every cached module, including its transitive dependants.
 withModules :: [(String, String)] -> Library -> Library
 withModules modules (Library sources compiled) =
   let added = Map.fromList modules
@@ -106,7 +106,7 @@ data World = World
     worldFiles :: Map.Map FilePath String,
     worldArguments :: [String],
     worldEnvironment :: [(String, String)],
-    -- `web_serve` answereþ each queued request, then reporteþ that none remain.
+    -- `web_serve` answereth each queued request, then reporteth that none remain.
     worldRequests :: [Request],
     worldResponses :: [Response],
     worldTasks :: Map.Map Int (Either String Runtime)
@@ -141,7 +141,7 @@ simulated =
       hostEnvironment = \name -> lookup name <$> gets worldEnvironment,
       hostRunProcess = \command inputs -> pure case command of
         "echo" -> Right (0, unwords inputs ++ "\n", "")
-        _ -> Left ("no program " ++ command),
+        _ -> Left ("no forewrit " ++ command),
       hostFork = \action -> do
         result <- action
         state \current -> let handle = Map.size (worldTasks current) in (handle, current {worldTasks = Map.insert handle result (worldTasks current)}),

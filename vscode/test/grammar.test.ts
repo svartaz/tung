@@ -21,7 +21,7 @@ const languageConfiguration = JSON.parse(
     "utf8",
   ),
 );
-test("textmate immediately scopeþ lexical syntax", async () => {
+test("textmate immediately scopeth lexical syntax", async () => {
   const loaded = await loadGrammar();
   for (const [source, name, scope] of [
     [
@@ -30,21 +30,21 @@ test("textmate immediately scopeþ lexical syntax", async () => {
       "string.unquoted.import-path.tung",
     ],
     ["use flock/functor.tung functor", "functor", "entity.name.namespace.tung"],
-    ["let value ≔ '𝟙\\128512;'", "'𝟙", "string.quoted.single.tung"],
-    ["let value ≔ `\\128512;", "`\\128512;", "constant.character.tung"],
-    ["let value ≔ 12.5", "12.5", "constant.numeric.float.tung"],
-    ["let value ≔ +12", "+12", "constant.numeric.integer.tung"],
-    ["let value ≔ 12", "12", "constant.numeric.natural.tung"],
+    ["let worth ≔ '𝟙\\128512;'", "'𝟙", "string.quoted.single.tung"],
+    ["let worth ≔ `\\128512;", "`\\128512;", "constant.character.tung"],
+    ["let worth ≔ 12.5", "12.5", "constant.numeric.float.tung"],
+    ["let worth ≔ +12", "+12", "constant.numeric.integer.tung"],
+    ["let worth ≔ 12", "12", "constant.numeric.natural.tung"],
     ["# a comment", "#", "comment.line.number-sign.tung"],
     ["/* a comment */", "a comment", "comment.block.tung"],
-    ["show let identity:[x:ℤ, ℤ] ≔ x", "let", "keyword.declaration.tung"],
-    ["match value {x ^ x}", "match", "keyword.control.tung"],
-    ["let main: 𝟙 deed ≔ only pure", "deed", "keyword.control.tung"],
+    ["show let selfness:[x:ℤ, ℤ] ≔ x", "let", "keyword.declaration.tung"],
+    ["match worth {x ^ x}", "match", "keyword.control.tung"],
+    ["let main: 𝟙 deed ≔ only sheer", "deed", "keyword.control.tung"],
     ["let proof ≔ sorry", "sorry", "keyword.control.tung"],
-    ["let fold ≔ unbuild list", "unbuild", "keyword.control.tung"],
+    ["let gather ≔ unbuild list", "unbuild", "keyword.control.tung"],
     ["@a:*", "*", "keyword.other.tung"],
     ["@a:*", "@", "keyword.other.tung"],
-    [">{cons, value, empty}", ">{", "punctuation.section.braces.begin.tung"],
+    [">{cons, worth, empty}", ">{", "punctuation.section.braces.begin.tung"],
     ["r{field ≔ 1}", "r{", "punctuation.section.braces.begin.tung"],
   ]) {
     const position = source.lastIndexOf(name);
@@ -57,20 +57,20 @@ test("textmate immediately scopeþ lexical syntax", async () => {
     assert(token?.scopes.includes(scope), `${source}: ${scope}`);
   }
 });
-test("textmate leaveþ name roles to the compiler", async () => {
+test("textmate leaveth name roles to the compiler", async () => {
   const loaded = await loadGrammar();
   let state = textmate.INITIAL;
   for (const source of [
     "show flock functor:[f:[*, *], *] {",
-    "  let map:[@a:*, @b:*, a f, [a, b], b f] ≔",
+    "  let warp:[@a:*, @b:*, a f, [a, b], b f] ≔",
     "}",
     "show let void:[@a:*, @f:[*, *], af:a f, 𝟙 f] ≔",
-    "  af map {_ ^ only}",
-    "show let read_paþ:[text paþ:_paþ, (text ∑ text) deed] ≔",
-    "show let join_paþ:[text₀ paþ:_paþ, text₁ paþ:_paþ, _paþ] ≔",
+    "  af warp {_ ^ only}",
+    "show let read:[text path:_path, (text ∑ text) deed] ≔",
+    "show let join:[text₀ path:_path, text₁ path:_path, _path] ≔",
     "x ‥ xs · list~‥",
     "let count:* ≔ ℤ",
-    "let identity:[@α:*, x:α, α] ≔ x",
+    "let selfness:[@α:*, x:α, α] ≔ x",
   ]) {
     const result = loaded.tokenizeLine(source, state);
     state = result.ruleStack;
@@ -96,7 +96,7 @@ test("special openers remain paired in language configuration", () => {
     );
   }
 });
-test("manifest mapeþ semantic roles to theme scopes", () => {
+test("manifest mapeth semantic roles to theme scopes", () => {
   const defaults = manifest.contributes.configurationDefaults["[tung]"];
   const scopes = manifest.contributes.semanticTokenScopes[0].scopes;
   const semanticDefaults =
@@ -154,7 +154,7 @@ test("manifest mapeþ semantic roles to theme scopes", () => {
     false,
   );
 });
-test("manifest exposeþ running a tung file from the editor", () => {
+test("manifest exposeth running a tung file from the editor", () => {
   const command = manifest.contributes.commands.find(
     ({ command }) => command === "tung.runFile",
   );

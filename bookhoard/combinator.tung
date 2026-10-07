@@ -1,4 +1,4 @@
-## þe binary function type constructor: `α → β` is `[α, β]`. it may be
+## the binary function type constructor: `α → β` is `[α, β]`. it may be
 ## passed unapplied, as in `bizen: → semigroupoid`.
 show let →: [α: *, β: *, *] ≔ [α, β]
 

@@ -1,7 +1,7 @@
 use combinator.tung
-use flock/algebra/partial/semigroupoid.tung
-use flock/equal.tung
-use flock/inhold.tung
+use flock/algebra/half/semigroupoid.tung
+use flock/hath_inhold.tung
+use flock/hath_same.tung
 use flock/order/complement.tung
 use flock/order/semilattice_lower.tung
 use flock/order/semilattice_upper.tung
@@ -14,16 +14,16 @@ show let empty: [@α: *, α powerset] ≔ nay constant
 
 show let universe: [@α: *, α powerset] ≔ yea constant
 
-show let singleton: [@α: *, @: α equal, α, α powerset] ≔ ≍
+show let singleton: [@α: *, @: α hath_≍, α, α powerset] ≔ ≍
 
-bizen: [@α: *, (α powerset) inhold α] {
+bizen: [@α: *, (α powerset) hath_∋ α] {
   let ∋: [p:, α:] ≔ α p
 }
 
-show let put: [@α: *, @: α equal, s: α powerset, a: α, α powerset] ≔
+show let put: [@α: *, @: α hath_≍, s: α powerset, a: α, α powerset] ≔
   s ∨ (a singleton)
 
-show let rid: [@α: *, @: α equal, s: α powerset, a: α, α powerset] ≔
+show let rid: [@α: *, @: α hath_≍, s: α powerset, a: α, α powerset] ≔
   s ∧ (a singleton $ ¬)
 
 show let ∖: [@α: *, p₀: α powerset, p₁: α powerset, α powerset] ≔ p₀ ∧ (p₁ ¬)

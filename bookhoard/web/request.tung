@@ -1,18 +1,18 @@
 use ilk/table.tung
 
-## an incoming http request wiþ its meþod, target, headers, and utf-8 body.
+## an incoming http request with its method, target, headers, and utf-8 body.
 show ilk _request: * {
   request: [text, text, text table text, text, _request]
 }
 
-show let request_meþod: [meþod request _ _ _: _request, text] ≔
-  meþod
+show let method: [method request _ _ _: _request, text] ≔
+  method
 
-show let request_target: [_ request target _ _: _request, text] ≔
+show let target: [_ request target _ _: _request, text] ≔
   target
 
-show let request_headers: [_ request _ headers _: _request, text table text] ≔
+show let headers: [_ request _ headers _: _request, text table text] ≔
   headers
 
-show let request_body: [_ request _ _ body: _request, text] ≔
+show let body: [_ request _ _ body: _request, text] ≔
   body

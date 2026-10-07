@@ -1,0 +1,24 @@
+use flock/algebra/arithmetic/hath_eke.tung
+use flock/algebra/arithmetic/hath_zero.tung
+use ilk/two.tung
+
+show flock monoid_eke: [α: *, @: α hath_+, @: α hath_zero, *] {
+  let +_+: [a: α, b: α, c: α, (a + (b + c)) = ((a + b) + c)]
+  let zero_+: [a: α, (zero + a) = a]
+  let +_zero: [a: α, (a + zero) = a]
+}
+
+bizen: 𝟚 monoid_eke {
+  let +_+ ≔ {
+    nay, nay, nay;
+    nay, nay, yea;
+    nay, yea, nay;
+    nay, yea, yea;
+    yea, nay, nay;
+    yea, nay, yea;
+    yea, yea, nay;
+    yea, yea, yea ^ backbend
+  }
+  let zero_+ ≔ {nay; yea ^ backbend}
+  let +_zero ≔ {nay; yea ^ backbend}
+}

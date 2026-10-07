@@ -50,7 +50,7 @@ data Plicity = Explicit | Implicit
   deriving stock (Eq, Ord, Show)
 
 -- both types and values use this syntax. binder names are absent from identity.
--- term metas are temporary elaboration syntax; the kernel rejecteþ every one.
+-- term metas are temporary elaboration syntax; the kernel rejecteth every one.
 data Term
   = Local Int
   | Global SymbolId [Level]
@@ -60,15 +60,15 @@ data Term
   | Apply Plicity Term Term
   | Let Term Term Term
   | Meta Int [Term]
-  | -- a literal nameþ þe host value type it inhabiteþ. host value types
+  | -- a literal nameth the host value type it inhabiteth. host value types
     -- have no universe parameters.
     Literal SymbolId HostLiteral
   | -- closed records. field names are distinct and sorted, so field order
-    -- in source never affecteþ identity.
+    -- in source never affecteth identity.
     RecordType [(String, Term)]
   | Record [(String, Term)]
   | Project Term String
-  | -- þe field at an index of a value of a one-constructor family wiþout
+  | -- the field at an index of a value of a one-constructor family without
     -- indices, counting implicit fields, as lean's primitive projections.
     Field Int Term
   deriving stock (Eq, Show)
@@ -89,11 +89,11 @@ data DefinitionBody
   | DataConstructor SymbolId Int
   | Eliminator SymbolId
   | -- a trusted host constant, bound to a catalogue key. a pure operation
-    -- reduceþ on literal inputs. on oþer inputs it unfoldeþ its model, a
-    -- checked tung definition of þe same type, when it haþ one; any oþer
+    -- reduceth on literal inputs. on other inputs it unfoldeth its model, a
+    -- checked tung definition of the same type, when it hath one; any other
     -- host constant is opaque.
     Host String (Maybe SymbolId)
-  | -- an `orsend` assumption: a constant wiþ a checked type and no body.
+  | -- an `orsetting` assumption: a constant with a checked type and no body.
     Assumption
   deriving stock (Eq, Show)
 
@@ -112,7 +112,7 @@ termTelescope = \case
   Pi plicity domain codomain -> let (rest, result) = termTelescope codomain in ((plicity, domain) : rest, result)
   term -> ([], term)
 
--- application inputs stay in written order, wiþ their original plicities.
+-- application inputs stay in written order, with their original plicities.
 termSpine :: Term -> (Term, [(Plicity, Term)])
 termSpine = go []
   where
@@ -122,15 +122,15 @@ termSpine = go []
 applyArguments :: Term -> [(Plicity, Term)] -> Term
 applyArguments = foldl (\function (plicity, argument) -> Apply plicity function argument)
 
--- free locals move past þe given number of new outer binders.
+-- free locals move past the given number of new outer binders.
 shiftTerm :: Int -> Term -> Term
 shiftTerm amount = runIdentity . traverseScoped move
   where
     move bound (Local index) _ | index >= bound = pure (Local (index + amount))
     move _ _ descend = descend
 
--- | each immediate subterm, in order, wiþ the number of binders between it
--- and its parent. every term traversal is built from þese two functions.
+-- | each immediate subterm, in order, with the number of binders between it
+-- and its parent. every term traversal is built from these two functions.
 children :: Term -> [(Int, Term)]
 children = getConst . mapChildren (\binders child -> Const [(binders, child)])
 
@@ -150,9 +150,9 @@ mapChildren f = \case
   term@Sort {} -> pure term
   term@Literal {} -> pure term
 
--- visit a node before its children, carrying þe number of enclosing binders.
--- use þe lazy default descent at most once; replacements are not revisited.
--- this walk trackeþ depth but doth not validate local indices.
+-- visit a node before its children, carrying the number of enclosing binders.
+-- use the lazy default descent at most once; replacements are not revisited.
+-- this walk tracketh depth but doth not validate local indices.
 traverseScoped :: (Applicative f) => (Int -> Term -> f Term -> f Term) -> Term -> f Term
 traverseScoped visit = go 0
   where
@@ -197,8 +197,8 @@ eraseGlobalLevels = runIdentity . traverseScoped erase
     erase _ (Global name _) _ = pure (Global name [])
     erase _ _ descend = descend
 
--- equality þat ignoreþ global universe instantiations, as
--- 'eraseGlobalLevels' doþ, wiþout rebuilding eiþer term.
+-- equality that ignoreth global universe instantiations, as
+-- 'eraseGlobalLevels' doth, without rebuilding either term.
 sameUpToLevels :: Term -> Term -> Bool
 sameUpToLevels left right = case (left, right) of
   (Global name _, Global other _) -> name == other
@@ -206,9 +206,9 @@ sameUpToLevels left right = case (left, right) of
   where
     blank = runIdentity . mapChildren (\_ _ -> Identity (Sort LZero))
 
--- replaceþ each occurrence of þe given terms, up to global universe levels,
--- wiþ new innermost inputs, þe first term outermost. þe result liveþ þat
--- many binders deeper; þe flags tell which terms occurred.
+-- replaceth each occurrence of the given terms, up to global universe levels,
+-- with new innermost inputs, the first term outermost. the result liveth that
+-- many binders deeper; the flags tell which terms occurred.
 abstractTerms :: [Term] -> Term -> (Term, [Bool])
 abstractTerms targets body = (abstracted, [position `elem` found | position <- [0 .. count - 1]])
   where

@@ -1,18 +1,18 @@
-## runner deeds beyond þe console, through bookhoard's host bindings.
+## runner deeds beyond the console, through bookhoard's host bindings.
 use _foreign.tung
 use deed/file.tung
+use ilk/maybe.tung
 use ilk/one.tung
-use ilk/option.tung
 use ilk/product.tung
 use ilk/sum.tung
 
-let þen: [@α: *, @β: *, first: α deed, next: β deed, β deed] ≔ first deed_bind {_ ^ next}
-let line: [text, 𝟙 deed] ≔ {x ^ (x join_text '\n') write}
+let then: [@α: *, @β: *, first: α deed, next: β deed, β deed] ≔ first deed_bind {_ ^ next}
+let line: [text, 𝟙 deed] ≔ {x ^ (x join_text '\n') _foreign~write}
 
-## a fallible deed returneþ `text ∑ α`: a message or a result.
+## a fallible deed returneth `text ∑ α`: a message or a result.
 let report: [(text ∑ text) deed, 𝟙 deed] ≔ {action ^ action deed_bind {
-    message inject₀ ^ message line,
-    contents inject₁ ^ contents line
+    message incast₀ ^ message line,
+    contents incast₁ ^ contents line
 }}
 
 ## a cancelled or failed task hath no result.
@@ -22,12 +22,12 @@ let await: [(text task) deed, 𝟙 deed] ≔ {started ^ started deed_bind {task 
 }}}
 
 let main: 𝟙 deed ≔
-  >{þen,
-    ('note.txt' write_file 'saved') deed_bind {_ ^ only deed_pure},
-    'note.txt' read_file $ report,
-    'absent.txt' read_file $ report,
-    ('from a task' deed_pure) fork $ await,
+  >{then,
+    ('note.txt' file~write 'saved') deed_bind {_ ^ only deed_sheer},
+    'note.txt' file~read $ report,
+    'absent.txt' file~read $ report,
+    ('from a task' deed_sheer) fork $ await,
     match 'tung' behead_text {
       none ^ 'empty' line,
-      (_ boþ rest) some ^ rest line
+      (_ both rest) some ^ rest line
   }}

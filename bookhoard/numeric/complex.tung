@@ -1,12 +1,12 @@
 use _foreign.tung
-use flock/absolute.tung
-use flock/algebra/arithmetic/add.tung
-use flock/algebra/arithmetic/divide.tung
-use flock/algebra/arithmetic/multiply.tung
-use flock/algebra/arithmetic/one.tung
-use flock/algebra/arithmetic/subtract.tung
-use flock/algebra/arithmetic/zero.tung
-use flock/elementary.tung
+use flock/algebra/arithmetic/hath_deal.tung
+use flock/algebra/arithmetic/hath_eke.tung
+use flock/algebra/arithmetic/hath_fold.tung
+use flock/algebra/arithmetic/hath_offdraw.tung
+use flock/algebra/arithmetic/hath_one.tung
+use flock/algebra/arithmetic/hath_zero.tung
+use flock/hath_absolute.tung
+use flock/hath_elementary.tung
 
 show ilk complex: [α: *, *] {
   +i: [α, α, α complex]
@@ -16,55 +16,55 @@ show let real: [@α: *, (a +i _): α complex, α] ≔ a
 
 show let imaginary: [@α: *, (_ +i b): α complex, α] ≔ b
 
-show let unit: [@α: *, @: α haþ_zero, @: α haþ_one, α complex] ≔ zero +i one
+show let unit: [@α: *, @: α hath_zero, @: α hath_one, α complex] ≔ zero +i one
 
-bizen: [@α: *, @: α add, (α complex) add] {
+bizen: [@α: *, @: α hath_+, (α complex) hath_+] {
   let +: [a +i b:, c +i d:] ≔ (a + c) +i (b + d)
 }
 
-bizen: [@α: *, @: α haþ_zero, (α complex) haþ_zero] {
+bizen: [@α: *, @: α hath_zero, (α complex) hath_zero] {
   let zero ≔ zero +i zero
 }
 
-bizen: [@α: *, @: α subtract, (α complex) subtract] {
+bizen: [@α: *, @: α hath_-, (α complex) hath_-] {
   let -: [a +i b:, c +i d:] ≔ (a - c) +i (b - d)
 }
 
-bizen: [@α: *, @: α subtract, @: α multiply, (α complex) multiply] {
+bizen: [@α: *, @: α hath_-, @: α hath_×, (α complex) hath_×] {
   let ×: [a +i b:, c +i d:] ≔ ((a × c) - (b × d)) +i ((a × d) + (b × c))
 }
 
-bizen: [@α: *, @: α haþ_one, @: α haþ_zero, (α complex) haþ_one] {
+bizen: [@α: *, @: α hath_one, @: α hath_zero, (α complex) hath_one] {
   let one ≔ one +i zero
 }
 
-bizen: [@α: *, @: α subtract, @: α multiply, @: α divide, (α complex) divide] {
+bizen: [@α: *, @: α hath_-, @: α hath_×, @: α hath_÷, (α complex) hath_÷] {
   let ÷: [a +i b:, c +i d:] ≔  (
     let e ≔ c × c $ + (d × d)
     yield ((a × c) + (b × d) $ ÷ e) +i ((b × c) - (a × d) $ ÷ e)
   )
 }
 
-bizen: [@α: *, @: α add, @: α multiply, (α complex) haþ_absolute α] {
+bizen: [@α: *, @: α hath_+, @: α hath_×, (α complex) hath_absolute α] {
   let absolute: [a +i b:] ≔ (a × a) + (b × b)
 }
 
-bizen: (float complex) elementary {
+bizen: (float complex) hath_elementary {
   let exponent: [a +i b:] ≔ (
     let c ≔ a exponent
     yield (c × (b cosine)) +i (c × (b sine))
   )
-  let logariþm: [a +i b:] ≔ ((a × a) + (b × b) $ logariþm) +i (a arctan_float b)
+  let logarithm: [a +i b:] ≔ ((a × a) + (b × b) $ logarithm) +i (a arctan_float b)
   let sine: [a +i b:] ≔ (
-    let positive ≔ ((zero - b) +i a) exponent
-    let negative ≔ (b +i (zero - a)) exponent
-    yield (((positive imaginary) - (negative imaginary)) × 0.5)
-    +i (((negative real) - (positive real)) × 0.5)
+    let overnaught ≔ ((zero - b) +i a) exponent
+    let undernaught ≔ (b +i (zero - a)) exponent
+    yield (((overnaught imaginary) - (undernaught imaginary)) × 0.5)
+    +i (((undernaught real) - (overnaught real)) × 0.5)
   )
   let cosine: [a +i b:] ≔ (
-    let positive ≔ ((zero - b) +i a) exponent
-    let negative ≔ (b +i (zero - a)) exponent
-    yield (((positive real) + (negative real)) × 0.5)
-    +i (((positive imaginary) + (negative imaginary)) × 0.5)
+    let overnaught ≔ ((zero - b) +i a) exponent
+    let undernaught ≔ (b +i (zero - a)) exponent
+    yield (((overnaught real) + (undernaught real)) × 0.5)
+    +i (((overnaught imaginary) + (undernaught imaginary)) × 0.5)
   )
 }

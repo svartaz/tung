@@ -1,4 +1,4 @@
--- source text compiled as þe library compileþ snapshots. þe string forms
+-- source text compiled as the library compileth snapshots. the string forms
 -- keep only a failure's text.
 module Test.Compile
   ( compileSource,

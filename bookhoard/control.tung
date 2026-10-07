@@ -3,13 +3,13 @@ use flock/order/complement.tung
 use ilk/one.tung
 use ilk/two.tung
 
-## a deed þat performeþ þe action only when þe condition is true.
+## a deed that performeth the action only when the condition is true.
 show let when: [𝟚, 𝟙 deed, 𝟙 deed] ≔ {
   yea, action ^ action,
-  nay, _ ^ only deed_pure
+  nay, _ ^ only deed_sheer
 }
 
-## a deed þat performeþ þe action only when þe condition is false.
+## a deed that performeth the action only when the condition is false.
 show let when_not: [two: 𝟚, action: 𝟙 deed, 𝟙 deed] ≔
   (two ¬) when action
 

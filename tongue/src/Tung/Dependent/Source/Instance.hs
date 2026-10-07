@@ -1,6 +1,6 @@
 -- | class dictionary goals and instance selection. candidates run in isolated
--- elaboration trials; only the chosen dictionary committeþ its inference state.
--- search useþ core types and class metadata, never source syntax.
+-- elaboration trials; only the chosen dictionary committeth its inference state.
+-- search useth core types and class metadata, never source syntax.
 module Tung.Dependent.Source.Instance
   ( implicitArgument,
     classFamily,
@@ -30,7 +30,7 @@ import Tung.Token (SourceFailure (..))
 type Elaboration = E.Elaboration
 
 -- search for a complete goal may use registered instances. an unknown goal
--- first useþ only local requirements and the parent dictionaries they project.
+-- first useth only local requirements and the parent dictionaries they project.
 data SearchMode = LocalRequirements | AllInstances
   deriving stock (Eq)
 
@@ -40,14 +40,14 @@ sameInstance environment left right = case (instancePattern environment left, in
   (Just first, Just second) -> instanceOf first second && instanceOf second first
   _ -> False
 
--- a dictionary's class arguments, under þe count of its own binders.
+-- a dictionary's class arguments, under the count of its own binders.
 instancePattern :: K.Environment -> SymbolId -> Maybe (Int, [Term])
 instancePattern environment symbol = do
   Definition {definitionType} <- Map.lookup symbol (globals environment)
   let (binders, result) = termTelescope definitionType
   pure (length binders, map snd (snd (termSpine result)))
 
--- `broad` matcheþ `narrow` when its own binders can stand for subterms.
+-- `broad` matcheth `narrow` when its own binders can stand for subterms.
 instanceOf :: (Int, [Term]) -> (Int, [Term]) -> Bool
 instanceOf (broadBound, broad) (narrowBound, narrow) = maybe False (const True) (foldM go Map.empty (zip broad narrow))
   where
@@ -65,7 +65,7 @@ instanceOf (broadBound, broad) (narrowBound, narrow) = maybe False (const True) 
       | left == right = Just solution
     go _ _ = Nothing
 
--- an implicit input whose type applieþ a class becomeþ an instance goal.
+-- an implicit input whose type applieth a class becometh an instance goal.
 implicitArgument :: Names -> K.Context -> N.Value -> Elaboration (Term, N.Value)
 implicitArgument names context domain = do
   hole@(_, holeValue) <- E.newMeta context domain
@@ -87,11 +87,11 @@ classFamily names ty =
     _ -> pure Nothing
 
 -- goals are solved after the declaration's ordinary unification, so their
--- types are as specific as the program makeþ them.
--- a goal waiteþ while þe head of an input parameter of its flock is still
--- unknown, as rocq's `!` mode doþ; output parameters (`* out`) are found by
--- þe search. a waiting goal may still be fixed by a local requirement or by
--- splitting a stuck equation; no candidate bizen fixeþ an unknown input.
+-- types are as specific as the program maketh them.
+-- a goal waiteth while the head of an input parameter of its flock is still
+-- unknown, as rocq's `!` mode doth; output parameters (`* out`) are found by
+-- the search. a waiting goal may still be fixed by a local requirement or by
+-- splitting a stuck equation; no candidate bizen fixeth an unknown input.
 solveInstances :: K.Environment -> Names -> Elaboration ()
 solveInstances environment names = E.repeatProgress do
   (ready, waiting) <- takeReadyGoals names
@@ -105,8 +105,8 @@ solveInstances environment names = E.repeatProgress do
     else mapM_ E.addInstanceGoal still >> pure True
   where
     search = searchGoal environment names
-    -- a goal still stuck on an unknown input trieþ its flock's fallback
-    -- bizens; þe first þat fiteþ fixeþ þe input.
+    -- a goal still stuck on an unknown input trieth its flock's fallback
+    -- bizens; the first that fiteth fixeth the input.
     fallback = \case
       [] -> pure False
       goal : rest ->
@@ -118,7 +118,7 @@ solveInstances environment names = E.repeatProgress do
             pure more
 
 -- goals whose class argument is known are solved now, so a computed match
--- scrutinee can be compared wiþ its goal. oþer goals keep waiting.
+-- scrutinee can be compared with its goal. other goals keep waiting.
 solveDeterminedInstances :: K.Environment -> Names -> Elaboration ()
 solveDeterminedInstances environment names = E.repeatProgress do
   (ready, waiting) <- takeReadyGoals names
@@ -127,18 +127,18 @@ solveDeterminedInstances environment names = E.repeatProgress do
   pure (not (null ready))
 
 -- a declaration's annotation is closed, so its dictionaries are chosen before
--- its body is checked. known goals are solved, and a stuck equation of þe
+-- its body is checked. known goals are solved, and a stuck equation of the
 -- annotation is split by first-order approximation, first against a rigid
--- application and þen between two applied holes, as nested flock calls
--- such as `(l filter p) filter p` need. þe unique-instance fallback still
--- waiteþ for þe whole declaration.
+-- application and then between two applied holes, as nested flock calls
+-- such as `(l filter p) filter p` need. the unique-instance fallback still
+-- waiteth for the whole declaration.
 settleAnnotation :: K.Environment -> Names -> Elaboration ()
 settleAnnotation environment names = E.repeatProgress do
   solveDeterminedInstances environment names
   rigid <- E.approximate
   if rigid then pure True else E.approximateFlexible
 
--- the same ordered partition serveþ body and annotation phases.
+-- the same ordered partition serveth body and annotation phases.
 takeReadyGoals :: Names -> Elaboration ([E.InstanceGoal], [E.InstanceGoal])
 takeReadyGoals names = E.takeInstanceGoals >>= partitionM (determined names . E.goalType)
 
@@ -152,7 +152,7 @@ searchGoal environment names mode E.InstanceGoal {..} = do
       E.unify goalContext goalHole value
     _ -> pure ()
 
--- þe flock's fallback bizens, by priority, for a goal wiþ unknown inputs.
+-- the flock's fallback bizens, by priority, for a goal with unknown inputs.
 searchFallback :: K.Environment -> Names -> E.InstanceGoal -> Elaboration ()
 searchFallback environment names E.InstanceGoal {..} = do
   family <- classFamily names goalType >>= maybe (E.failure "instance goal is not a flock") pure
@@ -165,7 +165,7 @@ searchFallback environment names E.InstanceGoal {..} = do
 partitionM :: (Monad m) => (a -> m Bool) -> [a] -> m ([a], [a])
 partitionM predicate = foldr (\goal rest -> do (yes, no) <- rest; keep <- predicate goal; pure (if keep then (goal : yes, no) else (yes, goal : no))) (pure ([], []))
 
--- a goal is ready when every input parameter of its flock haþ a known head.
+-- a goal is ready when every input parameter of its flock hath a known head.
 determined :: Names -> N.Value -> Elaboration Bool
 determined names goal =
   E.force goal >>= \case
@@ -181,7 +181,7 @@ determined names goal =
         N.VNeutral neutral | (N.NMeta _ _, _) <- N.neutralSpine neutral -> False
         _ -> True
 
--- þe first local requirement of þe goal's class þat unifieþ wiþ it.
+-- the first local requirement of the goal's class that unifieth with it.
 localInstance :: Names -> K.Context -> SymbolId -> N.Value -> Elaboration (Maybe Term)
 localInstance names context family goal = do
   let localTypes = zip [0 ..] (K.contextTypes context)
@@ -189,11 +189,11 @@ localInstance names context family goal = do
   firstJust [E.attempt (E.unify context ty goal >> pure (Local index)) | (index, ty) <- locals]
 
 -- local requirements are tried first, then registered instances, then inherited
--- instances. one registered match þat refineþ every oþer winneþ; þe first matching
+-- instances. one registered match that refineth every other winneth; the first matching
 -- inherited instance is used. a candidate's own requirements are solved
 -- recursively.
--- a goal þat repeateþ one of its own ancestors cannot be solved by þat path.
--- a local search useþ only local requirements and þe parents þey project, as
+-- a goal that repeateth one of its own ancestors cannot be solved by that path.
+-- a local search useth only local requirements and the parents they project, as
 -- for a goal whose type is still unknown.
 resolveInstance :: K.Environment -> Names -> K.Context -> N.Value -> Elaboration Term
 resolveInstance environment names = searchInstance environment names AllInstances []
@@ -201,7 +201,7 @@ resolveInstance environment names = searchInstance environment names AllInstance
 searchInstance :: K.Environment -> Names -> SearchMode -> [Term] -> K.Context -> N.Value -> Elaboration Term
 searchInstance = searchInstanceAmong Nothing
 
--- a search restricted to þe given bizens, such as a flock's fallbacks.
+-- a search restricted to the given bizens, such as a flock's fallbacks.
 searchInstanceAmong :: Maybe [SymbolId] -> K.Environment -> Names -> SearchMode -> [Term] -> K.Context -> N.Value -> Elaboration Term
 searchInstanceAmong restriction environment names mode ancestors context goal = do
   when (length ancestors > 16) (E.failure "instance search is too deep")
@@ -218,13 +218,13 @@ searchInstanceAmong restriction environment names mode ancestors context goal = 
       let classInfo = Map.lookup family (nameClasses names)
       wanted <- goalHeads goal
       let path = key : ancestors
-      -- candidates are tried by priority, þe latest first among equals, as
-      -- lean doþ; þe first þat succeedeþ is chosen, wiþ its requirements.
+      -- candidates are tried by priority, the latest first among equals, as
+      -- lean doth; the first that succeedeth is chosen, with its requirements.
       (direct, failures) <-
         if mode == LocalRequirements
           then pure ([], [])
           else firstSuccess path (filter (\symbol -> fits wanted symbol && maybe True (symbol `elem`) restriction) (maybe [] ordered classInfo))
-      -- instances are unique per type, so every parent projection reacheþ þe
+      -- instances are unique per type, so every parent projection reacheth the
       -- same dictionary; a diamond of parents is not ambiguous.
       inherited <-
         if null direct && restriction == Nothing
@@ -239,7 +239,7 @@ searchInstanceAmong restriction environment names mode ancestors context goal = 
           available <- traverse (E.quote (length (K.contextTypes context))) localRequirements
           let rendered = renderTermWith (displayName names) []
               detail = ["available requirement '" ++ rendered requirement ++ "'" | requirement <- available] ++ take 1 failures
-          E.failure ("no bizen of flock '" ++ displayName names family ++ "' matcheþ goal '" ++ rendered current ++ "'" ++ concatMap ("; " ++) detail)
+          E.failure ("no bizen of flock '" ++ displayName names family ++ "' matcheth goal '" ++ rendered current ++ "'" ++ concatMap ("; " ++) detail)
   where
     ordered ClassInfo {classInstances, classPriorities} =
       map snd (sortOn fst [((Down (Map.findWithDefault defaultPriority symbol classPriorities), Down age), symbol) | (age, symbol) <- zip [0 :: Int ..] classInstances])
@@ -252,8 +252,8 @@ searchInstanceAmong restriction environment names mode ancestors context goal = 
     firstMatching path = \case
       [] -> pure []
       symbol : rest -> E.speculate (candidate path symbol) >>= maybe (firstMatching path rest) (pure . pure)
-    -- a cheap filter: an instance whose class arguments start wiþ a different
-    -- family can never match. any oþer argument is compared by unification.
+    -- a cheap filter: an instance whose class arguments start with a different
+    -- family can never match. any other argument is compared by unification.
     rigid symbol = case definitionBody <$> Map.lookup symbol (globals environment) of
       Just (TypeConstructor _) -> True
       Just (Host _ _) -> True
@@ -271,10 +271,10 @@ searchInstanceAmong restriction environment names mode ancestors context goal = 
       Nothing -> True
     agree (Just left) (Just right) = left == right
     agree _ _ = True
-    -- an inherited instance projecteþ from a child class's dictionary. when
-    -- þe child passeþ its own parameters unchanged, þe child needeþ a local
-    -- requirement or an instance wiþ þe same heads, direct or inherited in turn;
-    -- oþerwise it may match.
+    -- an inherited instance projecteth from a child class's dictionary. when
+    -- the child passeth its own parameters unchanged, the child needeth a local
+    -- requirement or an instance with the same heads, direct or inherited in turn;
+    -- otherwise it may match.
     viable localFamilies visited wanted = \case
       Nothing -> True
       Just symbol -> case childClass symbol of

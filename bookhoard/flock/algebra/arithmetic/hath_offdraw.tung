@@ -1,0 +1,10 @@
+use flock/algebra/arithmetic/hath_eke.tung
+use ilk/two.tung
+
+show flock hath_-: [α: *, @: α hath_+, *] {
+  let -: [α, α, α]
+}
+
+bizen: 𝟚 hath_- {
+  let - ≔ +
+}

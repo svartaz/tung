@@ -25,14 +25,14 @@ import Tung.Identity (ModuleId (..), SymbolId (..), inducedFamily)
 import Tung.Name qualified as Name
 import Tung.Token (SourceFailure, SourceSpan)
 
--- the only connection to elaboration. a successful declaration returneþ an
+-- the only connection to elaboration. a successful declaration returneth an
 -- updated, kernel-checked module; import loading cannot bypass that check.
 type CheckDeclaration = ModuleId -> SourceProgram -> Declaration -> Either SourceFailure SourceProgram
 
 parsed :: SourceSnapshot -> Either CompileFailure ([(Maybe SourceSpan, Declaration)], Maybe Expression)
 parsed = Error.compilationFailure ParseFailure . snapshotProgram
 
--- a root may yield an expression. its checking and execution belong to þe
+-- a root may yield an expression. its checking and execution belong to the
 -- source facade, after every reachable declaration hath been checked.
 compileProject :: CheckDeclaration -> Map.Map String SourceProgram -> ModuleId -> SourceSnapshot -> Map.Map String SourceSnapshot -> Either CompileFailure (SourceProgram, Maybe Expression)
 compileProject check compiled owner source modules = do
@@ -41,8 +41,8 @@ compileProject check compiled owner source modules = do
   program <- compileModule check owner declarations done
   pure (program, yielded)
 
--- precompiled modules are authoritative and are never reloaded. every oþer
--- reached module is compiled once, wiþ its dependencies available first.
+-- precompiled modules are authoritative and are never reloaded. every other
+-- reached module is compiled once, with its dependencies available first.
 compileImports :: CheckDeclaration -> Map.Map String SourceProgram -> Map.Map String SourceSnapshot -> [String] -> Either CompileFailure (Map.Map String SourceProgram)
 compileImports check compiled modules = compileImportsAt check compiled modules . map (Nothing,)
 
@@ -61,7 +61,7 @@ compileImportsAt check compiled modules = foldM (compileImport []) compiled
             done' <- foldM (compileImport (path : stack)) done (importEdges declarations)
             program <- compileModule check (SourceModule path) declarations done'
             pure (Map.insert path program done')
-    -- the innermost existing module keepeþ its path; outer modules extend þe
+    -- the innermost existing module keepeth its path; outer modules extend the
     -- message without changing the owner or source span.
     inModule path = first (\failure -> failure {failurePath = maybe (Just path) Just (failurePath failure), failureText = "in use '" ++ path ++ "': " ++ failureText failure})
 
@@ -72,7 +72,7 @@ compileModule :: CheckDeclaration -> ModuleId -> [(Maybe SourceSpan, Declaration
 compileModule check owner declarations compiled = do
   imports <- forM [(span, path, alias) | (span, ImportDeclaration path alias) <- declarations] \(span, path, alias) ->
     (span,Name.importAlias path alias,path,) <$> maybe (Left (CompileFailure CheckFailure Nothing span ("missing use '" ++ path ++ "'"))) Right (Map.lookup path compiled)
-  -- every namespace nameþ one module, including when an import is repeated.
+  -- every namespace nameth one module, including when an import is repeated.
   foldM claimNamespace Map.empty imports
   definitions <- foldM mergeGlobals H.primitiveDefinitions imports
   let environment = K.Environment definitions
@@ -99,24 +99,24 @@ compileModule check owner declarations compiled = do
     mergeGlobals definitions (span, _, path, program) =
       let imported = globals (sourceEnvironment program)
           conflicts = Map.keys (Map.filter id (Map.intersectionWith (/=) definitions imported))
-       in -- a family conflicteþ wiþ its eliminator; þe family is named.
+       in -- a family conflicteth with its eliminator; the family is named.
           case filter (isNothing . inducedFamily) conflicts ++ conflicts of
             symbol : _ -> Left (CompileFailure CheckFailure Nothing span ("conflicting definition of '" ++ symbolName symbol ++ "' in use '" ++ path ++ "'"))
             [] -> pure (Map.union definitions imported)
     claimNamespace claimed (span, space, path, _) = case Map.lookup space claimed of
-      Just other | path /= other -> Left (CompileFailure CheckFailure Nothing span ("use namespace '" ++ space ++ "' nameþ boþ '" ++ other ++ "' and '" ++ path ++ "'"))
+      Just other | path /= other -> Left (CompileFailure CheckFailure Nothing span ("use namespace '" ++ space ++ "' nameth both '" ++ other ++ "' and '" ++ path ++ "'"))
       _ -> pure (Map.insert space path claimed)
 
 -- declarations are checked in dependency order, so source order doth not
--- matter. a declaration followeþ þe declarations whose names it useþ, and a
--- let or bizen þat useþ a flock member followeþ þe module's bizens of þat
--- flock. among ready declarations, source order winneþ; a cycle is broken in
--- source order and þen reported by checking.
+-- matter. a declaration followeth the declarations whose names it useth, and a
+-- let or bizen that useth a flock member followeth the module's bizens of that
+-- flock. among ready declarations, source order winneth; a cycle is broken in
+-- source order and then reported by checking.
 orderDeclarations :: Map.Map String String -> Map.Map String [String] -> [(Maybe SourceSpan, Declaration)] -> [(Maybe SourceSpan, Declaration)]
 orderDeclarations importedMembers importedParents located = go scheduled
   where
     declarations = map snd located
-    -- each declaration's dependencies are computed once and carried wiþ it.
+    -- each declaration's dependencies are computed once and carried with it.
     scheduled = [(index, entry, Set.delete index (Set.fromList (dependencies declaration))) | (index, entry@(_, declaration)) <- zip [0 :: Int ..] located]
     go [] = []
     go remaining@((_, first, _) : rest) =
@@ -126,10 +126,12 @@ orderDeclarations importedMembers importedParents located = go scheduled
             (before, (_, found, _) : after) -> found : go (before ++ after)
             (_, []) -> first : go rest
     indexed = zip [0 ..] declarations
+    -- a module's own let of a member's name shadoweth the member.
+    shadowed = Set.fromList [declarationName | Declaration {declarationName} <- map unshown declarations]
     definers = Map.fromList [(name, index) | (index, declaration) <- indexed, name <- defines declaration]
     members = Map.union (Map.fromList [(member, className) | FlockDeclaration className _ flockMembers <- map unshown declarations, FlockMember member _ <- flockMembers]) importedMembers
     instancesOf = Map.fromListWith (++) [(className, [index]) | (index, declaration@BizenDeclaration {}) <- indexed, Just className <- [instanceClass declaration]]
-    -- flock laws and member types use þe flock's own dictionary, and data
+    -- flock laws and member types use the flock's own dictionary, and data
     -- declarations use no dictionary, so only lets and bizens wait for bizens.
     dependencies declaration =
       let used = mentioned declaration
@@ -138,12 +140,12 @@ orderDeclarations importedMembers importedParents located = go scheduled
             BizenDeclaration {} -> True
             _ -> False
        in [definer | name <- used, Just definer <- [Map.lookup name definers]]
-            ++ [instanceIndex | usesInstances, name <- used, Just className <- [Map.lookup name members], instanceIndex <- Map.findWithDefault [] className instancesOf]
+            ++ [instanceIndex | usesInstances, name <- used, Set.notMember name shadowed, Just className <- [Map.lookup name members], instanceIndex <- Map.findWithDefault [] className instancesOf]
             ++ [instanceIndex | Just className <- [instanceClass declaration], ancestor <- ancestors className, instanceIndex <- Map.findWithDefault [] ancestor instancesOf]
     unshown = \case
       ShownDeclaration declaration -> unshown declaration
       declaration -> declaration
-    -- a bizen's dictionary needeþ bizens of every ancestor flock.
+    -- a bizen's dictionary needeth bizens of every ancestor flock.
     parentsOf = Map.union (Map.fromList [(className, [name | Parameter {parameterName = Nothing, parameterType} <- flockParameters, Just name <- [lastSegment <$> headName parameterType]]) | FlockDeclaration className flockParameters _ <- map unshown declarations]) importedParents
     ancestors className = go' Set.empty (Map.findWithDefault [] className parentsOf)
       where
@@ -164,7 +166,7 @@ orderDeclarations importedMembers importedParents located = go scheduled
     constructors = Set.fromList [constructorName constructor | InductiveDeclaration {inductiveConstructors} <- map unshown declarations, constructor <- inductiveConstructors]
     mentioned declaration = Set.toList . Set.unions . map (freeNames (`Set.member` constructors) Set.empty) $ case unshown declaration of
       Declaration {..} -> maybe [] pure declarationAnnotation ++ [declarationBody]
-      HostDeclaration {hostAnnotation, hostModel} -> hostAnnotation : map Name (maybe [] pure hostModel)
+      HostDeclaration {hostAnnotation, hostModel} -> hostAnnotation : maybe [] pure hostModel
       InductiveDeclaration {..} -> inductiveSignature : map constructorAnnotation inductiveConstructors
       FlockDeclaration {..} -> map parameterType flockParameters ++ concat [memberExpressions member | member <- flockMembers]
       BizenDeclaration {..} -> bizenType : concat [maybe [] pure declarationAnnotation ++ [declarationBody] | Declaration {..} <- bizenMembers]

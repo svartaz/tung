@@ -2,12 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { formatRangeEdit } from "../server/format.ts";
 
-test("range formatting returneþ requested full lines from formatted source", () => {
+test("range formatting returneth requested full lines from formatted source", () => {
   const source = [
     "show ilk box: [a:*, *] {",
     "box: [a, a box]",
     "}",
-    "let value ≔ {",
+    "let worth ≔ {",
     "x ^ x",
     "}",
     "",
@@ -16,7 +16,7 @@ test("range formatting returneþ requested full lines from formatted source", ()
     "show ilk box: [a:*, *] {",
     "  box: [a, a box]",
     "}",
-    "let value ≔ {",
+    "let worth ≔ {",
     "  x ^ x",
     "}",
     "",
@@ -31,12 +31,12 @@ test("range formatting returneþ requested full lines from formatted source", ()
         start: { line: 3, character: 0 },
         end: { line: 5, character: 1 },
       },
-      newText: "let value ≔ {\n  x ^ x\n}",
+      newText: "let worth ≔ {\n  x ^ x\n}",
     },
   );
 });
 
-test("range formatting returneþ null when the source is unchanged", () => {
+test("range formatting returneth null when the source is unchanged", () => {
   const source = "show ilk box: [a:*, *] {\n  box: [a, a box]\n}\n";
   assert.equal(
     formatRangeEdit(source, source, {

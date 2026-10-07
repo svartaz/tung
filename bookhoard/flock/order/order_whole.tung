@@ -1,0 +1,39 @@
+use flock/hath_same.tung
+use flock/order/hath_at_most.tung
+use flock/order/order_half.tung
+use ilk/three.tung
+use ilk/two.tung
+
+## a partial order in which every pair is comparable.
+show flock order_whole: [α: *, @: α order_half, *] {
+  let ≤_whole: [a: α, b: α, (((a ≤ b) ≍ nay) ≤ (b ≤ a)) = yea]
+}
+
+show let compare: [@α: *, @: α order_whole, @: α hath_≤, a: α, b: α, 𝟛] ≔
+  (a ≤ b) if ((b ≤ a) if mid fore) aft
+
+## keep a value within inclusive bounds of a total order.
+show let clamp: [@α: *, @: α order_whole, lower: α, upper: α, a: α, α] ≔ (
+  let raised ≔ (lower ≤ a) if a lower
+  yield (raised ≤ upper) if raised upper
+)
+
+bizen: 𝟚 order_whole {
+  let ≤_whole ≔ {
+    nay, _;
+    yea, nay;
+    yea, yea ^ backbend
+  }
+}
+
+bizen: 𝟛 order_whole {
+  let ≤_whole ≔ {
+    fore, _;
+    mid, fore;
+    mid, mid;
+    mid, aft;
+    aft, fore;
+    aft, mid;
+    aft, aft ^ backbend
+  }
+}

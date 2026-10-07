@@ -1,0 +1,9 @@
+use ilk/two.tung
+
+show flock hath_one: [α: *, *] {
+  let one: α
+}
+
+bizen: 𝟚 hath_one {
+  let one ≔ yea
+}

@@ -1,0 +1,5 @@
+use ilk/natural.tung
+
+show flock hath_size: [α: *, *] {
+  let size: [α, ℕ]
+}

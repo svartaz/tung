@@ -1,50 +1,50 @@
 use _foreign.tung
-use flock/algebra/arithmetic/add.tung
-use flock/algebra/arithmetic/monoid_additive.tung
-use flock/algebra/arithmetic/monoid_multiplicative.tung
-use flock/algebra/arithmetic/multiply.tung
-use flock/algebra/arithmetic/one.tung
+use flock/algebra/arithmetic/hath_eke.tung
+use flock/algebra/arithmetic/hath_fold.tung
+use flock/algebra/arithmetic/hath_offdraw.tung
+use flock/algebra/arithmetic/hath_one.tung
+use flock/algebra/arithmetic/hath_zero.tung
+use flock/algebra/arithmetic/monoid_eke.tung
+use flock/algebra/arithmetic/monoid_fold.tung
 use flock/algebra/arithmetic/semiring.tung
-use flock/algebra/arithmetic/subtract.tung
-use flock/algebra/arithmetic/zero.tung
-use flock/equal.tung
-use flock/from_text.tung
-use flock/order/less_equal.tung
-use flock/to_text.tung
+use flock/hath_from_text.tung
+use flock/hath_same.tung
+use flock/hath_to_text.tung
+use flock/order/hath_at_most.tung
 
-## ieee floats keep þeir useful operations wiþout claiming exact semiring laws.
-bizen: float add {
-  let + ≔ add_float
+## ieee floats keep their useful operations without claiming exact semiring laws.
+bizen: float hath_+ {
+  let + ≔ eke_float
 }
 
-bizen: float subtract {
-  let - ≔ subtract_float
+bizen: float hath_- {
+  let - ≔ offdraw_float
 }
 
-bizen: float haþ_zero {
+bizen: float hath_zero {
   let zero ≔ 0.0
 }
 
-bizen: float multiply {
-  let × ≔ multiply_float
+bizen: float hath_× {
+  let × ≔ fold_float
 }
 
-bizen: float haþ_one {
+bizen: float hath_one {
   let one ≔ 1.0
 }
 
-bizen: float equal {
-  let ≍ ≔ equal_float
+bizen: float hath_≍ {
+  let ≍ ≔ same_float
 }
 
-bizen: float less_equal {
-  let ≤ ≔ less_equal_float
+bizen: float hath_≤ {
+  let ≤ ≔ at_most_float
 }
 
-bizen: float haþ_to_text {
+bizen: float hath_to_text {
   let to_text ≔ float_to_text
 }
 
-bizen: float haþ_from_text {
+bizen: float hath_from_text {
   let from_text ≔ text_to_float
 }

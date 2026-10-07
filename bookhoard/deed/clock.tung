@@ -1,4 +1,4 @@
 use ilk/one.tung
 
-## whole seconds since þe unix epoch.
+## whole seconds since the unix epoch.
 show let unix_time: ℤ deed ≔ 'unix_time' fremmed

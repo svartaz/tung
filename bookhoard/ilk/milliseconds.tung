@@ -1,5 +1,5 @@
 use _foreign.tung
-use flock/algebra/arithmetic/multiply.tung
+use flock/algebra/arithmetic/hath_fold.tung
 use ilk/natural.tung
 use ilk/one.tung
 

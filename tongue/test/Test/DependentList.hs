@@ -17,7 +17,7 @@ group = do
 tests :: String -> [Test]
 tests source =
   [ checked "the ordinary list library containeth kernel-checked definitions" "",
-    checked "one list family storeþ values, types, and type constructors" $
+    checked "one list family storeth values, types, and type constructors" $
       "let values:nat list ≔ "
         ++ values
         ++ "\n"
@@ -27,35 +27,35 @@ tests source =
         ++ "let constructors:[*, *] list ≔ "
         ++ constructors
         ++ "\n",
-    same "supplied and inferred implicit list elements agree" "" values "zero ‥ @nat ((zero successor) ‥ @nat (∅ @nat))",
-    expectEq "composition associateþ ordinary applications independently of lists" (Right [True, True]) $
+    same "supplied and inferred implicit list elements agree" "" values "zero ‥ @nat ((zero heir) ‥ @nat (∅ @nat))",
+    expectEq "composition associateth ordinary applications independently of lists" (Right [True, True]) $
       traverse
         (uncurry (equalIn (extended "ilk pair:[α:*, β:*, *] {}\n")))
         [ ("<{pair, nat, bool, nat}", "(nat pair bool) pair nat"),
           (">{pair, nat, bool, nat}", "nat pair (bool pair nat)")
         ],
-    expectEq "composition requireþ two operands and closing braces" [True, True, True] $
+    expectEq "composition requireth two operands and closing braces" [True, True, True] $
       map (isLeft . parseExpression) [">{}", ">{‥, zero}", ">{‥, zero, ∅"],
-    expectEq "append computeþ at value and type levels" (Right [True, True]) $
+    expectEq "append computeth at worth and type levels" (Right [True, True]) $
       traverse
         (uncurry (equalIn base))
-        [ ("(>{‥, zero, ∅}) · (>{‥, zero successor, ∅})", values),
+        [ ("(>{‥, zero, ∅}) · (>{‥, zero heir, ∅})", values),
           ("(>{‥, nat, ∅}) · (>{‥, bool, ∅})", types)
         ],
-    same "map computeþ from the ordinary list eliminator" "" (values ++ " map successor") ">{‥, zero successor, (zero successor) successor, ∅}",
-    same "map can turn type constructors into types" "" (constructors ++ " map {F:[*, *] ^ nat F}") ">{‥, nat list, nat, ∅}",
-    same "fold replaceþ constructors by its supplied methods" "" (values ++ " fold zero {_, rest ^ rest successor}") "(zero successor) successor",
+    same "warp computeth from the ordinary list eliminator" "" (values ++ " warp heir") ">{‥, zero heir, (zero heir) heir, ∅}",
+    same "warp can turn type constructors into types" "" (constructors ++ " warp {F:[*, *] ^ nat F}") ">{‥, nat list, nat, ∅}",
+    same "fold replaceth constructors by its supplied methods" "" (values ++ " gather zero {_, rest ^ rest heir}") "(zero heir) heir",
     expectEq "open append retaineth an induction neutral and a checked type" (Right True) $ do
       program <- extended openAppend
       result <- normaliseSourceExpression program "append_empty"
       infer (sourceEnvironment program) result >>= validate (sourceEnvironment program)
       identity <- normaliseSourceExpression program "{xs:nat list ^ xs}"
       pure (eraseLevels result /= eraseLevels identity),
-    same "open append computeþ after its list is substituted" openAppend (values ++ " append_empty") values,
-    checked "append and map aliases convert inside family indices" $
+    same "open append computeth after its list is substituted" openAppend (values ++ " append_empty") values,
+    checked "append and warp aliases convert inside family indices" $
       indexed
         ++ "let appended ≔ (>{‥, nat, ∅}) · (>{‥, bool, ∅})\n"
-        ++ "let mapped ≔ row map {α:* ^ α}\n"
+        ++ "let mapped ≔ row warp {α:* ^ α}\n"
         ++ "let first:appended tag ≔ witness\n"
         ++ "let second:mapped tag ≔ witness\n",
     rejected "list indices preserve element order" (indexed ++ "let bad:(>{‥, bool, nat, ∅}) tag ≔ witness\n"),
@@ -75,7 +75,7 @@ tests source =
 naturalSource, openAppend, indexed, values, types, constructors :: String
 naturalSource =
   """
-  ilk nat:* { zero: nat, successor:[nat, nat] }
+  ilk nat:* { zero: nat, heir:[nat, nat] }
   ilk bool:* { no: bool, yes: bool }
 
   """
@@ -86,7 +86,7 @@ indexed =
   ilk tag:[* list, *] { witness:row tag }
 
   """
-values = ">{‥, zero, zero successor, ∅}"
+values = ">{‥, zero, zero heir, ∅}"
 types = ">{‥, nat, bool, ∅}"
 constructors = ">{‥, list, {α:* ^ α}, ∅ @([*, *])}"
 

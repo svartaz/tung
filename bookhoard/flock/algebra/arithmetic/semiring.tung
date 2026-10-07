@@ -1,12 +1,12 @@
-use flock/algebra/arithmetic/add.tung
-use flock/algebra/arithmetic/monoid_additive.tung
-use flock/algebra/arithmetic/monoid_multiplicative.tung
-use flock/algebra/arithmetic/multiply.tung
-use flock/algebra/arithmetic/one.tung
-use flock/algebra/arithmetic/zero.tung
+use flock/algebra/arithmetic/hath_eke.tung
+use flock/algebra/arithmetic/hath_fold.tung
+use flock/algebra/arithmetic/hath_one.tung
+use flock/algebra/arithmetic/hath_zero.tung
+use flock/algebra/arithmetic/monoid_eke.tung
+use flock/algebra/arithmetic/monoid_fold.tung
 use ilk/two.tung
 
-show flock semiring: [α: *, @: α monoid_additive, @: α monoid_multiplicative, *] {
+show flock semiring: [α: *, @: α monoid_eke, @: α monoid_fold, *] {
   let +_commute: [a: α, b: α, (a + b) = (b + a)]
   let ×_+: [a: α, b: α, c: α, (a × (b + c)) = ((a × b) + (a × c))]
   let +_×: [a: α, b: α, c: α, ((a + b) × c) = ((a × c) + (b × c))]
@@ -38,14 +38,14 @@ bizen: 𝟚 semiring {
     nay, nay;
     nay, yea;
     yea, nay;
-    yea, yea ^ reflect
+    yea, yea ^ backbend
   }
   let ×_+ ≔ {
     nay, _, _;
     yea, nay, nay;
     yea, nay, yea;
     yea, yea, nay;
-    yea, yea, yea ^ reflect
+    yea, yea, yea ^ backbend
   }
   let +_× ≔ {
     nay, nay, nay;
@@ -55,8 +55,8 @@ bizen: 𝟚 semiring {
     yea, nay, nay;
     yea, nay, yea;
     yea, yea, nay;
-    yea, yea, yea ^ reflect
+    yea, yea, yea ^ backbend
   }
-  let zero_× ≔ {_, _ ^ reflect}
-  let ×_zero ≔ {nay, _; yea, _ ^ reflect}
+  let zero_× ≔ {_, _ ^ backbend}
+  let ×_zero ≔ {nay, _; yea, _ ^ backbend}
 }

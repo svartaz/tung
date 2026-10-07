@@ -293,7 +293,7 @@ selectedSubdirectory root subdirectory = do
         Left failure -> Left ("cannot resolve library subdirectory '" ++ selected ++ "': " ++ show failure)
         Right (checkoutRoot, libraryPath)
           | addTrailingPathSeparator checkoutRoot `isPrefixOf` addTrailingPathSeparator libraryPath -> Right libraryPath
-          | otherwise -> Left ("library subdirectory '" ++ selected ++ "' escapeþ checkout '" ++ checkoutRoot ++ "'")
+          | otherwise -> Left ("library subdirectory '" ++ selected ++ "' escapeth checkout '" ++ checkoutRoot ++ "'")
 
 checkout :: FilePath -> String -> String -> String -> IO (Either String FilePath)
 checkout cache name repository commit = do

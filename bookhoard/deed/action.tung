@@ -1,37 +1,37 @@
 use _foreign.tung
 use combinator.tung
-use flock/algebra/partial/category.tung
-use flock/algebra/partial/semigroupoid.tung
+use flock/algebra/half/category.tung
+use flock/algebra/half/semigroupoid.tung
 use flock/functor.tung
 use flock/functor/applicative.tung
 use flock/functor/monad.tung
 use ilk/one.tung
 
-## deeds compose as a monad: `map` changeþ a result, and `map_flat` or `þen`
-## sequenceþ deeds.
+## deeds compose as a monad: `warp` changeth a result, and `warp_flat` or `then`
+## sequenceth deeds.
 bizen: deed functor {
-  let map: [action:, change:] ≔ action deed_bind (change ▷ deed_pure)
+  let warp: [action:, change:] ≔ action deed_bind (change ▷ deed_sheer)
 
-  let map_sameness ≔ sorry
+  let warp_is ≔ sorry
 }
 
 bizen: deed applicative {
-  let pure ≔ deed_pure
-  let apply: [action:, changes:] ≔ changes deed_bind { change ^ action map change }
+  let sheer ≔ deed_sheer
+  let apply: [action:, changes:] ≔ changes deed_bind { change ^ action warp change }
 
-  let apply_sameness_pure ≔ sorry
-  let pure_apply_pure ≔ sorry
+  let apply_is_sheer ≔ sorry
+  let sheer_apply_sheer ≔ sorry
   let apply_apply ≔ sorry
-  let pure_apply ≔ sorry
+  let sheer_apply ≔ sorry
 }
 
 bizen: deed monad {
-  let flat: [actions:] ≔ actions deed_bind sameness
+  let flat: [actions:] ≔ actions deed_bind is
 
-  let pure_map_flat ≔ sorry
-  let map_pure_flat ≔ sorry
+  let sheer_warp_flat ≔ sorry
+  let warp_sheer_flat ≔ sorry
 }
 
 ## write text followed by a newline.
 show let write_line: [t: text, 𝟙 deed] ≔
-  (t write) þen ('\n' write)
+  (t write) then ('\n' write)

@@ -1,62 +1,62 @@
 ilk 𝟚: * { yea: 𝟚, nay: 𝟚 }
 
-ilk option: [α: *, *] {
-  none: α option,
-  some: [α, α option]
+ilk maybe: [α: *, *] {
+  none: α maybe,
+  some: [α, α maybe]
 }
 
-## a flock nameþ þe members þat each bizen supplieþ.
-flock equal: [α: *, *] {
+## a flock nameth the members that each bizen supplieth.
+flock hath_≍: [α: *, *] {
   let ≍: [α, α, 𝟚]
 
-  let equal_reflexive: [x: α, (x ≍ x) = yea]
+  let same_backbend: [x: α, (x ≍ x) = yea]
 }
 
 ## an anonymous requirement `@:` is found by instance search.
-let ≭: [@α: *, @: α equal, a: α, b: α, 𝟚] ≔ match a ≍ b { yea ^ nay, nay ^ yea }
+let ≭: [@α: *, @: α hath_≍, a: α, b: α, 𝟚] ≔ match a ≍ b { yea ^ nay, nay ^ yea }
 
-## a bizen defineþ each law of its flock. þis example assumeþ þe laws wiþ
-## `sorry`; a checked proof may use `reflect` when þe law holdeþ by computation.
-bizen: 𝟚 equal {
+## a bizen defineth each law of its flock. this example assumeth the laws with
+## `sorry`; a checked proof may use `backbend` when the law holdeth by computation.
+bizen: 𝟚 hath_≍ {
   let ≍ ≔ {
     yea, yea;
     nay, nay ^ yea,
     _,   _   ^ nay
   }
 
-  let equal_reflexive ≔ sorry
+  let same_backbend ≔ sorry
 }
 
-## a bizen may require oþer bizens.
-bizen: [@α: *, @: α equal, (α option) equal] {
+## a bizen may require other bizens.
+bizen: [@α: *, @: α hath_≍, (α maybe) hath_≍] {
   let ≍ ≔ {
     none, none ^ yea,
     a some, b some ^ a ≍ b,
     _, _ ^ nay
   }
 
-  let equal_reflexive ≔ sorry
+  let same_backbend ≔ sorry
 }
 
 flock functor: [φ: [*, *], *] {
-  let map: [@α: *, @β: *, α φ, [α, β], β φ]
+  let warp: [@α: *, @β: *, α φ, [α, β], β φ]
 }
 
-## a parent requirement makeþ every applicative a functor.
+## a parent requirement maketh every applicative a functor.
 flock applicative: [φ: [*, *], @: φ functor, *] {
-  let pure: [@α: *, α, α φ]
+  let sheer: [@α: *, α, α φ]
 }
 
-bizen: option functor {
-  let map ≔ {
+bizen: maybe functor {
+  let warp ≔ {
     none, _ ^ none,
     a some, f ^ (a f) some
   }
 }
 
-bizen: option applicative {
-  let pure ≔ {a ^ a some}
+bizen: maybe applicative {
+  let sheer ≔ {a ^ a some}
 }
 
-## þe functor comeþ from þe applicative requirement.
-let lift: [@φ: [*, *], @: φ applicative, @α: *, @β: *, a: α, f: [α, β], β φ] ≔ (a pure) map f
+## the functor cometh from the applicative requirement.
+let lift: [@φ: [*, *], @: φ applicative, @α: *, @β: *, a: α, f: [α, β], β φ] ≔ (a sheer) warp f

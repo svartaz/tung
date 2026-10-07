@@ -1,12 +1,12 @@
--- | host bindings in the core. a host declaration bindeþ one key of the
+-- | host bindings in the core. a host declaration bindeth one key of the
 -- shared catalogue, 'Tung.Primitive.hostBindings', to a kernel-checked type
--- þat matcheþ its catalogued signature.
+-- that matcheth its catalogued signature.
 --
--- consistency: the standard model readeþ each primitive type as its runtime
+-- consistency: the standard model readeth each primitive type as its runtime
 -- set, each pure host function as its total definition, and each deed type as
 -- a one-element set. host constants therefore cannot inhabit an empty type;
--- `sorry` is þe one reported exception. no constant extracteþ the result of a
--- deed, and the deed fixed point stayeþ opaque. pure host functions compute
+-- `sorry` is the one reported exception. no constant extracteth the result of a
+-- deed, and the deed fixed point stayeth opaque. pure host functions compute
 -- only on literal arguments.
 module Tung.Dependent.Host
   ( defineHost,
@@ -30,18 +30,18 @@ import Tung.Dependent.Literal (coreConstructor, hostTypeSymbol, literalTypeNames
 import Tung.Dependent.Normalise qualified as N
 import Tung.Dependent.Syntax
 import Tung.Identity (ModuleId (..), SymbolId (..), inductionSymbol)
-import Tung.Primitive (HostBinding (..), HostDataSchema (..), HostSignature (..), HostType (..), findForeignBinding, hostDataSchemas, naturalSuccessorId, naturalZeroId, oneName, opaqueTypeFamilyNames, pureOperation)
+import Tung.Primitive (HostBinding (..), HostDataSchema (..), HostSignature (..), HostType (..), findForeignBinding, hostDataSchemas, integerNegativeId, integerPositiveId, naturalSuccessorId, naturalZeroId, oneName, opaqueTypeFamilyNames, pureOperation)
 
 -- primitive types, `=`, and `sorry` precede every module. host value types live in
--- þe base universe, so literals carry no levels. `sorry` inhabiteþ every type;
--- it is þe one reported assumption, and running it faileþ.
+-- the base universe, so literals carry no levels. `sorry` inhabiteth every type;
+-- it is the one reported assumption, and running it faileth.
 primitiveDefinitions :: Globals
 primitiveDefinitions =
-  Map.union (Map.union naturalDefinitions identityDefinitions) . Map.fromList $
-    [(SymbolId PrimitiveModule name, Definition 0 [] (Sort LZero) (Host name Nothing)) | name <- literalTypeNames, name /= "ℕ"]
+  Map.union (Map.union numberDefinitions identityDefinitions) . Map.fromList $
+    [(SymbolId PrimitiveModule name, Definition 0 [] (Sort LZero) (Host name Nothing)) | name <- literalTypeNames, name `notElem` ["ℕ", "ℤ"]]
       ++ [(SymbolId PrimitiveModule name, Definition 1 [] (Pi Explicit (Sort (LParam 0)) (Sort (LParam 0))) (Host name Nothing)) | name <- opaqueTypeFamilyNames]
       ++ [ (sorrySymbol, Definition 1 [] (Pi Implicit (Sort (LParam 0)) (Local 0)) (Host "sorry" Nothing)),
-           -- `[@α: *, @β, x: α, k: α, yes: β, no: β, β]` chooseþ `yes` when þe
+           -- `[@α: *, @β, x: α, k: α, yes: β, no: β, β]` chooseth `yes` when the
            -- literals `x` and `k` are equal. literal patterns compile to it.
            (literalCaseSymbol, Definition 1 [] literalCaseType (Host "literal_case" Nothing))
          ]
@@ -50,23 +50,26 @@ primitiveDefinitions =
       Pi Implicit (Sort LZero) . Pi Implicit (Sort (LParam 0)) $
         Pi Explicit (Local 1) (Pi Explicit (Local 2) (Pi Explicit (Local 2) (Pi Explicit (Local 3) (Local 4))))
 
--- `ℕ` is an inductive family wiþ `0` and `succeed`, checked like any
--- oþer, and eliminated by `unbuild ℕ`. literals represent its values; þe
--- normaliser and þe runner read a literal as its constructors.
-naturalDefinitions :: Globals
-naturalDefinitions =
-  case I.inferInductive (K.Environment Map.empty) natural (inductionSymbol natural) 0 (Sort LZero) constructors [] of
-    Right (K.Environment globals) -> globals
-    Left message -> error ("invalid primitive ℕ: " ++ message)
+-- `ℕ` is an inductive family with `0` and `heir`, and `ℤ` one with
+-- `overnaught` and `heir_undernaught` over `ℕ`. each is checked like any
+-- other and eliminated by `unbuild`. literals represent their values; the
+-- normaliser and the runner read a literal as its constructors.
+numberDefinitions :: Globals
+numberDefinitions = family integer [(integerPositiveId, fromNatural), (integerNegativeId, fromNatural)] (family natural [(naturalZeroId, Global natural []), (naturalSuccessorId, Pi Explicit (Global natural []) (Global natural []))] Map.empty)
   where
     natural = SymbolId PrimitiveModule "ℕ"
-    constructors = [(naturalZeroId, Global natural []), (naturalSuccessorId, Pi Explicit (Global natural []) (Global natural []))]
+    integer = SymbolId PrimitiveModule "ℤ"
+    fromNatural = Pi Explicit (Global natural []) (Global integer [])
+    family name constructors globals =
+      case I.inferInductive (K.Environment globals) name (inductionSymbol name) 0 (Sort LZero) constructors [] of
+        Right (K.Environment extended) -> extended
+        Left message -> error ("invalid primitive " ++ symbolName name ++ ": " ++ message)
 
--- `x = y` is þe type of proofs þat `x` and `y` are equal: parameters `@α`
--- and `x`, one index, þe one constructor `reflect: [@α: *, @x: α, x = x]`,
--- and þe eliminator `unbuild =`. it is checked like any oþer family; it is
--- primitive so þat flock laws and elaboration can state equations wiþout an
--- import. its lemmas are bookhoard code in `equality.tung`.
+-- `x = y` is the type of proofs that `x` and `y` are equal: parameters `@α`
+-- and `x`, one index, the one constructor `backbend: [@α: *, @x: α, x = x]`,
+-- and the eliminator `unbuild =`. it is checked like any other family; it is
+-- primitive so that flock laws and elaboration can state equations without an
+-- import. its lemmas are bookhoard code in `is.tung`.
 identityDefinitions :: Globals
 identityDefinitions =
   case I.inferInductive (K.Environment Map.empty) identitySymbol (inductionSymbol identitySymbol) 2 signature [(reflectSymbol, reflect)] [] of
@@ -81,14 +84,14 @@ identityDefinitions =
 
 identitySymbol, reflectSymbol :: SymbolId
 identitySymbol = SymbolId PrimitiveModule "="
-reflectSymbol = SymbolId PrimitiveModule "reflect"
+reflectSymbol = SymbolId PrimitiveModule "backbend"
 
 sorrySymbol, literalCaseSymbol :: SymbolId
 sorrySymbol = SymbolId PrimitiveModule "sorry"
 literalCaseSymbol = SymbolId PrimitiveModule "literal_case"
 
--- a model is a checked tung definition of þe same type þat conversion
--- unfoldeþ when an input is not a literal; þe runner keepeþ þe native
+-- a model is a checked tung definition of the same type that conversion
+-- unfoldeth when an input is not a literal; the runner keepeth the native
 -- operation. only a pure operation can have one.
 defineHost :: K.Environment -> SymbolId -> String -> Maybe SymbolId -> K.Inferred -> Either String K.Environment
 defineHost environment@(K.Environment globals) name key model signature@K.Inferred {..} = do
@@ -102,7 +105,7 @@ defineHost environment@(K.Environment globals) name key model signature@K.Inferr
     _ -> Left "host annotation is not a type"
   -- validation checked the annotation; raw normalisation is now safe.
   ty <- N.normalise globals 0 inferredTerm
-  unless (matches hostSignature ty) (Left ("host key '" ++ key ++ "' requireþ a different type"))
+  unless (matches hostSignature ty) (Left ("host key '" ++ key ++ "' requireth a different type"))
   validateHostData globals hostSignature
   forM_ model \symbol -> do
     when (isNothing (pureOperation key)) (Left ("host key '" ++ key ++ "' is not a pure operation, so it cannot have a model"))
@@ -110,9 +113,9 @@ defineHost environment@(K.Environment globals) name key model signature@K.Inferr
     case definitionBody of
       Transparent _ -> pure ()
       _ -> Left "a model must be a let definition"
-    unless (definitionUniverses == inferredUniverses) (Left "a model must have þe binding's universe parameters")
+    unless (definitionUniverses == inferredUniverses) (Left "a model must have the binding's universe parameters")
     modelType <- N.normalise globals 0 definitionType
-    unless (modelType == ty) (Left ("a model must have þe binding's type"))
+    unless (modelType == ty) (Left ("a model must have the binding's type"))
   pure (K.Environment (Map.insert name (Definition inferredUniverses inferredConstraints ty (Host key model)) globals))
   where
     isHost wanted (Host actual _) = wanted == actual
@@ -120,7 +123,7 @@ defineHost environment@(K.Environment globals) name key model signature@K.Inferr
 
 -- a canonical name alone doth not establish its runtime representation. check
 -- the nominal schema and its dependencies before a host can produce values.
--- the visited set stopþ recursive schemas, such as list, from looping.
+-- the visited set stopth recursive schemas, such as list, from looping.
 validateHostData :: Globals -> HostSignature -> Either String ()
 validateHostData globals HostSignature {..} = void (types Set.empty (hostArguments ++ [hostResult]))
   where
@@ -134,7 +137,7 @@ validateHostData globals HostSignature {..} = void (types Set.empty (hostArgumen
       Nothing -> pure seen
       Just _ | Set.member name seen -> pure seen
       Just HostDataSchema {..} -> do
-        let invalid = Left ("host data '" ++ name ++ "' requireþ its catalogued constructors")
+        let invalid = Left ("host data '" ++ name ++ "' requireth its catalogued constructors")
             constructors = [(coreConstructor constructor, signature) | (constructor, signature) <- hostDataConstructors]
         symbol <- maybe invalid pure (hostTypeSymbol name)
         Definition {definitionType, definitionBody} <- maybe invalid pure (Map.lookup symbol globals)
@@ -163,22 +166,22 @@ validateHostData globals HostSignature {..} = void (types Set.empty (hostArgumen
     parameterKinds count (Pi Explicit (Sort _) result) | count > 0 = parameterKinds (count - 1) result
     parameterKinds _ _ = False
 
--- main must be a deed of þe bookhoard unit type.
+-- main must be a deed of the bookhoard unit type.
 matchMain :: Globals -> Term -> Either String ()
 matchMain globals ty = do
   normal <- N.normalise globals 0 ty
-  unless (matches (HostSignature [] [] (HostApp "deed" [HostCon oneName])) normal) (Left "main requireþ a unit deed type")
+  unless (matches (HostSignature [] [] (HostApp "deed" [HostCon oneName])) normal) (Left "main requireth a unit deed type")
 
--- a normal type matcheþ a signature when its implicit type inputs, explicit
+-- a normal type matcheth a signature when its implicit type inputs, explicit
 -- inputs, and result agree. data types match by declaration; universe levels
--- are not constrained, as the model existeþ at every universe.
+-- are not constrained, as the model existeth at every universe.
 matches :: HostSignature -> Term -> Bool
 matches HostSignature {..} = quantified [] hostVariables
   where
     quantified bound (variable : rest) (Pi Implicit (Sort _) body) = quantified (variable : bound) rest body
     quantified bound [] ty = function bound 0 hostArguments hostResult ty
     quantified _ _ _ = False
-    -- explicit inputs are unnamed: no later type dependeþ on þem.
+    -- explicit inputs are unnamed: no later type dependeth on them.
     function bound depth (argument : rest) result (Pi Explicit domain codomain) =
       hostType bound depth argument domain && function bound (depth + 1) rest result codomain
     function bound depth [] result ty = hostType bound depth result ty

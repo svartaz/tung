@@ -1,4 +1,4 @@
--- induction exerciseþ computation, indexed motives, and the kernel boundary.
+-- induction exerciseth computation, indexed motives, and the kernel boundary.
 module Test.DependentInductive (group) where
 
 import Data.Either (isLeft)
@@ -12,10 +12,10 @@ group = Harness.group "dependent-inductive" tests
 
 tests :: [Test]
 tests =
-  [ expectEq "natural induction computeþ recursive hypotheses" (Right two) $ do
+  [ expectEq "natural induction computeth recursive hypotheses" (Right two) $ do
       environment <- naturalEnvironment
       normalise environment (naturalInduction naturalMotive zero successorMethod two),
-    expectEq "neutral induction surviveþ quotation and rechecking" (Right ()) $ do
+    expectEq "neutral induction surviveth quotation and rechecking" (Right ()) $ do
       environment <- naturalEnvironment
       let term = Lambda Explicit natural (naturalInduction naturalMotive zero successorMethod (Local 0))
       normal <- normalise environment term
@@ -25,50 +25,50 @@ tests =
       let motive = Lambda Explicit natural (sort 1)
           method = Lambda Explicit natural (Lambda Explicit (sort 1) (sort 0))
       normalise environment (apply Explicit (global "natural_induction" [level 2]) [motive, sort 0, method, zero]),
-    expectEq "indexed induction retaineþ the constructor result index" (Right vectorOne) $ do
+    expectEq "indexed induction retaineth the constructor result index" (Right vectorOne) $ do
       environment <- vectorEnvironment
       normalise environment vectorReconstruction,
     reject "an indexed constructor cannot inhabit another index" $ do
       environment <- vectorEnvironment
       check environment vectorEmpty (vector natural (successor zero)),
-    expectEq "identity transport along reflexivity computeþ" (Right transportedIdentity) $ do
+    expectEq "selfness transport along reflexivity computeth" (Right transportedIdentity) $ do
       environment <- identityEnvironment
       normalise environment transport,
     reject "reflexivity cannot identify distinct constructors" $ do
       environment <- identityEnvironment
       check environment reflexivity (identity natural zero (successor zero)),
-    reject "elimination requireþ every constructor method" $ do
+    reject "elimination requireth every constructor method" $ do
       environment <- naturalEnvironment
       check environment (apply Explicit (global "natural_induction" [level 0]) [naturalMotive, zero]) natural,
     expectEq "partly supplied eliminators remain ordinary functions" (Right ()) $ do
       environment <- naturalEnvironment
       infer environment (apply Explicit (global "natural_induction" [level 0]) [naturalMotive, zero]) >>= validate environment,
-    reject "elimination rejecteþ an extra constructor method" $ do
+    reject "elimination rejecteth an extra constructor method" $ do
       environment <- naturalEnvironment
       infer environment (Apply Explicit (naturalInduction naturalMotive zero successorMethod two) zero),
-    reject "elimination checkeþ the motive universe" $ do
+    reject "elimination checketh the motive universe" $ do
       environment <- naturalEnvironment
       infer environment (naturalInduction zero zero successorMethod two),
-    reject "elimination checkeþ recursive hypothesis types" $ do
+    reject "elimination checketh recursive hypothesis types" $ do
       environment <- naturalEnvironment
       let method = Lambda Explicit natural (Lambda Explicit (sort 0) zero)
       infer environment (naturalInduction naturalMotive zero method two),
     reject "unselected methods cannot hide term inference holes" $ do
       environment <- naturalEnvironment
       normalise environment (naturalInduction naturalMotive zero (Meta 0 []) zero),
-    reject "inductive metadata rejecteþ inference holes before evaluation" $ do
+    reject "inductive metadata rejecteth inference holes before evaluation" $ do
       environment <- naturalEnvironment
       defineInductive environment (badDeclaration (Meta 0 [])),
-    reject "negative recursive fields are rejected" $ do
+    reject "undernaught recursive fields are rejected" $ do
       environment <- naturalEnvironment
       defineInductive environment (badDeclaration (Pi Explicit bad natural)),
     reject "double-negative recursive fields are rejected" $ do
       environment <- naturalEnvironment
       defineInductive environment (badDeclaration (Pi Explicit (Pi Explicit bad natural) natural)),
-    reject "transparent aliases cannot hide negative recursive fields" $ do
+    reject "transparent aliases cannot hide undernaught recursive fields" $ do
       environment <- naturalEnvironment
-      aliased <- define environment (symbol "negative") Nothing (Lambda Explicit (sort 0) (Pi Explicit (Local 0) natural))
-      defineInductive aliased (badDeclaration (Apply Explicit (global "negative" []) bad)),
+      aliased <- define environment (symbol "undernaught") Nothing (Lambda Explicit (sort 0) (Pi Explicit (Local 0) natural))
+      defineInductive aliased (badDeclaration (Apply Explicit (global "undernaught" []) bad)),
     reject "a family cannot occur in a field's input" $ do
       environment <- naturalEnvironment
       defineInductive environment (badDeclaration (Pi Explicit bad natural)),
@@ -92,7 +92,7 @@ tests =
     reject "inductive names cannot replace checked globals" $ do
       environment <- naturalEnvironment
       defineInductive environment naturalDeclaration,
-    expectEq "inductive inference generaliseþ universe holes" (Right ()) $ do
+    expectEq "inductive inference generaliseth universe holes" (Right ()) $ do
       environment <- naturalEnvironment
       inferred <- inferInductive environment (symbol "inferred_box") (symbol "inferred_box_induction") 1 (Pi Implicit (Sort (LMeta 0)) (Sort (LMeta 0))) [(symbol "inferred_box_make", Pi Implicit (Sort (LMeta 0)) (Pi Explicit (Local 0) (Apply Implicit (global "inferred_box" [LMeta 0]) (Local 1))))] []
       result <- infer inferred (global "inferred_box" [level 0])
@@ -129,7 +129,7 @@ naturalEnvironment :: Either String Environment
 naturalEnvironment = defineInductive emptyEnvironment naturalDeclaration
 
 naturalDeclaration :: InductiveDeclaration
-naturalDeclaration = InductiveDeclaration (symbol "natural") (symbol "natural_induction") 0 0 [] (sort 0) [(symbol "zero", natural), (symbol "successor", Pi Explicit natural natural)]
+naturalDeclaration = InductiveDeclaration (symbol "natural") (symbol "natural_induction") 0 0 [] (sort 0) [(symbol "zero", natural), (symbol "heir", Pi Explicit natural natural)]
 
 natural, zero, two, naturalMotive, successorMethod :: Term
 natural = global "natural" []
@@ -139,7 +139,7 @@ naturalMotive = Lambda Explicit natural natural
 successorMethod = Lambda Explicit natural (Lambda Explicit natural (successor (Local 0)))
 
 successor :: Term -> Term
-successor = Apply Explicit (global "successor" [])
+successor = Apply Explicit (global "heir" [])
 
 naturalInduction :: Term -> Term -> Term -> Term -> Term
 naturalInduction motive initial method value = apply Explicit (global "natural_induction" [level 0]) [motive, initial, method, value]
@@ -194,8 +194,8 @@ identityEnvironment = naturalEnvironment >>= (`defineInductive` identityDeclarat
 identityDeclaration :: InductiveDeclaration
 identityDeclaration =
   InductiveDeclaration
-    (symbol "identity")
-    (symbol "identity_induction")
+    (symbol "selfness")
+    (symbol "selfness_induction")
     2
     1
     []
@@ -203,7 +203,7 @@ identityDeclaration =
     [(symbol "reflexivity", Pi Implicit (Sort (LParam 0)) (Pi Implicit (Local 0) (identityAt (LParam 0) (Local 1) (Local 0) (Local 0))))]
 
 identityAt :: Level -> Term -> Term -> Term -> Term
-identityAt universe ty left right = apply Explicit (Apply Implicit (global "identity" [universe]) ty) [left, right]
+identityAt universe ty left right = apply Explicit (Apply Implicit (global "selfness" [universe]) ty) [left, right]
 
 identity :: Term -> Term -> Term -> Term
 identity = identityAt (level 0)
@@ -214,7 +214,7 @@ transport =
   Lambda Explicit (Pi Explicit natural (sort 0)) $
     Lambda Explicit (Apply Explicit (Local 0) zero) $
       let motive = Lambda Explicit natural (Lambda Explicit (identity natural zero (Local 0)) (Apply Explicit (Local 3) (Local 1)))
-       in apply Explicit (apply Implicit (global "identity_induction" [level 0, level 0]) [natural, zero]) [motive, Local 0, zero, reflexivity]
+       in apply Explicit (apply Implicit (global "selfness_induction" [level 0, level 0]) [natural, zero]) [motive, Local 0, zero, reflexivity]
 transportedIdentity = Lambda Explicit (Pi Explicit natural (sort 0)) (Lambda Explicit (Apply Explicit (Local 0) zero) (Local 0))
 
 bad :: Term

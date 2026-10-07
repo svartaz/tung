@@ -2,40 +2,39 @@ use _foreign.tung
 use combinator.tung
 use control.tung
 use deed/action.tung
-use deed/file.tung
-use flock/algebra/arithmetic/add.tung
-use flock/algebra/arithmetic/divide.tung
-use flock/algebra/arithmetic/divide_remainder.tung
 use flock/algebra/arithmetic/euclidean.tung
 use flock/algebra/arithmetic/field.tung
-use flock/algebra/arithmetic/monoid_additive.tung
-use flock/algebra/arithmetic/monoid_multiplicative.tung
-use flock/algebra/arithmetic/multiply.tung
-use flock/algebra/arithmetic/one.tung one_flock
+use flock/algebra/arithmetic/hath_deal.tung
+use flock/algebra/arithmetic/hath_deal_remainder.tung
+use flock/algebra/arithmetic/hath_eke.tung
+use flock/algebra/arithmetic/hath_fold.tung
+use flock/algebra/arithmetic/hath_offdraw.tung
+use flock/algebra/arithmetic/hath_one.tung one_flock
+use flock/algebra/arithmetic/hath_zero.tung zero_flock
+use flock/algebra/arithmetic/monoid_eke.tung
+use flock/algebra/arithmetic/monoid_fold.tung
 use flock/algebra/arithmetic/ring.tung
 use flock/algebra/arithmetic/semiring.tung
-use flock/algebra/arithmetic/subtract.tung
-use flock/algebra/arithmetic/zero.tung zero_flock
-use flock/elementary.tung
-use flock/equal.tung
-use flock/from_text.tung
 use flock/functor.tung
 use flock/functor/applicative.tung
 use flock/functor/bifunctor.tung
 use flock/functor/monad.tung
-use flock/inhold.tung
+use flock/hath_elementary.tung
+use flock/hath_from_text.tung
+use flock/hath_inhold.tung
+use flock/hath_same.tung
+use flock/hath_to_text.tung
 use flock/order/complement.tung
+use flock/order/hath_at_most.tung
 use flock/order/lattice.tung
 use flock/order/lattice_bounded.tung
 use flock/order/lattice_distributive.tung
-use flock/order/less_equal.tung
-use flock/order/order_partial.tung
-use flock/order/order_total.tung
+use flock/order/order_half.tung
+use flock/order/order_whole.tung
 use flock/order/semilattice_bounded_upper.tung
 use flock/order/semilattice_lower.tung
 use flock/order/semilattice_upper.tung
 use flock/order/semilattice_upper_bounded.tung
-use flock/to_text.tung
 use ilk/float.tung
 use ilk/integer.tung
 use ilk/one.tung
@@ -59,15 +58,15 @@ show fore, mid, aft
 
 show task
 
-show equal
-show less_equal, order_partial, order_total
+show hath_≍
+show hath_≤, order_half, order_whole
 show semilattice_lower, semilattice_upper, lattice, lattice_distributive
 show semilattice_bounded_upper, semilattice_upper_bounded, lattice_bounded, complement
-show haþ_to_text, haþ_from_text
-show add, haþ_zero, monoid_additive, multiply, haþ_one, monoid_multiplicative, semiring
-show subtract, ring, divide, field, divide_remainder, euclidean
-show functor, bifunctor, applicative, monad, inhold
-show elementary
+show hath_to_text, hath_from_text
+show hath_+, hath_zero, monoid_eke, hath_×, hath_one, monoid_fold, semiring
+show hath_-, ring, hath_÷, field, hath_%, euclidean
+show functor, bifunctor, applicative, monad, hath_∋
+show hath_elementary
 
 show →
 show ¬, if
@@ -76,21 +75,20 @@ show when, when_not, branch
 show write, write_line, read
 show random
 show fork, wait, cancel, wait_for, sleep
-show read_file, write_file, append_file
 show ≍, ≭
 show ≤, <, compare, clamp, ∧, ∨, ⟂, ⊤
 show ∋
 
 show +, zero, ×, one, -, ÷, %
-show sine, cosine, tangent, exponent, logariþm, ⌊
+show sine, cosine, tangent, exponent, logarithm, ⌊
 show to_ℕ, to_ℤ
 
 show to_text
 show from_text
 show unicode_to_natural, natural_to_unicode
 show behead_text, text_to_list, list_to_text
-show map
-show bimap
-show pure, apply, lift₂, lift₃, keep_first, keep_oþer
-show flat, map_flat, þen, void
+show warp
+show biwarp
+show sheer, apply, lift₂, lift₃, keep_first, keep_other
+show flat, warp_flat, then, void
 show deed_fix

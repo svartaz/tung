@@ -1,138 +1,233 @@
-use flock/algebra/arithmetic/add.tung
-use flock/algebra/arithmetic/divide_remainder.tung
-use flock/algebra/arithmetic/monoid_additive.tung
-use flock/algebra/arithmetic/monoid_multiplicative.tung
-use flock/algebra/arithmetic/multiply.tung
-use flock/algebra/arithmetic/one.tung
+use flock/algebra/arithmetic/hath_deal_remainder.tung
+use flock/algebra/arithmetic/hath_eke.tung
+use flock/algebra/arithmetic/hath_fold.tung
+use flock/algebra/arithmetic/hath_offdraw.tung
+use flock/algebra/arithmetic/hath_one.tung
+use flock/algebra/arithmetic/hath_zero.tung
+use flock/algebra/arithmetic/monoid_eke.tung
+use flock/algebra/arithmetic/monoid_fold.tung
 use flock/algebra/arithmetic/semiring.tung
-use flock/algebra/arithmetic/subtract.tung
-use flock/algebra/arithmetic/zero.tung
-use flock/equal.tung
-use flock/order/less_equal.tung
-use flock/order/order_partial.tung
-use flock/order/order_total.tung
+use flock/hath_same.tung
+use flock/hath_to_text.tung
+use flock/order/hath_at_most.tung
+use flock/order/order_half.tung
+use flock/order/order_whole.tung
 use flock/order/semilattice_upper_bounded.tung
-use flock/to_text.tung
-use ilk/option.tung
+use ilk/maybe.tung
 use ilk/product.tung
 use ilk/two.tung
+use is.tung
 
-## ℕ is a primitive type wiþ arbitrary precision. its operations are host
-## bindings; þese bizens give it equality, order, and semiring structure.
-## each modelled binding computeþ natively on literals and, on oþer inputs,
-## unfoldeþ its structural model, so proofs can reason about it.
-let equal_natural_model: [m: ℕ, n: ℕ, 𝟚] ≔
-  match m, n {
-    0,         0         ^ yea,
-    0,         _ succeed ^ nay,
-    _ succeed, 0         ^ nay,
-    a succeed, b succeed ^ a equal_natural_model b
-  }
-
-let less_equal_natural_model: [m: ℕ, n: ℕ, 𝟚] ≔
-  match m, n {
-    0,         _         ^ yea,
-    _ succeed, 0         ^ nay,
-    a succeed, b succeed ^ a less_equal_natural_model b
-  }
-
-let add_natural_model: [m: ℕ, n: ℕ, ℕ] ≔
-  match n {
-    0         ^ m,
-    k succeed ^ (m add_natural_model k) succeed
-  }
-
-let subtract_natural_model: [m: ℕ, n: ℕ, ℕ] ≔
-  match n, m {
-    0,         _         ^ m,
-    _ succeed, 0         ^ 0,
-    k succeed, j succeed ^ j subtract_natural_model k
-  }
-
-let multiply_natural_model: [m: ℕ, n: ℕ, ℕ] ≔
-  match n {
-    0         ^ 0,
-    k succeed ^ (m multiply_natural_model k) add_natural m
-  }
-
-let equal_natural: [ℕ, ℕ, 𝟚] ≔ 'equal_natural' fremmed equal_natural_model
-let less_equal_natural: [ℕ, ℕ, 𝟚] ≔ 'less_equal_natural' fremmed less_equal_natural_model
-let add_natural: [ℕ, ℕ, ℕ] ≔ 'add_natural' fremmed add_natural_model
-## subtraction stoppeþ at zero.
-let subtract_natural: [ℕ, ℕ, ℕ] ≔ 'subtract_natural' fremmed subtract_natural_model
-let multiply_natural: [ℕ, ℕ, ℕ] ≔ 'multiply_natural' fremmed multiply_natural_model
-let divide_remainder_natural: [ℕ, ℕ, (ℕ ∏ ℕ) option] ≔ 'divide_remainder_natural' fremmed
-let natural_to_text: [ℕ, text] ≔ 'natural_to_text' fremmed
-
-bizen: ℕ equal {
-  let ≍ ≔ equal_natural
+## ℕ is a primitive type with arbitrary precision. its operations are host
+## bindings; these bizens give it equality, order, and semiring structure.
+## a binding with a body after `fremmed` computeth natively on literals and,
+## on other inputs, unfoldeth that structural model, so proofs can reason
+## about it.
+let is_same: [ℕ, ℕ, 𝟚] ≔ 'same_natural' fremmed {
+  0,         0         ^ yea,
+  0,         _ heir ^ nay,
+  _ heir, 0         ^ nay,
+  a heir, b heir ^ a is_same b
 }
 
-bizen: ℕ less_equal {
-  let ≤ ≔ less_equal_natural
+let is_at_most: [ℕ, ℕ, 𝟚] ≔ 'at_most_natural' fremmed {
+  0,         _         ^ yea,
+  _ heir, 0         ^ nay,
+  a heir, b heir ^ a is_at_most b
 }
 
-bizen: ℕ add {
-  let + ≔ add_natural
+let eking: [ℕ, ℕ, ℕ] ≔ 'eke_natural' fremmed {
+  m, 0         ^ m,
+  m, k heir ^ (m eking k) heir
 }
 
-## natural subtraction stoppeþ at zero: `2 - 3` is `0`.
-bizen: ℕ subtract {
-  let - ≔ subtract_natural
+## subtraction stoppeth at zero.
+let offdrawing: [ℕ, ℕ, ℕ] ≔ 'offdraw_natural' fremmed {
+  m,         0         ^ m,
+  0,         _ heir ^ 0,
+  j heir, k heir ^ j offdrawing k
 }
 
-bizen: ℕ haþ_zero {
+let folding: [ℕ, ℕ, ℕ] ≔ 'fold_natural' fremmed {
+  _, 0         ^ 0,
+  m, k heir ^ (m folding k) eking m
+}
+
+let dealing_remainder: [ℕ, ℕ, (ℕ ∏ ℕ) maybe] ≔ 'deal_remainder_natural' fremmed
+let spelling: [ℕ, text] ≔ 'natural_to_text' fremmed
+
+bizen: ℕ hath_≍ {
+  let ≍ ≔ is_same
+}
+
+bizen: ℕ hath_≤ {
+  let ≤ ≔ is_at_most
+}
+
+bizen: ℕ hath_+ {
+  let + ≔ eking
+}
+
+## natural subtraction stoppeth at zero: `2 - 3` is `0`.
+bizen: ℕ hath_- {
+  let - ≔ offdrawing
+}
+
+bizen: ℕ hath_zero {
   let zero ≔ 0
 }
 
-bizen: ℕ multiply {
-  let × ≔ multiply_natural
+bizen: ℕ hath_× {
+  let × ≔ folding
 }
 
-bizen: ℕ haþ_one {
+bizen: ℕ hath_one {
   let one ≔ 1
 }
 
-bizen: ℕ divide_remainder {
-  let % ≔ divide_remainder_natural
+bizen: ℕ hath_% {
+  let % ≔ dealing_remainder
 }
 
-bizen: ℕ haþ_to_text {
-  let to_text ≔ natural_to_text
+bizen: ℕ hath_to_text {
+  let to_text ≔ spelling
 }
 
-bizen: ℕ order_partial {
-  let ≤_reflect ≔ sorry
-  let ≤_antisymmetric ≔ sorry
-  let ≤_transit ≔ sorry
+## the laws below are proved by induction on the structural models.
+let at_most_backbend: [a: ℕ, (a ≤ a) = yea] ≔
+  match a {
+    0         ^ backbend,
+    k heir ^ k at_most_backbend
+  }
+
+let at_most_antievenmete: [a: ℕ, b: ℕ, >{≤, a ≤ b, b ≤ a, a ≍ b} = yea] ≔
+  match a, b {
+    0,         0         ^ backbend,
+    0,         _ heir ^ backbend,
+    _ heir, 0         ^ backbend,
+    j heir, k heir ^ j at_most_antievenmete k
+  }
+
+let at_most_throughgo: [a: ℕ, b: ℕ, c: ℕ, >{≤, a ≤ b, b ≤ c, a ≤ c} = yea] ≔
+  match a, b, c {
+    0,         _,         _         ^ match b ≤ c { yea; nay ^ backbend },
+    _ heir, 0,         _         ^ backbend,
+    i heir, j heir, 0         ^ match i ≤ j { yea; nay ^ backbend },
+    i heir, j heir, k heir ^ i at_most_throughgo j k
+  }
+
+let at_most_whole: [a: ℕ, b: ℕ, (((a ≤ b) ≍ nay) ≤ (b ≤ a)) = yea] ≔
+  match a, b {
+    0,         _         ^ backbend,
+    _ heir, 0         ^ backbend,
+    j heir, k heir ^ j at_most_whole k
+  }
+
+let zero_eke: [a: ℕ, (0 + a) = a] ≔
+  match a {
+    0         ^ backbend,
+    k heir ^ {x: ℕ ^ x heir} leibnitz (k zero_eke)
+  }
+
+let heir_eke: [a: ℕ, b: ℕ, ((a heir) + b) = ((a + b) heir)] ≔
+  match b {
+    0         ^ backbend,
+    k heir ^ {x: ℕ ^ x heir} leibnitz (a heir_eke k)
+  }
+
+let eke_associate: [a: ℕ, b: ℕ, c: ℕ, (a + (b + c)) = ((a + b) + c)] ≔
+  match c {
+    0         ^ backbend,
+    k heir ^ {x: ℕ ^ x heir} leibnitz (a eke_associate b k)
+  }
+
+let eke_commute: [a: ℕ, b: ℕ, (a + b) = (b + a)] ≔
+  match b {
+    0         ^ (a zero_eke) evenmete,
+    k heir ^ ({x: ℕ ^ x heir} leibnitz (a eke_commute k)) throughgo ((k heir_eke a) evenmete)
+  }
+
+## (p + q) + (r + s) regroupeth as (p + r) + (q + s).
+let eke_exchange: [p: ℕ, q: ℕ, r: ℕ, s: ℕ, ((p + q) + (r + s)) = ((p + r) + (q + s))] ≔ (
+  let inner: [(q + (r + s)) = (r + (q + s))] ≔
+    >{throughgo,
+      q eke_associate r s,
+      {x: ℕ ^ x + s} leibnitz (q eke_commute r),
+      (r eke_associate q s) evenmete}
+  yield >{throughgo,
+    (p eke_associate q (r + s)) evenmete,
+    {x: ℕ ^ p + x} leibnitz inner,
+    p eke_associate r (q + s)}
+)
+
+let zero_fold: [a: ℕ, (0 × a) = 0] ≔
+  match a {
+    0         ^ backbend,
+    k heir ^ k zero_fold
+  }
+
+let one_fold: [a: ℕ, (1 × a) = a] ≔
+  match a {
+    0         ^ backbend,
+    k heir ^ {x: ℕ ^ x heir} leibnitz (k one_fold)
+  }
+
+let fold_eke: [a: ℕ, b: ℕ, c: ℕ, (a × (b + c)) = ((a × b) + (a × c))] ≔
+  match c {
+    0         ^ backbend,
+    k heir ^
+      ({x: ℕ ^ x + a} leibnitz (a fold_eke b k))
+        throughgo (((a × b) eke_associate (a × k) a) evenmete)
+  }
+
+let eke_fold: [a: ℕ, b: ℕ, c: ℕ, ((a + b) × c) = ((a × c) + (b × c))] ≔
+  match c {
+    0         ^ backbend,
+    k heir ^
+      ({x: ℕ ^ x + (a + b)} leibnitz (a eke_fold b k))
+        throughgo ((a × k) eke_exchange (b × k) a b)
+  }
+
+let fold_associate: [a: ℕ, b: ℕ, c: ℕ, (a × (b × c)) = ((a × b) × c)] ≔
+  match c {
+    0         ^ backbend,
+    k heir ^
+      (a fold_eke (b × k) b)
+        throughgo ({x: ℕ ^ x + (a × b)} leibnitz (a fold_associate b k))
+  }
+
+bizen: ℕ order_half {
+  let ≤_backbend ≔ at_most_backbend
+  let ≤_antievenmete ≔ at_most_antievenmete
+  let ≤_throughgo ≔ at_most_throughgo
 }
 
-bizen: ℕ order_total {
-  let ≤_total ≔ sorry
+bizen: ℕ order_whole {
+  let ≤_whole ≔ at_most_whole
 }
 
 bizen: ℕ semilattice_upper_bounded {
   let ⟂ ≔ 0
 
-  let ⟂_∨ ≔ sorry
+  let ⟂_∨ ≔ {_ ^ backbend}
 }
 
-bizen: ℕ monoid_additive {
-  let +_+ ≔ sorry
-  let zero_+ ≔ sorry
-  let +_zero ≔ sorry
+bizen: ℕ monoid_eke {
+  let +_+ ≔ eke_associate
+  let zero_+ ≔ zero_eke
+  let +_zero ≔ {_ ^ backbend}
 }
 
-bizen: ℕ monoid_multiplicative {
-  let ×_× ≔ sorry
-  let one_× ≔ sorry
-  let ×_one ≔ sorry
+bizen: ℕ monoid_fold {
+  let ×_× ≔ fold_associate
+  let one_× ≔ one_fold
+  let ×_one ≔ zero_eke
 }
 
 bizen: ℕ semiring {
-  let +_commute ≔ sorry
-  let ×_+ ≔ sorry
-  let +_× ≔ sorry
-  let zero_× ≔ sorry
-  let ×_zero ≔ sorry
+  let +_commute ≔ eke_commute
+  let ×_+ ≔ fold_eke
+  let +_× ≔ eke_fold
+  let zero_× ≔ {a, _ ^ a zero_fold}
+  let ×_zero ≔ {_, _ ^ backbend}
 }

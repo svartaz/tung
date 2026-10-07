@@ -1,5 +1,5 @@
 -- | one declaration's elaboration run: instance solving, goal rendering, and
--- þe check þat no hole remaineþ.
+-- the check that no hole remaineth.
 module Tung.Dependent.Source.Elaborate
   ( elaborate,
     elaborateHoles,
@@ -18,6 +18,7 @@ import Tung.Dependent.Source.Environment
 import Tung.Dependent.Source.Error qualified as Error
 import Tung.Dependent.Source.Instance (solveInstances)
 import Tung.Dependent.Syntax hiding (Lambda, Literal)
+import Tung.Dependent.Universe qualified as U
 import Tung.Identity (SymbolId (..))
 import Tung.Token (SourceFailure (..))
 
@@ -25,14 +26,14 @@ import Tung.Token (SourceFailure (..))
 -- annotation and every occurrence of a universe-polymorphic global.
 type Elaboration = E.Elaboration
 
--- the caller checkeþ this result at the insertion or expression boundary.
+-- the caller checketh this result at the insertion or expression boundary.
 elaborate :: SourceProgram -> Elaboration (Term, N.Value) -> Either SourceFailure K.Inferred
 elaborate program action = (\(result, (), _) -> result) <$> elaborateHoles program ((\(term, ty) -> (term, ty, ())) <$> action)
 
--- one declaration's run, wiþ þe goal of each `sorry`, rendered once þe
+-- one declaration's run, with the goal of each `sorry`, rendered once the
 -- declaration's instances are chosen. metadata, such as law obligations,
--- travel beside þe result. a type must be determined: a top-level let is
--- never generalised over its holes, so a polymorphic let writeþ its
+-- travel beside the result. a type must be determined: a top-level let is
+-- never generalised over its holes, so a polymorphic let writeth its
 -- parameters.
 elaborateHoles :: SourceProgram -> Elaboration (Term, N.Value, a) -> Either SourceFailure (K.Inferred, a, [Hole])
 elaborateHoles SourceProgram {..} action = do
@@ -42,18 +43,30 @@ elaborateHoles SourceProgram {..} action = do
     -- a `sorry` under two located wrappers is recorded twice.
     holes <- nubBy (\left right -> holeSpan left == holeSpan right) <$> (E.takeHoles >>= traverse (renderHole (globals programEnvironment) (briefName globalNames)))
     remaining <- E.takeInstanceGoals
-    unless (null remaining) (E.failure "a bizen requirement haþ a type þat is still unknown; add an annotation")
+    unless (null remaining) (E.failure "a bizen requirement hath a type that is still unknown; add an annotation")
     open <- E.unsolved
-    unless (null open) (E.failure "a type is still unknown; write þe polymorphic parameters, as [@α: *, x: α, α], or add an annotation")
+    unless (null open) (E.failure "a type is still unknown; write the polymorphic parameters, as [@α: *, x: α, α], or add an annotation")
     annotation <- E.quote 0 ty
     (,,metadata,holes) <$> E.zonk term <*> E.zonk annotation
-  result <- Error.fromString (K.generalise term annotation constraints)
+  -- a hole's solution stayeth folded, so a constant it nameth bringeth that
+  -- definition's universe constraints, as the kernel obligeth them.
+  folded <- Error.fromString (traverse (uncurry instantiated) (concatMap constants [term, annotation]))
+  result <- Error.fromString (K.generalise term annotation (constraints ++ concat folded))
   pure (result, metadata, holes)
+  where
+    instantiated name levels = case Map.lookup name (globals programEnvironment) of
+      Just definition -> traverse (U.instantiateConstraint levels) (definitionConstraints definition)
+      Nothing -> Right []
+
+constants :: Term -> [(SymbolId, [Level])]
+constants = \case
+  Global name levels -> [(name, levels)]
+  term -> concatMap (constants . snd) (children term)
 
 -- a hole's goal and its named locals, outermost first. generated locals,
--- whose names start wiþ `#`, are omitted.
--- þe text is built lazily from a snapshot of þe hole solutions, so a goal
--- þat is never printed, such as one in an imported module, costeþ noþing.
+-- whose names start with `#`, are omitted.
+-- the text is built lazily from a snapshot of the hole solutions, so a goal
+-- that is never printed, such as one in an imported module, costeth nothing.
 renderHole :: Globals -> (SymbolId -> String) -> E.HoleSite -> Elaboration Hole
 renderHole base display E.HoleSite {..} = do
   resolve <- E.resolver

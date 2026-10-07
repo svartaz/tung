@@ -55,18 +55,9 @@ function run(args, input = "") {
   return { output: result.stdout, error: result.stderr, status: result.status };
 }
 
-// these byspels use bookhoard bizens whose laws are still `sorry`, so
-// their `main` dependeth on that assumption.
-const assuming = new Set([
-  "asynchronous",
-  "fizzbuzz",
-  "lambda",
-  "luck",
-  "scoreboard",
-  "tutorial",
-  "web_server",
-  "word_count",
-]);
+// this byspel useth bookhoard bizens whose laws are still `sorry` (text and
+// set), so its `main` dependeth on that assumption.
+const assuming = new Set(["word_count"]);
 
 for (const byspel of byspels) {
   const file = path.join("byspel", `${byspel}.tung`);

@@ -66,7 +66,7 @@ numberDefinitions = family integer [(integerPositiveId, fromNatural), (integerNe
         Left message -> error ("invalid primitive " ++ symbolName name ++ ": " ++ message)
 
 -- `x = y` is the type of proofs that `x` and `y` are equal: parameters `@α`
--- and `x`, one index, the one constructor `backbend: [@α: *, @x: α, x = x]`,
+-- and `x`, one index, the one constructor `eftbend: [@α: *, @x: α, x = x]`,
 -- and the eliminator `unbuild =`. it is checked like any other family; it is
 -- primitive so that flock laws and elaboration can state equations without an
 -- import. its lemmas are bookhoard code in `is.tung`.
@@ -84,7 +84,7 @@ identityDefinitions =
 
 identitySymbol, reflectSymbol :: SymbolId
 identitySymbol = SymbolId PrimitiveModule "="
-reflectSymbol = SymbolId PrimitiveModule "backbend"
+reflectSymbol = SymbolId PrimitiveModule "eftbend"
 
 sorrySymbol, literalCaseSymbol :: SymbolId
 sorrySymbol = SymbolId PrimitiveModule "sorry"

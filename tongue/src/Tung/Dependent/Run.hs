@@ -290,7 +290,7 @@ perform host key arguments = case (key, arguments) of
   -- a failed or cancelled task hath no result.
   ("wait", [RTask handle]) -> option . either (const Nothing) Just <$> lift (hostWait host handle)
   ("wait_for", [RTask handle, natural -> Just milliseconds]) -> option . (>>= either (const Nothing) Just) <$> lift (hostWaitFor host handle milliseconds)
-  ("cancel", [RTask handle]) -> lift (hostCancel host handle) >> pure only
+  ("outstrike", [RTask handle]) -> lift (hostCancel host handle) >> pure only
   ("read_file", [text -> Just path]) -> outcome textValue <$> lift (hostReadFile host path)
   ("write_file", [text -> Just path, text -> Just value]) -> outcome (const only) <$> lift (hostWriteFile host path value)
   ("append_file", [text -> Just path, text -> Just value]) -> outcome (const only) <$> lift (hostAppendFile host path value)
@@ -476,7 +476,7 @@ runtimeGlobals globals = table
             maybe (Left ("invalid runtime host call '" ++ key ++ "'")) (pure . fromHostValue) (traverse toHostValue values >>= operation)
           (_, "deed_sheer", [value]) -> pure (RDeed (DPure value))
           (_, "deed_bind", [action, continuation]) -> pure (RDeed (DBind action continuation))
-          (_, "deed_fix", [step]) -> pure (RDeed (DFix step))
+          (_, "deed_steadfast", [step]) -> pure (RDeed (DFix step))
           _ -> pure (RDeed (DHost key arguments))
 
 -- inputs arrive in order; the body receiveth them once all are present.

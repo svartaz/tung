@@ -28,6 +28,7 @@ library
     , Tung.Dependent.Normalise
     , Tung.Dependent.Render
     , Tung.Dependent.Source.Declaration
+    , Tung.Dependent.Source.Cache
     , Tung.Dependent.Source.Elaborate
     , Tung.Dependent.Source.Environment
     , Tung.Dependent.Source.Error
@@ -59,6 +60,7 @@ library
   build-depends:
       aeson >=2 && <3
     , base >=4.20 && <5
+    , binary
     , bytestring
     , containers
     , deepseq

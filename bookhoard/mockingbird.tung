@@ -1,19 +1,19 @@
 ## birds from smullyan's "to mock a mockingbird" and named variants.
 
 # I x = x
-show let selfness: [@α: *, a: α, α] ≔ a
+show let sameness: [@α: *, a: α, α] ≔ a
 
 # I* f x = f x
-show let selfness_once_removed: [@α: *, @β: *, f: [α, β], a: α, β] ≔ a f
+show let sameness_once_removed: [@α: *, @β: *, f: [α, β], a: α, β] ≔ a f
 
 # I** f x y = f x y
-show let selfness_twice_removed: [@α: *, @β: *, @γ: *, f: [α, β, γ], a: α, b: β, γ] ≔ a f b
+show let sameness_twice_removed: [@α: *, @β: *, @γ: *, f: [α, β, γ], a: α, b: β, γ] ≔ a f b
 
 # another name for the identity bird.
-show let idiot: [@α: *, [α, α]] ≔ selfness
+show let idiot: [@α: *, [α, α]] ≔ sameness
 
 # A f x = f x
-show let applicator: [@α: *, @β: *, [[α, β], α, β]] ≔ selfness_once_removed
+show let applicator: [@α: *, @β: *, [[α, β], α, β]] ≔ sameness_once_removed
 
 # K x y = x
 show let kestrel: [@α: *, @β: *, a: α, b: β, α] ≔ a
@@ -219,7 +219,7 @@ show let starling′: [@α: *, @β: *, @γ: *, @δ: *, [[β, γ, δ], [α, β], 
 show let psi: [@α: *, @β: *, @γ: *, f: [β, β, γ], g: [α, β], a: α, b: α, γ] ≔ (a g) f (b g)
 
 # Y f = f (Y f)
-# unbounded pure recursion is not total. `deed_fix` is the fixed point for deeds.
+# unbounded pure recursion is not total. `deed_steadfast` is the fixed point for deeds.
 # show let sage: [@α: *, f: [α, α], α] ≔ (f sage) f
 
 # L f x = f (x x)

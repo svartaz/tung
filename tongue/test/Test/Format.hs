@@ -27,7 +27,7 @@ generatedIdempotence = expect "formatter is idempotent for generated structural 
       [ ["show ilk box: [a:*, *] {", "box: [a, a box]", "}"],
         ["let result ≔", "match worth {", "yea; nay ^ 1", "}"],
         ["let handled ≔", "try risky {", "message fail ^ 0", "}"],
-        ["flock selfness:[a:*, *] {", "let selfness:[@a:*, a, a]", "let rule:[@a:*, x:a,", "(x selfness) ≔ x]", "}"]
+        ["flock sameness:[a:*, *] {", "let sameness:[@a:*, a, a]", "let rule:[@a:*, x:a,", "(x sameness) ≔ x]", "}"]
       ]
 
 isIdempotent :: String -> Bool
@@ -37,13 +37,31 @@ isIdempotent source = formatSource formatted == formatted
 
 cases :: [(String, String, String)]
 cases =
-  [ ( "a body after a closed header continueth its declaration",
+  [ ( "consecutive case rows align their columns and arrows",
+      """
+      let drop ≔ {
+        l, 0 ^ l,
+        _, 0;
+        empty, _ ^ empty,
+        _ ‥ rest, n ^ rest drop (n - 1)
+      }
+      """,
+      """
+      let drop ≔ {
+        l,        0 ^ l,
+        _,        0;
+        empty,    _ ^ empty,
+        _ ‥ rest, n ^ rest drop (n - 1)
+      }
+      """
+    ),
+    ( "a body after a closed header continueth its declaration",
       """
       let kept: [
       x: ℕ,
       x = x
       ] ≔ {c: ℕ ^ c = c}
-      transport backbend backbend
+      transport eftbend eftbend
       let next ≔ 0
       """,
       """
@@ -51,7 +69,7 @@ cases =
         x: ℕ,
         x = x
       ] ≔ {c: ℕ ^ c = c}
-        transport backbend backbend
+        transport eftbend eftbend
       let next ≔ 0
       """
     ),
@@ -73,7 +91,7 @@ cases =
     ),
     ( "declaration annotations compact colons and indent the body once",
       """
-      let selfness : [
+      let sameness : [
       @α : *,
       x : α,
       α] ≔
@@ -82,7 +100,7 @@ cases =
 
       """,
       """
-      let selfness: [
+      let sameness: [
         @α: *,
         x: α,
         α] ≔
@@ -150,7 +168,7 @@ cases =
     ( "a type colon hath one space after it",
       """
       let hath_+:[x : ℤ, y:  ℤ, ℤ] ≔ (x + y: ℤ)
-      flock selfness:[a:*, *] { let rule:[x : a, x = x] }
+      flock sameness:[a:*, *] { let rule:[x : a, x = x] }
       let record:r{field : ℤ} ≔ r{field: +1}
       let text ≔ 'x: y' # note: untouched
       let letter ≔ `:
@@ -159,7 +177,7 @@ cases =
       """,
       """
       let hath_+: [x: ℤ, y: ℤ, ℤ] ≔ (x + y: ℤ)
-      flock selfness: [a: *, *] { let rule: [x: a, x = x] }
+      flock sameness: [a: *, *] { let rule: [x: a, x = x] }
       let record: r{field: ℤ} ≔ r{field: +1}
       let text ≔ 'x: y' # note: untouched
       let letter ≔ `:
@@ -205,16 +223,16 @@ cases =
     ),
     ( "current application syntax",
       """
-      show let filter:[x:a maybe, f:[a, 𝟚], a maybe] ≔ x match {
+      show let sift:[x:a maybe, f:[a, 𝟚], a maybe] ≔ x match {
       a some ^ a f $ if (a some) none
-      none ^ none
+      none   ^ none
       }
 
       """,
       """
-      show let filter: [x: a maybe, f: [a, 𝟚], a maybe] ≔ x match {
+      show let sift: [x: a maybe, f: [a, 𝟚], a maybe] ≔ x match {
         a some ^ a f $ if (a some) none
-        none ^ none
+        none   ^ none
       }
 
       """
@@ -231,7 +249,7 @@ cases =
       yield worth ^ worth,
       message fail ^ +0
       }
-      let selfness ≔
+      let sameness ≔
       { x ^ x }
 
       """,
@@ -246,7 +264,7 @@ cases =
           yield worth ^ worth,
           message fail ^ +0
         }
-      let selfness ≔
+      let sameness ≔
         { x ^ x }
 
       """
@@ -295,30 +313,30 @@ cases =
     ),
     ( "split right side",
       """
-      bizen:(float complex) hath_elementary {
-      let sine: [a complex b:] ≔
-      (((0.0 offdraw_float b) complex a) exponent)
-      sine-from-exponents ((b complex (0.0 offdraw_float a)) exponent)
+      bizen:(float evenbraid) elementary {
+      let sine: [a evenbraid b:] ≔
+      (((0.0 offdraw_float b) evenbraid a) exponent)
+      sine-from-exponents ((b evenbraid (0.0 offdraw_float a)) exponent)
       }
 
       """,
       """
-      bizen: (float complex) hath_elementary {
-        let sine: [a complex b:] ≔
-          (((0.0 offdraw_float b) complex a) exponent)
-            sine-from-exponents ((b complex (0.0 offdraw_float a)) exponent)
+      bizen: (float evenbraid) elementary {
+        let sine: [a evenbraid b:] ≔
+          (((0.0 offdraw_float b) evenbraid a) exponent)
+            sine-from-exponents ((b evenbraid (0.0 offdraw_float a)) exponent)
       }
 
       """
     ),
     ( "body after a multiline header",
       """
-      show let selfness:[worth:a, a] ≔
+      show let sameness:[worth:a, a] ≔
       worth
 
       """,
       """
-      show let selfness: [worth: a, a] ≔
+      show let sameness: [worth: a, a] ≔
         worth
 
       """
@@ -331,7 +349,7 @@ cases =
       a₂:a₂ f,
       f:[a₀, a₁, a₂, b],
       b f] ≔
-      >{apply, a₂, a₁, a₀, f sheer}
+      >{atfold, a₂, a₁, a₀, f sheer}
 
       """,
       """
@@ -341,7 +359,7 @@ cases =
         a₂: a₂ f,
         f: [a₀, a₁, a₂, b],
         b f] ≔
-        >{apply, a₂, a₁, a₀, f sheer}
+        >{atfold, a₂, a₁, a₀, f sheer}
 
       """
     ),
@@ -389,17 +407,17 @@ cases =
     ),
     ( "multiline law annotation",
       """
-      flock applicative:[f:[*, *], *] {
+      flock atfoldsome:[f:[*, *], *] {
       let rule:[a:a f,
-      (a apply (selfness sheer)) = a]
+      (a atfold (sameness sheer)) = a]
       let sheer_rule:[a:a, (a sheer) = (a sheer)]
       }
 
       """,
       """
-      flock applicative: [f: [*, *], *] {
+      flock atfoldsome: [f: [*, *], *] {
         let rule: [a: a f,
-          (a apply (selfness sheer)) = a]
+          (a atfold (sameness sheer)) = a]
         let sheer_rule: [a: a, (a sheer) = (a sheer)]
       }
 
@@ -434,7 +452,7 @@ cases =
       let result ≔
         match character {
           `\\32; ^ 1,
-          _ ^ 0
+          _     ^ 0
         }
       /*
         {
@@ -492,22 +510,22 @@ cases =
     ),
     ( "comment useth structural indentation",
       """
-      flock selfness: [a: *, *] {
+      flock sameness: [a: *, *] {
         let rule: [x: a,
         # the equation.
-          (x selfness) = x]
+          (x sameness) = x]
         # the next law.
-        let next_rule: [x: a, (x selfness) = x]
+        let next_rule: [x: a, (x sameness) = x]
       }
 
       """,
       """
-      flock selfness: [a: *, *] {
+      flock sameness: [a: *, *] {
         let rule: [x: a,
         # the equation.
-          (x selfness) = x]
+          (x sameness) = x]
         # the next law.
-        let next_rule: [x: a, (x selfness) = x]
+        let next_rule: [x: a, (x sameness) = x]
       }
 
       """

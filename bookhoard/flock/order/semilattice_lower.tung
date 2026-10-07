@@ -2,6 +2,7 @@ use combinator.tung
 use flock/order/hath_at_most.tung
 use flock/order/order_whole.tung
 use ilk/two.tung
+use is.tung
 
 ## a carrier whose every pair hath an infimum.
 show flock semilattice_lower: [α: *, *] {
@@ -14,16 +15,22 @@ show flock semilattice_lower: [α: *, *] {
 bizen: [@β: *, @: β semilattice_lower, @α: *, (α → β) semilattice_lower] {
   let ∧: [f:, g:, a:] ≔ (a f) ∧ (a g)
 
-  let ∧_absorb ≔ sorry
-  let ∧_commute ≔ sorry
-  let ∧_∧ ≔ sorry
+  let ∧_absorb: [f:] ≔ {a ^ (a f) ∧_absorb} fall_umtake
+
+  let ∧_commute: [f:, g:] ≔
+    {a ^ (a f) ∧_commute (a g)} fall_umtake
+
+  let ∧_∧: [f:, g:, h:] ≔
+    {a ^ (a f) ∧_∧ (a g) (a h)} fall_umtake
 }
 
 bizen: [@α: *, @: α order_whole, α semilattice_lower] {
   let ∧: [a:, b:] ≔ (a ≤ b) if a b
 
   # each comparison result chooseth a, so matching on it proveth the law.
-  let ∧_absorb ≔ {a ^ match a ≤ a {yea ^ backbend, nay ^ backbend}}
+  let ∧_absorb: [a:] ≔ match a ≤ a {yea ^ eftbend, nay ^ eftbend}
+
   let ∧_commute ≔ sorry
+
   let ∧_∧ ≔ sorry
 }

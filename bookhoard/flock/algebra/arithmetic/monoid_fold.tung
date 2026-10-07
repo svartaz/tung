@@ -10,11 +10,11 @@ show flock monoid_fold: [α: *, @: α hath_×, @: α hath_one, *] {
 
 bizen: 𝟚 monoid_fold {
   let ×_× ≔ {
-    nay, _, _;
+    nay, _,   _;
     yea, nay, _;
     yea, yea, nay;
-    yea, yea, yea ^ backbend
+    yea, yea, yea ^ eftbend
   }
-  let one_× ≔ {nay; yea ^ backbend}
-  let ×_one ≔ {nay; yea ^ backbend}
+  let one_× ≔ {nay; yea ^ eftbend}
+  let ×_one ≔ {nay; yea ^ eftbend}
 }

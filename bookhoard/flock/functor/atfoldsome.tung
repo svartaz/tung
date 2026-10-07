@@ -1,0 +1,57 @@
+use combinator.tung
+use flock/algebra/half/category.tung
+use flock/algebra/half/semigroupoid.tung
+use flock/functor.tung
+
+show flock atfoldsome: [φ: [*, *], @: φ functor, *] {
+  let sheer: [@α: *, α, α φ]
+  let atfold: [@α: *, @β: *, α φ, [α, β] φ, β φ]
+
+  let atfold_sameness_sheer: [@α: *, a: α φ,
+    (a atfold ((sameness: [α, α]) sheer)) = a]
+
+  let sheer_atfold_sheer: [@α: *, @β: *, a: α, f: [α, β],
+    ((a sheer) atfold (f sheer)) = ((a f) sheer)]
+
+  let atfold_atfold: [@α: *, @β: *, @γ: *, a: α φ, f: [α, β], g: [β, γ],
+    <{atfold, a, f sheer, g sheer} = (a atfold (f ▷ g $ sheer))]
+
+  let sheer_atfold: [@α: *, @β: *, a: α, fs: [α, β] φ,
+    ((a sheer) atfold fs) = (fs warp (a call))]
+}
+
+show let lift₂: [
+  @φ: [*, *], @: φ atfoldsome,
+  @α₀: *, @α₁: *, @β: *,
+  a₀: α₀ φ,
+  a₁: α₁ φ,
+  f: [α₀, α₁, β],
+  β φ
+] ≔ >{atfold, a₁, a₀, f sheer}
+
+show let lift₃: [
+  @φ: [*, *], @: φ atfoldsome,
+  @α₀: *, @α₁: *, @α₂: *, @β: *,
+  a₀: α₀ φ,
+  a₁: α₁ φ,
+  a₂: α₂ φ,
+  f: [α₀, α₁, α₂, β],
+  β φ
+] ≔ >{atfold, a₂, a₁, a₀, f sheer}
+
+show let lift₄: [
+  @φ: [*, *], @: φ atfoldsome,
+  @α₀: *, @α₁: *, @α₂: *, @α₃: *, @β: *,
+  a₀: α₀ φ,
+  a₁: α₁ φ,
+  a₂: α₂ φ,
+  a₃: α₃ φ,
+  f: [α₀, α₁, α₂, α₃, β],
+  β φ
+] ≔ >{atfold, a₃, a₂, a₁, a₀, f sheer}
+
+show let keep_first: [@φ: [*, *], @: φ atfoldsome, @α: *, @β: *, a: α φ, b: β φ, α φ] ≔
+  a lift₂ b constant
+
+show let keep_other: [@φ: [*, *], @: φ atfoldsome, @α: *, @β: *, a: α φ, b: β φ, β φ] ≔
+  a lift₂ b (constant flip)

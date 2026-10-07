@@ -45,7 +45,7 @@ tests =
                  """
           )
       inferSourceExpression program "(natural_tag:bool tag)",
-    sameNormal "source selfness transport computeth on reflexivity" (naturalSource ++ identitySource ++ transportSource) "transport" "{F:[nat, *] ^ {worth:(zero F) ^ worth}}",
+    sameNormal "source sameness transport computeth on reflexivity" (naturalSource ++ identitySource ++ transportSource) "transport" "{F:[nat, *] ^ {worth:(zero F) ^ worth}}",
     expectEq "types and constructors share one namespace" (Right [True, True]) $
       traverse
         collision

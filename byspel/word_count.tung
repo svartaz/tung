@@ -1,7 +1,7 @@
 use deed/file.tung
 use deed/system.tung
 use flock/algebra/whole/hath_magma.tung
-use flock/functor/hath_cata.tung
+use flock/functor/catamorphism.tung
 use ground.tung
 use ilk/list.tung
 use ilk/maybe.tung
@@ -12,7 +12,7 @@ use ilk/text/operation.tung
 
 let count_word: [counts: text table ℤ, word: text, text table ℤ] ≔
   match counts lookup word {
-    none ^ counts put word +1,
+    none       ^ counts put word +1,
     count some ^ counts put word (count + +1)
   }
 
@@ -27,9 +27,9 @@ let write_count: [entry: text ∏ ℤ, 𝟙 deed] ≔ >{then,
   (entry forthcast₁) to_text $ write_line
 }
 
-let main: 𝟙 deed ≔ arguments warp_flat {
+let main: 𝟙 deed ≔ arguments bind {
   list~empty ^ 'usage: tung word_count.tung <file>' write_line,
-  path ‥ _ ^ path file~read $ warp_flat {
+  path ‥ _   ^ path file~read $ bind {
     message incast₀ ^ 'error:' · message $ write_line,
     content incast₁ ^ content count_words $ entries $ each write_count
   }

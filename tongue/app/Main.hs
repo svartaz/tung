@@ -56,10 +56,19 @@ withProject base load failed action =
     Right roots ->
       load roots >>= \case
         Left message -> projectFailure message
-        Right project@Project {projectPath, projectSource, projectImports, projectSnapshot, projectImportSnapshots} ->
-          case fst <$> Dependent.compileSnapshot Map.empty (SourceModule projectPath) projectSnapshot projectImportSnapshots of
+        Right project@Project {projectPath, projectSource, projectImports, projectSnapshot, projectImportSnapshots} -> do
+          -- imports reuse checked interfaces; newly checked ones are saved.
+          directory <- cacheDirectory projectPath
+          build <- Dependent.compilerBuild
+          let keys = Dependent.cacheKeys build projectImportSnapshots
+          cached <- Dependent.loadInterfaces directory projectImportSnapshots keys
+          case Dependent.compileImports cached projectImportSnapshots (Dependent.snapshotImportPaths projectSnapshot) of
             Left failure -> failed project (failureDiagnostic projectSource projectImports failure)
-            Right program -> action program
+            Right reached -> do
+              Dependent.saveInterfaces directory keys (Map.difference reached cached)
+              case fst <$> Dependent.compileSnapshot reached (SourceModule projectPath) projectSnapshot projectImportSnapshots of
+                Left failure -> failed project (failureDiagnostic projectSource projectImports failure)
+                Right program -> action program
 
 -- a file's failure is reported in the file that raised it.
 withProgram :: FilePath -> (Dependent.SourceProgram -> IO ()) -> IO ()

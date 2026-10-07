@@ -37,7 +37,7 @@ test("textmate immediately scopeth lexical syntax", async () => {
     ["let worth ≔ 12", "12", "constant.numeric.natural.tung"],
     ["# a comment", "#", "comment.line.number-sign.tung"],
     ["/* a comment */", "a comment", "comment.block.tung"],
-    ["show let selfness:[x:ℤ, ℤ] ≔ x", "let", "keyword.declaration.tung"],
+    ["show let sameness:[x:ℤ, ℤ] ≔ x", "let", "keyword.declaration.tung"],
     ["match worth {x ^ x}", "match", "keyword.control.tung"],
     ["let main: 𝟙 deed ≔ only sheer", "deed", "keyword.control.tung"],
     ["let proof ≔ sorry", "sorry", "keyword.control.tung"],
@@ -70,7 +70,7 @@ test("textmate leaveth name roles to the compiler", async () => {
     "show let join:[text₀ path:_path, text₁ path:_path, _path] ≔",
     "x ‥ xs · list~‥",
     "let count:* ≔ ℤ",
-    "let selfness:[@α:*, x:α, α] ≔ x",
+    "let sameness:[@α:*, x:α, α] ≔ x",
   ]) {
     const result = loaded.tokenizeLine(source, state);
     state = result.ruleStack;

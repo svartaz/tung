@@ -3,6 +3,7 @@
 -- type checking; formatting is idempotent.
 module Tung.Format (formatSource) where
 
+import Control.Monad (guard)
 import Data.Char (isDigit, isSpace)
 import Data.List (dropWhileEnd, intercalate, isPrefixOf, isSuffixOf, mapAccumL, sortOn, stripPrefix)
 
@@ -20,10 +21,83 @@ data LexicalState = Code | Text | BlockComment
 formatSource :: String -> String
 formatSource source =
   let (_, formatted) = mapAccumL formatLine initialState (sortUseBlocks (sourceLines source))
-      result = intercalate "\n" formatted
+      result = intercalate "\n" (alignRows formatted)
    in if "\n" `isSuffixOf` source
         then dropWhileEnd (== '\n') result ++ "\n"
         else result
+
+-- consecutive case rows of one indentation with as many pattern columns
+-- align: each column is padded after its comma, and `^` followeth the widest
+-- last column. a `;` alternative is a row without a result.
+data CaseRow = CaseRow
+  { rowIndent :: String,
+    rowColumns :: [String],
+    rowResult :: Maybe String
+  }
+
+alignRows :: [String] -> [String]
+alignRows = go Code
+  where
+    go _ [] = []
+    go Code lines'@(line : _)
+      | Just row <- caseRow line =
+          let (group, remaining) = spanRows row lines'
+           in map (renderRow (widths group)) group ++ go Code remaining
+    go lexicalState (line : rest) = line : go (lineLexicalState lexicalState line) rest
+    spanRows first = \case
+      line : rest
+        | Just row <- caseRow line,
+          rowIndent row == rowIndent first,
+          length (rowColumns row) == length (rowColumns first) ->
+            let (group, remaining) = spanRows first rest in (row : group, remaining)
+      remaining -> ([], remaining)
+    widths group = foldr1 (zipWith max) [map length (rowColumns row) | row <- group]
+    renderRow columnWidths CaseRow {..} =
+      let padded = [column ++ "," ++ replicate (width - length column + 1) ' ' | (column, width) <- zip (init rowColumns) columnWidths]
+          final = last rowColumns
+       in rowIndent ++ concat padded ++ case rowResult of
+            Just result -> final ++ replicate (last columnWidths - length final) ' ' ++ " ^" ++ (if null result then "" else ' ' : result)
+            Nothing -> final ++ ";"
+
+-- a line whose own top level holdeth `^`, or that endeth in `;`, outside
+-- brackets, literals, and comments.
+caseRow :: String -> Maybe CaseRow
+caseRow line = do
+  let (indent, content) = span (== ' ') line
+  guard (not (null content) && not (commentHead content) && not (declarationHead content))
+  (patterns, result) <- split 0 [] content
+  let columns = map trim (topLevelCommas patterns)
+  guard (not (null patterns) && all (not . null) columns && all (not . any (`elem` ("≔{" :: String))) columns)
+  pure (CaseRow indent columns (fmap trim result))
+  where
+    split :: Int -> String -> String -> Maybe (String, Maybe String)
+    split depth seen = \case
+      [] | depth == 0, ';' : before <- seen -> Just (reverse before, Nothing)
+      [] -> Nothing
+      '\'' : rest -> literal ('\'' : seen) rest >>= \(seen', rest') -> split depth seen' rest'
+      '`' : rest ->
+        let remaining = characterLiteralTail rest
+         in split depth (reverse (take (length rest - length remaining) rest) ++ '`' : seen) remaining
+      '#' : _ -> Nothing
+      '^' : rest | depth == 0 -> Just (reverse seen, Just rest)
+      character : rest
+        | character `elem` ("([{" :: String) -> split (depth + 1) (character : seen) rest
+        | character `elem` (")]}" :: String) -> if depth == 0 then Nothing else split (depth - 1) (character : seen) rest
+        | otherwise -> split depth (character : seen) rest
+    literal seen = \case
+      '\\' : character : rest -> literal (character : '\\' : seen) rest
+      '\'' : rest -> Just ('\'' : seen, rest)
+      character : rest -> literal (character : seen) rest
+      [] -> Nothing
+    topLevelCommas = go' 0 []
+      where
+        go' :: Int -> String -> String -> [String]
+        go' _ current [] = [reverse current]
+        go' depth current (character : rest)
+          | character == ',' && depth == 0 = reverse current : go' depth [] rest
+          | character `elem` ("([{" :: String) = go' (depth + 1) (character : current) rest
+          | character `elem` (")]}" :: String) = go' (depth - 1) (character : current) rest
+          | otherwise = go' depth (character : current) rest
 
 initialState :: FormatState
 initialState = FormatState 0 Code 0 [] Nothing

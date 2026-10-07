@@ -1,8 +1,9 @@
 use flock/algebra/half/category.tung
 use flock/algebra/half/semigroupoid.tung
 use flock/functor.tung
-use flock/functor/applicative.tung
+use flock/functor/atfoldsome.tung
 use flock/functor/monad.tung
+use is.tung
 
 ## a computation: either a result, or one request and the continuation that
 ## receiveth its answer. a request `ξ φ` asketh for a `ξ`; φ need not be a
@@ -27,7 +28,30 @@ show let warp: [@φ: [*, *], @α: *, @β: *, forewrit: φ freer α, change: [α,
   forewrit bind { worth ^ (worth change) done }
 
 show let flat: [@φ: [*, *], @α: *, forewrit: φ freer (φ freer α), φ freer α] ≔
-  forewrit bind is
+  forewrit bind sameness
+
+## mapping the identity keepeth a program, by induction on its requests.
+let helpsetting_warp_sameness: [@φ: [*, *], @α: *, forewrit: φ freer α, (forewrit warp {x ^ x}) = forewrit] ≔
+  match forewrit {
+    _ done                ^ eftbend,
+    request more continue ^ (request more) leibnitz ({answer ^ (answer continue) helpsetting_warp_sameness} fall_umtake)
+  }
+
+## mapping twice is mapping once with the composite.
+let warp_warp: [@φ: [*, *], @α: *, @β: *, @γ: *, forewrit: φ freer α, f: [α, β], g: [β, γ],
+  ((forewrit warp f) warp g) = (forewrit warp {x ^ x f $ g})
+] ≔
+  match forewrit {
+    _ done                ^ eftbend,
+    request more continue ^ (request more) leibnitz ({answer ^ (answer continue) warp_warp f g} fall_umtake)
+  }
+
+## flattening a program whose results are wrapped in `done` keepeth it.
+let warp_done_flat: [@φ: [*, *], @α: *, forewrit: φ freer α, ((forewrit warp done) flat) = forewrit] ≔
+  match forewrit {
+    _ done                ^ eftbend,
+    request more continue ^ (request more) leibnitz ({answer ^ (answer continue) warp_done_flat} fall_umtake)
+  }
 
 ## interpret a program: `handle` answereth each request by calling its
 ## continuation, and `leaf` turneth the result into the answer.
@@ -47,22 +71,28 @@ show let gather: [
 bizen: [@φ: [*, *], (φ freer) functor] {
   let warp: [forewrit:, change:] ≔ forewrit warp change
 
-  let warp_is ≔ sorry
+  let warp_sameness ≔ helpsetting_warp_sameness
 }
 
-bizen: [@φ: [*, *], (φ freer) applicative] {
+bizen: [@φ: [*, *], (φ freer) atfoldsome] {
   let sheer ≔ done
-  let apply: [forewrit:, changes:] ≔ changes bind { change ^ forewrit warp change }
 
-  let apply_is_sheer ≔ sorry
-  let sheer_apply_sheer ≔ {_, _ ^ backbend}
-  let apply_apply ≔ sorry
-  let sheer_apply ≔ {_, _ ^ backbend}
+  let atfold: [forewrit:, changes:] ≔
+    changes bind { change ^ forewrit warp change }
+
+  let atfold_sameness_sheer ≔ helpsetting_warp_sameness
+
+  let sheer_atfold_sheer: [_:, _:] ≔ eftbend
+
+  let atfold_atfold: [a:, f:, g:] ≔ a warp_warp f g
+
+  let sheer_atfold: [_:, _:] ≔ eftbend
 }
 
 bizen: [@φ: [*, *], (φ freer) monad] {
   let flat: [forewrit:] ≔ forewrit flat
 
-  let sheer_warp_flat ≔ {_, _ ^ backbend}
-  let warp_sheer_flat ≔ sorry
+  let sheer_bind: [_:, _:] ≔ eftbend
+
+  let warp_sheer_flat ≔ warp_done_flat
 }

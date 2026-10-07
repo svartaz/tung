@@ -5,51 +5,51 @@ use flock/algebra/arithmetic/hath_fold.tung
 use flock/algebra/arithmetic/hath_offdraw.tung
 use flock/algebra/arithmetic/hath_one.tung
 use flock/algebra/arithmetic/hath_zero.tung
-use flock/hath_absolute.tung
-use flock/hath_elementary.tung
+use flock/elementary.tung
+use flock/hath_norm.tung
 
-show ilk complex: [α: *, *] {
-  +i: [α, α, α complex]
+show ilk evenbraid: [α: *, *] {
+  +i: [α, α, α evenbraid]
 }
 
-show let real: [@α: *, (a +i _): α complex, α] ≔ a
+show let real: [@α: *, (a +i _): α evenbraid, α] ≔ a
 
-show let imaginary: [@α: *, (_ +i b): α complex, α] ≔ b
+show let imaginary: [@α: *, (_ +i b): α evenbraid, α] ≔ b
 
-show let unit: [@α: *, @: α hath_zero, @: α hath_one, α complex] ≔ zero +i one
+show let unit: [@α: *, @: α hath_zero, @: α hath_one, α evenbraid] ≔ zero +i one
 
-bizen: [@α: *, @: α hath_+, (α complex) hath_+] {
+bizen: [@α: *, @: α hath_+, (α evenbraid) hath_+] {
   let +: [a +i b:, c +i d:] ≔ (a + c) +i (b + d)
 }
 
-bizen: [@α: *, @: α hath_zero, (α complex) hath_zero] {
+bizen: [@α: *, @: α hath_zero, (α evenbraid) hath_zero] {
   let zero ≔ zero +i zero
 }
 
-bizen: [@α: *, @: α hath_-, (α complex) hath_-] {
+bizen: [@α: *, @: α hath_-, (α evenbraid) hath_-] {
   let -: [a +i b:, c +i d:] ≔ (a - c) +i (b - d)
 }
 
-bizen: [@α: *, @: α hath_-, @: α hath_×, (α complex) hath_×] {
+bizen: [@α: *, @: α hath_-, @: α hath_×, (α evenbraid) hath_×] {
   let ×: [a +i b:, c +i d:] ≔ ((a × c) - (b × d)) +i ((a × d) + (b × c))
 }
 
-bizen: [@α: *, @: α hath_one, @: α hath_zero, (α complex) hath_one] {
+bizen: [@α: *, @: α hath_one, @: α hath_zero, (α evenbraid) hath_one] {
   let one ≔ one +i zero
 }
 
-bizen: [@α: *, @: α hath_-, @: α hath_×, @: α hath_÷, (α complex) hath_÷] {
+bizen: [@α: *, @: α hath_-, @: α hath_×, @: α hath_÷, (α evenbraid) hath_÷] {
   let ÷: [a +i b:, c +i d:] ≔  (
     let e ≔ c × c $ + (d × d)
     yield ((a × c) + (b × d) $ ÷ e) +i ((b × c) - (a × d) $ ÷ e)
   )
 }
 
-bizen: [@α: *, @: α hath_+, @: α hath_×, (α complex) hath_absolute α] {
-  let absolute: [a +i b:] ≔ (a × a) + (b × b)
+bizen: [@α: *, @: α hath_+, @: α hath_×, (α evenbraid) hath_norm α] {
+  let norm: [a +i b:] ≔ (a × a) + (b × b)
 }
 
-bizen: (float complex) hath_elementary {
+bizen: (float evenbraid) elementary {
   let exponent: [a +i b:] ≔ (
     let c ≔ a exponent
     yield (c × (b cosine)) +i (c × (b sine))

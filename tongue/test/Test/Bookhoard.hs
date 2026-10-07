@@ -48,13 +48,13 @@ equalityCases library =
   [ expectEq "is helpers compute on reflection" (Right [True, True, True]) do
       program <- compile "let same:[x:ℤ, ℤ] ≔ x"
       traverse
-        (\expression -> sameNormalIn program expression "backbend @ℤ @+1")
-        [ "same leibnitz (backbend @ℤ @+1)",
-          "(backbend @ℤ @+1) evenmete",
-          "(backbend @ℤ @+1) throughgo (backbend @ℤ @+1)"
+        (\expression -> sameNormalIn program expression "eftbend @ℤ @+1")
+        [ "same leibnitz (eftbend @ℤ @+1)",
+          "(eftbend @ℤ @+1) evenmete",
+          "(eftbend @ℤ @+1) throughgo (eftbend @ℤ @+1)"
         ],
     rejectContaining "throughgo requireth matching middle endpoints" "cannot unify" $
-      compile "let bad ≔ (backbend @ℤ @+1) throughgo (backbend @ℤ @+2)"
+      compile "let bad ≔ (eftbend @ℤ @+1) throughgo (eftbend @ℤ @+2)"
   ]
   where
     compile source = compileWith library "is_test.tung" ("use is.tung\n" ++ source)
@@ -94,10 +94,10 @@ numberCases library natural integer =
       use ilk/natural.tung
       use flock/algebra/arithmetic/hath_eke.tung
       use is.tung
-      let right_zero: [n: ℕ, (n + 0) = n] ≔ backbend
+      let right_zero: [n: ℕ, (n + 0) = n] ≔ eftbend
       let left_zero: [n: ℕ, (0 + n) = n] ≔
         match n {
-          0 ^ backbend,
+          0 ^ eftbend,
           k heir ^ {x: ℕ ^ x heir} leibnitz (k left_zero)
         }
       """
@@ -124,22 +124,22 @@ accessibilityCases library =
 -- must be rejected for the stated reason, without `sorry`.
 soundnessCases :: Library -> [Test]
 soundnessCases library =
-  [ expectEq "a closed instance of a proved setting computeth to backbend" (Right True) do
+  [ expectEq "a closed instance of a proved setting computeth to eftbend" (Right True) do
       program <-
         compile
           """
           let closed: ((1 ‥ (2 ‥ empty)) reverse $ reverse) = (1 ‥ (2 ‥ empty)) ≔ (1 ‥ (2 ‥ empty)) reverse_reverse
-          let direct: ((1 ‥ (2 ‥ empty)) reverse $ reverse) = (1 ‥ (2 ‥ empty)) ≔ backbend
+          let direct: ((1 ‥ (2 ‥ empty)) reverse $ reverse) = (1 ‥ (2 ‥ empty)) ≔ eftbend
           """
       sameNormalIn program "closed" "direct",
     rejectContaining "a list is not its own double" "cannot unify" $
-      compile "let bad: [l: ℕ list, (l · l) = l] ≔ backbend",
+      compile "let bad: [l: ℕ list, (l · l) = l] ≔ eftbend",
     rejectContaining "appending is not commutative" "cannot unify" $
       compile "let bad: [a: ℕ list, b: ℕ list, (a · b) = (b · a)] ≔ match a { empty ^ (b ·_empty) evenmete, first ‥ rest ^ (first ‥) leibnitz (rest bad b) }",
     rejectContaining "distinct lists are not same" "cannot unify 1 with 2" $
-      compile "let bad: (1 ‥ empty) = (2 ‥ empty) ≔ backbend",
-    rejectContaining "reversing is not the selfness" "cannot unify" $
-      compile "let bad: [l: ℕ list, (l reverse) = l] ≔ match l { empty ^ backbend, first ‥ rest ^ (first ‥) leibnitz (rest bad) }",
+      compile "let bad: (1 ‥ empty) = (2 ‥ empty) ≔ eftbend",
+    rejectContaining "reversing is not the sameness" "cannot unify" $
+      compile "let bad: [l: ℕ list, (l reverse) = l] ≔ match l { empty ^ eftbend, first ‥ rest ^ (first ‥) leibnitz (rest bad) }",
     rejectContaining "selfcalling on the same list cannot prove the empty type" "a recursive call must pass a direct child" $
       compile "let bad: [l: ℕ list, 𝟘] ≔ l bad",
     rejectContaining "selfcalling on a larger list cannot prove the empty type" "a recursive call must pass a direct child" $
@@ -147,11 +147,11 @@ soundnessCases library =
     rejectContaining "a branch cannot recurse on its own input" "a recursive call must pass a direct child" $
       compile "let bad: [l: ℕ list, 𝟘] ≔ match l { empty ^ sorry, first ‥ rest ^ (first ‥ rest) bad }",
     rejectContaining "a half match proveth nothing" "the match is not exhaustive: missing ‥" $
-      compile "let bad: [l: ℕ list, l = empty] ≔ match l { empty ^ backbend }",
+      compile "let bad: [l: ℕ list, l = empty] ≔ match l { empty ^ eftbend }",
     rejectContaining "an empty function needeth an impossible input" "the match is not exhaustive" $
       compile "let bad: [(1 ‥ empty) = (1 ‥ empty), 𝟘] ≔ {}",
     rejectContaining "pointwise same functions are not provably same" "cannot unify" $
-      compile "let bad: [f: [ℕ, ℕ], g: [ℕ, ℕ], [n: ℕ, (n f) = (n g)], f = g] ≔ {_ ^ backbend}",
+      compile "let bad: [f: [ℕ, ℕ], g: [ℕ, ℕ], [n: ℕ, (n f) = (n g)], f = g] ≔ {_ ^ eftbend}",
     rejectContaining "a list of one type is not a list of another" "cannot unify ℕ with" $
       compile "let bad: [ℕ list, 𝟚 list] ≔ {l ^ l}",
     rejectContaining "a host binding cannot inhabit an empty type" "requireth a different type" $
@@ -248,7 +248,7 @@ groundDeedExportsCase imports =
   where
     source =
       "use ground.tung "
-        ++ "let echo:𝟙 deed ≔ read warp_flat { _ ^ >{then, 'a' write_line, random, 0 sleep, only sheer} } "
+        ++ "let echo:𝟙 deed ≔ read bind { _ ^ >{then, 'a' write_line, random, 0 sleep, only sheer} } "
         ++ "let task:(ℤ task) deed ≔ (+1 sheer) fork"
 
 systemExplicitCase :: Map.Map String String -> Test

@@ -22,6 +22,7 @@ module Tung
     renderFileDiagnostic,
     failureDiagnostic,
     resolveLibraryRoots,
+    cacheDirectory,
     readLibraryImportFiles,
     readLibraryImports,
     loadProjectFile,
@@ -34,7 +35,7 @@ import Tung.Diagnostic
 import Tung.Format (formatSource)
 import Tung.Highlight (highlightSource)
 import Tung.Identity
-import Tung.Library (readLibraryImportFiles, readLibraryImports, resolveLibraryRoots)
+import Tung.Library (cacheDirectory, readLibraryImportFiles, readLibraryImports, resolveLibraryRoots)
 import Tung.Metadata (languageMetadata)
 import Tung.Primitive
 import Tung.Project

@@ -211,7 +211,7 @@ inferExpression environment names scope@Scope {scopeContext = context, scopeName
 
 -- `match e for known { rows }` matcheth a fresh copy `x` of the scrutinee, as
 -- lean's `match h : e with` doth: the rows form a case function of type
--- `[x: τ, known: e = x, T]`, applied to `e` and `backbend`. each row thus
+-- `[x: τ, known: e = x, T]`, applied to `e` and `eftbend`. each row thus
 -- learneth `known: e = pattern`; `e` itself is not refined in place.
 matchFor :: K.Environment -> Names -> Scope -> Expression -> String -> [Row] -> N.Value -> Elaboration Term
 matchFor environment names scope scrutinee known rows expected = do

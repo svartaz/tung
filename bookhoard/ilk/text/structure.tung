@@ -26,8 +26,8 @@ bizen: text hath_≤ {
 }
 
 bizen: text order_half {
-  let ≤_backbend ≔ sorry
-  let ≤_antievenmete ≔ sorry
+  let ≤_eftbend ≔ sorry
+  let ≤_whitherevenmete ≔ sorry
   let ≤_throughgo ≔ sorry
 }
 
@@ -40,8 +40,8 @@ bizen: unicode hath_≤ {
 }
 
 bizen: unicode order_half {
-  let ≤_backbend ≔ sorry
-  let ≤_antievenmete ≔ sorry
+  let ≤_eftbend ≔ sorry
+  let ≤_whitherevenmete ≔ sorry
   let ≤_throughgo ≔ sorry
 }
 

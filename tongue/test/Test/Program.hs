@@ -45,19 +45,19 @@ integerTerms = atoms ++ binary ++ nested
 
 languagePrograms :: [(String, String, String)]
 languagePrograms =
-  [ ("checked declaration annotations and inferred functions", "use ground.tung let count:* ≔ ℤ let selfness: [@α: *, x: α, α] ≔ x let choose:[@α:*, @β:*, x:α, _:β, α] ≔ x let hath_+: [x:, y:count, count] ≔ x + y let number:count ≔ (let worth ≔ +3 yield worth selfness) let result ≔ number hath_+ (+4 choose @ℤ @text 'ignored') yield result", "eval ok: +7"),
+  [ ("checked declaration annotations and inferred functions", "use ground.tung let count:* ≔ ℤ let sameness: [@α: *, x: α, α] ≔ x let choose:[@α:*, @β:*, x:α, _:β, α] ≔ x let hath_+: [x:, y:count, count] ≔ x + y let tale:count ≔ (let worth ≔ +3 yield worth sameness) let result ≔ tale hath_+ (+4 choose @ℤ @text 'ignored') yield result", "eval ok: +7"),
     ("checked record access", "let worth ≔ r{left ≔ +1, right ≔ +2} yield worth.right", "eval ok: +2"),
     ("checked record update", "let worth ≔ r{left ≔ +1, right ≔ +2} yield r{≔ worth, right ≔ +3, - left}", "eval ok: r{right ≔ +3}"),
     ("checked exhaustive match", "ilk 𝟚: * { yea: 𝟚, nay: 𝟚 } yield match nay { yea ^ +1, nay ^ +2 }", "eval ok: +2"),
     ("checked ℤ match", "yield match +1 { +0 ^ +10, +1 ^ +20, _ ^ +30 }", "eval ok: +20"),
-    ("checked class evidence", "flock hath_selfness:[a:*, *] { let selfness:[a, a] } bizen:ℤ hath_selfness { let selfness: [x:] ≔ x } yield +7 selfness", "eval ok: +7"),
+    ("checked class evidence", "flock hath_sameness:[a:*, *] { let sameness:[a, a] } bizen:ℤ hath_sameness { let sameness: [x:] ≔ x } yield +7 sameness", "eval ok: +7"),
     ("checked record retaineth unused required evidence", "flock capability:[a:*, *] {} bizen:ℤ capability {} let empty:[@a:*, @:a capability, r{}] ≔ r{} yield empty @ℤ", "eval ok: r{}"),
     ("checked annotated local selfcalling", "use ground.tung yield (let count:[ℕ, ℕ] ≔ { 0 ^ 0, n heir ^ n count } yield 2 count)", "eval ok: 0"),
     ( "checked nested deep selfcalling with repeated scrutinees",
       """
       ilk nat:* { zero:nat, heir:[nat,nat] }
       let +:[ℤ,ℤ,ℤ] ≔ 'eke_integer' fremmed
-      let number:[nat,ℤ] ≔ { zero ^ +0, n heir ^ (n number) + +1 }
+      let tale:[nat,ℤ] ≔ { zero ^ +0, n heir ^ (n tale) + +1 }
       let deep:[x:nat,nat] ≔ match x,x {
         zero,_ ^ zero,
         zero heir,_ ^ zero heir,
@@ -67,14 +67,14 @@ languagePrograms =
           (k heir) heir ^ (k heir) local
         } yield m local) heir
       }
-      yield (((((zero heir) heir) heir) heir) deep) number
+      yield (((((zero heir) heir) heir) heir) deep) tale
       """,
       "eval ok: +4"
     ),
     ("checked annotated initializer seeth its preceding binding", "use ground.tung yield (let worth:ℤ ≔ +1 let worth:ℤ ≔ worth + +1 yield worth)", "eval ok: +2"),
     ("checked binders sharing a declaration's name", "let +:[ℤ, ℤ, ℤ] ≔ 'eke_integer' fremmed let keep:[keep:ℤ, ℤ] ≔ keep let outer:[ℤ, ℤ] ≔ {x ^ (let inner ≔ {inner ^ inner} yield x inner)} let worth ≔ (let worth ≔ +1 yield worth) yield (+1 keep) + (worth outer)", "eval ok: +2"),
     ("checked bizen member calleth sibling", "flock linked:[a:*, *] { let first:[a, a] let second:[a, a] } bizen:ℤ linked { let first: [x:] ≔ x let second: [x:] ≔ x first } yield +7 second", "eval ok: +7"),
-    ("checked non-finite floor yieldeth none", "use ground.tung use ilk/maybe.tung let parsed:float maybe ≔ 'Infinity' from_text yield match parsed warp_flat ⌊ { n some ^ n, none ^ +0 }", "eval ok: +0")
+    ("checked non-finite floor yieldeth none", "use ground.tung use ilk/maybe.tung let parsed:float maybe ≔ 'Infinity' from_text yield match parsed bind ⌊ { n some ^ n, none ^ +0 }", "eval ok: +0")
   ]
 
 booleanProductPrograms :: [(String, String, String)]

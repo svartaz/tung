@@ -17,8 +17,8 @@ bizen: 𝟚 monoid_eke {
     yea, nay, nay;
     yea, nay, yea;
     yea, yea, nay;
-    yea, yea, yea ^ backbend
+    yea, yea, yea ^ eftbend
   }
-  let zero_+ ≔ {nay; yea ^ backbend}
-  let +_zero ≔ {nay; yea ^ backbend}
+  let zero_+ ≔ {nay; yea ^ eftbend}
+  let +_zero ≔ {nay; yea ^ eftbend}
 }

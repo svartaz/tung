@@ -31,7 +31,7 @@ tests =
     reject "an indexed constructor cannot inhabit another index" $ do
       environment <- vectorEnvironment
       check environment vectorEmpty (vector natural (successor zero)),
-    expectEq "selfness transport along reflexivity computeth" (Right transportedIdentity) $ do
+    expectEq "sameness transport along reflexivity computeth" (Right transportedIdentity) $ do
       environment <- identityEnvironment
       normalise environment transport,
     reject "reflexivity cannot identify distinct constructors" $ do
@@ -194,8 +194,8 @@ identityEnvironment = naturalEnvironment >>= (`defineInductive` identityDeclarat
 identityDeclaration :: InductiveDeclaration
 identityDeclaration =
   InductiveDeclaration
-    (symbol "selfness")
-    (symbol "selfness_induction")
+    (symbol "sameness")
+    (symbol "sameness_induction")
     2
     1
     []
@@ -203,7 +203,7 @@ identityDeclaration =
     [(symbol "reflexivity", Pi Implicit (Sort (LParam 0)) (Pi Implicit (Local 0) (identityAt (LParam 0) (Local 1) (Local 0) (Local 0))))]
 
 identityAt :: Level -> Term -> Term -> Term -> Term
-identityAt universe ty left right = apply Explicit (Apply Implicit (global "selfness" [universe]) ty) [left, right]
+identityAt universe ty left right = apply Explicit (Apply Implicit (global "sameness" [universe]) ty) [left, right]
 
 identity :: Term -> Term -> Term -> Term
 identity = identityAt (level 0)
@@ -214,7 +214,7 @@ transport =
   Lambda Explicit (Pi Explicit natural (sort 0)) $
     Lambda Explicit (Apply Explicit (Local 0) zero) $
       let motive = Lambda Explicit natural (Lambda Explicit (identity natural zero (Local 0)) (Apply Explicit (Local 3) (Local 1)))
-       in apply Explicit (apply Implicit (global "selfness_induction" [level 0, level 0]) [natural, zero]) [motive, Local 0, zero, reflexivity]
+       in apply Explicit (apply Implicit (global "sameness_induction" [level 0, level 0]) [natural, zero]) [motive, Local 0, zero, reflexivity]
 transportedIdentity = Lambda Explicit (Pi Explicit natural (sort 0)) (Lambda Explicit (Apply Explicit (Local 0) zero) (Local 0))
 
 bad :: Term

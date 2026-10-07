@@ -2,15 +2,17 @@ use combinator.tung
 use flock/algebra/half/semigroupoid.tung
 
 show flock category: [⇨: [*, *, *], @: ⇨ semigroupoid, *] {
-  let is: [@α: *, α ⇨ α]
+  let sameness: [@α: *, α ⇨ α]
 
-  let is_▷: [@α: *, @β: *, f: α ⇨ β, (is ▷ f) = f]
-  let ▷_is: [@α: *, @β: *, f: α ⇨ β, (f ▷ is) = f]
+  let sameness_▷: [@α: *, @β: *, f: α ⇨ β, (sameness ▷ f) = f]
+
+  let ▷_sameness: [@α: *, @β: *, f: α ⇨ β, (f ▷ sameness) = f]
 }
 
 bizen fallback: → category {
-  let is: [a:] ≔ a
+  let sameness: [a:] ≔ a
 
-  let is_▷ ≔ {_ ^ backbend}
-  let ▷_is ≔ {_ ^ backbend}
+  let sameness_▷: [_:] ≔ eftbend
+
+  let ▷_sameness: [_:] ≔ eftbend
 }

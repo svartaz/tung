@@ -4,9 +4,9 @@ use flock/algebra/half/semigroupoid.tung
 use flock/algebra/whole/hath_magma.tung
 use flock/algebra/whole/semigroup.tung
 use flock/functor.tung
-use flock/functor/applicative.tung
-use flock/functor/hath_cata.tung
-use flock/functor/hath_traverse.tung
+use flock/functor/atfoldsome.tung
+use flock/functor/catamorphism.tung
+use flock/functor/hath_throughwend.tung
 use flock/functor/monad.tung
 use flock/hath_inhold.tung
 use ilk/list.tung
@@ -19,7 +19,7 @@ show ilk nonempty: [α: *, *] {
 }
 
 ## build a one-element non-empty list.
-show let singleton: [@α: *, a: α, α nonempty] ≔
+show let onesome: [@α: *, a: α, α nonempty] ≔
   a ‥′ empty
 
 ## expose a non-empty list as an ordinary list.
@@ -28,7 +28,7 @@ show let to_list: [@α: *, (first ‥′ rest): α nonempty, α list] ≔
 
 ## make a non-empty list when the input hath a first element.
 show let from_list: [@α: *, α list, (α nonempty) maybe] ≔ {
-  empty ^ none,
+  empty        ^ none,
   first ‥ rest ^ (first ‥′ rest) some
 }
 
@@ -44,95 +44,101 @@ bizen: nonempty functor {
   let warp: [first ‥′ rest:, f:] ≔
     (first f) ‥′ (rest warp f)
 
-  let warp_is ≔ {@α ^ {first ‥′ rest ^
+  let warp_sameness ≔ {@α ^ {first ‥′ rest ^
       (first ‥′) leibnitz (
-        {l: α list ^ (l warp is) = l} unbuild list backbend
+        {l: α list ^ (l warp sameness) = l} unbuild list eftbend
         {head, _, proof ^ (head ‥) leibnitz proof} rest
       )
-  }}
-}
+    }
+}}
 
 bizen: [@α: *, (α nonempty) semigroup] {
   let ·: [first ‥′ rest:, right:] ≔
     first ‥′ (rest · (right to_list))
 
-  let ·_· ≔ {first ‥′ rest, next ‥′ middle, last ‥′ end ^
+  let ·_·: [first ‥′ rest:, next ‥′ middle:, last ‥′ end:] ≔
     (first ‥′) leibnitz (
       {l: α list ^ (l · ((next ‥ middle) · (last ‥ end))) = ((l · (next ‥ middle)) · (last ‥ end))}
-      unbuild list backbend {head, _, proof ^ (head ‥) leibnitz proof} rest
+      unbuild list eftbend {head, _, proof ^ (head ‥) leibnitz proof} rest
     )
-  }
 }
 
-bizen: nonempty applicative {
-  let sheer ≔ singleton
-  let apply: [first ‥′ rest:, f ‥′ fs:] ≔
+bizen: nonempty atfoldsome {
+  let sheer ≔ onesome
+  let atfold: [first ‥′ rest:, f ‥′ fs:] ≔
     (first f) ‥′ (
-      (rest warp f) · ((first ‥ rest) apply fs)
+      (rest warp f) · ((first ‥ rest) atfold fs)
     )
 
-  let apply_is_sheer ≔ {@α ^ {first ‥′ rest ^
+  let atfold_sameness_sheer ≔ {@α ^ {first ‥′ rest ^
       (first ‥′) leibnitz (
-        {l: α list ^ ((l warp is) · empty) = l} unbuild list backbend
+        {l: α list ^ ((l warp sameness) · empty) = l} unbuild list eftbend
         {head, _, proof ^ (head ‥) leibnitz proof} rest
       )
   }}
-  let sheer_apply_sheer ≔ {_, _ ^ backbend}
-  let apply_apply ≔ {@α, @β, @γ ^ {first ‥′ rest, f, g ^
+
+  let sheer_atfold_sheer: [_:, _:] ≔ eftbend
+
+  let atfold_atfold ≔ {@α, @β, @γ ^ {first ‥′ rest, f, g ^
       ((first f $ g) ‥′) leibnitz (
         {l: α list ^ (((l warp f) · empty) warp g $ · empty) = ((l warp (f ▷ g)) · empty)}
-        unbuild list backbend
+        unbuild list eftbend
         {head, _, proof ^ ((head f $ g) ‥) leibnitz proof} rest
       )
   }}
-  let sheer_apply ≔ {@α, @β ^ {a, f ‥′ fs ^
+
+  let sheer_atfold ≔ {@α, @β ^ {a, f ‥′ fs ^
       ((a f) ‥′) leibnitz (
-        {l: [α, β] list ^ ((a list~singleton) apply l) = (l warp (a call))}
-        unbuild list backbend
+        {l: [α, β] list ^ ((a list~onesome) atfold l) = (l warp (a call))}
+        unbuild list eftbend
         {head, _, proof ^ ((a head) ‥) leibnitz proof} fs
       )
-  }}
+    }
+  }
 }
 
 bizen: nonempty monad {
   let flat: [first ‥′ rest:] ≔ rest gather₁ first ·
 
-  let sheer_warp_flat ≔ {_, _ ^ backbend}
-  let warp_sheer_flat ≔ {first ‥′ rest ^ rest gather_singletons (first singleton)}
+  let sheer_bind: [_:, _:] ≔ eftbend
+
+  let warp_sheer_flat: [first ‥′ rest:] ≔
+    rest gather_onesomes (first onesome)
 }
 
 ## list append equations for the non-empty flattening proof.
 let join_right: [@α: *, l: α list, (l · empty) = l] ≔ match l {
-  empty ^ backbend,
+  empty        ^ eftbend,
   first ‥ rest ^ (first ‥) leibnitz (rest join_right)
 }
 
 let join_associative: [@α: *, a: α list, b: α list, c: α list,
   (a · (b · c)) = ((a · b) · c)
 ] ≔ match a {
-  empty ^ backbend,
+  empty        ^ eftbend,
   first ‥ rest ^ (first ‥) leibnitz (rest join_associative b c)
 }
 
 ## folding singleton lists appendeth every element to the initial value.
-let gather_singletons: [@α: *, l: α list, start: α nonempty,
-  (l warp singleton $ gather₁ start ·) =
+let gather_onesomes: [@α: *, l: α list, start: α nonempty,
+  (l warp onesome $ gather₁ start ·) =
   (match start {first ‥′ rest ^ first ‥′ (rest · l)})
 ] ≔ match l, start {
-  empty, first ‥′ rest ^ ((first ‥′) leibnitz (rest join_right)) evenmete,
+  empty,       first ‥′ rest ^ ((first ‥′) leibnitz (rest join_right)) evenmete,
   next ‥ tail, first ‥′ rest ^
-    (tail gather_singletons ((first ‥′ rest) · (next singleton))) throughgo
+    (tail gather_onesomes ((first ‥′ rest) · (next onesome))) throughgo
       ((first ‥′) leibnitz ((rest join_associative (next ‥ empty) tail) evenmete))
 }
 
-bizen: nonempty hath_cata {
+bizen: nonempty catamorphism {
   let gather₀: [first ‥′ rest:, b:, f:] ≔
     first f (rest gather₀ b f)
+
   let gather₁: [first ‥′ rest:, b:, f:] ≔
     rest gather₁ (b f first) f
 }
 
-bizen: nonempty hath_traverse {
-  let traverse: [first ‥′ rest:, f:] ≔
-    (first f) lift₂ (rest traverse f) ‥′
+bizen: nonempty hath_throughwend {
+  let throughwend: [first ‥′ rest:, f:] ≔
+    (first f) lift₂ (rest throughwend f) ‥′
 }

@@ -2,6 +2,7 @@ use flock/order/lattice.tung
 use flock/order/order_whole.tung
 use flock/order/semilattice_lower.tung
 use flock/order/semilattice_upper.tung
+use is.tung
 
 ## a lattice whose infimum and supremum distribute over each other.
 show flock lattice_distributive: [α: *, @: α lattice, *] {
@@ -13,8 +14,11 @@ show flock lattice_distributive: [α: *, @: α lattice, *] {
 }
 
 bizen: [@β: *, @: β lattice_distributive, @α: *, [α, β] lattice_distributive] {
-  let ∧_∨ ≔ sorry
-  let ∨_∧ ≔ sorry
+  let ∧_∨: [f:, g:, h:] ≔
+    {a ^ (a f) ∧_∨ (a g) (a h)} fall_umtake
+
+  let ∨_∧: [f:, g:, h:] ≔
+    {a ^ (a f) ∨_∧ (a g) (a h)} fall_umtake
 }
 
 bizen: [@α: *, @: α order_whole, α lattice_distributive] {

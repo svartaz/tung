@@ -26,5 +26,5 @@ let to_integer: [ℕ, ℤ] ≔ 'natural_to_integer' fremmed
 let to_natural: [ℤ, ℕ maybe] ≔ 'integer_to_natural' fremmed
 
 ## a type may depend on a computed comparison.
-let sized: [ℤ, *] ≔ {n ^ match n ≤ +0 { yea ^ text, nay ^ ℤ }}
+let sized: [n: ℤ, *] ≔ match n ≤ +0 { yea ^ text, nay ^ ℤ }
 let five: (+1 sized) ≔ +2 + +3

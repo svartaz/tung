@@ -9,11 +9,11 @@ let l ≔ list~empty
 let h ≔ hashmap~empty
 
 # define variables
-let number: ℤ ≔ +42
+let tale: ℤ ≔ +42
 let message ≔ 'hello!'
 
 # define functions
-let is: [@α: *, a: α, α] ≔ a
+let sameness: [@α: *, a: α, α] ≔ a
 let constant: [@α: *, @β: *, a: α, b: β, α] ≔ a
 # infer type inputs or supply them with `@`
 let greeting: text ≔ 'hello' constant +42
@@ -80,8 +80,8 @@ bizen: 𝟚 hath_describe {
 # a deed is an action that the runner performeth. `then` sequenceth deeds
 let greet: [name: text, 𝟙 deed] ≔ ('hello, ' write) then (name write_line)
 
-# `warp_flat` passeth a deed's result to the next deed
-let roll: 𝟙 deed ≔ random warp_flat { luck ^ luck to_text $ write_line }
+# `bind` passeth a deed's result to the next deed
+let roll: 𝟙 deed ≔ random bind { luck ^ luck to_text $ write_line }
 
 # `main` is the entry point
 let main: 𝟙 deed ≔ >{then,

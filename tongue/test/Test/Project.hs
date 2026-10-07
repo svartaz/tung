@@ -18,7 +18,7 @@ import Test.Compile (compileProject)
 import Test.Harness (Group, Test, expect, expectEq)
 import Test.Harness qualified as Harness
 import Tung (ModuleId (..), Project (..), loadProjectFile)
-import Tung.Dependent.Source (typeOfName)
+import Tung.Dependent.Source (cacheKeys, compileImports, loadInterfaces, saveInterfaces, sourceEnvironment, sourceExports, sourceSnapshot, typeOfName)
 
 group :: IO Group
 group =
@@ -32,7 +32,9 @@ group =
       ambiguousModuleRoots,
       missingImport,
       ambiguousRelativeImport,
-      canonicalAlias
+      canonicalAlias,
+      interfaceRoundTrip,
+      interfaceKeys
     ]
 
 nestedImports :: Test
@@ -168,3 +170,33 @@ temporaryDirectory = do
   let path = base </> ("tung-project-test-" ++ show (stamp :: Integer))
   createDirectory path
   pure path
+
+-- a saved interface reloadeth to the same environment and exports.
+interfaceRoundTrip :: Test
+interfaceRoundTrip = withDirectory \root -> do
+  let modules = Map.map sourceSnapshot (Map.fromList [("a.tung", "use b.tung show let a ≔ b"), ("b.tung", "show ilk two:* { one:two, other:two } show let b ≔ one")])
+      keys = cacheKeys "build" modules
+  case compileImports Map.empty modules ["a.tung"] of
+    Left failure -> pure (Just (show failure))
+    Right compiled -> do
+      saveInterfaces root keys compiled
+      loaded <- loadInterfaces root modules keys
+      let same path = (sourceEnvironment <$> Map.lookup path loaded) == (sourceEnvironment <$> Map.lookup path compiled) && (sourceExports <$> Map.lookup path loaded) == (sourceExports <$> Map.lookup path compiled)
+      expect "an interface reloadeth to the same environment and exports" (Map.keys loaded == Map.keys compiled && all same (Map.keys compiled))
+
+-- a key changeth with its own text, an import's text, and the build, and a
+-- module with a missing import hath none.
+interfaceKeys :: Test
+interfaceKeys =
+  expectEq
+    "an interface key followeth its sources and build"
+    [True, True, True, True]
+    [ changed (Map.insert "b.tung" "show let b ≔ +2"),
+      changed (Map.insert "a.tung" "use b.tung show let a ≔ b let c ≔ a"),
+      key "other" base /= key "build" base,
+      Map.notMember "a.tung" (cacheKeys "build" (Map.map sourceSnapshot (Map.delete "b.tung" base)))
+    ]
+  where
+    base = Map.fromList [("a.tung", "use b.tung show let a ≔ b"), ("b.tung", "show let b ≔ +1")]
+    key build sources = Map.lookup "a.tung" (cacheKeys build (Map.map sourceSnapshot sources))
+    changed edit = key "build" (edit base) /= key "build" base

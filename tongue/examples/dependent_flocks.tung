@@ -9,14 +9,14 @@ ilk maybe: [α: *, *] {
 flock hath_≍: [α: *, *] {
   let ≍: [α, α, 𝟚]
 
-  let same_backbend: [x: α, (x ≍ x) = yea]
+  let same_eftbend: [x: α, (x ≍ x) = yea]
 }
 
 ## an anonymous requirement `@:` is found by instance search.
 let ≭: [@α: *, @: α hath_≍, a: α, b: α, 𝟚] ≔ match a ≍ b { yea ^ nay, nay ^ yea }
 
 ## a bizen defineth each law of its flock. this example assumeth the laws with
-## `sorry`; a checked proof may use `backbend` when the law holdeth by computation.
+## `sorry`; a checked proof may use `eftbend` when the law holdeth by computation.
 bizen: 𝟚 hath_≍ {
   let ≍ ≔ {
     yea, yea;
@@ -24,18 +24,18 @@ bizen: 𝟚 hath_≍ {
     _,   _   ^ nay
   }
 
-  let same_backbend ≔ sorry
+  let same_eftbend ≔ sorry
 }
 
 ## a bizen may require other bizens.
 bizen: [@α: *, @: α hath_≍, (α maybe) hath_≍] {
   let ≍ ≔ {
-    none, none ^ yea,
+    none,   none   ^ yea,
     a some, b some ^ a ≍ b,
-    _, _ ^ nay
+    _,      _      ^ nay
   }
 
-  let same_backbend ≔ sorry
+  let same_eftbend ≔ sorry
 }
 
 flock functor: [φ: [*, *], *] {
@@ -43,20 +43,20 @@ flock functor: [φ: [*, *], *] {
 }
 
 ## a parent requirement maketh every applicative a functor.
-flock applicative: [φ: [*, *], @: φ functor, *] {
+flock atfoldsome: [φ: [*, *], @: φ functor, *] {
   let sheer: [@α: *, α, α φ]
 }
 
 bizen: maybe functor {
   let warp ≔ {
-    none, _ ^ none,
+    none,   _ ^ none,
     a some, f ^ (a f) some
   }
 }
 
-bizen: maybe applicative {
-  let sheer ≔ {a ^ a some}
+bizen: maybe atfoldsome {
+  let sheer: [a:] ≔ a some
 }
 
 ## the functor cometh from the applicative requirement.
-let lift: [@φ: [*, *], @: φ applicative, @α: *, @β: *, a: α, f: [α, β], β φ] ≔ (a sheer) warp f
+let lift: [@φ: [*, *], @: φ atfoldsome, @α: *, @β: *, a: α, f: [α, β], β φ] ≔ (a sheer) warp f

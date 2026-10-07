@@ -72,7 +72,7 @@ tests library example =
                      again deed_bind {loop ^ next loop}
                    }
                  }} deed_sheer
-               } deed_fix
+               } deed_steadfast
                let main:𝟙 deed ≔ collect deed_bind {loop ^ +0 loop}
 
                """

@@ -2,6 +2,7 @@ use combinator.tung
 use flock/order/semilattice_lower.tung
 use ilk/three.tung
 use ilk/two.tung
+use is.tung
 
 ## an infimum semilattice with a greatest value.
 show flock semilattice_bounded_upper: [α: *, @: α semilattice_lower, *] {
@@ -13,17 +14,17 @@ show flock semilattice_bounded_upper: [α: *, @: α semilattice_lower, *] {
 bizen: [@β: *, @: β semilattice_bounded_upper, @α: *, (α → β) semilattice_bounded_upper] {
   let ⊤: [_:] ≔ ⊤
 
-  let ⊤_∧ ≔ sorry
+  let ⊤_∧: [f:] ≔ {a ^ (a f) ⊤_∧} fall_umtake
 }
 
 bizen: 𝟚 semilattice_bounded_upper {
   let ⊤ ≔ yea
 
-  let ⊤_∧ ≔ {yea; nay ^ backbend}
+  let ⊤_∧ ≔ {yea; nay ^ eftbend}
 }
 
 bizen: 𝟛 semilattice_bounded_upper {
   let ⊤ ≔ aft
 
-  let ⊤_∧ ≔ {fore; mid; aft ^ backbend}
+  let ⊤_∧ ≔ {fore; mid; aft ^ eftbend}
 }

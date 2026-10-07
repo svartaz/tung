@@ -43,8 +43,7 @@ const labels = async (source: string, name: string) => {
     });
 };
 test("compiler roles keep types, header binders and application positions consistent", async () => {
-  const source =
-    "show let constant:[@a:*, @b:*, x:a, _:b, a] ≔ x\n" +
+  const source = "show let constant:[@a:*, @b:*, x:a, _:b, a] ≔ x\n" +
     "show let read:[text path:_path, (text ∑ text) deed] ≔ text read_file\n" +
     "show let join:[text₀ path:_path, text₁ path:_path, _path] ≔ text₀ · '/' $ · text₁ $ path";
   assert.deepEqual(await labels(source, "a"), [
@@ -67,9 +66,8 @@ test("compiler roles keep types, header binders and application positions consis
   assert((await labels(source, ":")).every((label) => label === undefined));
 });
 test("names bound by worth slots stay terms inside later types", async () => {
-  const source =
-    "ilk =:[@α:*, a:α, α, *] { backbend:a = a }\n" +
-    "let leibnitz:[@α:*, @β:*, @a:α, @b:α, f:[α, β], backbend:a = b, (a f) = (b f)] ≔ reflect\n" +
+  const source = "ilk =:[@α:*, a:α, α, *] { eftbend:a = a }\n" +
+    "let leibnitz:[@α:*, @β:*, @a:α, @b:α, f:[α, β], eftbend:a = b, (a f) = (b f)] ≔ reflect\n" +
     "let other:[@a:*, a] ≔ sorry";
   assert.deepEqual(await labels(source, "a"), [
     undefined,
@@ -97,8 +95,7 @@ test("names bound by worth slots stay terms inside later types", async () => {
   ]);
 });
 test("ilk-returning let declarations have type roles", async () => {
-  const source =
-    "show let powerset:[a:*, *] ≔ a → 𝟚\n" +
+  const source = "show let powerset:[a:*, *] ≔ a → 𝟚\n" +
     "let predicate:ℤ powerset ≔ {_ ^ yea}";
   assert.deepEqual(await labels(source, "powerset"), [
     "type:declaration.typeFunction",
@@ -110,10 +107,9 @@ test("ilk-returning let declarations have type roles", async () => {
   ]);
 });
 test("declaration annotations retain compiler roles for prefixed names and greek parameters", async () => {
-  const source =
-    "let count:* ≔ ℤ\n" +
-    "let selfness:[@α:*, x:α, α] ≔ x\n" +
-    "let answer:count ≔ +42 selfness @count";
+  const source = "let count:* ≔ ℤ\n" +
+    "let sameness:[@α:*, x:α, α] ≔ x\n" +
+    "let answer:count ≔ +42 sameness @count";
   assert.deepEqual(await labels(source, "count"), [
     "type:declaration",
     "type:",
@@ -130,7 +126,7 @@ test("declaration annotations retain compiler roles for prefixed names and greek
     undefined,
     undefined,
   ]);
-  assert.deepEqual(await labels(source, "selfness"), [
+  assert.deepEqual(await labels(source, "sameness"), [
     "function:declaration.applied",
     "call:applied",
   ]);
@@ -170,9 +166,8 @@ test("explicit type arguments retain type roles among worth arguments", async ()
   ]);
 });
 test("compiler roles use GADT, flock and pattern grammar", async () => {
-  const source =
-    "show ilk tag: [a:*, *] { integer: ℤ tag, boolean: 𝟚 tag }\n" +
-    "show flock functor:[f:[*, *], *] { let warp:[@a:*, @b:*, a f, [a, b], b f] let warp_is:[@a:*, af:a f, (af warp is) = af] }\n" +
+  const source = "show ilk tag: [a:*, *] { integer: ℤ tag, boolean: 𝟚 tag }\n" +
+    "show flock functor:[f:[*, *], *] { let warp:[@a:*, @b:*, a f, [a, b], b f] let warp_sameness:[@a:*, af:a f, (af warp sameness) = af] }\n" +
     "show let void:[@f:[*, *], @:f functor, @a:*, af:a f, 𝟙 f] ≔ af warp {_ ^ only}\n" +
     "let read:[ℤ tag, ℤ] ≔ { x integer ^ x }";
   assert.deepEqual(await labels(source, "tag"), [
@@ -197,8 +192,7 @@ test("compiler roles use GADT, flock and pattern grammar", async () => {
   ]);
 });
 test("local polymorphic binders have compiler roles in declarations", async () => {
-  const source =
-    "ilk packed: * { pack: [@a:*, a, packed] }\n" +
+  const source = "ilk packed: * { pack: [@a:*, a, packed] }\n" +
     "flock hath_≍:[a:*, *] { let rule:[@b:*, x:b, x = x] }\n" +
     "bizen:[@a:*, a hath_≍] {}";
   assert.deepEqual(await labels(source, "@"), [
@@ -228,8 +222,9 @@ test("compiler highlighting recovereth incomplete syntax without accepting it", 
   );
   const result = await compiler.check({ text: source }, []).result;
   assert.equal(result.kind, "check");
-  if (result.kind === "check")
+  if (result.kind === "check") {
     assert.equal(result.diagnostics[0]?.kind, "parse");
+  }
 });
 test("compiler spans warp unicode and line endings without eager name resolution", () => {
   const resolve = () => {

@@ -120,11 +120,8 @@ and erased execution have separate public facades: `Tung.Dependent.Source` and
 and evaluator have been removed. ordinary commands and the editor use the same
 compiler.
 
-the [agda delegation plan](dependent.md#agda-delegation-plan) proposeth a
-shared syntax frontend over agda, replacing the handwritten haskell engine.
-no delegation stage is implemented. the completed local simplifications below
-supply the migration baseline and service contracts. this guide describeth
-the current local checker; update its module boundaries when each stage landeth.
+this guide describeth the current checker; update its module boundaries when
+they change.
 
 ## projects and imports
 
@@ -153,6 +150,16 @@ declarations. it calleth the declaration checker from `Source.Declaration`; it d
 not infer types or select instances. each declaration's dependencies are
 computed once. cached environments are merged only after shared definitions
 agree. source spans travel with declarations through scheduling.
+
+`Source.Cache` keepeth checked imports on disk for command-line runs, in
+`.tung/cache` beside the nearest `tung.yaml`, or beside the file without one.
+a module's key hasheth its source text, its path, its imports' keys, and the
+running compiler's path and modification time, so an edited module, any module
+that reacheth it, and a rebuilt compiler all miss. an interface holdeth only the
+module's own definitions and its exports; loading rebuildeth each environment
+from its imports' interfaces and the primitives, sharing them. a module whose
+imports are missing or unparsed hath no key. an unreadable interface is
+ignored, and a failed write leaveth the cache as it was.
 
 one editor session cacheth compiled imports until their source map changeth.
 it cacheth the last root result, including an import failure, until the root text
@@ -266,7 +273,8 @@ status exactly; `word_count` receiveth a real file.
 
 `Tung.Format` is the authoritative two-space formatter for the cli and editor.
 it preserveth comments and incomplete source, sorteth contiguous `use` blocks,
-and remaineth idempotent. it invoketh neither parsing nor type checking.
+aligneth the columns and `^` of consecutive case rows that share indentation
+and column count, and remaineth idempotent. it invoketh neither parsing nor type checking.
 
 `tung --editor-session` provideth diagnostics, inferred types, highlighting,
 and formatting through utf-8 json lines. each line is one complete message;
@@ -283,7 +291,7 @@ the compiler and extension must use the same protocol version.
 - diagnostics contain `kind` (`parse`, `type`, or `goal`), optional import
   `path`, utf-16 `start` and `end`, and `message`. an empty array is success.
   goals are informational diagnostics, with their named context in the message.
-- `cancel` useth the target request id. late replies to cancelled requests are
+- `outstrike` useth the target request id. late replies to cancelled requests are
   ignored. cancellation cannot interrupt a response line halfway through.
 - malformed requests terminate the session. malformed replies, unsupported
   protocol versions, and mismatched live replies settle all pending client

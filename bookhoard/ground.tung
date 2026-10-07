@@ -15,11 +15,11 @@ use flock/algebra/arithmetic/monoid_eke.tung
 use flock/algebra/arithmetic/monoid_fold.tung
 use flock/algebra/arithmetic/ring.tung
 use flock/algebra/arithmetic/semiring.tung
+use flock/elementary.tung
 use flock/functor.tung
-use flock/functor/applicative.tung
+use flock/functor/atfoldsome.tung
 use flock/functor/bifunctor.tung
 use flock/functor/monad.tung
-use flock/hath_elementary.tung
 use flock/hath_from_text.tung
 use flock/hath_inhold.tung
 use flock/hath_same.tung
@@ -65,8 +65,8 @@ show semilattice_bounded_upper, semilattice_upper_bounded, lattice_bounded, comp
 show hath_to_text, hath_from_text
 show hath_+, hath_zero, monoid_eke, hath_×, hath_one, monoid_fold, semiring
 show hath_-, ring, hath_÷, field, hath_%, euclidean
-show functor, bifunctor, applicative, monad, hath_∋
-show hath_elementary
+show functor, bifunctor, atfoldsome, monad, hath_∋
+show elementary
 
 show →
 show ¬, if
@@ -74,7 +74,7 @@ show when, when_not, branch
 
 show write, write_line, read
 show random
-show fork, wait, cancel, wait_for, sleep
+show fork, wait, outstrike, wait_for, sleep
 show ≍, ≭
 show ≤, <, compare, clamp, ∧, ∨, ⟂, ⊤
 show ∋
@@ -89,6 +89,6 @@ show unicode_to_natural, natural_to_unicode
 show behead_text, text_to_list, list_to_text
 show warp
 show biwarp
-show sheer, apply, lift₂, lift₃, keep_first, keep_other
-show flat, warp_flat, then, void
-show deed_fix
+show sheer, atfold, lift₂, lift₃, keep_first, keep_other
+show flat, bind, then, void
+show deed_steadfast

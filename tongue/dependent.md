@@ -2,8 +2,7 @@
 
 audience: agents. purpose: how the checker realiseth the language: the dependent
 core, elaboration, pattern compilation, instance search, the logical boundary,
-the settled [design decisions](#design-decisions), and the
-[agda delegation plan](#agda-delegation-plan). each section stateth its
+and the settled [design decisions](#design-decisions). each section stateth its
 algorithm, rejection cases, and limits.
 [`language.md`](language.md) owneth what a program author writeth and observeth:
 syntax, names, libraries, the runner, and command-line output. this document
@@ -11,10 +10,6 @@ linketh to it rather than restating those rules.
 [`tutorial.tung`](tutorial.tung) is the maintainer's draft of the
 target syntax, not a checked example. [`todo.md`](../todo.md) tracketh
 remaining work.
-
-[agda delegation](#agda-delegation-plan) is a proposed replacement for the
-haskell compiler and evaluator. it is not implemented; the rules below describe the current
-compiler.
 
 ## implemented core
 
@@ -103,7 +98,7 @@ they are not a machine-checked proof of consistency or subject reduction.
 
 ```tung
 let identity-type ≔ [α: *, x: α, α]
-let selfness: identity-type ≔ {α ^ {x ^ x}}
+let sameness: identity-type ≔ {α ^ {x ^ x}}
 let alias: [α: *, *] ≔ α
 let result: * ≔ * alias
 let choose: [α: *, @x: α, α] ≔ x
@@ -140,7 +135,7 @@ let inferred ≔ * implicit-identity
 - `{}` is the case function on an empty family, and `match x {}` matcheth a
   value of one.
 - `ℕ`, `0`, `heir`, `ℤ`, `overnaught`, `heir_undernaught`, `float`,
-  `unicode`, `text`, `deed`, `task`, `=`, and `backbend` are
+  `unicode`, `text`, `deed`, `task`, `=`, and `eftbend` are
   primitive and visible in every module. an imported or local name of the same spelling shadoweth
   them.
   anonymous `{x ^ body}` lambdas need constraints or a function annotation.
@@ -190,13 +185,13 @@ ilk ℕ: * {
 let rebuild: [x: ℕ, ℕ] ≔
   {_: ℕ ^ ℕ} unbuild ℕ zero {n, ih ^ ih heir} x
 
-ilk selfness: [α: *, x: α, α, *] {
-  refl: α selfness x x
+ilk sameness: [α: *, x: α, α, *] {
+  refl: α sameness x x
 }
 
-let transport: [@α: *, @x: α, @y: α, proof: α selfness x y,
+let transport: [@α: *, @x: α, @y: α, proof: α sameness x y,
   family: [α, *], worth: x family, y family] ≔
-  {z, _ ^ z family} unbuild selfness @α @x worth y proof
+  {z, _ ^ z family} unbuild sameness @α @x worth y proof
 ```
 
 - `ilk name:signature { ... }` declareth one family. constructors share the
@@ -252,7 +247,7 @@ let reverse_onto: [@α: *, list: α list, done: α list, α list] ≔ match list
   row of plain binders remaineth an ordinary lambda. a row whose binder nameth
   a constructor is a pattern row. leading implicit binders stay named lambda
   binders; only the explicit binders after them form the row, so a header slot
-  named by a constructor, as `backbend:a = b`, matcheth its input.
+  named by a constructor, as `eftbend:a = b`, matcheth its input.
 - `match a, b { rows }` matcheth scrutinees in order. a scrutinee that
   evaluateth to a neutral local is matched in place. a scrutinee that
   evaluateth to a stuck computation, such as `a ≤ a`, becometh a new input:
@@ -319,8 +314,16 @@ let reverse_onto: [@α: *, list: α list, done: α list, α list] ≔ match list
   `[yea = nay, 𝟘] ≔ {}` holdeth. an index whose constructor cannot be
   decided, such as a function call, is rejected, as is an index variable
   that appeareth twice or in the family's parameters: unifying `a = a` would
-  need axiom K, which tung leaveth unprovable. recursion cannot yet match a
-  value whose indices are constructors.
+  need axiom K, which tung leaveth unprovable.
+- a recursive let may match an indexed value when each index is a distinct
+  input bound before it and unused by the family's parameters. the motive
+  abstracteth those index inputs with the value, so the result type may
+  mention them. an index input is not a column: it must be matched by a
+  variable, and each branch rebindeth its name to the constructor's index.
+  a recursive call omitteth no input; an explicit index argument is unified
+  with the child's own index, and the hypothesis already standeth there.
+  course-of-values recursion, and recursion on a value whose indices are
+  constructors, still reject indexed families.
 - a family without indices revertth the inputs
   whose types mention the matched value in the same way, so in
   `{yea, known ^ ...}` against `[b: 𝟚, (x p) = b, ...]` the yea branch seeth
@@ -400,9 +403,9 @@ program across three files. run it with
 
 ```tung
 use host.tung
-use natural.tung number
+use natural.tung tale
 
-let main: 𝟙 deed ≔ >{then, number~four repeat ('tung ' write), '\n' host~write}
+let main: 𝟙 deed ≔ >{then, tale~four repeat ('tung ' write), '\n' host~write}
 ```
 
 - `use path` and `use path alias` import a module. `path` followeth the
@@ -429,7 +432,7 @@ equality and functor flocks, requiring bizens, and a parent flock.
 ```tung
 flock hath_≍: [α: *, *] {
   let ≍: [α, α, 𝟚]
-  let backbend: [x: α, (x ≍ x) = yea]
+  let eftbend: [x: α, (x ≍ x) = yea]
 }
 
 let ≭: [@α: *, @: α hath_≍, a: α, b: α, 𝟚] ≔ match a ≍ b { yea ^ nay, nay ^ yea }
@@ -438,7 +441,7 @@ bizen: [@α: *, @: α hath_≍, (α maybe) hath_≍] {
   let ≍ ≔ { none, none ^ yea, a some, b some ^ a ≍ b, _, _ ^ nay }
 }
 
-flock applicative: [φ: [*, *], @: φ functor, *] {
+flock atfoldsome: [φ: [*, *], @: φ functor, *] {
   let sheer: [@α: *, α, α φ]
 }
 ```
@@ -475,7 +478,7 @@ syntax. elaboration:
   neutral `NField`, compared structurally.
 - a bizen defineth each law of its flock as it defineth any member: the proof
   is checked against the field type with this bizen's earlier members
-  substituted, so `backbend` proveth a law that holdeth by computing them. an
+  substituted, so `eftbend` proveth a law that holdeth by computing them. an
   inline parent's law seeth the members defined for that parent. `sorry` is
   accepted as for any member and is reported for the bizen.
 - `show flock` publisheth the family, constructor, eliminator, accessors, and
@@ -521,7 +524,7 @@ instance search:
   equations of the annotation are split by first-order approximation, first
   against a rigid application and then between two applied holes. a body
   therefore matcheth against a goal whose members can compute, as in
-  `((l filter p) filter p) = (l filter p)`. fallback bizens still wait for
+  `((l sift p) sift p) = (l sift p)`. fallback bizens still wait for
   the whole declaration.
 - a goal waiteth while the head of any input parameter of its flock is
   unknown, as rocq's `!` mode doth; parameters written `* out` are outputs
@@ -698,9 +701,9 @@ name.
   normalisation preserveth the actual result family's universe arguments and
   type parameters, including nested results; it never replaceth them with zero.
 - deed constants never reduce during checking. `x deed_sheer deed_bind f` is
-  not convertible with `x f`, and `deed_fix` never unfoldeth. pure
+  not convertible with `x f`, and `deed_steadfast` never unfoldeth. pure
   normalisation therefore stayeth terminating.
-- `deed_fix` is the only source of unbounded execution. it is restricted to
+- `deed_steadfast` is the only source of unbounded execution. it is restricted to
   deed results, so an infinite loop is an action, never a pure value.
   bounded repetition useth ordinary induction.
 - the standard model readeth each primitive type as its runtime set, each pure
@@ -712,7 +715,7 @@ name.
 - evaluation eraseth types and universe levels; the runner's rules are in
   [deeds](language.md#deeds) and the
   [runtime boundary](language.md#runtime-boundary).
-- [`examples/dependent_numbers.tung`](examples/dependent_numbers.tung)
+- [`examples/dependent_tales.tung`](examples/dependent_tales.tung)
   bindeth pure operations, and
   [`examples/dependent_host.tung`](examples/dependent_host.tung) useth files,
   tasks, and text.
@@ -744,15 +747,15 @@ current limits:
 - an ordinary match doth not record the equation between its scrutinee and
   the chosen constructor; `match e for known` doth, by matching a fresh copy
   of `e` (see [algebraic data and patterns](language.md#algebraic-data-and-patterns)).
-  `filter_filter_step` in `list_setting.tung` still passeth the equation by
+  `sift_sift_step` in `list_setting.tung` still passeth the equation by
   hand.
 - there is no rewriting. a proof writeth the property for `transport` itself,
   or chaineth `leibnitz` and `throughgo`.
 - automatic recursion is structural only. well-founded recursion is
   library code: `ilk/accessible.tung` defineth an accessibility family and
-  `wellgrounded_selfcalling`, written with `unbuild`. mutual and nested
-  families, and automatic recursion over a value whose indices are
-  constructors or other inputs, are missing.
+  `wellgrounded_selfcalling`, written as ordinary recursion on the
+  accessibility proof. mutual and nested families, and automatic recursion
+  over a value whose indices are constructors, are missing.
 - `ℕ` equality, order, addition, subtraction, and multiplication have
   models, and `ilk/natural.tung` proveth its order and semiring laws by
   induction on them. `ℤ` equality, order, addition, subtraction,
@@ -761,8 +764,8 @@ current limits:
   identities by sign cases, and associativity and distributivity by writing
   each integer as `p difference q` and proving the law of differences from the
   `ℕ` laws. other host operations
-  compute only on literals, so statements about them are unprovable. function extensionality
-  is absent.
+  compute only on literals, so statements about them are unprovable.
+  function extensionality is the listed axiom `fall_umtake` in `is.tung`.
 - a large proof module checketh slowly, and every run checketh its imports
   again.
 
@@ -793,15 +796,17 @@ that implementeth it. open choices are in [`todo.md`](../todo.md).
 - pure definitions are total, with no general recursion. `orsetting` declareth
   named axioms and `sorry` is the unfinished hole; trusted host constants
   enter only through the host catalogue.
-- `=` and `backbend` are primitive, so laws and compiler features such as
+- `=` and `eftbend` are primitive, so laws and compiler features such as
   `match e for known` state equations without an import. as bookhoard code
   they cost an import and a lookup per compiler-built equation and changed
   nothing provable; their lemmas stay in `is.tung`.
 - axiom K stayeth unprovable: matching never equateth an index with a parameter
   it already equals.
-- function extensionality, equality reflection, quotient types, and a
-  separate proof universe are absent. function extensionality is an open
-  choice in [`todo.md`](../todo.md#theorem-proving).
+- function extensionality is the axiom `orsetting fall_umtake` in `is.tung`,
+  `[@α, @β, @f, @g, [x: α, (x f) = (x g)], f = g]`, as agda and lean assume
+  or derive it; `--check` listeth it for every program that relieth on it.
+  equality reflection, quotient types, and a separate proof universe are
+  absent. deeds have no observational equality.
 
 ### syntax
 
@@ -829,13 +834,13 @@ that implementeth it. open choices are in [`todo.md`](../todo.md).
 - generic polymorphic parameters use greek letters; parameters with a
   particular role use descriptive names.
 - no term reuseth a type's name. a clashing constructor taketh a new name
-  (`∏` with `both`, `complex` with `+i`, `nonempty` with `‥′`), another
+  (`∏` with `both`, `evenbraid` with `+i`, `nonempty` with `‥′`), another
   single-constructor type taketh a `_` prefix, and a flock whose member
   shareth its name taketh a `hath_` prefix.
 - a law is named by the operators and members of its left side in order,
-  joined by `_`, as `·_·`, `∅_·`, `×_+`, and `warp_is`. `_self` marketh
+  joined by `_`, as `·_·`, `∅_·`, `×_+`, and `warp_sameness`. `_self` marketh
   a repeated operand. a property word is added only when the operators alone
-  are ambiguous, as `+_commute` and `≤_backbend`.
+  are ambiguous, as `+_commute` and `≤_eftbend`.
 
 ### elaboration
 
@@ -890,397 +895,3 @@ that implementeth it. open choices are in [`todo.md`](../todo.md).
   ([deeds and host bindings](#deeds-and-host-bindings)).
 - runtime evaluation is call-by-need, so a branch or recursive call is
   computed only when used.
-
-## agda delegation plan
-
-status: planned; no agda translator, backend adapter, or release pin is
-implemented. remove tung's handwritten haskell engine after
-cutover. use a small shared typescript syntax frontend and delegate
-elaboration, checking, erasure, and compilation to a pinned agda release.
-the goal is fewer maintained algorithms and no tung-owned logical kernel.
-agda's implementation remaineth an external dependency.
-
-generating fully elaborated core would require keeping much of the current
-engine. generate agda declarations and clauses before type-directed
-elaboration instead. the existing compiler serveth only as a temporary
-comparison tool during migration; it is not a permanent fallback.
-
-### completed groundwork and next gate
-
-the current compiler's [structure](development.md#structural-decisions)
-supplieth these migration contracts. external certification is future work:
-
-| completed boundary                                                          | use during delegation                                                                                      |
-| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| located source snapshots shared by discovery and compilation                | preserve one immutable parse per source version, module identity, and owning paths                         |
-| utf-8 JSON editor protocol and structured diagnostics                       | retain request/document versions, source spans, schema validation, cancellation, and restart tests         |
-| compiled import cache and last-root result cache                            | reuse one accepted result for checking and type inspection on the same snapshot                            |
-| shared quotation, formatter scanning, meta telescopes, and retry scheduling | use current outputs as temporary oracles; replace logical algorithms through agda rather than porting them |
-| single inferred-inductive build with final rigid checking                   | retain valid/invalid universe instantiation regressions at the external checking boundary                  |
-
-no delegation stage is complete. stage 1 still needeth a frozen compiler
-revision, compatibility inventory, cold/warm timings, peak memory, and an
-agda release pin. use the verified simplification checkpoint as the reference;
-include all newly maintained frontend, adapter, catalogue, and host code in
-net size comparisons. report generated code and external toolchain size
-separately. refresh the checkpoint after further compiler edits and checks.
-
-the four inference and recursion restrictions in the local simplification
-plan remain unapproved language changes. delegation must inventory their
-effects; completion of the refactor doth not approve them or resolve agda
-compatibility.
-
-### ownership after cutover
-
-| tung code                                                           | delegated work                                                                     |
-| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| shared lexer/parser, recovery, formatting, and syntactic desugaring | agda elaboration, implicit insertion, unification, and conversion                  |
-| names, modules, visibility, and library resolution                  | agda universe checking, instance resolution, positivity, coverage, and termination |
-| source maps, error/type rendering, and editor protocol              | agda typed terms, goals, checking, erasure, and compiled code                      |
-| cli and a small host adapter                                        | generated program execution and existing runtime libraries                         |
-
-one shared parser must serve the cli and editor. the current typescript
-scanner is not a full tung parser; navigation currently consumeth roles from
-the haskell parser. replace that dependency, including the formatter, before
-deleting haskell. do not port NBE, a metavariable solver, or pattern matrices
-to typescript.
-
-move the cli/session shell, library/project resolver, identity scheme,
-primitive catalogue, and host bindings to their final frontend or adapter
-owners before deleting their haskell modules. keep one catalogue for
-translation, checked models, metadata, and execution. the host adapter
-provideth operations; it must not infer types, perform conversion, or
-interpret a second tung core.
-
-### validation boundary
-
-```text
-tung source and import snapshot
-  -> shared syntax frontend and source maps
-  -> agda declarations, annotations, clauses, and law obligations
-  -> agda elaboration and checking
-  -> agda compilation
-  -> generated program and host adapter
-```
-
-- preserve source annotations and nested ascriptions in translated agda.
-  lower word order, brackets, declaration sugar, and match syntax without
-  deciding type equality or refining indices in the frontend.
-- agda checketh declarations and generateth the code that runneth. bind
-  acceptance and compilation to the exact generated module graph, primitive
-  catalogue, entry judgement, backend version, and checking options.
-  execution must not reread source or re-elaborate after acceptance.
-- preserve nominal module and symbol identities, binder visibility, and
-  universe arguments. generated names must be unique and independent of
-  visible spelling; imports and private definitions keep their identities.
-- export law fields with their proof bodies before erasure; they are ordinary
-  dictionary fields.
-- fail certification when export is unsupported, obligations remain, or
-  agda is missing, incompatible, cancelled, timed out, or unsuccessful.
-  never fall back to local acceptance and call it agda certification.
-
-the consistency claim concerneth certified artefacts without assumptions. a
-closed tung proof of `𝟘` would have to translate to an agda proof of the same
-empty type. this requireth a consistent backend and a faithful translation.
-source translation, primitive interpretation, and runtime erasure remain
-justification obligations; backend acceptance alone doth not prove them.
-
-adopt agda-compatible inference and instance rules where a small syntactic
-translation sufficeth. tung's local/direct/inherited instance tiers differ
-from agda's rules. inventory affected
-programs; require explicit annotations or arguments where needed, with each
-language change documented before cutover. do not recreate those algorithms
-in the frontend just to reproduce every previous decision.
-[declared-variable generalisation](https://agda.readthedocs.io/en/latest/language/generalization-of-declared-variables.html)
-and [instance arguments](https://agda.readthedocs.io/en/latest/language/instance-arguments.html)
-defineth the backend facilities to use.
-
-### logical compatibility
-
-use `--safe --without-K` in every certification module and its imports.
-pin the release, primitive prelude, and options together. generated source
-cannot enable unsafe options or introduce postulates. `--safe` disalloweth
-unfinished proofs and bypasses of termination, coverage, positivity, and
-universe checking; it also disalloweth `COMPILE` pragmas.
-[safe agda](https://agda.readthedocs.io/en/latest/language/safe-agda.html)
-defineth the exact restrictions. keep runtime ffi outside certification modules.
-
-| tung feature                          | proposed agda representation                                      | gate before cutover                                              |
-| ------------------------------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------- |
-| universes                             | `Set` with explicit inferred level arguments                      | preserve successor and maximum; reject self-containing universes |
-| dependent functions                   | products, lambdas, and explicit applications                      | preserve implicit arguments and function eta                     |
-| identity and `backbend`               | an identity family in `Set u`, with `refl` and J                  | retain proof relevance; reject K and equality reflection         |
-| inductive families                    | data declarations and derived eliminators                         | check positivity, coverage, and index universes externally       |
-| closed records and flock dictionaries | generated records with `no-eta-equality`, or one-constructor data | retain structural field identity and reject record eta           |
-| native literals and pure operations   | checked definitions or explicit computation certificates          | justify each reduction independently of local NBE                |
-| deeds and tasks                       | an abstract signature with a separate justified model             | keep execution outside conversion; expose no pure extraction     |
-
-agda level arithmetic useth zero, successor, and maximum.
-[universe levels](https://agda.readthedocs.io/en/latest/language/universe-levels.html)
-describeth those operations. tung currently also exporteth arbitrary equality
-and inequality assumptions on levels. these are not automatically agda
-level-polymorphic signatures. begin with representable signatures; treat
-remaining constraints as a compatibility gate. prefer agda-admissible
-signatures inferred by the compiler over a second custom universe theory.
-document any changed acceptance rule before adopting it.
-
-under `--without-K`, index types must fit in the datatype's universe. the
-current primitive identity already returneth `Sort u` for a carrier in
-`Sort u`; other type-indexed families need an audit. never enable
-`--large-indices` to bypass this gate: its combination with `--without-K` is
-known inconsistent and rejected by `--safe`.
-[without K](https://agda.readthedocs.io/en/latest/language/without-k.html)
-stateth the index restriction. infer valid result universes without requiring
-users to write a hierarchy, or mark an unsupported family explicitly.
-
-agda records have eta by default.
-[record eta](https://agda.readthedocs.io/en/latest/language/record-types.html#eta-expansion)
-describeth how to disable it. audit empty records, products, and dictionaries;
-do not silently strengthen conversion while translating them.
-
-native computation needeth its own specification:
-
-- structural agda arithmetic may compute on open terms where tung's host
-  operation stayeth stuck. decide and document that semantic change before
-  using the structural definition in conversion.
-- a ground computation certificate must prove the original operation's
-  result against a checked definition. emitting a locally computed literal
-  or postulated equation is insufficient.
-- cover natural and integer operations first. text, unicode, parsing,
-  floats, bit-pattern equality, and NaNs need explicit models before release
-  coverage is complete. unsupported operations fail the pilot explicitly.
-- check host data schemas, nominal constructor identities, and signatures
-  against the same catalogue used by execution.
-- an inhabited model may justify an opaque deed interface, but unfolding a
-  singleton model would change conversion. keep the interface abstract in
-  certification. specify exactly which observations, if any, are allowed.
-  a deed fixed point must not unfold during checking.
-
-### proofs with holes
-
-retain `sorry` and its goal display during editing. an incomplete proof may
-have agda-inferred types and goals. reserve `certified` for external
-acceptance with every hole discharged and the primitive model justified;
-external checking under recorded assumptions is `conditional`.
-
-- omit the unrestricted polymorphic `sorry` constant from certification
-  environments, even when no proof body mentioneth it.
-- represent admitted holes as named assumptions of their exact types,
-  abstracted over their local contexts and passed as module or function
-  parameters. agda can check the resulting
-  conditional judgement without postulates. report it as conditional;
-  certification requireth checked inhabitants for every assumption.
-- certification of a declaration must include its dependency closure and
-  its law obligations. an assumed law cannot become a certified proof by
-  disappearing during erasure.
-- retain the current reported-assumption runner policy: an externally checked
-  conditional artefact may run with its assumptions reported, and executing
-  `sorry` still faileth. keep this distinct from assumption-free certification.
-  do not fabricate runtime inhabitants for holes. no unchecked artefact may
-  run after cutover.
-- `--no-sorry` must reject conditional results. no backend failure may be
-  replaced by a new hole or an implicit assumption.
-
-### compilation target
-
-agda provideth GHC and JavaScript backends.
-[agda compilers](https://agda.readthedocs.io/en/latest/tools/compilers.html)
-describeth generated code and erasure. both routes remove tung's handwritten
-checker, elaborator, and evaluator; generated haskell is build output, not
-the old implementation.
-
-agda [eraseth erasable types](https://agda.readthedocs.io/en/latest/tools/compilers.html#erasable-types).
-the runtime pilot must compare yielded identity values, proofs stored in
-returned records, and demanded/unused `sorry` against current rendering and
-failure behaviour. a mismatch needeth an approved language change or blocketh
-cutover; successful type checking alone doth not settle runtime compatibility.
-
-- prototype the GHC backend first when minimising compatibility code. it
-  retaineth a lazy runtime and access to the current thread libraries.
-  use generated programs and a small host adapter; do not keep an evaluator
-  for a second tung runtime core.
-- compare `--js --js-es6` with a Node host adapter if removing GHC from the
-  toolchain is also wanted. this route can remove authored haskell entirely.
-  test integers, float bits, lazy hole failure, task cancellation, captured
-  functions, and HTTP before choosing it. promises alone do not interrupt
-  synchronous work, and workers cannot freely transfer function closures.
-  [Node workers](https://nodejs.org/api/worker_threads.html) defineth the
-  available execution and transfer mechanisms.
-- choose one production target after the runtime pilot. measure adapter
-  size, behaviour, latency, and packaging; do not maintain both as fallbacks.
-- keep `--safe` proof modules separate from runtime instantiation and FFI.
-  the runtime wrapper is an explicit trusted boundary, and cannot supply new
-  proof assumptions or conversion rules. `COMPILE` mapping alone doth not
-  establish that the foreign implementation matcheth the logical definition.
-  [agda FFI](https://agda.readthedocs.io/en/latest/language/foreign-function-interface.html)
-  describeth the backend boundary.
-
-### other ways to reduce maintained code
-
-| approach                                     | expected benefit                                                             | cost or limit                                                                                 |
-| -------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| tung syntax over agda, including compilation | remove the independent elaborator, kernel, normaliser, and evaluator         | adopt backend-compatible inference and build a source/editor/host adapter                     |
-| a Lean language frontend or notation layer   | reuse elaboration, a separate kernel, compilation, and editor infrastructure | adopt Lean's logical and runtime conventions; tung source mapping still needeth work          |
-| a Lambdapi/Dedukti theory encoding           | reuse a generic logical-framework checker for custom rules                   | maintain the encoding, rewrite justification, elaboration, and runtime integration            |
-| a smaller independent MLTT implementation    | retain direct control of tung's exact rules                                  | checking, NBE, universes, positivity, elaboration, and execution remain maintained algorithms |
-| rewrite the existing engine in Agda or Idris | improve scope and representation invariants                                  | compiling the checker in a typed host doth not delegate object-language checking              |
-
-the [Lean elaborators](https://lean-lang.org/doc/reference/latest/Notations-and-Macros/Elaborators/)
-and [compilation](https://lean-lang.org/doc/reference/latest/Elaboration-and-Compilation/)
-make the frontend route an alternative worth a small comparison prototype.
-the [Lambdapi framework](https://lambdapi.readthedocs.io/en/latest/) encodeth logical theories,
-so a custom encoding needeth its own consistency argument. these are
-architectural expectations, not measured code-size results. prefer the agda
-frontend for the current dependent design; compare Lean if the smallest
-complete implementation outweigh preserving that design.
-
-removing a tung-owned kernel reduceth maintained code; trust still includeth
-agda's checker and the translation boundary. if a small independent trusted
-checker is the priority, compare Lean's separate kernel and explicit proof
-terms. the [Lean type-system reference](https://lean-lang.org/doc/reference/latest/The-Type-System/)
-describeth independent verification. do not equate a small frontend with a
-small total trusted implementation.
-
-### migration stages
-
-each stage hath a reviewable artefact and a gate. implementation starteth
-with stage 1; the current compiler supplyeth temporary comparison results.
-
-1. **specify and measure.** inventory core constructors, primitive operations,
-   inferred signatures, instance decisions, and source obligations. classify each as
-   directly representable, requiring a semantic decision, or unsupported.
-   freeze the simplified compiler and its passing test corpus. record
-   compiler/editor cold and warm timings, peak memory, and code size,
-   including changed imports and expensive instance/proof modules.
-   pin an agda release in an isolated prototype. exercise its structured
-   locations and type/goal responses before promising tung error rendering.
-   gate: a compatibility table
-   for actual tests and bookhoard declarations, including high-universe
-   indices, native arithmetic, and deed opacity.
-2. **build the shared frontend.** migrate the located snapshot contract to
-   typescript. share its parse between import discovery, translation, and
-   source roles; preserve bounded recovery for incomplete buffers. emit
-   readable agda declarations. preserve written types,
-   nested ascriptions, clauses, and law goals and bodies. keep source spans
-   and visible names in the source map. gate: syntax/formatter tests,
-   byte-equivalent formatting, deterministic translation, complete name/module
-   identity, and recovery for incomplete editor buffers; no type checker in
-   the frontend. move project/library resolution and the primitive catalogue
-   without depending on the old haskell services.
-3. **delegate the pure language.** translate universes, functions, identity,
-   lists, indexed families, records, and dictionary declarations. let agda
-   insert implicits, resolve instances, refine patterns, and derive
-   eliminators. test inferred slot types and implicit insertion before claiming
-   support. no unresolved hole may enter a certified compiled program.
-   use one owned batch process per job initially. gate: successful typing
-   and rejected corrupted artefacts in the test matrix below, with mapped
-   source locations. keep the pilot opt-in; unsupported features cannot be
-   mistaken for successful validation.
-4. **compile and run.** add checked native models and the opaque deed/task
-   interface. prototype both compilation targets on representative host
-   programs, then choose one. preserve law obligations and module identities.
-   compare frontend/backend acceptance and results against temporary old
-   compiler results across source tests, checked
-   examples, and bookhoard. investigate every disagreement at the owning
-   compiler stage; do not alter library code merely to appease a backend.
-   gate: every release feature hath a model or an explicit approved language
-   change, and all remaining differences have tests and documented reasons.
-5. **integrate diagnostics and the editor.** retain `tung --editor-session`
-   and the existing [structured protocol boundary](development.md#formatting-and-editor-protocol).
-   translate backend locations, names, types, and contexts into tung
-   diagnostics. preserve utf-16 spans and unsaved import snapshots. add
-   explicit provisional, incomplete/conditional, certified, rejected, and
-   backend-failure states; keep goal display separate from certification.
-   version these semantics as protocol 2 and update the compiler/client pair
-   together. type inspection must carry the same acceptance state as checking.
-   gate: existing lifecycle tests, new certification/cancellation cases, and
-   measured latency for the cases below.
-6. **make validation authoritative.** require external acceptance for each
-   complete supported artefact and every intended execution entry, including
-   files, stdin, repl expressions, deeds, and embedding/test APIs. bind the chosen
-   assumption policy and entry judgement to the accepted artefact. provide
-   pinned backend installation in ci and release packaging. gate: relevant
-   canonical suites pass, and a missing backend or modified artefact cannot
-   bypass validation. remove the temporary production comparison path.
-7. **delete the old engine.** replace remaining cli, resolver, catalogue, and
-   host services, then remove handwritten haskell parsing, elaboration,
-   checking, NBE, universe solving, pattern compilation, erasure, and
-   evaluation. migrate concise source/runtime regressions to the new harness;
-   retire tests of removed implementation details. remove Cabal/compiler
-   build steps and obsolete installation paths; a selected GHC backend may
-   still need GHC for generated code and a measured host adapter; this doth
-   not retain the old engine. gate: a clean build and installed cli/
-   extension work without the old compiler or its libraries. report the
-   maintained code size, latency, memory, and remaining host trust boundary.
-
-### diagnostics, cancellation, and caches
-
-keep parser roles, navigation, highlighting, and formatting independent of
-backend validation. frontend syntax/name errors remain useful before export.
-backend errors require a map from generated declarations and expressions to
-original module paths, names, and utf-16 ranges. render types in tung syntax;
-plain text replacement of generated names is insufficient.
-
-- freeze root text and reached imports, including unsaved buffers, for each
-  request. clear displayed certification as soon as the snapshot changeth.
-  stale replies must not change diagnostics or acceptance.
-- preserve current reuse of compiled imports and the last root result when
-  root text and the complete supplied import map match. extend it to one
-  agda elaboration/acceptance job per immutable snapshot. overlapping
-  `check` and `type` consumers share that job and its recorded state.
-  cancel each consumer independently so cancelling hover cannot stop work
-  still needed by diagnostics.
-- key a cached result by the complete artefact and dependency contents,
-  module identities, compiler/exporter/prelude/catalogue/backend versions,
-  options, and assumption policy. invalidation must include import edits.
-  a content fingerprint is a cache key, not an independent proof certificate.
-- cancellation must terminate and reap an owned batch process, remove a
-  queued job, or interrupt/restart an active persistent backend session.
-  killing the frontend request worker alone is insufficient. cancel the
-  backend job only when no live consumer needeth it. clean temporary files
-  and route backend stdout/stderr through the adapter; only complete tung
-  JSON messages may enter the editor response stream.
-- introduce persistent agda interaction only after measuring the batch
-  prototype. serialise stateful backend requests and define restart after
-  cancellation or failure. independent parser services must stay responsive.
-- keep unrecognised backend failures explicit. a timeout, unsupported error
-  response, or version mismatch is not a successful check.
-
-agda provideth JSON editor interaction and type-checking caches.
-[command-line options](https://agda.readthedocs.io/en/latest/tools/command-line-options.html)
-describeth them. pin the protocol version; benchmark rather than assuming
-these facilities make tung checking faster.
-
-### acceptance tests
-
-reuse the source cases, expected runtime results, and editor harnesses. add
-only cases that exercise a new boundary. test deliberate corruption after
-translation as well as invalid source, so frontend rejection cannot hide
-a faulty backend adapter.
-
-| boundary               | minimum evidence                                                                                                                                                                         |
-| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| products and scopes    | polymorphic identity, higher-rank input, explicit implicit arguments, capture-sensitive beta, and corrupted binder/type rejection                                                        |
-| universes              | multiple instantiations, successor/max signatures, supported constraints, rejected self-universe, and high-universe indexed families                                                     |
-| identity and induction | J/transport and list induction accepted; false literal equality, K, negative families, and ill-founded recursion rejected                                                                |
-| records                | projection computation accepted; field permutations preserve identity; unsupported record eta rejected                                                                                   |
-| laws                   | one valid and one false law, a parent dictionary, same-named law isolation, and an admitted law reported as conditional                                                                  |
-| primitives and deeds   | a checked native computation, a false computation, schema mismatch, nonzero result universes and nested results, opaque deed conversion, and exact existing runner results               |
-| source mapping         | Unicode, imported failure, generated dictionary/eliminator failure, original expected type, and no generated-name leakage                                                                |
-| editor lifecycle       | hole hover without certification, unsaved import invalidation, stale response ignored, cancellation cleanup, and a succeeding next request                                               |
-| acceptance gate        | missing/crashed backend, version/options change, cached dependency change, modified or unchecked execution artefact rejected, and conditional execution distinguished from certification |
-
-run the canonical gates in [`AGENTS.md`](../AGENTS.md) at each affected stage.
-before cutover, measure cold checks, unchanged checks, a changed declaration,
-a changed import, hover, and incomplete buffers against stage 1. set recorded
-latency and memory budgets before approving cutover; no speed claim precedeth
-those measurements. a separate preservation proof remaineth later work;
-passing this matrix doth not establish a formal proof of consistency.
-
-retain the regression for inferred field universes: its obligation must reach
-the family, constructor, and eliminator; a valid level instantiation passeth
-and an invalid one faileth. retain the structured-diagnostic span cases,
-fragmented unicode, out-of-order/versioned replies, cache invalidation after
-root or import edits, and recovery after session failure. these already
-exercise boundaries the adapter must preserve. extend them for corrupted
-translations, shared-job cancellation, and certification states.

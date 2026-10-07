@@ -1,7 +1,7 @@
 ## `a` is accessible under `smaller` when every `y smaller a` is
 ## accessible. recursion on an accessibility proof is structural, so a
 ## function may recurse on any input that a well-founded relation maketh
-## smaller, as lean's `WellFounded.fix` doth.
+## smaller, as lean's `WellFounded.steadfast` doth.
 show ilk accessible: [α: *, smaller: [α, α, *], α, *] {
   access: [@a: α, [y: α, y smaller a, α accessible smaller y], α accessible smaller a]
 }
@@ -14,8 +14,9 @@ show let wellgrounded: [α: *, smaller: [α, α, *], *] ≔ [a: α, α accessibl
 show let selfcalling: [@α: *, @smaller: [α, α, *], @motive: [α, *],
   step: [a: α, [b: α, b smaller a, b motive], a motive],
   a: α, proof: α accessible smaller a, a motive] ≔
-  {c: α, _: α accessible smaller c ^ c motive} unbuild accessible
-    {@c, _, recursive ^ c step recursive} a proof
+  match proof {
+    smaller_accessible access ^ a step {b, below ^ step selfcalling b (b smaller_accessible below)}
+  }
 
 ## recursion on every value of a well-founded relation.
 show let wellgrounded_selfcalling: [@α: *, @smaller: [α, α, *], @motive: [α, *],

@@ -4,7 +4,7 @@ use ilk/one.tung
 show flock functor: [φ: [*, *], *] {
   let warp: [@α: *, @β: *, α φ, [α, β], β φ]
 
-  let warp_is: [@α: *, af: α φ, (af warp is) = af]
+  let warp_sameness: [@α: *, af: α φ, (af warp sameness) = af]
 }
 
 show let void: [@φ: [*, *], @: φ functor, @α: *, af: α φ, 𝟙 φ] ≔

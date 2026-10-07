@@ -16,19 +16,19 @@ use ilk/two.tung
 show flock euclidean: [α: *, @: α ring, @: α hath_%, @: α order_whole, *] {
   let %_×_+: [dividend: α, divisor: α,
     (match dividend % divisor {
-        none ^ dividend,
+        none                      ^ dividend,
         (quotient both rest) some ^ (quotient × divisor) + rest
     }) = dividend]
 
   let %_nonnegative: [dividend: α, divisor: α,
     (match dividend % divisor {
-        none ^ yea,
+        none               ^ yea,
         (_ both rest) some ^ zero ≤ rest
     }) = yea]
 
   let %_bounded: [dividend: α, divisor: α,
     (match dividend % divisor {
-        none ^ yea,
+        none               ^ yea,
         (_ both rest) some ^ (zero ≤ divisor) if (rest < divisor) (rest < (zero - divisor))
     }) = yea]
 }

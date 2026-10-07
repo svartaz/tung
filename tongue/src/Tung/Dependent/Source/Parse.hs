@@ -695,12 +695,14 @@ lambda :: Parser Expression
 lambda (TRBrace : rest) = pure (Cases [], rest)
 lambda tokens = do
   (groups, remaining) <- caseGroups tokens
-  -- a lambda bindeth each name once; elaboration checketh pattern rows.
-  case [name | [([items], _)] <- [groups], Just binders <- [traverse plainBinder items], name <- repeated [name | Binder {binderName = Just name} <- binders]] of
-    name : _ -> failAt tokens ("'" ++ name ++ "' is bound twice in one row")
-    [] -> pure ()
+  -- a repeated bare name may be a constructor, as in `{eftbend, eftbend ^ …}`,
+  -- so such a row is a case function; elaboration rejecteth a variable bound
+  -- twice once constructors are resolved.
   pure case groups of
-    [([items], body)] | Just binders <- traverse plainBinder items -> (Lambda binders body, remaining)
+    [([items], body)]
+      | Just binders <- traverse plainBinder items,
+        null (repeated [name | Binder {binderName = Just name} <- binders]) ->
+          (Lambda binders body, remaining)
     _ -> (Cases [Row (map itemPattern items) body | (alternatives, body) <- groups, items <- alternatives], remaining)
   where
     plainBinder = \case

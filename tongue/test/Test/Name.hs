@@ -37,8 +37,8 @@ resolutionCases =
     typeOkWith "qualification resolveth type alias ambiguity" "use integer_type.tung use text_type.tung let integer_id:[x: integer_type~token, integer_type~token] ≔ x let text_id:[x: text_type~token, text_type~token] ≔ x" aliasImports,
     typeErrWith "an ambiguous type re-export is rejected" "use integer_type.tung use text_type.tung show token" aliasImports,
     typeOkWith "one show publisheth a type and its constructor" "use data_middle.tung let ok:ℤ _box ≔ +1 box" dataReexport,
-    typeOkWith "a flock export carrieth methods and bizen evidence" "use selfness.tung let ok:ℤ ≔ +1 selfness" identityExport,
-    typeOkWith "show re-exporteth a flock" "use selfness_middle.tung let ok:ℤ ≔ +1 selfness" classReexport,
+    typeOkWith "a flock export carrieth methods and bizen evidence" "use sameness.tung let ok:ℤ ≔ +1 sameness" identityExport,
+    typeOkWith "show re-exporteth a flock" "use sameness_middle.tung let ok:ℤ ≔ +1 sameness" classReexport,
     typeOkWith "constructor pattern is exhaustive after re-export" "use data_middle.tung let unbox:[ℤ _box, ℤ] ≔ { x box ^ x }" dataWholeReexport,
     typeOkWith "dotted filename preserveth its short default alias" "use a.extra.tung let ok:ℤ ≔ a~foo" dottedFileImport,
     typeOkWith "a dotted directory doth not alter the default basename alias" "use pkg.one/query.tung let ok:ℤ ≔ query~foo" dottedDirectoryImport
@@ -70,12 +70,12 @@ resolutionCases =
         ]
     identityExport =
       Map.fromList
-        [ ("selfness.tung", "show flock hath_selfness:[a:*, *] { let selfness:[a, a] } bizen:ℤ hath_selfness { let selfness: [x:] ≔ x }")
+        [ ("sameness.tung", "show flock hath_sameness:[a:*, *] { let sameness:[a, a] } bizen:ℤ hath_sameness { let sameness: [x:] ≔ x }")
         ]
     classReexport =
       Map.fromList
-        [ ("selfness_base.tung", "show flock hath_selfness:[a:*, *] { let selfness:[a, a] } bizen:ℤ hath_selfness { let selfness: [x:] ≔ x }"),
-          ("selfness_middle.tung", "use selfness_base.tung show selfness_base~hath_selfness, selfness_base~selfness")
+        [ ("sameness_base.tung", "show flock hath_sameness:[a:*, *] { let sameness:[a, a] } bizen:ℤ hath_sameness { let sameness: [x:] ≔ x }"),
+          ("sameness_middle.tung", "use sameness_base.tung show sameness_base~hath_sameness, sameness_base~sameness")
         ]
     aliasImports =
       Map.fromList

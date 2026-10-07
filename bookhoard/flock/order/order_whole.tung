@@ -22,18 +22,18 @@ bizen: 𝟚 order_whole {
   let ≤_whole ≔ {
     nay, _;
     yea, nay;
-    yea, yea ^ backbend
+    yea, yea ^ eftbend
   }
 }
 
 bizen: 𝟛 order_whole {
   let ≤_whole ≔ {
     fore, _;
-    mid, fore;
-    mid, mid;
-    mid, aft;
-    aft, fore;
-    aft, mid;
-    aft, aft ^ backbend
+    mid,  fore;
+    mid,  mid;
+    mid,  aft;
+    aft,  fore;
+    aft,  mid;
+    aft,  aft  ^ eftbend
   }
 }

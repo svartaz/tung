@@ -1,20 +1,20 @@
 use combinator.tung
 use flock/functor.tung
-use flock/functor/applicative.tung
+use flock/functor/atfoldsome.tung
 use ilk/one.tung
 
-show flock monad: [φ: [*, *], @: φ applicative, *] {
+show flock monad: [φ: [*, *], @: φ atfoldsome, *] {
   let flat: [@α: *, (α φ) φ, α φ]
 
-  let sheer_warp_flat: [@α: *, @β: *, a: α, f: [α, β φ],
+  let sheer_bind: [@α: *, @β: *, a: α, f: [α, β φ],
     ((a sheer) warp f $ flat) = (a f)]
 
   let warp_sheer_flat: [@α: *, a: α φ,
     (a warp sheer $ flat) = a]
 }
 
-show let warp_flat: [@φ: [*, *], @: φ functor, @: φ monad, @α: *, @β: *, a: α φ, f: [α, β φ], β φ] ≔
+show let bind: [@φ: [*, *], @: φ functor, @: φ monad, @α: *, @β: *, a: α φ, f: [α, β φ], β φ] ≔
   a warp f $ flat
 
 show let then: [@φ: [*, *], @: φ monad, @α: *, @β: *, a: α φ, b: β φ, β φ] ≔
-  a warp_flat (b constant)
+  a bind (b constant)

@@ -1,7 +1,7 @@
 use flock/algebra/half/category.tung
 use flock/functor.tung
-use flock/functor/hath_cata.tung
-use flock/functor/hath_filter.tung
+use flock/functor/catamorphism.tung
+use flock/functor/hath_sift.tung
 use flock/hath_inhold.tung
 use flock/hath_same.tung
 use flock/hath_size.tung
@@ -18,7 +18,7 @@ show ilk table: [α: *, β: *, *] {
 
 show let empty: [@α: *, @β: *, α table β] ≔ list~empty from_list
 
-show let singleton: [@α: *, @β: *, key: α, worth: β, α table β] ≔
+show let onesome: [@α: *, @β: *, key: α, worth: β, α table β] ≔
   key both worth $ ‥ list~empty $ from_list
 
 show let entries: [@α: *, @β: *, l from_list: α table β, (α ∏ β) list] ≔
@@ -32,10 +32,10 @@ show let put: [@α: *, @: α hath_≍, @β: *,
   key: α,
   worth: β,
   α table β
-] ≔ (key both worth) ‥ (l filter { pair ^ key ≭ (pair forthcast₀) }) $ from_list
+] ≔ (key both worth) ‥ (l sift { pair ^ key ≭ (pair forthcast₀) }) $ from_list
 
 show let rid: [@α: *, @: α hath_≍, @β: *, l from_list: α table β, key: α, α table β] ≔
-  l filter { pair ^ key ≭ (pair forthcast₀) } $ from_list
+  l sift { pair ^ key ≭ (pair forthcast₀) } $ from_list
 
 show let keys: [@α: *, @β: *, l from_list: α table β, α list] ≔
   l warp forthcast₀
@@ -51,19 +51,20 @@ bizen: [@α: *, (α table) functor] {
   let warp: [l from_list:, f:] ≔
     l warp { pair ^ pair warp f } $ from_list
 
-  let warp_is ≔ {@β ^ {entries from_list ^
+  let warp_sameness ≔ {@β ^ {entries from_list ^
       from_list leibnitz (
-        {l: (α ∏ β) list ^ (l warp {pair ^ pair warp is}) = l}
-        unbuild list backbend {first, _, proof ^ match first {
+        {l: (α ∏ β) list ^ (l warp {pair ^ pair warp sameness}) = l}
+        unbuild list eftbend {first, _, proof ^ match first {
             a both b ^ ((a both b) ‥) leibnitz proof
         }} entries
       )
-  }}
+    }
+  }
 }
 
-bizen: [@α: *, (α table) hath_filter] {
-  let filter: [l from_list:, predicate:] ≔
-    l filter {
+bizen: [@α: *, (α table) hath_sift] {
+  let sift: [l from_list:, predicate:] ≔
+    l sift {
       pair ^ (pair forthcast₁) predicate
     } $ from_list
 }

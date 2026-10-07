@@ -1,9 +1,9 @@
 use flock/algebra/half/category.tung
 use flock/functor.tung
-use flock/functor/applicative.tung
+use flock/functor/atfoldsome.tung
 use flock/functor/bifunctor.tung
-use flock/functor/hath_cata.tung
-use flock/functor/hath_traverse.tung
+use flock/functor/catamorphism.tung
+use flock/functor/hath_throughwend.tung
 use flock/functor/monad.tung
 use flock/order/complement.tung
 use ilk/two.tung
@@ -20,8 +20,8 @@ show let either: [
   [β, γ],
   γ
 ] ≔ {
-  a incast₀, f₀, _ ^ a f₀,
-  b incast₁, _, f₁ ^ b f₁
+  a incast₀, f₀, _  ^ a f₀,
+  b incast₁, _,  f₁ ^ b f₁
 }
 
 bizen: ∑ bifunctor {
@@ -30,13 +30,13 @@ bizen: ∑ bifunctor {
     b incast₁, _, g ^ (b g) incast₁
   }
 
-  let biwarp_is_is ≔ {
+  let biwarp_sameness_sameness ≔ {
     _ incast₀;
-    _ incast₁ ^ backbend
+    _ incast₁ ^ eftbend
   }
   let biwarp_biwarp ≔ {
     _ incast₀, _, _, _, _;
-    _ incast₁, _, _, _, _ ^ backbend
+    _ incast₁, _, _, _, _ ^ eftbend
   }
 }
 
@@ -48,34 +48,34 @@ show let is_incast₀: [@α: *, @β: *, α ∑ β, 𝟚] ≔ {
 show let is_incast₁: [@α: *, @β: *, sum: α ∑ β, 𝟚] ≔ sum is_incast₀ $ ¬
 
 bizen: [@α: *, (α ∑) functor] {
-  let warp: [sum:, f:] ≔ sum biwarp is f
+  let warp: [sum:, f:] ≔ sum biwarp sameness f
 
-  let warp_is ≔ {
+  let warp_sameness ≔ {
     _ incast₀;
-    _ incast₁ ^ backbend
+    _ incast₁ ^ eftbend
   }
 }
 
-bizen: [@α: *, (α ∑) applicative] {
+bizen: [@α: *, (α ∑) atfoldsome] {
   let sheer ≔ incast₁
-  let apply ≔ {
-    a incast₀, _ ^ a incast₀,
-    _, a incast₀ ^ a incast₀,
+  let atfold ≔ {
+    a incast₀, _         ^ a incast₀,
+    _,         a incast₀ ^ a incast₀,
     b incast₁, f incast₁ ^ (b f) incast₁
   }
 
-  let apply_is_sheer ≔ {
+  let atfold_sameness_sheer ≔ {
     _ incast₀;
-    _ incast₁ ^ backbend
+    _ incast₁ ^ eftbend
   }
-  let sheer_apply_sheer ≔ {_, _ ^ backbend}
-  let apply_apply ≔ {
+  let sheer_atfold_sheer: [_:, _:] ≔ eftbend
+  let atfold_atfold ≔ {
     _ incast₀, _, _;
-    _ incast₁, _, _ ^ backbend
+    _ incast₁, _, _ ^ eftbend
   }
-  let sheer_apply ≔ {
+  let sheer_atfold ≔ {
     _, _ incast₀;
-    _, _ incast₁ ^ backbend
+    _, _ incast₁ ^ eftbend
   }
 }
 
@@ -85,14 +85,14 @@ bizen: [@α: *, (α ∑) monad] {
     b incast₁ ^ b
   }
 
-  let sheer_warp_flat ≔ {_, _ ^ backbend}
+  let sheer_bind: [_:, _:] ≔ eftbend
   let warp_sheer_flat ≔ {
     _ incast₀;
-    _ incast₁ ^ backbend
+    _ incast₁ ^ eftbend
   }
 }
 
-bizen: [@α: *, (α ∑) hath_cata] {
+bizen: [@α: *, (α ∑) catamorphism] {
   let gather₀ ≔ {
     _ incast₀, b, _ ^ b,
     a incast₁, b, f ^ a f b
@@ -103,8 +103,8 @@ bizen: [@α: *, (α ∑) hath_cata] {
   }
 }
 
-bizen: [@α: *, (α ∑) hath_traverse] {
-  let traverse ≔ {
+bizen: [@α: *, (α ∑) hath_throughwend] {
+  let throughwend ≔ {
     a incast₀, _ ^ (a incast₀) sheer,
     b incast₁, f ^ (b f) warp incast₁
   }

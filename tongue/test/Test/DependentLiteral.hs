@@ -11,9 +11,9 @@ import Tung.Dependent.Source (SourceProgram, inferSourceExpression, sourceEnviro
 
 group :: IO Harness.Group
 group = do
-  example <- exampleSource "dependent_numbers.tung"
+  example <- exampleSource "dependent_tales.tung"
   library <- loadLibrary ["ilk/one.tung", "ilk/maybe.tung", "ilk/product.tung", "ilk/two.tung"]
-  Harness.group "dependent-literal" (tests (compileWith library "dependent_numbers.tung") example ++ subjectReductionTests)
+  Harness.group "dependent-literal" (tests (compileWith library "dependent_tales.tung") example ++ subjectReductionTests)
 
 tests :: (String -> Either String SourceProgram) -> String -> [Test]
 tests compiled example =

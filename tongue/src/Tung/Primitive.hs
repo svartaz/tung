@@ -224,7 +224,7 @@ hostBindings =
          deed "deed_sheer" ["a"] [variable "a"] (action (variable "a")),
          deed "deed_bind" ["a", "b"] [action (variable "a"), HostArrow [variable "a"] (action (variable "b"))] (action (variable "b")),
          -- the restricted fixed point: a deed may repeat itself, a pure value may not.
-         deed "deed_fix" ["a"] [HostArrow [action (variable "a")] (action (variable "a"))] (action (variable "a")),
+         deed "deed_steadfast" ["a"] [HostArrow [action (variable "a")] (action (variable "a"))] (action (variable "a")),
          deed "write" [] [text] (action one),
          deed "read" [] [] (action (option text)),
          deed "random" [] [] (action float),
@@ -233,7 +233,7 @@ hostBindings =
          deed "fork" ["a"] [action (variable "a")] (action (task (variable "a"))),
          deed "wait" ["a"] [task (variable "a")] (action (option (variable "a"))),
          deed "wait_for" ["a"] [task (variable "a"), natural] (action (option (variable "a"))),
-         deed "cancel" ["a"] [task (variable "a")] (action one),
+         deed "outstrike" ["a"] [task (variable "a")] (action one),
          deed "read_file" [] [text] (action (outcome text)),
          deed "write_file" [] [text, text] (action (outcome one)),
          deed "append_file" [] [text, text] (action (outcome one)),

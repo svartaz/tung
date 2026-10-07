@@ -3,12 +3,12 @@ use ilk/maybe.tung
 
 let whole: [left: ℤ maybe, right: ℤ maybe, ℤ] ≔ match left, right {
   l some, r some ^ l + r,
-  _, _ ^ +0
+  _,      _      ^ +0
 }
 
-let answer: ℤ deed ≔ (1000 sleep) then ((+20 sheer) fork $ warp_flat { left ^
-    (+22 sheer) fork $ warp_flat { right ^ (left wait) lift₂ (right wait) whole }
+let answer: ℤ deed ≔ (1000 sleep) then ((+20 sheer) fork $ bind { left ^
+    (+22 sheer) fork $ bind { right ^ (left wait) lift₂ (right wait) whole }
 })
 
 let main: 𝟙 deed ≔
-  ('async' write_line) then (answer warp to_text $ warp_flat write_line)
+  ('async' write_line) then (answer warp to_text $ bind write_line)

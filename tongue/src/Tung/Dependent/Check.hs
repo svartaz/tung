@@ -176,7 +176,7 @@ oblige constraint = do
   -- conversion may evaluate types. reject inconsistent universes before NBE,
   -- rather than provisionally typing a non-normalising type-in-type calculus.
   -- a repeated or trivially true constraint cannot change satisfiability.
-  unless (constraint `elem` U.universeConstraints current || U.trivial constraint) do
+  unless (U.hasConstraint constraint current || U.trivial constraint) do
     maybe (failure "inconsistent universe constraints") put (U.constrain constraint current)
 
 evaluate :: Globals -> Context -> Term -> Typing N.Value

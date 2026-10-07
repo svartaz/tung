@@ -13,6 +13,7 @@ use flock/order/hath_at_most.tung
 use flock/order/order_half.tung
 use flock/order/order_whole.tung
 use flock/order/semilattice_upper_bounded.tung
+use flock/same_to_is.tung
 use ilk/maybe.tung
 use ilk/product.tung
 use ilk/two.tung
@@ -24,32 +25,32 @@ use is.tung
 ## on other inputs, unfoldeth that structural model, so proofs can reason
 ## about it.
 let is_same: [ℕ, ℕ, 𝟚] ≔ 'same_natural' fremmed {
-  0,         0         ^ yea,
-  0,         _ heir ^ nay,
-  _ heir, 0         ^ nay,
+  0,      0      ^ yea,
+  0,      _ heir ^ nay,
+  _ heir, 0      ^ nay,
   a heir, b heir ^ a is_same b
 }
 
 let is_at_most: [ℕ, ℕ, 𝟚] ≔ 'at_most_natural' fremmed {
-  0,         _         ^ yea,
-  _ heir, 0         ^ nay,
+  0,      _      ^ yea,
+  _ heir, 0      ^ nay,
   a heir, b heir ^ a is_at_most b
 }
 
 let eking: [ℕ, ℕ, ℕ] ≔ 'eke_natural' fremmed {
-  m, 0         ^ m,
+  m, 0      ^ m,
   m, k heir ^ (m eking k) heir
 }
 
 ## subtraction stoppeth at zero.
 let offdrawing: [ℕ, ℕ, ℕ] ≔ 'offdraw_natural' fremmed {
-  m,         0         ^ m,
-  0,         _ heir ^ 0,
+  m,      0      ^ m,
+  0,      _ heir ^ 0,
   j heir, k heir ^ j offdrawing k
 }
 
 let folding: [ℕ, ℕ, ℕ] ≔ 'fold_natural' fremmed {
-  _, 0         ^ 0,
+  _, 0      ^ 0,
   m, k heir ^ (m folding k) eking m
 }
 
@@ -94,56 +95,56 @@ bizen: ℕ hath_to_text {
 }
 
 ## the laws below are proved by induction on the structural models.
-let at_most_backbend: [a: ℕ, (a ≤ a) = yea] ≔
+let at_most_eftbend: [a: ℕ, (a ≤ a) = yea] ≔
   match a {
-    0         ^ backbend,
-    k heir ^ k at_most_backbend
+    0      ^ eftbend,
+    k heir ^ k at_most_eftbend
   }
 
-let at_most_antievenmete: [a: ℕ, b: ℕ, >{≤, a ≤ b, b ≤ a, a ≍ b} = yea] ≔
+let at_most_whitherevenmete: [a: ℕ, b: ℕ, >{≤, a ≤ b, b ≤ a, a ≍ b} = yea] ≔
   match a, b {
-    0,         0         ^ backbend,
-    0,         _ heir ^ backbend,
-    _ heir, 0         ^ backbend,
-    j heir, k heir ^ j at_most_antievenmete k
+    0,      0      ^ eftbend,
+    0,      _ heir ^ eftbend,
+    _ heir, 0      ^ eftbend,
+    j heir, k heir ^ j at_most_whitherevenmete k
   }
 
 let at_most_throughgo: [a: ℕ, b: ℕ, c: ℕ, >{≤, a ≤ b, b ≤ c, a ≤ c} = yea] ≔
   match a, b, c {
-    0,         _,         _         ^ match b ≤ c { yea; nay ^ backbend },
-    _ heir, 0,         _         ^ backbend,
-    i heir, j heir, 0         ^ match i ≤ j { yea; nay ^ backbend },
+    0,      _,      _      ^ match b ≤ c { yea; nay ^ eftbend },
+    _ heir, 0,      _      ^ eftbend,
+    i heir, j heir, 0      ^ match i ≤ j { yea; nay ^ eftbend },
     i heir, j heir, k heir ^ i at_most_throughgo j k
   }
 
 let at_most_whole: [a: ℕ, b: ℕ, (((a ≤ b) ≍ nay) ≤ (b ≤ a)) = yea] ≔
   match a, b {
-    0,         _         ^ backbend,
-    _ heir, 0         ^ backbend,
+    0,      _      ^ eftbend,
+    _ heir, 0      ^ eftbend,
     j heir, k heir ^ j at_most_whole k
   }
 
 let zero_eke: [a: ℕ, (0 + a) = a] ≔
   match a {
-    0         ^ backbend,
+    0      ^ eftbend,
     k heir ^ {x: ℕ ^ x heir} leibnitz (k zero_eke)
   }
 
 let heir_eke: [a: ℕ, b: ℕ, ((a heir) + b) = ((a + b) heir)] ≔
   match b {
-    0         ^ backbend,
+    0      ^ eftbend,
     k heir ^ {x: ℕ ^ x heir} leibnitz (a heir_eke k)
   }
 
 let eke_associate: [a: ℕ, b: ℕ, c: ℕ, (a + (b + c)) = ((a + b) + c)] ≔
   match c {
-    0         ^ backbend,
+    0      ^ eftbend,
     k heir ^ {x: ℕ ^ x heir} leibnitz (a eke_associate b k)
   }
 
 let eke_commute: [a: ℕ, b: ℕ, (a + b) = (b + a)] ≔
   match b {
-    0         ^ (a zero_eke) evenmete,
+    0      ^ (a zero_eke) evenmete,
     k heir ^ ({x: ℕ ^ x heir} leibnitz (a eke_commute k)) throughgo ((k heir_eke a) evenmete)
   }
 
@@ -162,19 +163,19 @@ let eke_exchange: [p: ℕ, q: ℕ, r: ℕ, s: ℕ, ((p + q) + (r + s)) = ((p + r
 
 let zero_fold: [a: ℕ, (0 × a) = 0] ≔
   match a {
-    0         ^ backbend,
+    0      ^ eftbend,
     k heir ^ k zero_fold
   }
 
 let one_fold: [a: ℕ, (1 × a) = a] ≔
   match a {
-    0         ^ backbend,
+    0      ^ eftbend,
     k heir ^ {x: ℕ ^ x heir} leibnitz (k one_fold)
   }
 
 let fold_eke: [a: ℕ, b: ℕ, c: ℕ, (a × (b + c)) = ((a × b) + (a × c))] ≔
   match c {
-    0         ^ backbend,
+    0      ^ eftbend,
     k heir ^
       ({x: ℕ ^ x + a} leibnitz (a fold_eke b k))
         throughgo (((a × b) eke_associate (a × k) a) evenmete)
@@ -182,7 +183,7 @@ let fold_eke: [a: ℕ, b: ℕ, c: ℕ, (a × (b + c)) = ((a × b) + (a × c))] �
 
 let eke_fold: [a: ℕ, b: ℕ, c: ℕ, ((a + b) × c) = ((a × c) + (b × c))] ≔
   match c {
-    0         ^ backbend,
+    0      ^ eftbend,
     k heir ^
       ({x: ℕ ^ x + (a + b)} leibnitz (a eke_fold b k))
         throughgo ((a × k) eke_exchange (b × k) a b)
@@ -190,15 +191,15 @@ let eke_fold: [a: ℕ, b: ℕ, c: ℕ, ((a + b) × c) = ((a × c) + (b × c))] �
 
 let fold_associate: [a: ℕ, b: ℕ, c: ℕ, (a × (b × c)) = ((a × b) × c)] ≔
   match c {
-    0         ^ backbend,
+    0      ^ eftbend,
     k heir ^
       (a fold_eke (b × k) b)
         throughgo ({x: ℕ ^ x + (a × b)} leibnitz (a fold_associate b k))
   }
 
 bizen: ℕ order_half {
-  let ≤_backbend ≔ at_most_backbend
-  let ≤_antievenmete ≔ at_most_antievenmete
+  let ≤_eftbend ≔ at_most_eftbend
+  let ≤_whitherevenmete ≔ at_most_whitherevenmete
   let ≤_throughgo ≔ at_most_throughgo
 }
 
@@ -209,13 +210,13 @@ bizen: ℕ order_whole {
 bizen: ℕ semilattice_upper_bounded {
   let ⟂ ≔ 0
 
-  let ⟂_∨ ≔ {_ ^ backbend}
+  let ⟂_∨: [_:] ≔ eftbend
 }
 
 bizen: ℕ monoid_eke {
   let +_+ ≔ eke_associate
   let zero_+ ≔ zero_eke
-  let +_zero ≔ {_ ^ backbend}
+  let +_zero: [_:] ≔ eftbend
 }
 
 bizen: ℕ monoid_fold {
@@ -228,6 +229,26 @@ bizen: ℕ semiring {
   let +_commute ≔ eke_commute
   let ×_+ ≔ fold_eke
   let +_× ≔ eke_fold
-  let zero_× ≔ {a, _ ^ a zero_fold}
-  let ×_zero ≔ {_, _ ^ backbend}
+  let zero_×: [a:, _:] ≔ a zero_fold
+  let ×_zero: [_:, _:] ≔ eftbend
+}
+
+## boolean sameness of naturals agreeth with identity.
+let helpsetting_same_is: [a: ℕ, b: ℕ, same: (a ≍ b) = yea, a = b] ≔
+  match a, b {
+    0,      0      ^ eftbend,
+    0,      _ heir ^ match same {},
+    _ heir, 0      ^ match same {},
+    j heir, k heir ^ heir leibnitz (j helpsetting_same_is k same)
+  }
+
+let helpsetting_same_eftbend: [a: ℕ, (a ≍ a) = yea] ≔
+  match a {
+    0      ^ eftbend,
+    k heir ^ k helpsetting_same_eftbend
+  }
+
+bizen: ℕ same_to_is {
+  let same_is ≔ helpsetting_same_is
+  let same_eftbend ≔ helpsetting_same_eftbend
 }

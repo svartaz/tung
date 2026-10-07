@@ -3,6 +3,7 @@
 -- manifest libraries supply ordinary module roots without compiler-owned names.
 module Tung.Library
   ( resolveLibraryRoots,
+    cacheDirectory,
     readLibraryImportFiles,
     readLibraryImports,
   )
@@ -108,6 +109,16 @@ resolveLibraryRoots owner = do
       configured <- maybe [] (filter (not . null) . splitSearchPath) <$> lookupEnv "TUNG_PATH"
       absolute <- traverse makeAbsolute configured
       pure (Right (nub (roots ++ absolute)))
+
+-- checked interfaces live in `.tung/cache` beside the nearest `tung.yaml`,
+-- or beside the file when no manifest encloseth it; git ignoreth `.tung`.
+cacheDirectory :: FilePath -> IO FilePath
+cacheDirectory owner = do
+  absolute <- makeAbsolute owner
+  file <- doesFileExist absolute
+  let start = if file then takeDirectory absolute else absolute
+  root <- either (const start) (maybe start takeDirectory) <$> findManifest owner
+  pure (root </> ".tung" </> "cache")
 
 readLibraryImportFiles :: FilePath -> IO (Either String [(FilePath, String)])
 readLibraryImportFiles owner =

@@ -2,14 +2,15 @@ use flock/algebra/whole/hath_magma.tung
 use flock/algebra/whole/monoid.tung
 use flock/algebra/whole/semigroup.tung
 use flock/functor.tung
-use flock/functor/applicative.tung
-use flock/functor/hath_cata.tung
-use flock/functor/hath_filter.tung
-use flock/functor/hath_traverse.tung
+use flock/functor/atfoldsome.tung
+use flock/functor/catamorphism.tung
+use flock/functor/hath_sift.tung
+use flock/functor/hath_throughwend.tung
 use flock/functor/monad.tung
 use flock/order/complement.tung
 use ilk/one.tung
 use ilk/two.tung
+use is.tung
 
 ## optional value.
 show ilk maybe: [α: *, *] {
@@ -24,16 +25,22 @@ bizen: [@α: *, @: α semigroup, (α maybe) semigroup] {
     a some, b some ^ a · b $ some
   }
 
-  let ·_· ≔ sorry
+  let ·_· ≔ {
+    none,   _,      _      ^ eftbend,
+    _ some, none,   _      ^ eftbend,
+    _ some, _ some, none   ^ eftbend,
+    a some, b some, c some ^ some leibnitz (a ·_· b c)
+  }
 }
 
 bizen: [@α: *, @: α semigroup, (α maybe) monoid] {
   let ∅ ≔ none
 
-  let ∅_· ≔ {_ ^ backbend}
+  let ∅_·: [_:] ≔ eftbend
+
   let ·_∅ ≔ {
-    none   ^ backbend,
-    _ some ^ backbend
+    none   ^ eftbend,
+    _ some ^ eftbend
   }
 }
 
@@ -43,31 +50,31 @@ bizen: maybe functor {
     a some, f ^ a f $ some
   }
 
-  let warp_is ≔ {
-    none   ^ backbend,
-    _ some ^ backbend
+  let warp_sameness ≔ {
+    none   ^ eftbend,
+    _ some ^ eftbend
   }
 }
 
-bizen: maybe applicative {
+bizen: maybe atfoldsome {
   let sheer ≔ some
-  let apply ≔ {
+  let atfold ≔ {
     a some, f some ^ a f $ some,
     _,      _      ^ none
   }
 
-  let apply_is_sheer ≔ {
-    none   ^ backbend,
-    _ some ^ backbend
+  let atfold_sameness_sheer ≔ {
+    none   ^ eftbend,
+    _ some ^ eftbend
   }
-  let sheer_apply_sheer ≔ {a, f ^ backbend}
-  let apply_apply ≔ {
-    none,   _, _ ^ backbend,
-    _ some, _, _ ^ backbend
+  let sheer_atfold_sheer: [a:, f:] ≔ eftbend
+  let atfold_atfold ≔ {
+    none,   _, _ ^ eftbend,
+    _ some, _, _ ^ eftbend
   }
-  let sheer_apply ≔ {
-    _, none   ^ backbend,
-    _, _ some ^ backbend
+  let sheer_atfold ≔ {
+    _, none   ^ eftbend,
+    _, _ some ^ eftbend
   }
 }
 
@@ -77,21 +84,21 @@ bizen: maybe monad {
     a some ^ a
   }
 
-  let sheer_warp_flat ≔ {a, f ^ backbend}
+  let sheer_bind: [a:, f:] ≔ eftbend
   let warp_sheer_flat ≔ {
-    none   ^ backbend,
-    _ some ^ backbend
+    none   ^ eftbend,
+    _ some ^ eftbend
   }
 }
 
-bizen: maybe hath_filter {
-  let filter ≔ {
+bizen: maybe hath_sift {
+  let sift ≔ {
     none,   _ ^ none,
     a some, f ^ a f $ if (a some) none
   }
 }
 
-bizen: maybe hath_cata {
+bizen: maybe catamorphism {
   let gather₀ ≔ {
     none,   b, _ ^ b,
     a some, b, f ^ a f b
@@ -102,8 +109,8 @@ bizen: maybe hath_cata {
   }
 }
 
-bizen: maybe hath_traverse {
-  let traverse ≔ {
+bizen: maybe hath_throughwend {
+  let throughwend ≔ {
     none,   _ ^ none sheer,
     a some, f ^ (a f) warp some
   }

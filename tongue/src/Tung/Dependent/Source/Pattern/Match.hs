@@ -15,6 +15,7 @@ module Tung.Dependent.Source.Pattern.Match
     checkMatch,
     requireUsed,
     splitColumn,
+    unnamed,
   )
 where
 
@@ -22,7 +23,7 @@ import Control.Monad (filterM, foldM, forM, forM_, unless, when)
 import Data.Bifunctor (first)
 import Data.Foldable (foldrM)
 import Data.Functor ((<&>))
-import Data.List (nub, nubBy)
+import Data.List (elemIndex, nub, nubBy)
 import Data.Map.Strict qualified as Map
 import Data.Maybe (catMaybes)
 import Data.Set qualified as Set
@@ -215,7 +216,18 @@ bindCaseInputs start count expected = go start count expected []
 -- type may depend on it. other scrutinees are bound first.
 checkMatch :: ExpressionChecker -> Scope -> [Expression] -> [Row] -> N.Value -> Elaboration Term
 checkMatch checker@ExpressionChecker {checkerEnvironment = environment, checkerNames = names} scope scrutinees rows expected = do
-  resolved <- matchRows environment names rows
+  written <- matchRows environment names rows
+  -- a local scrutinee is rebound in each row to the value matched there, so
+  -- a branch seeth it at its refined type, as `nil` in `match v { nil ^ v }`.
+  -- only an indexed family's value changeth type in a branch.
+  localNames <- forM scrutinees \scrutinee -> case unlocated scrutinee of
+    Name name
+      | Just position <- elemIndex (Just name) (scopeNames scope) ->
+          familyOf environment (K.contextTypes (scopeContext scope) !! position) <&> \case
+            Just Split {splitIndices = _ : _} -> Just name
+            _ -> Nothing
+    _ -> pure Nothing
+  let resolved = [row {matchPatterns = [maybe pattern (`PNamed` pattern) local | (local, pattern) <- zip localNames (matchPatterns row)]} | row <- written]
   requireMatchArity scrutinees rows
   bindScrutinees scope scrutinees [] expected \current columns goal -> do
     let distinct = nubBy (\left right -> columnLevel left == columnLevel right) columns
@@ -458,7 +470,7 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
     foldM
       ( \(partial, used) (constructor, fields) ->
           fmap (Set.union used) <$> applyMethod scope partial \methodType ->
-            constructorMethod unified generalised dependents constructor fields methodType ty Split {..}
+            constructorMethod unified generalised dependents indexLevels constructor fields methodType ty Split {..}
       )
       ((prefix, prefixType), Set.empty)
       (inductiveConstructorInfo splitInfo)
@@ -497,7 +509,7 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
   when (maybe False (const True) unified) (() <$ inferCore scope term)
   pure (term, used)
   where
-    constructorMethod unified generalised dependents constructor fields methodType columnTy Split {..} = do
+    constructorMethod unified generalised dependents indexLevels constructor fields methodType columnTy Split {..} = do
       let selected = [row | row <- rows, keeps row]
           keeps row = case snd (unnamed (matchPatterns row !! index)) of
             PConstructor name _ -> name == constructor
@@ -518,7 +530,24 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
           else do
             when (null selected) (E.failure ("the match is not exhaustive: missing " ++ symbolName constructor))
             let constructed = constructorValue constructor splitLevels splitParameters (zip (map fieldPlicity fields) fieldValues)
-            rows' <- traverse (expandRow fields constructed columnTy) selected
+            -- the constructed value's own type carrieth its refined indices.
+            constructedType <-
+              if null indexLevels
+                then pure columnTy
+                else quote current constructed >>= inferCore current
+            -- each index input named in scope seeth the constructor's index.
+            refinements <- case unified of
+              Nothing
+                | not (null indexLevels) ->
+                    familyOf environment constructedType <&> \case
+                      Just Split {splitIndices = refined} ->
+                        [ (name, value, K.contextTypes (scopeContext scope) !! (depth scope - indexLevel - 1))
+                        | (indexLevel, value) <- zip indexLevels refined,
+                          Just name <- [scopeNames scope !! (depth scope - indexLevel - 1)]
+                        ]
+                      Nothing -> []
+              _ -> pure []
+            rows' <- map (\row -> row {matchBindings = matchBindings row ++ refinements}) <$> traverse (expandRow fields constructed constructedType) selected
             let fieldColumns = [Column fieldLevel (K.contextTypes (scopeContext current) !! (depth current - fieldLevel - 1)) | fieldLevel <- fieldLevels]
                 columns' = take index columns ++ fieldColumns ++ drop (index + 1) columns
             -- in course-of-values recursion each direct recursive field's

@@ -13,4 +13,4 @@ let route: [r: _request, _response deed] ≔
   ('request:' · (r request~target) $ write_line) then (r respond $ sheer)
 
 let main: 𝟙 deed ≔
-  8080 serve route $ warp_flat { message ^ 'web server:' · message $ write_line }
+  8080 serve route $ bind { message ^ 'web server:' · message $ write_line }

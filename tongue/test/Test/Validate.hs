@@ -20,7 +20,7 @@ accepted =
     ("explicit aliases distinguish dotted directories", "use pkg.one/query.tung one use pkg.two/query.tung two"),
     ("labels may repeat in separate records", "let first ≔ r{x ≔ +1} let second ≔ r{x ≔ +2}"),
     ("annotated fremmed let", "let plus:[ℤ, ℤ, ℤ] ≔ 'eke_integer' fremmed"),
-    ("shared constructor heads in law parameters", "ilk _box: [a:*, *] { box: [a, a _box] } flock selfness:[a:*, *] { let rule:[x box:a _box, y box:a _box, x = y] }")
+    ("shared constructor heads in law parameters", "ilk _box: [a:*, *] { box: [a, a _box] } flock sameness:[a:*, *] { let rule:[x box:a _box, y box:a _box, x = y] }")
   ]
 
 rejected :: [(String, String)]

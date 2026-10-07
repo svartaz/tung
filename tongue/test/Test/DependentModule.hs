@@ -56,10 +56,10 @@ tests =
       checked "use bool.tung\nilk mine:* { yes: mine }\nlet a:mine ≔ yes\n" [bool],
     rejectContaining "local names still cannot repeat" "top-level name repeateth" $
       compile "let a ≔ *\nlet a ≔ *\n" [],
-    expectEq "one module imported twice keepeth one selfness" (Right True) $
+    expectEq "one module imported twice keepeth one sameness" (Right True) $
       checked "use bool.tung\nuse wrap.tung\nlet a:bool ≔ yes keep\n" [bool, ("wrap.tung", "use bool.tung\nshow let keep:[bool, bool] ≔ {x ^ x}\n")],
     expectEq "later lambda annotations seeth earlier binders" (Right True) do
-      program <- compile "let shadow ≔ selfness\nlet selfness ≔ {shadow:*, x:shadow ^ x}" []
+      program <- compile "let shadow ≔ sameness\nlet sameness ≔ {shadow:*, x:shadow ^ x}" []
       sameNormalIn program "* shadow *" "*",
     expectEq "a later local let doth not hide an earlier global use" (Right True) do
       program <- compile "let before ≔ (let x ≔ later let later ≔ +0 yield x)\nlet later ≔ +1" []
@@ -72,7 +72,7 @@ tests =
       compile "use broken.tung\n" [("broken.tung", "let bad ≔ unknown\n")],
     rejectContaining "show precedeth a declaration" "show must precede" $
       parseSource "show use bool.tung\n",
-    rejectContaining "use is top-level" "use and show must be top-level" $
+    rejectContaining "use sameness top-level" "use and show must be top-level" $
       parseSource "let a ≔ (use bool.tung yield *)\n"
   ]
   where

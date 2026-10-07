@@ -23,6 +23,15 @@ tests example =
     computes "a function input is passed to each recursive call" "(>{‥, zero, zero heir, ∅}) warp heir" ">{‥, zero heir, (zero heir) heir, ∅}",
     computes "several columns recurse together" (two ++ " same " ++ two) "yes",
     computes "several columns and alternatives" (two ++ " same zero") "no",
+    -- a repeated bare name is a constructor pattern, not a lambda binder.
+    expectEq "one row may repeat a constructor" (Right True) $
+      compiled (example ++ "ilk one:* { only:one }\nlet pair:[one, one, bool] ≔ {only, only ^ yes}\n")
+        >>= \program -> sameNormalIn program "only pair only" "yes",
+    -- a local scrutinee is rebound at its refined type in each row.
+    expectEq "a branch seeth a local scrutinee at its refined index" (Right ()) $
+      () <$ compiled (example ++ "ilk vec:[α:*, [nat, *]] { nil:α vec zero, cons:[n:nat, head:α, tail:α vec n, α vec (n heir)] }\nlet keep:[@α:*, @n:nat, v:α vec n, α vec n] ≔ match v { nil ^ v, _ cons _ _ ^ v }\n"),
+    rejectContaining "one row cannot bind a variable twice" "'x' is bound twice in one row" $
+      compiled (example ++ "let first:[bool, bool, bool] ≔ {x, x ^ x}\n"),
     computes "nested patterns select deeper constructors" (two ++ " at_least_two") "yes",
     computes "a wildcard row catcheth shallower values" "(zero heir) at_least_two" "no",
     computes "selfcalling may pass a grandchild and a rebuilt child" ("(" ++ four ++ " heir) fibonacci") ("(" ++ four ++ " heir)"),
@@ -38,7 +47,7 @@ tests example =
         )
         >>= \program -> sameNormalIn program "yes pick" "zero",
     expectEq "a case function argument waiteth for a later argument to fix its input" (Right True) $
-      compiled (example ++ "let apply_to:[@α:*, @β:*, f:[α, β], a:α, β] ≔ a f\nlet answer ≔ { yes ^ no, no ^ yes } apply_to yes\n")
+      compiled (example ++ "let atfold_to:[@α:*, @β:*, f:[α, β], a:α, β] ≔ a f\nlet answer ≔ { yes ^ no, no ^ yes } atfold_to yes\n")
         >>= \program -> sameNormalIn program "answer" "no",
     expectEq "a computed scrutinee is replaced in the goal by each row's constructor" (Right ()) $
       ()
@@ -46,7 +55,7 @@ tests example =
           ( example
               ++ """
                  let constant:[b:bool, bool] ≔ match b { yes ^ no, no ^ no }
-                 let law:[b:bool, (b not $ constant) = no] ≔ match b not { yes ^ backbend, no ^ backbend }
+                 let law:[b:bool, (b not $ constant) = no] ≔ match b not { yes ^ eftbend, no ^ eftbend }
 
                  """
           ),
@@ -100,7 +109,7 @@ tests example =
     rejectContaining "an index computed by a function cannot be matched" "a variable or a constructor applied to variables" $
       compiled (example ++ tags ++ "let bad:[b:bool, (b not) tag, bool] ≔ { mark ^ yes, other ^ no }\n"),
     rejectContaining "an index a parameter also useth needeth orsetting K" "axiom K" $
-      compiled ("let k:[@α:*, @a:α, p:a = a, p = backbend] ≔ match p { backbend ^ backbend }\n")
+      compiled ("let k:[@α:*, @a:α, p:a = a, p = eftbend] ≔ match p { eftbend ^ eftbend }\n")
   ]
   where
     tags = "ilk tag:[bool, *] { mark:yes tag, other:no tag }\n"
@@ -141,8 +150,8 @@ repeatedScrutineeTests =
     )
     : [ rejectContaining label reason (compiled (natural ++ source))
       | (label, reason, source) <-
-          [ ("inconsistent repeated patterns keep their written row selfness", "case 1 is redundant", "let bad:[x:nat,nat] ≔ match x,x { zero,_ heir ^zero, zero,zero ^zero, n heir,m heir ^m }"),
-            ("recursive inconsistent patterns keep their written row selfness", "case 1 is redundant", "let bad:[x:nat,nat] ≔ match x,x { zero,_ heir ^zero, zero,zero ^zero, n heir,m heir ^m bad }"),
+          [ ("inconsistent repeated patterns keep their written row sameness", "case 1 is redundant", "let bad:[x:nat,nat] ≔ match x,x { zero,_ heir ^zero, zero,zero ^zero, n heir,m heir ^m }"),
+            ("recursive inconsistent patterns keep their written row sameness", "case 1 is redundant", "let bad:[x:nat,nat] ≔ match x,x { zero,_ heir ^zero, zero,zero ^zero, n heir,m heir ^m bad }"),
             ("repeated inputs still bind each row name once", "'n' is bound twice", "let bad:[x:nat,nat] ≔ match x,x { zero,zero ^zero, n heir,n heir ^n bad }"),
             ("every repeated constructor pattern is validated before intersection", "needs 1 explicit arguments", "let bad:[x:nat,nat] ≔ match x,x { zero,zero ^zero, n heir,heir ^n bad }")
           ]

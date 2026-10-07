@@ -44,21 +44,21 @@ let warp: [@α: *, @β: *, α list, [α, β], β list] ≔ {
 
 ## several columns and nested patterns.
 let same: [nat, nat, bool] ≔ {
-  zero,      zero       ^ yes,
-  zero,      _ heir;
-  _ heir, zero       ^ no,
-  m heir, n heir  ^ m same n
+  zero,   zero   ^ yes,
+  zero,   _ heir;
+  _ heir, zero   ^ no,
+  m heir, n heir ^ m same n
 }
 
 let at_least_two: [nat, bool] ≔ {
   (_ heir) heir ^ yes,
-  _                   ^ no
+  _             ^ no
 }
 
 ## a call may pass any descendant of the matched input, as in agda.
 let fibonacci: [nat, nat] ≔ {
-  zero                ^ zero,
-  zero heir        ^ zero heir,
+  zero          ^ zero,
+  zero heir     ^ zero heir,
   (n heir) heir ^ ((n heir) fibonacci) plus (n fibonacci)
 }
 

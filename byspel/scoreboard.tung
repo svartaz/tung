@@ -1,5 +1,5 @@
-use flock/functor/hath_cata.tung
-use flock/functor/hath_traverse.tung
+use flock/functor/catamorphism.tung
+use flock/functor/hath_throughwend.tung
 use ground.tung
 use ilk/list.tung
 use ilk/maybe.tung
@@ -16,8 +16,8 @@ bizen: team hath_to_text {
   let to_text ≔ {
     north ^ 'north',
     south ^ 'south',
-    east ^ 'east',
-    west ^ 'west'
+    east  ^ 'east',
+    west  ^ 'west'
   }
 }
 
@@ -44,9 +44,9 @@ let standing: * ≔ r{played: ℤ, points: ℤ, team: team}
 let same_team: [left: team, right: team, 𝟚] ≔ match left, right {
   north, north ^ yea,
   south, south ^ yea,
-  east, east ^ yea,
-  west, west ^ yea,
-  _, _ ^ nay
+  east,  east  ^ yea,
+  west,  west  ^ yea,
+  _,     _     ^ nay
 }
 
 let checked_score: [score: ℤ, text ∑ ℤ] ≔
@@ -85,30 +85,30 @@ let ordered_scoreline: [g: game, home_score: ℤ, away_score: ℤ, text ∑ scor
   }
 
 let scoreline_of: [g: game, text ∑ scoreline] ≔
-  g.home_score checked_score $ warp_flat { home_score ^
-    g.away_score checked_score $ warp_flat { away_score ^
+  g.home_score checked_score $ bind { home_score ^
+    g.away_score checked_score $ bind { away_score ^
       g ordered_scoreline home_score away_score
     }
   }
 
 let settle: [g: game, match_result] ≔
   match g scoreline_of {
-    line incast₁ ^ line finished,
+    line incast₁   ^ line finished,
     reason incast₀ ^ r{away ≔ g.away, home ≔ g.home, reason ≔ reason} cancelled
   }
 
 let delay_of: [luck: float, ℕ] ≔
-  match (luck × 30.0) ⌊ $ warp_flat to_ℕ {
+  match (luck × 30.0) ⌊ $ bind to_ℕ {
     delay some ^ delay,
-    none ^ 0
+    none       ^ 0
   }
 
-let start: [g: game, (match_result task) deed] ≔ random warp_flat {
+let start: [g: game, (match_result task) deed] ≔ random bind {
   luck ^ ((luck delay_of) sleep) then (g settle $ sheer) $ fork
 }
 
 let eke_result: [standing, match_result, standing] ≔ {
-  s, _ cancelled ^ s,
+  s, _ cancelled   ^ s,
   s, line finished ^ match s.team same_team line.home, s.team same_team line.away {
     yea, _ ^ r{
       ≔ s,
@@ -124,7 +124,7 @@ let eke_result: [standing, match_result, standing] ≔ {
   }
 }
 
-let apply_result: [standings: standing list, outcome: match_result, standing list] ≔
+let atfold_result: [standings: standing list, outcome: match_result, standing list] ≔
   standings warp { s ^ s eke_result outcome }
 
 let print_result: [match_result, 𝟙 deed] ≔ {
@@ -180,7 +180,7 @@ let initial_standings: standing list ≔
 let finished_results: [waited: (match_result maybe) list, match_result list] ≔
   match waited sequence {
     results some ^ results,
-    none ^ empty
+    none         ^ empty
   }
 
 let report: [results: match_result list, 𝟙 deed] ≔ >{then,
@@ -189,10 +189,10 @@ let report: [results: match_result list, 𝟙 deed] ≔ >{then,
   results each print_result,
   '' write_line,
   'standings' write_line,
-  results gather₁ initial_standings apply_result $ each print_standing
+  results gather₁ initial_standings atfold_result $ each print_standing
 }
 
 let main: 𝟙 deed ≔ >{then,
   'launching match jobs' write_line,
-  fixtures traverse start $ warp_flat { tasks ^ tasks traverse wait } $ warp finished_results $ warp_flat report
+  fixtures throughwend start $ bind { tasks ^ tasks throughwend wait } $ warp finished_results $ bind report
 }

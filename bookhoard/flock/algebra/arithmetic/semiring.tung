@@ -5,6 +5,7 @@ use flock/algebra/arithmetic/hath_zero.tung
 use flock/algebra/arithmetic/monoid_eke.tung
 use flock/algebra/arithmetic/monoid_fold.tung
 use ilk/two.tung
+use is.tung
 
 show flock semiring: [α: *, @: α monoid_eke, @: α monoid_fold, *] {
   let +_commute: [a: α, b: α, (a + b) = (b + a)]
@@ -20,17 +21,17 @@ bizen: [@β: *, @: β semiring, @α: *, [α, β] semiring] {
   let ×: [f:, g:, a:] ≔ (a f) × (a g)
   let one: [_:] ≔ one
 
-  let +_+ ≔ sorry
-  let zero_+ ≔ sorry
-  let +_zero ≔ sorry
-  let ×_× ≔ sorry
-  let one_× ≔ sorry
-  let ×_one ≔ sorry
-  let +_commute ≔ sorry
-  let ×_+ ≔ sorry
-  let +_× ≔ sorry
-  let zero_× ≔ sorry
-  let ×_zero ≔ sorry
+  let +_+: [f:, g:, h:] ≔ {x ^ (x f) +_+ (x g) (x h)} fall_umtake
+  let zero_+: [f:] ≔ {x ^ (x f) zero_+} fall_umtake
+  let +_zero: [f:] ≔ {x ^ (x f) +_zero} fall_umtake
+  let ×_×: [f:, g:, h:] ≔ {x ^ (x f) ×_× (x g) (x h)} fall_umtake
+  let one_×: [f:] ≔ {x ^ (x f) one_×} fall_umtake
+  let ×_one: [f:] ≔ {x ^ (x f) ×_one} fall_umtake
+  let +_commute: [f:, g:] ≔ {x ^ (x f) +_commute (x g)} fall_umtake
+  let ×_+: [f:, g:, h:] ≔ {x ^ (x f) ×_+ (x g) (x h)} fall_umtake
+  let +_×: [f:, g:, h:] ≔ {x ^ (x f) +_× (x g) (x h)} fall_umtake
+  let zero_×: [f:, g:] ≔ {x ^ (x f) zero_× (x g)} fall_umtake
+  let ×_zero: [f:, g:] ≔ {x ^ (x f) ×_zero (x g)} fall_umtake
 }
 
 bizen: 𝟚 semiring {
@@ -38,14 +39,14 @@ bizen: 𝟚 semiring {
     nay, nay;
     nay, yea;
     yea, nay;
-    yea, yea ^ backbend
+    yea, yea ^ eftbend
   }
   let ×_+ ≔ {
-    nay, _, _;
+    nay, _,   _;
     yea, nay, nay;
     yea, nay, yea;
     yea, yea, nay;
-    yea, yea, yea ^ backbend
+    yea, yea, yea ^ eftbend
   }
   let +_× ≔ {
     nay, nay, nay;
@@ -55,8 +56,8 @@ bizen: 𝟚 semiring {
     yea, nay, nay;
     yea, nay, yea;
     yea, yea, nay;
-    yea, yea, yea ^ backbend
+    yea, yea, yea ^ eftbend
   }
-  let zero_× ≔ {_, _ ^ backbend}
-  let ×_zero ≔ {nay, _; yea, _ ^ backbend}
+  let zero_×: [_:, _:] ≔ eftbend
+  let ×_zero ≔ {nay, _; yea, _ ^ eftbend}
 }

@@ -1,23 +1,23 @@
-# lemmas about the primitive identity type `=`, whose only proof is `backbend`.
-# matching on `backbend` replaceth one side of an equation with the other.
+# lemmas about the primitive identity type `=`, whose only proof is `eftbend`.
+# matching on `eftbend` replaceth one side of an equation with the other.
 
 ## equality is preserved by applying a function.
 show let leibnitz: [
   @α: *, @β: *,
   @a: α, @b: α,
-  f: [α, β], backbend: a = b, (a f) = (b f)
-] ≔ backbend
+  f: [α, β], eftbend: a = b, (a f) = (b f)
+] ≔ eftbend
 
 ## reverse an equality proof.
 show let evenmete: [
   @α: *, @a: α, @b: α,
-  backbend: a = b, b = a
-] ≔ backbend
+  eftbend: a = b, b = a
+] ≔ eftbend
 
 ## join two equality proofs.
 show let throughgo: [
   @α: *, @a: α, @b: α, @c: α,
-  backbend: a = b, q: b = c, a = c
+  eftbend: a = b, q: b = c, a = c
 ] ≔ q
 
 ## a property of one side holdeth for the other. the property is found by
@@ -25,7 +25,7 @@ show let throughgo: [
 ## each occurrence of `a` in the type of the second input.
 show let transport: [
   @α: *, @a: α, @b: α, @property: [α, *],
-  backbend: a = b, a property, b property
+  eftbend: a = b, a property, b property
 ] ≔ {x ^ x}
 
 ## a computed value with the proof of what it is, so that a case function can
@@ -35,4 +35,12 @@ show let transport: [
 show let inspect: [
   @α: *, @property: [α, *],
   a: α, f: [b: α, a = b, b property], a property
-] ≔ a f backbend
+] ≔ a f eftbend
+
+## function extensionality: functions that agree at every input are equal.
+## it is a listed assumption, as in agda and lean, where it is not provable
+## from the primitive identity type alone.
+show orsetting fall_umtake: [
+  @α: *, @β: *, @f: [α, β], @g: [α, β],
+  [a: α, (a f) = (a g)], f = g
+]

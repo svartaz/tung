@@ -1,8 +1,8 @@
 use ground.tung
 
 let fibonacci: [ℕ, ℕ] ≔ {
-  0 ^ 0,
-  1 ^ 1,
+  0             ^ 0,
+  1             ^ 1,
   (n heir) heir ^ (n fibonacci) + ((n heir) fibonacci)
 }
 

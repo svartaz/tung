@@ -1,7 +1,10 @@
 use flock/algebra/whole/hath_magma.tung
 use flock/algebra/whole/semigroup.tung
 use flock/order/semilattice_bounded_upper.tung
+use flock/order/semilattice_lower.tung
+use flock/order/semilattice_upper.tung
 use flock/order/semilattice_upper_bounded.tung
+use is.tung
 
 show flock monoid: [α: *, @: α semigroup, *] {
   let ∅: α
@@ -13,20 +16,27 @@ show flock monoid: [α: *, @: α semigroup, *] {
 bizen: [@β: *, @: β monoid, @α: *, [α, β] monoid] {
   let ∅: [_:] ≔ ∅
 
-  let ∅_· ≔ sorry
-  let ·_∅ ≔ sorry
+  let ∅_·: [f:] ≔ {x ^ (x f) ∅_·} fall_umtake
+
+  let ·_∅: [f:] ≔ {x ^ (x f) ·_∅} fall_umtake
 }
 
 bizen: [@α: *, @: α semilattice_bounded_upper, (α _lower) monoid] {
   let ∅ ≔ ⊤ lower
 
-  let ∅_· ≔ sorry
-  let ·_∅ ≔ sorry
+  let ∅_·: [a lower:] ≔
+    {x: α ^ x lower} leibnitz (a ⊤_∧)
+
+  let ·_∅: [a lower:] ≔
+    {x: α ^ x lower} leibnitz ((a ∧_commute ⊤) throughgo (a ⊤_∧))
 }
 
 bizen: [@α: *, @: α semilattice_upper_bounded, (α _upper) monoid] {
   let ∅ ≔ ⟂ upper
 
-  let ∅_· ≔ sorry
-  let ·_∅ ≔ sorry
+  let ∅_·: [a upper:] ≔
+    {x: α ^ x upper} leibnitz (a ⟂_∨)
+
+  let ·_∅: [a upper:] ≔
+    {x: α ^ x upper} leibnitz ((a ∨_commute ⟂) throughgo (a ⟂_∨))
 }

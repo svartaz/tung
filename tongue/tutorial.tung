@@ -9,7 +9,7 @@ let l ≔ list~empty
 let table ≔ hashmap~empty
 
 # define variables
-let number: ℤ ≔ 42
+let tale: ℤ ≔ 42
 let text ≔ 'hello!'
 
 # define functions
@@ -81,12 +81,12 @@ let age ≔ older.age
 show flock functor: [ϝ: [*, *], *] {
   let warp: [@α: *, @β: * α ϝ, [α, β], β ϝ]
 
-  let warp_is: [@α: *, b: α ϝ, (b warp is) = b]
+  let warp_sameness: [@α: *, b: α ϝ, (b warp sameness) = b]
 }
 
-show flock applicative: [ϝ: [*, *], @: ϝ functor, *] {
+show flock atfoldsome: [ϝ: [*, *], @: ϝ functor, *] {
   let sheer: [@α: *, α, α f]
-  let apply: [@α: *, @β: *, a f, [a, β] f, β f]
+  let atfold: [@α: *, @β: *, a f, [a, β] f, β f]
 
   # omitted laws
 }

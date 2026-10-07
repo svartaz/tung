@@ -1,7 +1,7 @@
 use flock/algebra/whole/monoid.tung
 use flock/algebra/whole/semigroup.tung
-use flock/functor/hath_cata.tung
-use flock/functor/hath_filter.tung
+use flock/functor/catamorphism.tung
+use flock/functor/hath_sift.tung
 use flock/hath_inhold.tung
 use flock/hath_same.tung
 use flock/hath_size.tung
@@ -24,7 +24,7 @@ show ilk set: [a: *, *] {
 
 show let empty: [@α: *, α set] ≔ list~empty from_list
 
-show let singleton: [@α: *, a: α, α set] ≔
+show let onesome: [@α: *, a: α, α set] ≔
   (a ‥ list~empty) from_list
 
 show let to_list: [@α: *, l from_list: α set, α list] ≔ l
@@ -43,7 +43,7 @@ show let keep: [
   l from_list: α set,
   predicate: [α, 𝟚],
   α set
-] ≔ (l filter predicate) from_list
+] ≔ (l sift predicate) from_list
 
 show let rid: [@α: *, @: α hath_≍, s: α set, x: α, α set] ≔
   s keep { b ^ x ≭ b }
@@ -72,15 +72,18 @@ bizen: [@α: *, @: (α list) hath_∋ α, (α set) hath_≤] {
 }
 
 bizen: [@α: *, @: (α list) hath_∋ α, (α set) order_half] {
-  let ≤_backbend ≔ sorry
-  let ≤_antievenmete ≔ {l₀ from_list, l₁ from_list ^
-    (let conjunction: [p: 𝟚, q: 𝟚, (p ≤ (q ≤ (p ∧ q))) = yea] ≔ match p, q {
+  let ≤_eftbend ≔ sorry
+
+  let ≤_whitherevenmete: [l₀ from_list:, l₁ from_list:] ≔ (
+    let conjunction: [p: 𝟚, q: 𝟚, (p ≤ (q ≤ (p ∧ q))) = yea] ≔
+      match p, q {
         yea, yea;
         yea, nay;
-        nay, _ ^ backbend
+        nay, _   ^ eftbend
       }
-      yield (l₀ included l₁) conjunction (l₁ included l₀))
-  }
+    yield (l₀ included l₁) conjunction (l₁ included l₀)
+  )
+
   let ≤_throughgo ≔ sorry
 }
 
@@ -94,7 +97,7 @@ bizen: [@α: *, @: (α list) hath_∋ α, (α set) monoid] {
   let ∅ ≔ empty
 
   let ∅_· ≔ sorry
-  let ·_∅ ≔ {_ from_list ^ backbend}
+  let ·_∅: [_ from_list:] ≔ eftbend
 }
 
 bizen: [@α: *, @: (α set) hath_∋ α, (α set) semilattice_lower] {
@@ -115,8 +118,8 @@ bizen: [@α: *, @: (α list) hath_∋ α, (α set) semilattice_upper] {
 }
 
 bizen: [@α: *, @: (α list) hath_∋ α, (α set) lattice] {
-  let ∧_∨_absorption ≔ sorry
-  let ∨_∧_absorption ≔ sorry
+  let ∧_∨_absorb ≔ sorry
+  let ∨_∧_absorb ≔ sorry
 }
 
 bizen: [@α: *, @: (α list) hath_∋ α, (α set) lattice_distributive] {

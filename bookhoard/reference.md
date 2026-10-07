@@ -11,7 +11,7 @@ implicit prelude. each public flock liveth below `flock/`; its file name matchet
 its flock name.
 
 - partial and total order are separate. lower and upper semilattices stand
-  alone; a lattice requireth both and absorption.
+  alone; a lattice requireth both and absorb.
 - `powerset` is a characteristic function. `set` and `table` are finite,
   list-backed collections.
 - integers provide exact euclidean division. floats expose IEEE operations
@@ -21,15 +21,17 @@ its flock name.
   folding. a request `ξ φ` nameth its answer type `ξ`, and the program keepeth
   the continuation, so any `φ` will do and every function stayeth total.
 - `deed/action.tung` maketh `deed` a functor, applicative, and monad, so
-  ordinary combinators such as `warp_flat`, `then`, `traverse`, and `each`
+  ordinary combinators such as `bind`, `then`, `throughwend`, and `each`
   sequence actions. fallible operations return `maybe` or `text ∑ α`;
   nothing throweth.
 
 ## naming and style
 
-- a flock that only nameth members and stateth no law is named `hath_x`.
-  when its one member is a symbol, `x` is that symbol: `hath_+`, `hath_≤`,
-  `hath_≍`. otherwise `x` is the member's word, as `hath_zero`. a flock with
+- a flock that only nameth one member and stateth no law is named `hath_x`,
+  where `x` is that member: `hath_+`, `hath_≤`, `hath_≍`, `hath_zero`. a
+  lawless flock of several members is named for what they share, as `catamorphism`
+  for `gather₀` and `gather₁` and `elementary` for the elementary functions,
+  never `hath_` of a name that is not a member. a flock with
   laws, or one that combineth lawful parents, is named for its structure,
   such as `monoid` or `order_whole`.
 - a flock's file name is its flock name, kept ascii: a symbol flock taketh
@@ -40,6 +42,11 @@ its flock name.
   module: `ilk/integer.tung` showeth `to_ℕ`, read `integer~to_ℕ`, not
   `integer_to_natural`. a host binding taketh that name directly; the
   library keepeth no second alias for it.
+- a let whose body is one anonymous function of a single row bindeth its
+  inputs in the header instead: `let +_+: [f:, g:, h:] ≔ …`, not
+  `let +_+ ≔ {f, g, h ^ …}`. the lambda stayeth only where a header would need
+  a written type the lambda inferreth, as a pattern input after implicit type
+  inputs, `{@β ^ {entries from_list ^ …}}`.
 - a let whose named inputs are matched at once is a case function over bare
   slots: `let f: [ℕ, ℕ, ℕ] ≔ {m, 0 ^ m, …}`, not
   `let f: [m: ℕ, n: ℕ, ℕ] ≔ match n {…}`. an input keepeth its name when the
@@ -50,20 +57,20 @@ its flock name.
 [purescript prelude](https://pursuit.purescript.org/packages/purescript-prelude/6.0.1/docs/Prelude)
 informeth the small surface. the mapping is approximate:
 
-| purescript family                 | bookhoard counterpart                            | boundary                                                               |
-| --------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------- |
-| `eq`, `ord`, lattice              | equality, order, semilattice, and lattice flocks | raw comparison, order laws, and lattice laws remain distinct           |
-| `semigroup`, `monoid`             | `semigroup`, `monoid`                            | `lower` and `upper` carriers remain distinct                           |
-| `semiring`, `ring`, `field`       | arithmetic and euclidean flocks                  | IEEE float division doth not claim exact algebra                       |
-| `functor`, `applicative`, `monad` | collection flocks                                | product applicative and monad require a monoid for the first component |
-| `foldable`, `traversable`         | `hath_cata`, `traverse`                          | applicative evidence belongeth to each polymorphic traversal           |
-| `maybe`, `either`, `tuple`        | `maybe`, `∑`, `both`                             | sums and products live in the core                                     |
-| `effect`                          | `deed`                                           | a primitive type; `deed/action.tung` supplieth its monad bizens        |
-| `array`, `warp`, `set`            | `list`, `table`, `set`, `powerset`               | a packed random-access array is absent                                 |
+| purescript family                | bookhoard counterpart                            | boundary                                                               |
+| -------------------------------- | ------------------------------------------------ | ---------------------------------------------------------------------- |
+| `eq`, `ord`, lattice             | equality, order, semilattice, and lattice flocks | raw comparison, order laws, and lattice laws remain distinct           |
+| `semigroup`, `monoid`            | `semigroup`, `monoid`                            | `lower` and `upper` carriers remain distinct                           |
+| `semiring`, `ring`, `field`      | arithmetic and euclidean flocks                  | IEEE float division doth not claim exact algebra                       |
+| `functor`, `atfoldsome`, `monad` | collection flocks                                | product applicative and monad require a monoid for the first component |
+| `foldable`, `traversable`        | `catamorphism`, `throughwend`                    | applicative evidence belongeth to each polymorphic traversal           |
+| `maybe`, `either`, `tuple`       | `maybe`, `∑`, `both`                             | sums and products live in the core                                     |
+| `effect`                         | `deed`                                           | a primitive type; `deed/action.tung` supplieth its monad bizens        |
+| `array`, `warp`, `set`           | `list`, `table`, `set`, `powerset`               | a packed random-access array is absent                                 |
 
 boolean conjunction useth `𝟚 lower`; disjunction useth `𝟚 upper`.
 [purescript traversable](https://pursuit.purescript.org/packages/purescript-foldable-traversable/docs/Data.Traversable)
-informeth the `functor` and `hath_cata` parent flocks. tung doth not copy its open
+informeth the `functor` and `catamorphism` parent flocks. tung doth not copy its open
 record rows, lazy assumptions, or effect encoding.
 
 ## lean and mathlib comparison
@@ -78,7 +85,7 @@ tung hath no quotient types. `powerset` is
 `[a, 𝟚]`. wrap it in `lower` for intersection or `upper` for
 union; no bare powerset monoid chooseth between them.
 
-`set` and `table` expose `from_list`. `empty`, `singleton`, and `put` preserve
+`set` and `table` expose `from_list`. `empty`, `onesome`, and `put` preserve
 uniqueness, but direct `set~from_list` may build a noncanonical value.
 `set~from_list` and `table~from_list` remain distinct by qualification.
 
@@ -91,7 +98,7 @@ provideth the laws as proofs. laws are never evaluator rewrite rules.
 
 [`is.tung`](sameness.tung) proveth `leibnitz` (congruence), `evenmete`,
 `throughgo`, and `transport` for the primitive identity type `=` by
-matching `backbend`. proofs use computation, constructor cases, or
+matching `eftbend`. proofs use computation, constructor cases, or
 checked induction. list, non-empty list, sum, option, and table mapping laws
 need no new axioms. finite boolean arithmetic and finite bounds also reduce
 by cases. generic min/max idempotence holdeth for either comparison result.
@@ -106,20 +113,34 @@ rejected.
 
 remaining `sorry` statements have distinct boundaries:
 
-| statements                                                                             | boundary                                                                                                                                        |
-| -------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| text, unicode, and euclidean laws                                                      | native operations without a model reduce only on literal inputs                                                                                 |
-| deed laws                                                                              | deed constructors and composition are opaque in conversion; there is no observational equality principle                                        |
-| four freer laws and powerset complement                                                | pointwise proofs require equality of continuation or characteristic functions; function extensionality is absent                                |
-| function-carrier algebra, order, lattice, and bound laws                               | function extensionality and reusable component-law evidence are absent                                                                          |
-| product algebra, option associativity, and infimal/supremal monoids and semigroups     | component laws are checked at instance declaration but not available as terms through a dictionary                                              |
-| generic total-order min/max commutativity, associativity, absorption, and distribution | parent operations are abstract; boolean order laws provide no identity soundness for `≍`, and their proofs are unavailable through requirements |
-| remaining set laws                                                                     | membership constraints carry no laws, and raw list identity observeth order and duplicates                                                      |
+| statements                                                                         | boundary                                                                                                                                        |
+| ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| text, unicode, and euclidean laws                                                  | native operations without a model reduce only on literal inputs                                                                                 |
+| generic total-order min/max commutativity, associativity, absorb, and distribution | parent operations are abstract; boolean order laws provide no identity soundness for `≍`, and their proofs are unavailable through requirements |
+| remaining set laws                                                                 | membership constraints carry no laws, and raw list identity observeth order and duplicates                                                      |
 
 the [flock rules](../tongue/dependent.md#flocks-and-bizens) specify proof
 checking and erasure. `sorry` is an assumption, so checking an instance doth
-not establish its remaining laws. no native equations, extensionality axiom,
-or additional assumptions are introduced by these proofs.
+not establish its remaining laws.
+
+function-carrier laws hold pointwise from the result carrier's laws, and the
+freer and powerset laws compare continuations and characteristic functions;
+each useth `fall_umtake` from [`is.tung`](is.tung), function extensionality,
+a listed `orsetting`. product, option, and lower/upper laws use the
+requirement's own laws, which a dictionary carrieth. no native equation is
+assumed.
+
+deed laws are proved from three listed assumptions in
+[`deed/action.tung`](deed/action.tung): `deed_sheer_bind`, `deed_bind_sheer`,
+and `deed_bind_bind`, the monad laws of the host's `deed_sheer` and
+`deed_bind`. deeds are opaque to conversion, so these are axioms, as lean's
+`IO` satisfieth them by its model; the functor, applicative, and monad laws
+of `deed` follow.
+
+[`flock/same_to_is.tung`](flock/same_to_is.tung) stateth that boolean
+sameness agreeth with identity, as lean's `LawfulBEq`: `same_is` turneth
+`(a ≍ b) = yea` into `a = b`, and `same_eftbend` giveth `(a ≍ a) = yea`. `𝟚`,
+`ℕ`, and `ℤ` prove it. a law that needeth sound sameness requireth it.
 
 some remaining statements are false under their present assumptions:
 

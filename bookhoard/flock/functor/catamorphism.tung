@@ -12,26 +12,26 @@ use flock/order/semilattice_lower.tung
 use flock/order/semilattice_upper.tung
 use flock/order/semilattice_upper_bounded.tung
 
-show flock hath_cata: [φ: [*, *], *] {
+show flock catamorphism: [φ: [*, *], *] {
   let gather₀: [@α: *, @β: *, α φ, β, [α, β, β], β]
   let gather₁: [@α: *, @β: *, α φ, β, [β, α, β], β]
 }
 
-show let …*: [@α: *, @: α monoid, @φ: [*, *], @: φ hath_cata, l: α φ, α] ≔ l gather₀ ∅ ·
+show let …*: [@α: *, @: α monoid, @φ: [*, *], @: φ catamorphism, l: α φ, α] ≔ l gather₀ ∅ ·
 
 ## map values into a monoid and combine them.
-show let gather_warp: [@β: *, @: β monoid, @φ: [*, *], @: φ hath_cata, @α: *, af: α φ, f: [α, β], β] ≔
+show let gather_warp: [@β: *, @: β monoid, @φ: [*, *], @: φ catamorphism, @α: *, af: α φ, f: [α, β], β] ≔
   af gather₁ ∅ { folded, a ^ folded · (a f) }
 
 ## combine every value with ∧; an empty collection yieldeth ⊤.
 show let …∧: [
-  @φ: [*, *], @: φ hath_cata, @α: *, @: α semilattice_bounded_upper, af: α φ, α
+  @φ: [*, *], @: φ catamorphism, @α: *, @: α semilattice_bounded_upper, af: α φ, α
 ] ≔ af gather₁ ⊤ ∧
 
 ## combine every value with ∨; an empty collection yieldeth ⟂.
-show let …∨: [@φ: [*, *], @: φ hath_cata, @α: *, @: α semilattice_upper_bounded, af: α φ, α] ≔ af gather₁ ⟂ ∨
+show let …∨: [@φ: [*, *], @: φ catamorphism, @α: *, @: α semilattice_upper_bounded, af: α φ, α] ≔ af gather₁ ⟂ ∨
 
 ## add every value in a foldable collection.
-show let …+: [@φ: [*, *], @: φ hath_cata, @α: *, @: α monoid_eke, af: α φ, α] ≔ af gather₁ zero +
+show let …+: [@φ: [*, *], @: φ catamorphism, @α: *, @: α monoid_eke, af: α φ, α] ≔ af gather₁ zero +
 ## multiply every value in a foldable collection.
-show let …×: [@φ: [*, *], @: φ hath_cata, @α: *, @: α monoid_fold, af: α φ, α] ≔ af gather₁ one ×
+show let …×: [@φ: [*, *], @: φ catamorphism, @α: *, @: α monoid_fold, af: α φ, α] ≔ af gather₁ one ×

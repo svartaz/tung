@@ -130,7 +130,7 @@ solveDeterminedInstances environment names = E.repeatProgress do
 -- its body is checked. known goals are solved, and a stuck equation of the
 -- annotation is split by first-order approximation, first against a rigid
 -- application and then between two applied holes, as nested flock calls
--- such as `(l filter p) filter p` need. the unique-instance fallback still
+-- such as `(l sift p) sift p` need. the unique-instance fallback still
 -- waiteth for the whole declaration.
 settleAnnotation :: K.Environment -> Names -> Elaboration ()
 settleAnnotation environment names = E.repeatProgress do

@@ -18,8 +18,8 @@ shadowingTests =
       program <- compile source
       sameNormalIn program actual expected
   | (label, source, actual, expected) <-
-      [ ("a header binder may share its declaration's name", "let selfness:[selfness:ℤ, ℤ] ≔ selfness", "+1 selfness", "+1"),
-        ("a lambda binder may share its declaration's name", "let selfness: [@α: *, α, α] ≔ {selfness ^ selfness}", "+1 selfness", "+1"),
+      [ ("a header binder may share its declaration's name", "let sameness:[sameness:ℤ, ℤ] ≔ sameness", "+1 sameness", "+1"),
+        ("a lambda binder may share its declaration's name", "let sameness: [@α: *, α, α] ≔ {sameness ^ sameness}", "+1 sameness", "+1"),
         ("a local binding hides its enclosing declaration's name", "let worth ≔ (let worth ≔ +1 yield worth)", "worth", "+1"),
         ("a case variable may share its declaration's name", "let predecessor:[ℕ, ℕ] ≔ {0 ^ 0, predecessor heir ^ predecessor}", "2 predecessor", "1"),
         ("a local function's binder is not a recursive reference", "let outer:[ℤ, ℤ] ≔ {x ^ (let inner ≔ {inner ^ inner} yield x inner)}", "+1 outer", "+1"),
@@ -30,7 +30,7 @@ shadowingTests =
 
 elaborationTests :: [Test]
 elaborationTests =
-  [ expectEq "definitions retain their source identities" (Right [SymbolId sourceModule "alias", SymbolId sourceModule "selfness"]) $ do
+  [ expectEq "definitions retain their source identities" (Right [SymbolId sourceModule "alias", SymbolId sourceModule "sameness"]) $ do
       program <- compileSource sourceModule (aliasSource ++ identitySource)
       pure (map fst (sourceDefinitions program)),
     expectEq "source definitions carry kernel-checked judgements" (Right ()) $ do
@@ -41,21 +41,21 @@ elaborationTests =
       pure case (inferredTerm result, inferredType result) of
         (Sort lower, Sort upper) -> universeEntails (inferredConstraints result) (LevelEqual (LSucc lower) upper)
         _ -> False,
-    normal "application substituteth the supplied type" identitySource "* selfness *" (Sort LZero),
-    expectEq "each global use receiveth fresh universe arguments" (Right ()) (checkedIn identitySource "[α:*, x:α, α] selfness selfness"),
+    normal "application substituteth the supplied type" identitySource "* sameness *" (Sort LZero),
+    expectEq "each global use receiveth fresh universe arguments" (Right ()) (checkedIn identitySource "[α:*, x:α, α] sameness sameness"),
     normal "type aliases use the same application syntax" aliasSource "* alias" (Sort LZero),
-    normal "a named type may annotate an ordinary function" "let selfness_type ≔ [α:*, x:α, α]\nlet selfness:selfness_type ≔ {α ^ {x ^ x}}" "selfness" explicitIdentity,
-    normal "an anonymous function is checked against its product" "let selfness:[α:*, α, α] ≔ {x ^ x}" "selfness" explicitIdentity,
-    normal "fall is a lambda checked against its written product" "let selfness ≔ fall α:*, x:α, α ^ x" "selfness" explicitIdentity,
-    normal "fall slots may be implicit" "let selfness ≔ fall @α:*, x:α, α ^ x" "selfness" (Lambda Implicit (Sort LZero) (Lambda Explicit (Local 0) (Local 0))),
+    normal "a named type may annotate an ordinary function" "let sameness_type ≔ [α:*, x:α, α]\nlet sameness:sameness_type ≔ {α ^ {x ^ x}}" "sameness" explicitIdentity,
+    normal "an anonymous function is checked against its product" "let sameness:[α:*, α, α] ≔ {x ^ x}" "sameness" explicitIdentity,
+    normal "fall is a lambda checked against its written product" "let sameness ≔ fall α:*, x:α, α ^ x" "sameness" explicitIdentity,
+    normal "fall slots may be implicit" "let sameness ≔ fall @α:*, x:α, α ^ x" "sameness" (Lambda Implicit (Sort LZero) (Lambda Explicit (Local 0) (Local 0))),
     rejectContaining "fall requireth an input before its result" "at least one input" (parseSource "let bad ≔ fall * ^ *"),
     normal "a local definition preserveth the outer type binding" "let local:[α:*, x:α, α] ≔ (let y:α ≔ x yield y)" "local" explicitIdentity,
-    normal "a local type alias preserveth its surrounding implicit binder" "let selfness:[@α:*, x:α, α] ≔ (let β ≔ α yield x)" "selfness" (Lambda Implicit (Sort LZero) (Lambda Explicit (Local 0) (Local 0))),
+    normal "a local type alias preserveth its surrounding implicit binder" "let sameness:[@α:*, x:α, α] ≔ (let β ≔ α yield x)" "sameness" (Lambda Implicit (Sort LZero) (Lambda Explicit (Local 0) (Local 0))),
     expectEq "lexical shadowing preserveth local capture beneath a binder" (Right [nested 1, nested 0]) $ do
       program <- compile "let keep:[α:*, x:α, [α, α]] ≔ (let y:α ≔ x yield {x ^ y})\nlet shadow:[α:*, x:α, [α, α]] ≔ {x ^ x}"
       mapM (fmap eraseLevels . normaliseSourceExpression program) ["keep", "shadow"],
     normal "an anonymous slot still shifteth surrounding binders" "let first:[α:*, x:α, _:α, α] ≔ x" "first" (Lambda Explicit (Sort LZero) (Lambda Explicit (Local 0) (Lambda Explicit (Local 1) (Local 1)))),
-    normal "explicit implicit types may follow worth arguments" "let selfness:[@α:*, x:α, α] ≔ x" "* selfness @*" (Sort LZero),
+    normal "explicit implicit types may follow worth arguments" "let sameness:[@α:*, x:α, α] ≔ x" "* sameness @*" (Sort LZero),
     normal "implicit arguments may be ordinary values" "let choose:[α:*, @x:α, α] ≔ x" "* choose @*" (Sort LZero),
     normal "implicit arguments select declaration order" (aliasSource ++ "let constant:[@α:*, @β:*, x:α, _:β, α] ≔ x") "* constant alias @* @([*, *])" (Sort LZero)
   ]
@@ -64,16 +64,16 @@ elaborationTests =
 
 implicitInferenceTests :: [Test]
 implicitInferenceTests =
-  [ normal "an explicit worth determineth its omitted type argument" implicitIdentitySource "* selfness" (Sort LZero),
-    normal "an expected type specialiseth an omitted argument" (implicitIdentitySource ++ "let specialised:[*, *] ≔ selfness") "specialised" (Lambda Explicit (Sort LZero) (Local 0)),
+  [ normal "an explicit worth determineth its omitted type argument" implicitIdentitySource "* sameness" (Sort LZero),
+    normal "an expected type specialiseth an omitted argument" (implicitIdentitySource ++ "let specialised:[*, *] ≔ sameness") "specialised" (Lambda Explicit (Sort LZero) (Local 0)),
     expectEq "unspecialised functions retain their implicit product" (Right implicitIdentityType) $ do
-      result <- inferIn implicitIdentitySource "selfness"
+      result <- inferIn implicitIdentitySource "sameness"
       pure (eraseLevels (inferredType result)),
-    normal "higher-rank arguments retain their polymorphism" (implicitIdentitySource ++ "let Id ≔ [@α:*, α, α]\nlet pass:[f:Id, Id] ≔ f") "selfness pass" implicitIdentity,
+    normal "higher-rank arguments retain their polymorphism" (implicitIdentitySource ++ "let Id ≔ [@α:*, α, α]\nlet pass:[f:Id, Id] ≔ f") "sameness pass" implicitIdentity,
     normal "a higher-rank lambda can be checked and passed" "let Id ≔ [@α:*, α, α]\nlet run:[f:Id, x:*, *] ≔ x f" "{@α ^ {x ^ x}} run *" (Sort LZero),
     normal "checking introduceth an omitted implicit lambda binder" "let Id ≔ [@α:*, α, α]\nlet run:[f:Id, x:*, *] ≔ x f" "{x ^ x} run *" (Sort LZero),
     normal "a neutral family determineth an omitted worth" "let forward:[α:*, F:[α, *], @x:α, worth:x F, x F] ≔ worth\nlet recover:[α:*, F:[α, *], x:α, worth:x F, x F] ≔ α forward F worth" "recover" familyIdentity,
-    normal "local aliases do not duplicate an inference spine" (implicitIdentitySource ++ "let through:[α:*, x:α, α] ≔ (let y ≔ x yield y selfness)") "through" explicitIdentity,
+    normal "local aliases do not duplicate an inference spine" (implicitIdentitySource ++ "let through:[α:*, x:α, α] ≔ (let y ≔ x yield y sameness)") "through" explicitIdentity,
     normal "family inference solveth a pattern beneath a binder" "let family_id:[α:*, @F:[α, *], [x:α, x F, x F]] ≔ {x ^ {v ^ v}}\nlet recover:[α:*, G:[α, *], [x:α, x G, x G]] ≔ α family_id" "recover" familyIdentity,
     normal "a later pattern solution dischargeth a delayed family equation" "let accept:[@F:[*, *], x:*, v:x F, w:[y:*, y F, y F], x F] ≔ v\nlet recover:[v:*, w:[y:*, *, *], *] ≔ * accept v w" "recover" (Lambda Explicit (Sort LZero) (Lambda Explicit (Pi Explicit (Sort LZero) (Pi Explicit (Sort LZero) (Sort LZero))) (Local 1))),
     reject "family agreement at one argument doth not determine the family" (compile "let use:[@F:[*, *], v:* F, * F] ≔ v\nlet bad:[G:[*, *], v:* G, * G] ≔ v use"),
@@ -86,7 +86,7 @@ implicitInferenceTests =
 delayedComputationTests :: [Test]
 delayedComputationTests =
   [ expectEq "conversion resumeth after a dictionary is selected" (Right ()) $
-      () <$ compile ("flock provided:[α:*, *] { let get:α } bizen:ℤ provided { let get ≔ +2 } let proof:(get @ℤ) = +2 ≔ backbend"),
+      () <$ compile ("flock provided:[α:*, *] { let get:α } bizen:ℤ provided { let get ≔ +2 } let proof:(get @ℤ) = +2 ≔ eftbend"),
     expectEq "a solution typed by an unselected dictionary waiteth for instance search" (Right ()) $
       ()
         <$ compile
@@ -95,16 +95,16 @@ delayedComputationTests =
           let hath_≍:[@α:*, a:α, α] ≔ a
           flock mapping:[φ:[*, *], *] { let over:[@α:*, @β:*, α φ, [α, β], β φ] }
           bizen:box mapping { let over:[a boxed:, f:] ≔ (a f) boxed }
-          let proof:[@α:*, b:α box, (b over hath_≍) = b] ≔ match b {a boxed ^ backbend}
+          let proof:[@α:*, b:α box, (b over hath_≍) = b] ≔ match b {a boxed ^ eftbend}
           """,
     expectEq "same eliminator results do not equate their delayed inputs" (Right True) do
-      program <- compile (choices ++ "let answer ≔ backbend accept right_evidence left_evidence")
+      program <- compile (choices ++ "let answer ≔ eftbend accept right_evidence left_evidence")
       sameNormalIn program "answer" "right",
     expectEq "native computation resumeth after its input is inferred" (Right True) do
-      program <- compile (arithmetic "+3" ++ "let answer ≔ backbend accept two")
+      program <- compile (arithmetic "+3" ++ "let answer ≔ eftbend accept two")
       sameNormalIn program "answer" "+2",
     rejectContaining "a postponed computed equation must still hold" "cannot unify" $
-      compile (arithmetic "+4" ++ "let answer ≔ backbend accept two")
+      compile (arithmetic "+4" ++ "let answer ≔ eftbend accept two")
   ]
   where
     choices =
@@ -164,14 +164,14 @@ rejectionTests =
     reject "a shadowing worth cannot be resolved as the former type" (compile "let bad:[@α:*, x:α, α] ≔ (let α ≔ x let y:α ≔ x yield y)"),
     -- a top-level let is never generalised over its holes.
     rejectContaining "a let whose type is undetermined is rejected" "write the polymorphic parameters" (compile "let unknown ≔ {x ^ x}"),
-    rejectContaining "an inferred slot type without a use is rejected" "write the polymorphic parameters" (compile "let selfness: [x:] ≔ x"),
+    rejectContaining "an inferred slot type without a use is rejected" "write the polymorphic parameters" (compile "let sameness: [x:] ≔ x"),
     -- `?f x` is pruned to `?f`, so the type function is solved.
     expectEq "a hole drops a local that its solution cannot see" (Right "[@α: *, @β: [*, *], α β, α β]") $
       compile "let lift:[@a:*, @f:[*, *], x: a f, a f] ≔ x\nlet twice:[@a:*, @f:[*, *], x: a f, a f] ≔ (x lift) lift" >>= (`typeOfName` "twice"),
-    expectEq "backbend proveth an equation that holdeth by computation" (Right ()) $
-      () <$ compile ("let one: ℕ ≔ 1\nlet checked: one = 1 ≔ backbend"),
-    rejectContaining "backbend cannot prove unequal values" "cannot unify 1 with 2" $
-      compile ("let wrong: 1 = 2 ≔ backbend"),
+    expectEq "eftbend proveth an equation that holdeth by computation" (Right ()) $
+      () <$ compile ("let one: ℕ ≔ 1\nlet checked: one = 1 ≔ eftbend"),
+    rejectContaining "eftbend cannot prove unequal values" "cannot unify 1 with 2" $
+      compile ("let wrong: 1 = 2 ≔ eftbend"),
     expectEq "goals keep definitions folded unless they reach a constructor or variable" (Right ["(b app c) = (b app c)", "(first cons (rest app (b app c))) = (first cons ((rest app b) app c))"]) $
       map holeGoal . reverse . sourceHoles
         <$> compile
@@ -185,14 +185,14 @@ rejectionTests =
       map (\Hole {holeGoal, holeContext} -> (holeGoal, holeContext)) . sourceHoles
         <$> compile "ilk box:[α:*, *] {boxed:[α, α box]}\nlet unbox:[@α:*, b:α box, α] ≔ match b { a boxed ^ sorry }",
     expectEq "matching a proof rewriteth its index" (Right "[@α: *, @x: α, @y: α, x = y, y = x]") $
-      compile ("let evenmete: [@α: *, @x: α, @y: α, p: x = y, y = x] ≔ match p { backbend ^ backbend }") >>= (`typeOfName` "evenmete"),
+      compile ("let evenmete: [@α: *, @x: α, @y: α, p: x = y, y = x] ≔ match p { eftbend ^ eftbend }") >>= (`typeOfName` "evenmete"),
     expectEq "a constructor slot after implicit slots matcheth its input" (Right "[@α: *, @x: α, @y: α, x = y, y = x]") $
-      compile ("let evenmete: [@α: *, @x: α, @y: α, backbend: x = y, y = x] ≔ backbend") >>= (`typeOfName` "evenmete")
+      compile ("let evenmete: [@α: *, @x: α, @y: α, eftbend: x = y, y = x] ≔ eftbend") >>= (`typeOfName` "evenmete")
   ]
 
 identitySource, implicitIdentitySource, aliasSource :: String
-identitySource = "let selfness:[α:*, x:α, α] ≔ x\n"
-implicitIdentitySource = "let selfness:[@α:*, x:α, α] ≔ x\n"
+identitySource = "let sameness:[α:*, x:α, α] ≔ x\n"
+implicitIdentitySource = "let sameness:[@α:*, x:α, α] ≔ x\n"
 aliasSource = "let alias:[α:*, *] ≔ α\n"
 
 explicitIdentity, implicitIdentity, implicitIdentityType, familyIdentity :: Term

@@ -4,10 +4,10 @@ use ilk/maybe.tung
 let fallback: float deed ≔
   ('could not read a float; using 0.0' write_line) then (0.0 sheer)
 
-let read_user: float deed ≔ read warp_flat {
+let read_user: float deed ≔ read bind {
   line some ^ match line from_text {
     worth some ^ worth sheer,
-    none ^ fallback
+    none       ^ fallback
   },
   none ^ fallback
 }
@@ -16,10 +16,10 @@ let outcome: [user: float, hidden: float, text] ≔
   match user ≤ hidden, hidden ≤ user {
     yea, nay ^ 'lose',
     nay, yea ^ 'win',
-    _, _ ^ 'draw'
+    _,   _   ^ 'draw'
   }
 
 let main: 𝟙 deed ≔ >{then,
   'input a float between 0.0 and 1.0' write_line,
-  read_user warp_flat { user ^ random warp (user outcome) $ warp_flat write_line }
+  read_user bind { user ^ random warp (user outcome) $ bind write_line }
 }

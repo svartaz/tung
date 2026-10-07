@@ -42,8 +42,9 @@ recursiveBinding :: String -> Scope -> Maybe Recursion
 recursiveBinding name = find ((== name) . recursionName) . scopeRecursions
 
 -- each explicit input of a recursive definition is fixed outside the
--- eliminator, matched structurally, or rebound by the motive.
-data Role = Fixed Int | Structural | Quantified
+-- eliminator, matched structurally, rebound by the motive, or the index at
+-- the given position of an indexed structural input.
+data Role = Fixed Int | Structural | Quantified | Index Int
   deriving stock (Eq)
 
 data Recursion = Recursion

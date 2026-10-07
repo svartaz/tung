@@ -5,6 +5,7 @@ module Tung.Dependent.Universe
     Universes,
     universes,
     universeConstraints,
+    hasConstraint,
     constrain,
     trivial,
     entails,
@@ -58,21 +59,26 @@ satisfiable constraints = isJust (solve (constraintAtoms constraints) (constrain
 -- constraints with an assignment that satisfieth them, when one is known. a
 -- new constraint that the assignment already satisfieth keepeth it, so only a
 -- constraint that contradicteth the current assignment re-solveth the set.
-data Universes = Universes [Constraint] (Maybe (Map.Map Atom Integer))
+-- the set answereth membership; the list keepeth insertion order.
+data Universes = Universes [Constraint] (Set.Set Constraint) (Maybe (Map.Map Atom Integer))
 
 universeConstraints :: Universes -> [Constraint]
-universeConstraints (Universes constraints _) = constraints
+universeConstraints (Universes constraints _ _) = constraints
+
+hasConstraint :: Constraint -> Universes -> Bool
+hasConstraint constraint (Universes _ known _) = Set.member constraint known
 
 universes :: [Constraint] -> Universes
-universes constraints = Universes constraints Nothing
+universes constraints = Universes constraints (Set.fromList constraints) Nothing
 
 -- 'Nothing' when the extended set is unsatisfiable.
 constrain :: Constraint -> Universes -> Maybe Universes
-constrain constraint (Universes constraints witness)
-  | Just assignment <- witness, holds assignment constraint = Just (Universes next witness)
-  | otherwise = Universes next . Just <$> solve (constraintAtoms next) (constraintClauses next) []
+constrain constraint (Universes constraints known witness)
+  | Just assignment <- witness, holds assignment constraint = Just (Universes next known' witness)
+  | otherwise = Universes next known' . Just <$> solve (constraintAtoms next) (constraintClauses next) []
   where
     next = constraint : constraints
+    known' = Set.insert constraint known
 
 -- an atom the assignment doth not mention taketh the value of zero, which keepeth
 -- every other constraint satisfied.
@@ -176,14 +182,17 @@ potentials atoms edges = passes (Set.size atoms + 1) (Map.fromSet (const 0) atom
             then (Map.insert target candidate distances, True)
             else (distances, changed)
 
+-- the arguments are checked and indexed once per partial application.
 instantiateConstraint :: [Level] -> Constraint -> Either String Constraint
-instantiateConstraint arguments constraint = do
-  mapM_ checkArgument arguments
+instantiateConstraint arguments = \constraint -> do
+  checked
   case constraint of
     LevelEqual left right -> LevelEqual <$> replace left <*> replace right
     LevelBelow left right -> LevelBelow <$> replace left <*> replace right
   where
-    replace level = normaliseLevel <$> instantiateLevel arguments level
+    checked = mapM_ checkArgument arguments
+    instantiate = instantiateLevel arguments
+    replace level = normaliseLevel <$> instantiate level
     checkArgument = \case
       LParam index | index < 0 -> Left "unbound universe parameter"
       LMeta index | index < 0 -> Left "unresolved universe inference hole"

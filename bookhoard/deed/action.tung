@@ -3,33 +3,68 @@ use combinator.tung
 use flock/algebra/half/category.tung
 use flock/algebra/half/semigroupoid.tung
 use flock/functor.tung
-use flock/functor/applicative.tung
+use flock/functor/atfoldsome.tung
 use flock/functor/monad.tung
 use ilk/one.tung
+use is.tung
 
-## deeds compose as a monad: `warp` changeth a result, and `warp_flat` or `then`
+## the host's deeds form a monad. deeds are opaque to conversion, so these
+## three laws of `deed_sheer` and `deed_bind` are listed assumptions; every
+## deed law below is proved from them.
+show orsetting deed_sheer_bind: [@α: *, @β: *, a: α, f: [α, β deed], ((a deed_sheer) deed_bind f) = (a f)]
+
+show orsetting deed_bind_sheer: [@α: *, m: α deed, (m deed_bind deed_sheer) = m]
+
+show orsetting deed_bind_bind: [@α: *, @β: *, @γ: *, m: α deed, f: [α, β deed], g: [β, γ deed],
+  ((m deed_bind f) deed_bind g) = (m deed_bind {x ^ (x f) deed_bind g})]
+
+## binding to functions that agree at every result is binding to one.
+let bind_same: [@α: *, @β: *, m: α deed, @f: [α, β deed], @g: [α, β deed], pointwise: [x: α, (x f) = (x g)], (m deed_bind f) = (m deed_bind g)] ≔
+  {h ^ m deed_bind h} leibnitz (pointwise fall_umtake)
+
+## mapping twice is mapping once with the composite.
+let warp_twice: [@α: *, @β: *, @γ: *, m: α deed, f: [α, β], g: [β, γ],
+  ((m deed_bind {x ^ (x f) deed_sheer}) deed_bind {y ^ (y g) deed_sheer}) = (m deed_bind {x ^ (x f $ g) deed_sheer})] ≔
+  (m deed_bind_bind {x ^ (x f) deed_sheer} {y ^ (y g) deed_sheer}) throughgo
+    (m bind_same {x ^ (x f) deed_sheer_bind {y ^ (y g) deed_sheer}})
+
+## deeds compose as a monad: `warp` changeth a result, and `bind` or `then`
 ## sequenceth deeds.
 bizen: deed functor {
   let warp: [action:, change:] ≔ action deed_bind (change ▷ deed_sheer)
 
-  let warp_is ≔ sorry
+  let warp_sameness: [m:] ≔ m deed_bind_sheer
 }
 
-bizen: deed applicative {
+bizen: deed atfoldsome {
   let sheer ≔ deed_sheer
-  let apply: [action:, changes:] ≔ changes deed_bind { change ^ action warp change }
+  let atfold: [action:, changes:] ≔ changes deed_bind { change ^ action warp change }
 
-  let apply_is_sheer ≔ sorry
-  let sheer_apply_sheer ≔ sorry
-  let apply_apply ≔ sorry
-  let sheer_apply ≔ sorry
+  let atfold_sameness_sheer: [m:] ≔ (sameness deed_sheer_bind {change ^ m warp change}) throughgo (m deed_bind_sheer)
+
+  let sheer_atfold_sheer: [a:, f:] ≔ (f deed_sheer_bind {change ^ (a deed_sheer) warp change}) throughgo (a deed_sheer_bind (f ▷ deed_sheer))
+
+  let atfold_atfold: [m:, f:, g:] ≔ >{throughgo,
+    g deed_sheer_bind {change ^ ((f deed_sheer) deed_bind {inner ^ m warp inner}) warp change},
+    {inner ^ inner warp g} leibnitz (f deed_sheer_bind {change ^ m warp change}),
+    m warp_twice f g,
+    ((f ▷ g) deed_sheer_bind {change ^ m warp change}) evenmete
+  }
+  let sheer_atfold: [a:, fs:] ≔ fs bind_same {change ^ a deed_sheer_bind (change ▷ deed_sheer)}
 }
 
 bizen: deed monad {
-  let flat: [actions:] ≔ actions deed_bind is
+  let flat: [actions:] ≔ actions deed_bind sameness
 
-  let sheer_warp_flat ≔ sorry
-  let warp_sheer_flat ≔ sorry
+  let sheer_bind: [a:, f:] ≔
+    ({inner ^ inner flat} leibnitz
+      (a deed_sheer_bind {x ^ (x f) deed_sheer})) throughgo ((a f) deed_sheer_bind {y ^ y})
+
+  let warp_sheer_flat: [m:] ≔ >{throughgo,
+    m deed_bind_bind {x ^ (x deed_sheer) deed_sheer} {y ^ y},
+    m bind_same {x ^ (x deed_sheer) deed_sheer_bind {y ^ y}},
+    m deed_bind_sheer
+  }
 }
 
 ## write text followed by a newline.

@@ -7,6 +7,10 @@ module Tung.Dependent.Source
     sourceGlobal,
     compileSnapshot,
     compileImports,
+    cacheKeys,
+    compilerBuild,
+    loadInterfaces,
+    saveInterfaces,
     CompileFailure (..),
     FailureKind (..),
     SourceSnapshot,
@@ -38,6 +42,7 @@ where
 import Data.Map.Strict qualified as Map
 import Tung.Dependent.Check qualified as K
 import Tung.Dependent.Normalise qualified as N
+import Tung.Dependent.Source.Cache (cacheKeys, compilerBuild, loadInterfaces, saveInterfaces)
 import Tung.Dependent.Source.Declaration (insertDeclaration)
 import Tung.Dependent.Source.Elaborate (elaborate)
 import Tung.Dependent.Source.Environment

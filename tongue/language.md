@@ -152,8 +152,8 @@ most one `~`. its namespace and member must be nonempty and slash-free. `‥` is
 an ordinary name; there is no general infix escape. `_` discardeth a binding or
 match value.
 
-names, keywords, host keys, and `.tung` paths use snake_case: words are
-lowercase and joined by `_`, as in `to_text`, `warp_flat`, and
+names, keywords, host keys, and `.tung` paths use snake*case: words are
+lowercase and joined by `*`, as in `to_text`, `bind`, and
 `flock/order/hath_at_most.tung`. `-` remaineth a legal name character, so this is
 a convention, not a lexical rule.
 
@@ -243,7 +243,7 @@ body extendeth to the end of the expression. a bare slot bindeth no name, and
 `fall` requireth at least one input, so `fall * ^ *` is rejected.
 
 ```tung
-let is ≔ fall @α: *, a: α, α ^ a
+let sameness ≔ fall @α: *, a: α, α ^ a
 let powerset ≔ fall α: *, * ^ [α, *]
 ```
 
@@ -253,14 +253,14 @@ a slot with no type after its `:` is inferred from the body, so
 `let hath_+: [x:, y: ℤ, ℤ] ≔ x + y` inferth `x: ℤ`. `_` is never a type; it only
 discardeth an input. a let's type must be fully determined: a let is never
 generalised over unknown types, so a polymorphic let writeth its parameters,
-as `let selfness: [@α: *, x: α, α] ≔ x`.
+as `let sameness: [@α: *, x: α, α] ≔ x`.
 
 ```tung
 let count ≔ 42
 let answer: ℤ ≔ +42
-let selfness: [x:] ≔ x
-let selfness: [@a: *, x: a, a] ≔ x
-let selfness: [@a: *, a, a] ≔ {x ^ x}
+let sameness: [x:] ≔ x
+let sameness: [@a: *, x: a, a] ≔ x
+let sameness: [@a: *, a, a] ≔ {x ^ x}
 let eke_after: [x:, y: ℤ, ℤ] ≔ x + y
 ```
 
@@ -275,7 +275,7 @@ an annotation is one type or a bracketed list of slots:
   pattern followeth the second-is-function rule and needeth no grouping, as in
   `let unbox:[@a:*, x box:a box, a] ≔ x` and `a both b`. a slot named by a
   constructor without fields matcheth that constructor, so
-  `let evenmete:[@α:*, @a:α, @b:α, backbend:a = b, b = a] ≔ backbend` rewriteth
+  `let evenmete:[@α:*, @a:α, @b:α, eftbend:a = b, b = a] ≔ eftbend` rewriteth
   `b` to `a` in the result. the match itself is the evidence: `_:a = b` doth
   not inspect the proof, so `b` stayeth distinct from `a`. slot patterns never match literals; use `match`.
 - a bare slot giveth a type only and bindeth no name. the body supplieth bare
@@ -293,7 +293,7 @@ an annotation endeth in a kind declareth a type alias; see
 use Greek letters for generic polymorphic parameters. type and flock names
 carry no `*` prefix, and no term reuseth a type's name: name a slot `l`, not
 `list`, beside `list`. when a constructor would share its type's name, the
-constructor getteth a new name (`both` with `both`, `complex` with `+i`, `nonempty`
+constructor getteth a new name (`both` with `both`, `evenbraid` with `+i`, `nonempty`
 with `‥′`), or, for a type with one constructor, the type taketh a `_` prefix
 (`_request` with `request`). a flock whose member would share its name taketh a
 `hath_` prefix (`hath_zero` with `zero`). `*name` still lexeth as one name, and
@@ -305,7 +305,7 @@ type declarations use `name:kind` without `@`.
 every type variable in a written annotation must be declared or already in
 scope, including type constructor variables. a
 requirement nameth only parameters declared before it.
-unknown names are errors. an unannotated `let selfness: [x:] ≔ x` may still infer
+unknown names are errors. an unannotated `let sameness: [x:] ≔ x` may still infer
 a polymorphic type.
 
 an anonymous function bound by `let` may call itself, with or without an
@@ -343,8 +343,8 @@ quantifier. its scope is that bracketed type. quantifiers may occur in arguments
 or results, at any rank:
 
 ```tung
-let both: [f: [@a: *, a, a], r{number: ℤ, word: text}] ≔
-  r{number≔+1 f, word≔'x' f}
+let both: [f: [@a: *, a, a], r{tale: ℤ, word: text}] ≔
+  r{tale≔+1 f, word≔'x' f}
 let make: [_: ℤ, [@a: *, a, a]] ≔ {x ^ x}
 ```
 
@@ -534,12 +534,12 @@ bindeth typed patterns and endeth in its equation. a law hath no body.
 ```tung
 flock hath_≍: [a: *, *] {
   let ≍: [a, a, 𝟚]
-  let backbend: [x: a, (x ≍ x) = yea]
+  let eftbend: [x: a, (x ≍ x) = yea]
 }
 
 let ≭: [@a: *, @: a hath_≍, a: a, b: a, 𝟚] ≔ (a ≍ b) if nay yea
 
-flock applicative: [f: [*, *], @: f functor, *] {...}
+flock atfoldsome: [f: [*, *], @: f functor, *] {...}
 bizen: [@b: *, @: b ring, @a: *, [a, b] ring] {...}
 
 bizen: 𝟚 hath_≍ {
@@ -548,7 +548,7 @@ bizen: 𝟚 hath_≍ {
     nay, nay ^ yea,
     _, _ ^ nay
   }
-  let backbend ≔ sorry
+  let eftbend ≔ sorry
 }
 ```
 
@@ -577,7 +577,7 @@ a flock parameter written `β: * out` is an output: search findeth it, as
 lean's `outParam` doth. a goal waiteth while the head of an input parameter is
 unknown. a goal still stuck on an unknown input trieth the flock's fallback
 bizens, written `bizen fallback: …`, as lean's default instances; for
-example the function `category` bizen is a fallback, so `is` used as a
+example the function `category` bizen is a fallback, so `sameness` used as a
 function findeth it. without a fallback, the goal needeth an annotation or
 stayeth unsolved, and the let needeth an annotation.
 [dependent instance search](dependent.md#flocks-and-bizens) defineth cycles,
@@ -586,15 +586,15 @@ depth, waiting goals, and candidate requirements.
 ## equality
 
 `x = y` is the type of proofs that `x` and `y` are equal; both sides share one
-type. `=` and `backbend` are primitive and visible in every module, like `ℕ`.
+type. `=` and `eftbend` are primitive and visible in every module, like `ℕ`.
 bookhoard's `is.tung` proveth the lemmas `leibnitz`, `evenmete`,
 `throughgo`, and `transport`.
 
-its only constructor is `backbend: [@α: *, @x: α, x = x]`, so `backbend`
+its only constructor is `eftbend: [@α: *, @x: α, x = x]`, so `eftbend`
 proveth any equation that holdeth by computation. a proof of `x = y` may be
-matched against `backbend`, which rewriteth `y` to `x` in that branch. when
+matched against `eftbend`, which rewriteth `y` to `x` in that branch. when
 both sides are built from constructors, matching compareth them: matching
-constructors equate their fields, so `backbend: (a ‥ l) = (b ‥ m)` giveth
+constructors equate their fields, so `eftbend: (a ‥ l) = (b ‥ m)` giveth
 `a = b`, and different constructors make the match empty, so
 `[yea = nay, 𝟘] ≔ {}` holdeth. `≍` is
 boolean equality, a flock member that computeth `yea` or `nay`; `≔` defineth a
@@ -602,9 +602,9 @@ name and is not an equation.
 
 ```tung
 let one: ℕ ≔ 1
-let checked: one = 1 ≔ backbend
+let checked: one = 1 ≔ eftbend
 let evenmete: [@α: *, @x: α, @y: α, p: x = y, y = x] ≔
-  match p { backbend ^ backbend }
+  match p { eftbend ^ eftbend }
 ```
 
 a law statement is a type over the flock's members. each bizen proveth every
@@ -615,7 +615,7 @@ this bizen's own members, so a law about `≍` is stated for the bizen's `≍`:
 ```tung
 bizen: 𝟚 hath_≍ {
   let ≍ ≔ ...
-  let backbend ≔ {x ^ ...}
+  let eftbend ≔ {x ^ ...}
 }
 ```
 
@@ -663,30 +663,30 @@ computed meaneth every constructor field, record field, and literal is
 computed; functions and deeds inside the value stay as they are. so
 `let main: 𝟙 deed ≔ 40 fibonacci $ to_text $ write_line` computeth the number
 when `main` writeth it, and an accumulator passed between the steps of a
-`deed_fix` loop doth not build a chain of pending work. the runner performeth
+`deed_steadfast` loop doth not build a chain of pending work. the runner performeth
 `main`. interactive evaluation performeth a deed only when it is the final
 `yield`, as a repl prompt doth; a yielded value is computed fully before it
 printeth.
 
 deeds compose only through bookhoard's monad methods; there is no sequencing
-syntax. `deed/action.tung` provideth `deed functor`, `deed applicative`, and
+syntax. `deed/action.tung` provideth `deed functor`, `deed atfoldsome`, and
 `deed monad`, built on the host bindings `deed_sheer` and `deed_bind`:
 
 - `sheer` wrappeth a value in a deed that performeth nothing;
 - `warp` changeth a deed's result;
-- `warp_flat` passeth a deed's result to the function that chooseth the next deed;
+- `bind` passeth a deed's result to the function that chooseth the next deed;
 - `then` performeth two deeds in order and keepeth the second result;
 - `>{then, a, b, c}` performeth several deeds in order;
-- `lift₂` and `apply` perform their deeds from left to right;
+- `lift₂` and `atfold` perform their deeds from left to right;
 - `each` performeth an action for each list element in order;
-- `deed_fix` repeateth a deed: its step receiveth the repeated deed itself, so
-  `{again ^ read deed_bind {none ^ only deed_sheer, _ some ^ again}} deed_fix`
+- `deed_steadfast` repeateth a deed: its step receiveth the repeated deed itself, so
+  `{again ^ read deed_bind {none ^ only deed_sheer, _ some ^ again}} deed_steadfast`
   readeth until input endeth.
 
 ```tung
 let greet: [name: text, 𝟙 deed] ≔ ('hello, ' write) then (name write_line)
 
-let main: 𝟙 deed ≔ read warp_flat {
+let main: 𝟙 deed ≔ read bind {
   line some ^ line greet,
   none ^ 'no input' write_line
 }
@@ -731,7 +731,7 @@ catalogue. a host binding without arguments must have a deed type; performing
 the deed runneth the host action. `_foreign.tung` and the `deed/` modules
 declare the runner's deeds: console text, `random`, tasks, `sleep`, files,
 arguments, environment, `exit`, the clock, processes, the web server, and
-`deed_fix`. every pure host operation hath one definition, shared by the
+`deed_steadfast`. every pure host operation hath one definition, shared by the
 erased evaluator and normalising kernel.
 
 a pure host operation may give a model after `fremmed`, a body checked
@@ -747,7 +747,7 @@ let eke_natural: [ℕ, ℕ, ℕ] ≔ 'eke_natural' fremmed {
 a call of the binding's own name in the model is structural recursion. the
 annotation may bind inputs only when a model followeth. checking computeth
 natively when every input is a literal and unfoldeth the model otherwise, so a
-proof can reason about the operation, as `[n: ℕ, (n + 0) = n] ≔ backbend`;
+proof can reason about the operation, as `[n: ℕ, (n + 0) = n] ≔ eftbend`;
 goals show the model under the binding's name. the runner always useth the native
 operation. a deed operation cannot have a model.
 `ilk/natural.tung` modelth `ℕ` equality, order, addition, subtraction, and
@@ -764,7 +764,7 @@ usually through `ground.tung`.
 
 `deed` and `task` are opaque primitive families of kind `[*, *]`. only the
 runner startth a task. they have no data constructor or eliminator;
-`fork`, `wait`, `wait_for`, and `cancel` are their operations.
+`fork`, `wait`, `wait_for`, and `outstrike` are their operations.
 
 a host data type, such as `maybe`, `list`, or `𝟙`, is the `ilk` of its name
 declared in its bookhoard file, such as `ilk/maybe.tung`. an `ilk` of the same

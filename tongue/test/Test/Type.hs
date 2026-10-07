@@ -44,20 +44,20 @@ typeCompositionCases =
 
 kindCases :: [Test]
 kindCases =
-  [ typeOk "requirement inferreth a higher kind" "flock functor:[f:[*, *], *] {} flock applicative:[f:[*, *], @:f functor, *] {}",
+  [ typeOk "requirement inferreth a higher kind" "flock functor:[f:[*, *], *] {} flock atfoldsome:[f:[*, *], @:f functor, *] {}",
     typeOk "requirements reuse an owner parameter" "flock hath_≍:[a:*, *] {} flock owner:[a:*, *] { let id:[@:a hath_≍, a, a] }",
     typeOk "explicit requirement parameter may shadow a visible type" "ilk a: * {} flock hath_≍:[x:*, *] {} let keep:[@a:*, @:a hath_≍, x:a, a] ≔ x",
     typeOk "a compound requirement useth declared kinds" "flock hath_≍:[x:*, *] {} flock higher:[a:*, f:[*, *], @:(a f) hath_≍, *] { let keep:[a f, a f] }",
     typeOk "requirement parameter order supporteth explicit type input" "flock hath_≍:[a:*, *] {} bizen:ℤ hath_≍ {} let keep:[@a:*, @:a hath_≍, @b:*, x:a, _:b, a] ≔ x let result:ℤ ≔ +1 keep @ℤ @text 'x'",
     typeOk "compound requirement followeth source parameter order" "ilk _pair: [a:*, b:*, *] { pair: [a, b, a _pair b] } flock hath_≍:[a:*, *] {} bizen:(ℤ _pair text) hath_≍ {} let keep:[@a:*, @f:[*, *, *], @b:*, @:(a f b) hath_≍, x:a f b, a f b] ≔ x let result:ℤ _pair text ≔ (+1 pair 'x') keep @ℤ @_pair @text",
-    typeOk "forward class requirements resolve kinds" "flock applicative:[f:[*, *], @:f functor, *] {} flock functor:[f:[*, *], *] {}",
+    typeOk "forward class requirements resolve kinds" "flock atfoldsome:[f:[*, *], @:f functor, *] {} flock functor:[f:[*, *], *] {}",
     typeOk "a child may require a parent declared later" "flock child:[a:*, f:[*, *], @:a parent f, *] {} flock parent:[a:*, f:[*, *], @:(a f) hath_≍, *] { let worth:[ℤ f, ℤ f] } flock hath_≍:[a:*, *] {}",
     typeErrContaining "a requirement's kinds must agree with its flock" "cannot unify * with [*, *]" "flock child:[a:*, f:*, @:a parent f, *] {} flock parent:[a:*, f:[*, *], *] {}",
     typeErrContaining "a requirement nameth only declared parameters" "unknown name 'a'" "flock hath_≍:[a:*, *] {} let bad:[@:a hath_≍, @a:*, x:a, a] ≔ x",
     typeOk "expected GADT index floweth through a local block" "ilk tag: [a:*, *] { integer: [ℤ, ℤ tag], word: [text, text tag] } let get:[@a:*, x:a tag, a] ≔ (let y ≔ x yield match y { n integer ^ n, s word ^ s })",
     typeOk "expected GADT index floweth through a record field" "ilk tag: [a:*, *] { integer: [ℤ, ℤ tag], word: [text, text tag] } let get:[@a:*, x:a tag, r{worth:a}] ≔ r{worth ≔ match x { n integer ^ n, s word ^ s }}",
     typeErr "an annotated strict initializer cannot refer to itself" "let worth:ℤ ≔ worth",
-    typeOkWith "imported class supplyeth parameter kinds" "use classes.tung c flock applicative:[f:[*, *], @:f c~functor, *] {}" (Map.singleton "classes.tung" "show flock functor:[f:[*, *], *] {}"),
+    typeOkWith "imported class supplyeth parameter kinds" "use classes.tung c flock atfoldsome:[f:[*, *], @:f c~functor, *] {}" (Map.singleton "classes.tung" "show flock functor:[f:[*, *], *] {}"),
     typeErr "ordinary type parameter cannot be a constructor" "let bad:[@a:*, @f:*, a f, a f] ≔ {x ^ x}",
     typeErr "requirements reject conflicting kinds" "flock hath_≍:[a:*, *] {} flock functor:[f:[*, *], *] {} flock bad:[a:*, @:a hath_≍, @:a functor, *] {}",
     typeErrContaining "a flock requirement nameth only declared parameters" "unknown name 'f'" "flock functor:[f:[*, *], *] {} flock bad:[@:f functor, *] {}"
@@ -69,7 +69,7 @@ kindCases =
         ("ordinary ilk parameter cannot be applied", "ilk box: [a:*, *] { make: [a a, a box] }"),
         ("primitive type cannot bizen a higher kind parameter", "ilk free: [f:[*, *], a:*, *] { bad: ℤ free a }"),
         ("flock member cannot use a constructor parameter as a worth type", "flock bad:[f:[*, *], *] { let wrong:[f, f] }"),
-        ("flock member cannot apply an ordinary type parameter", "flock bad:[a:*, *] { let wrong:[ℤ a, ℤ] }")
+        ("flock member cannot atfold an ordinary type parameter", "flock bad:[a:*, *] { let wrong:[ℤ a, ℤ] }")
       ]
 
 -- unused binders still have kinds. exercise the same rule through binding,
@@ -98,7 +98,7 @@ annotationScopeCases =
   [ typeErrContaining label ("unknown name '" ++ name ++ "'") source
   | (label, name, source) <-
       [ ("annotation requireth an explicit parameter", "a", "let id:[x:a, a] ≔ x"),
-        ("nested annotation cannot introduce a free variable", "b", "let apply:[@a:*, f:[a, b], x:a, a] ≔ x"),
+        ("nested annotation cannot introduce a free variable", "b", "let atfold:[@a:*, f:[a, b], x:a, a] ≔ x"),
         ("ascription requireth a scoped type", "a", "let id: [x:] ≔ (x:a)"),
         ("type constructor variable requireth a declaration", "f", "let id:[x:ℤ f, ℤ f] ≔ x"),
         ("constructor existential requireth a declaration", "a", "ilk packed: * { pack: [a, packed] }"),
@@ -111,29 +111,29 @@ annotationScopeCases =
 accepted :: [(String, String)]
 accepted =
   [ ("literal annotation", "let answer:ℤ ≔ +42"),
-    ("an annotated function worth checks its own binder", "let selfness:[@a:*, a, a] ≔ { x ^ x } let answer:ℤ ≔ +1 selfness"),
-    ("sorry hath any type", "let number:ℤ ≔ sorry let word:text ≔ sorry let f:[@a:*, a, a] ≔ sorry"),
+    ("an annotated function worth checks its own binder", "let sameness:[@a:*, a, a] ≔ { x ^ x } let answer:ℤ ≔ +1 sameness"),
+    ("sorry hath any type", "let tale:ℤ ≔ sorry let word:text ≔ sorry let f:[@a:*, a, a] ≔ sorry"),
     ("deed is a primitive unary type constructor", "let wrap:[@a:*, x: a deed, a deed] ≔ x let nested:[(ℤ deed) deed, (ℤ deed) deed] ≔ { x ^ x }"),
     ("second-position header pattern binds an argument", "ilk _box: [a:*, *] { box: [a, a _box] } let unbox:[@a:*, x box: a _box, a] ≔ x let answer:ℤ ≔ (+1 box) unbox"),
-    ("second-position header pattern binds several fields", "ilk _pair: * { pair: [ℤ, text, _pair] } let first:[number pair word: _pair, ℤ] ≔ number let answer:ℤ ≔ (+1 pair 'x') first"),
-    ("second-position law patterns bind distinct arguments", "ilk _box: [a:*, *] { box: [a, a _box] } flock selfness:[a:*, *] { let rule:[x box:a _box, y box:a _box, x = y] }"),
+    ("second-position header pattern binds several fields", "ilk _pair: * { pair: [ℤ, text, _pair] } let first:[tale pair word: _pair, ℤ] ≔ tale let answer:ℤ ≔ (+1 pair 'x') first"),
+    ("second-position law patterns bind distinct arguments", "ilk _box: [a:*, *] { box: [a, a _box] } flock sameness:[a:*, *] { let rule:[x box:a _box, y box:a _box, x = y] }"),
     ("bare argument after named prefix is supplied by the body", "use ground.tung let eke_after:[x: ℤ, ℤ, ℤ] ≔ { y ^ x + y } let answer:ℤ ≔ +1 eke_after +2"),
-    ("an inferred result followeth a written slot type", "let selfness: [x: ℤ] ≔ x let answer:ℤ ≔ +1 selfness"),
+    ("an inferred result followeth a written slot type", "let sameness: [x: ℤ] ≔ x let answer:ℤ ≔ +1 sameness"),
     ("inferred and written slot types mix", "use ground.tung let eke_after: [x:, y: ℤ, ℤ] ≔ x + y let answer:ℤ ≔ +1 eke_after +2"),
-    ("an inferred slot with a written result", "let selfness: [x:, ℤ] ≔ x let answer:ℤ ≔ +1 selfness"),
-    ("local alias constraineth its captured parameter", "use ground.tung let eke_one: [x:] ≔ (let y ≔ x let number:ℤ ≔ y yield number + +1) let result:ℤ ≔ +2 eke_one"),
-    ("inlocal function remaineth polymorphic", "let keep: [x: ℤ] ≔ (let selfness:[@α:*, y:α, α] ≔ y let number:ℤ ≔ +1 selfness let word:text ≔ 'x' selfness yield x)"),
+    ("an inferred slot with a written result", "let sameness: [x:, ℤ] ≔ x let answer:ℤ ≔ +1 sameness"),
+    ("local alias constraineth its captured parameter", "use ground.tung let eke_one: [x:] ≔ (let y ≔ x let tale:ℤ ≔ y yield tale + +1) let result:ℤ ≔ +2 eke_one"),
+    ("inlocal function remaineth polymorphic", "let keep: [x: ℤ] ≔ (let sameness:[@α:*, y:α, α] ≔ y let tale:ℤ ≔ +1 sameness let word:text ≔ 'x' sameness yield x)"),
     ("constructor variables remain linked through composition", "ilk _box: [a:*, *] { box: [a, a _box] } let lift:[@a:*, @f:[*, *], x: a f, a f] ≔ x let twice: [x: ℤ _box, ℤ _box] ≔ (x lift) lift let good:ℤ _box ≔ (+1 box) twice"),
     ("annotated global function may call itself", "use ground.tung let factorial:[ℕ, ℕ] ≔ { 0 ^ 1, n heir ^ (n heir) × (n factorial) } let answer:ℕ ≔ 5 factorial"),
     ("annotated local initializer seeth its preceding binding", "let answer:text ≔ (let worth ≔ +1 let worth:text ≔ match worth { +0 ^ 'zero', _ ^ 'other' } yield worth)"),
     ("arbitrary term type ascription", "use ground.tung let answer ≔ (+1 + +2: ℤ)"),
-    ("polymorphic term type ascription is reusable", "let selfness ≔ ({ x ^ x }: [@a:*, a, a]) let number:ℤ ≔ +1 selfness let word:text ≔ 'x' selfness"),
+    ("polymorphic term type ascription is reusable", "let sameness ≔ ({ x ^ x }: [@a:*, a, a]) let tale:ℤ ≔ +1 sameness let word:text ≔ 'x' sameness"),
     ("ascribed anonymous function remaineth recursive", "use ground.tung let factorial ≔ ({ 0 ^ 1, n heir ^ (n heir) × (n factorial) }: [ℕ, ℕ]) let answer:ℕ ≔ 5 factorial"),
     ("type ascription preserveth a constraint", equalPrelude ++ "let alike:[@a:*, @:a hath_≍, x: a, y: a, 𝟚] ≔ (x ≍ y: 𝟚)"),
     ("unicode primitive", "let letter:unicode ≔ `a"),
     ("text primitive", "let word:text ≔ 'λ字'"),
-    ("annotated polymorphic selfness", "let id:[@a:*, x: a, a] ≔ x let number:ℤ ≔ +1 id let word:text ≔ 'x' id"),
-    ("declared type parameters remain inferred at calls", "let constant:[@a:*, @b:*, x:a, _:b, a] ≔ x let number:ℤ ≔ +1 constant 'x' let word:text ≔ 'x' constant +1"),
+    ("annotated polymorphic sameness", "let id:[@a:*, x: a, a] ≔ x let tale:ℤ ≔ +1 id let word:text ≔ 'x' id"),
+    ("declared type parameters remain inferred at calls", "let constant:[@a:*, @b:*, x:a, _:b, a] ≔ x let tale:ℤ ≔ +1 constant 'x' let word:text ≔ 'x' constant +1"),
     ("explicit type arguments select declaration order around worth arguments", "ilk list: [a:*, *] { empty: a list } let f:[@a:*, @b:*, x:a, _:b, a] ≔ x let explicit:text ≔ 'a' f @text @(text list) empty"),
     ("declared type parameters are in scope in the body", "let id:[@a:*, x:a, a] ≔ x let forward:[@a:*, x:a, a] ≔ x id @a let answer:ℤ ≔ +1 forward @ℤ"),
     ("outer parameter scopes a local annotation", "let id:[@a:*, x:a, a] ≔ (let y:a ≔ x yield y)"),
@@ -146,20 +146,20 @@ accepted =
     ("explicit type application may precede worth application", "let keep:[@a:*, x:a, a] ≔ x let copy ≔ (keep @ℤ) let answer:ℤ ≔ +1 copy"),
     ("a quantified ascription retaineth explicit input after let binding", "let id ≔ ({x ^ x}:[@a:*, a, a]) let answer:ℤ ≔ +1 id @ℤ"),
     ("constructor fields preserve polymorphism through a match", "ilk holder: * { hold: [[@a:*, a, a], holder] } let unpack:[h:holder, [@a:*, a, a]] ≔ match h { f hold ^ f } let id:[@a:*, x:a, a] ≔ x let answer:ℤ ≔ +1 ((id hold) unpack) @ℤ"),
-    ("higher-rank argument instantiateth at distinct types", polymorphicPrelude ++ "let selfness:[@a:*, x:a, a] ≔ x let good ≔ selfness both let lambda ≔ {x ^ x} both"),
+    ("higher-rank argument instantiateth at distinct types", polymorphicPrelude ++ "let sameness:[@a:*, x:a, a] ≔ x let good ≔ sameness both let lambda ≔ {x ^ x} both"),
     ("rank-three annotation floweth into a lambda argument", "let run:[k:[[@a:*, a, a], ℤ], ℤ] ≔ {x ^ x} k let good:ℤ ≔ {f ^ +1 f} run"),
     ("polymorphic result is checked and reused", polymorphicPrelude ++ "let make:[_:ℤ, [@a:*, a, a]] ≔ {x ^ x} let good ≔ (+1 make) both"),
     ("explicit polymorphic ascription retaineth its quantifier", polymorphicPrelude ++ "let good ≔ ({x ^ x}:[@t1:*, t1, t1]) both"),
     ("quantified alias accepteth higher-kinded parameters", "ilk _box: [a:*, *] { box: [a, a _box] } let ⇒:[f:[*, *], g:[*, *], *] ≔ [@a:*, a f, a g] let lift:_box ⇒ _box ≔ {x ^ x}"),
     ("nested quantifiers shadow outer type variables", "let first:[@a:*, x:a, [@a:*, a, a]] ≔ {y ^ y} let good:ℤ ≔ +1 (('x' first):[@b:*, b, b])"),
-    ("subscripted type variable", "let id:[@a₀:*, x: a₀, a₀] ≔ x let number:ℤ ≔ +1 id let word:text ≔ 'x' id"),
+    ("subscripted type variable", "let id:[@a₀:*, x: a₀, a₀] ≔ x let tale:ℤ ≔ +1 id let word:text ≔ 'x' id"),
     ("half application of a flock member", "use ground.tung let half ≔ +1 %"),
     ("type alias is transparent", "let count:* ≔ ℤ let answer:count ≔ +42"),
     ("type alias accepteth higher-kinded parameters", "ilk _box: [a:*, *] { box: [a, a _box] } let applied:[f:[*, *], a:*, *] ≔ a f let worth:_box applied ℤ ≔ +1 box"),
     ("forward type-alias chains resolve by dependency", "let first:* ≔ second let second:* ≔ _token ilk _token: * { token: _token } let good:first ≔ token"),
     ("type-alias parameters shadow nominal types", "ilk a: * { make_a: a } let wrapper:[a:*, *] ≔ a let good:ℤ wrapper ≔ +1"),
     ("data parameters shadow type aliases", "let a:* ≔ ℤ ilk _box: [a:*, *] { box: [a, a _box] } let good:text _box ≔ 'x' box"),
-    ("flock parameters shadow type aliases", "let a:* ≔ ℤ flock hath_selfness:[a:*, *] { let selfness:[a, a] } bizen:text hath_selfness { let selfness: [x:] ≔ x } let good:text ≔ 'x' selfness"),
+    ("flock parameters shadow type aliases", "let a:* ≔ ℤ flock hath_sameness:[a:*, *] { let sameness:[a, a] } bizen:text hath_sameness { let sameness: [x:] ≔ x } let good:text ≔ 'x' sameness"),
     ("parameterised type alias is transparent", boolData ++ "let predicate:[a:*, *] ≔ [a, 𝟚] let member:ℤ predicate ≔ { _ ^ yea } let answer:𝟚 ≔ +1 member"),
     ("an arrow alias equaleth a unary function type", "let →:[α:*, β:*, *] ≔ [α, β] let id:[x: ℤ, ℤ] ≔ x let hath_≍:ℤ → ℤ ≔ id"),
     ("an alias applying a constructor to its parameters may stay unapplied", "let →:[α:*, β:*, *] ≔ [α, β] flock marker:[φ:[*, *, *], *] { let mark:[@α:*, α φ α, ℤ] } bizen fallback:→ marker { let mark: [_:] ≔ +1 } let worth:ℤ ≔ ({x ^ x}:[ℤ, ℤ]) mark"),
@@ -188,15 +188,15 @@ accepted =
     ("record removal changeth the row", "let person ≔ r{name ≔ 'n', age ≔ +1} let public:r{name: text} ≔ r{≔ person, - age}"),
     ("flock constraint dischargeth member need", equalPrelude ++ "let alike:[@a:*, @:a hath_≍, x: a, y: a, 𝟚] ≔ x ≍ y"),
     ("bizen context dischargeth inner need", equalPrelude ++ boxData ++ "bizen:[@a:*, @:a hath_≍, (a _box) hath_≍] { let ≍: [x box:, y box:] ≔ x ≍ y }"),
-    ("flock law useth its own methods", "flock hath_selfness:[a:*, *] { let selfness:[a, a] let rule:[x: a, (x selfness) = x] } bizen:ℤ hath_selfness { let selfness: [x:] ≔ x let rule ≔ sorry }"),
+    ("flock law useth its own methods", "flock hath_sameness:[a:*, *] { let sameness:[a, a] let rule:[x: a, (x sameness) = x] } bizen:ℤ hath_sameness { let sameness: [x:] ≔ x let rule ≔ sorry }"),
     ("well-typed unequal flock law remaineth checked documentation", "flock claimed:[a:*, *] { let rule:[x: ℤ, x = +0] }"),
-    ("flock member carrieth its own constraint", memberConstraint ++ "bizen:maybe functor { let warp: [worth:, f:] ≔ match worth { none ^ none, x some ^ x f $ some } } bizen:maybe applicative { let sheer ≔ some let apply ≔ { x some, f some ^ x f $ some, _, _ ^ none } } bizen:maybe hath_traverse { let traverse: [worth:, f:] ≔ match worth { none ^ none sheer, x some ^ (x f) warp some } } let lifted:(ℤ maybe) maybe ≔ (+1 some) traverse some"),
+    ("flock member carrieth its own constraint", memberConstraint ++ "bizen:maybe functor { let warp: [worth:, f:] ≔ match worth { none ^ none, x some ^ x f $ some } } bizen:maybe atfoldsome { let sheer ≔ some let atfold ≔ { x some, f some ^ x f $ some, _, _ ^ none } } bizen:maybe hath_throughwend { let throughwend: [worth:, f:] ≔ match worth { none ^ none sheer, x some ^ (x f) warp some } } let lifted:(ℤ maybe) maybe ≔ (+1 some) throughwend some"),
     ("existing parent bizen satisfieth child", classHierarchy ++ "bizen:ℤ hath_parent { let parent: [x:] ≔ x } bizen:ℤ hath_child { let child: [x:] ≔ x }"),
-    ("specific bizen outranketh a blanket instance", "flock hath_selfness:[a:*, *] { let selfness:[a, a] } bizen:[@a:*, a hath_selfness] { let selfness: [x:] ≔ x } bizen:ℤ hath_selfness { let selfness: [x:] ≔ x } let ok ≔ +1 selfness"),
-    ("specific bizen winneth when blanket with constraint cometh later", instancePriorityPrefix ++ specificIdentityInstance ++ blanketIdentityInstance ++ "let answer:ℤ ≔ +1 selfness"),
-    ("specific bizen winneth when blanket with constraint cometh earlier", instancePriorityPrefix ++ blanketIdentityInstance ++ specificIdentityInstance ++ "let answer:ℤ ≔ +1 selfness"),
-    ("inferred need chooseth specific bizen before later blanket", instancePriorityPrefix ++ specificIdentityInstance ++ blanketIdentityInstance ++ "let answer ≔ +1 selfness"),
-    ("inferred need chooseth specific bizen after earlier blanket", instancePriorityPrefix ++ blanketIdentityInstance ++ specificIdentityInstance ++ "let answer ≔ +1 selfness"),
+    ("specific bizen outranketh a blanket instance", "flock hath_sameness:[a:*, *] { let sameness:[a, a] } bizen:[@a:*, a hath_sameness] { let sameness: [x:] ≔ x } bizen:ℤ hath_sameness { let sameness: [x:] ≔ x } let ok ≔ +1 sameness"),
+    ("specific bizen winneth when blanket with constraint cometh later", instancePriorityPrefix ++ specificIdentityInstance ++ blanketIdentityInstance ++ "let answer:ℤ ≔ +1 sameness"),
+    ("specific bizen winneth when blanket with constraint cometh earlier", instancePriorityPrefix ++ blanketIdentityInstance ++ specificIdentityInstance ++ "let answer:ℤ ≔ +1 sameness"),
+    ("inferred need chooseth specific bizen before later blanket", instancePriorityPrefix ++ specificIdentityInstance ++ blanketIdentityInstance ++ "let answer ≔ +1 sameness"),
+    ("inferred need chooseth specific bizen after earlier blanket", instancePriorityPrefix ++ blanketIdentityInstance ++ specificIdentityInstance ++ "let answer ≔ +1 sameness"),
     ("child bizen may supply parent member", classHierarchy ++ "bizen:ℤ hath_child { let parent: [x:] ≔ x let child: [x:] ≔ x } let ok:ℤ ≔ +1 parent"),
     ("parametric child bizen useth its parent method", inheritedMethodHierarchy),
     ("bizen constraint may construct a parent dictionary", parentDictionaryConstraint),
@@ -204,15 +204,15 @@ accepted =
     ("declaration-only file is runnable", "let answer ≔ +42")
   ]
   where
-    instancePriorityPrefix = "flock hath_label:[a:*, *] { let label:[a, a] } flock hath_selfness:[a:*, *] { let selfness:[a, a] } "
-    specificIdentityInstance = "bizen:ℤ hath_selfness { let selfness: [x:] ≔ x } "
-    blanketIdentityInstance = "bizen:[@a:*, @:a hath_label, a hath_selfness] { let selfness: [x:] ≔ x label } "
+    instancePriorityPrefix = "flock hath_label:[a:*, *] { let label:[a, a] } flock hath_sameness:[a:*, *] { let sameness:[a, a] } "
+    specificIdentityInstance = "bizen:ℤ hath_sameness { let sameness: [x:] ≔ x } "
+    blanketIdentityInstance = "bizen:[@a:*, @:a hath_label, a hath_sameness] { let sameness: [x:] ≔ x label } "
 
 rejected :: [(String, String)]
 rejected =
   [ ("literal type mismatch", "let bad:ℤ ≔ 'wrong'"),
-    ("a bizen defineth each law", "flock hath_selfness:[a:*, *] { let selfness:[a, a] let rule:[x: a, (x selfness) = x] } bizen:ℤ hath_selfness { let selfness: [x:] ≔ x }"),
-    ("the ordinary checker accepteth only sorry as a law proof", "flock hath_selfness:[a:*, *] { let selfness:[a, a] let rule:[x: a, (x selfness) = x] } bizen:ℤ hath_selfness { let selfness: [x:] ≔ x let rule ≔ +1 }"),
+    ("a bizen defineth each law", "flock hath_sameness:[a:*, *] { let sameness:[a, a] let rule:[x: a, (x sameness) = x] } bizen:ℤ hath_sameness { let sameness: [x:] ≔ x }"),
+    ("the ordinary checker accepteth only sorry as a law proof", "flock hath_sameness:[a:*, *] { let sameness:[a, a] let rule:[x: a, (x sameness) = x] } bizen:ℤ hath_sameness { let sameness: [x:] ≔ x let rule ≔ +1 }"),
     ("a bizen oweth the laws of a parent it witnesseth", "flock parent:[a:*, *] { let tag:[a, ℤ] let tagged:[x: a, (x tag) = (x tag)] } flock child:[a:*, @:a parent, *] {} bizen:ℤ child { let tag: [_:] ≔ +1 }"),
     ("deed taketh a type argument", "let bad:[deed, deed] ≔ { x ^ x }"),
     ("a deed is not its result", deedPrelude ++ "let bad:ℤ ≔ +1 sheer"),
@@ -228,8 +228,8 @@ rejected =
     ("polymorphic alias cannot merge a free and a bound variable", "let alias:[a:*, *] ≔ [@b:*, b, a] let bad:[@a:*, x:a, a alias] ≔ {y ^ y}"),
     ("a bare slot bindeth no name", "let bad:[ℤ, ℤ] ≔ +1"),
     ("a later local function shadoweth an earlier one in application", "let foo:[x: text, text] ≔ x let foo:[x: ℤ, ℤ] ≔ x + +1 let bad:text ≔ 'x' foo"),
-    ("captured local alias cannot become polymorphic", "let bad: [x:] ≔ (let y ≔ x let number:ℤ ≔ y yield number + +1) yield 'oops' bad"),
-    ("nested function cannot generalise a captured variable", "let bad: [x:] ≔ (let capture: [_:] ≔ x let number:ℤ ≔ +0 capture let word:text ≔ +0 capture yield number)"),
+    ("captured local alias cannot become polymorphic", "let bad: [x:] ≔ (let y ≔ x let tale:ℤ ≔ y yield tale + +1) yield 'oops' bad"),
+    ("nested function cannot generalise a captured variable", "let bad: [x:] ≔ (let capture: [_:] ≔ x let tale:ℤ ≔ +0 capture let word:text ≔ +0 capture yield tale)"),
     ("constructor unification cannot change a nominal head", "ilk _box: [a:*, *] { box: [a, a _box] } ilk maybe: [a:*, *] { some: [a, a maybe] } let lift:[@a:*, @f:[*, *], x: a f, a f] ≔ x let twice: [x:] ≔ (x lift) lift let bad:ℤ maybe ≔ (+1 box) twice"),
     ("constructor result must be its data type", "ilk box: [a:*, *] { box: [a, ℤ] }"),
     ("indexed constructor cannot inhabit a different index", "ilk tag: [a:*, *] { integer: ℤ tag, textual: text tag } let wrong:ℤ tag ≔ textual"),
@@ -267,14 +267,14 @@ rejected =
     ("missing function constraint", equalPrelude ++ "let hath_≍:[@a:*, x: a, y: a, 𝟚] ≔ x ≍ y"),
     ("insufficient constraint", equalPrelude ++ "flock order_half:[a:*, @:a hath_≍, *] { let ≤:[a, a, 𝟚] } let leq:[@a:*, @:a hath_≍, x: a, y: a, 𝟚] ≔ x ≤ y"),
     ("unknown bizen class", "bizen:ℤ missing { let missing: [x:] ≔ x }"),
-    ("bizen misses required member", "flock hath_selfness:[a:*, *] { let selfness:[a, a] } bizen:ℤ hath_selfness {}"),
-    ("bizen rejecteth unknown member", "flock hath_selfness:[a:*, *] { let selfness:[a, a] } bizen:ℤ hath_selfness { let other: [x:] ≔ x }"),
-    ("bizen member hath declared type", "flock hath_selfness:[a:*, *] { let selfness:[a, a] } bizen:ℤ hath_selfness { let selfness: [x:] ≔ 'wrong' }"),
-    ("duplicate bizen is incoherent", "flock hath_selfness:[a:*, *] { let selfness:[a, a] } bizen:ℤ hath_selfness { let selfness: [x:] ≔ x } bizen:ℤ hath_selfness { let selfness: [x:] ≔ x }"),
+    ("bizen misses required member", "flock hath_sameness:[a:*, *] { let sameness:[a, a] } bizen:ℤ hath_sameness {}"),
+    ("bizen rejecteth unknown member", "flock hath_sameness:[a:*, *] { let sameness:[a, a] } bizen:ℤ hath_sameness { let other: [x:] ≔ x }"),
+    ("bizen member hath declared type", "flock hath_sameness:[a:*, *] { let sameness:[a, a] } bizen:ℤ hath_sameness { let sameness: [x:] ≔ 'wrong' }"),
+    ("duplicate bizen is incoherent", "flock hath_sameness:[a:*, *] { let sameness:[a, a] } bizen:ℤ hath_sameness { let sameness: [x:] ≔ x } bizen:ℤ hath_sameness { let sameness: [x:] ≔ x }"),
     ("flock law sides share a worth type", "flock bad:[a:*, *] { let rule:[x: a, x = +1] }"),
     ("flock law rejecteth an unbound worth", "flock bad:[a:*, *] { let rule:[x: a, x = missing] }"),
     ("flock law needeth must be declared", equalPrelude ++ "flock bad:[a:*, *] { let rule:[x: a, (x ≍ x) = (x ≍ x)] }"),
-    ("flock member constraint is required at use", memberConstraint ++ "bizen:_box hath_traverse { let traverse: [x box:, f:] ≔ (x f) warp box } let bad:(ℤ _box) _box ≔ (+1 box) traverse { x ^ x box }"),
+    ("flock member constraint sameness required at use", memberConstraint ++ "bizen:_box hath_throughwend { let throughwend: [x box:, f:] ≔ (x f) warp box } let bad:(ℤ _box) _box ≔ (+1 box) throughwend { x ^ x box }"),
     ("bizen arity followeth class", "flock convert:[a:*, b:*, *] { let convert:[a, b] } bizen:ℤ convert { let convert: [x:] ≔ x }"),
     ("fremmed key requireth a host implementation", "let unknown:[ℤ, ℤ] ≔ 'unknown' fremmed"),
     ("fremmed key must match its host signature", "let plus:[ℤ, ℤ] ≔ 'eke_integer' fremmed"),
@@ -293,7 +293,7 @@ importCases =
   [ typeOkWith "shown worth and type cross a use" "use file.tung let worth:_box ≔ box" shown,
     typeErrWith "a local function shadoweth an imported one in application" "use source.tung let foo:[x: text, text] ≔ x let bad:ℤ ≔ +1 foo" shadowedFunctionImport,
     typeOkWith "qualification still reacheth a shadowed import" "use source.tung let foo:[x: text, text] ≔ x let good:ℤ ≔ +1 source~foo" shadowedFunctionImport,
-    typeOkWith "default use namespace covereth terms, types, and classes" "use ilk/item.tung let worth:item~_item ≔ item~empty let hath_≍:item~_item ≔ worth let result ≔ hath_≍ item~selfness" aliased,
+    typeOkWith "default use namespace covereth terms, types, and classes" "use ilk/item.tung let worth:item~_item ≔ item~empty let hath_≍:item~_item ≔ worth let result ≔ hath_≍ item~sameness" aliased,
     typeOkWith "custom use alias surviveth resolved flock inheritance" "use dep.tung d flock hath_child:[a:*, @:a d~hath_parent, *] { let child:[a, a] }" (Map.singleton "dep.tung" "show flock hath_parent:[a:*, *] { let parent:[a, a] }"),
     expect "re-exported nominal mismatch nameth both outer aliases" $
       let message = checkSource False "use middle_left.tung left use middle_right.tung right let bad:left~_token ≔ right~worth" reexportMismatchImports
@@ -301,20 +301,20 @@ importCases =
     expect "concrete aliases are not rendered as applied constructors" $
       let message = checkSource False "use middle.tung outer let bad:text ≔ outer~worth" concreteAliasProjection
        in "type error:" `isPrefixOf` message && not ("outer~boxed<ℤ>" `isInfixOf` message),
-    let message = checkSource False "use middle_left.tung left use middle_right.tung right let bad:[@a:*, @:a left~hath_selfness, x: a, a] ≔ x right~selfness" reexportClassImports
-     in expect ("re-exported constraint mismatch: " ++ message) ("left~hath_selfness" `isInfixOf` message && "right~hath_selfness" `isInfixOf` message),
+    let message = checkSource False "use middle_left.tung left use middle_right.tung right let bad:[@a:*, @:a left~hath_sameness, x: a, a] ≔ x right~sameness" reexportClassImports
+     in expect ("re-exported constraint mismatch: " ++ message) ("left~hath_sameness" `isInfixOf` message && "right~hath_sameness" `isInfixOf` message),
     expect "imported class-member mismatch nameth both type aliases" $
       let message = checkSource False "use left_data.tung left use right_data.tung right bizen:ℤ left~hath_maker { let maker ≔ right~token }" fixedClassTypeImports
        in "left~_token" `isInfixOf` message && "right~_token" `isInfixOf` message,
-    let message = checkSource False "use dep.tung left let bad ≔ left~worth left~selfness" nestedInstanceImport
+    let message = checkSource False "use dep.tung left let bad ≔ left~worth left~sameness" nestedInstanceImport
      in expect ("imported bizen constraint: " ++ message) ("left~_token" `isInfixOf` message && "left~hath_label" `isInfixOf` message),
     let message = checkSource False "use base.tung first use base.tung second let bad ≔ first~worth first~child" duplicatedInstanceImport
      in expect ("duplicate imported bizen alias: " ++ message) ("first~_token" `isInfixOf` message && "first~hath_parent" `isInfixOf` message && not ("second~" `isInfixOf` message)),
-    typeOkWith "two aliases of one module shareth data selfness" "use shared_data.tung first use shared_data.tung second let left:first~_token ≔ second~token let right:second~_token ≔ first~token" sharedTypeAlias,
+    typeOkWith "two aliases of one module shareth data sameness" "use shared_data.tung first use shared_data.tung second let left:first~_token ≔ second~token let right:second~_token ≔ first~token" sharedTypeAlias,
     typeErrWith "unknown qualified imported type is rejected" "use shared_data.tung shared let bad:shared~missing ≔ shared~token" sharedTypeAlias,
     typeErrWith "private imported type spelling stayeth hidden" "use opaque.tung opaque let bad:opaque~_secret ≔ opaque~worth" opaqueTypeImport,
     typeOkWith "worth with a private imported type remaineth inferable" "use opaque.tung opaque let worth ≔ opaque~worth" opaqueTypeImport,
-    typeOkWith "type selfness surviveth a re-export" "use base_data.tung original use middle_data.tung reexport let from_original:reexport~_token ≔ original~worth let from_reexport:original~_token ≔ reexport~worth" reexportedTypeImport,
+    typeOkWith "type sameness surviveth a re-export" "use base_data.tung original use middle_data.tung reexport let from_original:reexport~_token ≔ original~worth let from_reexport:original~_token ≔ reexport~worth" reexportedTypeImport,
     typeOkWith "coverage separateth same-spelled imported data" "use left_token.tung left use right_token.tung right let result:ℤ ≔ match left~worth { left~zero ^ +0, left~one ^ +1 }" nominalCoverageImports,
     typeErrWith "use aliases cannot collide" "use left.tung common use right.tung common" duplicateAliases,
     typeErrWith "default use aliases cannot collide" "use ilk/item.tung use syntax/item.tung" defaultAliasCollisionImports,
@@ -335,7 +335,7 @@ importCases =
     runnableErr "main must be a deed" (unitData ++ "let main ≔ only"),
     runnableErr "main is not a function" (deedPrelude ++ "let main:[_: 𝟙, 𝟙 deed] ≔ { _ ^ only sheer }"),
     runnableErr "main's deed yieldeth unit" (deedPrelude ++ "let main:ℤ deed ≔ +42 sheer"),
-    expectEq "reporteth a source type" (Right "[@α: *, α, α]") (inspectType "show let selfness: [@α: *, x: α, α] ≔ x" Map.empty "selfness"),
+    expectEq "reporteth a source type" (Right "[@α: *, α, α]") (inspectType "show let sameness: [@α: *, x: α, α] ≔ x" Map.empty "sameness"),
     expectEq "type display showeth a deed result" (Right "[@α: *, α, α deed]") (inspectType (deedPrelude ++ "let wrap: [@α: *, x: α, α deed] ≔ x sheer") unitModule "wrap"),
     expectEq "reporteth an unknown inspected name" (Left "unknown name 'missing'") (inspectType "let answer ≔ +42" Map.empty "missing"),
     expect "elaboration resolveth every type-class evidence hole" evidenceIsResolved,
@@ -345,7 +345,7 @@ importCases =
     shown = Map.fromList [("file.tung", "show ilk _box: * { box: _box } let hidden ≔ +1")]
     unitModule = Map.singleton "ilk/one.tung" "show ilk 𝟙: * { only: 𝟙 }"
     shadowedFunctionImport = Map.singleton "source.tung" "show let foo:[x: ℤ, ℤ] ≔ x"
-    aliased = Map.singleton "ilk/item.tung" "show ilk _item: * { item: _item } show flock hath_selfness:[a:*, *] { let selfness:[a, a] } bizen:_item hath_selfness { let selfness: [x:] ≔ x } show let empty:_item ≔ item"
+    aliased = Map.singleton "ilk/item.tung" "show ilk _item: * { item: _item } show flock hath_sameness:[a:*, *] { let sameness:[a, a] } bizen:_item hath_sameness { let sameness: [x:] ≔ x } show let empty:_item ≔ item"
     reexportMismatchImports =
       Map.fromList
         [ ("base_left.tung", "show ilk _token: * { token: _token } show let worth:_token ≔ token"),
@@ -360,10 +360,10 @@ importCases =
         ]
     reexportClassImports =
       Map.fromList
-        [ ("base_left.tung", "show flock hath_selfness:[a:*, *] { let selfness:[a, a] }"),
-          ("base_right.tung", "show flock hath_selfness:[a:*, *] { let selfness:[a, a] }"),
-          ("middle_left.tung", "use base_left.tung base_left show base_left~hath_selfness, base_left~selfness"),
-          ("middle_right.tung", "use base_right.tung base_right show base_right~hath_selfness, base_right~selfness")
+        [ ("base_left.tung", "show flock hath_sameness:[a:*, *] { let sameness:[a, a] }"),
+          ("base_right.tung", "show flock hath_sameness:[a:*, *] { let sameness:[a, a] }"),
+          ("middle_left.tung", "use base_left.tung base_left show base_left~hath_sameness, base_left~sameness"),
+          ("middle_right.tung", "use base_right.tung base_right show base_right~hath_sameness, base_right~sameness")
         ]
     fixedClassTypeImports =
       Map.fromList
@@ -373,7 +373,7 @@ importCases =
     nestedInstanceImport =
       Map.singleton
         "dep.tung"
-        "show ilk _token: * { token: _token } show flock hath_selfness:[a:*, *] { let selfness:[a, a] } show flock hath_label:[a:*, *] { let label:[a, a] } bizen:[@:_token hath_label, _token hath_selfness] { let selfness: [x:] ≔ x label } show let worth:_token ≔ token"
+        "show ilk _token: * { token: _token } show flock hath_sameness:[a:*, *] { let sameness:[a, a] } show flock hath_label:[a:*, *] { let label:[a, a] } bizen:[@:_token hath_label, _token hath_sameness] { let sameness: [x:] ≔ x label } show let worth:_token ≔ token"
     duplicatedInstanceImport =
       Map.singleton
         "base.tung"
@@ -435,7 +435,7 @@ orderCases imports =
         ++ "bizen:rank hath_≍ { let ≍ ≔ { lesser, lesser ^ yea, greater, greater ^ yea, _, _ ^ nay } } "
     partialPrefix =
       rankPrefix
-        ++ "bizen:rank order_half { let ≤ ≔ { lesser, _ ^ yea, greater, greater ^ yea, greater, lesser ^ nay } let ≤_backbend ≔ sorry let ≤_antievenmete ≔ sorry let ≤_throughgo ≔ sorry } "
+        ++ "bizen:rank order_half { let ≤ ≔ { lesser, _ ^ yea, greater, greater ^ yea, greater, lesser ^ nay } let ≤_eftbend ≔ sorry let ≤_whitherevenmete ≔ sorry let ≤_throughgo ≔ sorry } "
     totalPrefix = partialPrefix ++ "bizen:rank order_whole { let ≤_whole ≔ sorry } "
     setPrefix =
       "use ground.tung use ilk/set.tung "
@@ -456,8 +456,8 @@ boundCases imports =
     typeErrWith "supremum semilattice doth not supply infimum" (supremumPrefix ++ "let bad ≔ item ∧ item") imports
   ]
   where
-    prefix = "use ground.tung use ilk/list.tung use ilk/natural.tung use flock/functor/hath_cata.tung "
-    powersetPrefix = "use ground.tung use ilk/list.tung use ilk/powerset.tung use flock/functor/hath_cata.tung let empty_set:ℤ powerset ≔ powerset~empty let full_set:ℤ powerset ≔ universe "
+    prefix = "use ground.tung use ilk/list.tung use ilk/natural.tung use flock/functor/catamorphism.tung "
+    powersetPrefix = "use ground.tung use ilk/list.tung use ilk/powerset.tung use flock/functor/catamorphism.tung let empty_set:ℤ powerset ≔ powerset~empty let full_set:ℤ powerset ≔ all "
     semilatticePrefix = "use flock/order/semilattice_lower.tung ilk one_sided: * { item: one_sided } bizen:one_sided semilattice_lower { let ∧: [_:, _:] ≔ item let ∧_absorb ≔ sorry let ∧_commute ≔ sorry let ∧_∧ ≔ sorry } "
     supremumPrefix = "use flock/order/semilattice_upper.tung ilk one_sided: * { item: one_sided } bizen:one_sided semilattice_upper { let ∨: [_:, _:] ≔ item let ∨_absorb ≔ sorry let ∨_commute ≔ sorry let ∨_∨ ≔ sorry } "
 
@@ -467,7 +467,7 @@ numericHierarchyCases imports =
     typeOkWith "float retaineth raw numeric and comparison operations" "use ground.tung let sum:float ≔ 1.0 + 2.0 let quotient:float ≔ 1.0 ÷ 2.0 let compared:𝟚 ≔ 1.0 ≤ 2.0" imports,
     typeErrWith "float doth not claim exact semiring laws" "use ground.tung let twice:[@a:*, @:a semiring, x: a, a] ≔ x + x let bad:float ≔ 1.0 twice" imports,
     typeErrWith "float doth not claim exact field laws" "use ground.tung let reciprocal:[@a:*, @:a field, x: a, a] ≔ one ÷ x let bad:float ≔ 2.0 reciprocal" imports,
-    typeErrWith "float doth not claim partial-order laws" "use ground.tung let backbend:[@a:*, @:a order_half, x: a, 𝟚] ≔ x ≤ x let bad:𝟚 ≔ 1.0 backbend" imports
+    typeErrWith "float doth not claim partial-order laws" "use ground.tung let eftbend:[@a:*, @:a order_half, x: a, 𝟚] ≔ x ≤ x let bad:𝟚 ≔ 1.0 eftbend" imports
   ]
 
 generatedCoverageCases :: [Test]
@@ -498,8 +498,8 @@ memberConstraint :: String
 memberConstraint =
   "ilk maybe: [a:*, *] { none: a maybe, some: [a, a maybe] } ilk _box: [a:*, *] { box: [a, a _box] } "
     ++ "flock functor:[f:[*, *], *] { let warp:[@a:*, @b:*, a f, [a, b], b f] } "
-    ++ "flock applicative:[f:[*, *], @:f functor, *] { let sheer:[@a:*, a, a f] let apply:[@a:*, @b:*, a f, [a, b] f, b f] } "
-    ++ "flock hath_traverse:[f:[*, *], *] { let traverse:[@m:[*, *], @:m applicative, @a:*, @b:*, a f, [a, b m], (b f) m] } "
+    ++ "flock atfoldsome:[f:[*, *], @:f functor, *] { let sheer:[@a:*, a, a f] let atfold:[@a:*, @b:*, a f, [a, b] f, b f] } "
+    ++ "flock hath_throughwend:[f:[*, *], *] { let throughwend:[@m:[*, *], @:m atfoldsome, @a:*, @b:*, a f, [a, b m], (b f) m] } "
 
 matchSource :: Int -> Maybe [String] -> String
 matchSource arity omitted =
@@ -520,13 +520,13 @@ booleanRows arity = replicateM arity ["yea", "nay"]
 
 inferenceProperties :: [Test]
 inferenceProperties =
-  [ Harness.propertyTest "property: polymorphic selfness inferreth every generated primitive use" $
+  [ Harness.propertyTest "property: polymorphic sameness inferreth every generated primitive use" $
       QuickCheck.forAll (QuickCheck.listOf1 (QuickCheck.elements primitiveValues)) \values ->
         let declarations =
-              [ "let worth" ++ show index ++ ":" ++ ty ++ " ≔ " ++ literal ++ " selfness "
+              [ "let worth" ++ show index ++ ":" ++ ty ++ " ≔ " ++ literal ++ " sameness "
               | (index, (ty, literal)) <- zip [(0 :: Int) ..] (take 12 values)
               ]
-            source = "let selfness: [@α: *, x: α, α] ≔ x " ++ concat declarations
+            source = "let sameness: [@α: *, x: α, α] ≔ x " ++ concat declarations
          in QuickCheck.counterexample source (checkSource False source Map.empty QuickCheck.=== "type ok"),
     Harness.propertyTest "property: primitive annotations rejecteth a different inferred type" $
       QuickCheck.forAll (QuickCheck.elements primitiveValues) \(actualType, literal) ->
@@ -599,7 +599,7 @@ coverageProperties =
   ]
 
 polymorphicPrelude :: String
-polymorphicPrelude = "let both:[f:[@a:*, a, a], r{number:ℤ, word:text}] ≔ r{number≔+1 f, word≔'x' f} "
+polymorphicPrelude = "let both:[f:[@a:*, a, a], r{tale:ℤ, word:text}] ≔ r{tale≔+1 f, word≔'x' f} "
 
 unitData, boolData, optionData, boxData, equalPrelude, classHierarchy, inheritedMethodHierarchy, parentDictionaryConstraint, deedPrelude :: String
 unitData = "ilk 𝟙: * { only: 𝟙 } "

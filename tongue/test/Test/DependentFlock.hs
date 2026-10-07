@@ -48,19 +48,19 @@ tests example =
     rejectContaining "a missing bizen is reported" "no bizen of flock 'hath_≍'" $
       compiled (example ++ "ilk unit:* { only: unit }\nlet bad:𝟚 ≔ only ≍ only\n"),
     rejectContaining "a second bizen of one type is rejected" "a bizen with the same type already exists" $
-      compiled (example ++ "bizen:𝟚 hath_≍ { let ≍ ≔ {_, _ ^ yea}\nlet same_backbend ≔ sorry }\n"),
+      compiled (example ++ "bizen:𝟚 hath_≍ { let ≍ ≔ {_, _ ^ yea}\nlet same_eftbend ≔ sorry }\n"),
     rejectContaining "a member must have its declared type" "in bizen of" $
-      compiled (example ++ "bizen:(𝟚 maybe) maybe hath_≍ { let ≍ ≔ yea\nlet same_backbend ≔ sorry }\n"),
-    rejectContaining "a bizen defineth each law" "bizen is missing member 'same_backbend'" $
+      compiled (example ++ "bizen:(𝟚 maybe) maybe hath_≍ { let ≍ ≔ yea\nlet same_eftbend ≔ sorry }\n"),
+    rejectContaining "a bizen defineth each law" "bizen is missing member 'same_eftbend'" $
       compiled (example ++ "ilk unit:* { only: unit }\nbizen:unit hath_≍ { let ≍ ≔ {_, _ ^ yea} }\n"),
     rejectContaining "a law proof is checked against the bizen's members" "cannot unify nay with yea" $
-      compiled (example ++ "ilk unit:* { only: unit }\nbizen:unit hath_≍ { let ≍ ≔ {_, _ ^ nay}\nlet same_backbend ≔ {_ ^ backbend} }\n"),
+      compiled (example ++ "ilk unit:* { only: unit }\nbizen:unit hath_≍ { let ≍ ≔ {_, _ ^ nay}\nlet same_eftbend ≔ {_ ^ eftbend} }\n"),
     rejectContaining "an ascribed sorry law must still have its declared type" "cannot unify text with" $
-      compiled (example ++ "ilk unit:* { only:unit } bizen:unit hath_≍ { let ≍ ≔ {_, _ ^ yea} let same_backbend:text ≔ sorry }"),
-    expectEq "a law that holdeth by computation is proved by backbend" (Right ()) $
-      () <$ compiled (example ++ "ilk unit:* { only: unit }\nbizen:unit hath_≍ { let ≍ ≔ {_, _ ^ yea}\nlet same_backbend ≔ {_ ^ backbend} }\n"),
+      compiled (example ++ "ilk unit:* { only:unit } bizen:unit hath_≍ { let ≍ ≔ {_, _ ^ yea} let same_eftbend:text ≔ sorry }"),
+    expectEq "a law that holdeth by computation is proved by eftbend" (Right ()) $
+      () <$ compiled (example ++ "ilk unit:* { only: unit }\nbizen:unit hath_≍ { let ≍ ≔ {_, _ ^ yea}\nlet same_eftbend ≔ {_ ^ eftbend} }\n"),
     expectEq "a bizen may define a parent that hath no bizen" (Right True) do
-      program <- compiled (example ++ "ilk _box:[α:*, *] { box:[α, α _box] }\nbizen:_box applicative {\nlet warp ≔ {a box, f ^ (a f) box}\nlet sheer ≔ {a ^ a box}\n}\nlet boxed:𝟚 _box ≔ (yea box) warp {x ^ x}\n")
+      program <- compiled (example ++ "ilk _box:[α:*, *] { box:[α, α _box] }\nbizen:_box atfoldsome {\nlet warp ≔ {a box, f ^ (a f) box}\nlet sheer ≔ {a ^ a box}\n}\nlet boxed:𝟚 _box ≔ (yea box) warp {x ^ x}\n")
       sameNormalIn program "boxed" "yea box",
     rejectContaining "both law sides share one type" "cannot unify 𝟚 with" $
       compiled (example ++ "flock bad:[α:*, *] {\nlet f:[α, α]\nlet rule:[x:α, (x f) = yea]\n}\n"),
@@ -103,7 +103,7 @@ selectionTests =
           let choose:[outer:ℤ tag, inner:ℤ tag, ℤ] ≔ worth @ℤ
           """
       sameNormalIn program "(+1 tag_make) choose (+2 tag_make)" "+2",
-    expectEq "a dictionary's private selfness cannot capture source names" (Right [True, True, True]) do
+    expectEq "a dictionary's private identity cannot capture source names" (Right [True, True, True]) do
       program <-
         compiled
           """
@@ -122,7 +122,7 @@ selectionTests =
     expectEq "a law is projected like any other member" (Right ()) $
       () <$ compiled (lawClasses ++ firstInstance ++ "let proof:[(only left) = yea] ≔ rule @unit only"),
     rejectContaining "a law proof must hold for the bizen's own members" "cannot unify" $
-      compiled (lawClasses ++ firstInstance ++ "bizen:unit second { let right ≔ {_ ^ nay} let rule_right ≔ {_ ^ backbend} }"),
+      compiled (lawClasses ++ firstInstance ++ "bizen:unit second { let right ≔ {_ ^ nay} let rule_right ≔ {_ ^ eftbend} }"),
     expectEq "an inline parent's law useth the projected dictionary and its arguments" (Right True) do
       program <-
         compiled
@@ -132,7 +132,7 @@ selectionTests =
           flock child:[α:*, @:(α box) parent, *] { let tag:ℕ }
           bizen:[@α:*, α child] {
             let keep:[x:] ≔ x
-            let rule ≔ {_ ^ backbend}
+            let rule ≔ {_ ^ eftbend}
             let tag ≔ 0
           }
           """
@@ -176,7 +176,7 @@ selectionTests =
       flock second:[α:*, *] { let right:[α, truth] let rule_right:[x:α, (x right) = yea] }
 
       """
-    firstInstance = "bizen:unit first { let left ≔ {_ ^ yea} let rule ≔ {_ ^ backbend} } "
+    firstInstance = "bizen:unit first { let left ≔ {_ ^ yea} let rule ≔ {_ ^ eftbend} } "
     countClass = "flock count:[α:*, *] { let length:[α, ℕ] } "
     choice = "flock choice:[α:*, β:*, *] { let selected:ℤ } "
     converting output = "flock convert:[α:*, β:*" ++ output ++ ", *] { let into:[α, β] } bizen:ℤ convert text { let into: [_:] ≔ 'one' } let worth ≔ +1 into"

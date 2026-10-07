@@ -5,7 +5,7 @@ import { analyzed } from "./compiler.ts";
 test("declaration annotations expose definitions and scoped parameters in incomplete buffers", async () => {
   const source = [
     "show let count:* ≔ ℤ",
-    "show let selfness:[@α:*, x:α, α] ≔ x",
+    "show let sameness:[@α:*, x:α, α] ≔ x",
     "let hath_+: [x:, y:ℤ, ℤ] ≔ x + y",
     "let answer:count ≔ +42",
     "let outside ≔ x",
@@ -13,7 +13,7 @@ test("declaration annotations expose definitions and scoped parameters in incomp
   const model = await analyzed(source, "file:///annotations.tung");
   for (const [name, role] of [
     ["count", "type"],
-    ["selfness", "function"],
+    ["sameness", "function"],
     ["hath_+", "function"],
     ["answer", "variable"],
   ]) {
@@ -78,8 +78,8 @@ test("class parameters resolve inside the braced body", async () => {
 });
 test("instance parameters resolve in requirements, the head, and members", async () => {
   const source = [
-    "bizen:[@a:*, @:a parent, [a, a] selfness] {",
-    "  let selfness:[[a, a], [a, a]] ≔ { x ^ x }",
+    "bizen:[@a:*, @:a parent, [a, a] sameness] {",
+    "  let sameness:[[a, a], [a, a]] ≔ { x ^ x }",
     "}",
     "let outside ≔ a",
   ].join("\n");
@@ -93,10 +93,10 @@ test("instance parameters resolve in requirements, the head, and members", async
   assert.equal(findDefinition(model, occurrences.at(-1)), undefined);
   assert.deepEqual(
     model.instances.map(({ className }) => className),
-    ["selfness"],
+    ["sameness"],
   );
   assert.equal(
-    model.definitions.find(({ name }) => name === "selfness")?.role,
+    model.definitions.find(({ name }) => name === "sameness")?.role,
     "method",
   );
 });
@@ -184,8 +184,8 @@ test("analysis recordeth each re-exported name", async () => {
 });
 test("analysis attacheth doc comments to following shown declarations", async () => {
   const source = [
-    "## selfness worth.",
-    "show let selfness:[@a:*, @:a hath_≍, x: a, a] ≔ x",
+    "## sameness worth.",
+    "show let sameness:[@a:*, @:a hath_≍, x: a, a] ≔ x",
     "",
     "/**",
     " * boxed data.",
@@ -194,8 +194,8 @@ test("analysis attacheth doc comments to following shown declarations", async ()
   ].join("\n");
   const model = await analyzed(source, "file:///docs.tung");
   assert.equal(
-    model.definitions.find(({ name }) => name === "selfness").documentation,
-    "selfness worth.",
+    model.definitions.find(({ name }) => name === "sameness").documentation,
+    "sameness worth.",
   );
   assert.equal(
     model.definitions.find(

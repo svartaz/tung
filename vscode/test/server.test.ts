@@ -20,9 +20,9 @@ test("server implementeth the editor workflow over stdio", async (context) => {
   const depPath = path.join(root, "dep.tung");
   const mainPath = path.join(root, "main.tung");
   const depText =
-    "show ilk tally: * { zero: tally }\nshow ilk truth: * { yea: truth, nay: truth }\nshow ilk parcel: [a:*, *] { wrap: [a, a parcel] }\nshow let selfness:[x: ℤ, ℤ] ≔ x\nshow let answer:ℤ ≔ +42\nshow flock hath_convert:[a:*, *] { let convert:[a, a] }\n";
+    "show ilk tally: * { zero: tally }\nshow ilk truth: * { yea: truth, nay: truth }\nshow ilk parcel: [a:*, *] { wrap: [a, a parcel] }\nshow let sameness:[x: ℤ, ℤ] ≔ x\nshow let answer:ℤ ≔ +42\nshow flock hath_convert:[a:*, *] { let convert:[a, a] }\n";
   const mainText =
-    "use dep.tung\nlet worth:ℤ ≔ answer\nlet count:tally ≔ zero\nlet ratio:float ≔ 1.5\nlet truth_to_text:[truth, text] ≔ { yea ^ 'yea', nay ^ 'nay' }\nlet shipment:ℤ parcel ≔ +1 wrap\nlet hath_≍:ℤ ≔ +1 selfness # \"unicode 𝟙\\n\"\nlet select:[left: ℤ, middle: ℤ, right: ℤ, ℤ] ≔ middle\nlet picker: [ℤ, ℤ, ℤ, ℤ] ≔ { first, second, third ^ second }\nbizen:ℤ hath_convert { let convert: [x:] ≔ x }\nshow ilk _box: [a:*, *] {\n  box: [a, a _box]\n}\n";
+    "use dep.tung\nlet worth:ℤ ≔ answer\nlet count:tally ≔ zero\nlet ratio:float ≔ 1.5\nlet truth_to_text:[truth, text] ≔ { yea ^ 'yea', nay ^ 'nay' }\nlet shipment:ℤ parcel ≔ +1 wrap\nlet hath_≍:ℤ ≔ +1 sameness # \"unicode 𝟙\\n\"\nlet select:[left: ℤ, middle: ℤ, right: ℤ, ℤ] ≔ middle\nlet picker: [ℤ, ℤ, ℤ, ℤ] ≔ { first, second, third ^ second }\nbizen:ℤ hath_convert { let convert: [x:] ≔ x }\nshow ilk _box: [a:*, *] {\n  box: [a, a _box]\n}\n";
   fs.writeFileSync(depPath, depText);
   fs.writeFileSync(mainPath, mainText);
   const depUri = pathToFileURL(depPath).href;
@@ -143,7 +143,7 @@ test("server implementeth the editor workflow over stdio", async (context) => {
     );
   }
   assert.equal(
-    semanticAt.get(positionKey(positionOf(mainText, "selfness"))),
+    semanticAt.get(positionKey(positionOf(mainText, "sameness"))),
     "call",
   );
   assert.equal(
@@ -159,7 +159,7 @@ test("server implementeth the editor workflow over stdio", async (context) => {
   }
   assert.notEqual(
     semanticAt.get(positionKey(positionOf(mainText, "tally"))),
-    semanticAt.get(positionKey(positionOf(mainText, "selfness"))),
+    semanticAt.get(positionKey(positionOf(mainText, "sameness"))),
   );
   assert.equal(
     semanticAt.get(positionKey(positionOf(mainText, "convert", 1))),
@@ -205,7 +205,7 @@ test("server implementeth the editor workflow over stdio", async (context) => {
   });
   assert(moduleCompletion.some(({ label }) => label === "dep.tung"));
   const answerPosition = positionOf(mainText, "answer");
-  const identityPosition = positionOf(mainText, "selfness");
+  const identityPosition = positionOf(mainText, "sameness");
   const completion = await request("textDocument/completion", {
     textDocument: { uri: mainUri },
     position: answerPosition,
@@ -293,10 +293,10 @@ test("server implementeth the editor workflow over stdio", async (context) => {
     textDocument: { uri: mainUri },
     position: {
       line: identityPosition.line,
-      character: identityPosition.character + "selfness".length,
+      character: identityPosition.character + "sameness".length,
     },
   });
-  assert.match(signature.signatures[0].label, /selfness/);
+  assert.match(signature.signatures[0].label, /sameness/);
   const formatted = await request("textDocument/formatting", {
     textDocument: { uri: mainUri },
     options: { tabSize: 2, insertSpaces: true },

@@ -18,6 +18,6 @@ bizen: 𝟚 complement {
     nay ^ yea
   }
 
-  let ∧_¬ ≔ {yea; nay ^ backbend}
-  let ∨_¬ ≔ {yea; nay ^ backbend}
+  let ∧_¬ ≔ {yea; nay ^ eftbend}
+  let ∨_¬ ≔ {yea; nay ^ eftbend}
 }

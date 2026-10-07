@@ -579,7 +579,7 @@ solvePattern context identity arguments right = do
 -- locals, as a property `?p b` meeting the goal of `transport`, is solved by
 -- abstracting those inputs from the other side, as lean's `▸` doth. the side
 -- is searched as written first and as a normal form second, so `first p`
--- is found inside `(first ‥ rest) filter p`. every abstracted input must
+-- is found inside `(first ‥ rest) sift p`. every abstracted input must
 -- occur, neither side may hold an unsolved hole, and a carrier is left to
 -- instance search. a candidate that the kernel rejecteth is no solution.
 solveAbstraction :: K.Context -> Int -> [(Plicity, N.Value)] -> N.Value -> Elaboration Bool

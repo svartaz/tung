@@ -17,6 +17,7 @@ import Control.Applicative ((<|>))
 import Control.Monad (foldM, forM, forM_, unless, when)
 import Data.Functor ((<&>))
 import Data.List (nub)
+import Data.Maybe (fromMaybe)
 import Tung.Dependent.Check qualified as K
 import Tung.Dependent.Elaboration qualified as E
 import Tung.Dependent.Normalise qualified as N
@@ -99,11 +100,28 @@ elaborateRecursive checker@ExpressionChecker {checkerEnvironment = environment} 
   let explicitInputs = [(level, ty) | (level, Explicit, ty) <- clauseInputs]
       scope = clauseScope
   families <- traverse (familyOf environment . snd) explicitInputs
-  let positions =
-        [ position
-        | (position, Just Split {splitInfo}) <- zip [0 ..] families,
-          null (inductiveIndexPlicities splitInfo)
-        ]
+  -- an indexed structural input needeth each index to be a distinct input
+  -- bound before it and unused by the parameters; the motive then
+  -- abstracteth those inputs with the value.
+  indexed <- forM (zip [0 ..] families) \case
+    (position, Just Split {splitInfo, splitIndices, splitParameters})
+      | null (inductiveIndexPlicities splitInfo) -> pure (Just (position, []))
+      | otherwise -> do
+          let structuralLevel = fst (explicitInputs !! position)
+          locals <- forM splitIndices \index ->
+            E.force index <&> \case
+              N.VNeutral (N.NLocal level) -> Just level
+              _ -> Nothing
+          parameterLevels <- concat <$> traverse (\parameter -> map (\level -> depth scope - level - 1) . freeIndices <$> quote scope parameter) splitParameters
+          pure case sequence locals of
+            Just levels
+              | length (nub levels) == length levels,
+                all (\level -> level < structuralLevel && level `notElem` parameterLevels && level `elem` [input | (input, _, _) <- clauseInputs]) levels ->
+                  Just (position, zip levels (inductiveIndexPlicities splitInfo))
+            _ -> Nothing
+    _ -> pure Nothing
+  let positions = [position | Just (position, _) <- indexed]
+      indicesAt position = fromMaybe [] (lookup position [entry | Just entry <- indexed])
       -- candidate checking useth the same local bindings and induction evidence
       -- as expression checking. failed trials cannot influence later choices.
       select previous [] = maybe (E.failure ("'" ++ name ++ "' needs a structurally decreasing input")) E.raise previous
@@ -115,12 +133,22 @@ elaborateRecursive checker@ExpressionChecker {checkerEnvironment = environment} 
         let (structuralLevel, structuralType) = explicitInputs !! position
         dependencies <- freeIndices <$> quote scope structuralType
         when (any (\(level, plicity, _) -> plicity == Implicit && level > structuralLevel) clauseInputs) (E.failure "implicit inputs after the structural input are not supported")
-        let fixed level plicity = level < structuralLevel && (plicity == Implicit || (depth scope - level - 1) `elem` dependencies)
-            roles = [if level == structuralLevel then Structural else if fixed level Explicit then Fixed level else Quantified | (level, _) <- explicitInputs]
-            quantified = [(level, plicity) | (level, plicity, _) <- clauseInputs, level /= structuralLevel, not (fixed level plicity)]
-            columnOf level = length [() | (other, Explicit, _) <- clauseInputs, other < level]
+        let indices = indicesAt position
+            indexLevels = map fst indices
+            fixed level plicity = level < structuralLevel && level `notElem` indexLevels && (plicity == Implicit || (depth scope - level - 1) `elem` dependencies)
+            role level
+              | level == structuralLevel = Structural
+              | Just position <- lookup level (zip indexLevels [0 ..]) = Index position
+              | fixed level Explicit = Fixed level
+              | otherwise = Quantified
+            roles = map (role . fst) explicitInputs
+            quantified = [(level, plicity) | (level, plicity, _) <- clauseInputs, level /= structuralLevel, level `notElem` indexLevels, not (fixed level plicity)]
+            -- an explicit index input is no column: the structural input
+            -- determineth it, and each branch nameth its refined value.
+            dropped = [inputPosition | (inputPosition, (level, _)) <- zip [0 ..] explicitInputs, level `elem` indexLevels]
+            columnOf level = length [() | (other, Explicit, _) <- clauseInputs, other < level, other `notElem` indexLevels]
         -- the motive rebindeth quantified inputs in order after the matched value.
-        resultMotive <- recursiveMotive scope annotation clauseInputs structuralLevel (map fst quantified)
+        resultMotive <- recursiveMotive scope annotation clauseInputs indices structuralLevel (map fst quantified)
         (motive, memo) <-
           if deep
             then do
@@ -128,46 +156,63 @@ elaborateRecursive checker@ExpressionChecker {checkerEnvironment = environment} 
               memoValue <- eval scope memoMotive
               pure (memoMotive, Just (Memo memoValue []))
             else pure (resultMotive, Nothing)
-        let columns = [Column level ty | (level, ty) <- explicitInputs]
+        forM_ rows \row -> forM_ dropped \inputPosition -> case unnamed (matchPatterns row !! inputPosition) of
+          (_, PVariable _) -> pure ()
+          _ -> E.failure "an index input of the structural input must be matched by a variable"
+        let columns = [Column level ty | (level, ty) <- explicitInputs, level `notElem` indexLevels]
+            keptRows = [row {matchPatterns = [pattern | (inputPosition, pattern) <- zip [0 ..] (matchPatterns row), inputPosition `notElem` dropped]} | row <- rows]
+            structuralColumn = columnOf structuralLevel
             recursion = Recursion name roles [(columnOf level, plicity) | (level, plicity) <- quantified] [] memo
             enter current hypotheses = current {scopeRecursions = recursion {recursionHypotheses = hypotheses} : scopeRecursions current}
-        (split, used) <- splitColumn checker scope columns rows clauseResult position (Just (motive, enter))
+        (split, used) <- splitColumn checker scope columns keptRows clauseResult structuralColumn (Just (motive, enter))
         requireUsed clauseWrittenRows used
         let result = if deep then Project split "now" else split
             applied = foldl (\term (level, plicity) -> Apply plicity term (Local (depth scope - level - 1))) result quantified
         appliedType <- inferCore scope applied
         E.unify (scopeContext scope) appliedType clauseResult
         wrapInputs clauseInputs applied
-  select Nothing [(position, deep) | deep <- [False, True], position <- positions]
+  -- course-of-values recursion is for families without indices.
+  select Nothing [(position, deep) | deep <- [False, True], position <- positions, not deep || null (indicesAt position)]
 
 -- walk the annotation again with the matched input and quantified inputs
 -- replaced by fresh binders; fixed inputs keep their outer locals.
-recursiveMotive :: Scope -> N.Value -> [(Int, Plicity, N.Value)] -> Int -> [Int] -> Elaboration Term
-recursiveMotive scope annotation inputs structuralLevel quantified = do
+recursiveMotive :: Scope -> N.Value -> [(Int, Plicity, N.Value)] -> [(Int, Plicity)] -> Int -> [Int] -> Elaboration Term
+recursiveMotive scope annotation inputs indices structuralLevel quantified = do
   let outer = depth scope
-      structuralBinder = outer
-  (structuralDomain, binders, result) <- walk annotation inputs (structuralBinder + 1) Nothing []
-  pure (Core.Lambda Explicit structuralDomain (foldr (\(plicity, domain) term -> Pi plicity domain term) result binders))
+      -- the indices bind first, then the matched value, then quantified inputs.
+      structuralBinder = outer + length indices
+  (indexDomains, structuralDomain, binders, result) <- walk annotation inputs (structuralBinder + 1) [] Nothing []
+  pure
+    ( foldr
+        (\(plicity, domain) term -> Core.Lambda plicity domain term)
+        (Core.Lambda Explicit structuralDomain (foldr (\(plicity, domain) term -> Pi plicity domain term) result binders))
+        (zip (map snd indices) indexDomains)
+    )
   where
-    walk ty [] next domain binders = do
+    walk ty [] next indexDomains domain binders = do
       result <- E.quote next ty
       case domain of
-        Just structuralDomain -> pure (structuralDomain, reverse binders, result)
+        Just structuralDomain -> pure (reverse indexDomains, structuralDomain, reverse binders, result)
         Nothing -> E.failure "missing structural input"
-    walk ty ((level, plicity, _) : rest) next domain binders =
+    walk ty ((level, plicity, _) : rest) next indexDomains domain binders =
       E.force ty >>= \case
         N.VPi _ inputDomain codomain
+          | Just binder <- lookup level (zip (map fst indices) [depth scope ..]) -> do
+              domainTerm <- E.quote binder inputDomain
+              continue <- E.instantiate codomain (N.VNeutral (N.NLocal binder))
+              walk continue rest next (domainTerm : indexDomains) domain binders
           | level == structuralLevel -> do
-              domainTerm <- E.quote (depth scope) inputDomain
-              continue <- E.instantiate codomain (N.VNeutral (N.NLocal (depth scope)))
-              walk continue rest next (Just domainTerm) binders
+              let binder = depth scope + length indices
+              domainTerm <- E.quote binder inputDomain
+              continue <- E.instantiate codomain (N.VNeutral (N.NLocal binder))
+              walk continue rest next indexDomains (Just domainTerm) binders
           | level `elem` quantified -> do
               domainTerm <- E.quote next inputDomain
               continue <- E.instantiate codomain (N.VNeutral (N.NLocal next))
-              walk continue rest (next + 1) domain ((plicity, domainTerm) : binders)
+              walk continue rest (next + 1) indexDomains domain ((plicity, domainTerm) : binders)
           | otherwise -> do
               continue <- E.instantiate codomain (N.VNeutral (N.NLocal level))
-              walk continue rest next domain binders
+              walk continue rest next indexDomains domain binders
         _ -> E.failure "invalid recursive annotation"
 
 -- `[x: T, r{below: Below x, now: P x}]`. `Below` eliminateth into types: each
@@ -224,6 +269,7 @@ recursiveCall checker scope Recursion {..} arguments = do
     fmap concat . sequence $
       [ case role of
           Structural -> pure []
+          Index _ -> pure []
           Quantified -> pure [Argument Explicit argument]
           Fixed level -> do
             value <- localLevel argument
@@ -258,6 +304,20 @@ recursiveCall checker scope Recursion {..} arguments = do
             Just hypothesis <- lookup level recursionHypotheses ->
               pure (hypothesis, arguments)
         _ -> E.failure "a recursive call must pass a direct child of the matched input"
+      -- an explicit index argument must be the child's own index; the
+      -- hypothesis already standeth at that index.
+      let indexArguments = [(position, argument) | (Index position, argument) <- zip recursionRoles (map argumentExpression arguments)]
+      unless (null indexArguments) do
+        childTerm <- quote scope value
+        childType <- inferCore scope childTerm
+        indices <-
+          familyOf (checkerEnvironment checker) childType >>= \case
+            Just Split {splitIndices} -> pure splitIndices
+            Nothing -> E.failure "a recursive call must pass a child of the indexed family"
+        forM_ indexArguments \(position, argument) -> do
+          (term, _) <- inferTerm checker scope argument
+          written <- eval scope term
+          E.unify (scopeContext scope) written (indices !! position)
       -- a function child's hypothesis first taketh the child's inputs.
       arguments <- traverse (\(plicity, value) -> (plicity,) <$> quote scope value) childArguments
       let term = applyArguments (Local (depth scope - hypothesis - 1)) arguments

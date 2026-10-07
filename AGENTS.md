@@ -16,7 +16,7 @@ per audience; other documents link to it.
 | [`AGENTS.md`](AGENTS.md)                           | agents     | workflow, writing rules, and test gates                     |
 | [`anglish.md`](anglish.md)                         | agents     | anglish words and the english words they replace            |
 | [`tongue/language.md`](tongue/language.md)         | agents     | what a program author writeth and observeth                 |
-| [`tongue/dependent.md`](tongue/dependent.md)       | agents     | checker algorithms, logic, design decisions, agda plan      |
+| [`tongue/dependent.md`](tongue/dependent.md)       | agents     | checker algorithms, logic, and design decisions             |
 | [`tongue/development.md`](tongue/development.md)   | agents     | commands, modules, structural decisions, test machinery     |
 | [`bookhoard/reference.md`](bookhoard/reference.md) | agents     | standard library design boundaries                          |
 | [`todo.md`](todo.md)                               | agents     | planned work only, in priority order                        |
@@ -43,6 +43,11 @@ the prose in the owning document.
   including `.tung` paths and host keys. [`anglish.md`](anglish.md) listeth
   the anglish words and the english words they replace. haskell and tooling
   identifiers use conventional compiler terms.
+- a name putteth a namespace-like part first, then the concept it owneth,
+  then qualifiers: `at_most_eftbend` is `at_most`'s `eftbend`, `deed_bind` is
+  `deed`'s `bind`, and a helper proof is `helpsetting_same_is`. a name that
+  spelleth an expression keepeth the expression's term order, as
+  `sheer_bind` or `zero_+`, and a conversion stayeth `x_to_y`.
 - a name doth not repeat its module's file name: a shown name is read
   qualified, so `x.tung` showeth `to_y`, read `x~to_y`, not `x_to_y`. the
   same name may be used in different files.

@@ -1,0 +1,17 @@
+use flock/algebra/arithmetic/hath_offdraw.tung
+use flock/order/hath_at_most.tung
+use ilk/float.tung
+use ilk/integer.tung
+use ilk/two.tung
+
+show flock hath_norm: [α: *, β: *, *] {
+  let norm: [α, β]
+}
+
+bizen: ℤ hath_norm ℤ {
+  let norm: [integer:] ≔ (+0 ≤ integer) if integer (+0 - integer)
+}
+
+bizen: float hath_norm float {
+  let norm: [x:] ≔ (0.0 ≤ x) if x (0.0 - x)
+}

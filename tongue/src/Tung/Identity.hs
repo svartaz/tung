@@ -1,7 +1,9 @@
+{-# LANGUAGE PatternSynonyms #-}
+
 -- | nominal module and symbol identities, shared by source lookup and the core.
 module Tung.Identity
   ( ModuleId (..),
-    SymbolId (..),
+    SymbolId (SymbolId, symbolModule, symbolName),
     inductionSymbol,
     inducedFamily,
     modelSymbol,
@@ -9,23 +11,43 @@ module Tung.Identity
   )
 where
 
+import Data.Bits (xor)
+import Data.Char (ord)
+import Data.List (foldl')
+
 -- primitive definitions belong to no source file.
 data ModuleId = RootModule | SourceModule FilePath | PrimitiveModule
   deriving stock (Eq, Ord, Show)
 
-data SymbolId = SymbolId
-  { symbolModule :: ModuleId,
-    symbolName :: String
-  }
-  deriving stock (Show)
+-- an identity carrieth a hash of its name, computed once when it is built.
+-- global lookups compare identities constantly; equal hashes are rare, so
+-- most comparisons never walk the name or the long module path.
+data SymbolId = SymbolIdHashed !Int ModuleId String
 
--- names are compared before modules. module paths share long prefixes, and
--- global lookups compare identities constantly.
+pattern SymbolId :: ModuleId -> String -> SymbolId
+pattern SymbolId {symbolModule, symbolName} <- SymbolIdHashed _ symbolModule symbolName
+  where
+    SymbolId owner name = SymbolIdHashed (nameHash name) owner name
+
+{-# COMPLETE SymbolId #-}
+
+-- fnv-1a over the name's characters.
+nameHash :: String -> Int
+nameHash = foldl' (\hash character -> (hash `xor` ord character) * 16777619) 2166136261
+
+instance Show SymbolId where
+  showsPrec depth (SymbolId owner name) =
+    showParen (depth >= 11) $
+      showString "SymbolId {symbolModule = " . showsPrec 0 owner . showString ", symbolName = " . showsPrec 0 name . showString "}"
+
 instance Eq SymbolId where
-  SymbolId leftModule leftName == SymbolId rightModule rightName = leftName == rightName && leftModule == rightModule
+  SymbolIdHashed leftHash leftModule leftName == SymbolIdHashed rightHash rightModule rightName =
+    leftHash == rightHash && leftName == rightName && leftModule == rightModule
 
+-- the order is by hash, then name, then module: any total order serveth maps.
 instance Ord SymbolId where
-  compare (SymbolId leftModule leftName) (SymbolId rightModule rightName) = compare leftName rightName <> compare leftModule rightModule
+  compare (SymbolIdHashed leftHash leftModule leftName) (SymbolIdHashed rightHash rightModule rightName) =
+    compare leftHash rightHash <> compare leftName rightName <> compare leftModule rightModule
 
 -- the eliminator of an ilk or flock, written `unbuild name`. its spelling
 -- containeth a space, so no source name can collide with it or name it.

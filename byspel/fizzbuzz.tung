@@ -7,7 +7,7 @@ use ilk/product.tung
 let can_deal: [@α: *, @: α hath_%, @: α hath_zero, @: α hath_≍, divisor: α, dividend: α, 𝟚] ≔
   match dividend % divisor {
     (_ both rest) some ^ rest ≍ zero,
-    none ^ nay
+    none               ^ nay
   }
 
 ilk _fizzbuzz: * {
@@ -19,10 +19,10 @@ ilk _fizzbuzz: * {
 
 bizen: _fizzbuzz hath_to_text {
   let to_text ≔ {
-    fizz ^ 'fizz',
-    buzz ^ 'buzz',
+    fizz     ^ 'fizz',
+    buzz     ^ 'buzz',
     fizzbuzz ^ 'fizzbuzz',
-    i raw ^ i to_text
+    i raw    ^ i to_text
   }
 }
 

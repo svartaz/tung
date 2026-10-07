@@ -4,23 +4,17 @@ this backlog tracketh planned work in the compiler, editor, and bookhoard
 library. active work appeareth in priority order. deferred gates
 depend on later evidence.
 
-## agda delegation
-
-- begin stage 1 of the [agda delegation plan](tongue/dependent.md#agda-delegation-plan):
-  freeze the simplified compiler, inventory compatibility, measure costs,
-  and pin an isolated backend. reuse the completed source snapshots,
-  structured protocol, and caches. follow the plan's gates before replacing
-  the handwritten haskell engine; no delegation stage is complete.
-
 ## theorem proving
 
 [`tongue/dependent.md`](tongue/dependent.md#proving-status) summariseth what
 proofs can use now. the maintainer decided the direction of each item below;
 open choices are marked.
 
-- recover checking speed. `byspel/word_count.tung` checketh in about 16 s,
-  against about 11 s before laws became dictionary fields; global lookups
-  compare symbol names as strings, and neutral reduction remaineth large.
+- checking speed: `byspel/word_count.tung` checketh in about 7 s on a quiet
+  machine. the next
+  cost is the global lookup in neutral reduction, which compareth symbol
+  names as strings; carrying the looked-up definition in a neutral head
+  would avoid it.
 - use requirement laws in bookhoard: the component-law rows in
   [`reference.md`](bookhoard/reference.md#law-proofs) may now be proved.
 - extend recursion. `ilk/accessible.tung` provideth well-founded recursion
@@ -28,11 +22,11 @@ open choices are marked.
   annotation compiled to it. support mutual families implied by a dependency
   cycle of ilks (preferred over an explicit group), then nested families such
   as `rose list` by translation to mutual ones. let recursion match a value
-  whose indices are constructors or other inputs; `accessible~selfcalling`
-  useth `unbuild` because its proof is indexed by an earlier input.
-- function extensionality and observational equality for deeds: undecided;
-  the maintainer will choose later between never, a tracked axiom, and a
-  computational rule.
+  whose indices are constructors, and allow course-of-values recursion on
+  indexed families.
+- define `deed` as a free structure over host requests, as `freer` is, so
+  that its laws follow by induction and `fall_umtake` instead of the three
+  listed deed axioms.
 - rewriting: later, as a new keyword. a rewrite replaceth the left side of an
   equation with the right, and faileth when the goal hath no occurrence.
 
@@ -50,7 +44,7 @@ open choices are marked.
 ## self-hosting
 
 each stage is ported only with an exact oracle in the active compiler. the
-existing haskell compiler is a temporary oracle before agda cutover. a stage
+haskell compiler is the oracle. a stage
 stayeth authoritative until the port matcheth it on every tracked `.tung` file
 and every test input of that stage.
 
@@ -58,11 +52,8 @@ and every test input of that stage.
   checker dependency, and `tung --format-stdin` is its oracle. add a
   differential test that runneth the port on all tracked `.tung` files and the
   format test inputs and compareth bytes.
-- cache checked module interfaces. a run of a small program spendeth about
-  2.8 s checking its bookhoard imports and under 0.2 s evaluating 49 kb of
-  input, so a self-hosted stage is dominated by import checking; large proof
-  modules suffer the same way. decide where the cache liveth: a project-local
-  directory ignored by git (preferred), a user cache, or memory only.
+- let the editor session reuse the disk interface cache that command-line
+  runs use, so a new session doth not recheck bookhoard.
 - port the active lexer next, with a token dump command as its oracle. token spans
   must match exactly in utf-16 units.
 - port the parser with well-founded recursion from `ilk/accessible.tung`.
@@ -71,9 +62,6 @@ and every test input of that stage.
 - add a balanced ordered map to bookhoard before porting name/module scope
   or syntax translation.
   `table` is an association list.
-- after agda cutover, port the syntax translator and backend adapter. agda
-  stayeth authoritative for elaboration, checking, and compilation; no
-  independent tung kernel or elaborator is planned.
 
 ## correctness
 
@@ -124,8 +112,9 @@ and every test input of that stage.
 
 these tasks belong to [`bookhoard/`](bookhoard/).
 
-- strengthen order assumptions so boolean equality implyth identity when
-  proving generic min/max laws. repair the list-backed set's representation
+- require `same_to_is` for the generic min/max laws, which need boolean
+  sameness to imply identity, and give it bizens for `maybe`, lists,
+  products, and the remaining carriers. repair the list-backed set's representation
   and membership assumptions before claiming its extensional algebra laws;
   [`reference.md`](bookhoard/reference.md#law-proofs) giveth counterexamples.
 - add first, last, and reversed monoid carriers without burdening the core monoid

@@ -3,8 +3,8 @@ use flock/algebra/half/semigroupoid.tung
 use flock/algebra/whole/hath_magma.tung
 use flock/algebra/whole/semigroup.tung
 use flock/functor.tung
-use flock/functor/hath_cata.tung
-use flock/functor/hath_filter.tung
+use flock/functor/catamorphism.tung
+use flock/functor/hath_sift.tung
 use flock/hath_same.tung
 use flock/hath_size.tung
 use flock/order/complement.tung
@@ -18,7 +18,7 @@ use ilk/two.tung
 ## true when text hath no unicode code points.
 show let is_empty_text: [t: text, 𝟚] ≔
   match t behead_text {
-    none ^ yea,
+    none   ^ yea,
     _ some ^ nay
   }
 
@@ -40,16 +40,16 @@ show let prepend_text: [character: unicode, t: text, text] ≔
   character ‥ (t text_to_list) $ list_to_text
 
 show let append_text: [t: text, character: unicode, text] ≔
-  t text_to_list $ · (character singleton) $ list_to_text
+  t text_to_list $ · (character onesome) $ list_to_text
 
 let split_unicode_by: [
   l: unicode list,
   separates: [unicode, 𝟚],
   (unicode list) list] ≔
   match l {
-    empty ^ empty ‥ empty,
+    empty            ^ empty ‥ empty,
     character ‥ rest ^ match rest split_unicode_by separates {
-      empty ^ (character ‥ empty) ‥ empty,
+      empty              ^ (character ‥ empty) ‥ empty,
       current ‥ previous ^ match character separates {
         yea ^ empty ‥ (current ‥ previous),
         nay ^ (character ‥ current) ‥ previous
@@ -75,11 +75,11 @@ show let split_text: [t: text, separator: unicode, text list] ≔
 
 ## split text on runs of common ascii whitespace.
 show let words_text: [t: text, text list] ≔
-  t text_to_list $ split_unicode_by is_whitespace $ warp list_to_text $ filter (is_empty_text ▷ ¬)
+  t text_to_list $ split_unicode_by is_whitespace $ warp list_to_text $ sift (is_empty_text ▷ ¬)
 
 ## join text values with a separator between neighbours.
 show let join_with_text: [text list, text, text] ≔ {
-  empty, _ ^ '',
+  empty,        _         ^ '',
   text ‥ texts, separator ^ texts gather₁ text {
     joined, next ^ (joined · separator) · next
   }

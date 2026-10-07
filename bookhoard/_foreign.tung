@@ -11,7 +11,7 @@ show task
 show let deed_sheer: [@α: *, α, α deed] ≔ 'deed_sheer' fremmed
 show let deed_bind: [@α: *, @β: *, α deed, [α, β deed], β deed] ≔ 'deed_bind' fremmed
 ## repeat a deed: the step receiveth the repeated deed. only a deed may loop.
-show let deed_fix: [@α: *, [α deed, α deed], α deed] ≔ 'deed_fix' fremmed
+show let deed_steadfast: [@α: *, [α deed, α deed], α deed] ≔ 'deed_steadfast' fremmed
 
 show let write: [text, 𝟙 deed] ≔ 'write' fremmed
 ## none once input endeth.
@@ -26,7 +26,7 @@ show let sleep: [ℕ, 𝟙 deed] ≔ 'sleep' fremmed
 show let fork: [@α: *, α deed, (α task) deed] ≔ 'fork' fremmed
 show let wait: [@α: *, α task, (α maybe) deed] ≔ 'wait' fremmed
 show let wait_for: [@α: *, α task, ℕ, (α maybe) deed] ≔ 'wait_for' fremmed
-show let cancel: [@α: *, α task, 𝟙 deed] ≔ 'cancel' fremmed
+show let outstrike: [@α: *, α task, 𝟙 deed] ≔ 'outstrike' fremmed
 
 show let deal_remainder_integer: [ℤ, ℤ, (ℤ ∏ ℤ) maybe] ≔ 'deal_remainder_integer' fremmed
 show let eke_float: [float, float, float] ≔ 'eke_float' fremmed

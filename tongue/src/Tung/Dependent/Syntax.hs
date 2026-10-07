@@ -32,6 +32,7 @@ import Data.Functor.Const (Const (..))
 import Data.Functor.Identity (Identity (..))
 import Data.List (findIndex)
 import Data.Map.Strict qualified as Map
+import Data.Sequence qualified as Seq
 import Tung.Dependent.Literal (HostLiteral (..))
 import Tung.Identity (SymbolId)
 
@@ -170,15 +171,17 @@ mapLevels f = runIdentity . traverseLevels (Identity . f)
 
 -- template holes are forbidden; supplied levels remain untouched, including
 -- inference holes introduced by a caller.
+-- the arguments are indexed once, so a partial application shareth them.
 instantiateLevel :: [Level] -> Level -> Either String Level
-instantiateLevel arguments = \case
-  LParam index
-    | index < 0 || index >= length arguments -> Left "unbound universe parameter"
-    | otherwise -> Right (arguments !! index)
-  LMeta _ -> Left "unresolved universe inference hole"
-  LSucc level -> LSucc <$> instantiateLevel arguments level
-  LMax left right -> LMax <$> instantiateLevel arguments left <*> instantiateLevel arguments right
-  LZero -> Right LZero
+instantiateLevel arguments = go
+  where
+    indexed = Seq.fromList arguments
+    go = \case
+      LParam index -> maybe (Left "unbound universe parameter") Right (Seq.lookup index indexed)
+      LMeta _ -> Left "unresolved universe inference hole"
+      LSucc level -> LSucc <$> go level
+      LMax left right -> LMax <$> go left <*> go right
+      LZero -> Right LZero
 
 instantiateLevels :: [Level] -> Term -> Either String Term
 instantiateLevels arguments = traverseLevels (instantiateLevel arguments)

@@ -7,8 +7,8 @@ ilk lambda: [v: *, *] {
 }
 
 let subst: [@v: *, @: v hath_≍, target: v lambda, x: v, s: v lambda, v lambda] ≔ match target {
-  y var ^ (x ≍ y) if s (y var),
-  y abs t ^ (x ≍ y) if (y abs t) (y abs (t subst x s)),
+  y var     ^ (x ≍ y) if s (y var),
+  y abs t   ^ (x ≍ y) if (y abs t) (y abs (t subst x s)),
   t0 app t1 ^ (t0 subst x s) app (t1 subst x s)
 }
 

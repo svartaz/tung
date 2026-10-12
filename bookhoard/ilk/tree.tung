@@ -1,4 +1,148 @@
-ilk tree: [a: *, *] {
-  leaf: a tree,
-  branch: [a, a tree, a tree, a tree]
+use flock/algebra/whole/hath_eke.tung
+use flock/algebra/whole/hath_fold.tung
+use flock/algebra/whole/hath_fold.tung
+use flock/algebra/whole/semigroup_fold.tung
+use flock/functor.tung
+use flock/hath_greatness.tung
+use flock/hath_same.tung
+use flock/order/hath_at_most.tung
+use flock/order/order_half.tung
+use flock/order/order_whole.tung
+use ilk/list.tung
+use ilk/maybe.tung
+use ilk/natural.tung
+use ilk/product.tung
+use ilk/three.tung
+use ilk/two.tung
+
+## a finite wordbook kept as a weight-balanced search tree, ordered by its keys.
+## each node holdeth its weight, the number of its entries.
+show ilk tree: [α: *, β: *, *] {
+  leaf: α tree β,
+  node: [ℕ, α, β, α tree β, α tree β, α tree β]
 }
+
+show let empty: [@α: *, @β: *, α tree β] ≔ leaf
+
+show let onesome: [@α: *, @β: *, key: α, worth: β, α tree β] ≔
+  1 node key worth leaf leaf
+
+let weight: [@α: *, @β: *, α tree β, ℕ] ≔ {
+  leaf           ^ 0,
+  n node _ _ _ _ ^ n
+}
+
+bizen: [@α: *, @β: *, (α tree β) hath_greatness] {
+  let greatness ≔ weight
+}
+
+let make: [@α: *, @β: *, key: α, worth: β, left: α tree β, right: α tree β, α tree β] ≔
+  (((left weight) + (right weight)) + 1) node key worth left right
+
+# rotations keep the order of keys; a missing child leaveth the node as is.
+let single_left: [@α: *, @β: *, key: α, worth: β, left: α tree β, right: α tree β, α tree β] ≔
+  match right {
+    leaf                   ^ key make worth left right,
+    _ node k v inner outer ^ k make v (key make worth left inner) outer
+  }
+
+let double_left: [@α: *, @β: *, key: α, worth: β, left: α tree β, right: α tree β, α tree β] ≔
+  match right {
+    _ node k v (_ node ik iv il ir) outer ^ ik make iv (key make worth left il) (k make v ir outer),
+    _                                     ^ key single_left worth left right
+  }
+
+let single_right: [@α: *, @β: *, key: α, worth: β, left: α tree β, right: α tree β, α tree β] ≔
+  match left {
+    leaf                   ^ key make worth left right,
+    _ node k v outer inner ^ k make v outer (key make worth inner right)
+  }
+
+let double_right: [@α: *, @β: *, key: α, worth: β, left: α tree β, right: α tree β, α tree β] ≔
+  match left {
+    _ node k v outer (_ node ik iv il ir) ^ ik make iv (k make v outer il) (key make worth ir right),
+    _                                     ^ key single_right worth left right
+  }
+
+# one side may outweigh the other by at most three times; a heavier side is
+# rotated, singly when its outer child is heavier, and doubly otherwise.
+let balance: [@α: *, @β: *, key: α, worth: β, left: α tree β, right: α tree β, α tree β] ≔ (
+  let l ≔ left weight
+  let r ≔ right weight
+  yield ((l + r) ≤ 1) if (key make worth left right) (
+    ((3 · l) < r) if (
+      match right {
+        _ node _ _ inner outer ^ ((inner weight) < (2 · (outer weight))) if (key single_left worth left right) (key double_left worth left right),
+        leaf                   ^ key make worth left right
+      }
+    ) (
+      ((3 · r) < l) if (
+        match left {
+          _ node _ _ outer inner ^ ((inner weight) < (2 · (outer weight))) if (key single_right worth left right) (key double_right worth left right),
+          leaf                   ^ key make worth left right
+        }
+      ) (key make worth left right)
+    )
+  )
+)
+
+## the worth at a key, if present.
+show let lookup: [@α: *, @: α order_whole, @β: *, t: α tree β, key: α, β maybe] ≔
+  match t {
+    leaf           ^ none,
+    _ node k v l r ^ match key compare k {
+      fore ^ l lookup key,
+      mid  ^ v some,
+      aft  ^ r lookup key
+    }
+  }
+
+## the tree with a worth at a key, replacing any worth there.
+show let put: [@α: *, @: α order_whole, @β: *, t: α tree β, key: α, worth: β, α tree β] ≔
+  match t {
+    leaf           ^ key onesome worth,
+    n node k v l r ^ match key compare k {
+      fore ^ k balance v (l put key worth) r,
+      mid  ^ n node key worth l r,
+      aft  ^ k balance v l (r put key worth)
+    }
+  }
+
+# the least entry and the rest of the tree, if any.
+let behead: [@α: *, @β: *, t: α tree β, ((α ∏ β) ∏ (α tree β)) maybe] ≔
+  match t {
+    leaf           ^ none,
+    _ node k v l r ^ match l behead {
+      none                   ^ ((k both v) both r) some,
+      (least both rest) some ^ (least both (k balance v rest r)) some
+    }
+  }
+
+# two trees whose keys are ordered one before the other, yoked.
+let glue: [@α: *, @β: *, left: α tree β, right: α tree β, α tree β] ≔
+  match right behead {
+    none                        ^ left,
+    ((k both v) both rest) some ^ k balance v left rest
+  }
+
+## the tree without a key.
+show let rid: [@α: *, @: α order_whole, @β: *, t: α tree β, key: α, α tree β] ≔
+  match t {
+    leaf           ^ leaf,
+    _ node k v l r ^ match key compare k {
+      fore ^ k balance v (l rid key) r,
+      mid  ^ l glue r,
+      aft  ^ k balance v l (r rid key)
+    }
+  }
+
+## the entries in key order.
+show let entries: [@α: *, @β: *, t: α tree β, (α ∏ β) list] ≔
+  match t {
+    leaf           ^ list~empty,
+    _ node k v l r ^ (l entries) · ((k both v) ‥ (r entries))
+  }
+
+## the keys in order.
+show let keys: [@α: *, @β: *, t: α tree β, α list] ≔
+  t entries $ warp forthcast₀

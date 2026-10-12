@@ -15,8 +15,8 @@ CODE ?= code
 BENCH_RUNS ?= 3
 BENCH_SIZE ?= 1000
 
-.PHONY: all setup build test benchmark install \
-	compiler-build compiler-test compiler-install runner-check prose-test byspel-test \
+.PHONY: all setup build test check benchmark install \
+	compiler-build compiler-test compiler-install runner-check prose-test byspel-test format-check \
 	editor-deps editor-build editor-test language-metadata extension-package extension-install formula-check
 
 all: build
@@ -27,6 +27,23 @@ setup: test install
 build: compiler-build editor-build
 
 test: prose-test formula-check compiler-test byspel-test editor-test
+
+check: test format-check
+	@printf 'checking whitespace in the working tree\n'
+	@git -C "$(ROOT)" diff --check
+
+# tracked haskell must already satisfy ormolu, and tracked tung must already
+# be in canonical form; neither check changeth a file.
+format-check: compiler-build
+	@printf 'checking haskell and tung formatting\n'
+	@cd "$(ROOT)" && git ls-files -z '*.hs' | \
+		xargs -0 sh -c 'for file; do [ ! -f "$$file" ] || printf "%s\0" "$$file"; done' sh | \
+		xargs -0 ormolu --mode check
+	@cd "$(ROOT)" && tung="$$(cd "$(TONGUE_DIR)" && $(CABAL) list-bin exe:tung)" && status=0 && \
+		for file in $$(git ls-files '*.tung'); do \
+			[ -f "$$file" ] || continue; \
+			"$$tung" --format-stdin < "$$file" | cmp -s - "$$file" || { printf 'not canonical: %s\n' "$$file"; status=1; }; \
+		done; exit $$status
 
 benchmark: compiler-build
 	@printf 'benchmarking tung compiler and evaluator\n'
@@ -82,7 +99,7 @@ compiler-install: compiler-build
 
 runner-check:
 	@printf 'checking installed tung runner\n'
-	@printf '%s\n' 'let identity: [value:] ≔ value' | (cd /tmp && "$(BIN_DIR)/tung" --check-stdin) | grep -qx 'type ok'
+	@printf '%s\n' 'let identity: [@α: *, value: α, α] ≔ value' | (cd /tmp && "$(BIN_DIR)/tung" --check-stdin) | grep -qx 'type ok'
 	@printf '%s\n' ' let value ≔ 1 ' | (cd /tmp && "$(BIN_DIR)/tung" --format-stdin) | grep -qx 'let value ≔ 1'
 	@if ! printf '%s' ":$$PATH:" | grep -Fq ':$(BIN_DIR):'; then \
 		printf 'add %s to path to run: tung filename.tung\n' "$(BIN_DIR)"; \

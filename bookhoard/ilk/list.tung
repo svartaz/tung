@@ -1,27 +1,28 @@
 use combinator.tung
-use flock/algebra/arithmetic/hath_eke.tung
-use flock/algebra/arithmetic/hath_offdraw.tung
 use flock/algebra/half/category.tung
 use flock/algebra/half/semigroupoid.tung
-use flock/algebra/whole/hath_magma.tung
-use flock/algebra/whole/monoid.tung
-use flock/algebra/whole/semigroup.tung
+use flock/algebra/whole/hath_eke.tung
+use flock/algebra/whole/hath_fold.tung
+use flock/algebra/whole/hath_offdraw.tung
+use flock/algebra/whole/monoid_fold.tung
+use flock/algebra/whole/semigroup_fold.tung
 use flock/functor.tung
 use flock/functor/atfoldsome.tung
 use flock/functor/catamorphism.tung
 use flock/functor/hath_sift.tung
 use flock/functor/hath_throughwend.tung
 use flock/functor/monad.tung
+use flock/hath_greatness.tung
 use flock/hath_inhold.tung
 use flock/hath_same.tung
-use flock/hath_size.tung
 use flock/order/hath_at_most.tung
-use ilk/integer.tung
+use flock/same_to_is.tung
 use ilk/maybe.tung
 use ilk/natural.tung
 use ilk/one.tung
 use ilk/product.tung
 use ilk/two.tung
+use ilk/wholetale.tung
 use is.tung
 
 ## finite linked lists.
@@ -55,25 +56,25 @@ show let till: [start: ℤ, stop: ℤ, ℤ list] ≔
 ## build a one-element list.
 show let onesome: [@α: *, a: α, α list] ≔ a ‥ empty
 
-let append: [@α: *, α list, α list, α list] ≔ {
+let athang: [@α: *, α list, α list, α list] ≔ {
   empty,        m ^ m,
-  first ‥ rest, m ^ first ‥ (rest append m)
+  first ‥ rest, m ^ first ‥ (rest athang m)
 }
 
-bizen: [@α: *, (α list) semigroup] {
-  let · ≔ append
+bizen: [@α: *, (α list) semigroup_·] {
+  let · ≔ athang
 
   let ·_·: [a:, b:, c:] ≔
     {l: α list ^ (l · (b · c)) = ((l · b) · c)} unbuild list eftbend
       {first, _, proof ^ (first ‥) leibnitz proof} a
 }
 
-bizen: [@α: *, (α list) monoid] {
-  let ∅ ≔ empty
+bizen: [@α: *, (α list) monoid_·] {
+  let one ≔ empty
 
-  let ∅_·: [_:] ≔ eftbend
+  let one_·: [_:] ≔ eftbend
 
-  let ·_∅: [a:] ≔
+  let ·_one: [a:] ≔
     {l: α list ^ (l · empty) = l} unbuild list eftbend
       {first, _, proof ^ (first ‥) leibnitz proof} a
 }
@@ -93,16 +94,16 @@ bizen: list functor {
 
 let atfold: [@α: *, @β: *, α list, [α, β] list, β list] ≔ {
   _, empty        ^ empty,
-  l, first ‥ rest ^ (l warp first) append (l atfold rest)
+  l, first ‥ rest ^ (l warp first) athang (l atfold rest)
 }
 
 let flat: [@α: *, (α list) list, α list] ≔ {
   empty        ^ empty,
-  first ‥ rest ^ first append (rest flat)
+  first ‥ rest ^ first athang (rest flat)
 }
 
 bizen: list monad {
-  let sheer: [a:] ≔ a ‥ empty
+  let sheer: [@α: *, a: α, α list] ≔ a ‥ empty
 
   let atfold ≔ atfold
 
@@ -122,14 +123,12 @@ bizen: list monad {
 
   let sheer_atfold_sheer: [_:, _:] ≔ eftbend
 
-  let atfold_atfold ≔ {@α, @β, @γ ^ {a, f, g ^
-      {l: α list ^ <{atfold, l, f sheer, g sheer} = (l atfold (f ▷ g $ sheer))} unbuild list eftbend
+  let atfold_atfold: [@α:, @β:, @γ:, a:, f:, g:] ≔
+    {l: α list ^ <{atfold, l, f sheer, g sheer} = (l atfold (f ▷ g $ sheer))} unbuild list eftbend
       {first, _, proof ^ ((first f $ g) ‥) leibnitz proof} a
-  }}
-  let sheer_atfold ≔ {@α, @β ^ {a, fs ^
-      {l: [α, β] list ^ ((a sheer) atfold l) = (l warp (a call))} unbuild list eftbend
+  let sheer_atfold: [@α:, @β:, a:, fs:] ≔
+    {l: [α, β] list ^ ((a sheer) atfold l) = (l warp (a call))} unbuild list eftbend
       {first, _, proof ^ ((a first) ‥) leibnitz proof} fs
-  }}
 }
 
 let sift: [@α: *, α list, [α, 𝟚], α list] ≔ {
@@ -212,8 +211,8 @@ bizen: list hath_throughwend {
   let throughwend ≔ throughwend
 }
 
-bizen: [@α: *, (α list) hath_size] {
-  let size: [l:] ≔ l gather₁ 0 { n, _ ^ n + 1 }
+bizen: [@α: *, (α list) hath_greatness] {
+  let greatness: [l:] ≔ l gather₁ 0 { n, _ ^ n + 1 }
 }
 
 show let reverse: [@α: *, l: α list, α list] ≔
@@ -225,7 +224,7 @@ show let zip: [@α: *, @β: *, α list, β list, (α ∏ β) list] ≔ {
   a ‥ a…, b ‥ b… ^ (a both b) ‥ (a… zip b…)
 }
 
-## element at a zero-based index, if present.
+## element at a naught-based index, if present.
 show let at: [@α: *, l: α list, index: ℕ, α maybe] ≔
   match l drop index {
     empty     ^ none,
@@ -253,3 +252,37 @@ show let unzip: [@α: *, @β: *, pairs: (α ∏ β) list, (α list) ∏ (β list
   pairs gather₀ (empty both empty) { α both β, α… both β… ^
     (α ‥ α…) both (β ‥ β…)
   }
+
+## lists are the same when they have the same length and the same worths in
+## order.
+show let same: [@α: *, @: α hath_≍, α list, α list, 𝟚] ≔ {
+  empty, empty ^ yea,
+  a ‥ l, b ‥ m ^ (a ≍ b) if (l same m) nay,
+  _,     _     ^ nay
+}
+
+bizen: [@α: *, @: α hath_≍, (α list) hath_≍] {
+  let ≍ ≔ same
+}
+
+let helpsetting_≍_=: [@α: *, @: α ≍_to_=, x: α list, y: α list, held: (x same y) = yea, x = y] ≔
+  match x, y {
+    empty, empty ^ eftbend,
+    a ‥ l, b ‥ m ^
+      ({z: α ^ z ‥ l} leibnitz (a ≍_= b ((a ≍ b) yea_if_former (l same m) held)))
+        throughgo ((b ‥) leibnitz (l helpsetting_≍_= m ((a ≍ b) yea_if_latter (l same m) held))),
+    empty, _ ‥ _ ^ match held {},
+    _ ‥ _, empty ^ match held {}
+  }
+
+let helpsetting_≍_eftbend: [@α: *, @: α ≍_to_=, x: α list, (x same x) = yea] ≔
+  match x {
+    empty ^ eftbend,
+    a ‥ l ^
+      {w: 𝟚 ^ w if (l same l) nay} yea_throughbear ((a ≍_eftbend) evenmete) (l helpsetting_≍_eftbend)
+  }
+
+bizen: [@α: *, @: α ≍_to_=, (α list) ≍_to_=] {
+  let ≍_= ≔ helpsetting_≍_=
+  let ≍_eftbend ≔ helpsetting_≍_eftbend
+}

@@ -1,0 +1,9 @@
+use flock/algebra/whole/hath_one.tung
+use flock/algebra/whole/monoid_fold.tung
+use is.tung
+
+show flock group_·: [α: *, @: α monoid_·, *] {
+  let /: [α, α, α]
+
+  let /_outstrike: [a: α, (a / a) = one]
+}

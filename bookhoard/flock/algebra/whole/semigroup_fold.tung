@@ -1,0 +1,44 @@
+use flock/algebra/whole/hath_fold.tung
+use flock/order/semilattice_lower.tung
+use flock/order/semilattice_upper.tung
+use ilk/lower.tung
+use ilk/two.tung
+use ilk/upper.tung
+use is.tung
+
+show flock semigroup_·: [α: *, @: α hath_·, *] {
+  let ·_·: [a: α, b: α, c: α, (a · (b · c)) = ((a · b) · c)]
+}
+
+show _lower, _upper
+show lower, upper
+
+bizen: [@β: *, @: β semigroup_·, @α: *, [α, β] semigroup_·] {
+  let ·: [f:, g:, α:] ≔ (α f) · (α g)
+
+  let ·_·: [f:, g:, h:] ≔
+    {x ^ (x f) ·_· (x g) (x h)} fall_umtake
+}
+
+bizen: [@α: *, @: α semilattice_lower, (α _lower) semigroup_·] {
+  let ·: [a lower:, b lower:] ≔ (a ∧ b) lower
+
+  let ·_·: [a lower:, b lower:, c lower:] ≔
+    {x: α ^ x lower} leibnitz ((a ∧_∧ b c) evenmete)
+}
+
+bizen: [@α: *, @: α semilattice_upper, (α _upper) semigroup_·] {
+  let ·: [a upper:, b upper:] ≔ (a ∨ b) upper
+
+  let ·_·: [a upper:, b upper:, c upper:] ≔
+    {x: α ^ x upper} leibnitz ((a ∨_∨ b c) evenmete)
+}
+
+bizen: 𝟚 semigroup_· {
+  let ·_· ≔ {
+    nay, _,   _;
+    yea, nay, _;
+    yea, yea, nay;
+    yea, yea, yea ^ eftbend
+  }
+}

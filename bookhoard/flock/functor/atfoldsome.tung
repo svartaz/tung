@@ -2,6 +2,7 @@ use combinator.tung
 use flock/algebra/half/category.tung
 use flock/algebra/half/semigroupoid.tung
 use flock/functor.tung
+use is.tung
 
 show flock atfoldsome: [φ: [*, *], @: φ functor, *] {
   let sheer: [@α: *, α, α φ]
@@ -51,7 +52,7 @@ show let lift₄: [
 ] ≔ >{atfold, a₃, a₂, a₁, a₀, f sheer}
 
 show let keep_first: [@φ: [*, *], @: φ atfoldsome, @α: *, @β: *, a: α φ, b: β φ, α φ] ≔
-  a lift₂ b constant
+  a lift₂ b withstand
 
 show let keep_other: [@φ: [*, *], @: φ atfoldsome, @α: *, @β: *, a: α φ, b: β φ, β φ] ≔
-  a lift₂ b (constant flip)
+  a lift₂ b (withstand flip)

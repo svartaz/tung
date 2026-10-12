@@ -1,6 +1,18 @@
 cabal-version: 3.0
 name: tung
 version: 0.1.0.0
+synopsis: Compiler and runner for tung, a dependently typed functional language
+description:
+  tung is a functional language with dependent types, inductive families,
+  type classes with checked laws, and actions performed by a runner. this
+  package provideth the compiler, the checker, and the runner.
+category: Language, Compiler
+license: LGPL-3.0-or-later
+license-files: COPYING, COPYING.LESSER
+author: svartaz
+maintainer: svartaz
+homepage: https://github.com/svartaz/tung
+bug-reports: https://github.com/svartaz/tung/issues
 build-type: Simple
 extra-source-files: examples/dependent_list.tung
 
@@ -36,6 +48,8 @@ library
     , Tung.Dependent.Source.Instance
     , Tung.Dependent.Source.Module
     , Tung.Dependent.Source.Parse
+    , Tung.Dependent.Source.Proof
+    , Tung.Dependent.Source.Render
     , Tung.Dependent.Source.Pattern
     , Tung.Dependent.Source.Pattern.Common
     , Tung.Dependent.Source.Pattern.Index
@@ -109,6 +123,7 @@ test-suite tung-test
   type: exitcode-stdio-1.0
   main-is: Main.hs
   hs-source-dirs: test
+  ghc-options: -threaded
   default-extensions: MultilineStrings
   other-modules:
       Test.Program
@@ -122,7 +137,7 @@ test-suite tung-test
     , Test.DependentLiteral
     , Test.DependentMatch
     , Test.DependentModule
-    , Test.DependentRecord
+    , Test.DependentField
     , Test.DependentRecursion
     , Test.DependentSource
     , Test.Compile
@@ -156,3 +171,8 @@ test-suite tung-test
     , time
     , transformers
     , tung
+
+source-repository head
+  type: git
+  location: https://github.com/svartaz/tung.git
+  subdir: tongue

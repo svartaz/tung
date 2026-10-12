@@ -5,14 +5,14 @@ let fallback: float deed ≔
   ('could not read a float; using 0.0' write_line) then (0.0 sheer)
 
 let read_user: float deed ≔ read bind {
-  line some ^ match line from_text {
+  line some ^ match line from_string {
     worth some ^ worth sheer,
     none       ^ fallback
   },
   none ^ fallback
 }
 
-let outcome: [user: float, hidden: float, text] ≔
+let outcome: [user: float, hidden: float, string] ≔
   match user ≤ hidden, hidden ≤ user {
     yea, nay ^ 'lose',
     nay, yea ^ 'win',

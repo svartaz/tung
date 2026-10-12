@@ -2,3 +2,4 @@ build
 dist-newstyle
 .tung/
 node_modules/
+.DS_Store

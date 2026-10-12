@@ -1,5 +1,7 @@
-# lemmas about the primitive identity type `=`, whose only proof is `eftbend`.
+# the identity type `=`, whose only constructor is `eftbend`.
 # matching on `eftbend` replaceth one side of an equation with the other.
+
+show ilk =: [@α: *, a: α, α, *] { eftbend: a = @α a }
 
 ## equality is preserved by applying a function.
 show let leibnitz: [
@@ -14,7 +16,7 @@ show let evenmete: [
   eftbend: a = b, b = a
 ] ≔ eftbend
 
-## join two equality proofs.
+## yoke two equality proofs.
 show let throughgo: [
   @α: *, @a: α, @b: α, @c: α,
   eftbend: a = b, q: b = c, a = c
@@ -23,23 +25,23 @@ show let throughgo: [
 ## a property of one side holdeth for the other. the property is found by
 ## abstracting each occurrence of `b` in the expected type, or without one,
 ## each occurrence of `a` in the type of the second input.
-show let transport: [
+show let throughbear: [
   @α: *, @a: α, @b: α, @property: [α, *],
   eftbend: a = b, a property, b property
 ] ≔ {x ^ x}
 
 ## a computed value with the proof of what it is, so that a case function can
 ## match the value and still know it: in
-## `e inspect { yea, known ^ …, nay, known ^ … }` each case seeth `known`
-## as `e = yea` or `e = nay`. the property is found as for `transport`.
-show let inspect: [
+## `e inlook { yea, known ^ …, nay, known ^ … }` each case seeth `known`
+## as `e = yea` or `e = nay`. the property is found as for `throughbear`.
+show let inlook: [
   @α: *, @property: [α, *],
   a: α, f: [b: α, a = b, b property], a property
 ] ≔ a f eftbend
 
 ## function extensionality: functions that agree at every input are equal.
 ## it is a listed assumption, as in agda and lean, where it is not provable
-## from the primitive identity type alone.
+## from identity elimination alone.
 show orsetting fall_umtake: [
   @α: *, @β: *, @f: [α, β], @g: [α, β],
   [a: α, (a f) = (a g)], f = g

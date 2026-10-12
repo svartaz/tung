@@ -1,13 +1,15 @@
-use flock/algebra/whole/hath_magma.tung
-use flock/algebra/whole/monoid.tung
-use flock/algebra/whole/semigroup.tung
+use flock/algebra/whole/hath_fold.tung
+use flock/algebra/whole/monoid_fold.tung
+use flock/algebra/whole/semigroup_fold.tung
 use flock/functor.tung
 use flock/functor/atfoldsome.tung
 use flock/functor/catamorphism.tung
 use flock/functor/hath_sift.tung
 use flock/functor/hath_throughwend.tung
 use flock/functor/monad.tung
+use flock/hath_same.tung
 use flock/order/complement.tung
+use flock/same_to_is.tung
 use ilk/one.tung
 use ilk/two.tung
 use is.tung
@@ -18,7 +20,7 @@ show ilk maybe: [α: *, *] {
   some: [α, α maybe]
 }
 
-bizen: [@α: *, @: α semigroup, (α maybe) semigroup] {
+bizen: [@α: *, @: α semigroup_·, (α maybe) semigroup_·] {
   let · ≔ {
     none,   b      ^ b,
     a,      none   ^ a,
@@ -33,12 +35,12 @@ bizen: [@α: *, @: α semigroup, (α maybe) semigroup] {
   }
 }
 
-bizen: [@α: *, @: α semigroup, (α maybe) monoid] {
-  let ∅ ≔ none
+bizen: [@α: *, @: α semigroup_·, (α maybe) monoid_·] {
+  let one ≔ none
 
-  let ∅_·: [_:] ≔ eftbend
+  let one_·: [_:] ≔ eftbend
 
-  let ·_∅ ≔ {
+  let ·_one ≔ {
     none   ^ eftbend,
     _ some ^ eftbend
   }
@@ -128,7 +130,7 @@ show let handle: [@α: *, @β: *, α maybe, β, [α, β], β] ≔ {
   a some, _, f ^ a f
 }
 
-## true when an option containeth a value.
+## true when an option inholdeth a value.
 show let is_some: [@α: *, α maybe, 𝟚] ≔ {
   none   ^ nay,
   _ some ^ yea
@@ -141,4 +143,30 @@ show let is_none: [@α: *, o: α maybe, 𝟚] ≔ o is_some $ ¬
 show let or_else: [@α: *, α maybe, [𝟙, α], α] ≔ {
   none,   fallback ^ only fallback,
   a some, _        ^ a
+}
+
+## options are the same when both are absent or hold the same worth.
+show let same: [@α: *, @: α hath_≍, α maybe, α maybe, 𝟚] ≔ {
+  none,   none   ^ yea,
+  a some, b some ^ a ≍ b,
+  _,      _      ^ nay
+}
+
+bizen: [@α: *, @: α hath_≍, (α maybe) hath_≍] {
+  let ≍ ≔ same
+}
+
+bizen: [@α: *, @: α ≍_to_=, (α maybe) ≍_to_=] {
+  let ≍_=: [x:, y:, same:] ≔
+    match x, y {
+      none,   none   ^ eftbend,
+      a some, b some ^ some leibnitz (a ≍_= b same),
+      none,   _ some ^ match same {},
+      _ some, none   ^ match same {}
+    }
+  let ≍_eftbend: [x:] ≔
+    match x {
+      none   ^ eftbend,
+      a some ^ a ≍_eftbend
+    }
 }

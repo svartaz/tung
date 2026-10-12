@@ -33,7 +33,7 @@ test("textmate immediately scopeth lexical syntax", async () => {
     ["let worth ≔ '𝟙\\128512;'", "'𝟙", "string.quoted.single.tung"],
     ["let worth ≔ `\\128512;", "`\\128512;", "constant.character.tung"],
     ["let worth ≔ 12.5", "12.5", "constant.numeric.float.tung"],
-    ["let worth ≔ +12", "+12", "constant.numeric.integer.tung"],
+    ["let worth ≔ +12", "+12", "constant.numeric.wholetale.tung"],
     ["let worth ≔ 12", "12", "constant.numeric.natural.tung"],
     ["# a comment", "#", "comment.line.number-sign.tung"],
     ["/* a comment */", "a comment", "comment.block.tung"],
@@ -45,7 +45,6 @@ test("textmate immediately scopeth lexical syntax", async () => {
     ["@a:*", "*", "keyword.other.tung"],
     ["@a:*", "@", "keyword.other.tung"],
     [">{cons, worth, empty}", ">{", "punctuation.section.braces.begin.tung"],
-    ["r{field ≔ 1}", "r{", "punctuation.section.braces.begin.tung"],
   ]) {
     const position = source.lastIndexOf(name);
     const token = loaded
@@ -66,8 +65,8 @@ test("textmate leaveth name roles to the compiler", async () => {
     "}",
     "show let void:[@a:*, @f:[*, *], af:a f, 𝟙 f] ≔",
     "  af warp {_ ^ only}",
-    "show let read:[text path:_path, (text ∑ text) deed] ≔",
-    "show let join:[text₀ path:_path, text₁ path:_path, _path] ≔",
+    "show let read:[string path:_path, (string ∑ string) deed] ≔",
+    "show let yoke:[string₀ path:_path, string₁ path:_path, _path] ≔",
     "x ‥ xs · list~‥",
     "let count:* ≔ ℤ",
     "let sameness:[@α:*, x:α, α] ≔ x",
@@ -88,7 +87,7 @@ test("textmate leaveth name roles to the compiler", async () => {
   }
 });
 test("special openers remain paired in language configuration", () => {
-  for (const opener of ["r{", "{", "<{", ">{"]) {
+  for (const opener of ["{", "<{", ">{"]) {
     assert(
       languageConfiguration.brackets.some(
         ([open, close]) => open === opener && close === "}",

@@ -9,21 +9,21 @@ use ilk/sum.tung
 let then: [@α: *, @β: *, first: α deed, next: β deed, β deed] ≔
   first deed_bind {_ ^ next}
 
-let line: [a: text, 𝟙 deed] ≔
-  (a join_text '\n') _foreign~write
+let line: [a: string, 𝟙 deed] ≔
+  (a yoke_string '\n') _foreign~write
 
-## a fallible deed returneth `text ∑ α`: a message or a result.
-let report: [action: (text ∑ text) deed, 𝟙 deed] ≔
+## a fallible deed returneth `string ∑ α`: a message or a result.
+let report: [action: (string ∑ string) deed, 𝟙 deed] ≔
   action deed_bind {
     message incast₀  ^ message line,
     contents incast₁ ^ contents line
   }
 
 ## a cancelled or failed task hath no result.
-let await: [started: (text task) deed, 𝟙 deed] ≔
+let await: [started: (string task) deed, 𝟙 deed] ≔
   started deed_bind {task ^ (task wait) deed_bind {
-      none         ^ 'no result' line,
-      message some ^ message line
+    none         ^ 'no result' line,
+    message some ^ message line
   }}
 
 let main: 𝟙 deed ≔
@@ -32,7 +32,7 @@ let main: 𝟙 deed ≔
     'note.txt' file~read $ report,
     'absent.txt' file~read $ report,
     ('from a task' deed_sheer) fork $ await,
-    match 'tung' behead_text {
+    match 'tung' behead_string {
       none               ^ 'empty' line,
       (_ both rest) some ^ rest line
     }

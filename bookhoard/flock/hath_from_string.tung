@@ -1,0 +1,5 @@
+use ilk/maybe.tung
+
+show flock hath_from_string: [α: *, *] {
+  let from_string: [string, α maybe]
+}

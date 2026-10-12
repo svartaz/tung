@@ -4,17 +4,20 @@
 module Tung.Dependent.Source.Scope
   ( Scope (..),
     Role (..),
+    IndexPattern (..),
     Recursion (..),
     Memo (..),
     emptyScope,
     recursiveBinding,
     extend,
+    bindDomain,
     define,
     bindingName,
     depth,
     quote,
     quoteFolded,
     eval,
+    evalArgument,
     inferCore,
     requireUniverse,
   )
@@ -25,6 +28,7 @@ import Tung.Dependent.Check qualified as K
 import Tung.Dependent.Elaboration qualified as E
 import Tung.Dependent.Normalise qualified as N
 import Tung.Dependent.Syntax
+import Tung.Identity (SymbolId)
 
 type Elaboration = E.Elaboration
 
@@ -42,14 +46,20 @@ recursiveBinding :: String -> Scope -> Maybe Recursion
 recursiveBinding name = find ((== name) . recursionName) . scopeRecursions
 
 -- each explicit input of a recursive definition is fixed outside the
--- eliminator, matched structurally, rebound by the motive, or the index at
--- the given position of an indexed structural input.
+-- eliminator, matched structurally, rebound by the motive, or an index leaf
+-- identified by its original input level.
 data Role = Fixed Int | Structural | Quantified | Index Int
   deriving stock (Eq)
+
+-- an index in constructor form over variables, as `n s` or `a ‥ empty`.
+-- leaf levels identify the declaration's inputs, even after branch refinement.
+data IndexPattern = IndexVariable Int | IndexConstructor SymbolId [IndexPattern]
 
 data Recursion = Recursion
   { recursionName :: String,
     recursionRoles :: [Role],
+    -- each child must match this declared shape before its hypothesis is used.
+    recursionIndices :: [IndexPattern],
     -- column positions and plicities rebound after each constructor's fields.
     recursionQuantified :: [(Int, Plicity)],
     -- direct children of the matched value and their induction hypotheses.
@@ -60,15 +70,24 @@ data Recursion = Recursion
 
 -- course-of-values recursion, as lean's `brecOn`: the motive is
 -- `r{below: Below x, now: P x}`, where `Below x` holdeth the records of every
--- recursive descendant. each known descendant value mapeth to a local and the
--- projections that reach its record.
+-- recursive descendant. joint records also retain ordinary nested containers;
+-- only the chosen root's records may justify a call. each known descendant
+-- mapeth to its checked target, a local, and its record projections. a function
+-- field's projection taketh the same arguments as the field.
 data Memo = Memo
-  { memoType :: N.Value,
-    memoEntries :: [(N.Value, (Int, [String]))]
+  { memoRoot :: SymbolId,
+    -- target indices precede the value in each joint record motive.
+    memoTypes :: [(SymbolId, ([Plicity], N.Value))],
+    memoEntries :: [(N.Value, (SymbolId, Int, [String]))]
   }
 
 extend :: Scope -> Maybe String -> N.Value -> Scope
 extend Scope {..} name ty = Scope (K.bind scopeContext ty) (bindingName name : scopeNames) scopeRecursions
+
+-- the codomain and extended scope share the same fresh neutral input.
+bindDomain :: Scope -> Maybe String -> N.Value -> N.Closure -> Elaboration (Scope, N.Value)
+bindDomain scope name domain codomain =
+  (extend scope name domain,) <$> E.instantiate codomain (N.VNeutral (N.NLocal (depth scope)))
 
 bindingName :: Maybe String -> Maybe String
 bindingName (Just "_") = Nothing
@@ -85,6 +104,10 @@ quoteFolded scope = E.quoteFolded (depth scope)
 
 eval :: Scope -> Term -> Elaboration N.Value
 eval Scope {scopeContext} = E.evaluate scopeContext
+
+-- an argument's worth, folded until forced.
+evalArgument :: Scope -> Term -> Elaboration N.Value
+evalArgument Scope {scopeContext} = E.evaluateGlued scopeContext
 
 inferCore :: Scope -> Term -> Elaboration N.Value
 inferCore Scope {scopeContext} = E.infer scopeContext

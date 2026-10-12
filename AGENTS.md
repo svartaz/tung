@@ -8,19 +8,18 @@ writing rules, workflow, and test gates. every rule here is binding.
 each document hath one audience and one purpose. a rule liveth in one document
 per audience; other documents link to it.
 
-| document                                           | audience   | purpose                                                     |
-| -------------------------------------------------- | ---------- | ----------------------------------------------------------- |
-| [`readme.md`](readme.md)                           | people     | install, run, and find the next step                        |
-| [`byspel/tutorial.tung`](byspel/tutorial.tung)     | people     | a checked tour of the ordinary language                     |
-| [`vscode/readme.md`](vscode/readme.md)             | people     | editor setup and features                                   |
-| [`AGENTS.md`](AGENTS.md)                           | agents     | workflow, writing rules, and test gates                     |
-| [`anglish.md`](anglish.md)                         | agents     | anglish words and the english words they replace            |
-| [`tongue/language.md`](tongue/language.md)         | agents     | what a program author writeth and observeth                 |
-| [`tongue/dependent.md`](tongue/dependent.md)       | agents     | checker algorithms, logic, and design decisions             |
-| [`tongue/development.md`](tongue/development.md)   | agents     | commands, modules, structural decisions, test machinery     |
-| [`bookhoard/reference.md`](bookhoard/reference.md) | agents     | standard library design boundaries                          |
-| [`todo.md`](todo.md)                               | agents     | planned work only, in priority order                        |
-| [`tongue/tutorial.tung`](tongue/tutorial.tung)     | maintainer | draft of the target syntax; not checked and not a reference |
+| document                                           | audience | purpose                                                 |
+| -------------------------------------------------- | -------- | ------------------------------------------------------- |
+| [`readme.md`](readme.md)                           | people   | install, run, and find the next step                    |
+| [`byspel/tutorial.tung`](byspel/tutorial.tung)     | people   | a checked tour of the ordinary language                 |
+| [`vscode/readme.md`](vscode/readme.md)             | people   | editor setup and features                               |
+| [`AGENTS.md`](AGENTS.md)                           | agents   | workflow, writing rules, and test gates                 |
+| [`anglish.md`](anglish.md)                         | agents   | anglish words and the english words they replace        |
+| [`tongue/language.md`](tongue/language.md)         | agents   | what a program author writeth and observeth             |
+| [`tongue/dependent.md`](tongue/dependent.md)       | agents   | checker algorithms, logic, and design decisions         |
+| [`tongue/development.md`](tongue/development.md)   | agents   | commands, modules, structural decisions, test machinery |
+| [`bookhoard/reference.md`](bookhoard/reference.md) | agents   | standard library design boundaries                      |
+| [`todo.md`](todo.md)                               | agents   | planned work only, in priority order                    |
 
 `CLAUDE.md` importeth this file. module-local invariants live in comments
 beside the code, not in these documents.
@@ -39,15 +38,20 @@ the prose in the owning document.
 - use `thou` and `thee` for singular subject and object, and `-st` for a verb
   with `thou`: `thou hast`, `thou dost`, `thou checkest`. use `ye` and `you`
   for plural subject and object. never use `you` as a subject.
+- use `e`, `em`, and `es` for third-person singular personal pronouns:
+  subject, object, and possessive respectively.
 - object-language names follow tung's anglish direction and use snake_case,
   including `.tung` paths and host keys. [`anglish.md`](anglish.md) listeth
   the anglish words and the english words they replace. haskell and tooling
   identifiers use conventional compiler terms.
 - a name putteth a namespace-like part first, then the concept it owneth,
-  then qualifiers: `at_most_eftbend` is `at_most`'s `eftbend`, `deed_bind` is
-  `deed`'s `bind`, and a helper proof is `helpsetting_same_is`. a name that
+  then qualifiers: `≤_eftbend` is `≤`'s `eftbend`, `deed_bind` is
+  `deed`'s `bind`, and a helper proof is `helpsetting_≍_=`. a name that
   spelleth an expression keepeth the expression's term order, as
-  `sheer_bind` or `zero_+`, and a conversion stayeth `x_to_y`.
+  `sheer_bind` or `naught_+`, and a conversion stayeth `x_to_y`.
+- a compound declared name keepeth each term's own spelling, including symbols:
+  `≍_to_=`, `≍_eftbend`, and `≤_=`. ordinary word-named terms such as
+  `sameness` keep their spelling too, as in `warp_sameness`.
 - a name doth not repeat its module's file name: a shown name is read
   qualified, so `x.tung` showeth `to_y`, read `x~to_y`, not `x_to_y`. the
   same name may be used in different files.
@@ -105,6 +109,8 @@ before handoff:
 - run `make prose-test` after prose changes;
 - run `git diff --check`;
 - report every check that could not run.
+
+`make check` runneth every check above.
 
 `TUNG_TEST_GROUP="parse type"` selecteth compiler groups; the names are listed in
 `tongue/test/Main.hs`. `TUNG_TEST_PROGRESS=1` printeth each case number. the

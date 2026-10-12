@@ -2,6 +2,7 @@
 module Tung.Dependent.Universe
   ( normaliseLevel,
     satisfiable,
+    satisfy,
     Universes,
     universes,
     universeConstraints,
@@ -9,6 +10,7 @@ module Tung.Dependent.Universe
     constrain,
     trivial,
     entails,
+    entailsAll,
     instantiateConstraint,
   )
 where
@@ -54,7 +56,7 @@ levelAtoms level = case Map.lookup Zero atoms of
       LMax left right -> Map.unionWith max (collect offset left) (collect offset right)
 
 satisfiable :: [Constraint] -> Bool
-satisfiable constraints = isJust (solve (constraintAtoms constraints) (constraintClauses constraints) [])
+satisfiable = isJust . satisfy
 
 -- constraints with an assignment that satisfieth them, when one is known. a
 -- new constraint that the assignment already satisfieth keepeth it, so only a
@@ -71,11 +73,18 @@ hasConstraint constraint (Universes _ known _) = Set.member constraint known
 universes :: [Constraint] -> Universes
 universes constraints = Universes constraints (Set.fromList constraints) Nothing
 
+-- checking an initial set retaineth its witness for the following judgement.
+satisfy :: [Constraint] -> Maybe Universes
+satisfy constraints = Universes constraints (Set.fromList constraints) . Just <$> solveConstraints constraints
+
+solveConstraints :: [Constraint] -> Maybe (Map.Map Atom Integer)
+solveConstraints constraints = solve (constraintAtoms constraints) (constraintClauses constraints) []
+
 -- 'Nothing' when the extended set is unsatisfiable.
 constrain :: Constraint -> Universes -> Maybe Universes
 constrain constraint (Universes constraints known witness)
   | Just assignment <- witness, holds assignment constraint = Just (Universes next known' witness)
-  | otherwise = Universes next known' . Just <$> solve (constraintAtoms next) (constraintClauses next) []
+  | otherwise = Universes next known' . Just <$> solveConstraints next
   where
     next = constraint : constraints
     known' = Set.insert constraint known
@@ -104,11 +113,28 @@ trivial = \case
        in and [maybe (atom == Zero && any (>= offset) (Map.elems rightAtoms)) (>= offset) (Map.lookup atom rightAtoms) | (atom, offset) <- Map.toList (levelAtoms left)]
 
 entails :: [Constraint] -> Constraint -> Bool
-entails assumptions conclusion =
-  not (any (isJust . solve atoms clauses) (negatedBranches conclusion))
+entails assumptions conclusion = entailsAll assumptions [conclusion]
+
+-- a declaration's obligations share the same assumptions. prepare their clauses
+-- once; each conclusion addeth only its own atoms and negated edges.
+entailsAll :: [Constraint] -> [Constraint] -> Bool
+entailsAll assumptions conclusions = all entailed conclusions
   where
-    atoms = constraintAtoms (conclusion : assumptions)
+    atoms = constraintAtoms assumptions
     clauses = constraintClauses assumptions
+    entailed conclusion = all proved (constraintClauses [conclusion])
+      where
+        allAtoms = Set.union atoms (constraintAtoms [conclusion])
+        proved target =
+          any (`impliesClause` target) clauses
+            || not (isJust (solve allAtoms clauses (map negateEdge target)))
+    -- a premise disjunction implieth a target when every premise alternative
+    -- hath a weaker target edge. uncovered clauses still use the exact solver.
+    impliesClause premise target = all (\edge -> any (weaker edge) target) premise
+    weaker (Edge source target weight) (Edge source' target' weight') =
+      source == source' && target == target' && weight <= weight'
+    -- integer strictness reverseth the edge and subtracteth one from its bound.
+    negateEdge (Edge source target weight) = Edge target source (-weight - 1)
 
 constraintAtoms :: [Constraint] -> Set.Set Atom
 constraintAtoms constraints = Set.fromList (Zero : concatMap atoms constraints)
@@ -118,7 +144,7 @@ constraintAtoms constraints = Set.fromList (Zero : concatMap atoms constraints)
 -- max(left) <= max(right) holdeth iff each left atom is below some right atom.
 -- each clause chooseth one difference edge; no finite bound on universes is assumed.
 constraintClauses :: [Constraint] -> [[Edge]]
-constraintClauses = List.sortOn length . Set.toList . Set.fromList . mapMaybe simplify . concatMap clauses
+constraintClauses = simplifyClauses . concatMap clauses
   where
     clauses = \case
       LevelBelow left right -> below left right
@@ -127,50 +153,51 @@ constraintClauses = List.sortOn length . Set.toList . Set.fromList . mapMaybe si
       [ [Edge rightAtom leftAtom (rightOffset - leftOffset) | (rightAtom, rightOffset) <- Map.toList (levelAtoms right)]
       | (leftAtom, leftOffset) <- Map.toList (levelAtoms left)
       ]
+
+-- a self-edge is either a tautology or an impossible alternative. an empty
+-- clause stayeth empty, since no choice can satisfy it.
+simplifyClauses :: [[Edge]] -> [[Edge]]
+simplifyClauses = List.sortOn length . Set.toList . Set.fromList . mapMaybe simplify
+  where
     simplify edges
       | any tautology edges = Nothing
       | otherwise = Just (Set.toList (Set.fromList [edge | edge@(Edge source target _) <- edges, source /= target]))
     tautology (Edge source target weight) = source == target && weight >= 0
 
--- negating <= selecteth a left atom strictly above every right atom.
--- integer strictness is represented exactly by subtracting one from the offset.
-negatedBranches :: Constraint -> [[Edge]]
-negatedBranches = \case
-  LevelBelow left right -> above left right
-  LevelEqual left right -> above left right ++ above right left
-  where
-    above left right =
-      [ [Edge leftAtom rightAtom (leftOffset - rightOffset - 1) | (rightAtom, rightOffset) <- Map.toList (levelAtoms right)]
-      | (leftAtom, leftOffset) <- Map.toList (levelAtoms left)
-      ]
-
--- single-edge clauses are fixed before the search. a clause that the current
--- solution already satisfieth is tried first, which keepeth that solution and
--- needeth no new pass; every alternative is still tried on failure.
+-- single-edge clauses are fixed first. branch on a shortest violated clause;
+-- unchosen clauses stay available, since a later solution may invalidate one
+-- that holdeth now. every alternative is still tried on failure.
 solve :: Set.Set Atom -> [[Edge]] -> [Edge] -> Maybe (Map.Map Atom Integer)
-solve atoms clauses initial = case potentials atoms fixed of
-  Nothing -> Nothing
-  Just solution -> search solution fixed choices
+solve atoms clauses initial = do
+  solution <- potentials (Map.fromSet (const 0) atoms) fixed
+  search solution fixed choices
   where
     (units, choices) = List.partition ((== 1) . length) clauses
     -- shifting a solution so Zero = 0 then maketh every other atom a natural.
     nonnegative = [Edge atom Zero 0 | atom <- Set.toList atoms, atom /= Zero]
     fixed = initial ++ nonnegative ++ concat units
-    search solution _ [] = Just solution
-    search solution edges (alternatives : rest) =
-      let (kept, others) = List.partition (satisfied solution) alternatives
-       in asum ([search solution (edge : edges) rest | edge <- take 1 kept] ++ map (extend edges rest) (drop 1 kept ++ others))
-    extend edges rest edge = case potentials atoms (edge : edges) of
+    search solution edges remaining =
+      case List.break (not . any (satisfied solution)) remaining of
+        (_, []) -> Just solution
+        (before, alternatives : after)
+          | any impossible remaining -> Nothing
+          | otherwise -> asum (map (extend solution edges (before ++ after)) alternatives)
+      where
+        impossible alternatives =
+          not (any (satisfied solution) alternatives)
+            && all (not . isJust . potentials solution . (: edges)) alternatives
+    extend solution edges rest edge = case potentials solution (edge : edges) of
       Just solution -> search solution (edge : edges) rest
       Nothing -> Nothing
     satisfied solution (Edge source target weight) =
       Map.findWithDefault 0 target solution <= Map.findWithDefault 0 source solution + weight
 
--- bellman-ford starteth every vertex at zero, equivalent to a fresh source.
--- the distances solve every edge; a change on the nth pass proveth a negative
--- cycle, and integer weights give integral solutions.
-potentials :: Set.Set Atom -> [Edge] -> Maybe (Map.Map Atom Integer)
-potentials atoms edges = passes (Set.size atoms + 1) (Map.fromSet (const 0) atoms)
+-- bellman-ford starteth with finite distances for every vertex: zero for the
+-- initial graph, or its existing solution when adding an edge. each seed is
+-- equivalent to weighted edges from a fresh source. a change on the nth pass
+-- proveth a negative cycle; integer weights give integral solutions.
+potentials :: Map.Map Atom Integer -> [Edge] -> Maybe (Map.Map Atom Integer)
+potentials initial edges = passes (Map.size initial + 1) initial
   where
     passes 0 _ = Nothing
     passes count distances =

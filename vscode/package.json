@@ -4,7 +4,12 @@
   "description": "language support for tung source files",
   "version": "0.1.0",
   "publisher": "tung",
-  "license": "UNLICENSED",
+  "license": "LGPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/svartaz/tung.git",
+    "directory": "vscode"
+  },
   "main": "./bundle/client/extension.js",
   "scripts": {
     "setup": "npm test && npm run install:extension",
@@ -53,6 +58,11 @@
         "title": "Run Tung File",
         "category": "Tung",
         "icon": "$(play)"
+      },
+      {
+        "command": "tung.checkProof",
+        "title": "Check Proof",
+        "category": "Tung"
       }
     ],
     "menus": {
@@ -64,6 +74,11 @@
         }
       ],
       "editor/context": [
+        {
+          "command": "tung.checkProof",
+          "when": "resourceLangId == tung",
+          "group": "navigation@2"
+        },
         {
           "command": "tung.runFile",
           "when": "resourceLangId == tung",

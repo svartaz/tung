@@ -1,9 +1,8 @@
 # dependent tung design
 
 audience: agents. purpose: how the checker realiseth the language: the dependent
-core, elaboration, pattern compilation, instance search, the logical boundary,
-and the settled [design decisions](#design-decisions). each section stateth its
-algorithm, rejection cases, and limits.
+core, elaboration, pattern compilation, instance search, and logical boundary.
+each section stateth its algorithm, rejection cases, and limits.
 [`language.md`](language.md) owneth what a program author writeth and observeth:
 syntax, names, libraries, the runner, and command-line output. this document
 linketh to it rather than restating those rules.
@@ -23,23 +22,41 @@ remaining work.
   `Sort u` and `Sort v` inhabiteth `Sort (max u v)`.
 - conversion useth beta reduction, local substitution, transparent definitions,
   eta conversion for functions, and exact universe equality. there is no
-  cumulative subtyping in this initial core.
+  cumulative subtyping.
 - evaluation is glued: a transparent global applied to its arguments stayeth
   folded, with its unfolding computed only when a value is forced. every
-  public evaluation result is forced at its head, and quotation for
-  conversion unfoldeth everything, so folding never changeth which terms are
-  equal. motives keep definitions folded, and display quotation unfoldeth a
+  public evaluation result is forced at its head, except an application's
+  argument, whose worth only instantiateth the codomain and stayeth folded;
+  so checking `t greatness` doth not compute a closed `t`. conversion accepteth
+  identical folded terms by reflexivity, retaining all universe arguments.
+  other comparisons unfold both normal forms. folding changeth no equality.
+  motives keep definitions folded without forcing their bodies;
+  display quotation unfoldeth a
   definition only when that reacheth a constructor, literal, record, or
   variable; a stuck elimination equal to an enclosing definition applied to
   the eliminated child is shown as that application.
+- universe levels are never written. source hath no level syntax, and every
+  universe constraint is inferred; a program that needeth a level relation
+  inference cannot find is rejected.
 - inference solveth direct universe-hole equations. remaining holes become
   universe parameters qualified by their constraints. maximum constraints
   retain their alternatives; inference never guesseth one branch.
   generalisation discardeth tautological constraints with the same canonical
   atom comparison as constraint insertion.
 - each global application instantiateth and checketh exported universe
-  constraints. the exact solver useth difference constraints and negative-cycle
-  detection. maximum alternatives can require exponential search.
+  constraints. a declaration's obligations share the prepared assumption
+  clauses and atom set. each conclusion clause is proved when every alternative
+  of one assumption clause hath a weaker counterpart in it. uncovered clauses
+  use the exact solver on their negation. this preserveth disjunctions and both
+  directions of equality. the exact solver useth difference constraints and
+  negative-cycle detection. adding an
+  edge starteth bellman-ford from the existing feasible assignment rather than
+  resetting every distance to zero.
+  before branching, it accepteth an assignment that satisfieth every remaining
+  clause. it rejecteth a maximum clause when every alternative contradicteth
+  the current fixed graph. a clause satisfied by the current assignment
+  needeth no further graph pass. every surviving alternative remaineth
+  available; maximum constraints can still require exponential search.
 - the kernel rechecketh generalised terms with rigid parameters and proveth every
   generated universe obligation from the declared assumptions.
 - inconsistent universe constraints are rejected before normalisation proceeds.
@@ -49,23 +66,23 @@ remaining work.
   public normalisation first checketh its input. raw NBE remaineth private.
 - only checked, closed declarations enter the environment. transparent globals
   are ordered and cannot reference themselves. inductive families, constructors,
-  and generated eliminators are checked and inserted together. there are no
-  axioms or general recursion in the pure core. trusted host constants enter only
-  through the catalogue described under
+  and generated eliminators are checked and inserted together. there is no
+  general recursion. named assumptions and trusted host constants extend the
+  axiom-free fragment under the [logical boundary](#logical-boundary); host
+  constants enter only through the catalogue described under
   [deeds and host bindings](#deeds-and-host-bindings).
 
 the api exposeth `infer`, `check`, `define`, `validate`, and `normalise`.
 `defineInductive` checketh rigid declarations; `inferInductive` generaliseth valid
-universe constraints before the same check.
+universe constraints before the same check. `defineInductives` and
+`inferInductives` check mutual groups through the same builder.
 explicit and implicit applications retain their visibility; insertion of
-omitted source arguments belongth to elaboration. runtime erasure is separate.
+omitted source arguments belongeth to elaboration. runtime erasure is separate.
 
-the implementation followeth the dependent-product rules described in
-[lambda pi](https://www.andres-loeh.de/LambdaPi/). its new tests include closed
-typing judgements, capture-sensitive reductions, universe-polymorphic globals,
-kernel rejection cases, and independent arithmetic models of universe
-constraints. inductive declarations use generated dependent eliminators,
-following the [Lean inductive rules](https://lean-lang.org/doc/reference/latest/The-Type-System/Inductive-Types/).
+the dependent-product rules follow
+[lambda pi](https://www.andres-loeh.de/LambdaPi/). inductive declarations use
+generated dependent eliminators, following the
+[lean inductive rules](https://lean-lang.org/doc/reference/latest/The-Type-System/Inductive-Types/).
 
 ### logical boundary
 
@@ -81,34 +98,48 @@ inconsistent as a proof system. a runtime failure doth not repair that logical
 fact. type checking accepteth terms under this assumption; the
 [runtime boundary](language.md#runtime-boundary) defineth how `--check`
 reporteth it and how `--no-sorry` rejecteth it. a host binding is trusted as a
-program and is not reported. an `orsetting` declaration is a named axiom, a constant
-with a checked type and no body: a consistent proof may rely on the `orsetting`
-assumptions it lists, but not on `sorry`.
+program; ordinary `--check` doth not report it. an `orsetting` declaration is a
+named axiom, a constant with a checked type and no body: a consistent proof may
+rely on the `orsetting` assumptions it lists, but not on `sorry`.
+
+theorem-specific checking traverseth checked types and bodies across imports,
+including selected dictionaries, host models, and inductive metadata and
+computation rules. elaboration also retaineth resolved input references before
+normalisation can erase them. declaration insertion storeth these references,
+and imports and cached interfaces preserve them. rejected speculative trials
+discard their references with their inference state.
+
+the audit reporteth reachable named axioms, `sorry`, and host
+constants. this is a conservative syntactic closure: a referenced dictionary
+retaineth all its fields, and a referenced inductive family retaineth its whole
+checked group, including the group's input references. unused imported
+declarations are excluded. no extra normalisation or source-name search
+decideth dependencies.
+
+the report describeth assumptions relative to the checked kernel and host
+catalogue; it is not a separate proof of their correctness. a modelled host
+operation remaineth a trust dependency, since agreement between its native
+implementation and its model is trusted. the
+[language rules](language.md#proof-checking) specify selection and axiom policy.
 the [lean axiom boundary](https://lean-lang.org/doc/reference/latest/Axioms/#consistency)
 describeth the same distinction between checking a term and justifying its
 assumptions.
 
 the intended consistency argument for terms without `sorry` requireth correct
 kernel rules, universe entailment, inductive generation, conversion, and
-trusted host operations. host data schemas and compatible cached definitions
-are checked at their entry boundaries. regression tests exercise these rules;
-they are not a machine-checked proof of consistency or subject reduction.
+trusted host operations. host data schemas are checked at binding boundaries.
+interfaces are trusted compiler output reused under source, import, and build
+keys; loading checketh the format and reference metadata, without repeating
+kernel checking. regression tests exercise these rules; they are not a
+machine-checked proof of consistency or subject reduction.
 
 ## implemented source
 
-```tung
-let identity-type ≔ [α: *, x: α, α]
-let sameness: identity-type ≔ {α ^ {x ^ x}}
-let alias: [α: *, *] ≔ α
-let result: * ≔ * alias
-let choose: [α: *, @x: α, α] ≔ x
-let chosen ≔ * choose @*
-let implicit-identity: [@α: *, x: α, α] ≔ x
-let inferred ≔ * implicit-identity
-```
-
 - annotations and bodies use one expression parser and lexical namespace.
-- module definitions resolve to `SymbolId` in dependency order. local bindings
+- module definitions resolve to `SymbolId` in dependency order, so source
+  order doth not matter. a declaration that useth a flock member waiteth for
+  the module's bizens of that flock, except one that itself needeth the
+  declaration by name. local bindings
   are sequential and shadow visible names. unknown names are errors. types, flocks, constructors, flock
   members, and lets share one namespace: a module that declareth a top-level
   name twice, such as a flock and its member or an ilk and its constructor,
@@ -133,11 +164,13 @@ let inferred ≔ * implicit-identity
   lambda bindeth a hidden local and the body matcheth it. a bracket whose last
   slot bindeth, as in `let f: [x:] ≔ x`, leaveth its result to inference.
 - `{}` is the case function on an empty family, and `match x {}` matcheth a
-  value of one.
-- `ℕ`, `0`, `heir`, `ℤ`, `overnaught`, `heir_undernaught`, `float`,
-  `unicode`, `text`, `deed`, `task`, `=`, and `eftbend` are
-  primitive and visible in every module. an imported or local name of the same spelling shadoweth
-  them.
+  value of one. before a match decideth that no constructor fiteth, instance
+  goals whose flock arguments are known are solved, so an impossible case
+  seeth the selected dictionary's operations compute.
+- primitive names from the
+  [language reference](language.md#declarations-and-types) are visible in every
+  module. an imported or local name of the same spelling shadoweth them.
+  `=` and `eftbend` come from the ordinary library module `is.tung`.
   anonymous `{x ^ body}` lambdas need constraints or a function annotation.
   typed binders such as `{x:* ^ x}` can infer their function type.
 - applications, `(expression:type)`, and `(let ... yield expression)` use the
@@ -151,7 +184,7 @@ let inferred ≔ * implicit-identity
 - arguments are checked in order, except a case function `{rows}` whose
   input type is still a hole. a hole standeth for it, the later arguments are
   checked, and the case function is then checked against its fixed type and
-  fills that hole. so `{ empty ^ 𝟘, _ ‥ _ ^ 𝟙 } transport p only` learneth its
+  fills that hole. so `{ empty ^ 𝟘, _ ‥ _ ^ 𝟙 } throughbear p only` learneth its
   input type from `p`. a lambda whose body matcheth inside a larger
   expression is not postponed and needeth a binder annotation.
 - an expected implicit product introduceth its binders before any expression
@@ -159,7 +192,11 @@ let inferred ≔ * implicit-identity
   polymorphic type. a polymorphic value checked against any other type,
   including an unknown one, is specialised.
 - an ascription with holes first learneth from the expected type, then checketh
-  its body.
+  its body. a header that bindeth its own implicit slots, as a local function's
+  `[@α:, a:, f:] ≔ …`, is unified with the expected type first; when they
+  agree, the body is checked against the expected type, so slots written
+  without types have known types. otherwise the body is checked against the
+  written type and then specialised.
 - unannotated lambda domains can be inferred when constraints determine them.
   unresolved domains never introduce unwritten polymorphic parameters.
 - every completed definition and expression is rechecked by the core kernel
@@ -178,18 +215,18 @@ let inferred ≔ * implicit-identity
 
 ```tung
 ilk ℕ: * {
-  zero: ℕ,
+  naught: ℕ,
   heir: [ℕ, ℕ]
 }
 
 let rebuild: [x: ℕ, ℕ] ≔
-  {_: ℕ ^ ℕ} unbuild ℕ zero {n, ih ^ ih heir} x
+  {_: ℕ ^ ℕ} unbuild ℕ naught {n, ih ^ ih heir} x
 
 ilk sameness: [α: *, x: α, α, *] {
   refl: α sameness x x
 }
 
-let transport: [@α: *, @x: α, @y: α, proof: α sameness x y,
+let throughbear: [@α: *, @x: α, @y: α, proof: α sameness x y,
   family: [α, *], worth: x family, y family] ≔
   {z, _ ^ z family} unbuild sameness @α @x worth y proof
 ```
@@ -198,29 +235,90 @@ let transport: [@α: *, @x: α, @y: α, proof: α sameness x y,
   ordinary namespace. the generated eliminator is not a name: `unbuild name`
   denoteth it, with `name` resolved as a family. a name that resolveth to
   anything but an ilk or flock is rejected.
+- a dependency cycle containing only `ilk` declarations formeth one mutual
+  group, ordered by the families' source positions. no grouping keyword is
+  needed. a cycle containing any other declaration is rejected; this rule
+  doth not permit mutually recursive lets or import cycles. a group's
+  signatures are checked before its families enter the environment, so a
+  signature cannot depend on a group member. names and constructors are
+  inserted atomically only after the complete group checketh.
 - the named prefix of the outer bracket declareth uniform parameters. later
   bare slots and a nested result product declare indices. only uniform
   parameters scope over constructor annotations. inherited constructor and
   eliminator parameters are implicit, regardless of family argument visibility.
+- mutual families share one parameter telescope: parameter counts and
+  visibility agree, and domains are definitionally equal after renaming
+  bound parameter names. their result universes are equal. their own index
+  telescopes may differ. signatures and constructors are generalised jointly;
+  every peer occurrence useth the group's canonical universe vector, and
+  the whole group exporteth its shared constraints.
 - every constructor stateth its type, as in a GADT; a constructor without one is
   rejected. constructors require a saturated result of their family with
   unchanged parameters. constructor fields must fit within the family's
   universe.
-- a recursive field is the family itself or a function ending in it, such as
-  `[ξ, φ freer α]`, whose inputs do not mention the family: the family occurreth
+- a recursive field is any family in the group or a function ending in one,
+  such as `[ξ, φ freer α]`, whose inputs mention no group family: each occurreth
   strictly positively. normalisation exposeth aliases before checking
-  occurrences. negative, nested, and mutual recursion are rejected.
+  occurrences. recursive occurrences must supply every parameter and index;
+  shared parameters stay unchanged. negative occurrences and group families
+  inside their own arguments are rejected. nested occurrences use the
+  checked specialisation described below.
 - `unbuild name` taketh the implicit parameters, a motive, one method per
   constructor in declaration order, the indices, and the value. the motive
   taketh the indices and value and returneth a type. each recursive field is
   followed by its induction hypothesis in that constructor's method; for a
   function field `k` the hypothesis is `[inputs, motive (inputs k)]`.
+- in a mutual group, `unbuild name` instead taketh the shared implicit
+  parameters, one motive per family in group order, and all constructor
+  methods in group order and then written constructor order. the requested
+  family's own indices and value follow. each recursive field's hypothesis
+  useth the motive of that field's family. each motive hath its own result
+  universe, so every group eliminator's universe vector containeth the
+  shared declaration parameters followed by one universe per motive.
+- a nested field may apply an already checked, unindexed inductive container
+  to group families, as `rose list` or `(rose list) list`. transparent aliases
+  are normalised first. specialisation arguments depend only on shared uniform
+  parameters; they cannot mention constructor fields or function inputs.
+  group-family parameters remain unchanged. each specialised container's
+  result universe equaleth the group's result universe. abstract container
+  heads and indexed containers are rejected.
+- nested induction is a native kernel extension certified by translation.
+  original constructor signatures are checked before specialisation, including
+  phantom parameters. a finite worklist cloneth each specialised container's
+  ordinary family peers and constructors under the shared parameter telescope.
+  the ordinary mutual checker certifieth the entire translated group, so a
+  negative container parameter faileth the same strict-positivity rule. positive
+  function fields retain their pointwise hypotheses. later dependent fields
+  must type-check under that uniform translation; there is no rewrite for a
+  particular container operation.
+- restoration replaceth temporary family and constructor applications by their
+  original container applications. private, checked transparent aliases label
+  the specialised elimination targets; they introduce no nominal type or new
+  conversion rule. public field types, constructor identities, and container
+  operations remain ordinary. temporary constructor definitions are discarded.
+  restored signatures, alias bodies, and every computation-rule right side are
+  independently rechecked with the new recursors opaque. typing the rules alone
+  would not justify termination: the mutual positivity certificate is required.
+- a nested `unbuild` taketh the root motives first, then the specialised
+  container motives, then all methods in that same target order. roots follow
+  source order. targets follow first occurrence in normalised constructor
+  signatures, with ordinary container peers added together; the worklist then
+  closeth over their fields in order. repeated specialisations share one target.
+  each target dispatcheth its own constructor rules, even when several targets
+  use the same original container constructors. ordinary matching supplieth
+  trivial motives and methods for these auxiliary targets.
+- native and nested induction use one checked core term per constructor rule,
+  scoped over shared parameters, motives, methods, and actual fields. the type
+  normaliser and erased runner evaluate these same terms; neither reconstructeth
+  recursive hypotheses from metadata. recursive field metadata nameth its
+  target explicitly, because an ordinary container head alone cannot identify
+  its specialisation.
 - induction computeth on constructors and remaineth neutral on variables.
   recursion thus descendeth through constructor children. arbitrary recursive
   `let` definitions remain errors. source patterns compile to the eliminators
   described below.
 - the identity family above provideth intensional equality and path induction.
-  `transport` computeth to its supplied value on `refl`. there is no equality
+  `throughbear` computeth to its supplied value on `refl`. there is no equality
   reflection or proof irrelevance. `sorry` remaineth the assumption described
   under the [logical boundary](#logical-boundary).
 
@@ -228,20 +326,6 @@ let transport: [@α: *, @x: α, @y: α, proof: α sameness x y,
 
 [`examples/dependent_match.tung`](examples/dependent_match.tung) showeth case
 functions, `match`, nested patterns, and structural recursion.
-
-```tung
-let not: [bool, bool] ≔ { no ^ yes, yes ^ no }
-
-let plus: [x: nat, y: nat, nat] ≔ match x {
-  zero ^ y,
-  n heir ^ (n plus y) heir
-}
-
-let reverse_onto: [@α: *, list: α list, done: α list, α list] ≔ match list {
-  ∅ ^ done,
-  head ‥ tail ^ tail reverse_onto (head ‥ done)
-}
-```
 
 - `{p, q ^ body, ...}` is a case function with one column per pattern. one
   row of plain binders remaineth an ordinary lambda. a row whose binder nameth
@@ -264,12 +348,22 @@ let reverse_onto: [@α: *, list: α list, done: α list, α list] ≔ match list
   make the written row unreachable; its original position is retained for
   redundancy checking. arbitrary equal non-local expressions do not share
   columns.
+- abstracting a known descendant computation also abstracteth each applicable
+  enclosing recursion's record. the fresh value `z` and records of types
+  `R z` form a checked telescope, applied to the original computation and
+  its records. dependent row goals and descendant evidence therefore refer
+  to the same value; a fresh neutral doth not acquire evidence by its type alone.
 - every row hath the same number of patterns. a match hath one pattern per
   scrutinee, including inside a recursive definition. written rows are
   validated before recursive clause collection projecteth their columns.
   every constructor's written arguments are checked and aligned before
-  intersection. a name cannot be bound twice in one written row.
+  intersection. a name cannot be bound twice in one written row. a name
+  repeated in a lambda row or in one let bracket becometh a pattern, so a
+  constructor such as `eftbend` may repeat, while a repeated variable is
+  rejected by this rule.
 - rows are tried in order.
+- a name in a pattern that two imports show is rejected only when one of
+  them is a constructor; otherwise it bindeth a variable.
 - a pattern is `_`, a variable, a literal, or a constructor applied to
   sub-patterns in ordinary application order, such as `n heir` or
   `head ‥ tail`. `ℕ` is an inductive family with constructors `0` and
@@ -281,7 +375,7 @@ let reverse_onto: [@α: *, list: α list, done: α list, α list] ≔ match list
   `n heir_undernaught` is `-(n + 1)`, so each integer hath one form; the
   kernel and runner read `+3` as `3 overnaught` and `-4` as
   `3 heir_undernaught`, and build a literal from either constructor. an
-  integer, text, unicode, or float literal pattern
+  integer, string, unicode, or float literal pattern
   compileth to the primitive `literal_case` of type
   `[@α: *, @β, x: α, k: α, yes: β, no: β, β]`, which chooseth `yes` or `no`
   once `x` and `k` are literals.
@@ -295,8 +389,18 @@ let reverse_onto: [@α: *, list: α list, done: α list, α list] ≔ match list
 - the compiler splitteth the first column whose first row hath a constructor.
   each split applieth the family's eliminator. its motive abstracteth the split
   local from the expected type, so the result type may depend on the matched
-  value. a variable matched against a constructor case denoteth the rebuilt
-  constructor value.
+  value. a field determined by an index split carrieth its known constructor
+  shape and is decomposed into its fields, unless an enclosing recursion
+  carrieth a memo record for it. such records stay on the eliminator path, where every
+  applicable record retaineth its descendants' evidence. a variable matched
+  against a constructor case denoteth the rebuilt constructor value.
+  ordinary scrutinees still require coverage of their whole input type, even
+  when the supplied expression is a known constructor.
+- a match on one mutual family supplieth its chosen motive and methods to
+  the joint eliminator. peer families receive constant inhabited motives
+  `[goal, goal]` and identity methods. these peer hypotheses cannot justify a
+  direct recursive call on a value of the chosen family. course-of-values
+  recursion instead supplieth the joint record motives described below.
 - a missing constructor case and a row that no input can reach are errors.
 - an indexed family is matched when each index of the scrutinee's type is a
   distinct local variable. the motive abstracteth the indices with the value, and
@@ -311,24 +415,61 @@ let reverse_onto: [@α: *, list: α list, done: α list, α list] ≔ match list
   whose index hath a different constructor at some position is impossible:
   its method is trivial, its rows may be omitted, and a row naming it is
   redundant. `{}` is accepted when every constructor is impossible, so
-  `[yea = nay, 𝟘] ≔ {}` holdeth. an index whose constructor cannot be
-  decided, such as a function call, is rejected, as is an index variable
-  that appeareth twice or in the family's parameters: unifying `a = a` would
-  need axiom K, which tung leaveth unprovable.
-- a recursive let may match an indexed value when each index is a distinct
-  input bound before it and unused by the family's parameters. the motive
-  abstracteth those index inputs with the value, so the result type may
-  mention them. an index input is not a column: it must be matched by a
-  variable, and each branch rebindeth its name to the constructor's index.
-  a recursive call omitteth no input; an explicit index argument is unified
-  with the child's own index, and the hypothesis already standeth there.
-  course-of-values recursion, and recursion on a value whose indices are
-  constructors, still reject indexed families.
-- a family without indices revertth the inputs
+  `[yea = nay, 𝟘] ≔ {}` holdeth.
+- splitting an earlier index also reverteth every later bound input whose
+  domain dependeth on it, transitively and in telescope order. those inputs
+  are rebound at each constructor's refined domains before matching
+  continueth. named index inputs use their refined values' types. the trivial
+  type is `[reverted goal, reverted goal]`, so impossible methods inhabit the
+  same universe as the goal with its reverted inputs.
+- a constructor's result index may constrain its own fields. matching
+  `cons` at `n heir` against a value of index `2` forceth `n` to `1`, and a
+  later tail field hath type `α vec 1`. the index planner intersecteth
+  constructor-shape requirements on each field without assigning local
+  variables or inference holes. each constrained field is split by its ordinary
+  eliminator before its later dependent fields and induction hypothesis are
+  bound. the remaining method type then computeth at the rebuilt field, so
+  dependent domains refine by computation. written field patterns see that
+  rebuilt value, and written index-variable names bind its matching parts.
+  incompatible field requirements still need these eliminations to compute
+  their motive to the trivial type; their rows are unreachable.
+- every family destructured inside an index pattern must have no indices of
+  its own. an index whose constructor cannot be decided, such as a stuck
+  function call, is rejected, as is a written index variable that appeareth
+  twice or in the family's parameters: unifying `a = a` would need axiom K,
+  which tung leaveth unprovable.
+- a recursive let may match an indexed value whose indices are variables or
+  constructor shapes over variables. every variable leaf must be a distinct
+  input bound before the structural input and unused by uniform parameters.
+  a leaf input is not a pattern column: it must be matched by a variable,
+  and each branch rebindeth its name to the matching part of the constructor's
+  index. one motive builder abstracteth the value and quantifieth other
+  inputs for every recursive candidate. bare variable indices need no
+  eliminations; constructor shapes use the same large elimination as ordinary
+  indexed matching. the result may depend on the indices or matched value.
+- before using a recursive child's hypothesis, the compiler matcheth every
+  actual child index against the declaration's whole index shape. explicit
+  leaf arguments must equal their corresponding matched parts; implicit
+  leaf inputs still require the whole shape to match. a fixed `α vec 2` function
+  cannot call itself on its `α vec 1` tail. a function on `α vec (n heir)`
+  may call itself on a tail of index `k` only after a split establisheth
+  `k = m heir`; a stuck variable doth not promise that later split.
+  [`examples/dependent_index_recursion.tung`](examples/dependent_index_recursion.tung)
+  showeth fixed indices, dependent results, and explicit leaf inputs.
+- reverting a dependent input also moveth its direct-child evidence and
+  induction-hypothesis level to the new binders. accumulated row bindings'
+  values and types receive the same substitution, including refined indices.
+  visible local definitions that mention a reverted input are rebuilt as
+  checked lets under the substitution, preserving their names and lexical
+  shadowing. captured context slots are not overwritten. carried descendant
+  entries and their record locals receive the same substitution.
+- a family without indices reverteth the inputs
   whose types mention the matched value in the same way, so in
   `{yea, known ^ ...}` against `[b: 𝟚, (x p) = b, ...]` the yea branch seeth
-  `known: (x p) = yea`. a split that also carrieth course-of-values
-  recursion records revertth nothing. a header slot is a parameter only while every
+  `known: (x p) = yea`. an indexed split that carrieth course-of-values
+  records reverteth dependent inputs before binding its refined records.
+  an unindexed split with carried records needeth no dependent-input reversion.
+  a header slot is a parameter only while every
   constructor's written result passeth it unchanged; the slots after it are
   indices, as in `ilk tag: [a: *, *] { integer: [ℤ, ℤ tag] }`.
 
@@ -338,9 +479,10 @@ to the value matched at each step. repeated named scrutinees use the same
 pattern intersection as ordinary matches.
 
 the compiler first trieth direct induction on each explicit input of an
-unindexed family, in input order. if none succeedeth, it trieth course-of-values
-recursion on the same inputs in the same order. the first candidate whose
-branches and recursive calls check is selected. failed candidates restore
+inductive family, in input order, subject to the indexed-input rules above.
+if none succeedeth, it trieth course-of-values recursion on those inputs
+in the same order, including indexed families and groups. the first candidate
+whose branches and recursive calls check is selected. failed candidates restore
 inference state. recursive calls use ordinary lexical resolution and compare
 normalised argument values with induction evidence; aliases of descendants
 are accepted, and a shadowing variable is checked by its own value.
@@ -348,9 +490,11 @@ are accepted, and a shadowing variable is checked by its own value.
 - implicit inputs before the structural input, and explicit inputs its type
   dependeth on, are fixed. recursive calls must pass fixed explicit inputs
   unchanged and cannot supply implicit arguments.
-- implicit inputs after the chosen structural input are rejected. each
-  recursive call must supply every explicit input of the recursive definition;
-  partial recursive applications are rejected.
+- implicit inputs after the chosen structural input are rejected. a recursive
+  call must supply its structural input, fixed explicit inputs, and explicit
+  index leaf inputs. it may leave a trailing suffix of quantified inputs
+  unapplied; the result is the corresponding checked hypothesis function,
+  specialised to that descendant.
 - every other explicit input is rebound by the motive. recursive calls may
   pass any value for it, as an accumulator doth.
 - a call `child f others` becometh the eliminator's induction hypothesis for
@@ -363,88 +507,92 @@ are accepted, and a shadowing variable is checked by its own value.
 - a call on a deeper descendant, such as the row
   `(n heir) heir ^ ((n heir) fibonacci) + (n fibonacci)`, useth
   course-of-values recursion like lean's
-  `brecOn`. the motive becometh `r{below: x below, now: x result}`, where
-  `below` is a large elimination whose record holdeth, for each direct
-  recursive field, that field's own `r{below, now}` record. a nested split of a
-  descendant generaliseth over its record, so each deeper constructor's
-  record nameth its fields' records. a call projecteth `now` from the record
-  of the value it passeth, compared after normalisation.
+  `brecOn`. joint large elimination buildeth a `below` type for every target
+  in the group, including specialised containers. its record holdeth each
+  recursive field's own `r{below, now}` record. the chosen
+  structural family's `now` type is the result motive; every other target's
+  `now` type is the empty record type. each target's motive bindeth its own
+  index telescope, including dependent domains and implicit indices. each
+  child's record useth that child's actual indices, followed by its value.
+  joint induction then buildeth those records. no new kernel rule is needed.
+- a function field's record is pointwise: it retaineth the field's checked
+  dependent input telescope and plicities, ending in the record of the
+  applied child. a known application prefix must match in full before its
+  remaining arguments are applied to the record. aliases retain evidence
+  by their normalised values; an unrelated or shadowing function doth not
+  acquire it. this worketh through nested containers and mutual peers too.
+  [`examples/dependent_function_recursion.tung`](examples/dependent_function_recursion.tung)
+  showeth dependent function fields and partially applied recursive calls.
+- a nested split of a descendant generaliseth over its record, so each deeper
+  constructor's record nameth its fields' records. ordinary container matches
+  retain their ordinary eliminators. each carried record's target label
+  selecteth the specialised constructor metadata for its child projections:
+  a `rose list` head is a recursive rose even though the ordinary list
+  eliminator hath no hypothesis for that head. this alloweth recursive calls
+  through nested containers or mutual peers back to the structural family.
+  a helper quantified over an ordinary container doth not inherit evidence
+  for its arbitrary input: matching a `rose list` alone cannot establish that
+  its head descendeth from an enclosing rose.
+- a call projecteth `now` from the record of the value it passeth, compared
+  after normalisation. the record's target must be the chosen structural
+  family. a container or mutual peer cannot justify a call merely because
+  its empty `now` type happeneth to fit the required result type. the child's
+  entire index shape must also match the source declaration, and explicit
+  leaf inputs must equal the matching parts, as with direct induction.
+  outside that shape, a root record's `now` is the inhabited `[goal, goal]`.
+  its `below` still retaineth descendants, which may re-enter the shape;
+  the trivial `now` never justifieth an off-domain call.
+  [`examples/dependent_index_memo.tung`](examples/dependent_index_memo.tung)
+  showeth indexed descendants, dependent results, and domain re-entry.
 - the passed value must be a proper descendant: the matched value itself, or
-  a rebuilt copy of it, is rejected. a function child cannot be called under
-  course-of-values recursion.
+  a rebuilt copy of it, is rejected.
 - nested recursive definitions retain enclosing definitions' induction
   evidence. a local binder shadoweth a recursive name ordinarily. calls to
   an unshadowed enclosing function still use its own evidence. nested
   matches preserve every applicable enclosing course-of-values record, so
   descendant checks for one function do not replace another function's checks.
-- the recursive name cannot be used as a value. mutual recursion is rejected
-  in this version, and so is recursion on an indexed family.
+- the bare recursive name cannot be used as a value or passed to another
+  function. a checked descendant application may yield a function by leaving
+  trailing quantified inputs unapplied. mutually recursive lets remain
+  rejected. explicit joint induction through `unbuild` remaineth available.
 
-### records
+### fields and kernel records
 
-[records](language.md#records) owneth the syntax;
-[`examples/dependent_records.tung`](examples/dependent_records.tung) useth
-types, values, projection, and update.
+[fields](language.md#fields) owneth the syntax;
+[`examples/dependent_fields.tung`](examples/dependent_fields.tung) useth plain,
+parameterised, chained, and dependent fields.
 
-- a record type inhabiteth the largest universe of its field types; the empty
-  record `r{}` hath the empty record type in the base universe.
-- a record checked against a record type must match its fields exactly;
-  inferred, its type listeth its fields. an update bindeth its base once.
-- a projection of a variable stayeth neutral.
-- the kernel storeth fields sorted by name, so source order never changeth
-  identity. fields are not dependent, and records have no eta rule.
-- a family cannot occur inside a record field of its own constructor.
+- after an ilk with one constructor and no indices is checked, each named
+  explicit field becometh a hidden global `ilk.field`, using the same checked
+  core projection as flock members. its header parameters are implicit.
+  earlier fields in its type become projections from the same value;
+  constructor-local implicit fields retain their positions and dependencies.
+  `.` cannot occur in a source name, so only `value.field` reacheth it.
+- `value.field` inferreth the value, readeth its ilk from the type's head, and
+  applieth that ilk's accessor, solving its parameters by unification. a
+  value whose type is not such an ilk hath no fields.
+- types, goals, and proof audits recover named projections from the receiver's
+  checked type. this display step changeth neither conversion nor proof checking.
+- source hath no record syntax. the kernel keepeth closed records only for
+  course-of-values memos: the pattern compiler buildeth `below` and `now`
+  records internally. a family cannot occur inside a record field of its own
+  constructor.
 
 ### modules
 
-[`examples/dependent_modules/`](examples/dependent_modules/) splitteth a
-program across three files. run it with
-`tung tongue/examples/dependent_modules/main.tung`.
+`ModuleId` and `SymbolId` preserve nominal identity through aliases and
+re-exports. two imports of one identity do not conflict. identity interning
+permiteth pointer comparisons, with structural equality and ordering as
+fallbacks; correctness never dependeth on sharing.
 
-```tung
-use host.tung
-use natural.tung tale
-
-let main: 𝟙 deed ≔ >{then, tale~four repeat ('tung ' write), '\n' host~write}
-```
-
-- `use path` and `use path alias` import a module. `path` followeth the
-  ordinary [module search rules](language.md#libraries-and-imports), so
-  `tung.yaml` roots and `TUNG_PATH` apply.
-- visibility and re-export syntax follow the ordinary
-  [module rules](language.md#files-and-modules). a shown inductive family
-  exposeth its constructors and generated eliminator. a re-exported flock
-  carrieth its instance registry.
-- each definition retaineth its canonical `ModuleId` and `SymbolId` through
-  aliases and re-exports. bare-name ambiguity compareth these identities; two
-  imports of one identity do not conflict.
-- each module is checked once in dependency order, and identities are
-  qualified by module, so a module imported along two paths keepeth one
-  identity. the [import rules](language.md#libraries-and-imports) define
-  cycle and missing-source diagnostics. errors inside an import retain that
-  module's path and span as the use chain is extended.
+[development.md](development.md#projects-and-imports) owneth module scheduling,
+checked interfaces, and cache invalidation. the
+[language reference](language.md#files-and-modules) owneth visibility and lookup.
 
 ### flocks and bizens
 
-[`examples/dependent_flocks.tung`](examples/dependent_flocks.tung) defineth
-equality and functor flocks, requiring bizens, and a parent flock.
-
-```tung
-flock hath_≍: [α: *, *] {
-  let ≍: [α, α, 𝟚]
-  let eftbend: [x: α, (x ≍ x) = yea]
-}
-
-let ≭: [@α: *, @: α hath_≍, a: α, b: α, 𝟚] ≔ match a ≍ b { yea ^ nay, nay ^ yea }
-
-bizen: [@α: *, @: α hath_≍, (α maybe) hath_≍] {
-  let ≍ ≔ { none, none ^ yea, a some, b some ^ a ≍ b, _, _ ^ nay }
-}
-
-flock atfoldsome: [φ: [*, *], @: φ functor, *] {
-  let sheer: [@α: *, α, α φ]
-}
-```
+[`examples/dependent_flocks.tung`](examples/dependent_flocks.tung) showeth these
+rules in checked source.
 
 [flocks, bizens, and laws](language.md#flocks-bizens-and-laws) owneth the
 syntax. elaboration:
@@ -457,30 +605,25 @@ syntax. elaboration:
   `unbuild name`.
 - each member becometh a global accessor
   `member:[@parameters, @dictionary:(parameters name), type]` that selecteth its
-  field through the eliminator. a member name is therefore an ordinary global;
+  field through a checked core projection. a member name is therefore an ordinary global;
   it cannot repeat another name in the module.
 - each parent becometh an inherited instance `name_parent_i` of the parent
   flock. it projecteth the parent dictionary from a dictionary of this flock.
-- a member whose bracketed type endeth in an equation,
-  `let name:[binders, left = right]`, is a named law. `=` is the primitive
-  identity type, so each side is one term and a compound side needeth
-  parentheses.
-  the law is an ordinary field of the flock's family, of type
-  `[binders, left = right]`, in source order among the other members; earlier
-  members in it refer to the constructor's earlier fields. a law with pattern
-  slots matcheth them on both sides. nothing executeth or rewriteth with a law.
-  its accessor is a source term, so a flock requirement provideth reusable
-  proofs of its laws, and an explicitly constructed dictionary must supply
-  them.
+- all member types use the ordinary expression parser and elaborator.
+  a law is a member whose type requireth an equality proof, such as
+  `[x:α, (x keep) = x]`; no separate law syntax tree or lowering is needed.
+  earlier members in its type refer to the constructor's earlier fields.
+  patterns use an ordinary `match` in the type. laws trigger no automatic
+  rewriting. a law accessor provideth reusable proofs through a flock
+  requirement, and an explicitly constructed dictionary must supply them.
 - accessors are core primitive projections `Field index dictionary`, built
   from the checked constructor and checked by the kernel. a projection reduceth
   only on a constructor application; on a neutral dictionary it stayeth a
   neutral `NField`, compared structurally.
-- a bizen defineth each law of its flock as it defineth any member: the proof
-  is checked against the field type with this bizen's earlier members
-  substituted, so `eftbend` proveth a law that holdeth by computing them. an
-  inline parent's law seeth the members defined for that parent. `sorry` is
-  accepted as for any member and is reported for the bizen.
+- an ordinary constructor application checketh each law against its field
+  type, with the actual preceding fields substituted. a law about a method
+  therefore concerneth the supplied method, including in a parent dictionary.
+  `sorry` is accepted as for any term and is reported for the bizen.
 - `show flock` publisheth the family, constructor, eliminator, accessors, and
   parent instances, and carrieth the flock's instance registry to importers.
 
@@ -496,20 +639,26 @@ bizens:
 
 - a bizen's type is a product of implicit slots ending in a flock
   application, or the application alone; explicit slots are rejected.
-- the body holdeth only `let` definitions. each member and law is supplied
-  exactly once; a missing or unknown one is rejected. an annotation on a
-  member is checked and must agree with the member type.
-- a bizen may also define the members and laws of a parent flock that hath no
-  bizen of its own at those arguments. that parent's dictionary is built
-  inline, and inherited search projecteth it from this bizen.
-- a member that nameth its own accessor useth the flock through instance search,
-  as any visible name doth, so it can use the flock at another type. the bizen
-  being defined is not yet registered, so a recursive member is written as
-  a recursive let that the member nameth, as in lean.
-- the head's arguments fix the flock parameters before members are checked, so
-  case functions need no annotation. parent fields are solved by instance
-  search inside the bizen, where its requirements are local dictionaries.
-- a bizen is a global definition named `bizen_n` in its module. it cannot be
+- `bizen:type { let member ≔ body ... }` lowereth named members to ordinary
+  local bindings and a dictionary constructor application. each member and law
+  is supplied once; missing, repeated, and unknown members are rejected.
+- the flock declaration order determineth field checking and scope, regardless
+  of source member order. expected field types supply omitted annotations;
+  written annotations are ordinary ascriptions and must agree. later fields
+  see earlier values, including type fields and methods used by laws.
+- a member's own right-hand side nameth its global accessor. earlier members
+  are lexical bindings; there is no speculative global-then-sibling retry.
+  a call intended for another carrier may qualify the global accessor.
+  recursive methods use ordinary recursive helpers.
+- parent dictionaries are ordinary implicit fields. search findeth requirements
+  or registered instances by class identity before supplied ancestor members
+  construct a missing parent inline. inline construction useth the same lowering
+  and checking rules. an existing parent dictionary retaineth precedence, even
+  when another imported flock hath same-spelled members.
+- the head fixeth constructor parameters before members are checked, so case
+  functions receive their expected types. the dictionary is registered only
+  after its complete ordinary term is checked; there is no special kernel rule.
+- a bizen is a global definition named `#instance_n` in its module. it cannot be
   named in source. every bizen is registered, whether or not its flock is
   shown, and importers see it wherever the flock is visible.
 
@@ -544,9 +693,9 @@ instance search:
   latest declared first, as lean doth. the first candidate that matcheth, with its requirements
   solved, is chosen, so overlapping bizens are never ambiguous. no
   match reporteth the goal, available local requirements, and a rejected
-  candidate's reason when available. bizens are unique per type, so
-  every parent projection reacheth the same dictionary: the first matching
-  inherited instance is used, and a diamond of parents is not ambiguous.
+  candidate's reason when available. registration rejecteth equivalent
+  instance patterns. inherited search selecteth the first successful path; it
+  neither compareth parent dictionaries nor proveth them equal.
 - a candidate's own requirements are solved recursively, to a depth of 16.
   a goal that repeateth one of its ancestors faileth, and a requirement whose
   type is still unknown waiteth as a goal of the declaration.
@@ -590,6 +739,13 @@ generalisation addeth the instantiated universe constraints of every constant
 in the final term. unification compareth two applications of one constant by
 their folded arguments before unfolding either.
 
+when a numeric literal meeteth a constructor application, unification exposeth
+the literal's outer constructor and compareth its fields in either orientation.
+thus `2` against `?n heir` solveth `?n` as `1`; signed integers use the same
+view of `overnaught` and `heir_undernaught`. fields stay literals, and exact
+literal comparisons remain constant-time. induction and index matching share
+this constructor view; no numeric index equation hath a separate rule.
+
 nonpattern equations remain pending and are retried only after a new
 assignment. when
 instance search or a pattern column can make no other progress, one pending
@@ -605,51 +761,23 @@ holes may still generalise under valid constraints.
 
 ### ordinary lists
 
-[`examples/dependent_list.tung`](examples/dependent_list.tung) defineth one
-universe-polymorphic `list`, its `∅` and `‥` constructors, and ordinary append
-(`·`), `warp`, and `gather`. check it with:
+[`examples/dependent_list.tung`](examples/dependent_list.tung) useth one
+universe-polymorphic list at value and type levels. lists may index inductive
+families; their operations compare by ordinary conversion. no native type-level
+list, element-kind rule, or implicit library import is needed.
 
-```sh
-tung --check-module tongue/examples/dependent_list.tung
-```
-
-append these examples to that file to use the same family at several universes:
-
-```tung
-ilk unit: * { only: unit }
-let values: unit list ≔ >{‥, only, only, ∅}
-let types: * list ≔ >{‥, unit, [unit, unit], ∅}
-let constructors: [*, *] list ≔ >{‥, list, ∅}
-let joined: * list ≔ types · >{‥, unit, ∅}
-```
-
-- element types may be values of a universe or function types between universes.
-  the same constructors and functions handle all of them.
-- lists can index ordinary inductive families. computed append and map results
-  compare by kernel conversion. order and duplicate elements remain observable.
-- empty lists need a determined element type. supply `∅ @α` or an annotation
-  when arguments and the expected type cannot determine it.
-- append recurseth on its left input. an unknown left list remaineth neutral,
-  including `xs · ∅`. right identity requireth an induction proof; the checker
-  doth not add a special rewrite or infer an arbitrary concatenation split.
-- list definitions are supplied as source. the compiler hath no built-in list
-  type, operator names, element-kind rules, or implicit standard-library import.
-  imports remain a separate migration stage.
+list concatenation recurseth on the left input. `xs · ∅` remaineth neutral
+while `xs` is unknown; right identity requireth induction. conversion neither
+addeth a rewrite for it nor inferreth arbitrary concatenation splits.
 
 ### deeds and host bindings
 
-[`examples/dependent_deed.tung`](examples/dependent_deed.tung) useth
-bookhoard's host bindings, repeateth an action by induction, loopeth with the
-deed fixed point, and readeth console input. check and run it with:
-
-```sh
-tung --check-module tongue/examples/dependent_deed.tung
-tung tongue/examples/dependent_deed.tung
-```
+[`examples/dependent_deed.tung`](examples/dependent_deed.tung) showeth host
+bindings, bounded repetition, and a deed loop.
 
 normalisation and execution share one host catalogue, `hostBindings` in `Tung.Primitive`, and
-one failure convention: a fallible operation returneth an `maybe` or a
-`text ∑ α`, as in the ordinary language. bookhoard declareth every key in
+one failure convention: a fallible operation returneth a `maybe` or a
+`string ∑ α`, as in the ordinary language. bookhoard declareth every key in
 `_foreign.tung` and the `deed/` modules, with its signature, as described in
 [language.md](language.md#runtime-boundary).
 
@@ -661,7 +789,7 @@ and the result. universe levels are not compared. the program chooseth every
 name.
 
 - primitive types match by name. a host data type, such as `𝟙`, `𝟚`,
-  `maybe`, `∏`, `∑`, `list`, `table`, `_process_result`,
+  `maybe`, `∏`, `∑`, `list`, `wordbook`, `_process_result`,
   `_request`, or `_response`, matcheth only the `ilk` of that name declared in
   its bookhoard file, such as `ilk/maybe.tung`. a lookalike declared
   elsewhere is a different type.
@@ -677,12 +805,12 @@ name.
 - each key may be bound once. unknown keys, different types, local
   bindings, and bindings without annotations are rejected.
 - primitive value types live in the base universe and have no universe
-  parameters. a literal inhabiteth the primitive type of its kind: `'x'` text,
+  parameters. a literal inhabiteth the primitive type of its kind: `'x'` string,
   `42` ℕ, `+42` and `-7` ℤ, `1.5` float, and `` `a `` unicode. an integer
   literal always hath a sign; unsigned digits are a natural. equal literals
   convert; floats compare by bit pattern, so a NaN literal equaleth itself.
 - a pure host operation computeth during checking when every input is a
-  literal, or a list of literals, so `+2 + +2` convertth with `+4` and a type
+  literal, or a list of literals, so `+2 + +2` converteth with `+4` and a type
   may depend on an integer comparison. on other inputs a binding with a model
   unfoldeth the model, glued so goals still show its name; another stayeth
   neutral. the model is the binding's body after `fremmed`, elaborated as a
@@ -696,7 +824,7 @@ name.
   native operation.
   results are built at the catalogued type, so a comparison yieldeth `yea` or
   `nay` and a partial operation yieldeth `none` or `x some`. `pureOperation`
-  in `Tung.Primitive` defineth these operations once for the kernel, the
+  in `Tung.Primitive` defineth these operations once for the kernel and
   erased runner.
   normalisation preserveth the actual result family's universe arguments and
   type parameters, including nested results; it never replaceth them with zero.
@@ -718,180 +846,28 @@ name.
 - [`examples/dependent_tales.tung`](examples/dependent_tales.tung)
   bindeth pure operations, and
   [`examples/dependent_host.tung`](examples/dependent_host.tung) useth files,
-  tasks, and text.
+  tasks, and strings.
 
-### proving status
+### proof construction
 
-this summary pointeth to the rules above.
-[`todo.md`](../todo.md#theorem-proving) ordereth the remaining work and its
-open decisions.
+`is.tung` defineth identity as an ordinary indexed family. `throughbear`,
+`leibnitz`, and `throughgo` prove substitution and composition without extra
+kernel rules. `inlook` passeth a matched value and its branch equation to an
+ordinary case function. a constant result family may require a written motive.
+function extensionality remaineth the named axiom `fall_umtake`.
 
-available:
+well-founded recursion is ordinary library code in
+[`ilk/accessible.tung`](../bookhoard/ilk/accessible.tung).
+`wellgrounded_selfcall` recurseth structurally on accessibility evidence.
+`wellgrounded_selfcall_by` taketh an explicit result motive `[α, *]` and a
+measure `[α, μ]`; its recursive callback requireth a proof that the new measure
+is smaller. identity elimination keepeth computed measures usable after a
+match, without axiom K. dependent inputs may be packed in a single-constructor
+type, or remain curried in the motive when the measure doth not depend on them.
+[`dependent_wellgrounded.tung`](examples/dependent_wellgrounded.tung) showeth
+this construction. the parser and kernel add no measured-recursion rule.
 
-- the primitive identity type and bookhoard's `is.tung` lemmas
-  ([logic](#logic)); `unbuild name` for any ilk or flock
-  ([inductive declarations](#inductive-declarations-and-proofs)).
-- dependent matching with index unification, impossible rows, computed
-  scrutinees, and `match e for known`
-  ([pattern matching](#pattern-matching-and-recursion)).
-- structural, accumulator, and course-of-values recursion, and well-founded
-  recursion through `ilk/accessible.tung`.
-- `orsetting` axioms and `sorry` holes with goals
-  ([runtime boundary](language.md#runtime-boundary)).
-- [`bookhoard/ilk/list_setting.tung`](../bookhoard/ilk/list_setting.tung)
-  proveth list theorems without `sorry`; `Test.Bookhoard` checketh that false and
-  ill-founded proofs beside them are rejected for the stated reason.
-
-current limits:
-
-- an ordinary match doth not record the equation between its scrutinee and
-  the chosen constructor; `match e for known` doth, by matching a fresh copy
-  of `e` (see [algebraic data and patterns](language.md#algebraic-data-and-patterns)).
-  `sift_sift_step` in `list_setting.tung` still passeth the equation by
-  hand.
-- there is no rewriting. a proof writeth the property for `transport` itself,
-  or chaineth `leibnitz` and `throughgo`.
-- automatic recursion is structural only. well-founded recursion is
-  library code: `ilk/accessible.tung` defineth an accessibility family and
-  `wellgrounded_selfcalling`, written as ordinary recursion on the
-  accessibility proof. mutual and nested families, and automatic recursion
-  over a value whose indices are constructors, are missing.
-- `ℕ` equality, order, addition, subtraction, and multiplication have
-  models, and `ilk/natural.tung` proveth its order and semiring laws by
-  induction on them. `ℤ` equality, order, addition, subtraction,
-  multiplication, and conversion to and from `ℕ` have models by sign cases
-  in `ilk/integer.tung`, which proveth its order and ring laws: order and the
-  identities by sign cases, and associativity and distributivity by writing
-  each integer as `p difference q` and proving the law of differences from the
-  `ℕ` laws. other host operations
-  compute only on literals, so statements about them are unprovable.
-  function extensionality is the listed axiom `fall_umtake` in `is.tung`.
-- a large proof module checketh slowly, and every run checketh its imports
-  again.
-
-## design decisions
-
-each entry recordeth a settled choice and its reason, and linketh to the rule
-that implementeth it. open choices are in [`todo.md`](../todo.md).
-
-### direction
-
-- one parser and one checked dependent core serve every command, test, and
-  editor service. the source followeth the maintainer's draft,
-  [`tutorial.tung`](tutorial.tung).
-- a superseded form is removed, not kept beside its replacement. removed
-  forms include constructor-first patterns, documentary constructor field
-  names, literal patterns in headers, the `!` token, the `law`, `show_ilk`, and
-  `induce` keywords, the ordinary effect system, the `*` name prefix, generated
-  `name_induct` names, and most-specific instance selection.
-- the checker hath no special rule for an individual example. refactoring
-  keepeth independent kernel checking, exact runtime tests, and adversarial
-  source cases.
-
-### logic
-
-- predicative intensional type theory with inferred universe levels: no
-  impredicative `Prop`, no `Sort u : Sort u`, no cumulativity
-  ([logical boundary](#logical-boundary)).
-- pure definitions are total, with no general recursion. `orsetting` declareth
-  named axioms and `sorry` is the unfinished hole; trusted host constants
-  enter only through the host catalogue.
-- `=` and `eftbend` are primitive, so laws and compiler features such as
-  `match e for known` state equations without an import. as bookhoard code
-  they cost an import and a lookup per compiler-built equation and changed
-  nothing provable; their lemmas stay in `is.tung`.
-- axiom K stayeth unprovable: matching never equateth an index with a parameter
-  it already equals.
-- function extensionality is the axiom `orsetting fall_umtake` in `is.tung`,
-  `[@α, @β, @f, @g, [x: α, (x f) = (x g)], f = g]`, as agda and lean assume
-  or derive it; `--check` listeth it for every program that relieth on it.
-  equality reflection, quotient types, and a separate proof universe are
-  absent. deeds have no observational equality.
-
-### syntax
-
-- `≔` defineth, `=` is the identity type, and `≍` is boolean equality; one
-  symbol never serveth two of these.
-- a let header is only the name; arguments are annotation slots, so one form
-  serveth values, functions, and types
-  ([let declarations](language.md#let-declarations)).
-- every constructor stateth its type, as in a gadt, so indexed families need
-  no second form ([declarations and types](language.md#declarations-and-types)).
-- a flock requirement `@:flock` never introduceth a name, and a law is a
-  member whose type endeth in `=`; there is no `law` keyword
-  ([flocks, bizens, and laws](language.md#flocks-bizens-and-laws)).
-- `unbuild name` nameth an eliminator, replacing generated `name_induct`
-  names; an alternative block form was rejected.
-- an integer literal carrieth a sign and unsigned digits are `ℕ`, so a
-  quantity that cannot be negative is a `ℕ` and `ℕ` subtraction stoppeth at
-  zero.
-- the formatter is canonical, two-space, and writeth `a: α`.
-
-### names
-
-- one namespace for terms and types, so a module declareth each top-level
-  name once and a slot can shadow a type that a later slot nameth.
-- generic polymorphic parameters use greek letters; parameters with a
-  particular role use descriptive names.
-- no term reuseth a type's name. a clashing constructor taketh a new name
-  (`∏` with `both`, `evenbraid` with `+i`, `nonempty` with `‥′`), another
-  single-constructor type taketh a `_` prefix, and a flock whose member
-  shareth its name taketh a `hath_` prefix.
-- a law is named by the operators and members of its left side in order,
-  joined by `_`, as `·_·`, `∅_·`, `×_+`, and `warp_sameness`. `_self` marketh
-  a repeated operand. a property word is added only when the operators alone
-  are ambiguous, as `+_commute` and `≤_eftbend`.
-
-### elaboration
-
-- bidirectional elaboration never turneth an unknown written name into a
-  parameter.
-- instance search followeth lean: priorities, recency, fallback bizens, and
-  output parameters ([flocks and bizens](#flocks-and-bizens)). this replaced
-  most-specific selection and carrier inference from candidates, whose
-  interaction was unpredictable and slow.
-- no let is generalised over its holes, as hindley-milner would; a
-  polymorphic let writeth its parameters. this removed a heuristic that turned
-  leftover holes into placeholder constants, and no bookhoard code relied
-  on it.
-- a declaration's annotation chooseth its dictionaries before its body is
-  checked, and a case function argument waiteth for later arguments to fix
-  its input type ([inference boundary](#inference-boundary)).
-
-### recursion and matching
-
-- recursion followeth agda and rocq: a recursive call taketh a structurally
-  smaller argument ([pattern matching](#pattern-matching-and-recursion)).
-  other measures use well-founded recursion from `ilk/accessible.tung`.
-  unbounded execution is allowed only in deeds, and there is no unchecked
-  termination pragma.
-- `ℕ` is a primitive inductive family represented by literals, so matching
-  recurseth structurally while literals and host arithmetic stay efficient.
-- a match on a computed scrutinee replaceth its occurrences in the goal, as
-  agda's `with` doth; `match e for known` instead keepeth the equation, as
-  lean's `match h : e`.
-- matching unifieth constructor indices by computation, so impossible rows
-  and `{}` need no new syntax.
-
-### proofs and assumptions
-
-- every bizen defineth each law it oweth, by a checked proof or by `sorry`.
-  laws are erased and never rewrite.
-- `orsetting` is a listed, allowed axiom, and `sorry` an unfinished hole that
-  `--no-sorry` rejecteth ([runtime boundary](language.md#runtime-boundary)).
-- a host operation may name a structural model that checking unfoldeth while
-  the runner keepeth the native operation, so arithmetic stayeth fast and
-  becometh provable ([deeds and host bindings](#deeds-and-host-bindings)).
-
-### deeds and the host
-
-- `α deed` is a primitive type like haskell `IO`, composed only by bookhoard
-  monad methods; there is no effect system or sequencing syntax
-  ([deeds](language.md#deeds)).
-- a fallible host operation returneth an `maybe` or a `text ∑ α`, so failure
-  is a value.
-- one host catalogue serveth checking and running. a host data type is
-  identified by its bookhoard path and name; there are no primitive bizens
-  ([deeds and host bindings](#deeds-and-host-bindings)).
-- runtime evaluation is call-by-need, so a branch or recursive call is
-  computed only when used.
+the [bookhoard reference](../bookhoard/reference.md#law-proofs) owneth library
+proof coverage and assumptions. [proof checking](language.md#proof-checking)
+owneth cli and editor output; the [logical boundary](#logical-boundary)
+owneth their trust requirements.

@@ -1,9 +1,0 @@
-use ilk/two.tung
-
-show flock hath_zero: [α: *, *] {
-  let zero: α
-}
-
-bizen: 𝟚 hath_zero {
-  let zero ≔ nay
-}

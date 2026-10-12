@@ -1,10 +1,10 @@
 use _foreign.tung
-use flock/algebra/arithmetic/hath_deal.tung
-use flock/algebra/arithmetic/hath_eke.tung
-use flock/algebra/arithmetic/hath_fold.tung
-use flock/algebra/arithmetic/hath_offdraw.tung
-use flock/algebra/arithmetic/hath_one.tung
-use flock/algebra/arithmetic/hath_zero.tung
+use flock/algebra/whole/hath_deal.tung
+use flock/algebra/whole/hath_eke.tung
+use flock/algebra/whole/hath_fold.tung
+use flock/algebra/whole/hath_naught.tung
+use flock/algebra/whole/hath_offdraw.tung
+use flock/algebra/whole/hath_one.tung
 use flock/elementary.tung
 use flock/hath_norm.tung
 
@@ -16,55 +16,56 @@ show let real: [@α: *, (a +i _): α evenbraid, α] ≔ a
 
 show let imaginary: [@α: *, (_ +i b): α evenbraid, α] ≔ b
 
-show let unit: [@α: *, @: α hath_zero, @: α hath_one, α evenbraid] ≔ zero +i one
+show let unit: [@α: *, @: α hath_naught, @: α hath_one, α evenbraid] ≔ naught +i one
 
 bizen: [@α: *, @: α hath_+, (α evenbraid) hath_+] {
   let +: [a +i b:, c +i d:] ≔ (a + c) +i (b + d)
 }
 
-bizen: [@α: *, @: α hath_zero, (α evenbraid) hath_zero] {
-  let zero ≔ zero +i zero
+bizen: [@α: *, @: α hath_naught, (α evenbraid) hath_naught] {
+  let naught ≔ naught +i naught
 }
 
 bizen: [@α: *, @: α hath_-, (α evenbraid) hath_-] {
   let -: [a +i b:, c +i d:] ≔ (a - c) +i (b - d)
 }
 
-bizen: [@α: *, @: α hath_-, @: α hath_×, (α evenbraid) hath_×] {
-  let ×: [a +i b:, c +i d:] ≔ ((a × c) - (b × d)) +i ((a × d) + (b × c))
+bizen: [@α: *, @: α hath_-, @: α hath_·, (α evenbraid) hath_·] {
+  let ·: [a +i b:, c +i d:] ≔ ((a · c) - (b · d)) +i ((a · d) + (b · c))
 }
 
-bizen: [@α: *, @: α hath_one, @: α hath_zero, (α evenbraid) hath_one] {
-  let one ≔ one +i zero
+bizen: [@α: *, @: α hath_one, @: α hath_naught, (α evenbraid) hath_one] {
+  let one ≔ one +i naught
 }
 
-bizen: [@α: *, @: α hath_-, @: α hath_×, @: α hath_÷, (α evenbraid) hath_÷] {
+bizen: [@α: *, @: α hath_-, @: α hath_·, @: α hath_÷, (α evenbraid) hath_÷] {
   let ÷: [a +i b:, c +i d:] ≔  (
-    let e ≔ c × c $ + (d × d)
-    yield ((a × c) + (b × d) $ ÷ e) +i ((b × c) - (a × d) $ ÷ e)
+    let e ≔ c · c $ + (d · d)
+    yield ((a · c) + (b · d) $ ÷ e) +i ((b · c) - (a · d) $ ÷ e)
   )
 }
 
-bizen: [@α: *, @: α hath_+, @: α hath_×, (α evenbraid) hath_norm α] {
-  let norm: [a +i b:] ≔ (a × a) + (b × b)
+bizen: [@α: *, @: α hath_+, @: α hath_·, (α evenbraid) hath_‖ α] {
+  let ‖: [a +i b:] ≔ (a · a) + (b · b)
 }
 
+## the complex exponential is shared directly by the trigonometric functions.
 bizen: (float evenbraid) elementary {
-  let exponent: [a +i b:] ≔ (
-    let c ≔ a exponent
-    yield (c × (b cosine)) +i (c × (b sine))
+  let exponent: [a +i b: float evenbraid, float evenbraid] ≔ (
+    let c ≔ a elementary~exponent
+    yield (c · (b cosine)) +i (c · (b sine))
   )
-  let logarithm: [a +i b:] ≔ ((a × a) + (b × b) $ logarithm) +i (a arctan_float b)
+  let logarithm: [a +i b:] ≔ ((a · a) + (b · b) $ logarithm) +i (a arctan_float b)
   let sine: [a +i b:] ≔ (
-    let overnaught ≔ ((zero - b) +i a) exponent
-    let undernaught ≔ (b +i (zero - a)) exponent
-    yield (((overnaught imaginary) - (undernaught imaginary)) × 0.5)
-    +i (((undernaught real) - (overnaught real)) × 0.5)
+    let overnaught ≔ ((naught - b) +i a) exponent
+    let undernaught ≔ (b +i (naught - a)) exponent
+    yield (((overnaught imaginary) - (undernaught imaginary)) · 0.5)
+    +i (((undernaught real) - (overnaught real)) · 0.5)
   )
   let cosine: [a +i b:] ≔ (
-    let overnaught ≔ ((zero - b) +i a) exponent
-    let undernaught ≔ (b +i (zero - a)) exponent
-    yield (((overnaught real) + (undernaught real)) × 0.5)
-    +i (((overnaught imaginary) + (undernaught imaginary)) × 0.5)
+    let overnaught ≔ ((naught - b) +i a) exponent
+    let undernaught ≔ (b +i (naught - a)) exponent
+    yield (((overnaught real) + (undernaught real)) · 0.5)
+    +i (((overnaught imaginary) + (undernaught imaginary)) · 0.5)
   )
 }

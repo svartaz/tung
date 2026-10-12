@@ -69,11 +69,11 @@ fileRoundTrip imports = do
   directory <- getTemporaryDirectory
   let path = directory ++ "/tung-file-deed-test~txt"
       file = "'" ++ path ++ "'"
-      -- `each` appendeth in list order.
+      -- `each` athangeth in list order.
       source =
         "use ground.tung use deed/file.tung use ilk/list.tung yield >{then, "
           ++ (file ++ " file~write 'hello', ")
-          ++ ("(' ' ‥ ('world' ‥ empty)) each { part ^ " ++ file ++ " file~append part $ void }, ")
+          ++ ("(' ' ‥ ('world' ‥ empty)) each { part ^ " ++ file ++ " file~athang part $ void }, ")
           ++ (file ++ " file~read}")
   removeIfPresent path
   actual <- evaluateSource source imports
@@ -88,13 +88,13 @@ webServerRoundTrip imports = do
         use ground.tung
         use deed/clock.tung
         use ilk/maybe.tung
-        use ilk/table.tung
+        use ilk/wordbook.tung
         use web/request.tung
         use web/server.tung
 
         let route:[incoming: _request, _response deed] ≔ unix_time warp { _ ^
           match ((incoming request~method) ≍ 'POST') ∧ ((incoming request~target) ≍ '/echo') {
-            yea ^ match ((incoming request~headers) table~lookup 'Host') {
+            yea ^ match ((incoming request~headers) wordbook~lookup 'Host') {
               host maybe~some ^ match host ≍ 'localhost' {
                 yea ^ ((((incoming request~body) ok) with_header 'Transfer-Encoding' 'chunked') with_header 'X-Tung' 'old') with_header 'X-Tung' 'yea',
                 nay ^ 'not found\\n' not_found

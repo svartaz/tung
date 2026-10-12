@@ -7,15 +7,11 @@ import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
 const { CompilerBridge } = require("../out/server/checker.js");
-const {
-  HighlightCache,
-  buildHighlightRanges,
-} = require("../out/server/highlight.js");
+const { buildHighlightRanges } = require("../out/server/highlight.js");
 const { WorkspaceIndex } = require("../out/server/workspace.js");
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const compiler = new CompilerBridge();
 compiler.configure(`${root}/tongue`, [], process.env.TUNG_EXECUTABLE);
-const cache = new HighlightCache(compiler);
 const samples = [
   ["path", readFileSync(`${root}/bookhoard/ilk/path.tung`, "utf8")],
   ["mockingbird", readFileSync(`${root}/bookhoard/mockingbird.tung`, "utf8")],
@@ -24,13 +20,13 @@ const samples = [
       `${size} ${broken ? "incomplete" : "complete"}`,
       Array.from(
         { length: size },
-        (_, i) => `let worth${i}${broken ? ":[ℤ" : ":ℤ = +1"}`,
+        (_, i) => `let worth${i}${broken ? ":[ℤ" : ":ℤ ≔ +1"}`,
       ).join("\n"),
     ]),
   ),
   [
     "1000 functions",
-    Array.from({ length: 1000 }, (_, i) => `let f${i}:[x:ℤ, ℤ] = x`).join("\n"),
+    Array.from({ length: 1000 }, (_, i) => `let f${i}:[x:ℤ, ℤ] ≔ x`).join("\n"),
   ],
 ];
 const median = (values) =>
@@ -44,7 +40,7 @@ try {
   );
   for (const [name, source] of samples) {
     const uri = `file://${root}/bookhoard/ilk/benchmark.tung`;
-    const document = { uri, getText: () => source };
+    const document = { uri, version: 0, getText: () => source };
     const workspace = new WorkspaceIndex(
       {
         get: (key) => (key === uri ? document : undefined),
@@ -58,9 +54,10 @@ try {
       cached = [];
     let count = 0;
     for (let version = 1; version <= 3; version++) {
+      document.version = version;
       workspace.invalidate(uri);
       const start = performance.now();
-      const roles = await cache.get(uri, source, version);
+      const roles = await workspace.roles(uri, source, version);
       const resolve = (token) =>
         workspace.resolveAt(uri, { line: token.line, character: token.char })
           .definition;
@@ -69,7 +66,7 @@ try {
       const cacheStart = performance.now();
       buildHighlightRanges(
         source,
-        await cache.get(uri, source, version),
+        await workspace.roles(uri, source, version),
         resolve,
       );
       cached.push(performance.now() - cacheStart);
@@ -79,6 +76,5 @@ try {
     );
   }
 } finally {
-  cache.clear();
   compiler.dispose();
 }

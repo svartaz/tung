@@ -1,7 +1,10 @@
+use flock/order/hath_at_most.tung
 use flock/order/lattice.tung
+use flock/order/order_half.tung
 use flock/order/order_whole.tung
 use flock/order/semilattice_lower.tung
 use flock/order/semilattice_upper.tung
+use ilk/two.tung
 use is.tung
 
 ## a lattice whose infimum and supremum distribute over each other.
@@ -21,7 +24,55 @@ bizen: [@β: *, @: β lattice_distributive, @α: *, [α, β] lattice_distributiv
     {a ^ (a f) ∨_∧ (a g) (a h)} fall_umtake
 }
 
+let helpsetting_∧_∨: [@α: *, @: α order_whole, a: α, b: α, c: α,
+  ((a ≤ ((b ≤ c) if c b)) if a ((b ≤ c) if c b)) = ((((a ≤ b) if a b) ≤ ((a ≤ c) if a c)) if ((a ≤ c) if a c) ((a ≤ b) if a b))
+] ≔
+  (b ≤ c) inlook {
+    yea, k₀ ^ (a ≤ b) inlook {
+      yea, k₁ ^ ((a ∧_yea c (a ≤_yea_throughgo b c k₁ k₀)) throughgo ((a ∧_yea a (a ≤_eftbend)) evenmete))
+      throughgo ({x: α ^ (a ≤ x) if x a} leibnitz ((a ∧_yea c (a ≤_yea_throughgo b c k₁ k₀)) evenmete)),
+      nay, k₁ ^ (a ≤ c) inlook {
+        yea, _ ^ (b ∨_yea a (a ≤_flip b k₁)) evenmete,
+        nay, _ ^ (b ∨_yea c k₀) evenmete
+      }
+    },
+    nay, k₀ ^ (a ≤ b) inlook {
+      yea, _ ^ (a ≤ c) inlook {
+        yea, _  ^ (a ∧_yea a (a ≤_eftbend)) evenmete,
+        nay, k₂ ^ (a ∨_nay c k₂) evenmete
+      },
+      nay, k₁ ^ (a ≤ c) inlook {
+        yea, k₂ ^ match (k₀ evenmete) throughgo (b ≤_yea_throughgo a c (a ≤_flip b k₁) k₂) {},
+        nay, _  ^ (b ∨_nay c k₀) evenmete
+      }
+    }
+  }
+
+let helpsetting_∨_∧: [@α: *, @: α order_whole, a: α, b: α, c: α,
+  ((a ≤ ((b ≤ c) if b c)) if ((b ≤ c) if b c) a) =
+  ((((a ≤ b) if b a) ≤ ((a ≤ c) if c a)) if ((a ≤ b) if b a) ((a ≤ c) if c a))
+] ≔
+  (b ≤ c) inlook {
+    yea, k₀ ^ (a ≤ b) inlook {
+      yea, k₁ ^ (({x: α ^ (b ≤ x) if b x} leibnitz (a ∨_yea c (a ≤_yea_throughgo b c k₁ k₀))) throughgo (b ∧_yea c k₀)) evenmete,
+      nay, _  ^ (a ≤ c) inlook {
+        yea, k₂ ^ (a ∧_yea c k₂) evenmete,
+        nay, _  ^ (a ∧_yea a (a ≤_eftbend)) evenmete
+      }
+    },
+    nay, k₀ ^ (a ≤ b) inlook {
+      yea, k₁ ^ (a ≤ c) inlook {
+        yea, _ ^ (b ∧_nay c k₀) evenmete,
+        nay, _ ^ ((b helpsetting_∧_swap a) throughgo (a ∧_yea b k₁)) evenmete
+      },
+      nay, k₁ ^ (a ≤ c) inlook {
+        yea, k₂ ^ match (k₀ evenmete) throughgo (b ≤_yea_throughgo a c (a ≤_flip b k₁) k₂) {},
+        nay, _  ^ (a ∧_yea a (a ≤_eftbend)) evenmete
+      }
+    }
+  }
+
 bizen: [@α: *, @: α order_whole, α lattice_distributive] {
-  let ∧_∨ ≔ sorry
-  let ∨_∧ ≔ sorry
+  let ∧_∨ ≔ helpsetting_∧_∨
+  let ∨_∧ ≔ helpsetting_∨_∧
 }

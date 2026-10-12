@@ -7,28 +7,66 @@ use is.tung
 ## a carrier whose every pair hath a supremum.
 show flock semilattice_upper: [α: *, *] {
   let ∨: [α, α, α]
-  let ∨_absorb: [a: α, (a ∨ a) = a]
-  let ∨_commute: [a: α, b: α, (a ∨ b) = (b ∨ a)]
+  let ∨_swallow: [a: α, (a ∨ a) = a]
+  let ∨_swap: [a: α, b: α, (a ∨ b) = (b ∨ a)]
   let ∨_∨: [a: α, b: α, c: α, ((a ∨ b) ∨ c) = (a ∨ (b ∨ c))]
 }
 
 bizen: [@β: *, @: β semilattice_upper, @α: *, (α → β) semilattice_upper] {
   let ∨: [f:, g:, a:] ≔ (a f) ∨ (a g)
 
-  let ∨_absorb: [f:] ≔ {a ^ (a f) ∨_absorb} fall_umtake
+  let ∨_swallow: [f:] ≔ {a ^ (a f) ∨_swallow} fall_umtake
 
-  let ∨_commute: [f:, g:] ≔
-    {a ^ (a f) ∨_commute (a g)} fall_umtake
+  let ∨_swap: [f:, g:] ≔
+    {a ^ (a f) ∨_swap (a g)} fall_umtake
 
   let ∨_∨: [f:, g:, h:] ≔
     {a ^ (a f) ∨_∨ (a g) (a h)} fall_umtake
 }
 
+## for a total order, `a ∨ b` is `b` when `a ≤ b` holdeth.
+show let ∨_yea: [@α: *, @: α order_whole, a: α, b: α, k: (a ≤ b) = yea, ((a ≤ b) if b a) = b] ≔
+  {x: 𝟚 ^ x if b a} leibnitz k
+
+## for a total order, `a ∨ b` is `a` when `a ≤ b` faileth.
+show let ∨_nay: [@α: *, @: α order_whole, a: α, b: α, k: (a ≤ b) = nay, ((a ≤ b) if b a) = a] ≔
+  {x: 𝟚 ^ x if b a} leibnitz k
+
+let helpsetting_∨_swap: [@α: *, @: α order_whole, a: α, b: α, ((a ≤ b) if b a) = ((b ≤ a) if a b)] ≔
+  (a ≤ b) inlook {
+    yea, k₀ ^ (b ≤ a) inlook {
+      yea, k₁ ^ (a ≤_= b k₀ k₁) evenmete,
+      nay, _  ^ eftbend
+    },
+    nay, k₀ ^ (b ≤ a) inlook {
+      yea, _  ^ eftbend,
+      nay, k₁ ^ match ((a ≤_flip b k₀) evenmete) throughgo k₁ {}
+    }
+  }
+
+let helpsetting_∨_∨: [@α: *, @: α order_whole, a: α, b: α, c: α,
+  ((((a ≤ b) if b a) ≤ c) if c ((a ≤ b) if b a)) = ((a ≤ ((b ≤ c) if c b)) if ((b ≤ c) if c b) a)
+] ≔
+  (a ≤ b) inlook {
+    yea, k₀ ^ (b ≤ c) inlook {
+      yea, k₁ ^ (a ∨_yea c (a ≤_yea_throughgo b c k₀ k₁)) evenmete,
+      nay, _  ^ (a ∨_yea b k₀) evenmete
+    },
+    nay, k₀ ^ (b ≤ c) inlook {
+      yea, _  ^ eftbend,
+      nay, k₁ ^ (a ≤ c) inlook {
+        yea, k₂ ^ ((a ≤_= c k₂ (c ≤_yea_throughgo b a (b ≤_flip c k₁) (a ≤_flip b k₀))) evenmete)
+        throughgo ((a ∨_nay b k₀) evenmete),
+        nay, _ ^ (a ∨_nay b k₀) evenmete
+      }
+    }
+  }
+
 bizen: [@α: *, @: α order_whole, α semilattice_upper] {
   let ∨: [a:, b:] ≔ (a ≤ b) if b a
 
   # each comparison result chooseth a, so matching on it proveth the law.
-  let ∨_absorb: [a:] ≔ match a ≤ a {yea ^ eftbend, nay ^ eftbend}
-  let ∨_commute ≔ sorry
-  let ∨_∨ ≔ sorry
+  let ∨_swallow: [a:] ≔ match a ≤ a {yea ^ eftbend, nay ^ eftbend}
+  let ∨_swap ≔ helpsetting_∨_swap
+  let ∨_∨ ≔ helpsetting_∨_∨
 }

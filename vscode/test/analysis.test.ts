@@ -34,6 +34,8 @@ test("declaration annotations expose definitions and scoped parameters in incomp
     occurrences[2].offset,
   );
   assert.equal(findDefinition(model, occurrences.at(-1)), undefined);
+  const y = model.tokens.filter(({ text }) => text === "y");
+  assert.equal(findDefinition(model, y.at(-1))?.token.offset, y[0].offset);
 });
 test("analysis recordeth shown owners, members, parameters, and imports", async () => {
   const source =
@@ -79,7 +81,7 @@ test("class parameters resolve inside the braced body", async () => {
 test("instance parameters resolve in requirements, the head, and members", async () => {
   const source = [
     "bizen:[@a:*, @:a parent, [a, a] sameness] {",
-    "  let sameness:[[a, a], [a, a]] ≔ { x ^ x }",
+    "  let sameness:[[a, a], [a, a]] ≔ (let inner:[x:] ≔ x yield inner)",
     "}",
     "let outside ≔ a",
   ].join("\n");
@@ -99,10 +101,14 @@ test("instance parameters resolve in requirements, the head, and members", async
     model.definitions.find(({ name }) => name === "sameness")?.role,
     "method",
   );
+  assert.equal(
+    model.definitions.find(({ name }) => name === "inner")?.role,
+    "function",
+  );
 });
 test("instances without parameter brackets retain their class and members", async () => {
   const model = await analyzed(
-    "bizen:[ℤ, ℤ] ring { let -: [f:, g:, x:] ≔ (x f) - (x g) }",
+    "bizen:[ℤ, ℤ] ring { let -:[f:[ℤ, ℤ], g:[ℤ, ℤ], x:ℤ, ℤ] ≔ (x f) - (x g) }",
     "file:///instance.tung",
   );
   assert.deepEqual(
@@ -128,55 +134,24 @@ test("requirement parameters respect nested types and owner scope", async () => 
       assert.equal(findDefinition(model, token)?.token.offset, uses[0].offset);
   }
 });
-test("analysis recordeth foreign import paths", async () => {
-  const source = "use _foreign.tung\nuse flock/algebra/arithmetic/field.tung";
-  const model = await analyzed(source, "file:///imports.tung");
-  assert.deepEqual(
-    model.imports.map(({ path }) => path),
-    ["_foreign.tung", "flock/algebra/arithmetic/field.tung"],
-  );
-});
-test("analysis recordeth an optional import alias separately from its path", async () => {
+test("analysis retaineth import paths, aliases, and default namespaces", async () => {
+  const imports = [
+    ["_foreign.tung", undefined, "_foreign"],
+    ["flock/algebra/arithmetic/field.tung", undefined, "field"],
+    ["ilk/list.tung", "items", "items"],
+    ["ilk/list.tung", undefined, "list"],
+    ["pkg.one/query.tung", undefined, "query"],
+  ];
   const model = await analyzed(
-    "use ilk/list.tung list yield list~empty",
+    imports
+      .map(([path, alias]) => `use ${path}${alias ? ` ${alias}` : ""}`)
+      .join("\n"),
     "file:///imports.tung",
   );
   assert.deepEqual(
-    model.imports.map(({ path, namespace, alias }) => ({
-      path,
-      namespace,
-      alias,
-    })),
-    [
-      {
-        path: "ilk/list.tung",
-        namespace: "list",
-        alias: "list",
-      },
-    ],
+    model.imports.map(({ path, alias, namespace }) => [path, alias, namespace]),
+    imports,
   );
-});
-test("analysis defaulteth an import namespace to its last path segment", async () => {
-  const model = await analyzed(
-    "use ilk/list.tung yield list~empty",
-    "file:///imports.tung",
-  );
-  assert.deepEqual(
-    model.imports.map(({ namespace, alias }) => ({ namespace, alias })),
-    [
-      {
-        namespace: "list",
-        alias: undefined,
-      },
-    ],
-  );
-});
-test("analysis ignoreth dots in directories when defaulting a namespace", async () => {
-  const model = await analyzed(
-    "use pkg.one/query.tung yield query~answer",
-    "file:///imports.tung",
-  );
-  assert.equal(model.imports[0].namespace, "query");
 });
 test("analysis recordeth each re-exported name", async () => {
   const model = await analyzed("show first, second", "file:///exports.tung");
@@ -214,17 +189,6 @@ test("local resolution preferreth the narrowest binder scope", async () => {
     definition.token.offset,
     model.tokens.filter(({ text }) => text === "x").at(-2).offset,
   );
-});
-test("inferred and annotated slots resolve in one function body", async () => {
-  const source = "let hath_+: [a:, b: ℤ, ℤ] ≔ a + b";
-  const model = await analyzed(source, "file:///mixed_header.tung");
-  for (const name of ["a", "b"]) {
-    const occurrences = model.tokens.filter(({ text }) => text === name);
-    const use = occurrences.at(-1);
-    const definition = findDefinition(model, use, use.offset);
-    assert.equal(definition.role, "parameter");
-    assert.equal(definition.token.offset, occurrences[0].offset);
-  }
 });
 test("an unfinished lambda scopeth its binders to the end of the buffer", async () => {
   const source = "let choose ≔ { left, right ^ right";

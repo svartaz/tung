@@ -13,8 +13,6 @@ module Tung.Dependent.Host
     primitiveDefinitions,
     sorrySymbol,
     literalCaseSymbol,
-    identitySymbol,
-    reflectSymbol,
     matchMain,
   )
 where
@@ -32,12 +30,12 @@ import Tung.Dependent.Syntax
 import Tung.Identity (ModuleId (..), SymbolId (..), inductionSymbol)
 import Tung.Primitive (HostBinding (..), HostDataSchema (..), HostSignature (..), HostType (..), findForeignBinding, hostDataSchemas, integerNegativeId, integerPositiveId, naturalSuccessorId, naturalZeroId, oneName, opaqueTypeFamilyNames, pureOperation)
 
--- primitive types, `=`, and `sorry` precede every module. host value types live in
+-- primitive types and `sorry` precede every module. host value types live in
 -- the base universe, so literals carry no levels. `sorry` inhabiteth every type;
 -- it is the one reported assumption, and running it faileth.
 primitiveDefinitions :: Globals
 primitiveDefinitions =
-  Map.union (Map.union numberDefinitions identityDefinitions) . Map.fromList $
+  Map.union numberDefinitions . Map.fromList $
     [(SymbolId PrimitiveModule name, Definition 0 [] (Sort LZero) (Host name Nothing)) | name <- literalTypeNames, name `notElem` ["ℕ", "ℤ"]]
       ++ [(SymbolId PrimitiveModule name, Definition 1 [] (Pi Explicit (Sort (LParam 0)) (Sort (LParam 0))) (Host name Nothing)) | name <- opaqueTypeFamilyNames]
       ++ [ (sorrySymbol, Definition 1 [] (Pi Implicit (Sort (LParam 0)) (Local 0)) (Host "sorry" Nothing)),
@@ -64,27 +62,6 @@ numberDefinitions = family integer [(integerPositiveId, fromNatural), (integerNe
       case I.inferInductive (K.Environment globals) name (inductionSymbol name) 0 (Sort LZero) constructors [] of
         Right (K.Environment extended) -> extended
         Left message -> error ("invalid primitive " ++ symbolName name ++ ": " ++ message)
-
--- `x = y` is the type of proofs that `x` and `y` are equal: parameters `@α`
--- and `x`, one index, the one constructor `eftbend: [@α: *, @x: α, x = x]`,
--- and the eliminator `unbuild =`. it is checked like any other family; it is
--- primitive so that flock laws and elaboration can state equations without an
--- import. its lemmas are bookhoard code in `is.tung`.
-identityDefinitions :: Globals
-identityDefinitions =
-  case I.inferInductive (K.Environment Map.empty) identitySymbol (inductionSymbol identitySymbol) 2 signature [(reflectSymbol, reflect)] [] of
-    Right (K.Environment globals) -> globals
-    Left message -> error ("invalid primitive =: " ++ message)
-  where
-    universe = LMeta 0
-    signature = Pi Implicit (Sort universe) (Pi Explicit (Local 0) (Pi Explicit (Local 1) (Sort universe)))
-    reflect =
-      Pi Implicit (Sort universe) . Pi Implicit (Local 0) $
-        Apply Explicit (Apply Explicit (Apply Implicit (Global identitySymbol [universe]) (Local 1)) (Local 0)) (Local 0)
-
-identitySymbol, reflectSymbol :: SymbolId
-identitySymbol = SymbolId PrimitiveModule "="
-reflectSymbol = SymbolId PrimitiveModule "eftbend"
 
 sorrySymbol, literalCaseSymbol :: SymbolId
 sorrySymbol = SymbolId PrimitiveModule "sorry"

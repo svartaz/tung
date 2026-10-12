@@ -2,6 +2,6 @@ use ilk/one.tung
 use ilk/sum.tung
 
 ## file access. a failure yieldeth its error message on the left.
-show let read: [text, (text ∑ text) deed] ≔ 'read_file' fremmed
-show let write: [text, text, (text ∑ 𝟙) deed] ≔ 'write_file' fremmed
-show let append: [text, text, (text ∑ 𝟙) deed] ≔ 'append_file' fremmed
+show let read: [string, (string ∑ string) deed] ≔ 'read_file' fremmed
+show let write: [string, string, (string ∑ 𝟙) deed] ≔ 'write_file' fremmed
+show let athang: [string, string, (string ∑ 𝟙) deed] ≔ 'athang_file' fremmed

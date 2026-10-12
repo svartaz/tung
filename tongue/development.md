@@ -27,6 +27,8 @@ coordinateth its scripts with the haskell build and formula check.
 | ----------------------- | ----------------------------------------------------------------------- |
 | `make build`            | buildeth the compiler and editor                                        |
 | `make test`             | runneth compiler, byspel, prose, editor, and formula checks             |
+| `make check`            | runneth `make test`, `make format-check`, and `git diff --check`        |
+| `make format-check`     | checketh ormolu and canonical tung formatting without changing files    |
 | `make compiler-test`    | testeth parsing, typing, evaluation, bookhoard modules, and integration |
 | `make byspel-test`      | runneth the deterministic byspels and checketh their results            |
 | `make editor-test`      | runneth the VS Code extension tests                                     |
@@ -82,46 +84,43 @@ keep these boundaries:
 module-local invariants live beside the implementation. the modules divide work
 thus:
 
-| module                                 | responsibility                                                                          |
-| -------------------------------------- | --------------------------------------------------------------------------------------- |
-| `Tung.Token`                           | lexical syntax and utf-16 source locations                                              |
-| `Tung.Dependent.Source.Parse`          | declarations, expressions, and compiler source roles                                    |
-| `Tung.Dependent.Source.Syntax`         | one source expression syntax and lexical free-name analysis for types and values        |
-| `Tung.Dependent.Source.Environment`    | checked module state, name visibility, exports, and class registries                    |
-| `Tung.Dependent.Source.Module`         | import graphs, namespaces, and declaration scheduling                                   |
-| `Tung.Dependent.Source.Error`          | structured source failures, locations, and diagnostic context                           |
-| `Tung.Dependent.Source.Instance`       | dictionary goals, candidate selection, and inherited instance search                    |
-| `Tung.Dependent.Source.Pattern`        | structural and course-of-values recursion lowering; facade for pattern compilation      |
-| `Tung.Dependent.Source.Pattern.Match`  | pattern matrices, coverage, row splitting, and literal rows                             |
-| `Tung.Dependent.Source.Pattern.Index`  | index unification and refined motives for indexed splits                                |
-| `Tung.Dependent.Source.Pattern.Common` | match types, family splits, binder walks, and memo records                              |
-| `Tung.Dependent.Source.Scope`          | lexical contexts, local binding transitions, and a stack of active recursion evidence   |
-| `Tung.Dependent.Source.Expression`     | bidirectional expression checking, application, records, matches, and local definitions |
-| `Tung.Dependent.Source.Elaborate`      | one declaration's elaboration run, goal rendering, and the unsolved-hole check          |
-| `Tung.Dependent.Source.Declaration`    | lets, host bindings, ilks, flocks, bizens, and law proofs                               |
-| `Tung.Dependent.Source`                | public source facade: snapshot compilation and expression queries                       |
-| `Tung.Dependent.Syntax`                | core terms, binder-aware traversals, product telescopes, and application spines         |
-| `Tung.Dependent.Elaboration`           | contextual metavariables, unification, and speculative checking                         |
-| `Tung.Dependent.Check`                 | independent kernel checking and checked environments                                    |
-| `Tung.Dependent.Inductive`             | positivity, inductive families, and generated eliminators                               |
-| `Tung.Dependent.Normalise`             | glued normalisation by evaluation, conversion and display quotation                     |
-| `Tung.Dependent.Universe`              | universe constraints and exact entailment                                               |
-| `Tung.Dependent.Render`                | source-style core rendering, with visible aliases for diagnostics                       |
-| `Tung.Dependent.Host`                  | trusted primitive definitions and host signature checking                               |
-| `Tung.Dependent.Literal`               | literal types and host value conversion                                                 |
-| `Tung.Dependent.Run`                   | erased evaluation and deed execution                                                    |
-| `Tung.Primitive`                       | one host catalogue, nominal constructor identities, and pure operations                 |
-| `Tung.Diagnostic`                      | source failures rendered for command-line and editor clients                            |
+| module                                 | responsibility                                                                                      |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `Tung.Token`                           | lexical syntax and utf-16 source locations                                                          |
+| `Tung.Dependent.Source.Parse`          | declarations, expressions, and compiler source roles                                                |
+| `Tung.Dependent.Source.Syntax`         | one source expression syntax and lexical free-name analysis for types and values                    |
+| `Tung.Dependent.Source.Environment`    | checked module state, checking references, name visibility, exports, and class registries           |
+| `Tung.Dependent.Source.Proof`          | theorem dependency closure, assumption auditing, and axiom policy checking                          |
+| `Tung.Dependent.Source.Render`         | type-directed field names in source types, goals, and proof audits                                  |
+| `Tung.Dependent.Source.Module`         | import graphs, namespaces, and declaration scheduling                                               |
+| `Tung.Dependent.Source.Error`          | structured source failures, locations, and diagnostic context                                       |
+| `Tung.Dependent.Source.Instance`       | dictionary goals, candidate selection, and inherited instance search                                |
+| `Tung.Dependent.Source.Pattern`        | structural and course-of-values recursion lowering; facade for pattern compilation                  |
+| `Tung.Dependent.Source.Pattern.Match`  | pattern matrices, coverage, row splitting, and literal rows                                         |
+| `Tung.Dependent.Source.Pattern.Index`  | index unification and refined motives for indexed splits                                            |
+| `Tung.Dependent.Source.Pattern.Common` | match types, family splits, binder walks, and memo records                                          |
+| `Tung.Dependent.Source.Scope`          | lexical contexts, local binding transitions, and a stack of active recursion evidence               |
+| `Tung.Dependent.Source.Expression`     | bidirectional expression checking, application, field access, matches, and local definitions        |
+| `Tung.Dependent.Source.Elaborate`      | one declaration's elaboration run, checking references, goal rendering, and the unsolved-hole check |
+| `Tung.Dependent.Source.Declaration`    | lets, host bindings, ilks, flocks, bizens, and law proofs                                           |
+| `Tung.Dependent.Source`                | public source facade: snapshot compilation and expression queries                                   |
+| `Tung.Dependent.Syntax`                | core terms, binder-aware traversals, product telescopes, and application spines                     |
+| `Tung.Dependent.Elaboration`           | contextual metavariables, unification, and speculative checking                                     |
+| `Tung.Dependent.Check`                 | independent kernel checking and checked environments                                                |
+| `Tung.Dependent.Inductive`             | positivity, nested specialisation, and checked eliminator rules                                     |
+| `Tung.Dependent.Normalise`             | glued normalisation by evaluation, conversion and display quotation                                 |
+| `Tung.Dependent.Universe`              | universe constraints and exact entailment                                                           |
+| `Tung.Dependent.Render`                | source-style core rendering, with visible aliases for diagnostics                                   |
+| `Tung.Dependent.Host`                  | trusted primitive definitions and host signature checking                                           |
+| `Tung.Dependent.Literal`               | literal types and host value conversion                                                             |
+| `Tung.Dependent.Run`                   | erased evaluation and deed execution                                                                |
+| `Tung.Primitive`                       | one host catalogue, nominal constructor identities, and pure operations                             |
+| `Tung.Diagnostic`                      | source failures rendered for command-line and editor clients                                        |
 
 `Tung` exposeth common source services, diagnostics, metadata, and library and
 project loading. `Tung.Dependent` exposeth the checked core. source compilation
 and erased execution have separate public facades: `Tung.Dependent.Source` and
-`Tung.Dependent.Run`. the previous parser, kind pass, checker, Core lowering,
-and evaluator have been removed. ordinary commands and the editor use the same
-compiler.
-
-this guide describeth the current checker; update its module boundaries when
-they change.
+`Tung.Dependent.Run`. ordinary commands and the editor use the same compiler.
 
 ## projects and imports
 
@@ -133,8 +132,8 @@ reporting diagnostics.
 `compileImports` compileth reached modules once into a map of `SourceProgram`
 values. `compileSnapshot` reuseth that map for a root module and returneth any
 yielded expression. both take parsed snapshots and return structured failures;
-the text and string forms used by tests live in `Test.Compile`. each program holdeth a checked
-kernel environment, checked definitions, visible names, and exported names.
+test adapters live in `Test.Compile`. each program holdeth a checked kernel
+environment, visible names, and exported names.
 `ModuleId` and `SymbolId` preserve nominal identity across aliases and re-exports.
 private definitions remain available to checked terms without becoming visible
 source names.
@@ -151,54 +150,87 @@ not infer types or select instances. each declaration's dependencies are
 computed once. cached environments are merged only after shared definitions
 agree. source spans travel with declarations through scheduling.
 
+`Source.Module` groupeth strongly connected declarations. all-ilk components
+are checked atomically; other declaration cycles are rejected. `Inductive`
+owneth the joint and nested-family certificates described in
+[dependent.md](dependent.md#inductive-declarations-and-proofs).
+
+`Identity.internSymbols` reuseth definition keys through a pure table that
+holdeth only identities. `Source.Environment` interneth a newly checked module's
+own bodies, metadata, checking references, names, and class registries.
+recorded checking results
+share those rewritten bodies. imported definitions are not walked again.
+
 `Source.Cache` keepeth checked imports on disk for command-line runs, in
 `.tung/cache` beside the nearest `tung.yaml`, or beside the file without one.
 a module's key hasheth its source text, its path, its imports' keys, and the
 running compiler's path and modification time, so an edited module, any module
 that reacheth it, and a rebuilt compiler all miss. an interface holdeth only the
-module's own definitions and its exports; loading rebuildeth each environment
-from its imports' interfaces and the primitives, sharing them. a module whose
+module's own definitions, exports, and resolved checking references; loading
+rebuildeth each environment from its imports' interfaces and the primitives,
+sharing them. loading first
+interneth identities across the decoded interfaces and primitives, before
+rebuilding those environments. the binary format still storeth module and name;
+pointer sharing is an optimisation, never the meaning of equality. a module whose
 imports are missing or unparsed hath no key. an unreadable interface is
-ignored, and a failed write leaveth the cache as it was.
+ignored, and a failed write leaveth the cache as it was. an older interface
+without checking references is rejected. reference keys must belong to the
+module, and every referenced symbol must exist in the rebuilt environment.
+loading reuseth trusted checked output; it doth not repeat kernel validation.
 
-one editor session cacheth compiled imports until their source map changeth.
-it cacheth the last root result, including an import failure, until the root text
-or imports change. each source snapshot shareth its located parse between
-import discovery and compilation. filesystem
+one editor session reuseth compiled imports by their transitive interface
+keys. editing an import invalidateth its dependants; unchanged imports remain
+reusable. the session cacheth the last root result, including an import
+failure, until the root text or imports change. each source snapshot shareth
+its located parse between import discovery and compilation. filesystem
 projects retain those snapshots beside their original text and owning paths.
-highlighting hath its own buffer-version cache and needeth no compilation.
+highlighting needeth no compilation.
 
 ## checking and execution
 
+inductive metadata storeth target-labelled recursive fields and checked core
+computation rules. `Inductive` generateth and checketh the rules once;
+`Normalise` and `Run` execute the same terms. nested specialisation is temporary:
+only the restored public families, their constructors and recursors, and private
+transparent target aliases enter the environment. interfaces preserve this
+metadata and the aliases, while source exports contain only declared names.
+
 `Source.Declaration` lowereth data to inductive families and flocks to one-constructor
-dictionary families. members are accessor functions. bizens define dictionary
-functions; instance search resolveth their requirements before kernel checking.
+dictionary families. members are accessor functions. a bizen's named members
+lower to ordinary local bindings and dictionary constructor applications.
+instance search resolveth requirements before kernel checking.
 pattern matches become dependent eliminator applications. structural recursion
 and course-of-values recursion use the same checked elimination rules.
 [`dependent.md`](dependent.md) owneth these semantics and rejection cases.
 
-top-level and local lets share annotation and recursion checking. only the
-top-level caller inserteth the result into the checked environment. type-position annotations share validation and evaluation.
-expected implicit products share one anonymous-binder transition.
+`Elaboration` collecteth resolved references before inference or evaluation can
+erase them. `Source.Elaborate` returneth them with each checked result, and
+`Source.Declaration` attacheth them to the inserted symbols in `SourceProgram`.
+`Source.Module` and `Source.Cache` preserve this graph across imports.
+`Source.Proof.auditProof` traverseth it beside checked types and bodies;
+`verifyProof` applieth the axiom policy. `Main` rendereth one report for both
+the cli and editor. proof auditing addeth no kernel typing or conversion rule.
 
-`Source.Instance` solveth dictionary goals using core types and class registries.
-it hath no source-syntax or declaration-checking dependency. class and instance
-declarations are in `Source.Declaration`. candidates are ordered by priority
-and recency, fallback bizens serve goals whose inputs stay unknown, and
-output parameters are found by search; [`dependent.md`](dependent.md) owneth
-the rules.
-a law is an ordinary member, so a bizen's dictionary is one constructor
-application checked by the kernel. member accessors are built in core from the
-checked constructor as primitive projections (`Field`).
+`Source.recoverSnapshotHoles` provideth diagnostic goals after a checking error.
+`Parse.recoverSnapshot` retaineth complete declarations at unindented heads
+outside balanced delimiters. unfinished delimiters, strings, and comments
+may limit recovery. only fully checked imports provide names.
 
-`Source.Pattern` compileth matches and total recursion to eliminator applications.
-it calleth inference, checking, and application callbacks supplied by `Source.Expression`
-for scrutinees and row bodies. row validation, constructor-field alignment,
-column projection, and pattern intersection are shared between ordinary matches
-and recursive clause collection. original row identities survive projection
-for coverage and redundancy checks. case functions and recursive clause
-collection share one product walk; implicit inputs do not consume patterns.
-both paths retain semantic input domains and share lambda reconstruction.
+`Elaboration.recover` retaineth inference state so encountered holes can show
+their goals and named contexts after failure. speculative attempts still
+restore their state on failure. `Source.Declaration.recoverDeclarations`
+returneth goals separately from its checked result. failed declaration groups
+and their dependants never enter the private recovery environment; independent
+root goals may still use primitives and checked imports. the cli and editor
+show these goals beside the original diagnostic. proof auditing, type queries,
+and execution retain strict compilation.
+
+`Source.Instance` solveth dictionary goals from core types and class registries;
+it hath no source-syntax or declaration-checking dependency.
+`Source.Declaration` lowereth the named syntax to ordinary dictionary terms.
+`Source.Pattern` lowereth matching and recursion through the expression callbacks
+in its `ExpressionChecker`. the algorithms and rejection rules belong to
+[dependent.md](dependent.md#pattern-matching-and-recursion).
 
 `Syntax` owneth pure core decomposition, application construction, local
 shifting, and universe traversal and substitution. `mapChildren` owneth each
@@ -209,25 +241,10 @@ source elaboration use these same operations. universe
 constraint solving remaineth in `Universe`; semantic neutral spines remain
 in `Normalise` and serve inference too.
 
-recursion candidate selection checketh eliminator lowerings inside
-`Elaboration.trial`, using the same expression callbacks and normalised
-argument values as branch checking. there is no separate syntax walk to decide
-which names are descendants. `Source.Scope` shareth ordinary local binding
-transitions and a stack of induction contexts. nested definitions push a new
-context without discarding enclosing ones; nested matches carry and refine
-every applicable memo record. no module importeth the source facade to call
-back into it.
-
-`Source.Syntax.freeNames` shareth lexical name analysis between declaration
-scheduling and recursion detection. callers supply constructor recognition for
-patterns; annotations and initialisers see only earlier bindings.
-
-`Elaboration` useth typed contextual holes. `attempt`, `probe`, and `speculate`
-share `trial`, which snapshotteth metavariable and universe state. failed trials
-roll back; successful trials commit only when selected. universe holes may generalise under valid constraints;
-term holes must disappear before the independent kernel accepteth a definition.
-each run carrieth the definitions in scope, given to `runElaboration`, so
-elaboration functions take no globals argument.
+`Source.Scope` owneth local transitions and the active induction contexts.
+`Source.Syntax.freeNames` serveth declaration scheduling and recursion detection.
+`Elaboration.trial` snapshotteth holes, universes, and resolved references;
+failed trials restore all three. no lower layer importeth the source facade.
 
 `Source.Error` keepeth failure text separate from its optional source span.
 elaboration retaineth the innermost failing expression's span. declaration and
@@ -260,7 +277,9 @@ no shape matching or built-in bizen. `deed` and `task` are opaque primitive
 families; they have no constructor schema or eliminator.
 
 `Test.Harness` compileth reusable bookhoard imports once per test process. a test
-that replaceth a library source invalidateth that cache. successful evaluation cases
+that replaceth a library source invalidateth that cache. the runner forceth each
+outcome before starting the next test, so successful checks do not retain
+deferred work. successful evaluation cases
 assert exact results. rejected cases exercise the compiler before execution.
 `Test.Program` compareth generated checked programs against independent host
 results; dependent groups cover kernel and source rules directly.
@@ -283,15 +302,31 @@ the compiler and extension must use the same protocol version.
 
 - requests contain `protocol: 1`, `id`, document `version`, `command`, `name`,
   `source`, and `imports`. imports map use paths to source text, including
-  unsaved buffers. the client allocateth unique increasing request ids.
+  unsaved buffers. the client allocateth unique increasing request ids. a
+  request for a file document also carrieth its `path`.
+- the session keepeth checked imports by interface key, so a change to one
+  import rechecketh only its dependants. a request with `path` also loadeth
+  and saveth interfaces in that project's `.tung/cache`, shared with
+  command-line runs.
 - responses contain `protocol: 1`, the request `id` and `version`, and `result`.
-  the result's `kind` is `check`, `type`, `format`, `highlight`, or `error`.
+  the result's `kind` is `check`, `type`, `proof`, `format`, `highlight`, or `error`.
 - `check` returneth `diagnostics`; `type` returneth `type`; `format` returneth
   `source`; `highlight` returneth `roles`; infrastructure errors return `message`.
+- `proof` taketh `name` and optional `allowedAxioms`; an absent policy useth
+  the nearest project manifest. it returneth `audit` (`name`, `type`, and
+  `dependencies`), `verified`, `message`, and the shared cli `report`.
+  each dependency hath a nominal `symbol` (`module`, `name`), display `name`,
+  `type`, and `kind` (`sorry`, `axiom`, or `host`); host entries also contain
+  their catalogue key in `host`. checking errors return `error`; a completed
+  audit that faileth its policy still returneth its dependencies and
+  `verified: false`. clients never reconstruct dependency graphs from source.
+  the language server discardeth a proof result if the root version or text,
+  or any captured import text, changeth during the request.
 - diagnostics contain `kind` (`parse`, `type`, or `goal`), optional import
   `path`, utf-16 `start` and `end`, and `message`. an empty array is success.
   goals are informational diagnostics, with their named context in the message.
-- `outstrike` useth the target request id. late replies to cancelled requests are
+  a failed check may return the original error beside recoverable root goals.
+- `cancel` useth the target request id. late replies to cancelled requests are
   ignored. cancellation cannot interrupt a response line halfway through.
 - malformed requests terminate the session. malformed replies, unsupported
   protocol versions, and mismatched live replies settle all pending client
@@ -301,19 +336,23 @@ the compiler and extension must use the same protocol version.
   failure useth the start of its owning file; no client parseth error prose to
   reconstruct a location.
 
-`Source.elaborateHoles` renderth goals once a declaration's instances are chosen;
-the `sourceHoles` query returneth them per module.
+`Source.Elaborate.elaborateHoles` rendereth successful goals after instance
+selection. diagnostic recovery also rendereth encountered goals after failure;
+`sourceHoles` returneth goals from a checked module.
 `tung --language-metadata` emiteth
 compiler-owned lexical names for editor clients. [`vscode/`](../vscode/) owneth
 the language server, generated metadata, and editor tests.
 
 the parser emiteth source roles alongside its result. highlighting retaineth
 partial roles on failure and retryeth bounded declarations. it doth not check
-types or load imports. the editor cacheth roles per buffer version and cancelleth
-obsolete requests. textmate supplieth immediate lexical colours. navigation
-useth the same roles: `vscode/server/analysis.ts` joineth them with token
-structure, scopes, docs, and imports, and the workspace fetcheth missing roles
-before each request. the editor doth not classify tokens itself.
+types or load imports. `WorkspaceIndex` owneth one pending or resolved role
+request per document text and version. navigation and highlighting share that
+request; edits cancel it, and obsolete replies cannot repopulate the cache.
+textmate supplieth immediate lexical colours. `vscode/server/analysis.ts`
+joineth compiler roles with token structure, scopes, docs, and imports; the
+workspace fetcheth missing roles before navigation. the editor doth not
+classify tokens itself. one builder createth definitions from those roles;
+pattern arms supply narrower scopes rather than a second set of definitions.
 after building both components, `npm run benchmark:highlight --workspace=tung-vscode`
 measureth fresh and cached highlighting on library files and incomplete buffers.
 
@@ -331,36 +370,8 @@ commit hashes have no useful version order. the resolver cannot choose a newer
 pin or silently override an exact requirement. one library name must also
 resolve to the same local path throughout the graph.
 
-other dependency managers differ:
-
-- [go modules](https://go.dev/ref/mod#minimal-version-selection) select one
-  version per module path from _minimum_ version requirements.
-- [cargo](https://doc.rust-lang.org/cargo/reference/resolver.html#semver-compatibility)
-  unifieth compatible versions but may retain distinct incompatible versions.
-- [node.js](https://nodejs.org/api/modules.html#loading-from-node_modules-folders)
-  may resolve dependencies from separate package directories.
-
-this exact-pin rule followeth tung's flat namespace. it is not universal for
-indirect dependencies.
-
 the compiler buildeth independently of bookhoard. ci and local development
 resolve its source from `bookhoard/` through the same manifest.
-
-## reference model
-
-tung adapteth established work without copying its syntax:
-
-- damas and milner ground instantiation and unification.
-- wadler and blott ground qualified polymorphism and explicit evidence.
-- haskell `IO` and purescript `Effect` ground the inert deed type and its
-  monad interface.
-- intensional dependent type theory ground universes, products, inductive
-  families, and computational conversion.
-
-purescript informeth strict functional module and class boundaries. lean and
-mathlib inform lawful algebra and finite-collection distinctions. detailed
-bookhoard comparisons live in the
-[bookhoard reference guide](../bookhoard/reference.md).
 
 ## structural decisions
 
@@ -386,14 +397,3 @@ alternative.
   transformer stack would not shrink it.
 - the editor's tolerant typescript lexer serveth incomplete buffers that the
   compiler's lexer rejecteth.
-- scope-indexed syntax was prototyped and not adopted: it established
-  lexical scope only and left contexts, closures, quotation, pruning, and
-  conversion to migrate. `Syntax.traverseScoped` shareth the recursive walks
-  instead.
-- a private checked-judgement capsule was assessed and not adopted. source expression
-  normalisation already validateth once. the yield compiler also validateth
-  once, but public `runYield` must recheck its editable `Inferred` input.
-  retaining both raw and trusted execution APIs would add code to save only
-  that repeated yield check. public program accessors instead preserve the
-  environment boundary, and a regression rejecteth a judgement borrowed from
-  a different program with the same symbol identity.

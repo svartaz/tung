@@ -25,8 +25,8 @@ tests compiled example =
     expectEq "an environment variable is an maybe" (Right (Right 0, "hello\nabsent\n")) $
       output
         ( host
-            ++ "let environment:[text, (text maybe) deed] ≔ 'environment' fremmed\n"
-            ++ "let lookup:[text, 𝟙 deed] ≔ {name ^ (name environment) deed_bind {none ^ 'absent' line, worth some ^ worth line}}\n"
+            ++ "let environment:[string, (string maybe) deed] ≔ 'environment' fremmed\n"
+            ++ "let lookup:[string, 𝟙 deed] ≔ {name ^ (name environment) deed_bind {none ^ 'absent' line, worth some ^ worth line}}\n"
             ++ "let main:𝟙 deed ≔ ('GREETING' lookup) then ('OTHER' lookup)\n"
         )
         world {worldEnvironment = [("GREETING", "hello")]},

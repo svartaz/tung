@@ -1,5 +1,6 @@
 use flock/algebra/half/category.tung
 use flock/algebra/half/semigroupoid.tung
+use is.tung
 
 show flock groupoid: [⇨: [*, *, *], @: ⇨ category, *] {
   let witherwend: [@α: *, @β: *, α ⇨ β, β ⇨ α]

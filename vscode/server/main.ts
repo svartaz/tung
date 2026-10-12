@@ -5,6 +5,7 @@ import * as path from "node:path";
 import {
   CompletionItemKind,
   createConnection,
+  type Diagnostic,
   DiagnosticSeverity,
   DidChangeWatchedFilesNotification,
   DocumentHighlightKind,
@@ -33,7 +34,6 @@ import {
 import { languageNames } from "./syntax.ts";
 import { toFilePath, uniqueByKey, WorkspaceIndex } from "./workspace.ts";
 import {
-  HighlightCache,
   buildHighlightRanges,
   tokenModifiers,
   tokenTypes,
@@ -52,7 +52,6 @@ const navigation =
     await workspace.ready();
     return await handler(...parameters);
   };
-const highlights = new HighlightCache(compiler);
 const timers = new Map();
 const checks = new Map();
 const diagnosticReports = new Map();
@@ -141,13 +140,92 @@ connection.onInitialized(() => {
     .catch(() => {});
 });
 connection.onShutdown(() => {
-  highlights.clear();
+  workspace.clearRoles();
   compiler.dispose();
   return null;
 });
 connection.onRequest("tung/executable", () => compiler.findExecutable());
 connection.onRequest("tung/libraryPath", () =>
   localLibraryRoots.join(path.delimiter),
+);
+connection.onRequest(
+  "tung/checkProof",
+  navigation(
+    async ({ textDocument, position, name, allowedAxioms }, cancellation) => {
+      if (libraryResolutionError)
+        return {
+          kind: "error",
+          message: `project error: ${libraryResolutionError}`,
+        };
+      const model = workspace.model(textDocument.uri);
+      if (!model)
+        return { kind: "error", message: "open a tung file to check a proof" };
+      const document = documents.get(textDocument.uri);
+      const version = document?.version ?? 0;
+      const offset = position ? document?.offsetAt(position) : undefined;
+      const region =
+        offset === undefined
+          ? undefined
+          : smallestRegion(
+              model.regions.filter(
+                (candidate) =>
+                  candidate.depth === 0 && candidate.kind === "let",
+              ),
+              offset,
+            );
+      const declaration =
+        region &&
+        model.definitions.find(
+          (definition) =>
+            definition.topLevel &&
+            definition.token.index > region.startIndex &&
+            definition.token.index <= region.headerEnd,
+        );
+      const selected =
+        typeof name === "string" && name.trim()
+          ? name.trim()
+          : declaration?.name;
+      if (!selected)
+        return {
+          kind: "error",
+          message:
+            "select a proof name or place the cursor in its top-level let declaration",
+        };
+      const imports = workspace.importSources(model);
+      const running = compiler.proof(
+        model,
+        imports,
+        selected,
+        version,
+        allowedAxioms,
+      );
+      const cancelled = cancellation?.onCancellationRequested(() =>
+        running.cancel(),
+      );
+      try {
+        const result = await running.result;
+        const current = workspace.model(textDocument.uri);
+        const currentImports = workspace.importSources(current);
+        if (
+          (documents.get(textDocument.uri)?.version ?? 0) !== version ||
+          current?.text !== model.text ||
+          currentImports.length !== imports.length ||
+          currentImports.some(
+            ([path, text], index) =>
+              path !== imports[index][0] || text !== imports[index][1],
+          )
+        )
+          return {
+            kind: "error",
+            message:
+              "the proof source or its imports changed; check the proof again",
+          };
+        return result;
+      } finally {
+        cancelled?.dispose();
+      }
+    },
+  ),
 );
 process.on("exit", () => compiler.dispose());
 connection.onNotification(
@@ -286,21 +364,12 @@ connection.onHover(
       : null;
   }),
 );
-connection.onDefinition(
-  navigation(({ textDocument, position }) =>
-    definitionLocation(textDocument.uri, position),
-  ),
+const navigateToDefinition = navigation(({ textDocument, position }) =>
+  definitionLocation(textDocument.uri, position),
 );
-connection.onDeclaration(
-  navigation(({ textDocument, position }) =>
-    definitionLocation(textDocument.uri, position),
-  ),
-);
-connection.onTypeDefinition(
-  navigation(({ textDocument, position }) =>
-    definitionLocation(textDocument.uri, position),
-  ),
-);
+connection.onDefinition(navigateToDefinition);
+connection.onDeclaration(navigateToDefinition);
+connection.onTypeDefinition(navigateToDefinition);
 connection.onImplementation(
   navigation(({ textDocument, position }) => {
     const { definition } = workspace.resolveAt(textDocument.uri, position);
@@ -486,7 +555,6 @@ documents.onDidOpen(({ document }) => {
   checkAllOpenDocuments();
 });
 documents.onDidChangeContent(({ document }) => {
-  highlights.invalidate(document.uri);
   workspace.invalidate(document.uri);
   clearTypeCache(document.uri);
   scheduleCheck(document);
@@ -502,14 +570,13 @@ documents.onDidSave(({ document }) => {
   clearTypeCache(document.uri);
 });
 documents.onDidClose(({ document }) => {
-  highlights.invalidate(document.uri);
   cancelCheck(document.uri);
   configureWorkspace();
   workspace.invalidate(document.uri);
   const previous = diagnosticReports.get(document.uri);
   diagnosticReports.delete(document.uri);
   goalReports.delete(document.uri);
-  refreshDiagnostics(previous?.targetUri);
+  for (const { targetUri } of previous || []) refreshDiagnostics(targetUri);
   refreshDiagnostics(document.uri);
   checkAllOpenDocuments();
 });
@@ -521,7 +588,7 @@ const semanticTokens = async (uri, requestedRange = undefined) => {
   if (!document) return builder.build();
   const source = document.getText();
   const version = document.version;
-  const roles = await highlights.get(uri, source, version);
+  const roles = await workspace.roles(uri, source, version);
   await workspace.ready();
   if (documents.get(uri)?.version !== version) return builder.build();
   const resolve = (token) =>
@@ -658,16 +725,11 @@ const publish = (document, diagnostic, goals = []) => {
   const message =
     typeof diagnostic === "string" ? diagnostic : diagnostic?.message;
   const owner = diagnosticOwner(document, diagnostic);
-  const items = message
-    ? [
-        {
-          range: errorRange(owner, diagnostic),
-          severity: DiagnosticSeverity.Error,
-          source: "tung",
-          message,
-        },
-      ]
-    : goals.map(({ start, end, message: goal }) => ({
+  // a root buffer's goals retain their locations when an import hath an error.
+  const items: { targetUri: string; diagnostic: Diagnostic }[] = goals.map(
+    ({ start, end, message: goal }) => ({
+      targetUri: document.uri,
+      diagnostic: {
         range: {
           start: document.positionAt(start),
           end: document.positionAt(end),
@@ -675,18 +737,31 @@ const publish = (document, diagnostic, goals = []) => {
         severity: DiagnosticSeverity.Information,
         source: "tung",
         message: goal,
-      }));
-  if (items.length) {
-    diagnosticReports.set(document.uri, {
+      },
+    }),
+  );
+  if (message) {
+    items.unshift({
       targetUri: owner.uri,
-      items,
+      diagnostic: {
+        range: errorRange(owner, diagnostic),
+        severity: DiagnosticSeverity.Error,
+        source: "tung",
+        message,
+      },
     });
+  }
+  if (items.length) {
+    diagnosticReports.set(document.uri, items);
   } else {
     diagnosticReports.delete(document.uri);
   }
-  refreshDiagnostics(previous?.targetUri);
-  refreshDiagnostics(document.uri);
-  refreshDiagnostics(owner.uri);
+  for (const uri of new Set([
+    document.uri,
+    ...[...(previous || []), ...items].map(({ targetUri }) => targetUri),
+  ])) {
+    refreshDiagnostics(uri);
+  }
 };
 const diagnosticOwner = (document, diagnostic) => {
   if (typeof diagnostic !== "string" && diagnostic?.path) {
@@ -705,8 +780,9 @@ const refreshDiagnostics = (uri) => {
   if (!uri) return;
   const items = uniqueByKey(
     [...diagnosticReports.values()]
+      .flat()
       .filter(({ targetUri }) => targetUri === uri)
-      .flatMap(({ items: reported }) => reported),
+      .map(({ diagnostic }) => diagnostic),
     ({ range, message }) =>
       `${range.start.line}:${range.start.character}:${range.end.line}:${range.end.character}:${message}`,
   );
@@ -755,36 +831,20 @@ const definitionCompletion = (definition) => {
         : `1-${label}`,
   };
 };
-const completionKind = (role) => {
-  return (
-    {
-      namespace: CompletionItemKind.Module,
-      type: CompletionItemKind.TypeParameter,
-      class: CompletionItemKind.Interface,
-      function: CompletionItemKind.Function,
-      method: CompletionItemKind.Method,
-      variable: CompletionItemKind.Variable,
-      parameter: CompletionItemKind.Variable,
-      property: CompletionItemKind.Field,
-      enumMember: CompletionItemKind.EnumMember,
-    }[role] || CompletionItemKind.Text
-  );
+const roleKinds: Record<string, [CompletionItemKind, SymbolKind]> = {
+  namespace: [CompletionItemKind.Module, SymbolKind.Namespace],
+  type: [CompletionItemKind.TypeParameter, SymbolKind.TypeParameter],
+  class: [CompletionItemKind.Interface, SymbolKind.Interface],
+  function: [CompletionItemKind.Function, SymbolKind.Function],
+  method: [CompletionItemKind.Method, SymbolKind.Method],
+  variable: [CompletionItemKind.Variable, SymbolKind.Variable],
+  parameter: [CompletionItemKind.Variable, SymbolKind.Variable],
+  property: [CompletionItemKind.Field, SymbolKind.Field],
+  enumMember: [CompletionItemKind.EnumMember, SymbolKind.EnumMember],
 };
-const symbolKind = (role) => {
-  return (
-    {
-      namespace: SymbolKind.Namespace,
-      type: SymbolKind.TypeParameter,
-      class: SymbolKind.Interface,
-      function: SymbolKind.Function,
-      method: SymbolKind.Method,
-      variable: SymbolKind.Variable,
-      parameter: SymbolKind.Variable,
-      property: SymbolKind.Field,
-      enumMember: SymbolKind.EnumMember,
-    }[role] || SymbolKind.String
-  );
-};
+const completionKind = (role) =>
+  roleKinds[role]?.[0] || CompletionItemKind.Text;
+const symbolKind = (role) => roleKinds[role]?.[1] || SymbolKind.String;
 const roleDescription = (definition) => {
   const where =
     definition.uri && toFilePath(definition.uri)
@@ -876,7 +936,7 @@ const configureWorkspace = () => {
       (root, index) => root !== localLibraryRoots[index],
     )
   ) {
-    highlights.clear();
+    workspace.clearRoles();
   }
   compiler.configure(tongueDir, localLibraryRoots, executable);
   let declared: string[] = [];

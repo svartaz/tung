@@ -1,0 +1,65 @@
+use _foreign.tung
+use flock/algebra/whole/monoid_fold.tung
+use flock/algebra/whole/semigroup_fold.tung
+use flock/hath_same.tung
+use flock/order/hath_at_most.tung
+use flock/order/order_half.tung
+use flock/order/order_whole.tung
+use ilk/list.tung
+use ilk/maybe.tung
+use ilk/product.tung
+use ilk/two.tung
+
+show let string_to_list: [string, unicode list] ≔ 'string_to_list' fremmed
+show let list_to_string: [unicode list, string] ≔ 'list_to_string' fremmed
+
+bizen: string hath_≍ {
+  let ≍ ≔ same_string
+}
+
+bizen: unicode hath_≍ {
+  let ≍ ≔ same_unicode
+}
+
+bizen: string hath_≤ {
+  let ≤ ≔ at_most_string
+}
+
+bizen: string order_half {
+  let ≤_eftbend ≔ sorry
+  let ≤_witherevenmete ≔ sorry
+  let ≤_throughgo ≔ sorry
+}
+
+bizen: string order_whole {
+  let ≤_whole ≔ sorry
+  let ≤_= ≔ sorry
+}
+
+bizen: unicode hath_≤ {
+  let ≤ ≔ at_most_unicode
+}
+
+bizen: unicode order_half {
+  let ≤_eftbend ≔ sorry
+  let ≤_witherevenmete ≔ sorry
+  let ≤_throughgo ≔ sorry
+}
+
+bizen: unicode order_whole {
+  let ≤_whole ≔ sorry
+  let ≤_= ≔ sorry
+}
+
+bizen: string semigroup_· {
+  let · ≔ yoke_string
+
+  let ·_· ≔ sorry
+}
+
+bizen: string monoid_· {
+  let one ≔ ''
+
+  let one_· ≔ sorry
+  let ·_one ≔ sorry
+}

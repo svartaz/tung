@@ -3,6 +3,7 @@ module Main where
 import Test.Bookhoard qualified as Bookhoard
 import Test.Dependent qualified as Dependent
 import Test.DependentDeed qualified as DependentDeed
+import Test.DependentField qualified as DependentField
 import Test.DependentFlock qualified as DependentFlock
 import Test.DependentHost qualified as DependentHost
 import Test.DependentInductive qualified as DependentInductive
@@ -11,7 +12,6 @@ import Test.DependentList qualified as DependentList
 import Test.DependentLiteral qualified as DependentLiteral
 import Test.DependentMatch qualified as DependentMatch
 import Test.DependentModule qualified as DependentModule
-import Test.DependentRecord qualified as DependentRecord
 import Test.DependentRecursion qualified as DependentRecursion
 import Test.DependentSource qualified as DependentSource
 import Test.Diagnostic qualified as Diagnostic
@@ -54,7 +54,7 @@ main =
       ("dependent-literal", DependentLiteral.group),
       ("dependent_match", DependentMatch.group),
       ("dependent-module", DependentModule.group),
-      ("dependent-record", DependentRecord.group),
+      ("dependent-field", DependentField.group),
       ("dependent-recursion", DependentRecursion.group),
       ("dependent-source", DependentSource.group),
       ("diagnostic", Diagnostic.group),

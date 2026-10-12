@@ -1,7 +1,7 @@
 -- project loading tests filesystem discovery without involving cli presentation.
 module Test.Project (group) where
 
-import Control.Exception (bracket)
+import Control.Exception (bracket, evaluate)
 import Data.List (isInfixOf)
 import Data.Map.Strict qualified as Map
 import Data.Time.Clock.POSIX (getPOSIXTime)
@@ -14,11 +14,14 @@ import System.Directory
     removePathForcibly,
   )
 import System.FilePath (takeDirectory, (</>))
-import Test.Compile (compileProject)
+import System.Mem.StableName (makeStableName)
+import Test.Compile (compileProject, compileProjectWith)
+import Test.DependentSupport (equalitySource)
 import Test.Harness (Group, Test, expect, expectEq)
 import Test.Harness qualified as Harness
 import Tung (ModuleId (..), Project (..), loadProjectFile)
-import Tung.Dependent.Source (cacheKeys, compileImports, loadInterfaces, saveInterfaces, sourceEnvironment, sourceExports, sourceSnapshot, typeOfName)
+import Tung.Dependent (HostLiteral (..), Level (LParam), SymbolId (..), Term (Global, Literal))
+import Tung.Dependent.Source (DependencyKind (..), ProofDependency (..), auditDependencies, auditProof, cacheKeys, compileImports, loadInterfaces, normaliseSourceExpression, saveInterfaces, sourceEnvironment, sourceExports, sourceGlobal, sourceSnapshot, typeOfName, verifyProof)
 
 group :: IO Group
 group =
@@ -34,6 +37,7 @@ group =
       ambiguousRelativeImport,
       canonicalAlias,
       interfaceRoundTrip,
+      interfaceProofAudit,
       interfaceKeys
     ]
 
@@ -171,18 +175,134 @@ temporaryDirectory = do
   createDirectory path
   pure path
 
--- a saved interface reloadeth to the same environment and exports.
+-- interfaces preserve private bodies, class registries, re-exports, and nominal
+-- identities. repeated references share one symbol after checking and loading.
 interfaceRoundTrip :: Test
 interfaceRoundTrip = withDirectory \root -> do
-  let modules = Map.map sourceSnapshot (Map.fromList [("a.tung", "use b.tung show let a ≔ b"), ("b.tung", "show ilk two:* { one:two, other:two } show let b ≔ one")])
+  let modules = Map.map sourceSnapshot (Map.fromList sources)
       keys = cacheKeys "build" modules
   case compileImports Map.empty modules ["a.tung"] of
     Left failure -> pure (Just (show failure))
     Right compiled -> do
       saveInterfaces root keys compiled
       loaded <- loadInterfaces root modules keys
+      sharing <- traverse shared [compiled, loaded]
       let same path = (sourceEnvironment <$> Map.lookup path loaded) == (sourceEnvironment <$> Map.lookup path compiled) && (sourceExports <$> Map.lookup path loaded) == (sourceExports <$> Map.lookup path compiled)
-      expect "an interface reloadeth to the same environment and exports" (Map.keys loaded == Map.keys compiled && all same (Map.keys compiled))
+      expectEq
+        "interfaces preserve checking, exports, nominal identity, and symbol sharing"
+        (True, [Right expected, Right expected], [True, True])
+        ( Map.keys loaded == Map.keys compiled && all same (Map.keys compiled),
+          map checked [compiled, loaded],
+          sharing
+        )
+  where
+    sources =
+      [ ( "a.tung",
+          """
+          use b.tung base
+          use c.tung different
+          show base~two
+          show base~one
+          show base~keep
+          show base~rose_sample
+          show base~depth
+          show base~keeps
+          show let a:base~two ≔ base~worth base~keep
+          show let number ≔ base~number
+          """
+        ),
+        ( "b.tung",
+          """
+          show ilk two:* { one:two, other:two }
+          show flock keeps:[α:*, *] { let keep:[α, α] }
+          bizen:two keeps { let keep:[x:] ≔ x }
+          let secret:two ≔ one
+          show let worth:two ≔ secret keep
+          show let number ≔ +7
+          ilk box:[α:*, *] { pack:[α, α box] }
+          ilk rose:* { leaf:rose, node:[rose box, rose] }
+          show let rose_sample:rose ≔ (leaf pack @rose) node
+          show let depth:[rose, ℕ] ≔
+            {_:rose ^ ℕ} unbuild rose {_:rose box ^ ℕ}
+              0 {child:rose box ^ {below:ℕ ^ below heir}}
+              {child:rose ^ {below:ℕ ^ below}}
+          """
+        ),
+        ("c.tung", "show ilk two:* { one:two }")
+      ]
+    checked compiled = do
+      program <- rootProgram compiled
+      traverse (normaliseSourceExpression program) ["answer", "number", "different~one", "shared~rose_sample shared~depth"]
+    rootProgram compiled = compileProjectWith compiled RootModule rootSource Map.empty
+    rootSource =
+      """
+      use a.tung shared
+      use c.tung different
+      let answer:shared~two ≔ shared~a shared~keep
+      let number:ℤ ≔ shared~number
+      """
+    expected = [Global (SymbolId (SourceModule "b.tung") "one") [LParam 0], Literal (SymbolId PrimitiveModule "ℤ") (IntegerValue 7), Global (SymbolId (SourceModule "c.tung") "one") [LParam 0], Literal (SymbolId PrimitiveModule "ℕ") (NaturalValue 1)]
+    shared programs = case references programs of
+      Nothing -> pure False
+      Just symbols -> do
+        names <- traverse (\symbol -> evaluate symbol >>= makeStableName) symbols
+        pure case names of
+          first : rest -> all (== first) rest
+          [] -> False
+    references programs = do
+      defining <- Map.lookup "b.tung" programs
+      using <- either (const Nothing) Just (rootProgram programs)
+      original <- sourceGlobal defining "one"
+      exported <- sourceGlobal using "shared~one"
+      case normaliseSourceExpression using "answer" of
+        Right (Global used _) -> Just [original, exported, used]
+        _ -> Nothing
+
+interfaceProofAudit :: Test
+interfaceProofAudit = withDirectory \root -> do
+  let modules = Map.map sourceSnapshot (Map.fromList sources)
+      keys = cacheKeys "proof-audit" modules
+  case compileImports Map.empty modules ["a.tung"] of
+    Left failure -> pure (Just (show failure))
+    Right compiled -> do
+      saveInterfaces root keys compiled
+      loaded <- loadInterfaces root modules keys
+      expectEq
+        "proof dependencies and policies survive a disk interface round trip"
+        [Right expected, Right expected]
+        (map checked [compiled, loaded])
+  where
+    sources =
+      [ ("a.tung", "use b.tung source\nshow source~visible\nshow source~computed\nshow let theorem:ℕ ≔ source~secret"),
+        ( "b.tung",
+          equalitySource
+            ++ """
+               show orsetting visible:ℕ
+               orsetting hidden:ℕ
+               let ignore:[ℕ,*] ≔ {_ ^ ℕ}
+               let annotation:* ≔ hidden ignore
+               show let secret:annotation ≔ 0
+               let add:[ℕ,ℕ,ℕ] ≔ 'eke_natural' fremmed
+               show let computed:(0 add 0) = 0 ≔ eftbend
+               """
+        )
+      ]
+    source = "use a.tung shared\nlet selected:ℕ ≔ shared~theorem\nlet allowed:ℕ ≔ shared~visible\nlet computed ≔ shared~computed"
+    checked compiled = do
+      program <- compileProjectWith compiled RootModule source Map.empty
+      selected <- auditProof program "selected"
+      allowed <- auditProof program "allowed"
+      computed <- auditProof program "computed"
+      pure
+        ( [[(dependencySymbol, dependencyKind) | ProofDependency {..} <- auditDependencies audited] | audited <- [selected, allowed, computed]],
+          verifyProof program Nothing selected,
+          verifyProof program (Just ["shared~visible"]) allowed
+        )
+    expected =
+      ( [[(SymbolId (SourceModule "b.tung") "hidden", AxiomDependency)], [(SymbolId (SourceModule "b.tung") "visible", AxiomDependency)], [(SymbolId (SourceModule "b.tung") "add", HostDependency "eke_natural")]],
+        Right (),
+        Right ()
+      )
 
 -- a key changeth with its own text, an import's text, and the build, and a
 -- module with a missing import hath none.

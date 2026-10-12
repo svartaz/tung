@@ -34,7 +34,7 @@ yieldTests =
       transferred <- traverse (\owner -> runYield host owner borrowed) [first, second]
       expectEq
         "yield validateth its judgement in the supplied environment before erasure"
-        [Right "+7", Left "cannot unify ℤ with *", Right "+7", Left "cannot unify text with ℤ"]
+        [Right "+7", Left "cannot unify ℤ with *", Right "+7", Left "cannot unify string with ℤ"]
         (map (fmap renderRuntime) (actual ++ transferred))
   ]
 
@@ -54,8 +54,9 @@ tests library example =
       run
         ( prelude
             ++ """
+               ilk box: * { box_of: [nested: ℤ maybe, box] }
                let main:𝟙 deed ≔
-                 (r{nested ≔ (sorry:ℤ) some} deed_sheer) deed_bind {_ ^ 'never' write}
+                 ((((sorry:ℤ) some) box_of) deed_sheer) deed_bind {_ ^ 'never' write}
 
                """
         )
@@ -64,10 +65,10 @@ tests library example =
       run
         ( prelude
             ++ """
-               let plus:[ℤ, ℤ, ℤ] ≔ 'eke_integer' fremmed
+               let plus:[ℤ, ℤ, ℤ] ≔ 'eke_wholetale' fremmed
                let collect:[ℤ, 𝟙 deed] deed ≔ {again ^
                  {whole ^ read deed_bind {
-                   none ^ (whole integer_to_text) write,
+                   none ^ (whole wholetale_to_string) write,
                    _ some ^ (whole plus +1) deed_sheer $ deed_bind {next ^
                      again deed_bind {loop ^ next loop}
                    }
@@ -83,16 +84,14 @@ tests library example =
       left <- normaliseSourceExpression program "(only deed_sheer) deed_bind {x ^ x deed_sheer}"
       right <- normaliseSourceExpression program "only deed_sheer"
       pure (eraseLevels left == eraseLevels right),
-    expectEq "same text literals convert and different ones do not" (Right [True, False]) $ do
+    expectEq "same string literals convert and different ones do not" (Right [True, False]) $ do
       program <- compile (prelude ++ "ilk same:[@α:*, x:α, [α, *]] { refl:(x same @α x) }\n")
       pure [either (const False) (const True) (inferSourceExpression program source) | source <- ["(refl : 'a' same 'a')", "(refl : 'a' same 'b')"]],
-    expectEq "a text literal hath the primitive text type" (Right True) $ do
+    expectEq "a string literal hath the primitive string type" (Right True) $ do
       program <- compile prelude
       literal <- inferSourceExpression program "'hello'"
-      text <- normaliseSourceExpression program "text"
+      text <- normaliseSourceExpression program "string"
       pure (eraseLevels (inferredType literal) == eraseLevels text),
-    rejectContaining "a text literal cannot inhabit another type" "cannot unify" $
-      compile (prelude ++ "let wrong:𝟙 ≔ 'hello'\n"),
     rejectContaining "an unknown host key is rejected" "unknown host key 'launch'" $
       compile "let launch:* ≔ 'launch' fremmed\n",
     rejectContaining "a host type must match its catalogue signature" "requireth a different type" $
@@ -100,9 +99,9 @@ tests library example =
     rejectContaining "a deed operation cannot use a different deed type" "requireth a different type" $
       compile "ilk _box:[α:*, *] { box:[α, α _box] }\nlet sheer:[@α:*, α, α _box] ≔ 'deed_sheer' fremmed\n",
     rejectContaining "host data is identified by its declaration" "requireth a different type" $
-      compile "ilk 𝟙:* { only:𝟙 }\nlet write:[text, 𝟙 deed] ≔ 'write' fremmed\n",
+      compile "ilk 𝟙:* { only:𝟙 }\nlet write:[string, 𝟙 deed] ≔ 'write' fremmed\n",
     rejectContaining "one host key cannot be bound twice" "already bound" $
-      compile (prelude ++ "let other:[text, 𝟙 deed] ≔ 'write' fremmed\n"),
+      compile (prelude ++ "let other:[string, 𝟙 deed] ≔ 'write' fremmed\n"),
     -- a model is the binding's body: checked against its annotation, with
     -- calls of its own name as structural recursion, for a pure operation.
     rejectContaining "a model is checked against the binding's type" "cannot unify" $
@@ -116,11 +115,11 @@ tests library example =
     rejectContaining "fremmed cannot appear inside an expression" "only an annotated top-level let" $
       parseSource "let worth:* ≔ ('deed' fremmed)\n",
     rejectContaining "fremmed bindings cannot enter a let block" "must be top-level" $
-      parseSource "let worth ≔ (let write:[text, 𝟙 deed] ≔ 'write' fremmed yield *)\n",
+      parseSource "let worth ≔ (let write:[string, 𝟙 deed] ≔ 'write' fremmed yield *)\n",
     rejectContaining "a family cannot hide undernaught selfcalling inside a deed" "direct saturated family application" $
       compile (prelude ++ "ilk bad:* { make:[[bad, 𝟙] deed, bad] }\n"),
     rejectContaining "main requireth a unit deed type" "main requireth a unit deed type" $
-      run (prelude ++ "let main:(text maybe) deed ≔ read\n") [],
+      run (prelude ++ "let main:(string maybe) deed ≔ read\n") [],
     rejectContaining "a runnable forewrit requireth main" "requireth a top-level main" $
       run prelude []
   ]
@@ -145,7 +144,7 @@ hostSchemaTests =
       "a canonical maybe requireth its named constructors"
       """
       use ilk/maybe.tung
-      let read:(text maybe) deed ≔ 'read' fremmed
+      let read:(string maybe) deed ≔ 'read' fremmed
 
       """
       [("ilk/maybe.tung", "show ilk maybe:[α:*, *] { absent:α maybe, present:[α, α maybe] }\n")],
@@ -153,7 +152,7 @@ hostSchemaTests =
       "a canonical list requireth its element field type"
       """
       use ilk/list.tung
-      let to_text:[unicode list, text] ≔ 'list_to_text' fremmed
+      let to_string:[unicode list, string] ≔ 'list_to_string' fremmed
 
       """
       [("ilk/list.tung", wrongList)],
@@ -162,28 +161,28 @@ hostSchemaTests =
       """
       use web/request.tung
       use web/response.tung
-      let serve:[ℕ, [_request, _response deed], text deed] ≔ 'serve' fremmed
+      let serve:[ℕ, [_request, _response deed], string deed] ≔ 'serve' fremmed
 
       """
       [ ( "web/request.tung",
           """
-          use ilk/table.tung
-          show ilk _request:* { request:[text, text, text table text, text, _request] }
+          use ilk/wordbook.tung
+          show ilk _request:* { request:[string, string, string wordbook string, string, _request] }
 
           """
         ),
         ( "web/response.tung",
           """
-          use ilk/table.tung
-          show ilk _response:* { response:[ℕ, text table text, text, _response] }
+          use ilk/wordbook.tung
+          show ilk _response:* { response:[ℕ, string wordbook string, string, _response] }
 
           """
         ),
-        ( "ilk/table.tung",
+        ( "ilk/wordbook.tung",
           """
           use ilk/list.tung
           use ilk/product.tung
-          show ilk table:[α:*, β:*, *] { from_list:[(α ∏ β) list, α table β] }
+          show ilk wordbook:[α:*, β:*, *] { from_list:[(α ∏ β) list, α wordbook β] }
 
           """
         ),
@@ -198,7 +197,7 @@ hostSchemaTests =
     truthBinding =
       """
       use ilk/two.tung
-      let same:[ℤ, ℤ, 𝟚] ≔ 'same_integer' fremmed
+      let same:[ℤ, ℤ, 𝟚] ≔ 'same_wholetale' fremmed
 
       """
     wrongList = "show ilk list:[α:*, *] { empty:α list, ‥:[ℤ, α list, α list] }\n"

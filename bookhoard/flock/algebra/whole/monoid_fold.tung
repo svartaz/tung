@@ -1,0 +1,47 @@
+use flock/algebra/whole/hath_fold.tung
+use flock/algebra/whole/hath_one.tung
+use flock/algebra/whole/semigroup_fold.tung
+use flock/order/semilattice_bounded_upper.tung
+use flock/order/semilattice_lower.tung
+use flock/order/semilattice_upper.tung
+use flock/order/semilattice_upper_bounded.tung
+use ilk/two.tung
+use is.tung
+
+show flock monoid_·: [α: *, @: α semigroup_·, @: α hath_one, *] {
+  let one_·: [a: α, (one · a) = a]
+  let ·_one: [a: α, (a · one) = a]
+}
+
+bizen: 𝟚 monoid_· {
+  let one_· ≔ {nay; yea ^ eftbend}
+  let ·_one ≔ {nay; yea ^ eftbend}
+}
+
+bizen: [@β: *, @: β monoid_·, @α: *, [α, β] monoid_·] {
+  let one: [_:] ≔ one
+
+  let one_·: [f:] ≔ {x ^ (x f) one_·} fall_umtake
+
+  let ·_one: [f:] ≔ {x ^ (x f) ·_one} fall_umtake
+}
+
+bizen: [@α: *, @: α semilattice_bounded_upper, (α _lower) monoid_·] {
+  let one ≔ ⊤ lower
+
+  let one_·: [a lower:] ≔
+    {x: α ^ x lower} leibnitz (a ⊤_∧)
+
+  let ·_one: [a lower:] ≔
+    {x: α ^ x lower} leibnitz ((a ∧_swap ⊤) throughgo (a ⊤_∧))
+}
+
+bizen: [@α: *, @: α semilattice_upper_bounded, (α _upper) monoid_·] {
+  let one ≔ ⟂ upper
+
+  let one_·: [a upper:] ≔
+    {x: α ^ x upper} leibnitz (a ⟂_∨)
+
+  let ·_one: [a upper:] ≔
+    {x: α ^ x upper} leibnitz ((a ∨_swap ⟂) throughgo (a ⟂_∨))
+}

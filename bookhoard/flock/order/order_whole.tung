@@ -1,13 +1,26 @@
 use flock/hath_same.tung
 use flock/order/hath_at_most.tung
 use flock/order/order_half.tung
+use flock/same_to_is.tung
 use ilk/three.tung
 use ilk/two.tung
+use is.tung
 
-## a partial order in which every pair is comparable.
+## a partial order in which every pair is comparable, and whose
+## antisymmetry holdeth in identity, not only in boolean sameness.
 show flock order_whole: [α: *, @: α order_half, *] {
   let ≤_whole: [a: α, b: α, (((a ≤ b) ≍ nay) ≤ (b ≤ a)) = yea]
+  let ≤_=: [a: α, b: α, below: (a ≤ b) = yea, above: (b ≤ a) = yea, a = b]
 }
+
+## two values that are not ordered one way are ordered the other way.
+show let ≤_flip: [@α: *, @: α order_whole, a: α, b: α, k: (a ≤ b) = nay, (b ≤ a) = yea] ≔
+  {x: 𝟚 ^ (x ≍ nay) ≤ (b ≤ a)} yea_throughbear k (a ≤_whole b)
+
+## transitivity for comparisons known to hold.
+show let ≤_yea_throughgo: [@α: *, @: α order_whole, a: α, b: α, c: α, k₀: (a ≤ b) = yea, k₁: (b ≤ c) = yea, (a ≤ c) = yea] ≔
+  {x: 𝟚 ^ x ≤ (a ≤ c)} yea_throughbear k₁
+    ({x: 𝟚 ^ x ≤ ((b ≤ c) ≤ (a ≤ c))} yea_throughbear k₀ (a ≤_throughgo b c))
 
 show let compare: [@α: *, @: α order_whole, @: α hath_≤, a: α, b: α, 𝟛] ≔
   (a ≤ b) if ((b ≤ a) if mid fore) aft
@@ -24,6 +37,13 @@ bizen: 𝟚 order_whole {
     yea, nay;
     yea, yea ^ eftbend
   }
+  let ≤_=: [a:, b:, below:, above:] ≔
+    match a, b, below, above {
+      yea, yea, _, _;
+      nay, nay, _, _ ^ eftbend,
+      yea, nay, k, _ ^ match k {},
+      nay, yea, _, k ^ match k {}
+    }
 }
 
 bizen: 𝟛 order_whole {
@@ -36,4 +56,16 @@ bizen: 𝟛 order_whole {
     aft,  mid;
     aft,  aft  ^ eftbend
   }
+  let ≤_=: [a:, b:, below:, above:] ≔
+    match a, b, below, above {
+      fore, fore, _, _;
+      mid,  mid,  _, _;
+      aft,  aft,  _, _ ^ eftbend,
+      fore, mid,  _, k ^ match k {},
+      fore, aft,  _, k ^ match k {},
+      mid,  fore, k, _ ^ match k {},
+      mid,  aft,  _, k ^ match k {},
+      aft,  fore, k, _ ^ match k {},
+      aft,  mid,  k, _ ^ match k {}
+    }
 }

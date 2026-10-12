@@ -1,9 +1,9 @@
 use _foreign.tung
-use flock/algebra/arithmetic/hath_deal.tung
-use flock/algebra/arithmetic/hath_fold.tung
-use flock/algebra/arithmetic/hath_offdraw.tung
+use flock/algebra/whole/hath_deal.tung
+use flock/algebra/whole/hath_fold.tung
+use flock/algebra/whole/hath_offdraw.tung
 use ilk/float.tung
-use numeric/constant.tung
+use numeric/withstand.tung
 
 show flock elementary: [α: *, @: α hath_÷, *] {
   let exponent: [α, α]
@@ -19,5 +19,5 @@ bizen: float elementary {
   let exponent ≔ exponent_float
   let logarithm ≔ logarithm_float
   let sine ≔ sine_float
-  let cosine: [a:] ≔ circumference × 0.25 $ - a $ sine
+  let cosine: [a:] ≔ turn · 0.25 $ - a $ sine_float
 }

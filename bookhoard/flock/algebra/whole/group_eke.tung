@@ -1,0 +1,13 @@
+use flock/algebra/whole/hath_naught.tung
+use flock/algebra/whole/hath_offdraw.tung
+use flock/algebra/whole/monoid_eke.tung
+use ilk/two.tung
+use is.tung
+
+show flock group_+: [α: *, @: α monoid_+, @: α hath_-, *] {
+  let -_outstrike: [a: α, (a - a) = naught]
+}
+
+bizen: 𝟚 group_+ {
+  let -_outstrike ≔ {nay; yea ^ eftbend}
+}

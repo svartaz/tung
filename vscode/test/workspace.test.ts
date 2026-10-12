@@ -2,26 +2,76 @@ import assert from "node:assert/strict";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import test from "node:test";
+import test, { type TestContext } from "node:test";
 import { pathToFileURL } from "node:url";
 import { WorkspaceIndex } from "../server/workspace.ts";
 import { compiler } from "./compiler.ts";
-test("requirements resolve imported types and declared parameters", async (context) => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-requirement-"));
+
+const fixture = async (context: TestContext, files: Record<string, string>) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-workspace-"));
   context.after(() => fs.rmSync(root, { recursive: true, force: true }));
-  fs.writeFileSync(path.join(root, "dep.tung"), "show ilk box: * { box: box }");
-  const main = path.join(root, "main.tung");
-  fs.writeFileSync(
-    main,
-    "use dep.tung flock child:[@:box hath_≍, a:*, @:a hath_≍, *] {let f:[a, a]}",
-  );
+  for (const [name, source] of Object.entries(files)) {
+    const file = path.join(root, name);
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, source);
+  }
   const workspace = new WorkspaceIndex(
     { get: () => undefined, all: () => [] },
     compiler,
   );
   workspace.configure([root]);
   await workspace.ready();
-  const model = workspace.model(pathToFileURL(main).href);
+  const model = (name = "main.tung") =>
+    workspace.model(pathToFileURL(path.join(root, name)).href);
+  return { root, workspace, model };
+};
+test("changing an import retaineth unchanged role snapshots", async () => {
+  const requests = [];
+  let imported = "show let old ≔ +1";
+  const documents = [
+    { uri: "main", version: 1, getText: () => "use dep.tung" },
+    { uri: "dep", version: 1, getText: () => imported },
+  ];
+  const workspace = new WorkspaceIndex(
+    {
+      get: (uri) => documents.find((document) => document.uri === uri),
+      all: () => documents,
+    },
+    {
+      highlight: (source, version) => {
+        requests.push([source, version]);
+        return { result: Promise.resolve([]), cancel() {} };
+      },
+    },
+  );
+  await Promise.all([
+    workspace.ready(),
+    workspace.ready(),
+    workspace.roles("main", documents[0].getText(), 1),
+  ]);
+  assert.equal(requests.length, 2);
+  imported = "show let new ≔ +2";
+  documents[1].version++;
+  workspace.invalidate("dep");
+  workspace.invalidateFiles();
+  await workspace.ready();
+  assert.deepEqual(requests, [
+    ["use dep.tung", 1],
+    ["show let old ≔ +1", 1],
+    [imported, 2],
+  ]);
+});
+test("requirements resolve imported types and declared parameters", async (context) => {
+  const {
+    root,
+    workspace,
+    model: getModel,
+  } = await fixture(context, {
+    "dep.tung": "show ilk box: * { box: box }",
+    "main.tung":
+      "use dep.tung flock child:[@:box hath_≍, a:*, @:a hath_≍, *] {let f:[a, a]}",
+  });
+  const model = getModel();
   const box = model.tokens.find((token) => token.text === "box");
   const resolved = workspace.resolveAt(model.uri, {
     line: box.line,
@@ -36,129 +86,62 @@ test("requirements resolve imported types and declared parameters", async (conte
   }).definition;
   assert.equal(binder?.token.offset, uses[0].offset);
 });
-test("workspace resolveth only shown names across an import", async (context) => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-workspace-"));
-  context.after(() => fs.rmSync(root, { recursive: true, force: true }));
-  const dep = path.join(root, "dep.tung");
-  const main = path.join(root, "main.tung");
-  fs.writeFileSync(dep, "show let answer:ℤ ≔ +42 let hidden ≔ +0");
-  fs.writeFileSync(main, "use dep.tung let worth:ℤ ≔ answer");
-  const documents = { get: () => undefined, all: () => [] };
-  const workspace = new WorkspaceIndex(documents, compiler);
-  workspace.configure([root]);
-  await workspace.ready();
-  const model = workspace.model(pathToFileURL(main).href);
-  assert.equal(workspace.resolveVisible(model, "answer").length, 1);
-  assert.equal(workspace.resolveVisible(model, "hidden").length, 0);
-  assert.equal(workspace.resolveVisible(model, "dep~answer").length, 1);
-  assert.equal(
-    workspace.importModel(model, "dep.tung")?.uri,
-    pathToFileURL(dep).href,
-  );
-});
-test("workspace explicit import alias replaceth the default namespace", async (context) => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-use-alias-"));
-  context.after(() => fs.rmSync(root, { recursive: true, force: true }));
-  const dep = path.join(root, "data", "dep.tung");
-  const main = path.join(root, "main.tung");
-  fs.mkdirSync(path.dirname(dep), { recursive: true });
-  fs.writeFileSync(dep, "show let answer:ℤ ≔ +42");
-  fs.writeFileSync(main, "use data/dep.tung d yield d~answer");
-  const workspace = new WorkspaceIndex(
-    { get: () => undefined, all: () => [] },
-    compiler,
-  );
-  workspace.configure([root]);
-  await workspace.ready();
-  const model = workspace.model(pathToFileURL(main).href);
-  assert.equal(workspace.resolveVisible(model, "d~answer").length, 1);
-  assert.equal(workspace.resolveVisible(model, "dep~answer").length, 0);
-  const labels = new Set(
-    workspace
-      .completions(model.uri, { line: 0, character: 40 })
-      .map(({ completionName, bareName }) => completionName || bareName),
-  );
-  assert(labels.has("d~answer"));
-  assert(!labels.has("dep~answer"));
-});
-test("workspace resolveth and completeth a default basename alias", async (context) => {
-  const root = fs.mkdtempSync(
-    path.join(os.tmpdir(), "tung-default-use-alias-"),
-  );
-  context.after(() => fs.rmSync(root, { recursive: true, force: true }));
-  const dep = path.join(root, "data", "dep.tung");
-  const main = path.join(root, "main.tung");
-  fs.mkdirSync(path.dirname(dep), { recursive: true });
-  fs.writeFileSync(dep, "show let answer:ℤ ≔ +42");
-  fs.writeFileSync(main, "use data/dep.tung yield dep~answer");
-  const workspace = new WorkspaceIndex(
-    { get: () => undefined, all: () => [] },
-    compiler,
-  );
-  workspace.configure([root]);
-  await workspace.ready();
-  const model = workspace.model(pathToFileURL(main).href);
-  assert.equal(workspace.resolveVisible(model, "dep~answer").length, 1);
-  assert.equal(workspace.resolveVisible(model, "ilk/dep~answer").length, 0);
-  const labels = new Set(
-    workspace
-      .completions(model.uri, { line: 0, character: 40 })
-      .map(({ completionName, bareName }) => completionName || bareName),
-  );
-  assert(labels.has("dep~answer"));
-  assert(!labels.has("ilk/dep~answer"));
-});
-test("workspace default alias ignoreth dots in import directories", async (context) => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-dotted-use-"));
-  context.after(() => fs.rmSync(root, { recursive: true, force: true }));
-  const dep = path.join(root, "pkg.one", "query.tung");
-  const main = path.join(root, "main.tung");
-  fs.mkdirSync(path.dirname(dep), { recursive: true });
-  fs.writeFileSync(dep, "show let answer:ℤ ≔ +42");
-  fs.writeFileSync(main, "use pkg.one/query.tung yield query~answer");
-  const workspace = new WorkspaceIndex(
-    { get: () => undefined, all: () => [] },
-    compiler,
-  );
-  workspace.configure([root]);
-  await workspace.ready();
-  const model = workspace.model(pathToFileURL(main).href);
-  assert.equal(workspace.resolveVisible(model, "query~answer").length, 1);
-  assert.equal(workspace.resolveVisible(model, "pkg~answer").length, 0);
+test("imports expose shown names under explicit and basename aliases", async (context) => {
+  const cases = [
+    ["default.tung", "data/dep.tung", "", "dep", "ilk/dep"],
+    ["explicit.tung", "data/dep.tung", "d", "d", "dep"],
+    ["dotted.tung", "pkg.one/query.tung", "", "query", "pkg"],
+  ];
+  const { root, workspace, model } = await fixture(context, {
+    "data/dep.tung": "show let answer:ℤ ≔ +42 let hidden ≔ +0",
+    "pkg.one/query.tung": "show let answer:ℤ ≔ +42 let hidden ≔ +0",
+    ...Object.fromEntries(
+      cases.map(([file, imported, alias, namespace]) => [
+        file,
+        `use ${imported}${alias ? ` ${alias}` : ""} yield ${namespace}~answer`,
+      ]),
+    ),
+  });
+  for (const [file, imported, , namespace, wrong] of cases) {
+    const current = model(file);
+    for (const [name, count] of [
+      ["answer", 1],
+      ["hidden", 0],
+      [`${namespace}~answer`, 1],
+      [`${wrong}~answer`, 0],
+    ] as const) {
+      assert.equal(workspace.resolveVisible(current, name).length, count, file);
+    }
+    assert.equal(
+      workspace.importModel(current, imported)?.uri,
+      pathToFileURL(path.join(root, imported)).href,
+    );
+    const labels = new Set(
+      workspace
+        .completions(current.uri, {
+          line: 0,
+          character: current.text.length,
+        })
+        .map(({ completionName, bareName }) => completionName || bareName),
+    );
+    assert(labels.has(`${namespace}~answer`), file);
+    assert(!labels.has(`${wrong}~answer`), file);
+  }
 });
 test("workspace leaveth duplicate imported bare names ambiguous", async (context) => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-ambiguous-"));
-  context.after(() => fs.rmSync(root, { recursive: true, force: true }));
-  fs.writeFileSync(path.join(root, "left.tung"), "show let worth ≔ +1");
-  fs.writeFileSync(path.join(root, "right.tung"), "show let worth ≔ +2");
-  const main = path.join(root, "main.tung");
-  fs.writeFileSync(main, "use left.tung use right.tung let answer ≔ worth");
-  const workspace = new WorkspaceIndex(
-    { get: () => undefined, all: () => [] },
-    compiler,
-  );
-  workspace.configure([root]);
-  await workspace.ready();
-  const model = workspace.model(pathToFileURL(main).href);
-  assert.equal(workspace.resolveVisible(model, "worth").length, 2);
-  assert.equal(workspace.resolveVisible(model, "left~worth").length, 1);
+  const { workspace, model } = await fixture(context, {
+    "left.tung": "show let worth ≔ +1",
+    "right.tung": "show let worth ≔ +2",
+    "main.tung": "use left.tung use right.tung let answer ≔ worth",
+  });
+  assert.equal(workspace.resolveVisible(model(), "worth").length, 2);
+  assert.equal(workspace.resolveVisible(model(), "left~worth").length, 1);
 });
 test("workspace re-exports every same-spelled role", async (context) => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-namespaces-"));
-  context.after(() => fs.rmSync(root, { recursive: true, force: true }));
-  fs.writeFileSync(
-    path.join(root, "both.tung"),
-    "let token:* ≔ ℤ let token ≔ +1 show token",
-  );
-  const workspace = new WorkspaceIndex(
-    { get: () => undefined, all: () => [] },
-    compiler,
-  );
-  workspace.configure([root]);
-  await workspace.ready();
-  const shown = workspace.publicDefinitions(
-    workspace.model(pathToFileURL(path.join(root, "both.tung")).href),
-  );
+  const { workspace, model } = await fixture(context, {
+    "both.tung": "let token:* ≔ ℤ let token ≔ +1 show token",
+  });
+  const shown = workspace.publicDefinitions(model("both.tung"));
   assert.deepEqual(shown.map(({ role }) => role).sort(), ["type", "variable"]);
 });
 test("library modules do not become an implicit prelude", async (context) => {

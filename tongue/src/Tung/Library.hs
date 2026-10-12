@@ -3,6 +3,7 @@
 -- manifest libraries supply ordinary module roots without compiler-owned names.
 module Tung.Library
   ( resolveLibraryRoots,
+    proofAxiomPolicy,
     cacheDirectory,
     readLibraryImportFiles,
     readLibraryImports,
@@ -55,15 +56,29 @@ instance FromJSON LibrarySource where
       (Nothing, Nothing, Just directory) | subdirectory == Nothing -> pure (PathSource directory)
       _ -> fail "library needs either 'path' or 'repo' with 'hash' and optional 'subdir'"
 
-newtype Manifest = Manifest [(String, LibrarySource)]
+data Manifest = Manifest
+  { manifestLibraries :: [Library],
+    manifestProofAxioms :: Maybe [String]
+  }
 
 instance FromJSON Manifest where
   parseJSON = withObject "tung.yaml" \fields -> do
-    rejectUnknown "manifest" ["dependencies"] fields
+    rejectUnknown "manifest" ["dependencies", "proof"] fields
     dependencies <- fields .: "dependencies" :: Parser Aeson.Value
-    Manifest <$> withObject "dependencies" (traverse parseEntry . KeyMap.toAscList) dependencies
+    libraries <- withObject "dependencies" (traverse parseEntry . KeyMap.toAscList) dependencies
+    axioms <- maybe (pure Nothing) parseProofPolicy (KeyMap.lookup "proof" fields)
+    pure (Manifest libraries axioms)
     where
-      parseEntry (name, source) = (Key.toString name,) <$> parseJSON source
+      parseEntry (name, source) = Library (Key.toString name) <$> parseJSON source
+
+parseProofPolicy :: Aeson.Value -> Parser (Maybe [String])
+parseProofPolicy = withObject "proof" \fields -> do
+  rejectUnknown "proof" ["axioms"] fields
+  traverse parseAxioms (KeyMap.lookup "axioms" fields)
+  where
+    parseAxioms value = do
+      names <- parseJSON value
+      if names == nub names then pure names else fail "duplicate proof axiom names"
 
 rejectUnknown :: String -> [String] -> Aeson.Object -> Parser ()
 rejectUnknown context allowed fields =
@@ -109,6 +124,14 @@ resolveLibraryRoots owner = do
       configured <- maybe [] (filter (not . null) . splitSearchPath) <$> lookupEnv "TUNG_PATH"
       absolute <- traverse makeAbsolute configured
       pure (Right (nub (roots ++ absolute)))
+
+-- the nearest project's policy governeth its audit; dependency policies do not.
+proofAxiomPolicy :: FilePath -> IO (Either String (Maybe [String]))
+proofAxiomPolicy owner =
+  findManifest owner >>= \case
+    Left message -> pure (Left message)
+    Right Nothing -> pure (Right Nothing)
+    Right (Just path) -> fmap manifestProofAxioms <$> readManifest path
 
 -- checked interfaces live in `.tung/cache` beside the nearest `tung.yaml`,
 -- or beside the file when no manifest encloseth it; git ignoreth `.tung`.
@@ -165,7 +188,7 @@ manifestAt directory = do
 
 resolveManifest :: FilePath -> FilePath -> Resolver [FilePath]
 resolveManifest cache manifest = do
-  libraries <- resolveIO (readManifest manifest)
+  libraries <- manifestLibraries <$> resolveIO (readManifest manifest)
   fmap concat $ forM libraries \Library {libraryName, librarySource} -> do
     source <- resolveIO (resolveSource manifest librarySource)
     known <- get
@@ -234,17 +257,17 @@ describeSource = \case
   GitSource repository commit subdirectory -> "from '" ++ repository ++ "' at " ++ commit ++ " in '" ++ subdirectory ++ "'"
   PathSource path -> "from local path '" ++ path ++ "'"
 
-readManifest :: FilePath -> IO (Either String [Library])
+readManifest :: FilePath -> IO (Either String Manifest)
 readManifest path = do
   decoded <- tryIOError (Yaml.decodeFileWithWarnings path)
   pure $ case decoded of
     Left failure -> Left ("cannot read '" ++ path ++ "': " ++ show failure)
     Right (Left failure) -> Left (path ++ ": " ++ Yaml.prettyPrintParseException failure)
-    Right (Right (warnings, Manifest entries))
+    Right (Right (warnings, Manifest libraries axioms))
       | not (null warnings) -> Left (path ++ ": " ++ intercalate "; " (map show warnings))
-      | otherwise -> traverse validateEntry entries
+      | otherwise -> (`Manifest` axioms) <$> traverse validateEntry libraries
   where
-    validateEntry (name, source)
+    validateEntry (Library name source)
       | not (validName name) = Left (path ++ ": invalid library name '" ++ name ++ "'")
       | otherwise = Library name <$> validateSource name source
     validateSource name = \case

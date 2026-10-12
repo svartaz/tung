@@ -1,5 +1,6 @@
 use flock/algebra/half/category.tung
 use ilk/one.tung
+use is.tung
 
 show flock functor: [φ: [*, *], *] {
   let warp: [@α: *, @β: *, α φ, [α, β], β φ]

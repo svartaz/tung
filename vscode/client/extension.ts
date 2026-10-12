@@ -1,13 +1,15 @@
-// vscode entry point: starteth the lsp client and run-file command.
+// vscode entry point: starteth the lsp client and source commands.
 import * as path from "node:path";
 import * as vscode from "vscode";
 import { LanguageClient, TransportKind } from "vscode-languageclient/node";
 import { documentSelector } from "./options.ts";
+import type { ProofResult } from "../server/checker.ts";
 let client: LanguageClient;
 export const activate = (context) => {
   const server = context.asAbsolutePath(
     path.join("bundle", "server", "main.js"),
   );
+  const configuration = vscode.workspace.getConfiguration("tung");
   client = new LanguageClient(
     "tung",
     "tung language server",
@@ -15,23 +17,49 @@ export const activate = (context) => {
     {
       documentSelector,
       initializationOptions: {
-        executablePath: vscode.workspace.getConfiguration("tung").get(
-          "executablePath",
-        ),
-        tonguePath: vscode.workspace.getConfiguration("tung").get(
-          "tonguePath",
-        ),
-        libraryPaths: vscode.workspace.getConfiguration("tung").get(
-          "libraryPaths",
-        ),
+        executablePath: configuration.get("executablePath"),
+        tonguePath: configuration.get("tonguePath"),
+        libraryPaths: configuration.get("libraryPaths"),
       },
     },
   );
+  const proofs = vscode.window.createOutputChannel("Tung Proof");
   context.subscriptions.push(
     client,
+    proofs,
     vscode.commands.registerCommand("tung.runFile", runFile),
+    vscode.commands.registerCommand("tung.checkProof", () =>
+      checkProof(proofs),
+    ),
   );
   return client.start();
+};
+const checkProof = async (output: vscode.OutputChannel) => {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || editor.document.languageId !== "tung") {
+    vscode.window.showErrorMessage("open a tung file to check a proof");
+    return;
+  }
+  try {
+    const result = await client.sendRequest<
+      ProofResult | { kind: "error"; message: string }
+    >("tung/checkProof", {
+      textDocument: { uri: editor.document.uri.toString() },
+      position: editor.selection.active,
+      name: editor.selection.isEmpty
+        ? undefined
+        : editor.document.getText(editor.selection).trim(),
+    });
+    output.clear();
+    output.append(
+      result.kind === "proof" ? result.report : result.message + "\n",
+    );
+    output.show(true);
+  } catch (error) {
+    vscode.window.showErrorMessage(
+      `could not check the proof: ${String(error)}`,
+    );
+  }
 };
 const runFile = async (resource?: vscode.Uri) => {
   const document = await runnableDocument(resource);
@@ -40,19 +68,18 @@ const runFile = async (resource?: vscode.Uri) => {
     vscode.window.showErrorMessage("save the tung file before running it");
     return;
   }
-  const executable = await client.sendRequest<string | undefined>(
-    "tung/executable",
-  ).catch(() => undefined);
+  const executable = await client
+    .sendRequest<string | undefined>("tung/executable")
+    .catch(() => undefined);
   if (!executable) {
     vscode.window.showErrorMessage(
       "could not find tung executable; install tung or set tung.executablePath",
     );
     return;
   }
-  const libraryPath = await client.sendRequest<string>("tung/libraryPath")
-    .catch(
-      () => "",
-    );
+  const libraryPath = await client
+    .sendRequest<string>("tung/libraryPath")
+    .catch(() => "");
   const folder = vscode.workspace.getWorkspaceFolder(document.uri);
   const task = new vscode.Task(
     { type: "tung", file: document.uri.fsPath },

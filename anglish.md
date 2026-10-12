@@ -2,69 +2,132 @@
 
 audience: ai agents that name things in tung. purpose: the anglish words that
 tung useth and the english words they replace. object-language names,
-keywords, host keys, and `.tung` paths use the anglish word; prose in
-documents and comments useth plain english.
+keywords, host keys, `.tung` paths, and bookhoard comments use anglish words.
+implementation prose and documents use plain english.
+
+prefer an ordinary word with a germanic root when its meaning fitteth. otherwise
+build a clear compound or calque from germanic roots. reuse an established root
+and prefix for the same meaning; do not merely respell a latin or greek word.
+a borrowed spelling alone doth not decide the root: check its history.
 
 a name made of several words replaceth each word, so `pure_map_flat` becometh
 `sheer_bind`. a new name useth a word from this table when one fitteth;
 add a row before using a new anglish word.
 
-| anglish          | english               | where                                          |
-| ---------------- | --------------------- | ---------------------------------------------- |
-| atfold           | apply                 | `atfoldsome` member `atfold`                   |
-| atfoldsome       | applicative           | flock `atfoldsome`                             |
-| biwarp           | bimap                 | `bifunctor` member                             |
-| bizen            | instance              | keyword                                        |
-| bookhoard        | library               | directory                                      |
-| byspel           | example               | directory                                      |
-| deal             | divide                | flock `hath_÷`, `hath_%`                       |
-| deed             | action, effect        | `α deed`                                       |
-| eftbend          | reflect, reflexive    | constructor `eftbend` of `=`, `≤_eftbend`      |
-| eke              | add                   | flock `hath_+`, `monoid_eke`                   |
-| evenbraid        | complex number        | `numeric/evenbraid.tung`                       |
-| evenmete         | symmetry              | `evenmete` in `is.tung`                        |
-| fall             | function              | keyword                                        |
-| fallback         | default               | `bizen fallback:`, `maybe~fallback`            |
-| flock            | (type) class          | keyword                                        |
-| fold             | multiply              | flock `hath_×`, `monoid_fold`                  |
-| followsetting    | corollary             | names of derived proofs                        |
-| forewrit         | program               | names of programs and their inputs             |
-| forthcast        | project               | names of projected values                      |
-| fremmed          | foreign               | keyword                                        |
-| gather           | fold over a structure | `catamorphism` members `gather₀`, `gather₁`    |
-| half             | partial               | `order_half`, `flock/algebra/half/`            |
-| heir             | successor             | `ℕ` constructor `n heir`                       |
-| helpsetting      | lemma                 | names of helper proofs                         |
-| ilk              | (data) type           | keyword                                        |
-| incast           | inject                | `∑` constructors `incast₀`, `incast₁`          |
-| inhold           | contain               | flock `hath_∋`, member `∋`                     |
-| inlead(ing)      | induct(ion)           | names of induction principles                  |
-| is               | is equal to           | `is.tung`                                      |
-| maybe            | option(al)            | `α maybe`                                      |
-| norm             | absolute              | flock `hath_norm`, member `norm`               |
-| offdraw          | subtract              | flock `hath_-`                                 |
-| offhanging (ilk) | dependent (type)      | names about dependent types                    |
-| onesome          | singleton             | `powerset~onesome`, `gather_onesomes`          |
-| orsetting        | axiom                 | keyword                                        |
-| outstrike        | cancel                | `-_outstrike`, task `outstrike`                |
-| overnaught       | positive              | `ℤ` constructor `n overnaught`                 |
-| same             | equal                 | flock `hath_≍`, `hath_≤`                       |
-| sameness         | identity              | law names such as `warp_sameness`              |
-| selfcall(ing)    | recur(sion)           | `wellgrounded_selfcalling`                     |
-| setting          | theorem               | `ilk/list_setting.tung`                        |
-| sheer            | pure                  | `atfoldsome` member, `deed_sheer`              |
-| sift             | filter                | flock `hath_sift`, member `sift`               |
-| steadfast        | fixed point           | `deed_steadfast`                               |
-| tale             | number                | `tongue/examples/dependent_tales.tung`         |
-| throughgo(ing)   | transit(ive)          | `≤_throughgo`, `throughgo` in `is.tung`        |
-| throughwend      | traverse              | flock `hath_throughwend`, member `throughwend` |
-| tongue           | language              | directory                                      |
-| umtaking         | extensional           | `fall_umtake`, function extensionality         |
-| unbuild          | eliminate             | keyword                                        |
-| undernaught      | negative              | `ℤ` constructor `n heir_undernaught`           |
-| warp             | map                   | `functor` member, `bind`                       |
-| wellgrounded     | well-founded          | `wellgrounded_selfcalling`                     |
-| whitherevenmete  | antisymmetry          | `≤_whitherevenmete`                            |
-| whole            | total                 | `order_whole`, `≤_whole`                       |
-| witherwend       | invert                | `groupoid` member `witherwend`                 |
-| worth            | value                 | names of values                                |
+### compounds and mathematical families
+
+mathematical structure names stay as they are: `order`, `functor`, `monad`,
+`monoid`, `semigroup`, `group`, `semiring`, `lattice`, `category`, the `-oid`
+family, and their compounds. a literal calque such as `one_shaped` doth not
+explain a monoid's laws.
+
+| english      | anglish       |
+| ------------ | ------------- |
+| anti-        | wither-       |
+| con-, syn-   | with-         |
+| de-          | off-          |
+| ex-          | out-          |
+| homo-        | same-         |
+| iso-         | even          |
+| pro-         | fore-, forth- |
+| proto-       | or-           |
+| re-          | eft-          |
+| sub-         | under-        |
+| super-       | over-         |
+| trans-, tra- | through-      |
+| -duce        | -lead         |
+| -it          | -go           |
+| -ject        | -cast         |
+| -lect        | -bend         |
+| -pend        | -hang         |
+| -ply         | -fold         |
+| -spect       | -look         |
+| -tain        | -hold         |
+| -verse       | -wend         |
+| -tend        | -stretch      |
+
+| english        | anglish        | byspel                     |
+| -------------- | -------------- | -------------------------- |
+| absolute       | norm           |                            |
+| absorb         | swallow        |                            |
+| accumulate     | hoard          |                            |
+| action         | deed           |                            |
+| add            | eke            |                            |
+| antisymmetry   | witherevenmete |                            |
+| applicative    | atfoldsome     |                            |
+| apply          | atfold         | in atfoldsome              |
+| axiom          | orsetting      |                            |
+| bimap          | biwarp         | in bifunctor               |
+| binary         | twostead       |                            |
+| cancel         | outstrike      |                            |
+| change         | tweak          |                            |
+| character      | staff          |                            |
+| class          | flock          |                            |
+| commute        | swap           |                            |
+| complex number | evenbraid      |                            |
+| condition      | kilter         |                            |
+| constant       | withstand      |                            |
+| contain        | inhold         |                            |
+| continue       | throughwone    |                            |
+| corollary      | followsetting  |                            |
+| default        | fallback       |                            |
+| dependent      | offhanging     |                            |
+| divide         | deal           |                            |
+| dividend       | dealt          |                            |
+| divisor        | dealer         |                            |
+| eliminate      | unbuild        |                            |
+| equal          | same           |                            |
+| example        | byspel         |                            |
+| extensional    | umtaking       | in function extensionality |
+| failure        | misfare        |                            |
+| fallible       | misfaresome    |                            |
+| filter         | sift           |                            |
+| fixed point    | steadfast      |                            |
+| fold           | gather         | in catamorphism            |
+| foreign        | fremmed        |                            |
+| function       | fall           |                            |
+| homomorphism   | sameshaping    |                            |
+| identity       | sameness       |                            |
+| induction      | inleading      |                            |
+| inject         | incast         |                            |
+| instance       | bizen          |                            |
+| integer        | wholetale      |                            |
+| invert         | witherwend     |                            |
+| is equal to    | is             |                            |
+| isomorphism    | evenshaping    |                            |
+| language       | tongue         |                            |
+| lemma          | helpsetting    |                            |
+| library        | bookhoard      |                            |
+| map            | warp           | in functor                 |
+| member         | limb           |                            |
+| morphism       | shaping        |                            |
+| multiply       | fold           |                            |
+| negative       | undernaught    |
+| nullary        | naughtstead    |                            |
+| number         | tale           |                            |
+| optional       | maybe          |                            |
+| partial        | half           |                            |
+| positive       | overnaught     |                            |
+| predicate      | umbsay         |                            |
+| program        | forewrit       |                            |
+| project        | forthcast      |                            |
+| prove          | soothe         |                            |
+| pure           | sheer          | in atfoldsome              |
+| recur          | selfcall       |                            |
+| reflect        | eftbend        |                            |
+| remainder      | leftover       |                            |
+| second         | other          |                            |
+| separate       | shed           |                            |
+| singleton      | onesome        |                            |
+| state          | onstand        |                            |
+| subtract       | offdraw        |                            |
+| successor      | heir           |                            |
+| symmetry       | evenmete       |                            |
+| theorem        | setting        |                            |
+| total          | whole          |                            |
+| transit        | throughgo      |                            |
+| traverse       | throughwend    |                            |
+| type           | ilk            |                            |
+| unary          | onestead       |                            |
+| value          | worth          |                            |
+| well-founded   | wellgrounded   |                            |

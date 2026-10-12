@@ -7,8 +7,11 @@ import Control.Monad (guard)
 import Data.Char (isDigit, isSpace)
 import Data.List (dropWhileEnd, intercalate, isPrefixOf, isSuffixOf, mapAccumL, sortOn, stripPrefix)
 
+-- each indentation level holdeth the brackets one line opened, so a line
+-- opening `(match x {` indenteth its body once, not twice.
 data FormatState = FormatState
   { formatDepth :: !Int,
+    formatGroups :: ![Int],
     formatLexicalState :: !LexicalState,
     formatContinuation :: !Int,
     formatContinuationBlocks :: ![(Int, Int)],
@@ -100,7 +103,7 @@ caseRow line = do
           | otherwise = go' depth (character : current) rest
 
 initialState :: FormatState
-initialState = FormatState 0 Code 0 [] Nothing
+initialState = FormatState 0 [] Code 0 [] Nothing
 
 sortUseBlocks :: [String] -> [String]
 sortUseBlocks = go Code
@@ -145,8 +148,10 @@ formatLine state line
             -- previous declaration, as a body after `] ≔ {...}` doth.
             | formatDepth state == 0 && formatHeaderBracket state == Nothing && not ("]" `isPrefixOf` content) = max 1 (formatContinuation state)
             | otherwise = formatContinuation state
-          lineDepth = max 0 (formatDepth state - closes + lineContinuation)
-          (delta, bracketDelta, lexicalState, code, content) = scanned
+          lineDepth = max 0 (formatDepth state - closedLevels closes (formatGroups state) + lineContinuation)
+          (rawDelta, bracketDelta, lexicalState, code, content) = scanned
+          groups = openGroups (rawDelta + closes) (closeGroups closes (formatGroups state))
+          delta = length groups - length (formatGroups state)
           oldDepth = formatDepth state
           -- a continued line opening a block keepeth its continuation, unless
           -- it closeth a header bracket, as `@a:*, head] {` doth.
@@ -180,10 +185,34 @@ formatLine state line
             | delta == 0 && lineContinues code (lineContinuation > 0) = 1
             | lineContinuation > 0 && delta == 0 = max 2 lineContinuation
             | otherwise = 0
-          next = FormatState depth lexicalState continuation remainingBlocks headerBracket
+          next = FormatState depth groups lexicalState continuation remainingBlocks headerBracket
        in (next, replicate (lineDepth * 2) ' ' ++ content)
   where
     scanned@(_, _, _, _, content) = scanLine (formatLexicalState state) (trim line)
+
+-- the levels that leading closures reach, partly or fully: a line beginning
+-- `}}` under `({s ^ >{` returneth to the level of the line that opened them.
+closedLevels :: Int -> [Int] -> Int
+closedLevels count groups
+  | count <= 0 = 0
+closedLevels count (open : rest)
+  | count <= open = 1
+  | otherwise = 1 + closedLevels (count - open) rest
+closedLevels _ [] = 0
+
+closeGroups :: Int -> [Int] -> [Int]
+closeGroups count groups
+  | count <= 0 = groups
+closeGroups count (open : rest)
+  | count < open = (open - count) : rest
+  | otherwise = closeGroups (count - open) rest
+closeGroups _ [] = []
+
+-- a net opening becometh one level; a net closing closeth older levels.
+openGroups :: Int -> [Int] -> [Int]
+openGroups change groups
+  | change > 0 = change : groups
+  | otherwise = closeGroups (negate change) groups
 
 releaseBlocks :: Int -> [(Int, Int)] -> (Int, [(Int, Int)])
 releaseBlocks depth blocks@((closingDepth, extraDepth) : rest)

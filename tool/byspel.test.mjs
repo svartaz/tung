@@ -55,28 +55,24 @@ function run(args, input = "") {
   return { output: result.stdout, error: result.stderr, status: result.status };
 }
 
-// this byspel useth bookhoard bizens whose laws are still `sorry` (text and
-// set), so its `main` dependeth on that assumption.
-const assuming = new Set(["word_count"]);
-
+// running also checketh the whole program and rejecteth `sorry`.
 for (const byspel of byspels) {
   const file = path.join("byspel", `${byspel}.tung`);
-  test(`${byspel} checketh`, () => {
-    assert.deepEqual(run(["--check", file]), {
-      output: assuming.has(byspel) ? "type ok\nsorry: main\n" : "type ok\n",
-      error: "",
-      status: 0,
-    });
-  });
-  if (Object.hasOwn(outputs, byspel)) {
-    test(`${byspel} printeth its result`, () => {
-      assert.deepEqual(run([file]), {
-        output: outputs[byspel],
+  const output = Object.hasOwn(outputs, byspel) ? outputs[byspel] : undefined;
+  test(`${byspel} ${output === undefined ? "checketh" : "printeth its checked result"}`, () => {
+    assert.deepEqual(
+      run(
+        output === undefined
+          ? ["--no-sorry", "--check", file]
+          : ["--no-sorry", file],
+      ),
+      {
+        output: output ?? "type ok\n",
         error: "",
         status: 0,
-      });
-    });
-  }
+      },
+    );
+  });
 }
 
 test("word_count readeth its file and counteth repeated words", (context) => {
@@ -113,7 +109,7 @@ test("stdin checking reporteth success and rejection through its exit status", (
     ["let worth ≔", "parse error: expected an expression\n", 1],
     [
       "let worth:ℤ ≔ 'text'",
-      "type error: in let 'worth': cannot unify text with ℤ\n",
+      "type error: in let 'worth': cannot unify string with ℤ\n",
       1,
     ],
   ]) {
@@ -123,4 +119,87 @@ test("stdin checking reporteth success and rejection through its exit status", (
       source,
     );
   }
+});
+
+test("checking retaineth goals beside errors without accepting the proof", (context) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "tung-goals-"));
+  context.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const file = path.join(directory, "proof.tung");
+  const unfinished = "let unfinished:[x:ℤ, ℤ] ≔ sorry\n";
+  for (const fault of ["let bad:ℤ ≔ 'text'", "let bad ≔"]) {
+    const source = unfinished + fault;
+    fs.writeFileSync(file, source);
+    for (const result of [
+      run(["--check-stdin"], source),
+      run(["--check-module", file]),
+    ]) {
+      assert.equal(result.status, 1);
+      assert.equal(result.error, "");
+      assert.match(result.output, /(?:type|parse) error:/);
+      assert.match(result.output, /goal: ℤ\n  x: ℤ/);
+      assert.doesNotMatch(result.output, /type ok/);
+    }
+    const proof = run(["--check-proof", "unfinished", file]);
+    assert.equal(proof.status, 1);
+    assert.doesNotMatch(proof.output, /proof ok|goal:/);
+  }
+});
+
+test("proof checking reporteth one theorem and enforceeth its axiom policy", (context) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "tung-proof-"));
+  context.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const file = path.join(directory, "proof.tung");
+  fs.writeFileSync(
+    file,
+    `ilk =:[@α:*, x:α, α, *] { eftbend:x = @α x }
+ilk one:* { only:one }
+let proved:only = only ≔ eftbend
+let unfinished:one ≔ sorry
+orsetting axiom:only = only
+orsetting unused:one
+let dependent:only = only ≔ axiom
+`,
+  );
+  assert.deepEqual(
+    run(["--no-sorry", "--no-axioms", "--check-proof", "proved", file]),
+    {
+      output:
+        "proof: proved\ntype: only = only\ndependencies: none\nproof ok\n",
+      error: "",
+      status: 0,
+    },
+  );
+  for (const [options, status, verdict] of [
+    [[], 0, "proof ok"],
+    [["--allow-axiom", "axiom", "--allow-axiom", "unused"], 0, "proof ok"],
+    [["--no-axioms"], 1, "proof error: axiom is not allowed: axiom"],
+    [
+      ["--allow-axiom", "proved"],
+      1,
+      "proof error: allowed axiom 'proved' is not an orsetting",
+    ],
+  ]) {
+    assert.deepEqual(run([...options, "--check-proof", "dependent", file]), {
+      output: `proof: dependent\ntype: only = only\norsetting: axiom: only = only\n${verdict}\n`,
+      error: "",
+      status,
+    });
+  }
+  const unfinished = run(["--check-proof", "unfinished", file]);
+  assert.equal(unfinished.status, 1);
+  assert.equal(unfinished.error, "");
+  assert.match(
+    unfinished.output,
+    /proof: unfinished\ntype: one\nsorry: sorry:/,
+  );
+  assert.match(unfinished.output, /proof error: unfinished proof: sorry\n$/);
+  fs.writeFileSync(
+    path.join(directory, "tung.yaml"),
+    "dependencies: {}\nproof:\n  axioms: []\n",
+  );
+  assert.equal(run(["--check-proof", "dependent", file]).status, 1);
+  assert.equal(
+    run(["--allow-axiom", "axiom", "--check-proof", "dependent", file]).status,
+    0,
+  );
 });

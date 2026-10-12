@@ -27,7 +27,7 @@ import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (ExceptT (..), runExceptT, throwE)
 import Data.Functor ((<&>))
 import Data.IORef (atomicModifyIORef', newIORef, readIORef)
-import Data.List (intercalate, sortOn)
+import Data.List (findIndex, intercalate, sortOn)
 import Data.Map.Lazy qualified as Lazy
 import Data.Map.Strict qualified as Map
 import Data.Text qualified as Text
@@ -278,7 +278,7 @@ execute host = \case
     continue function arguments = runtime (foldM apply function arguments) >>= execute host
 
 -- each case followeth the catalogue type of its key. a fallible deed returneth
--- an option or `text ∑ α`, as in the ordinary runner.
+-- an option or `string ∑ α`, as in the ordinary runner.
 perform :: (Monad m) => HostIO m -> String -> [Runtime] -> Execution m Runtime
 perform host key arguments = case (key, arguments) of
   ("write", [text -> Just value]) -> lift (hostWrite host value) >>= runtime >> pure only
@@ -293,12 +293,12 @@ perform host key arguments = case (key, arguments) of
   ("outstrike", [RTask handle]) -> lift (hostCancel host handle) >> pure only
   ("read_file", [text -> Just path]) -> outcome textValue <$> lift (hostReadFile host path)
   ("write_file", [text -> Just path, text -> Just value]) -> outcome (const only) <$> lift (hostWriteFile host path value)
-  ("append_file", [text -> Just path, text -> Just value]) -> outcome (const only) <$> lift (hostAppendFile host path value)
+  ("athang_file", [text -> Just path, text -> Just value]) -> outcome (const only) <$> lift (hostAppendFile host path value)
   ("arguments", []) -> list . map textValue <$> lift (hostArguments host)
   ("environment", [text -> Just name]) -> option . fmap textValue <$> lift (hostEnvironment host name)
   ("exit", [natural -> Just status]) -> throwE (Exit status)
   ("run_process", [text -> Just command, inputs]) -> do
-    texts <- runtime (maybe (Left "process arguments must be text") Right (listed inputs >>= traverse text))
+    texts <- runtime (maybe (Left "process arguments must be string") Right (listed inputs >>= traverse text))
     outcome (\(status, output, errors) -> RConstructor (coreConstructor processResultConstructorId) [RLiteral (IntegerValue status), textValue output, textValue errors])
       <$> lift (hostRunProcess host command texts)
   -- serving endeth with a message when the transport or a handler faileth.
@@ -374,7 +374,7 @@ responseOf = \case
   RConstructor constructor [natural -> Just status, RConstructor table [rows], text -> Just body]
     | constructor == coreConstructor responseConstructorId,
       table == coreConstructor tableConstructorId -> do
-        pairs <- maybe (Left "web response containeth a non-text header") pure do
+        pairs <- maybe (Left "web response inholdeth a non-string header") pure do
           entries <- listed rows
           traverse (\case RConstructor product [text -> Just name, text -> Just value] | product == coreConstructor productConstructorId -> Just (Text.pack name, Text.pack value); _ -> Nothing) entries
         unless (all (\(name, value) -> Web.validHeaderName name && Web.validHeaderValue value) pairs) (Left "invalid response header")
@@ -402,6 +402,7 @@ runtimeGlobals globals = table
     table = Lazy.mapWithKey global globals
     global name Definition {definitionBody} = case definitionBody of
       Transparent term -> evaluate table [] term
+      EliminationTarget _ term -> evaluate table [] term
       TypeConstructor _ -> pure RErased
       -- number constructors work on literals.
       DataConstructor _ _
@@ -427,41 +428,30 @@ runtimeGlobals globals = table
       Just (TypeConstructor InductiveInfo {inductiveParameterCount, inductiveConstructorInfo})
         | (_, fields) : _ <- drop index inductiveConstructorInfo -> pure (inductiveParameterCount, fields)
       _ -> Left "invalid runtime constructor metadata"
-    -- induction receiveth parameters, motive, methods, indices, and scrutinee.
-    -- recursive hypotheses reuse the prefix; erased indices never compute.
-    -- the chosen method computeth at once; a hypothesis computeth when used.
-    eliminator name family = case definitionBody <$> Map.lookup family globals of
-      Just (TypeConstructor InductiveInfo {..}) -> do
-        let prefixSize = inductiveParameterCount + 1 + length inductiveConstructorInfo
-            indexCount = length inductiveIndexPlicities
-            induct arguments = do
-              let (prefix, rest) = splitAt prefixSize arguments
-                  methods = drop (inductiveParameterCount + 1) prefix
-              scrutinee <- case drop indexCount rest of
-                [value] -> pure value
-                _ -> Left "invalid runtime induction arguments"
-              case literalView scrutinee of
-                RConstructor constructorName values
-                  | Just Definition {definitionBody = DataConstructor owner index} <- Map.lookup constructorName globals,
-                    owner == family,
-                    (_, fields) : _ <- drop index inductiveConstructorInfo,
-                    length fields == length values -> do
-                      method <- maybe (Left "missing runtime induction method") inspected (lookup index (zip [0 ..] methods))
-                      foldM (field prefix) method (zip fields values)
-                RFailure message -> Left message
-                _ -> Left ("induction " ++ show name ++ " received a non-constructor")
-            -- a function field's hypothesis taketh the field's inputs first.
-            field prefix method ((_, annotation, recursive), value) = do
-              applied <- apply method value
-              let recurse child = induct (prefix ++ replicate indexCount RErased ++ [child])
-              if recursive
-                then case inputCount annotation of
-                  0 -> apply applied (delayed (recurse value))
-                  count -> apply applied =<< curried count (foldM apply value >=> recurse)
-                else pure applied
-            inputCount = length . fst . termTelescope
-        curried (prefixSize + indexCount + 1) induct
-      _ -> Left "invalid runtime eliminator metadata"
+    -- both evaluators execute the same checked constructor rule. runtime
+    -- constructors have already discarded their original uniform parameters.
+    eliminator name family = do
+      info@InductiveInfo {..} <- inductiveInfo globals family
+      groupMethods <- inductiveMethods globals info
+      let prefixSize = inductiveParameterCount + length inductiveFamilies + length groupMethods
+          indexCount = length inductiveIndexPlicities
+          induct arguments = do
+            let (prefix, rest) = splitAt prefixSize arguments
+            scrutinee <- case drop indexCount rest of
+              [value] -> inspected value
+              _ -> Left "invalid runtime induction arguments"
+            case literalView scrutinee of
+              RConstructor constructorName values
+                | Just Definition {definitionBody = DataConstructor owner index} <- Map.lookup constructorName globals,
+                  Just row <- if owner == family then Just index else findIndex ((== constructorName) . fst) inductiveConstructorInfo,
+                  row >= 0,
+                  ((selected, fields), rule) : _ <- drop row (zip inductiveConstructorInfo inductiveRules),
+                  selected == constructorName,
+                  length fields == length values ->
+                    evaluate table (reverse (prefix ++ values)) rule
+              RFailure message -> Left message
+              _ -> Left ("induction " ++ show name ++ " received a non-constructor")
+      curried (prefixSize + indexCount + 1) induct
     literalView = \case
       RLiteral literal | Just (constructor, fields) <- literalConstructor literal -> RConstructor constructor (map RLiteral fields)
       value -> value
@@ -497,7 +487,7 @@ evaluate table environment = \case
   Lambda _ _ body -> pure (RFunction \argument -> evaluate table (argument : environment) body)
   Apply _ function argument -> evaluate table environment function >>= \functionValue -> apply functionValue (delayed (evaluate table environment argument))
   Let _ value body -> evaluate table (delayed (evaluate table environment value) : environment) body
-  Meta {} -> Left "runtime term containeth an inference hole"
+  Meta {} -> Left "runtime term inholdeth an inference hole"
   Literal _ value -> pure (RLiteral value)
   RecordType _ -> pure RErased
   Record fields -> pure (RRecord [(name, delayed (evaluate table environment field)) | (name, field) <- fields])

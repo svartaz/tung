@@ -1,8 +1,0 @@
-use flock/algebra/whole/monoid.tung
-use flock/algebra/whole/semigroup.tung
-
-show flock group: [α: *, @: α monoid, *] {
-  let /: [α, α, α]
-
-  let /_outstrike: [a: α, (a / a) = ∅]
-}

@@ -5,5 +5,5 @@ use process/result.tung
 ## run a child process and capture its status, standard output, and standard
 ## error. a process that cannot start yieldeth its error message.
 show let run: [
-  text, text list, (text ∑ _process_result) deed
+  string, string list, (string ∑ _process_result) deed
 ] ≔ 'run_process' fremmed

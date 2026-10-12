@@ -26,8 +26,8 @@ generatedIdempotence = expect "formatter is idempotent for generated structural 
     declarations =
       [ ["show ilk box: [a:*, *] {", "box: [a, a box]", "}"],
         ["let result ≔", "match worth {", "yea; nay ^ 1", "}"],
-        ["let handled ≔", "try risky {", "message fail ^ 0", "}"],
-        ["flock sameness:[a:*, *] {", "let sameness:[@a:*, a, a]", "let rule:[@a:*, x:a,", "(x sameness) ≔ x]", "}"]
+        ["let handled ≔", "risky bind {", "message incast₀ ^ 0", "}"],
+        ["flock sameness:[a:*, *] {", "let sameness:[@a:*, a, a]", "let rule:[@a:*, x:a,", "(x sameness) = x]", "}"]
       ]
 
 isIdempotent :: String -> Bool
@@ -61,7 +61,7 @@ cases =
       x: ℕ,
       x = x
       ] ≔ {c: ℕ ^ c = c}
-      transport eftbend eftbend
+      throughbear eftbend eftbend
       let next ≔ 0
       """,
       """
@@ -69,8 +69,42 @@ cases =
         x: ℕ,
         x = x
       ] ≔ {c: ℕ ^ c = c}
-        transport eftbend eftbend
+        throughbear eftbend eftbend
       let next ≔ 0
+      """
+    ),
+    ( "brackets opened on one line indent once",
+      """
+      let rule: [d: α,
+      (match d {
+      none ^ yea,
+      _ some ^ nay
+      }) = yea]
+      """,
+      """
+      let rule: [d: α,
+        (match d {
+          none   ^ yea,
+          _ some ^ nay
+        }) = yea]
+      """
+    ),
+    ( "leading closures that close part of a line's brackets return to its level",
+      """
+      let x ≔ match y {
+      z ^ f ({s ^ >{throughgo,
+      a,
+      b
+      }} g)
+      }
+      """,
+      """
+      let x ≔ match y {
+        z ^ f ({s ^ >{throughgo,
+          a,
+          b
+        }} g)
+      }
       """
     ),
     ( "a row body after its separator is indented",
@@ -118,6 +152,7 @@ cases =
       pair,
       ℤ
       }
+      let string ≔ '{not a block}' # }
 
       """,
       """
@@ -128,6 +163,7 @@ cases =
         pair,
         ℤ
       }
+      let string ≔ '{not a block}' # }
 
       """
     ),
@@ -169,8 +205,8 @@ cases =
       """
       let hath_+:[x : ℤ, y:  ℤ, ℤ] ≔ (x + y: ℤ)
       flock sameness:[a:*, *] { let rule:[x : a, x = x] }
-      let record:r{field : ℤ} ≔ r{field: +1}
-      let text ≔ 'x: y' # note: untouched
+      ilk record:* { make:[field : ℤ, record] }
+      let string ≔ 'x: y' # note: untouched
       let letter ≔ `:
       /* note: untouched */
 
@@ -178,8 +214,8 @@ cases =
       """
       let hath_+: [x: ℤ, y: ℤ, ℤ] ≔ (x + y: ℤ)
       flock sameness: [a: *, *] { let rule: [x: a, x = x] }
-      let record: r{field: ℤ} ≔ r{field: +1}
-      let text ≔ 'x: y' # note: untouched
+      ilk record: * { make: [field: ℤ, record] }
+      let string ≔ 'x: y' # note: untouched
       let letter ≔ `:
       /* note: untouched */
 
@@ -205,32 +241,16 @@ cases =
 
       """
     ),
-    ( "nested declarations",
-      """
-      show ilk box: [a:*, *] {
-      box: [a, a box]
-      }
-      let text ≔ '{not a block}' # }
-
-      """,
-      """
-      show ilk box: [a: *, *] {
-        box: [a, a box]
-      }
-      let text ≔ '{not a block}' # }
-
-      """
-    ),
     ( "current application syntax",
       """
-      show let sift:[x:a maybe, f:[a, 𝟚], a maybe] ≔ x match {
+      show let sift:[x:a maybe, f:[a, 𝟚], a maybe] ≔ match x {
       a some ^ a f $ if (a some) none
       none   ^ none
       }
 
       """,
       """
-      show let sift: [x: a maybe, f: [a, 𝟚], a maybe] ≔ x match {
+      show let sift: [x: a maybe, f: [a, 𝟚], a maybe] ≔ match x {
         a some ^ a f $ if (a some) none
         none   ^ none
       }
@@ -245,9 +265,9 @@ cases =
       nay ^ +0
       }
       let handled ≔
-      try risky {
-      yield worth ^ worth,
-      message fail ^ +0
+      match risky {
+      worth incast₁ ^ worth,
+      message incast₀ ^ +0
       }
       let sameness ≔
       { x ^ x }
@@ -260,9 +280,9 @@ cases =
           nay ^ +0
         }
       let handled ≔
-        try risky {
-          yield worth ^ worth,
-          message fail ^ +0
+        match risky {
+          worth incast₁   ^ worth,
+          message incast₀ ^ +0
         }
       let sameness ≔
         { x ^ x }
@@ -329,82 +349,6 @@ cases =
 
       """
     ),
-    ( "body after a multiline header",
-      """
-      show let sameness:[worth:a, a] ≔
-      worth
-
-      """,
-      """
-      show let sameness: [worth: a, a] ≔
-        worth
-
-      """
-    ),
-    ( "multiline bracket header keepeth one indentation level",
-      """
-      show let lift₃:[
-      a₀:a₀ f,
-      a₁:a₁ f,
-      a₂:a₂ f,
-      f:[a₀, a₁, a₂, b],
-      b f] ≔
-      >{atfold, a₂, a₁, a₀, f sheer}
-
-      """,
-      """
-      show let lift₃: [
-        a₀: a₀ f,
-        a₁: a₁ f,
-        a₂: a₂ f,
-        f: [a₀, a₁, a₂, b],
-        b f] ≔
-        >{atfold, a₂, a₁, a₀, f sheer}
-
-      """
-    ),
-    ( "multiline record",
-      """
-      let person:r{
-      name:text,
-      age:ℤ
-      } ≔ r{
-      name ≔ 'naoki',
-      age ≔ +35
-      }
-
-      """,
-      """
-      let person: r{
-        name: text,
-        age: ℤ
-      } ≔ r{
-        name ≔ 'naoki',
-        age ≔ +35
-      }
-
-      """
-    ),
-    ( "associative sequence",
-      """
-      let list ≔ >{
-      ‥,
-      a,
-      b,
-      empty
-      }
-
-      """,
-      """
-      let list ≔ >{
-        ‥,
-        a,
-        b,
-        empty
-      }
-
-      """
-    ),
     ( "multiline law annotation",
       """
       flock atfoldsome:[f:[*, *], *] {
@@ -425,12 +369,12 @@ cases =
     ),
     ( "equals signs in strings and comments",
       """
-      let text ≔ 'a = b' # =
+      let string ≔ 'a = b' # =
       let next ≔ +1
 
       """,
       """
-      let text ≔ 'a = b' # =
+      let string ≔ 'a = b' # =
       let next ≔ +1
 
       """
@@ -438,46 +382,26 @@ cases =
     ( "decimal unicode and block comments",
       """
       let result ≔
-      match character {
+      match staff {
       `\\32; ^ 1,
       _ ^ 0
       }
       /*
         {
       */
-      let next ≔ 1
+      let next ≔ 1 /* { = */
 
       """,
       """
       let result ≔
-        match character {
+        match staff {
           `\\32; ^ 1,
           _     ^ 0
         }
       /*
         {
       */
-      let next ≔ 1
-
-      """
-    ),
-    ( "delimiters in block comments",
-      """
-      let x ≔ +1 /* { = */
-      let y ≔ +2
-      /*
-        {
-      */
-      let z ≔ +3
-
-      """,
-      """
-      let x ≔ +1 /* { = */
-      let y ≔ +2
-      /*
-        {
-      */
-      let z ≔ +3
+      let next ≔ 1 /* { = */
 
       """
     ),

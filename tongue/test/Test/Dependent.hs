@@ -1,6 +1,7 @@
 -- closed examples exercise dependent typing independently of source elaboration.
 module Test.Dependent (group) where
 
+import Data.Either (isRight)
 import Test.DependentSupport
 import Test.Harness (Group, Test, expect, expectEq, propertyTest)
 import Test.Harness qualified as Harness
@@ -18,8 +19,8 @@ typingTests =
       pure (inferredUniverses result, inferredType result, inferredConstraints result),
     expectEq "sameness retaineth its bound type" (Right identityType) (inferredType <$> infer emptyEnvironment identity),
     expectEq "application substituteth its result type" (Right (Pi Explicit (sort 0) (sort 0))) (inferredType <$> infer emptyEnvironment (Apply Explicit identity (sort 0))),
-    reject "a universe cannot contain itself" (check emptyEnvironment (sort 0) (sort 0)),
-    reject "inferred universes cannot contain themselves" (check emptyEnvironment (Sort (LMeta 0)) (Sort (LMeta 0))),
+    reject "a universe cannot inhold itself" (check emptyEnvironment (sort 0) (sort 0)),
+    reject "inferred universes cannot inhold themselves" (check emptyEnvironment (Sort (LMeta 0)) (Sort (LMeta 0))),
     reject "closed terms have no local variable" (infer emptyEnvironment (Local 0)),
     reject "undernaught local indices are invalid" (infer emptyEnvironment (Local (-1))),
     reject "a function domain must be a type" (infer emptyEnvironment (Lambda Explicit identity (Local 0))),
@@ -61,6 +62,9 @@ globalTests =
     expectEq "products retain the maximum of inuniverses" (Right (sort 3)) $ do
       environment <- define emptyEnvironment (name "arrow") Nothing (Pi Explicit (Sort (LMeta 0)) (Sort (LMeta 1)))
       inferredType <$> infer environment (Global (name "arrow") [level 0, level 2]),
+    expectEq "folded carriers retain global universe arguments" (Right [True, False]) $ do
+      environment <- defineInductive emptyEnvironment (InductiveDeclaration (name "carrier") (name "carrier_induction") 0 1 [] (Sort (LParam 0)) [(name "value", Global (name "carrier") [LParam 0])])
+      pure [isRight (check environment (Global (name "value") [level 0]) (Global (name "carrier") [level index])) | index <- [0, 1]],
     expectEq "constrained globals accept universe inference holes" (Right 3) $ do
       environment <- define emptyEnvironment (name "maximum") (Just maximumAnnotation) (Sort (LMeta 0))
       inferredUniverses <$> infer environment (Global (name "maximum") [LMeta 0, LMeta 1, LMeta 2]),
@@ -97,6 +101,29 @@ universeTests =
   [ expect "strict heir constraints have no solution" (not (universeSatisfiable [LevelBelow (LSucc (LParam 0)) (LParam 0)])),
     expect "universe maxima preserve each lower bound" (universeEntails [] (LevelBelow (LParam 0) (LMax (LParam 0) (LParam 1)))),
     expect "unrelated universe parameters are not same" (not (universeEntails [] (LevelEqual (LParam 0) (LParam 1)))),
+    expectEq "universe entailment preserveth disjunctions, offsets, and both equality directions" [True, False, False, False, True] $
+      let p = LParam 0
+          q = LParam 1
+          r = LParam 2
+          choice = LevelBelow p (LMax q r)
+       in [ universeEntails [choice] (LevelBelow p (LMax (LSucc q) r)),
+            universeEntails [choice] (LevelBelow p q),
+            universeEntails [LevelBelow p (LSucc q)] (LevelBelow p q),
+            universeEntails [LevelBelow p q] (LevelEqual p q),
+            universeEntails [LevelBelow p q, LevelBelow q r] (LevelBelow p r)
+          ],
+    expect "an impossible maximum is rejected before unrelated choices" $
+      not $
+        universeSatisfiable
+          ( [LevelEqual (LParam 64) LZero, LevelEqual (LParam 65) LZero]
+              ++ [LevelBelow (LSucc LZero) (LMax (LParam (2 * index)) (LParam (2 * index + 1))) | index <- [0 .. 32]]
+          ),
+    expect "universe search rechecketh previously satisfied choices" $
+      let x = LParam 0
+          y = LParam 1
+          z = LParam 2
+          w = LParam 3
+       in not (universeSatisfiable [LevelEqual y z, LevelEqual x w, LevelBelow x (LMax y z), LevelBelow (LSucc y) (LMax x w)]),
     propertyTest "universe generalisation discardeth exactly tautological constraints" $ QuickCheck.forAll singleConstraintGenerator $ \constraint ->
       let generalised = do
             environment <- inferInductive emptyEnvironment (name "constraint") (name "constraint_induction") 0 (Sort (LMax (LParam 0) (LParam 1))) [] [constraint]
@@ -107,6 +134,13 @@ universeTests =
       all (\assignment -> evalLevel assignment expression == evalLevel assignment (universeNormalise expression)) assignments,
     propertyTest "bounded witnesses prevent false universe rejection" $ QuickCheck.forAll constraintGenerator $ \constraints ->
       not (any (\assignment -> all (satisfies assignment) constraints) assignments) || universeSatisfiable constraints,
+    propertyTest "bounded universe solving agreeth with every model" $
+      QuickCheck.forAll constraintGenerator $ \constraints ->
+        QuickCheck.forAll singleConstraintGenerator $ \conclusion ->
+          let bounded = constraints ++ [LevelBelow (LParam index) (LSucc (LSucc LZero)) | index <- [0, 1]]
+              models = filter (\assignment -> all (satisfies assignment) bounded) [[a, b] | a <- [0 .. 2], b <- [0 .. 2]]
+           in (universeSatisfiable bounded, universeEntails bounded conclusion)
+                QuickCheck.=== (not (null models), all (\assignment -> satisfies assignment conclusion) models),
     propertyTest "entailed universe constraints hold in every bounded model" $
       QuickCheck.forAll constraintGenerator $ \constraints ->
         QuickCheck.forAll singleConstraintGenerator $ \conclusion ->

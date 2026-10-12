@@ -1,103 +1,54 @@
 # todo
 
-this backlog tracketh planned work in the compiler, editor, and bookhoard
-library. active work appeareth in priority order. deferred gates
-depend on later evidence.
-
-## theorem proving
-
-[`tongue/dependent.md`](tongue/dependent.md#proving-status) summariseth what
-proofs can use now. the maintainer decided the direction of each item below;
-open choices are marked.
-
-- checking speed: `byspel/word_count.tung` checketh in about 7 s on a quiet
-  machine. the next
-  cost is the global lookup in neutral reduction, which compareth symbol
-  names as strings; carrying the looked-up definition in a neutral head
-  would avoid it.
-- use requirement laws in bookhoard: the component-law rows in
-  [`reference.md`](bookhoard/reference.md#law-proofs) may now be proved.
-- extend recursion. `ilk/accessible.tung` provideth well-founded recursion
-  through an accessibility family. later, if wanted, add a measure
-  annotation compiled to it. support mutual families implied by a dependency
-  cycle of ilks (preferred over an explicit group), then nested families such
-  as `rose list` by translation to mutual ones. let recursion match a value
-  whose indices are constructors, and allow course-of-values recursion on
-  indexed families.
-- define `deed` as a free structure over host requests, as `freer` is, so
-  that its laws follow by induction and `fall_umtake` instead of the three
-  listed deed axioms.
-- rewriting: later, as a new keyword. a rewrite replaceth the left side of an
-  equation with the right, and faileth when the goal hath no occurrence.
+planned work in priority order. current behaviour belongeth to the
+[language reference](tongue/language.md), checker design to
+[dependent.md](tongue/dependent.md), and workflow to
+[development.md](tongue/development.md).
 
 ## dependent language
 
-[`tongue/dependent.md`](tongue/dependent.md) owneth the implemented system.
-
-- extend contextual inference only when concrete programs require broader
-  constraints. hole arguments are pruned; ambiguous holes still need
-  annotations or explicit arguments.
-- encode state and failure as dependent library code over `deed`.
-- decide the syntax for universe constraints in exported signatures and for
-  guarded recursion of actions.
+- decide the syntax for guarded recursion of actions.
+- universe levels stay fully implicit; there is no level syntax. report an
+  inconsistent universe as the source `*` occurrences and definitions that
+  would make a universe contain itself, and show inferred universe signatures
+  in hover and `--type-of` in that form.
+- report when a shown name's inferred universe constraints change, beside the
+  module interface cache, since importers depend on them.
 
 ## self-hosting
 
-each stage is ported only with an exact oracle in the active compiler. the
-haskell compiler is the oracle. a stage
-stayeth authoritative until the port matcheth it on every tracked `.tung` file
-and every test input of that stage.
+the haskell stage stayeth authoritative until its tung port matcheth every
+tracked `.tung` file and stage test input against an exact oracle.
 
 - port the active formatter to tung first. it is a line scanner with no parser or
   checker dependency, and `tung --format-stdin` is its oracle. add a
   differential test that runneth the port on all tracked `.tung` files and the
   format test inputs and compareth bytes.
-- let the editor session reuse the disk interface cache that command-line
-  runs use, so a new session doth not recheck bookhoard.
 - port the active lexer next, with a token dump command as its oracle. token spans
   must match exactly in utf-16 units.
 - port the parser with well-founded recursion from `ilk/accessible.tung`.
   recursive descent over a token list is not structural; fuel is a
   stopgap, not the design.
-- add a balanced ordered map to bookhoard before porting name/module scope
-  or syntax translation.
-  `table` is an association list.
-
-## correctness
-
-- measure test time and peak memory after shared dependent import compilation.
-- extend `Test.Program` with varied generated matches, records, dictionaries,
-  imports, and deeds, using independent host results.
-- add laws for selected bookhoard bizens to the deterministic quickcheck harness.
-  start with `𝟚` equality, partial order, and total order. then check functor,
-  applicative, and monad laws for bounded lists and options. the compiler
-  checketh and eraseth flock proofs; runtime tests check their equations. print generated tung source for
-  every counterexample.
-- generate small acyclic module graphs. canonical term, type, flock, and
-  bizen identities must survive declaration and import reordering. include
-  aliases, re-exports, private name collisions, and transitive imports of the
-  same module. keep filesystem path collisions in `Test.Project`.
 
 ## tooling and maintainability
 
-- add a non-mutating `make check` target for ci. check ormolu and idempotent
-  canonical formatting of all tracked tung files.
+- reduce repeated normalisation, universe-clause search, and allocation in
+  large proof checks. share checked interfaces between test helpers and
+  isolated groups. preserve inferred universe constraints and kernel rechecking.
 - pin a hackage index state for cabal in ci. keep local dependency refresh
   separate from ci checks.
 
 ## release
 
-- add macos compiler and editor checks and windows ci jobs beside ubuntu.
-  handle executable suffixes, temporary paths, and path separators explicitly.
+- add windows ci jobs beside ubuntu and macos. handle executable suffixes,
+  temporary paths, path separators, and the makefile's shell commands.
 - build and test runner and extension artefacts from a clean checkout. check
   that the installed runner resolveth a git-pinned Bookhoard through `tung.yaml`
   and that the packaged extension connecteth to the installed compiler.
-- after publishing the monorepo, update `Formula/tung.rb` to a commit with the
-  manifest-based library resolver. test the installed formula with an external
-  Bookhoard pin.
-- choose a licence. declare the github repository in cabal metadata. define a
-  compatible release-version policy with `vscode/`. then add changelogs and
-  signed runner artefacts.
+- after publishing the monorepo, update `Formula/tung.rb` to that commit and
+  test the installed formula with an external Bookhoard pin.
+- define a release-version policy shared by `tongue/` and `vscode/`. then add
+  changelogs and signed runner artefacts.
 
 ## modules and packages
 
@@ -112,21 +63,19 @@ and every test input of that stage.
 
 these tasks belong to [`bookhoard/`](bookhoard/).
 
-- require `same_to_is` for the generic min/max laws, which need boolean
-  sameness to imply identity, and give it bizens for `maybe`, lists,
-  products, and the remaining carriers. repair the list-backed set's representation
-  and membership assumptions before claiming its extensional algebra laws;
-  [`reference.md`](bookhoard/reference.md#law-proofs) giveth counterexamples.
 - add first, last, and reversed monoid carriers without burdening the core monoid
-  flock.
+  class.
 - implement the order-insensitive bag as an opaque, ordered list of distinct
   positive-count pairs, sorted by value. keep its constructor private and
   publish only the type. require `order_whole` smart constructors to preserve
-  strict order and omit zero counts. equality and rendering must ignore
-  insertion order. quotient types are not required.
+  strict order and omit naught counts. equality and rendering must be
+  independent of the order in which values were added. quotient types are not required.
 
 ## deferred gates
 
+- a free inductive `deed`, whose laws would follow by induction, needeth
+  coinduction while `deed_steadfast` existeth: its step would put `deed` left
+  of an arrow. until then the three deed axioms stay.
 - add a packed immutable array only if benchmarks show a material bottleneck in
   list-backed algorithms or host boundaries. design the representation and host
   abi first.

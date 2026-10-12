@@ -18,9 +18,8 @@ accepted =
     ("explicit aliases override colliding defaults", "use ilk/list.tung data_list use syntax/list.tung syntax_list"),
     ("explicit aliases distinguish extension-sharing paths", "use a.tung one use a.extra.tung two"),
     ("explicit aliases distinguish dotted directories", "use pkg.one/query.tung one use pkg.two/query.tung two"),
-    ("labels may repeat in separate records", "let first ≔ r{x ≔ +1} let second ≔ r{x ≔ +2}"),
-    ("annotated fremmed let", "let plus:[ℤ, ℤ, ℤ] ≔ 'eke_integer' fremmed"),
-    ("shared constructor heads in law parameters", "ilk _box: [a:*, *] { box: [a, a _box] } flock sameness:[a:*, *] { let rule:[x box:a _box, y box:a _box, x = y] }")
+    ("field names may repeat in separate ilks", "ilk first: * { first_of: [x: ℤ, first] } ilk second: * { second_of: [x: ℤ, second] }"),
+    ("shared constructor heads in a law type", "use is.tung ilk _box: [a:*, *] { box: [a, a _box] } flock sameness:[a:*, *] { let rule:[left:a _box, right:a _box, match left, right { x box, y box ^ x = y }] }")
   ]
 
 rejected :: [(String, String)]
@@ -39,17 +38,14 @@ rejected =
     ("duplicate data parameter", "ilk bad: [a:*, a:*, *] { bad: a bad a }"),
     ("duplicate type alias parameter", "let bad:[a:*, a:*, *] ≔ a"),
     ("duplicate constructor", "ilk bad: * { hath_≍: bad, hath_≍: bad }"),
-    ("unannotated fremmed let", "let plus ≔ 'eke_integer' fremmed"),
-    ("nested fremmed marker", "let bad:r{worth: ℤ} ≔ r{worth ≔ 'eke_integer' fremmed}"),
     ("qualified flock name", "flock left~right:[a:*, *] { let op:[a, a] }"),
     ("qualified flock member name", "flock left:[a:*, *] { let right~op:[a, a] }"),
     ("duplicate flock parameter", "flock bad:[a:*, a:*, *] { let op:[a, a] }"),
     ("duplicate flock member", "flock bad:[a:*, *] { let op:[a, a] let op:[a, a] }"),
-    ("duplicate flock law parameter", "flock bad:[a:*, *] { let rule:[x: a, x: a, x = x] }"),
-    ("a law and a member share one namespace", "flock bad:[a:*, *] { let hath_≍:[a, a] let hath_≍:[x: a, (x hath_≍) = x] }"),
+    ("duplicate flock law parameter", "use is.tung flock bad:[a:*, *] { let rule:[x: a, x: a, x = x] }"),
+    ("a law and a member share one namespace", "use is.tung flock bad:[a:*, *] { let hath_≍:[a, a] let hath_≍:[x: a, (x hath_≍) = x] }"),
     ("duplicate bizen member", "bizen:ℤ bad { let op: [x:] ≔ x let op: [y:] ≔ y }"),
-    ("duplicate record type field", "let bad:r{x: ℤ, x: text} ≔ r{x ≔ +1}"),
-    ("duplicate record field", "let bad ≔ r{x ≔ +1, x ≔ +2}")
+    ("duplicate field", "ilk bad: * { bad_of: [x: ℤ, x: string, bad] }")
   ]
 
 validationOk, validationErr :: String -> String -> Test
@@ -67,4 +63,4 @@ validationCase name shouldPass source =
         (False, "type ok") -> Just (name ++ ": unexpected acceptance")
         _ -> Nothing
   where
-    libraryPaths = Map.fromList [(path, ()) | path <- ["ilk/list.tung", "ground.tung"]]
+    libraryPaths = Map.fromList [(path, ()) | path <- ["ilk/list.tung", "ground.tung", "is.tung"]]

@@ -23,6 +23,7 @@ module Tung.Dependent.Source.Environment
     registerInstance,
     defaultPriority,
     exportIntroduced,
+    exportNames,
     reexportNames,
     typeOfName,
     sorryAssumptions,
@@ -30,6 +31,8 @@ module Tung.Dependent.Source.Environment
     sourceDefinitions,
     sourceGlobal,
     globals,
+    internProgram,
+    internNames,
   )
 where
 
@@ -38,10 +41,10 @@ import Data.List (intercalate, nub)
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
 import Tung.Dependent.Check qualified as K
-import Tung.Dependent.Render (renderTermWith)
 import Tung.Dependent.Source.Error qualified as Error
+import Tung.Dependent.Source.Render (renderTermIn)
 import Tung.Dependent.Syntax
-import Tung.Identity (ModuleId (..), SymbolId (..), inducedFamily, modelledHost)
+import Tung.Identity (ModuleId (..), SymbolId (..), inducedFamily, internSymbols, modelledHost)
 import Tung.Name qualified as Name
 import Tung.Token (SourceFailure, SourceSpan)
 
@@ -54,9 +57,54 @@ data SourceProgram = SourceProgram
     localNames :: Set.Set String,
     programExports :: Names,
     -- the goal and named context of each `sorry` in this module, newest first.
-    programHoles :: [Hole]
+    programHoles :: [Hole],
+    -- resolved source references survive computation during elaboration.
+    programReferences :: Map.Map SymbolId (Set.Set SymbolId)
   }
   deriving stock (Eq, Show)
+
+-- only this module's new definitions are walked. imported definition bodies
+-- and map subtrees remain shared with their checked modules.
+internProgram :: Globals -> SourceProgram -> SourceProgram
+internProgram imported program@SourceProgram {..} =
+  program
+    { programEnvironment = K.Environment (Map.union own imported),
+      checkedDefinitions = [(intern symbol, checked symbol) | (symbol, _) <- checkedDefinitions],
+      globalNames = internNames intern globalNames,
+      programExports = internNames intern programExports,
+      programReferences = Map.union (Map.mapKeysMonotonic intern (Map.map (Set.mapMonotonic intern) ownReferences)) inheritedReferences
+    }
+  where
+    definitions = globals programEnvironment
+    intern = internSymbols definitions
+    own = Map.map (mapDefinitionSymbols intern) (Map.difference definitions imported)
+    ownReferences = Map.restrictKeys programReferences (Map.keysSet own)
+    inheritedReferences = Map.withoutKeys programReferences (Map.keysSet own)
+    -- recorded source definitions are this module's transparent constants.
+    -- reuse their rewritten trees rather than retaining and walking them twice.
+    checked symbol = case own Map.! symbol of
+      Definition {definitionUniverses, definitionConstraints, definitionType, definitionBody = Transparent term} ->
+        K.Inferred definitionUniverses definitionConstraints term definitionType
+      _ -> error "recorded source definition is not transparent"
+
+-- the supplied interner preserveth identity and therefore map ordering.
+-- visible names retain their spelling; only resolved identities are shared.
+internNames :: (SymbolId -> SymbolId) -> Names -> Names
+internNames intern Names {nameTable, nameClasses} =
+  Names (Map.map binding nameTable) (Map.mapKeysMonotonic intern (Map.map registry nameClasses))
+  where
+    binding = \case
+      FreshName symbol universes -> FreshName (intern symbol) universes
+      FixedName symbol levels -> FixedName (intern symbol) levels
+      ambiguous@AmbiguousName {} -> ambiguous
+    registry info@ClassInfo {..} =
+      info
+        { classParents = map intern classParents,
+          classInstances = map intern classInstances,
+          classInherited = map intern classInherited,
+          classPriorities = Map.mapKeysMonotonic intern classPriorities,
+          classFallbacks = map intern classFallbacks
+        }
 
 -- public accessors are ordinary functions. an exported record selector would
 -- let callers replace a checked environment even with its constructor hidden.
@@ -95,8 +143,7 @@ data Names = Names
 -- a class is a one-constructor family. its implicit fields hold parent
 -- dictionaries; its explicit fields are the members, in declaration order.
 data ClassInfo = ClassInfo
-  { classConstructor :: SymbolId,
-    classMembers :: [String],
+  { classMembers :: [String],
     -- parent classes, which an instance's dictionary also needeth.
     classParents :: [SymbolId],
     -- registered instances, oldest first. they outrank inherited instances.
@@ -201,10 +248,13 @@ registerClass symbol info names = names {nameClasses = Map.insertWith keep symbo
 
 -- a shown declaration exporteth the names and class metadata it introduceth.
 exportIntroduced :: SourceProgram -> SourceProgram -> SourceProgram
-exportIntroduced before after@SourceProgram {globalNames, programExports} =
-  let introduced = Set.difference (localNames after) (localNames before)
-      exported = Map.restrictKeys (nameTable globalNames) introduced
-      shownClasses = Map.filter (\ClassInfo {classConstructor} -> symbolName classConstructor `Set.member` introduced) (nameClasses globalNames)
+exportIntroduced before after = exportNames (Set.difference (localNames after) (localNames before)) after
+
+-- group insertion exporteth only the names of its individually shown members.
+exportNames :: Set.Set String -> SourceProgram -> SourceProgram
+exportNames introduced after@SourceProgram {globalNames, programExports} =
+  let exported = Map.restrictKeys (nameTable globalNames) introduced
+      shownClasses = Map.restrictKeys (nameClasses globalNames) (Set.fromList [symbol | binding <- Map.elems exported, Just symbol <- [bindingSymbol binding]])
    in after {programExports = programExports {nameTable = Map.union exported (nameTable programExports), nameClasses = Map.unionWith mergeClass (nameClasses programExports) shownClasses}}
 
 -- re-exported names keep their identities and class registries. a qualified
@@ -248,17 +298,19 @@ sorryAssumptions SourceProgram {..} =
     reported symbol = symbol `Set.member` shown || isInstance symbol || symbolName symbol == "main"
     isInstance symbol = take 10 (symbolName symbol) == "#instance_"
     describe symbol
-      | isInstance symbol = "bizen " ++ maybe "?" (renderTermWith (displayName globalNames) [] . definitionType) (Map.lookup symbol definitions)
+      | isInstance symbol = "bizen " ++ maybe "?" (renderTermIn definitions (displayName globalNames) K.emptyContext [] . definitionType) (Map.lookup symbol definitions)
       | otherwise = displayName globalNames symbol
 
 -- the module's own `orsetting` assumptions, each with its type.
 orsendAssumptions :: SourceProgram -> [String]
 orsendAssumptions SourceProgram {..} =
-  [ name ++ ": " ++ renderTermWith (displayName globalNames) [] definitionType
+  [ name ++ ": " ++ render definitionType
   | name <- Set.toList localNames,
     Just symbol <- [lookupName name globalNames >>= bindingSymbol],
     Just Definition {definitionType, definitionBody = Assumption} <- [Map.lookup symbol (globals programEnvironment)]
   ]
+  where
+    render = renderTermIn (globals programEnvironment) (displayName globalNames) K.emptyContext []
 
 termGlobals :: Term -> [SymbolId]
 termGlobals = \case
@@ -270,7 +322,8 @@ typeOfName SourceProgram {..} name = case lookupName name globalNames of
   Just (AmbiguousName modules) -> Left (ambiguousName name modules)
   binding -> maybe (Left ("unknown name '" ++ name ++ "'")) found (binding >>= bindingSymbol)
   where
-    found identity = maybe (Left ("unknown name '" ++ name ++ "'")) (Right . renderTermWith (displayName globalNames) [] . definitionType) (Map.lookup identity (globals programEnvironment))
+    render = renderTermIn (globals programEnvironment) (displayName globalNames) K.emptyContext []
+    found identity = maybe (Left ("unknown name '" ++ name ++ "'")) (Right . render . definitionType) (Map.lookup identity (globals programEnvironment))
 
 sourceDefinitions :: SourceProgram -> [(SymbolId, K.Inferred)]
 sourceDefinitions = reverse . checkedDefinitions

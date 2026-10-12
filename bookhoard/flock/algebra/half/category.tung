@@ -1,5 +1,6 @@
 use combinator.tung
 use flock/algebra/half/semigroupoid.tung
+use is.tung
 
 show flock category: [⇨: [*, *, *], @: ⇨ semigroupoid, *] {
   let sameness: [@α: *, α ⇨ α]

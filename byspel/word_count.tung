@@ -1,30 +1,30 @@
 use deed/file.tung
 use deed/system.tung
-use flock/algebra/whole/hath_magma.tung
+use flock/algebra/whole/hath_fold.tung
 use flock/functor/catamorphism.tung
 use ground.tung
 use ilk/list.tung
 use ilk/maybe.tung
 use ilk/product.tung
+use ilk/string/operation.tung
 use ilk/sum.tung
-use ilk/table.tung
-use ilk/text/operation.tung
+use ilk/wordbook.tung
 
-let count_word: [counts: text table ℤ, word: text, text table ℤ] ≔
+let count_word: [counts: string wordbook ℤ, word: string, string wordbook ℤ] ≔
   match counts lookup word {
     none       ^ counts put word +1,
     count some ^ counts put word (count + +1)
   }
 
-let count_words: [content: text, text table ℤ] ≔ (
-  let words ≔ content words_text
-  yield words gather₁ table~empty count_word
+let count_words: [content: string, string wordbook ℤ] ≔ (
+  let words ≔ content words_string
+  yield words gather₁ wordbook~empty count_word
 )
 
-let write_count: [entry: text ∏ ℤ, 𝟙 deed] ≔ >{then,
+let write_count: [entry: string ∏ ℤ, 𝟙 deed] ≔ >{then,
   (entry forthcast₀) ground~write,
   ':' ground~write,
-  (entry forthcast₁) to_text $ write_line
+  (entry forthcast₁) to_string $ write_line
 }
 
 let main: 𝟙 deed ≔ arguments bind {

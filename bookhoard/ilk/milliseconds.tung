@@ -1,5 +1,5 @@
 use _foreign.tung
-use flock/algebra/arithmetic/hath_fold.tung
+use flock/algebra/whole/hath_fold.tung
 use ilk/natural.tung
 use ilk/one.tung
 
@@ -9,13 +9,13 @@ show ilk _milliseconds: * {
 }
 
 show let seconds: [t: ℕ, _milliseconds] ≔
-  t × 1000 $ milliseconds
+  t · 1000 $ milliseconds
 
 show let minutes: [t: ℕ, _milliseconds] ≔
-  t × 60 $ seconds
+  t · 60 $ seconds
 
 show let hours: [t: ℕ, _milliseconds] ≔
-  t × 60 $ minutes
+  t · 60 $ minutes
 
 show let sleep_for: [(t milliseconds): _milliseconds, 𝟙 deed] ≔
   t sleep

@@ -21,6 +21,65 @@ test("checker requests preserve unicode, quotes, slashes, and control characters
     imports: { "dep.tung": source },
   });
 });
+test("a file request nameth its path", () => {
+  const request = sessionRequest(8, 1, "check", "", "", [], "/project/a.tung");
+  assert.equal(JSON.parse(request).path, "/project/a.tung");
+});
+test("proof requests distinguish inherited and empty axiom policies", () => {
+  const inherited = JSON.parse(sessionRequest(9, 2, "proof", "proved", "", []));
+  const restricted = JSON.parse(
+    sessionRequest(10, 2, "proof", "proved", "", [], undefined, []),
+  );
+  assert.equal(inherited.allowedAxioms, undefined);
+  assert.deepEqual(restricted.allowedAxioms, []);
+});
+test("proof checking reporteth the selected closure and its policy verdict", async () => {
+  const model = {
+    text: "ilk =:[@α:*, x:α, α,*] { eftbend:x = @α x }\nilk one:* { only:one }\nlet proved:only = only ≔ eftbend\nlet unfinished:one ≔ sorry\norsetting axiom:only = only\nlet dependent:only = only ≔ axiom",
+  };
+  const proved = await compiler.proof(model, [], "proved", 0, []).result;
+  assert.equal(proved.kind, "proof");
+  if (proved.kind !== "proof") return;
+  assert.equal(proved.verified, true);
+  assert.deepEqual(proved.audit, {
+    name: "proved",
+    type: "only = only",
+    dependencies: [],
+  });
+  assert.equal(
+    proved.report,
+    "proof: proved\ntype: only = only\ndependencies: none\nproof ok\n",
+  );
+  for (const [allowed, verified] of [
+    [[], false],
+    [["axiom"], true],
+  ] as const) {
+    const result = await compiler.proof(model, [], "dependent", 0, [...allowed])
+      .result;
+    assert.equal(result.kind, "proof");
+    if (result.kind !== "proof") continue;
+    assert.equal(result.verified, verified);
+    assert.deepEqual(result.audit.dependencies, [
+      {
+        symbol: { module: "<root>", name: "axiom" },
+        name: "axiom",
+        type: "only = only",
+        kind: "axiom",
+      },
+    ]);
+    assert.match(result.report, /orsetting: axiom: only = only/);
+  }
+  const unfinished = await compiler.proof(model, [], "unfinished").result;
+  assert.equal(unfinished.kind, "proof");
+  if (unfinished.kind === "proof") {
+    assert.equal(unfinished.verified, false);
+    assert.match(unfinished.message, /unfinished proof: sorry/);
+    assert.equal(
+      unfinished.audit.dependencies.some(({ kind }) => kind === "sorry"),
+      true,
+    );
+  }
+});
 test("a successful check carrieth each sorry goal with its span and context", async () => {
   const source = "# 𝟙\nlet twice:[x:ℤ, ℤ] ≔ sorry\nlet worth:ℤ ≔ +1";
   const output = await compiler.check({ text: source }, []).result;
@@ -100,8 +159,8 @@ test("source and unsaved import changes invalidate the compiled cache", async ()
   const imported = "use dep.tung\nlet worth ≔ exported";
   for (const [source, annotation, value, expected] of [
     [imported, "ℤ", "+1", "ℤ"],
-    [imported, "text", "'new'", "text"],
-    ["use dep.tung\nlet worth ≔ +2", "text", "'new'", "ℤ"],
+    [imported, "string", "'new'", "string"],
+    ["use dep.tung\nlet worth ≔ +2", "string", "'new'", "ℤ"],
   ]) {
     const imports = [
       ["dep.tung", `show let exported:${annotation} ≔ ${value}`],
@@ -207,10 +266,10 @@ test(
   `,
     );
     const first = bridge.typeOf({ text: "" }, [], "ℤ", 3);
-    const second = bridge.typeOf({ text: "" }, [], "text", 4);
+    const second = bridge.typeOf({ text: "" }, [], "string", 4);
     assert.deepEqual(await Promise.all([first.result, second.result]), [
       { kind: "type", type: "ℤ" },
-      { kind: "type", type: "text" },
+      { kind: "type", type: "string" },
     ]);
   },
 );

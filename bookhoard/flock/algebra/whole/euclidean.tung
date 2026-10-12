@@ -1,0 +1,41 @@
+use flock/algebra/whole/hath_deal_leftover.tung
+use flock/algebra/whole/hath_eke.tung
+use flock/algebra/whole/hath_fold.tung
+use flock/algebra/whole/hath_naught.tung
+use flock/algebra/whole/hath_offdraw.tung
+use flock/algebra/whole/ring.tung
+use flock/order/hath_at_most.tung
+use flock/order/order_whole.tung
+use ilk/maybe.tung
+use ilk/product.tung
+use ilk/two.tung
+use ilk/wholetale.tung
+use is.tung
+
+## euclidean division, whose remainder lieth between naught and the divisor's
+## absolute magnitude. division by naught yieldeth none, which the laws skip.
+show flock euclidean: [α: *, @: α ring, @: α hath_%, @: α order_whole, *] {
+  let %_·_+: [dealt: α, dealer: α,
+    (match dealt % dealer {
+      none                      ^ dealt,
+      (quotient both rest) some ^ (quotient · dealer) + rest
+    }) = dealt]
+
+  let %_nonnegative: [dealt: α, dealer: α,
+    (match dealt % dealer {
+      none               ^ yea,
+      (_ both rest) some ^ naught ≤ rest
+    }) = yea]
+
+  let %_bounded: [dealt: α, dealer: α,
+    (match dealt % dealer {
+      none               ^ yea,
+      (_ both rest) some ^ (naught ≤ dealer) if (rest < dealer) (rest < (naught - dealer))
+    }) = yea]
+}
+
+bizen: ℤ euclidean {
+  let %_·_+ ≔ sorry
+  let %_nonnegative ≔ sorry
+  let %_bounded ≔ sorry
+}

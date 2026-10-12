@@ -1,3 +1,4 @@
+use is.tung
 ilk 𝟚: * { yea: 𝟚, nay: 𝟚 }
 
 ilk maybe: [α: *, *] {
@@ -9,7 +10,7 @@ ilk maybe: [α: *, *] {
 flock hath_≍: [α: *, *] {
   let ≍: [α, α, 𝟚]
 
-  let same_eftbend: [x: α, (x ≍ x) = yea]
+  let ≍_eftbend: [x: α, (x ≍ x) = yea]
 }
 
 ## an anonymous requirement `@:` is found by instance search.
@@ -24,7 +25,7 @@ bizen: 𝟚 hath_≍ {
     _,   _   ^ nay
   }
 
-  let same_eftbend ≔ sorry
+  let ≍_eftbend ≔ sorry
 }
 
 ## a bizen may require other bizens.
@@ -35,7 +36,7 @@ bizen: [@α: *, @: α hath_≍, (α maybe) hath_≍] {
     _,      _      ^ nay
   }
 
-  let same_eftbend ≔ sorry
+  let ≍_eftbend ≔ sorry
 }
 
 flock functor: [φ: [*, *], *] {

@@ -1,12 +1,12 @@
-use flock/algebra/arithmetic/hath_eke.tung
-use flock/algebra/arithmetic/hath_fold.tung
-use flock/algebra/arithmetic/hath_one.tung
-use flock/algebra/arithmetic/hath_zero.tung
-use flock/algebra/arithmetic/monoid_eke.tung
-use flock/algebra/arithmetic/monoid_fold.tung
-use flock/algebra/whole/hath_magma.tung
-use flock/algebra/whole/monoid.tung
-use flock/algebra/whole/semigroup.tung
+use flock/algebra/whole/hath_eke.tung
+use flock/algebra/whole/hath_fold.tung
+use flock/algebra/whole/hath_fold.tung
+use flock/algebra/whole/hath_naught.tung
+use flock/algebra/whole/hath_one.tung
+use flock/algebra/whole/monoid_eke.tung
+use flock/algebra/whole/monoid_fold.tung
+use flock/algebra/whole/monoid_fold.tung
+use flock/algebra/whole/semigroup_fold.tung
 use flock/order/semilattice_bounded_upper.tung
 use flock/order/semilattice_lower.tung
 use flock/order/semilattice_upper.tung
@@ -17,11 +17,11 @@ show flock catamorphism: [φ: [*, *], *] {
   let gather₁: [@α: *, @β: *, α φ, β, [β, α, β], β]
 }
 
-show let …*: [@α: *, @: α monoid, @φ: [*, *], @: φ catamorphism, l: α φ, α] ≔ l gather₀ ∅ ·
+show let …·: [@α: *, @: α monoid_·, @φ: [*, *], @: φ catamorphism, l: α φ, α] ≔ l gather₀ one ·
 
 ## map values into a monoid and combine them.
-show let gather_warp: [@β: *, @: β monoid, @φ: [*, *], @: φ catamorphism, @α: *, af: α φ, f: [α, β], β] ≔
-  af gather₁ ∅ { folded, a ^ folded · (a f) }
+show let gather_warp: [@β: *, @: β monoid_·, @φ: [*, *], @: φ catamorphism, @α: *, af: α φ, f: [α, β], β] ≔
+  af gather₁ one { folded, a ^ folded · (a f) }
 
 ## combine every value with ∧; an empty collection yieldeth ⊤.
 show let …∧: [
@@ -32,6 +32,4 @@ show let …∧: [
 show let …∨: [@φ: [*, *], @: φ catamorphism, @α: *, @: α semilattice_upper_bounded, af: α φ, α] ≔ af gather₁ ⟂ ∨
 
 ## add every value in a foldable collection.
-show let …+: [@φ: [*, *], @: φ catamorphism, @α: *, @: α monoid_eke, af: α φ, α] ≔ af gather₁ zero +
-## multiply every value in a foldable collection.
-show let …×: [@φ: [*, *], @: φ catamorphism, @α: *, @: α monoid_fold, af: α φ, α] ≔ af gather₁ one ×
+show let …+: [@φ: [*, *], @: φ catamorphism, @α: *, @: α monoid_+, af: α φ, α] ≔ af gather₁ naught +

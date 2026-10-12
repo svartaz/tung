@@ -1,34 +1,37 @@
-use flock/algebra/whole/hath_magma.tung
+use flock/algebra/whole/hath_eke.tung
+use flock/algebra/whole/hath_fold.tung
 use flock/functor.tung
 use flock/functor/catamorphism.tung
 use flock/functor/hath_sift.tung
+use flock/hath_greatness.tung
 use ilk/list.tung
+use ilk/natural.tung
+use ilk/naught.tung
 use ilk/two.tung
-use ilk/zero.tung
 use is.tung
 
-## a non-empty list is never empty.
+## a unempty list is never empty.
 show let ‥_not_empty: [@α: *, @a: α, @l: α list, (a ‥ l) = empty, 𝟘] ≔ {}
 
-## equal non-empty lists have equal first elements.
+## equal unempty lists have equal first elements.
 show let ‥_injective_first: [
   @α: *, @a: α, @b: α, @l: α list, @m: α list,
   eftbend: (a ‥ l) = (b ‥ m), a = b
 ] ≔ eftbend
 
-## equal non-empty lists have equal rests.
+## equal unempty lists have equal rests.
 show let ‥_injective_rest: [
   @α: *, @a: α, @b: α, @l: α list, @m: α list,
   eftbend: (a ‥ l) = (b ‥ m), l = m
 ] ≔ eftbend
 
-## appending empty changeth nothing.
+## athanging empty changeth nothing.
 show let ·_empty: [@α: *, l: α list, (l · empty) = l] ≔ match l {
   empty        ^ eftbend,
   first ‥ rest ^ (first ‥) leibnitz (rest ·_empty)
 }
 
-## appending is associative.
+## athanging is associative.
 show let ·_·: [@α: *, a: α list, b: α list, c: α list, (a · (b · c)) = ((a · b) · c)] ≔
   match a {
     empty        ^ eftbend,
@@ -51,7 +54,7 @@ show let warp_warp: [
   first ‥ rest ^ ((first f $ g) ‥) leibnitz (rest warp_warp f g)
 }
 
-## mapping distributeth over appending.
+## mapping distributeth over athanging.
 show let warp_·: [
   @α: *, @β: *,
   a: α list, b: α list, f: [α, β],
@@ -61,7 +64,7 @@ show let warp_·: [
   first ‥ rest ^ ((first f) ‥) leibnitz (rest warp_· b f)
 }
 
-## folding from the right over an appended list foldeth the first part onto
+## folding from the right over an athanged list foldeth the first part onto
 ## the fold of the second.
 show let gather₀_·: [
   @α: *, @β: *,
@@ -72,7 +75,7 @@ show let gather₀_·: [
   first ‥ rest ^ (first f) leibnitz (rest gather₀_· b start f)
 }
 
-## folding from the left over an appended list continueth from the fold of the
+## folding from the left over an athanged list continueth from the fold of the
 ## first part.
 show let gather₁_·: [
   @α: *, @β: *,
@@ -83,7 +86,7 @@ show let gather₁_·: [
   first ‥ rest ^ rest gather₁_· b (start f first) f
 }
 
-## filtering distributeth over appending.
+## filtering distributeth over athanging.
 show let sift_·: [
   @α: *,
   a: α list, b: α list, p: [α, 𝟚],
@@ -101,22 +104,22 @@ show let sift_kept: [
   @α: *,
   first: α, rest: α list, p: [α, 𝟚], kept: (first p) = yea,
   ((first ‥ rest) sift p) = (first ‥ (rest sift p))
-] ≔ (kept evenmete) transport eftbend
+] ≔ (kept evenmete) throughbear eftbend
 
 ## a dropped first element is gone.
 show let sift_dropped: [
   @α: *,
   first: α, rest: α list, p: [α, 𝟚], dropped: (first p) = nay,
   ((first ‥ rest) sift p) = (rest sift p)
-] ≔ (dropped evenmete) transport eftbend
+] ≔ (dropped evenmete) throughbear eftbend
 
 ## filtering twice by one predicate is filtering once.
 show let sift_sift: [
   @α: *, l: α list, p: [α, 𝟚], ((l sift p) sift p) = (l sift p)
 ] ≔ match l {
   empty        ^ eftbend,
-  first ‥ rest ^ (first p) inspect {
-    yea, kept ^ (kept evenmete) transport ((first ‥) leibnitz (rest sift_sift p)),
+  first ‥ rest ^ (first p) inlook {
+    yea, kept ^ (kept evenmete) throughbear ((first ‥) leibnitz (rest sift_sift p)),
     nay, _    ^ rest sift_sift p
   }
 }
@@ -128,7 +131,7 @@ show let gather₀_‥: [@α: *, l: α list, (l gather₀ empty {x, rest ^ x ‥
     first ‥ rest ^ (first ‥) leibnitz (rest gather₀_‥)
   }
 
-## reversing onto a start appendeth the start to the reversed list.
+## reversing onto a start athangeth the start to the reversed list.
 show let reverse_onto: [
   @α: *, l: α list, start: α list,
   (l gather₁ start {outcome, x ^ x ‥ outcome}) = ((l reverse) · start)
@@ -142,7 +145,7 @@ show let reverse_onto: [
   )
 }
 
-## reversing an appended list appendeth the reversed parts in turn.
+## reversing an athanged list athangeth the reversed parts in turn.
 show let reverse_·: [@α: *, a: α list, b: α list, ((a · b) reverse) = ((b reverse) · (a reverse))] ≔
   (a gather₁_· b empty {outcome, x ^ x ‥ outcome}) throughgo (b reverse_onto (a reverse))
 
@@ -179,3 +182,19 @@ show let warp_replicate: [
   0      ^ eftbend,
   n heir ^ ((a f) ‥) leibnitz (a warp_replicate n f)
 }
+
+## counting from an heir endeth one higher.
+let helpsetting_greatness_heir: [@α: *, l: α list, n: ℕ,
+  (l gather₁ (n heir) {k, _ ^ k + 1}) = ((l gather₁ n {k, _ ^ k + 1}) heir)
+] ≔ match l {
+  empty    ^ eftbend,
+  _ ‥ rest ^ rest helpsetting_greatness_heir (n + 1)
+}
+
+## a list with one more element hath one more in greatness.
+show let ‥_greatness: [@α: *, x: α, l: α list, ((x ‥ l) greatness) = ((l greatness) heir)] ≔
+  l helpsetting_greatness_heir 0
+
+## a tail is under its list in greatness, for well-founded recursion by `greatness`.
+show let ‥_greatness_under: [@α: *, x: α, l: α list, (l greatness) under ((x ‥ l) greatness)] ≔
+  ((x ‥_greatness l) evenmete) throughbear ((l greatness) under_heir)

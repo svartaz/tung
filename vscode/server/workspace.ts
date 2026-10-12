@@ -13,11 +13,23 @@ import {
 import type { SourceRole } from "./checker.ts";
 import { languageNames } from "./syntax.ts";
 type DocumentModel = ReturnType<typeof analyzeDocument>;
-type CachedModel = { text: string; roles: SourceRole[]; model: DocumentModel };
-type RoleSource = {
-  highlight(source: string): { result: Promise<SourceRole[] | undefined> };
+type DocumentSnapshot = {
+  text: string;
+  version: number;
+  request?: ReturnType<RoleSource["highlight"]>;
+  roles?: SourceRole[];
+  model?: DocumentModel;
 };
-type DocumentLike = { uri: string; getText(): string };
+type RoleSource = {
+  highlight(
+    source: string,
+    version: number,
+  ): {
+    result: Promise<SourceRole[] | undefined>;
+    cancel(): void;
+  };
+};
+type DocumentLike = { uri: string; version?: number; getText(): string };
 type DocumentStore = {
   get(uri: string): DocumentLike | undefined;
   all(): DocumentLike[];
@@ -30,31 +42,19 @@ const skippedDirectories = new Set([
   "node_modules",
 ]);
 class WorkspaceIndex {
-  documents: DocumentStore;
-  roots: string[];
-  libraryRoots: string[];
-  cache: Map<string, CachedModel>;
-  fileUris: string[];
-  filesDirty: boolean;
-  modelsCache: DocumentModel[] | undefined;
-  resolveImportCache: Map<string, DocumentModel | undefined>;
-  publicDefinitionsCache: Map<string, Definition[]>;
-  compiler: RoleSource | undefined;
-  // the latest compiler roles of each uri, with the text they describe.
-  roleCache: Map<string, { text: string; roles: SourceRole[] }>;
-  constructor(documents: DocumentStore, compiler?: RoleSource) {
-    this.documents = documents;
-    this.compiler = compiler;
-    this.roleCache = new Map();
-    this.roots = [];
-    this.libraryRoots = [];
-    this.cache = new Map();
-    this.fileUris = [];
-    this.filesDirty = true;
-    this.modelsCache = undefined;
-    this.resolveImportCache = new Map();
-    this.publicDefinitionsCache = new Map();
-  }
+  roots: string[] = [];
+  libraryRoots: string[] = [];
+  // navigation and colouring share one versioned compiler snapshot per uri.
+  cache = new Map<string, DocumentSnapshot>();
+  fileUris: string[] = [];
+  filesDirty = true;
+  modelsCache: DocumentModel[] | undefined = undefined;
+  resolveImportCache = new Map<string, DocumentModel | undefined>();
+  publicDefinitionsCache = new Map<string, Definition[]>();
+  constructor(
+    public documents: DocumentStore,
+    public compiler?: RoleSource,
+  ) {}
   configure(roots: string[], libraryRoots: string[] = []) {
     this.roots = [
       ...new Set(roots.filter(Boolean).map((root) => path.resolve(root))),
@@ -67,7 +67,7 @@ class WorkspaceIndex {
     this.invalidateFiles();
   }
   invalidate(uri) {
-    if (uri) this.cache.delete(uri);
+    this.snapshot(uri, this.documents.get(uri)?.getText());
     this.invalidateDerived();
   }
   invalidateFiles() {
@@ -79,22 +79,54 @@ class WorkspaceIndex {
     this.resolveImportCache.clear();
     this.publicDefinitionsCache.clear();
   }
-  // fetch compiler roles for every known document whose text changed.
+  async roles(
+    uri: string,
+    text: string | undefined,
+    version = this.versionOf(uri),
+  ): Promise<SourceRole[]> {
+    const entry = this.snapshot(uri, text, version);
+    if (!this.compiler || !entry) return [];
+    entry.request ||= this.compiler.highlight(entry.text, entry.version);
+    if (entry.roles) return entry.roles;
+    const roles = await entry.request.result;
+    if (this.cache.get(uri) !== entry) return [];
+    if (!entry.roles) {
+      entry.roles = roles || [];
+      entry.model = undefined;
+      this.invalidateDerived();
+    }
+    return entry.roles;
+  }
+  clearRoles() {
+    for (const entry of this.cache.values()) entry.request?.cancel();
+    this.cache.clear();
+    this.invalidateDerived();
+  }
+  versionOf(uri: string) {
+    return this.documents.get(uri)?.version || 0;
+  }
+  snapshot(
+    uri: string,
+    text: string | undefined,
+    version = this.versionOf(uri),
+  ) {
+    const previous = this.cache.get(uri);
+    if (previous?.text === text && previous?.version === version)
+      return previous;
+    previous?.request?.cancel();
+    if (text === undefined) {
+      this.cache.delete(uri);
+      return undefined;
+    }
+    const entry: DocumentSnapshot = { text, version };
+    this.cache.set(uri, entry);
+    return entry;
+  }
   async ready() {
     if (!this.compiler) return;
-    const missing = this.knownUris().flatMap((uri) => {
-      const text = this.textOf(uri);
-      return text !== undefined && this.roleCache.get(uri)?.text !== text
-        ? [[uri, text] as const]
-        : [];
-    });
     await Promise.all(
-      missing.map(async ([uri, text]) => {
-        const roles = (await this.compiler.highlight(text).result) || [];
-        this.roleCache.set(uri, { text, roles });
-      }),
+      this.knownUris().map((uri) => this.roles(uri, this.textOf(uri))),
     );
-    if (missing.length) this.invalidateDerived();
   }
   knownUris() {
     const uris = new Set(this.workspaceFileUris());
@@ -113,15 +145,12 @@ class WorkspaceIndex {
     return text === undefined ? undefined : this.modelForText(uri, text);
   }
   modelForText(uri, text) {
-    const known = this.roleCache.get(uri);
-    const roles = known?.text === text ? known.roles : [];
-    const cached = this.cache.get(uri);
-    if (cached?.text === text && cached.roles === roles) return cached.model;
-    const model = analyzeDocument(text, uri, roles);
-    model.instances.forEach((instance) => (instance.uri = uri));
-    this.cache.set(uri, { text, roles, model });
+    const entry = this.snapshot(uri, text)!;
+    if (entry.model) return entry.model;
+    entry.model = analyzeDocument(text, uri, entry.roles || []);
+    entry.model.instances.forEach((instance) => (instance.uri = uri));
     this.invalidateDerived();
-    return model;
+    return entry.model;
   }
   models() {
     if (this.modelsCache) return this.modelsCache;
@@ -160,17 +189,17 @@ class WorkspaceIndex {
     const libraryMatches = this.libraryRoots
       .map((root) => byPath.get(normalPath(path.resolve(root, imported.path))))
       .filter(Boolean);
-    if (libraryMatches.length > 1) {
-      return this.cacheResolvedImport(cacheKey, undefined);
-    }
-    if (libraryMatches.length === 1) {
-      return this.cacheResolvedImport(cacheKey, libraryMatches[0]);
-    }
-    return this.cacheResolvedImport(cacheKey, undefined);
+    return this.cacheResolvedImport(
+      cacheKey,
+      libraryMatches.length === 1 ? libraryMatches[0] : undefined,
+    );
   }
   cacheResolvedImport(key, model) {
     this.resolveImportCache.set(key, model);
     return model;
+  }
+  importDefinitions(model, imported, seen = new Set()) {
+    return this.publicDefinitions(this.resolveImport(model, imported), seen);
   }
   // public definitions follow shown declarations, shown imports, and explicit
   // re-exports while the seen set preventeth import cycles.
@@ -183,9 +212,7 @@ class WorkspaceIndex {
     const own = model.definitions.filter(({ exported }) => exported);
     const shownImports = model.imports
       .filter(({ exported }) => exported)
-      .flatMap((imported) =>
-        this.publicDefinitions(this.resolveImport(model, imported), nextSeen),
-      );
+      .flatMap((imported) => this.importDefinitions(model, imported, nextSeen));
     // `show name` re-exporteth every visible role with that name.
     const reexported = model.reexports.flatMap(({ name }) =>
       this.resolveVisible(model, name, nextSeen),
@@ -209,10 +236,7 @@ class WorkspaceIndex {
         ({ namespace }) => namespace === qualifier,
       );
       if (imported) {
-        return this.publicDefinitions(
-          this.resolveImport(model, imported),
-          seen,
-        ).filter(
+        return this.importDefinitions(model, imported, seen).filter(
           (definition) =>
             definition.bareName === bare && visibleRole(definition),
         );
@@ -233,10 +257,7 @@ class WorkspaceIndex {
     if (own.length) return own;
     return uniqueByKey(
       model.imports.flatMap((imported) =>
-        this.publicDefinitions(
-          this.resolveImport(model, imported),
-          seen,
-        ).filter(
+        this.importDefinitions(model, imported, seen).filter(
           (definition) =>
             definition.bareName === name && visibleRole(definition),
         ),
@@ -375,9 +396,7 @@ class WorkspaceIndex {
       ({ scopeStart, scopeEnd }) => scopeStart <= offset && offset <= scopeEnd,
     );
     const imported = model.imports.flatMap((entry) => {
-      const definitions = this.publicDefinitions(
-        this.resolveImport(model, entry),
-      );
+      const definitions = this.importDefinitions(model, entry);
       return definitions.flatMap((definition) => [
         definition,
         {
@@ -419,9 +438,7 @@ class WorkspaceIndex {
       .sort();
   }
   primitiveCompletions() {
-    return [
-      ...languageNames.primitiveTypes.map((name) => primitive(name, "type")),
-    ];
+    return languageNames.primitiveTypes.map((name) => primitive(name, "type"));
   }
 }
 const collectFiles = (root, result) => {

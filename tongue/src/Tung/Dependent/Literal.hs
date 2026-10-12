@@ -1,3 +1,6 @@
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
+
 -- | host literal values and their bridge to the shared host catalogue. the
 -- kernel's normaliser and the runner compute pure host operations through
 -- 'Tung.Primitive.pureOperation', so checking-time computation and execution
@@ -16,10 +19,11 @@ module Tung.Dependent.Literal
   )
 where
 
-import Control.DeepSeq (NFData (..))
+import Control.DeepSeq (NFData)
 import Data.Char (isControl, ord)
 import Data.Word (Word64)
 import GHC.Float (castDoubleToWord64, castWord64ToDouble)
+import GHC.Generics (Generic)
 import GHC.TypeLits (Natural)
 import Tung.Identity (ModuleId (..), SymbolId (..))
 import Tung.Primitive (HostValue (..), hostTypeId, integerNegativeId, integerPositiveId, naturalSuccessorId, naturalZeroId, primitiveTypeNames)
@@ -31,21 +35,14 @@ data HostLiteral
   | IntegerValue Integer
   | FloatBits Word64
   | UnicodeValue Char
-  deriving stock (Eq, Ord, Show)
-
-instance NFData HostLiteral where
-  rnf = \case
-    TextValue x -> rnf x
-    NaturalValue x -> rnf x
-    IntegerValue x -> rnf x
-    FloatBits x -> rnf x
-    UnicodeValue x -> rnf x
+  deriving stock (Eq, Ord, Show, Generic)
+  deriving anyclass (NFData)
 
 -- each literal inhabiteth a primitive type of the same name in every module.
 literalType :: HostLiteral -> SymbolId
 literalType =
   SymbolId PrimitiveModule . \case
-    TextValue _ -> "text"
+    TextValue _ -> "string"
     NaturalValue _ -> "ℕ"
     IntegerValue _ -> "ℤ"
     FloatBits _ -> "float"
@@ -72,7 +69,7 @@ constructedLiteral constructor fields = case fields of
   _ -> Nothing
 
 literalTypeNames :: [String]
-literalTypeNames = ["text", "ℕ", "ℤ", "float", "unicode"]
+literalTypeNames = ["string", "ℕ", "ℤ", "float", "unicode"]
 
 literalValue :: HostLiteral -> HostValue
 literalValue = \case

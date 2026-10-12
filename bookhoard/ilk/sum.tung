@@ -5,8 +5,11 @@ use flock/functor/bifunctor.tung
 use flock/functor/catamorphism.tung
 use flock/functor/hath_throughwend.tung
 use flock/functor/monad.tung
+use flock/hath_same.tung
 use flock/order/complement.tung
+use flock/same_to_is.tung
 use ilk/two.tung
+use is.tung
 
 show ilk ∑: [α: *, β: *, *] {
   incast₀: [α, α ∑ β],
@@ -108,4 +111,30 @@ bizen: [@α: *, (α ∑) hath_throughwend] {
     a incast₀, _ ^ (a incast₀) sheer,
     b incast₁, f ^ (b f) warp incast₁
   }
+}
+
+## sums are the same when both take one side with the same worth.
+show let same: [@α: *, @: α hath_≍, @β: *, @: β hath_≍, α ∑ β, α ∑ β, 𝟚] ≔ {
+  a incast₀, b incast₀ ^ a ≍ b,
+  a incast₁, b incast₁ ^ a ≍ b,
+  _,         _         ^ nay
+}
+
+bizen: [@α: *, @: α hath_≍, @β: *, @: β hath_≍, (α ∑ β) hath_≍] {
+  let ≍ ≔ same
+}
+
+bizen: [@α: *, @: α ≍_to_=, @β: *, @: β ≍_to_=, (α ∑ β) ≍_to_=] {
+  let ≍_=: [x:, y:, held:] ≔
+    match x, y {
+      a incast₀, b incast₀ ^ incast₀ leibnitz (a ≍_= b held),
+      a incast₁, b incast₁ ^ incast₁ leibnitz (a ≍_= b held),
+      _ incast₀, _ incast₁ ^ match held {},
+      _ incast₁, _ incast₀ ^ match held {}
+    }
+  let ≍_eftbend: [x:] ≔
+    match x {
+      a incast₀ ^ a ≍_eftbend,
+      a incast₁ ^ a ≍_eftbend
+    }
 }

@@ -9,9 +9,13 @@ module Tung.Dependent.Syntax
     Definition (..),
     DefinitionBody (..),
     InductiveInfo (..),
+    inductiveInfo,
+    inductiveMethods,
     Globals,
     children,
     mapChildren,
+    mapSymbols,
+    mapDefinitionSymbols,
     traverseScoped,
     mapLevels,
     instantiateLevel,
@@ -19,6 +23,7 @@ module Tung.Dependent.Syntax
     termLevels,
     constraintLevels,
     eraseGlobalLevels,
+    sameUpToLevels,
     abstractTerms,
     freeIndices,
     termTelescope,
@@ -87,6 +92,9 @@ data Definition = Definition
 data DefinitionBody
   = Transparent Term
   | TypeConstructor InductiveInfo
+  | -- a private nested-induction target. its checked alias body retaineth
+    -- the ordinary container type; metadata giveth its specialised recursor.
+    EliminationTarget InductiveInfo Term
   | DataConstructor SymbolId Int
   | Eliminator SymbolId
   | -- a trusted host constant, bound to a catalogue key. a pure operation
@@ -98,14 +106,62 @@ data DefinitionBody
     Assumption
   deriving stock (Eq, Show)
 
+-- group order fixeth the shared recursor prefix; constructors remain per-family.
+-- a recursive field endeth in any group member, directly or after function inputs.
 data InductiveInfo = InductiveInfo
-  { inductiveParameterCount :: Int,
+  { inductiveFamilies :: [SymbolId],
+    inductiveParameterCount :: Int,
+    inductiveConstructorParameterCount :: Int,
     inductiveIndexPlicities :: [Plicity],
-    inductiveConstructorInfo :: [(SymbolId, [(Plicity, Term, Bool)])]
+    inductiveConstructorInfo :: [(SymbolId, [(Plicity, Term, Maybe SymbolId)])],
+    -- each checked rule is scoped over the common recursor prefix followed
+    -- by its constructor's fields. both evaluators execute these terms.
+    inductiveRules :: [Term]
   }
   deriving stock (Eq, Show)
 
 type Globals = Map.Map SymbolId Definition
+
+-- every recursor in a mutual group taketh the same ordered method prefix.
+inductiveInfo :: Globals -> SymbolId -> Either String InductiveInfo
+inductiveInfo globals family = case definitionBody <$> Map.lookup family globals of
+  Just (TypeConstructor info) -> pure info
+  Just (EliminationTarget info _) -> pure info
+  _ -> Left "missing inductive group member"
+
+inductiveMethods :: Globals -> InductiveInfo -> Either String [(SymbolId, [(Plicity, Term, Maybe SymbolId)])]
+inductiveMethods _ InductiveInfo {inductiveFamilies = [_], inductiveConstructorInfo} = pure inductiveConstructorInfo
+inductiveMethods globals info = concat <$> traverse methods (inductiveFamilies info)
+  where
+    methods family = inductiveConstructorInfo <$> inductiveInfo globals family
+
+mapSymbols :: (SymbolId -> SymbolId) -> Term -> Term
+mapSymbols f = runIdentity . traverseScoped visit
+  where
+    visit _ (Global symbol levels) _ = pure (Global (f symbol) levels)
+    visit _ (Literal symbol value) _ = pure (Literal (f symbol) value)
+    visit _ _ descend = descend
+
+-- metadata carrieth identities too, including recursive field annotations
+-- and a host binding's structural model.
+mapDefinitionSymbols :: (SymbolId -> SymbolId) -> Definition -> Definition
+mapDefinitionSymbols f definition@Definition {definitionType, definitionBody} =
+  definition {definitionType = mapSymbols f definitionType, definitionBody = body definitionBody}
+  where
+    body = \case
+      Transparent term -> Transparent (mapSymbols f term)
+      TypeConstructor info -> TypeConstructor (metadata info)
+      EliminationTarget info term -> EliminationTarget (metadata info) (mapSymbols f term)
+      DataConstructor family index -> DataConstructor (f family) index
+      Eliminator family -> Eliminator (f family)
+      Host key model -> Host key (f <$> model)
+      Assumption -> Assumption
+    metadata info@InductiveInfo {inductiveFamilies, inductiveConstructorInfo, inductiveRules} =
+      info
+        { inductiveFamilies = map f inductiveFamilies,
+          inductiveConstructorInfo = [(f symbol, [(plicity, mapSymbols f ty, f <$> recursive) | (plicity, ty, recursive) <- fields]) | (symbol, fields) <- inductiveConstructorInfo],
+          inductiveRules = map (mapSymbols f) inductiveRules
+        }
 
 -- product domains retain their original scope over preceding binders.
 termTelescope :: Term -> ([(Plicity, Term)], Term)

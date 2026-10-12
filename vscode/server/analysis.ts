@@ -29,7 +29,7 @@ const keywordHelp = {
     "name the eliminator of an ilk or flock: `motive unbuild name methods target` performeth structural induction.",
   flock: "declare a flock and its members.",
   fremmed:
-    "bind an annotated file-level let to the host function named by a preceding text key.",
+    "bind an annotated file-level let to the host function named by a preceding string key.",
   bizen: "provide evidence and member definitions for a flock.",
   match:
     "match one or more values against exhaustive pattern rows; `;` joineth rows that share a result.",
@@ -46,16 +46,19 @@ const analyzeDocument = (
   const depths = tokenDepths(tokens);
   const pairs = bracketPairs(tokens);
   const regions = declarationRegions(tokens, depths, pairs);
-  const semantic = compilerSemantic(tokens, sourceRoles, regions);
+  const semantic = compilerSemantic(tokens, sourceRoles, regions, depths);
   const roles = semantic.semantic;
   const docs = collectDocComments(text);
   attachDocs(regions, docs, tokens);
   const imports = collectImports(tokens, depths);
   const reexports = collectReexports(tokens, depths);
-  const definitions = uniqueDefinitions([
-    ...patternDefinitions(tokens, semantic),
-    ...semanticDefinitions(text, tokens, semantic, depths, regions),
-  ]);
+  const definitions = semanticDefinitions(
+    text,
+    tokens,
+    semantic,
+    depths,
+    regions,
+  );
   definitions.forEach((definition, id) => {
     definition.id = `${uri}:${definition.token.offset}:${id}`;
     definition.uri = uri;
@@ -85,9 +88,14 @@ const analyzeDocument = (
 // compiler roles become the model's token roles. a header binder arriveth as
 // `headerPattern`, since only name resolution can tell a binder from a
 // constructor: it is a parameter here, and resolution prefereth a visible
-// constructor of the same name. a declaration in a flock or bizen body is a
-// method.
-const compilerSemantic = (tokens, sourceRoles: SourceRole[], regions) => {
+// constructor of the same name. a direct declaration in a flock or bizen
+// body is a method; nested declarations retain their own roles.
+const compilerSemantic = (
+  tokens,
+  sourceRoles: SourceRole[],
+  regions,
+  depths,
+) => {
   const byOffset = new Map<number, ReturnType<typeof tokenize>[number]>(
     tokens.map((token) => [token.offset, token]),
   );
@@ -118,6 +126,7 @@ const compilerSemantic = (tokens, sourceRoles: SourceRole[], regions) => {
       regions.some(
         (region) =>
           (region.kind === "flock" || region.kind === "bizen") &&
+          depths[token.index] === region.depth + 1 &&
           token.index > region.headerEnd &&
           token.offset <= region.endOffset &&
           token.offset >= region.startOffset,
@@ -248,7 +257,7 @@ const declarationRegions = (tokens, depths, pairs) => {
     const baseDepth = depths[token.index];
     const open =
       token.text === "bizen"
-        ? (findInstanceHeader(tokens, token.index + 1)?.body ?? -1)
+        ? (findInstanceHeader(tokens, token.index + 1, depths)?.body ?? -1)
         : ownedKinds.has(token.text)
           ? findAtDepth(tokens, depths, token.index + 1, "{", baseDepth)
           : -1;
@@ -339,8 +348,13 @@ const collectReexports = (tokens, depths) => {
   return reexports;
 };
 const semanticDefinitions = (text, tokens, semantic, depths, regions) => {
+  const scopes = patternScopes(tokens, semantic);
+  // row binders come first, as their precise scopes override declaration-wide
+  // scopes. every token still hath only one definition and one stable id.
+  const indices = new Set([...scopes.keys(), ...semantic.semantic.keys()]);
   const definitions = [];
-  for (const [index, role] of semantic.semantic.entries()) {
+  for (const index of indices) {
+    const role = semantic.semantic.get(index);
     if (!role.modifiers.includes("declaration")) continue;
     const token = tokens[index];
     if (
@@ -368,32 +382,36 @@ const semanticDefinitions = (text, tokens, semantic, depths, regions) => {
         (owner?.shown &&
           ["enumMember", "method", "function"].includes(role.type)),
       );
-    const scope = definitionScope(tokens, region, role.type);
+    const pattern = scopes.get(index);
+    const scope = pattern || definitionScope(tokens, region, role.type);
     definitions.push({
       name: token.text,
       bareName: lastQualifiedSegment(token.text),
       role: role.type,
-      modifiers: role.modifiers,
-      callableConstructor:
-        role.type === "enumMember" &&
-        semantic.callableConstructors.has(lastQualifiedSegment(token.text)),
+      modifiers: pattern ? ["declaration"] : role.modifiers,
       token,
       range: tokenRange(token),
       selectionRange: tokenRange(token),
       scopeStart: scope.start,
       scopeEnd: scope.end,
-      exported,
-      local,
-      topLevel: depths[token.index] === 0,
-      detail: declarationDetail(text, tokens, token, region, role.type),
-      documentation: region?.doc,
-      containerName: ownerName(tokens, semantic, owner),
+      exported: !pattern && exported,
+      local: Boolean(pattern) || local,
+      topLevel: !pattern && depths[token.index] === 0,
+      detail: pattern
+        ? `parameter ${lastQualifiedSegment(token.text)}`
+        : declarationDetail(text, tokens, token, region, role.type),
+      callableConstructor: pattern
+        ? undefined
+        : role.type === "enumMember" &&
+          semantic.callableConstructors.has(lastQualifiedSegment(token.text)),
+      documentation: pattern ? undefined : region?.doc,
+      containerName: pattern ? undefined : ownerName(tokens, semantic, owner),
     });
   }
   return definitions;
 };
-const patternDefinitions = (tokens, semantic) => {
-  const definitions = [];
+const patternScopes = (tokens, semantic) => {
+  const scopes = new Map<number, { start: number; end: number }>();
   for (const { patternStart, pipe, bodyEnd } of patternArmRegions(tokens)) {
     const endOffset =
       tokens[bodyEnd]?.offset ?? tokens.at(-1)?.endOffset ?? pipe.endOffset;
@@ -406,25 +424,11 @@ const patternDefinitions = (tokens, semantic) => {
       ) {
         continue;
       }
-      const name = lastQualifiedSegment(token.text);
-      definitions.push({
-        name: token.text,
-        bareName: name,
-        role: "parameter",
-        modifiers: ["declaration"],
-        token,
-        range: tokenRange(token),
-        selectionRange: tokenRange(token),
-        scopeStart: pipe.endOffset,
-        scopeEnd: endOffset,
-        exported: false,
-        local: true,
-        topLevel: false,
-        detail: `parameter ${name}`,
-      });
+      if (!scopes.has(token.index))
+        scopes.set(token.index, { start: pipe.endOffset, end: endOffset });
     }
   }
-  return definitions;
+  return scopes;
 };
 const definitionScope = (tokens, region, role) => {
   const documentEnd = tokens.at(-1)?.endOffset || 0;
@@ -460,17 +464,12 @@ const smallestRegion = (regions, offset, kind = undefined) => {
     )[0];
 };
 const enclosingOwner = (regions, region, offset) => {
-  return regions
-    .filter(
-      (candidate) =>
-        ownedKinds.has(candidate.kind) &&
-        candidate.startOffset <= offset &&
-        offset <= candidate.endOffset &&
-        candidate !== region,
-    )
-    .sort(
-      (a, b) => a.endOffset - a.startOffset - (b.endOffset - b.startOffset),
-    )[0];
+  return smallestRegion(
+    regions.filter(
+      (candidate) => ownedKinds.has(candidate.kind) && candidate !== region,
+    ),
+    offset,
+  );
 };
 const ownerName = (tokens, semantic, owner) => {
   if (!owner) return undefined;
@@ -530,15 +529,6 @@ const findAtDepth = (tokens, depths, start, text, depth) => {
     }
   }
   return -1;
-};
-const uniqueDefinitions = (definitions) => {
-  const seen = new Set();
-  return definitions.filter((definition) => {
-    const key = `${definition.token.offset}:${definition.role}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
 };
 export {
   analyzeDocument,

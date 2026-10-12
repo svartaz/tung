@@ -1,28 +1,28 @@
 use _foreign.tung
 use deed/file.tung
-use flock/algebra/whole/hath_magma.tung
-use flock/hath_to_text.tung
+use flock/algebra/whole/hath_fold.tung
+use flock/hath_to_string.tung
 use ilk/one.tung
+use ilk/string/structure.tung
 use ilk/sum.tung
-use ilk/text/structure.tung
 
-## a path kept distinct from arbitrary text at api boundaries.
+## a path kept distinct from arbitrary string at api boundaries.
 show ilk _path: * {
-  path: [text, _path]
+  path: [string, _path]
 }
 
-bizen: _path hath_to_text {
-  let to_text: [t path:] ≔ t
+bizen: _path hath_to_string {
+  let to_string: [t path:] ≔ t
 }
 
-show let join: [t₀ path: _path, t₁ path: _path, _path] ≔
+show let yoke: [t₀ path: _path, t₁ path: _path, _path] ≔
   t₀ · '/' $ · t₁ $ path
 
-show let read: [t path: _path, (text ∑ text) deed] ≔
+show let read: [t path: _path, (string ∑ string) deed] ≔
   t file~read
 
-show let write: [t path: _path, contents: text, (text ∑ 𝟙) deed] ≔
+show let write: [t path: _path, contents: string, (string ∑ 𝟙) deed] ≔
   t file~write contents
 
-show let append: [t path: _path, contents: text, (text ∑ 𝟙) deed] ≔
-  t file~append contents
+show let athang: [t path: _path, contents: string, (string ∑ 𝟙) deed] ≔
+  t file~athang contents

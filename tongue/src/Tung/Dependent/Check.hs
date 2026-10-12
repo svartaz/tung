@@ -48,8 +48,9 @@ where
 import Control.Monad (unless, when)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.State.Strict (StateT, get, put, runStateT)
+import Data.Containers.ListUtils (nubOrd)
 import Data.Foldable (foldlM, traverse_)
-import Data.List (nub, sort)
+import Data.List (sort)
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
 import Tung.Dependent.Literal (literalType)
@@ -142,14 +143,16 @@ validate (Environment globals) Inferred {..} = do
   when (inferredUniverses < 0) (Left "negative universe parameter count")
   let levels = termLevels inferredTerm ++ termLevels inferredType ++ concatMap constraintLevels inferredConstraints
   traverse_ (validLevel (Just inferredUniverses) False) levels
-  unless (U.satisfiable inferredConstraints) (Left "inconsistent universe constraints")
-  (_, U.universeConstraints -> obligations) <- runStateT (checkType globals emptyContext inferredType >> checkTerm globals emptyContext inferredTerm inferredType) (U.universes inferredConstraints)
-  unless (all (U.entails inferredConstraints) (openObligations inferredConstraints obligations)) (Left "unproved universe constraint in core")
+  universes <- maybe (Left "inconsistent universe constraints") Right (U.satisfy inferredConstraints)
+  (_, U.universeConstraints -> obligations) <- runStateT (checkType globals emptyContext inferredType >> checkTerm globals emptyContext inferredTerm inferredType) universes
+  unless (U.entailsAll inferredConstraints (openObligations inferredConstraints obligations)) (Left "unproved universe constraint in core")
 
 -- the obligations a search must still prove. a repeated, trivially true, or
 -- assumed constraint needeth no search.
 openObligations :: [Constraint] -> [Constraint] -> [Constraint]
-openObligations assumptions obligations = [obligation | obligation <- nub obligations, not (U.trivial obligation), obligation `notElem` assumptions]
+openObligations assumptions obligations = [obligation | obligation <- nubOrd obligations, not (U.trivial obligation), obligation `Set.notMember` assumed]
+  where
+    assumed = Set.fromList assumptions
 
 -- unchecked evaluation is private: a caller cannot normalise omega or an
 -- arbitrary cyclic environment by bypassing the kernel.
@@ -195,6 +198,9 @@ data Checking m = Checking
   { failCheck :: forall a. String -> m a,
     liftCheck :: forall a. Either String a -> m a,
     evaluateCheck :: Context -> Term -> m N.Value,
+    -- an argument's worth only instantiateth a codomain, so its definitions
+    -- stay folded until something forceth them.
+    argumentCheck :: Context -> Term -> m N.Value,
     quoteCheck :: Int -> N.Value -> m Term,
     instantiateCheck :: N.Closure -> N.Value -> m N.Value,
     forceCheck :: N.Value -> m N.Value,
@@ -210,6 +216,7 @@ kernelChecking globals =
     { failCheck = failure,
       liftCheck = lift,
       evaluateCheck = evaluate globals,
+      argumentCheck = \Context {contextValues} -> lift . N.evaluateGlued (N.closed globals) contextValues,
       quoteCheck = \depth -> lift . N.quote globals depth,
       instantiateCheck = \closure -> lift . N.instantiate globals closure,
       forceCheck = pure,
@@ -252,7 +259,7 @@ inferTermWith operations@Checking {..} context@Context {..} = \case
         unless (plicity == expected) (failCheck "implicit and explicit arguments do not match")
         argumentType <- inferTermWith operations context argument
         convertCheck context argumentType domain
-        argumentValue <- evaluateCheck context argument
+        argumentValue <- argumentCheck context argument
         instantiateCheck codomain argumentValue
       _ -> failCheck "application requireth a function"
   Let annotation value body -> do
@@ -332,9 +339,15 @@ rejectMetas = \case
 
 convert :: Globals -> Context -> N.Value -> N.Value -> Typing ()
 convert globals Context {contextTypes} actual expected = do
-  left <- lift (N.quote globals (length contextTypes) actual)
-  right <- lift (N.quote globals (length contextTypes) expected)
-  compareTerms left right
+  let depth = length contextTypes
+  -- identical folded terms are definitionally equal, including their levels.
+  -- other comparisons use the complete normal forms below.
+  leftFolded <- lift (N.quoteFoldedWith (N.closed globals) depth actual)
+  rightFolded <- lift (N.quoteFoldedWith (N.closed globals) depth expected)
+  unless (leftFolded == rightFolded) do
+    left <- lift (N.quote globals depth actual)
+    right <- lift (N.quote globals depth expected)
+    compareTerms left right
   where
     compareTerms (Sort left) (Sort right) = oblige (LevelEqual left right)
     compareTerms (Local left) (Local right) | left == right = pure ()
@@ -384,9 +397,9 @@ generalise term annotation constraints = do
 generaliseTerms :: [Term] -> [Constraint] -> Either String (Int, [Constraint], [Term])
 generaliseTerms terms constraints = do
   unless (U.satisfiable constraints) (Left "inconsistent universe constraints")
-  let substitution = solve Map.empty constraints
+  let substitution = foldl solve Map.empty constraints
       resolve = U.normaliseLevel . replace substitution
-      solved = nub [constraint | original <- constraints, let constraint = mapConstraint resolve original, not (U.trivial constraint)]
+      solved = nubOrd [constraint | original <- constraints, let constraint = mapConstraint resolve original, not (U.trivial constraint)]
       levels = map resolve (concatMap termLevels terms) ++ concatMap constraintLevels solved
       atoms = Set.unions (map levelAtoms levels)
       parameters = [index | LParam index <- Set.toList atoms]
@@ -396,16 +409,13 @@ generaliseTerms terms constraints = do
       finish = U.normaliseLevel . rename names . resolve
   pure (base + length holes, map (mapConstraint finish) solved, map (mapLevels finish) terms)
   where
-    solve substitution pending = case candidates of
-      (index, level) : _ -> solve (Map.insert index level substitution) pending
-      [] -> substitution
-      where
-        candidates =
-          [ (index, level)
-          | LevelEqual left right <- map (mapConstraint (U.normaliseLevel . replace substitution)) pending,
-            (LMeta index, level) <- [(left, right), (right, left)],
-            LMeta index `Set.notMember` levelAtoms level
-          ]
+    -- one pass sufficeth: a substitution only replaceth holes, so an
+    -- equation that is not a hole equation now never becometh one later.
+    solve substitution constraint = case mapConstraint (U.normaliseLevel . replace substitution) constraint of
+      LevelEqual left right
+        | (index, level) : _ <- [(index, level) | (LMeta index, level) <- [(left, right), (right, left)], LMeta index `Set.notMember` levelAtoms level] ->
+            Map.insert index level substitution
+      _ -> substitution
     replace substitution = \case
       LMeta index | Just level <- Map.lookup index substitution -> replace substitution level
       LSucc level -> LSucc (replace substitution level)

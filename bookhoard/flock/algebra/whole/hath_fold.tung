@@ -1,0 +1,12 @@
+use ilk/two.tung
+
+show flock hath_·: [α: *, *] {
+  let ·: [α, α, α]
+}
+
+bizen: 𝟚 hath_· {
+  let · ≔ {
+    yea, yea ^ yea,
+    _,   _   ^ nay
+  }
+}

@@ -1,0 +1,18 @@
+use is.tung
+let +: [ℤ, ℤ, ℤ] ≔ 'eke_wholetale' fremmed
+
+## an ilk with one constructor and no indices hath an accessor for each named
+## field; `value.field` findeth it by the value's ilk.
+ilk person: * { person_of: [name: string, age: ℤ, person] }
+let someone: person ≔ 'tung' person_of +1
+
+## a new value is built from the fields of the old.
+let older: person ≔ someone.name person_of (someone.age + +1)
+
+## parameters stay implicit in each accessor.
+ilk duo: [α: *, *] { duo_of: [first: α, other: α, α duo] }
+let pair: ℤ duo ≔ +1 duo_of +2
+
+## a field type may name an earlier field.
+ilk tagged: * { tagged_of: [who: person, label: string, sure: label = label, tagged] }
+let entry: tagged ≔ older tagged_of 'x' eftbend

@@ -12,7 +12,7 @@ import Tung.Dependent.Source (SourceProgram, sorryAssumptions, typeOfName)
 group :: IO Harness.Group
 group = do
   example <- exampleSource "dependent_flocks.tung"
-  Harness.group "dependent-flock" (tests example ++ selectionTests)
+  Harness.group "dependent-flock" (tests example ++ selectionTests ++ constructionTests)
 
 tests :: String -> [Test]
 tests example =
@@ -27,8 +27,8 @@ tests example =
     expectEq "a declaration may precede what it useth" (Right True) do
       program <- compiled ("let early:𝟚 ≔ yea ≭ nay\n" ++ example)
       sameNormalIn program "early" "yea",
-    expectEq "a shown flock and its bizens cross modules" (Right True) do
-      program <- compileProject (SourceModule "main.tung") "use same.tung\nlet hath_≍:𝟚 ≔ nay ≍ nay\n" (Map.fromList [("same.tung", shown)])
+    expectEq "a shown flock, its laws and bizens cross modules" (Right True) do
+      program <- compileProject (SourceModule "main.tung") "use is.tung\nlet proof:(nay ≍ nay) = yea ≔ nay ≍_eftbend\nuse same.tung\nlet hath_≍:𝟚 ≔ nay ≍ nay\n" (Map.fromList [("same.tung", "use is.tung\n" ++ shown), ("is.tung", equalitySource)])
       sameNormalIn program "hath_≍" "yea",
     expectEq "a rejected candidate doth not affect a later bizen" (Right True) do
       program <-
@@ -37,8 +37,8 @@ tests example =
           ilk box:[α:*, *] { box_worth:[α, α box] }
           flock provided:[α:*, *] { let get:α }
           bizen:(ℕ box) provided { let get ≔ 0 box_worth }
-          bizen:(text box) provided { let get ≔ 'ok' box_worth }
-          let answer:text box ≔ get
+          bizen:(string box) provided { let get ≔ 'ok' box_worth }
+          let answer:string box ≔ get
           """
       sameNormalIn program "answer" "'ok' box_worth",
     rejectContaining "a bizen needeth every member" "bizen is missing member 'two'" $
@@ -48,20 +48,29 @@ tests example =
     rejectContaining "a missing bizen is reported" "no bizen of flock 'hath_≍'" $
       compiled (example ++ "ilk unit:* { only: unit }\nlet bad:𝟚 ≔ only ≍ only\n"),
     rejectContaining "a second bizen of one type is rejected" "a bizen with the same type already exists" $
-      compiled (example ++ "bizen:𝟚 hath_≍ { let ≍ ≔ {_, _ ^ yea}\nlet same_eftbend ≔ sorry }\n"),
+      compiled (example ++ "bizen:𝟚 hath_≍ { let ≍ ≔ {_, _ ^ yea}\nlet ≍_eftbend ≔ sorry }\n"),
     rejectContaining "a member must have its declared type" "in bizen of" $
-      compiled (example ++ "bizen:(𝟚 maybe) maybe hath_≍ { let ≍ ≔ yea\nlet same_eftbend ≔ sorry }\n"),
-    rejectContaining "a bizen defineth each law" "bizen is missing member 'same_eftbend'" $
+      compiled (example ++ "bizen:(𝟚 maybe) maybe hath_≍ { let ≍ ≔ yea\nlet ≍_eftbend ≔ sorry }\n"),
+    rejectContaining "a bizen defineth each law" "bizen is missing member '≍_eftbend'" $
       compiled (example ++ "ilk unit:* { only: unit }\nbizen:unit hath_≍ { let ≍ ≔ {_, _ ^ yea} }\n"),
     rejectContaining "a law proof is checked against the bizen's members" "cannot unify nay with yea" $
-      compiled (example ++ "ilk unit:* { only: unit }\nbizen:unit hath_≍ { let ≍ ≔ {_, _ ^ nay}\nlet same_eftbend ≔ {_ ^ eftbend} }\n"),
-    rejectContaining "an ascribed sorry law must still have its declared type" "cannot unify text with" $
-      compiled (example ++ "ilk unit:* { only:unit } bizen:unit hath_≍ { let ≍ ≔ {_, _ ^ yea} let same_eftbend:text ≔ sorry }"),
-    expectEq "a law that holdeth by computation is proved by eftbend" (Right ()) $
-      () <$ compiled (example ++ "ilk unit:* { only: unit }\nbizen:unit hath_≍ { let ≍ ≔ {_, _ ^ yea}\nlet same_eftbend ≔ {_ ^ eftbend} }\n"),
+      compiled (example ++ "ilk unit:* { only: unit }\nbizen:unit hath_≍ { let ≍ ≔ {_, _ ^ nay}\nlet ≍_eftbend ≔ {_ ^ eftbend} }\n"),
+    rejectContaining "an ascribed sorry law must still have its declared type" "cannot unify string with" $
+      compiled (example ++ "ilk unit:* { only:unit } bizen:unit hath_≍ { let ≍ ≔ {_, _ ^ yea} let ≍_eftbend:string ≔ sorry }"),
     expectEq "a bizen may define a parent that hath no bizen" (Right True) do
       program <- compiled (example ++ "ilk _box:[α:*, *] { box:[α, α _box] }\nbizen:_box atfoldsome {\nlet warp ≔ {a box, f ^ (a f) box}\nlet sheer ≔ {a ^ a box}\n}\nlet boxed:𝟚 _box ≔ (yea box) warp {x ^ x}\n")
       sameNormalIn program "boxed" "yea box",
+    expectEq "a law proof may match in its proposition" (Right ()) $
+      ()
+        <$ compiled
+          """
+          ilk box:[α:*, *] { wrap:[α, α box] }
+          flock reflexive:[α:*, *] {
+            let rule:[left:α box, right:α box, match left, right { x wrap, y wrap ^ x = x }]
+          }
+          bizen:ℤ reflexive { let rule ≔ { x wrap, y wrap ^ eftbend } }
+          let proof:+1 = +1 ≔ (+1 wrap) rule (+2 wrap)
+          """,
     rejectContaining "both law sides share one type" "cannot unify 𝟚 with" $
       compiled (example ++ "flock bad:[α:*, *] {\nlet f:[α, α]\nlet rule:[x:α, (x f) = yea]\n}\n"),
     rejectContaining "requirements precede bare slots" "must precede bare slots" $
@@ -74,8 +83,11 @@ tests example =
     shown =
       """
       show ilk 𝟚:* { yea: 𝟚, nay: 𝟚 }
-      show flock hath_≍:[α:*, *] { let ≍:[α, α, 𝟚] }
-      bizen:𝟚 hath_≍ { let ≍ ≔ { yea, yea; nay, nay ^ yea, _, _ ^ nay } }
+      show flock hath_≍:[α:*, *] { let ≍:[α, α, 𝟚] let ≍_eftbend:[x:α, (x ≍ x) = yea] }
+      bizen:𝟚 hath_≍ {
+        let ≍ ≔ { yea, yea; nay, nay ^ yea, _, _ ^ nay }
+        let ≍_eftbend ≔ { yea; nay ^ eftbend }
+      }
       """
     computes label expression expected = expectEq label (Right True) do
       program <- compiled example
@@ -121,8 +133,6 @@ selectionTests =
       compiled (lawClasses ++ "flock third:[α:*, *] { let rule:[x:α, x = x] }"),
     expectEq "a law is projected like any other member" (Right ()) $
       () <$ compiled (lawClasses ++ firstInstance ++ "let proof:[(only left) = yea] ≔ rule @unit only"),
-    rejectContaining "a law proof must hold for the bizen's own members" "cannot unify" $
-      compiled (lawClasses ++ firstInstance ++ "bizen:unit second { let right ≔ {_ ^ nay} let rule_right ≔ {_ ^ eftbend} }"),
     expectEq "an inline parent's law useth the projected dictionary and its arguments" (Right True) do
       program <-
         compiled
@@ -153,7 +163,7 @@ selectionTests =
       sameNormalIn program "2 length" "2",
     -- `* out` letth search find a parameter, as lean's `outParam` doth; an
     -- unknown input parameter leaveth the goal waiting.
-    expectEq "an output parameter is found by instance search" (Right "text") $
+    expectEq "an output parameter is found by instance search" (Right "string") $
       compiled (converting " out") >>= (`typeOfName` "worth"),
     rejectContaining "an unknown input parameter leaveth its goal unsolved" "still unknown" $ compiled (converting ""),
     expectEq "incomparable matching bizens follow declaration order" (Right True) do
@@ -179,9 +189,45 @@ selectionTests =
     firstInstance = "bizen:unit first { let left ≔ {_ ^ yea} let rule ≔ {_ ^ eftbend} } "
     countClass = "flock count:[α:*, *] { let length:[α, ℕ] } "
     choice = "flock choice:[α:*, β:*, *] { let selected:ℤ } "
-    converting output = "flock convert:[α:*, β:*" ++ output ++ ", *] { let into:[α, β] } bizen:ℤ convert text { let into: [_:] ≔ 'one' } let worth ≔ +1 into"
+    converting output = "flock convert:[α:*, β:*" ++ output ++ ", *] { let into:[α, β] } bizen:ℤ convert string { let into: [_:] ≔ 'one' } let worth ≔ +1 into"
     blanket = "bizen:[@α:*, @β:*, α choice β] { let selected ≔ +0 } "
     repeated = "bizen:[@α:*, α choice α] { let selected ≔ +1 } "
 
+constructionTests :: [Test]
+constructionTests =
+  [ expectEq "a bizen may reuse an ordinary dictionary defined before its flock" (Right True) do
+      program <-
+        compiled
+          """
+          let dictionary ≔ 7 tag_make
+          flock tag:* { let worth:ℕ }
+          let read_worth:[dictionary:tag, ℕ] ≔ worth
+          bizen:tag { let worth ≔ dictionary read_worth }
+          let answer:ℕ ≔ worth
+          """
+      sameNormalIn program "answer" "7",
+    expectEq "named members supply an ordinary dictionary and its dependent law" (Right True) do
+      program <-
+        compiled
+          """
+          flock stable:[α:*, *] { let keep:[α, α] let rule:[x:α, (x keep) = x] }
+          bizen:[@α:*, α stable] {
+            let keep:[x:] ≔ x
+            let rule:[x:] ≔ eftbend
+          }
+          let proof:3 = 3 ≔ 3 rule
+          """
+      sameNormalIn program "proof" "(eftbend:3 = 3)",
+    expectEq "dictionary fields may supply a type, its value, and a dependent proof" (Right True) do
+      program <-
+        compiled
+          """
+          flock chosen:* { let carrier:* let item:carrier let rule:item = item }
+          bizen:chosen { let rule ≔ eftbend let item ≔ 3 let carrier ≔ ℕ }
+          let proof:3 = 3 ≔ rule
+          """
+      sameNormalIn program "proof" "(eftbend:3 = 3)"
+  ]
+
 compiled :: String -> Either String SourceProgram
-compiled = compileAs "dependent_flocks.tung"
+compiled source = compileProject (SourceModule "dependent_flocks.tung") ("use is.tung\n" ++ source) (Map.singleton "is.tung" equalitySource)

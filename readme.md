@@ -10,7 +10,7 @@ use ground.tung
 
 let double: [x:, ℤ] ≔ x + x
 
-let main: 𝟙 deed ≔ +21 double $ to_text $ write_line
+let main: 𝟙 deed ≔ +21 double $ to_string $ write_line
 ```
 
 save it as `double.tung` and run `tung double.tung`. it printeth `42`.
@@ -23,11 +23,12 @@ save it as `double.tung` and run `tung double.tung`. it printeth `42`.
 ## install
 
 ```sh
-brew tap jukisima/tung https://github.com/jukisima/tung.git
-brew install jukisima/tung/tung
+brew tap svartaz/tung https://github.com/svartaz/tung.git
+brew install svartaz/tung/tung
 ```
 
-or build from this checkout with ghc 9.12 or newer and cabal:
+homebrew installeth the pinned release. for the current syntax and proof
+checker, build from this checkout with ghc 9.12 or newer and cabal:
 
 ```sh
 brew bundle
@@ -39,14 +40,24 @@ choose another place.
 
 ## run
 
-| command                                  | purpose                                     |
-| ---------------------------------------- | ------------------------------------------- |
-| `tung forewrit.tung [arguments...]`      | runneth `main` with the remaining arguments |
-| `tung --check forewrit.tung`             | checketh a program with `main`              |
-| `tung --check-module module.tung`        | checketh a file without `main`              |
-| `tung --no-sorry --check-module m.tung`  | also faileth when a proof assumeth `sorry`  |
-| `tung --type-of name forewrit.tung`      | printeth the inferred type of a name        |
-| `tung --format file.tung [more.tung...]` | formateth files in place                    |
+| command                                  | purpose                                      |
+| ---------------------------------------- | -------------------------------------------- |
+| `tung forewrit.tung [arguments...]`      | runneth `main` with the remaining arguments  |
+| `tung --check forewrit.tung`             | checketh a program with `main`               |
+| `tung --check-module module.tung`        | checketh a file without `main`               |
+| `tung --no-sorry --check-module m.tung`  | also faileth when a proof assumeth `sorry`   |
+| `tung --type-of name forewrit.tung`      | printeth the inferred type of a name         |
+| `tung --check-proof name module.tung`    | checketh one declaration and its assumptions |
+| `tung --format file.tung [more.tung...]` | formateth files in place                     |
+
+proof checking rejecteth reachable `sorry`. the
+[proof checking guide](tongue/language.md#proof-checking) describeth axiom
+allowlists and editor support. try the
+[proof example](tongue/examples/dependent_proof.tung):
+
+```sh
+tung --no-axioms --check-proof proved tongue/examples/dependent_proof.tung
+```
 
 ## libraries
 
@@ -80,3 +91,9 @@ dependencies:
   explaineth its rules.
 
 contributors and agents start at [`AGENTS.md`](AGENTS.md).
+
+## licence
+
+tung is free software under the GNU LGPL, version 3 or later.
+[`COPYING.LESSER`](COPYING.LESSER) holdeth its terms, and
+[`COPYING`](COPYING) the GNU GPL they build on.

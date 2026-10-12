@@ -12,8 +12,8 @@ ilk team: * {
   west: team
 }
 
-bizen: team hath_to_text {
-  let to_text ≔ {
+bizen: team hath_to_string {
+  let to_string ≔ {
     north ^ 'north',
     south ^ 'south',
     east  ^ 'east',
@@ -21,25 +21,21 @@ bizen: team hath_to_text {
   }
 }
 
-let game: * ≔ r{away: team, away_score: ℤ, home: team, home_score: ℤ}
+## each field is read as `g.home`; a value is built from its fields in order.
+ilk game: * { meet: [home: team, home_score: ℤ, away: team, away_score: ℤ, game] }
 
-let scoreline: * ≔ r{
-  away: team,
-  away_points: ℤ,
-  away_score: ℤ,
-  home: team,
-  home_points: ℤ,
-  home_score: ℤ
+ilk scoreline: * {
+  tally: [home: team, home_score: ℤ, home_points: ℤ, away: team, away_score: ℤ, away_points: ℤ, scoreline]
 }
 
-let cancelled_game: * ≔ r{away: team, home: team, reason: text}
+ilk outstruck_game: * { call_off: [home: team, away: team, reason: string, outstruck_game] }
 
 ilk match_result: * {
   finished: [scoreline, match_result],
-  cancelled: [cancelled_game, match_result]
+  outstruck: [outstruck_game, match_result]
 }
 
-let standing: * ≔ r{played: ℤ, points: ℤ, team: team}
+ilk standing: * { stand: [team: team, played: ℤ, points: ℤ, standing] }
 
 let same_team: [left: team, right: team, 𝟚] ≔ match left, right {
   north, north ^ yea,
@@ -49,42 +45,21 @@ let same_team: [left: team, right: team, 𝟚] ≔ match left, right {
   _,     _     ^ nay
 }
 
-let checked_score: [score: ℤ, text ∑ ℤ] ≔
+let checked_score: [score: ℤ, string ∑ ℤ] ≔
   match score < +0 {
     yea ^ 'a score cannot be negative' incast₀,
     nay ^ score incast₁
   }
 
-let ordered_scoreline: [g: game, home_score: ℤ, away_score: ℤ, text ∑ scoreline] ≔
+let ordered_scoreline: [g: game, home_score: ℤ, away_score: ℤ, string ∑ scoreline] ≔
   match home_score ≤ away_score, away_score ≤ home_score {
-    yea, yea ^ r{
-      away ≔ g.away,
-      away_points ≔ +1,
-      away_score ≔ away_score,
-      home ≔ g.home,
-      home_points ≔ +1,
-      home_score ≔ home_score
-    } incast₁,
-    nay, yea ^ r{
-      away ≔ g.away,
-      away_points ≔ +0,
-      away_score ≔ away_score,
-      home ≔ g.home,
-      home_points ≔ +3,
-      home_score ≔ home_score
-    } incast₁,
-    yea, nay ^ r{
-      away ≔ g.away,
-      away_points ≔ +3,
-      away_score ≔ away_score,
-      home ≔ g.home,
-      home_points ≔ +0,
-      home_score ≔ home_score
-    } incast₁,
+    yea, yea ^ (g.home tally home_score +1 g.away away_score +1) incast₁,
+    nay, yea ^ (g.home tally home_score +3 g.away away_score +0) incast₁,
+    yea, nay ^ (g.home tally home_score +0 g.away away_score +3) incast₁,
     nay, nay ^ 'scores are not ordered' incast₀
   }
 
-let scoreline_of: [g: game, text ∑ scoreline] ≔
+let scoreline_of: [g: game, string ∑ scoreline] ≔
   g.home_score checked_score $ bind { home_score ^
     g.away_score checked_score $ bind { away_score ^
       g ordered_scoreline home_score away_score
@@ -94,11 +69,11 @@ let scoreline_of: [g: game, text ∑ scoreline] ≔
 let settle: [g: game, match_result] ≔
   match g scoreline_of {
     line incast₁   ^ line finished,
-    reason incast₀ ^ r{away ≔ g.away, home ≔ g.home, reason ≔ reason} cancelled
+    reason incast₀ ^ (g.home call_off g.away reason) outstruck
   }
 
 let delay_of: [luck: float, ℕ] ≔
-  match (luck × 30.0) ⌊ $ bind to_ℕ {
+  match (luck · 30.0) ⌊ $ bind to_ℕ {
     delay some ^ delay,
     none       ^ 0
   }
@@ -108,18 +83,10 @@ let start: [g: game, (match_result task) deed] ≔ random bind {
 }
 
 let eke_result: [standing, match_result, standing] ≔ {
-  s, _ cancelled   ^ s,
+  s, _ outstruck   ^ s,
   s, line finished ^ match s.team same_team line.home, s.team same_team line.away {
-    yea, _ ^ r{
-      ≔ s,
-      played ≔ s.played + +1,
-      points ≔ s.points + line.home_points
-    },
-    nay, yea ^ r{
-      ≔ s,
-      played ≔ s.played + +1,
-      points ≔ s.points + line.away_points
-    },
+    yea, _   ^ s.team stand (s.played + +1) (s.points + line.home_points),
+    nay, yea ^ s.team stand (s.played + +1) (s.points + line.away_points),
     nay, nay ^ s
   }
 }
@@ -129,29 +96,29 @@ let atfold_result: [standings: standing list, outcome: match_result, standing li
 
 let print_result: [match_result, 𝟙 deed] ≔ {
   line finished ^ >{then,
-    line.home to_text $ write,
+    line.home to_string $ write,
     ' ' write,
-    line.home_score to_text $ write,
+    line.home_score to_string $ write,
     ' - ' write,
-    line.away_score to_text $ write,
+    line.away_score to_string $ write,
     ' ' write,
-    line.away to_text $ write_line
+    line.away to_string $ write_line
   },
-  c cancelled ^ >{then,
-    c.home to_text $ write,
+  c outstruck ^ >{then,
+    c.home to_string $ write,
     ' - ' write,
-    c.away to_text $ write,
+    c.away to_string $ write,
     ':cancelled:' write,
     c.reason write_line
   }
 }
 
 let print_standing: [s: standing, 𝟙 deed] ≔ >{then,
-  s.team to_text $ write,
+  s.team to_string $ write,
   ':' write,
-  s.points to_text $ write,
+  s.points to_string $ write,
   ' points from ' write,
-  s.played to_text $ write,
+  s.played to_string $ write,
   match s.played ≤ +1 {
     yea ^ ' game' write_line,
     nay ^ ' games' write_line
@@ -160,19 +127,19 @@ let print_standing: [s: standing, 𝟙 deed] ≔ >{then,
 
 let fixtures: game list ≔
   >{‥,
-    r{home ≔ north, home_score ≔ +3, away ≔ south, away_score ≔ +1},
-    r{home ≔ east, home_score ≔ +2, away ≔ west, away_score ≔ +2},
-    r{home ≔ south, home_score ≔ -1, away ≔ east, away_score ≔ +4},
-    r{home ≔ west, home_score ≔ +1, away ≔ north, away_score ≔ +2},
+    north meet +3 south +1,
+    east meet +2 west +2,
+    south meet -1 east +4,
+    west meet +1 north +2,
     empty
   }
 
 let initial_standings: standing list ≔
   >{‥,
-    r{team ≔ north, played ≔ +0, points ≔ +0},
-    r{team ≔ south, played ≔ +0, points ≔ +0},
-    r{team ≔ east, played ≔ +0, points ≔ +0},
-    r{team ≔ west, played ≔ +0, points ≔ +0},
+    north stand +0 +0,
+    south stand +0 +0,
+    east stand +0 +0,
+    west stand +0 +0,
     empty
   }
 

@@ -1,7 +1,9 @@
+use is.tung
+
 ## `a` is accessible under `smaller` when every `y smaller a` is
 ## accessible. recursion on an accessibility proof is structural, so a
 ## function may recurse on any input that a well-founded relation maketh
-## smaller, as lean's `WellFounded.steadfast` doth.
+## smaller.
 show ilk accessible: [α: *, smaller: [α, α, *], α, *] {
   access: [@a: α, [y: α, y smaller a, α accessible smaller y], α accessible smaller a]
 }
@@ -11,16 +13,37 @@ show let wellgrounded: [α: *, smaller: [α, α, *], *] ≔ [a: α, α accessibl
 
 ## recursion on an accessibility proof. `step` defineth the result at `x`
 ## from the results at every smaller value.
-show let selfcalling: [@α: *, @smaller: [α, α, *], @motive: [α, *],
+show let selfcall: [@α: *, @smaller: [α, α, *], @motive: [α, *],
   step: [a: α, [b: α, b smaller a, b motive], a motive],
   a: α, proof: α accessible smaller a, a motive] ≔
   match proof {
-    smaller_accessible access ^ a step {b, below ^ step selfcalling b (b smaller_accessible below)}
+    smaller_accessible access ^ a step {b, below ^ step selfcall b (b smaller_accessible below)}
   }
 
 ## recursion on every value of a well-founded relation.
-show let wellgrounded_selfcalling: [@α: *, @smaller: [α, α, *], @motive: [α, *],
+show let wellgrounded_selfcall: [@α: *, @smaller: [α, α, *], @motive: [α, *],
   founded: α wellgrounded smaller,
   step: [a: α, [b: α, b smaller a, b motive], a motive],
   a: α, a motive] ≔
-  step selfcalling a (a founded)
+  step selfcall a (a founded)
+
+## well-founded recursion with an explicit result motive.
+show let wellgrounded_selfcall_toward: [@α: *, @smaller: [α, α, *],
+  motive: [α, *],
+  founded: α wellgrounded smaller,
+  step: [a: α, [b: α, b smaller a, b motive], a motive],
+  a: α, a motive] ≔
+  founded wellgrounded_selfcall step a
+
+## recurse on any input whose measure is smaller. the result may depend on
+## the input. only the measure needeth a well-founded relation.
+show let wellgrounded_selfcall_by: [@α: *, @μ: *, @smaller: [μ, μ, *],
+  motive: [α, *], measure: [α, μ], founded: μ wellgrounded smaller,
+  step: [a: α, [b: α, (b measure) smaller (a measure), b motive], a motive],
+  a: α, a motive] ≔
+## each measured value carrieth the original input and its equation.
+  ({at ^ [x: α, (x measure) = at, x motive]}) wellgrounded_selfcall_toward founded
+    {at, recurse, x, same ^ x step {b, below ^
+      (b measure) recurse (match same { eftbend ^ below }) b eftbend
+    }}
+  (a measure) a eftbend

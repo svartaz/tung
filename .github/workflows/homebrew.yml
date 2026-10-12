@@ -28,13 +28,13 @@ jobs:
         uses: actions/checkout@v6
 
       - name: tap local checkout
-        run: brew tap jukisima/tung "$GITHUB_WORKSPACE"
+        run: brew tap svartaz/tung "$GITHUB_WORKSPACE"
 
       - name: check formula style
         run: brew style Formula/tung.rb
 
       - name: install pinned release
-        run: brew install --build-from-source jukisima/tung/tung
+        run: brew install --build-from-source svartaz/tung/tung
 
       - name: test installed command
-        run: brew test jukisima/tung/tung
+        run: brew test svartaz/tung/tung

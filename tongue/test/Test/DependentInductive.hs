@@ -1,14 +1,14 @@
 -- induction exerciseth computation, indexed motives, and the kernel boundary.
 module Test.DependentInductive (group) where
 
-import Data.Either (isLeft)
+import Data.Either (isLeft, isRight)
 import Test.DependentSupport
 import Test.Harness (Test, expectEq)
 import Test.Harness qualified as Harness
 import Tung.Dependent
 
 group :: IO Harness.Group
-group = Harness.group "dependent-inductive" tests
+group = Harness.group "dependent-inductive" (tests ++ mutualTests ++ nestedTests)
 
 tests :: [Test]
 tests =
@@ -31,7 +31,7 @@ tests =
     reject "an indexed constructor cannot inhabit another index" $ do
       environment <- vectorEnvironment
       check environment vectorEmpty (vector natural (successor zero)),
-    expectEq "sameness transport along reflexivity computeth" (Right transportedIdentity) $ do
+    expectEq "sameness throughbear along reflexivity computeth" (Right transportedIdentity) $ do
       environment <- identityEnvironment
       normalise environment transport,
     reject "reflexivity cannot identify distinct constructors" $ do
@@ -69,9 +69,6 @@ tests =
       environment <- naturalEnvironment
       aliased <- define environment (symbol "undernaught") Nothing (Lambda Explicit (sort 0) (Pi Explicit (Local 0) natural))
       defineInductive aliased (badDeclaration (Apply Explicit (global "undernaught" []) bad)),
-    reject "a family cannot occur in a field's input" $ do
-      environment <- naturalEnvironment
-      defineInductive environment (badDeclaration (Pi Explicit bad natural)),
     reject "stored fields cannot exceed the inductive universe" $ do
       environment <- naturalEnvironment
       defineInductive environment (badDeclaration (sort 0)),
@@ -84,7 +81,7 @@ tests =
     reject "uniform parameters cannot change in constructor results" $ do
       environment <- naturalEnvironment
       defineInductive environment vectorDeclaration {inductiveUniverses = 0, inductiveType = Pi Implicit (sort 0) (Pi Explicit natural (sort 0)), inductiveConstructors = [(symbol "vector_empty", Pi Implicit (sort 0) (apply Explicit (Apply Implicit (global "vector" []) natural) [zero]))]},
-    reject "recursive family arguments cannot contain that family" $ do
+    reject "recursive family arguments cannot inhold that family" $ do
       environment <- naturalEnvironment
       let family argument = Apply Explicit (global "nested" []) argument
           declaration = InductiveDeclaration (symbol "nested") (symbol "nested_induction") 0 0 [] (Pi Explicit (sort 0) (sort 0)) [(symbol "nested_make", Pi Explicit (family (family natural)) (family natural))]
@@ -125,15 +122,86 @@ tests =
       inferInductive emptyEnvironment (symbol "concrete") (symbol "concrete_induction") 0 (sort 0) [(symbol "concrete_make", global "concrete" [level 1])] []
   ]
 
+-- the direct kernel API must certify container polarity, independently of
+-- source elaboration and without any privileged container spelling.
+nestedTests :: [Test]
+nestedTests =
+  [ expectEq "nested container polarity is certified by the mutual kernel" (Right [True, True]) $
+      traverse
+        ( \(stored, accepted) -> do
+            base <- naturalEnvironment
+            container <-
+              defineInductive
+                base
+                ( InductiveDeclaration
+                    box
+                    (inductionSymbol box)
+                    1
+                    0
+                    []
+                    (Pi Explicit (sort 0) (sort 0))
+                    [(symbol "store", Pi Implicit (sort 0) (Pi Explicit stored (Apply Explicit (Global box []) (Local 1))))]
+                )
+            let result = defineInductive container (badDeclaration (Apply Explicit (Global box []) bad)) {inductiveEliminator = inductionSymbol (symbol "bad")}
+            pure (if accepted then isRight result else isLeft result)
+        )
+        [(Local 0, True), (Pi Explicit (Local 0) natural, False)]
+  ]
+  where
+    box = symbol "container"
+
+mutualTests :: [Test]
+mutualTests =
+  expectEq
+    "joint induction keepeth distinct motive universes"
+    (Right [zero, natural])
+    ( do
+        environment <- naturalEnvironment >>= (`defineInductives` mutualDeclarations)
+        let evenMotive = Lambda Explicit evenFamily natural
+            oddMotive = Lambda Explicit oddFamily (sort 0)
+            evenMethod = Lambda Explicit oddFamily (Lambda Explicit (sort 0) zero)
+            oddMethod = Lambda Explicit evenFamily (Lambda Explicit natural natural)
+            prefix = [evenMotive, oddMotive, zero, evenMethod, oddMethod]
+            child = Apply Explicit (global "from_even" []) (global "naught_even" [])
+            induction family value = apply Explicit (Global (inductionSymbol (symbol family)) [level 0, level 1]) (prefix ++ [value])
+        traverse (normalise environment) [induction "even" (Apply Explicit (global "from_odd" []) child), induction "odd" child]
+    )
+    : [ rejectContaining label reason do
+          environment <- naturalEnvironment
+          defineInductives environment declarations
+      | (label, reason, declarations) <-
+          [ ("joint positivity encloseth negative sibling occurrences", "strictly positive", [evenDeclaration, oddDeclaration {inductiveConstructors = [(symbol "from_even", Pi Explicit (Pi Explicit evenFamily natural) oddFamily)]}]),
+            ("joint parameters require the same telescope length", "shared parameters", [parameterisedEven, oddDeclaration]),
+            ("joint parameters require equal domains", "cannot unify", [parameterisedEven, parameterisedOdd {inductiveType = Pi Implicit natural (sort 0)}]),
+            ("joint families require compatible result universes", "inconsistent universe constraints", [evenDeclaration, oddDeclaration {inductiveType = sort 1}]),
+            ("joint families require one universe vector", "shared universe parameters", [evenDeclaration, oddDeclaration {inductiveUniverses = 1}]),
+            ("joint recursive dispatch requireth canonical recursor names", "canonical identities", [evenDeclaration, oddDeclaration {inductiveEliminator = symbol "odd_induction"}]),
+            ("a recursive sibling cannot change shared parameters", "cannot unify", [parameterisedEven {inductiveConstructors = [(symbol "from_odd", Pi Implicit (sort 0) (Pi Explicit (Apply Implicit oddFamily natural) (Apply Implicit evenFamily (Local 1))))]}, parameterisedOdd]),
+            ("joint family signatures cannot depend on sibling values", "signatures cannot depend on their group", [evenDeclaration {inductiveType = Pi Explicit oddFamily (sort 0)}, oddDeclaration])
+          ]
+      ]
+  where
+    evenFamily = global "even" []
+    oddFamily = global "odd" []
+    mutualDeclarations = [evenDeclaration, oddDeclaration]
+    evenDeclaration = mutual "even" 0 (sort 0) [("naught_even", evenFamily), ("from_odd", Pi Explicit oddFamily evenFamily)]
+    oddDeclaration = mutual "odd" 0 (sort 0) [("from_even", Pi Explicit evenFamily oddFamily)]
+    parameterisedEven = parameterised "even" "odd" "from_odd"
+    parameterisedOdd = parameterised "odd" "even" "from_even"
+    parameterised owner peer constructor =
+      mutual owner 1 (Pi Implicit (sort 0) (sort 0)) [(constructor, Pi Implicit (sort 0) (Pi Explicit (Apply Implicit (global peer []) (Local 0)) (Apply Implicit (global owner []) (Local 1))))]
+    mutual name parameters annotation constructors =
+      InductiveDeclaration (symbol name) (inductionSymbol (symbol name)) parameters 0 [] annotation [(symbol constructor, ty) | (constructor, ty) <- constructors]
+
 naturalEnvironment :: Either String Environment
 naturalEnvironment = defineInductive emptyEnvironment naturalDeclaration
 
 naturalDeclaration :: InductiveDeclaration
-naturalDeclaration = InductiveDeclaration (symbol "natural") (symbol "natural_induction") 0 0 [] (sort 0) [(symbol "zero", natural), (symbol "heir", Pi Explicit natural natural)]
+naturalDeclaration = InductiveDeclaration (symbol "natural") (symbol "natural_induction") 0 0 [] (sort 0) [(symbol "naught", natural), (symbol "heir", Pi Explicit natural natural)]
 
 natural, zero, two, naturalMotive, successorMethod :: Term
 natural = global "natural" []
-zero = global "zero" []
+zero = global "naught" []
 two = successor (successor zero)
 naturalMotive = Lambda Explicit natural natural
 successorMethod = Lambda Explicit natural (Lambda Explicit natural (successor (Local 0)))

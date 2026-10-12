@@ -7,8 +7,8 @@ let whole: [left: ℤ maybe, right: ℤ maybe, ℤ] ≔ match left, right {
 }
 
 let answer: ℤ deed ≔ (1000 sleep) then ((+20 sheer) fork $ bind { left ^
-    (+22 sheer) fork $ bind { right ^ (left wait) lift₂ (right wait) whole }
+  (+22 sheer) fork $ bind { right ^ (left wait) lift₂ (right wait) whole }
 })
 
 let main: 𝟙 deed ≔
-  ('async' write_line) then (answer warp to_text $ bind write_line)
+  ('async' write_line) then (answer warp to_string $ bind write_line)

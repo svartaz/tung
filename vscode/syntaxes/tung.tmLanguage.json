@@ -181,7 +181,7 @@
     "punctuation": {
       "patterns": [
         {
-          "match": "(?<![^\\s#()\\[\\]{}:,;≔$`'@^.])(?:r|[<>])\\{",
+          "match": "(?<![^\\s#()\\[\\]{}:,;≔$`'@^.])[<>]\\{",
           "name": "punctuation.section.braces.begin.tung"
         },
         {

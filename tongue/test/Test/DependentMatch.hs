@@ -1,15 +1,18 @@
 -- pattern matching and structural recursion compile to checked eliminators.
 module Test.DependentMatch (group) where
 
+import Data.Map.Strict qualified as Map
+import Test.Compile (compileProject)
 import Test.DependentSupport
 import Test.Harness (Test, expectEq)
 import Test.Harness qualified as Harness
+import Tung.Dependent (ModuleId (..))
 import Tung.Dependent.Source (SourceProgram)
 
 group :: IO Harness.Group
 group = do
   example <- exampleSource "dependent_match.tung"
-  Harness.group "dependent_match" (tests example ++ recursiveArityTests ++ repeatedScrutineeTests)
+  Harness.group "dependent_match" (tests example ++ fixedIndexTests example ++ recursiveArityTests ++ repeatedScrutineeTests)
 
 tests :: String -> [Test]
 tests example =
@@ -18,34 +21,39 @@ tests example =
     computes "';' alternatives each select the shared result" "no both yes" "no",
     computes "the first matching row winneth" "yes both yes" "yes",
     computes "selfcalling on a direct child computeth" (two ++ " plus " ++ two) four,
-    computes "a fixed implicit input stayeth outside the selfcalling" "(>{‥, zero, zero, ∅}) length" two,
-    computes "a changing input actth as an accumulator" "(>{‥, zero, zero heir, ∅}) reverse_onto ∅" ">{‥, zero heir, zero, ∅}",
-    computes "a function input is passed to each recursive call" "(>{‥, zero, zero heir, ∅}) warp heir" ">{‥, zero heir, (zero heir) heir, ∅}",
+    computes "a fixed implicit input stayeth outside the selfcalling" "(>{‥, naught, naught, ∅}) length" two,
+    computes "a changing input actth as an accumulator" "(>{‥, naught, naught heir, ∅}) reverse_onto ∅" ">{‥, naught heir, naught, ∅}",
+    computes "a function input is passed to each recursive call" "(>{‥, naught, naught heir, ∅}) warp heir" ">{‥, naught heir, (naught heir) heir, ∅}",
     computes "several columns recurse together" (two ++ " same " ++ two) "yes",
-    computes "several columns and alternatives" (two ++ " same zero") "no",
+    computes "several columns and alternatives" (two ++ " same naught") "no",
     -- a repeated bare name is a constructor pattern, not a lambda binder.
     expectEq "one row may repeat a constructor" (Right True) $
       compiled (example ++ "ilk one:* { only:one }\nlet pair:[one, one, bool] ≔ {only, only ^ yes}\n")
         >>= \program -> sameNormalIn program "only pair only" "yes",
     -- a local scrutinee is rebound at its refined type in each row.
     expectEq "a branch seeth a local scrutinee at its refined index" (Right ()) $
-      () <$ compiled (example ++ "ilk vec:[α:*, [nat, *]] { nil:α vec zero, cons:[n:nat, head:α, tail:α vec n, α vec (n heir)] }\nlet keep:[@α:*, @n:nat, v:α vec n, α vec n] ≔ match v { nil ^ v, _ cons _ _ ^ v }\n"),
+      () <$ compiled (example ++ "let keep:[@α:*, @n:nat, v:α vec n, α vec n] ≔ match v { nil ^ v, _ cons _ _ ^ v }\n"),
     rejectContaining "one row cannot bind a variable twice" "'x' is bound twice in one row" $
       compiled (example ++ "let first:[bool, bool, bool] ≔ {x, x ^ x}\n"),
+    expectEq "one bracket may repeat a constructor slot" (Right True) $
+      compiled (example ++ "ilk one:* { only:one }\nlet pair:[only:one, only:one, bool] ≔ yes\n")
+        >>= \program -> sameNormalIn program "only pair only" "yes",
+    rejectContaining "one bracket cannot bind a variable twice" "'x' is bound twice in one row" $
+      compiled (example ++ "let first:[x:bool, x:bool, bool] ≔ x\n"),
     computes "nested patterns select deeper constructors" (two ++ " at_least_two") "yes",
-    computes "a wildcard row catcheth shallower values" "(zero heir) at_least_two" "no",
+    computes "a wildcard row catcheth shallower values" "(naught heir) at_least_two" "no",
     computes "selfcalling may pass a grandchild and a rebuilt child" ("(" ++ four ++ " heir) fibonacci") ("(" ++ four ++ " heir)"),
-    computes "deep selfcalling keepeth an accumulator" "(>{‥, zero, zero, zero, ∅}) pairs zero" "zero heir",
+    computes "deep selfcalling keepeth an accumulator" "(>{‥, naught, naught, naught, ∅}) pairs naught" "naught heir",
     expectEq "a match result type may depend on the matched worth" (Right True) $
       compiled
         ( example
             ++ """
                let choice:[bool, *] ≔ { yes ^ nat, no ^ bool }
-               let pick:[b:bool, b choice] ≔ match b { yes ^ zero, no ^ no }
+               let pick:[b:bool, b choice] ≔ match b { yes ^ naught, no ^ no }
 
                """
         )
-        >>= \program -> sameNormalIn program "yes pick" "zero",
+        >>= \program -> sameNormalIn program "yes pick" "naught",
     expectEq "a case function argument waiteth for a later argument to fix its input" (Right True) $
       compiled (example ++ "let atfold_to:[@α:*, @β:*, f:[α, β], a:α, β] ≔ a f\nlet answer ≔ { yes ^ no, no ^ yes } atfold_to yes\n")
         >>= \program -> sameNormalIn program "answer" "no",
@@ -64,17 +72,17 @@ tests example =
         ( example
             ++ """
                ilk tree:* { leaf: tree, node: [[nat, tree], tree] }
-               let height:[t: tree, n: nat, nat] ≔ match t { leaf ^ zero, branch node ^ ((n branch) height n) heir }
+               let height:[t: tree, n: nat, nat] ≔ match t { leaf ^ naught, branch node ^ ((n branch) height n) heir }
 
                """
         )
-        >>= \program -> sameNormalIn program "({_ ^ leaf} node) height zero" "zero heir",
+        >>= \program -> sameNormalIn program "({_ ^ leaf} node) height naught" "naught heir",
     expectEq "indexed branches refine another input before checking its body" (Right [True, True]) do
       program <-
         compiled
           """
-          ilk tag:[α:*, *] { integer:ℤ tag, textual:text tag }
-          let +:[ℤ, ℤ, ℤ] ≔ 'eke_integer' fremmed
+          ilk tag:[α:*, *] { integer:ℤ tag, textual:string tag }
+          let +:[ℤ, ℤ, ℤ] ≔ 'eke_wholetale' fremmed
           let choose:[@α:*, label:α tag, x:α, α] ≔ match label {
             integer ^ x + +1,
             textual ^ x
@@ -85,18 +93,16 @@ tests example =
       compiled (example ++ "ilk bad:* { make:[[bad, nat], bad] }\n"),
     rejectContaining "a missing constructor is reported" "missing no" $
       compiled (example ++ "let bad:[bool, bool] ≔ { yes ^ no }\n"),
-    rejectContaining "a row covered by earlier rows is redundant" "case 3 is redundant" $
-      compiled (example ++ "let bad:[bool, bool] ≔ { no ^ yes, yes ^ no, _ ^ yes }\n"),
     rejectContaining "selfcalling on the matched worth is rejected" "must pass a direct child" $
-      compiled (example ++ "let loop:[x:nat, nat] ≔ match x { zero ^ zero, n heir ^ (n heir) loop }\n"),
+      compiled (example ++ "let loop:[x:nat, nat] ≔ match x { naught ^ naught, n heir ^ (n heir) loop }\n"),
     rejectContaining "selfcalling on a rebuilt matched worth is rejected" "must pass a direct child" $
-      compiled (example ++ "let loop:[nat, nat] ≔ { zero ^ zero, zero heir ^ zero, (n heir) heir ^ ((n heir) heir) loop }\n"),
+      compiled (example ++ "let loop:[nat, nat] ≔ { naught ^ naught, naught heir ^ naught, (n heir) heir ^ ((n heir) heir) loop }\n"),
     rejectContaining "a recursive definition needs an annotation" "needs a type annotation" $
       compiled (example ++ "let loop ≔ loop\n"),
     rejectContaining "a recursive name is not a worth" "must only be called" $
-      compiled (example ++ "let bad:[x:nat, [nat, nat]] ≔ match x { zero ^ {y ^ y}, n heir ^ bad }\n"),
+      compiled (example ++ "let bad:[x:nat, [nat, nat]] ≔ match x { naught ^ {y ^ y}, n heir ^ bad }\n"),
     rejectContaining "constructor patterns need every explicit field" "needs 1 explicit arguments" $
-      compiled (example ++ "let bad:[nat, bool] ≔ { heir ^ yes, zero ^ no }\n"),
+      compiled (example ++ "let bad:[nat, bool] ≔ { heir ^ yes, naught ^ no }\n"),
     rejectContaining "a constructor function needs an annotation" "needs a type annotation" $
       compiled (example ++ "let bad ≔ { no ^ yes, yes ^ no }\n"),
     expectEq "a constructor index keepeth the constructors that fit it" (Right True) $
@@ -113,19 +119,107 @@ tests example =
   ]
   where
     tags = "ilk tag:[bool, *] { mark:yes tag, other:no tag }\n"
-    two = "((zero heir) heir)"
-    four = "((((zero heir) heir) heir) heir)"
+    two = "((naught heir) heir)"
+    four = "((((naught heir) heir) heir) heir)"
+    base = compiled example
     computes label expression expected = expectEq label (Right True) do
-      program <- compiled example
+      program <- base
       sameNormalIn program expression expected
+
+fixedIndexTests :: String -> [Test]
+fixedIndexTests example =
+  expectEq
+    "fixed indices refine fields, their dependent tails, and whole inputs"
+    (Right (replicate 12 True))
+    ( do
+        program <- compiled (vector ++ definitions ++ dependentFields ++ dependentIndices ++ diagonal ++ "let impossible:[0 diagonal 1, ℕ] ≔ {}\n")
+        literalResults <-
+          traverse
+            (uncurry (sameNormalIn program))
+            [ (pair ++ " predecessor", "1"),
+              (pair ++ " tail", "0 cons @ℤ +7 (nil @ℤ)"),
+              (pair ++ " second", "+7"),
+              (pair ++ " keep", pair),
+              (pair ++ " known_input eftbend", "1"),
+              (pair ++ " forced_tail", "0 cons @ℤ +7 (nil @ℤ)"),
+              ("0 shifted_tail " ++ pair, "0 cons @ℤ +7 (nil @ℤ)"),
+              ("(yes pack 0) extract", "0"),
+              ("0 pick (0 first) (1 indexed_pack (0 first))", "0 first"),
+              (pair ++ " high (0 cons @* ℕ (nil @*))", "1")
+            ]
+        custom <- compiled example
+        customResults <-
+          traverse
+            (uncurry (sameNormalIn custom))
+            [ (customPair ++ " predecessor_two", "naught heir"),
+              (customPair ++ " tail_two", "naught cons @nat (naught heir) (nil @nat)")
+            ]
+        pure (literalResults ++ customResults)
+    )
+    : ( do
+          actual <- Harness.evaluateSource ("use is.tung\n" ++ vector ++ definitions ++ "yield " ++ pair ++ " second") Map.empty
+          expectEq "the runner computeth fixed-index constructor fields" "eval ok: +7" actual
+      )
+    : [ rejectContaining label reason (compiled (vector ++ source))
+      | (label, reason, source) <-
+          [ ("a fixed index still needeth every possible constructor", "not exhaustive", "let bad:[ℤ vec 2, ℤ] ≔ {}"),
+            ("a fixed index maketh the empty constructor redundant", "case 1 is redundant", "let bad:[ℤ vec 2, ℤ] ≔ { nil ^ +0, _ cons _ _ ^ +1 }"),
+            ("a refined tail cannot inhabit the wrong index", "cannot unify", "let bad:[ℤ vec 2, ℤ vec 1] ≔ { _ cons _ _ ^ nil }"),
+            ("one field cannot satisfy incompatible constructor indices", "case 1 is redundant", diagonal ++ "let bad:[0 diagonal 1, ℕ] ≔ { _ same ^ 0 }"),
+            ("a computed constructor index stayeth undecidable", "matching cannot decide", "let next:[ℕ, ℕ] ≔ { 0 ^ 0, n heir ^ n }\nilk stuck:[ℕ, *] { pack:[n:ℕ, (n next) stuck] }\nlet bad:[0 stuck, ℕ] ≔ { n pack ^ n }"),
+            ("written index variables must remain distinct", "variables in the indices of an indexed family to be distinct", diagonal ++ "let bad:[n:ℕ, n diagonal n, ℕ] ≔ { _ same ^ n }"),
+            ("refining an early field preserveth the later field's type", "cannot unify", dependentFields ++ "let bad:[(yes make 0) witness, bool] ≔ { _ pack x ^ x }")
+          ]
+      ]
+  where
+    vector = "ilk vec:[α:*, [ℕ, *]] { nil:α vec 0, cons:[n:ℕ, head:α, tail:α vec n, α vec (n heir)] }\n"
+    diagonal = "ilk diagonal:[ℕ, ℕ, *] { same:[n:ℕ, n diagonal n] }\n"
+    pair = "(1 cons @ℤ +3 (0 cons @ℤ +7 (nil @ℤ)))"
+    customPair = "((naught heir) cons @nat naught (naught cons @nat (naught heir) (nil @nat)))"
+    definitions =
+      """
+      let predecessor:[@α:*, v:α vec 2, ℕ] ≔ match v { n cons _ _ ^ n }
+      let tail:[@α:*, v:α vec 2, α vec 1] ≔ match v {
+        n cons _ t ^ (let known:n = 1 ≔ eftbend yield t)
+      }
+      let second:[@α:*, α vec 2, α] ≔ { _ cons _ (_ cons x nil) ^ x }
+      let keep:[@α:*, v:α vec 2, α vec 2] ≔ match v { _ cons _ _ ^ v }
+      let known_input:[@α:*, v:α vec 2, known:(v predecessor) = 1, ℕ] ≔ match v {
+        _ cons _ _ ^ match known { eftbend ^ 1 }
+      }
+      let forced_tail:[@α:*, α vec 2, α vec 1] ≔ { 1 cons _ t ^ t }
+      let shifted_tail:[@α:*, k:ℕ, v:α vec ((k heir) heir), α vec (k heir)] ≔ match v {
+        n cons _ t ^ (let known:n = (k heir) ≔ eftbend yield t)
+      }
+      let high:[@α:*, v:α vec 2, p:* vec (v predecessor), ℕ] ≔ match v { _ cons _ _ ^ 1 }
+
+      """
+    dependentFields =
+      """
+      ilk bool:* { no:bool, yes:bool }
+      let choice:[bool, *] ≔ { yes ^ ℕ, no ^ bool }
+      ilk dependent:* { make:[b:bool, x:b choice, dependent] }
+      ilk witness:[dependent, *] { pack:[b:bool, x:b choice, (b make x) witness] }
+      let extract:[(yes make 0) witness, ℕ] ≔ { b pack x ^ x }
+
+      """
+    dependentIndices =
+      """
+      ilk fin:[ℕ, *] { first:[n:ℕ, (n heir) fin] }
+      ilk indexed_witness:[n:ℕ, n fin, *] { indexed_pack:[k:ℕ, p:k fin, k indexed_witness p] }
+      let pick:[n:ℕ, q:(n heir) fin, v:(n heir) indexed_witness q, (n heir) fin] ≔ match v {
+        k indexed_pack p ^ q
+      }
+
+      """
 
 recursiveArityTests :: [Test]
 recursiveArityTests =
   [ rejectContaining "recursive matches validate written columns" reason $
-      compiled ("ilk nat:* { zero:nat, heir:[nat, nat] } let count:[x:nat, nat] ≔ match x { " ++ rows ++ " }")
+      compiled ("ilk nat:* { naught:nat, heir:[nat, nat] } let count:[x:nat, nat] ≔ match x { " ++ rows ++ " }")
   | (reason, rows) <-
-      [ ("one pattern per scrutinee", "zero, _ ^ zero, n heir, _ ^ n count"),
-        ("every case must have the same number of patterns", "zero ^ zero, n heir, _ ^ n count")
+      [ ("one pattern per scrutinee", "naught, _ ^ naught, n heir, _ ^ n count"),
+        ("every case must have the same number of patterns", "naught ^ naught, n heir, _ ^ n count")
       ]
   ]
 
@@ -142,47 +236,47 @@ repeatedScrutineeTests =
             (two ++ " whole", two),
             (two ++ " count", two),
             (four ++ " deep", two),
-            (two ++ " accumulate " ++ one, "(" ++ two ++ " heir)"),
-            ("(" ++ one ++ " wrap @zero) extract", one),
+            (two ++ " hoard " ++ one, "(" ++ two ++ " heir)"),
+            ("(" ++ one ++ " wrap @naught) extract", one),
             ("+0 literal", "+1"),
             ("+1 literal", "+2")
           ]
     )
     : [ rejectContaining label reason (compiled (natural ++ source))
       | (label, reason, source) <-
-          [ ("inconsistent repeated patterns keep their written row sameness", "case 1 is redundant", "let bad:[x:nat,nat] ≔ match x,x { zero,_ heir ^zero, zero,zero ^zero, n heir,m heir ^m }"),
-            ("recursive inconsistent patterns keep their written row sameness", "case 1 is redundant", "let bad:[x:nat,nat] ≔ match x,x { zero,_ heir ^zero, zero,zero ^zero, n heir,m heir ^m bad }"),
-            ("repeated inputs still bind each row name once", "'n' is bound twice", "let bad:[x:nat,nat] ≔ match x,x { zero,zero ^zero, n heir,n heir ^n bad }"),
-            ("every repeated constructor pattern is validated before intersection", "needs 1 explicit arguments", "let bad:[x:nat,nat] ≔ match x,x { zero,zero ^zero, n heir,heir ^n bad }")
+          [ ("inconsistent repeated patterns keep their written row sameness", "case 1 is redundant", "let bad:[x:nat,nat] ≔ match x,x { naught,_ heir ^naught, naught,naught ^naught, n heir,m heir ^m }"),
+            ("recursive inconsistent patterns keep their written row sameness", "case 1 is redundant", "let bad:[x:nat,nat] ≔ match x,x { naught,_ heir ^naught, naught,naught ^naught, n heir,m heir ^m bad }"),
+            ("repeated inputs still bind each row name once", "'n' is bound twice", "let bad:[x:nat,nat] ≔ match x,x { naught,naught ^naught, n heir,n heir ^n bad }"),
+            ("every repeated constructor pattern is validated before intersection", "needs 1 explicit arguments", "let bad:[x:nat,nat] ≔ match x,x { naught,naught ^naught, n heir,heir ^n bad }")
           ]
       ]
   where
-    one = "(zero heir)"
+    one = "(naught heir)"
     two = "(" ++ one ++ " heir)"
     four = "((" ++ two ++ " heir) heir)"
-    natural = "ilk nat:* { zero:nat, heir:[nat, nat] }\n"
+    natural = "ilk nat:* { naught:nat, heir:[nat, nat] }\n"
     definitions =
       """
       let pick:[x:nat, nat] ≔ match x,x {
-        zero,zero ^ zero,
+        naught,naught ^ naught,
         n heir,m heir ^ m
       }
       let whole:[x:nat, nat] ≔ match x,x {
-        zero,_ ^ zero,
+        naught,_ ^ naught,
         _ heir,worth ^ worth
       }
       let count:[x:nat, nat] ≔ match x,x {
-        _,zero ^ zero,
+        _,naught ^ naught,
         n heir,m heir ^ (m count) heir
       }
       let deep:[x:nat, nat] ≔ match x,x {
-        zero,_ ^ zero,
-        zero heir,_ ^ zero,
+        naught,_ ^ naught,
+        naught heir,_ ^ naught,
         (n heir) heir,(m heir) heir ^ (m deep) heir
       }
-      let accumulate:[x:nat, y:nat, nat] ≔ match y,x,x {
-        _,zero,zero ^ y,
-        z,n heir,m heir ^ (m accumulate z) heir
+      let hoard:[x:nat, y:nat, nat] ≔ match y,x,x {
+        _,naught,naught ^ y,
+        z,n heir,m heir ^ (m hoard z) heir
       }
       ilk box:* { wrap:[@hidden:nat, worth:nat, box] }
       let extract:[x:box, nat] ≔ match x,x { a wrap,b wrap @h ^ b }
@@ -194,4 +288,4 @@ repeatedScrutineeTests =
       """
 
 compiled :: String -> Either String SourceProgram
-compiled = compileAs "dependent_match.tung"
+compiled source = compileProject (SourceModule "dependent_match.tung") ("use is.tung\n" ++ source) (Map.singleton "is.tung" equalitySource)

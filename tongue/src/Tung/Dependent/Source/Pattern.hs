@@ -21,12 +21,15 @@ import Data.Maybe (fromMaybe)
 import Tung.Dependent.Check qualified as K
 import Tung.Dependent.Elaboration qualified as E
 import Tung.Dependent.Normalise qualified as N
+import Tung.Dependent.Source.Environment (globals)
 import Tung.Dependent.Source.Pattern.Common
+import Tung.Dependent.Source.Pattern.Index (indexBindings, indexPattern, patternLeaves, unifiedMotive)
 import Tung.Dependent.Source.Pattern.Match
 import Tung.Dependent.Source.Scope
 import Tung.Dependent.Source.Syntax
 import Tung.Dependent.Syntax hiding (Lambda, Literal)
 import Tung.Dependent.Syntax qualified as Core
+import Tung.Identity (inducedFamily, inductionSymbol)
 
 type Elaboration = E.Elaboration
 
@@ -59,8 +62,8 @@ gatherClauses checker@ExpressionChecker {checkerEnvironment = environment, check
           _ -> False
         bind plicity name domain codomain next newColumns = do
           let level = depth scope
-          resultType <- E.instantiate codomain (N.VNeutral (N.NLocal level))
-          go (extend scope name domain) resultType next ((level, plicity, domain) : inputs) (newColumns ++ columnNames)
+          (current, resultType) <- bindDomain scope name domain codomain
+          go current resultType next ((level, plicity, domain) : inputs) (newColumns ++ columnNames)
         casesColumns rows = do
           (current, added, resultType) <- bindCaseInputs scope (rowArity rows) ty
           resolved <- matchRows environment names [Row (reverse columnNames ++ rowPatterns) rowBody | Row {..} <- rows]
@@ -100,28 +103,24 @@ elaborateRecursive checker@ExpressionChecker {checkerEnvironment = environment} 
   let explicitInputs = [(level, ty) | (level, Explicit, ty) <- clauseInputs]
       scope = clauseScope
   families <- traverse (familyOf environment . snd) explicitInputs
-  -- an indexed structural input needeth each index to be a distinct input
-  -- bound before it and unused by the parameters; the motive then
-  -- abstracteth those inputs with the value.
+  -- index patterns have distinct leaf inputs, bound before the structural
+  -- input and unused by parameters. their shape stayeth part of the function's
+  -- domain even when induction abstracteth the whole index.
   indexed <- forM (zip [0 ..] families) \case
-    (position, Just Split {splitInfo, splitIndices, splitParameters})
-      | null (inductiveIndexPlicities splitInfo) -> pure (Just (position, []))
-      | otherwise -> do
-          let structuralLevel = fst (explicitInputs !! position)
-          locals <- forM splitIndices \index ->
-            E.force index <&> \case
-              N.VNeutral (N.NLocal level) -> Just level
-              _ -> Nothing
-          parameterLevels <- concat <$> traverse (\parameter -> map (\level -> depth scope - level - 1) . freeIndices <$> quote scope parameter) splitParameters
-          pure case sequence locals of
-            Just levels
-              | length (nub levels) == length levels,
-                all (\level -> level < structuralLevel && level `notElem` parameterLevels && level `elem` [input | (input, _, _) <- clauseInputs]) levels ->
-                  Just (position, zip levels (inductiveIndexPlicities splitInfo))
-            _ -> Nothing
+    (position, Just Split {splitIndices, splitParameters}) -> do
+      patterns <- traverse (indexPattern environment) splitIndices
+      let structuralLevel = fst (explicitInputs !! position)
+      parameterLevels <- concat <$> traverse (\parameter -> map (\level -> depth scope - level - 1) . freeIndices <$> quote scope parameter) splitParameters
+      pure case sequence patterns of
+        Just patterns
+          | let leaves = concatMap patternLeaves patterns,
+            length (nub leaves) == length leaves,
+            all (\level -> level < structuralLevel && level `notElem` parameterLevels && level `elem` [input | (input, _, _) <- clauseInputs]) leaves ->
+              Just (position, patterns)
+        _ -> Nothing
     _ -> pure Nothing
   let positions = [position | Just (position, _) <- indexed]
-      indicesAt position = fromMaybe [] (lookup position [entry | Just entry <- indexed])
+      patternsAt position = fromMaybe [] (lookup position [entry | Just entry <- indexed])
       -- candidate checking useth the same local bindings and induction evidence
       -- as expression checking. failed trials cannot influence later choices.
       select previous [] = maybe (E.failure ("'" ++ name ++ "' needs a structurally decreasing input")) E.raise previous
@@ -133,12 +132,12 @@ elaborateRecursive checker@ExpressionChecker {checkerEnvironment = environment} 
         let (structuralLevel, structuralType) = explicitInputs !! position
         dependencies <- freeIndices <$> quote scope structuralType
         when (any (\(level, plicity, _) -> plicity == Implicit && level > structuralLevel) clauseInputs) (E.failure "implicit inputs after the structural input are not supported")
-        let indices = indicesAt position
-            indexLevels = map fst indices
+        let indexPatterns = patternsAt position
+            indexLevels = concatMap patternLeaves indexPatterns
             fixed level plicity = level < structuralLevel && level `notElem` indexLevels && (plicity == Implicit || (depth scope - level - 1) `elem` dependencies)
             role level
               | level == structuralLevel = Structural
-              | Just position <- lookup level (zip indexLevels [0 ..]) = Index position
+              | level `elem` indexLevels = Index level
               | fixed level Explicit = Fixed level
               | otherwise = Quantified
             roles = map (role . fst) explicitInputs
@@ -147,148 +146,151 @@ elaborateRecursive checker@ExpressionChecker {checkerEnvironment = environment} 
             -- determineth it, and each branch nameth its refined value.
             dropped = [inputPosition | (inputPosition, (level, _)) <- zip [0 ..] explicitInputs, level `elem` indexLevels]
             columnOf level = length [() | (other, Explicit, _) <- clauseInputs, other < level, other `notElem` indexLevels]
-        -- the motive rebindeth quantified inputs in order after the matched value.
-        resultMotive <- recursiveMotive scope annotation clauseInputs indices structuralLevel (map fst quantified)
+        -- matching and recursion share index abstraction and the quantified
+        -- input telescope; no second annotation walk is needed.
+        split@Split {..} <- columnFamily environment structuralType
+        levels <- E.freshUniverses splitEliminator
+        parameters <- traverse (quote scope) splitParameters
+        resultMotive <- unifiedMotive environment scope structuralLevel split levels parameters indexPatterns (map fst quantified) clauseResult
         (motive, memo) <-
           if deep
             then do
-              memoMotive <- memoisedMotive environment scope structuralType resultMotive
-              memoValue <- eval scope memoMotive
-              pure (memoMotive, Just (Memo memoValue []))
+              (memoMotive, memo) <- memoisedMotive environment scope structuralType resultMotive
+              pure (memoMotive, Just memo)
             else pure (resultMotive, Nothing)
         forM_ rows \row -> forM_ dropped \inputPosition -> case unnamed (matchPatterns row !! inputPosition) of
           (_, PVariable _) -> pure ()
           _ -> E.failure "an index input of the structural input must be matched by a variable"
-        let columns = [Column level ty | (level, ty) <- explicitInputs, level `notElem` indexLevels]
+        let columns = [Column level ty Nothing | (level, ty) <- explicitInputs, level `notElem` indexLevels]
             keptRows = [row {matchPatterns = [pattern | (inputPosition, pattern) <- zip [0 ..] (matchPatterns row), inputPosition `notElem` dropped]} | row <- rows]
             structuralColumn = columnOf structuralLevel
-            recursion = Recursion name roles [(columnOf level, plicity) | (level, plicity) <- quantified] [] memo
+            recursion = Recursion name roles indexPatterns [(columnOf level, plicity) | (level, plicity) <- quantified] [] memo
             enter current hypotheses = current {scopeRecursions = recursion {recursionHypotheses = hypotheses} : scopeRecursions current}
-        (split, used) <- splitColumn checker scope columns keptRows clauseResult structuralColumn (Just (motive, enter))
+        (split, used) <- splitColumn checker scope columns keptRows clauseResult structuralColumn (Just (motive, memo, enter))
         requireUsed clauseWrittenRows used
         let result = if deep then Project split "now" else split
             applied = foldl (\term (level, plicity) -> Apply plicity term (Local (depth scope - level - 1))) result quantified
         appliedType <- inferCore scope applied
         E.unify (scopeContext scope) appliedType clauseResult
         wrapInputs clauseInputs applied
-  -- course-of-values recursion is for families without indices.
-  select Nothing [(position, deep) | deep <- [False, True], position <- positions, not deep || null (indicesAt position)]
+  select Nothing [(position, deep) | deep <- [False, True], position <- positions]
 
--- walk the annotation again with the matched input and quantified inputs
--- replaced by fresh binders; fixed inputs keep their outer locals.
-recursiveMotive :: Scope -> N.Value -> [(Int, Plicity, N.Value)] -> [(Int, Plicity)] -> Int -> [Int] -> Elaboration Term
-recursiveMotive scope annotation inputs indices structuralLevel quantified = do
-  let outer = depth scope
-      -- the indices bind first, then the matched value, then quantified inputs.
-      structuralBinder = outer + length indices
-  (indexDomains, structuralDomain, binders, result) <- walk annotation inputs (structuralBinder + 1) [] Nothing []
-  pure
-    ( foldr
-        (\(plicity, domain) term -> Core.Lambda plicity domain term)
-        (Core.Lambda Explicit structuralDomain (foldr (\(plicity, domain) term -> Pi plicity domain term) result binders))
-        (zip (map snd indices) indexDomains)
-    )
-  where
-    walk ty [] next indexDomains domain binders = do
-      result <- E.quote next ty
-      case domain of
-        Just structuralDomain -> pure (reverse indexDomains, structuralDomain, reverse binders, result)
-        Nothing -> E.failure "missing structural input"
-    walk ty ((level, plicity, _) : rest) next indexDomains domain binders =
-      E.force ty >>= \case
-        N.VPi _ inputDomain codomain
-          | Just binder <- lookup level (zip (map fst indices) [depth scope ..]) -> do
-              domainTerm <- E.quote binder inputDomain
-              continue <- E.instantiate codomain (N.VNeutral (N.NLocal binder))
-              walk continue rest next (domainTerm : indexDomains) domain binders
-          | level == structuralLevel -> do
-              let binder = depth scope + length indices
-              domainTerm <- E.quote binder inputDomain
-              continue <- E.instantiate codomain (N.VNeutral (N.NLocal binder))
-              walk continue rest next indexDomains (Just domainTerm) binders
-          | level `elem` quantified -> do
-              domainTerm <- E.quote next inputDomain
-              continue <- E.instantiate codomain (N.VNeutral (N.NLocal next))
-              walk continue rest (next + 1) indexDomains domain ((plicity, domainTerm) : binders)
-          | otherwise -> do
-              continue <- E.instantiate codomain (N.VNeutral (N.NLocal level))
-              walk continue rest next indexDomains domain binders
-        _ -> E.failure "invalid recursive annotation"
-
--- `[x: T, r{below: Below x, now: P x}]`. `Below` eliminateth into types: each
+-- `[indices, x: T indices, r{below: Below indices x, now: P indices x}]`.
+-- `Below` eliminateth into types: each
 -- constructor's record holdeth, per recursive field, that field's own record.
--- function fields contribute no entry.
-memoisedMotive :: K.Environment -> Scope -> N.Value -> Term -> Elaboration Term
+-- joint targets retain records through nested containers, but only the chosen
+-- root hath a result; the other targets' `now` is empty. function fields
+-- retain their checked input telescope before each child's record.
+memoisedMotive :: K.Environment -> Scope -> N.Value -> Term -> Elaboration (Term, Memo)
 memoisedMotive environment scope structuralType resultMotive = do
   Split {..} <- columnFamily environment structuralType
-  domain <- quote scope structuralType
+  root <- maybe (E.failure "missing structural family") pure (inducedFamily splitEliminator)
+  targets <- case inductiveFamilies splitInfo of
+    [family] -> pure [(family, splitInfo)]
+    families -> forM families \family -> (family,) <$> E.fromEither (inductiveInfo (globals environment) family)
   levels <- E.freshUniverses splitEliminator
   belowLevel <- E.freshLevel
   parameterTerms <- traverse (quote scope) splitParameters
-  let prefix = Apply Explicit (foldl (Apply Implicit) (Global splitEliminator levels) parameterTerms) (Core.Lambda Explicit domain (Sort belowLevel))
-  prefixType <- inferCore scope prefix
+  let parameterPrefix = foldl (Apply Implicit) (Global splitEliminator levels) parameterTerms
+  parameterType <- inferCore scope parameterPrefix
+  ((prefix, prefixType), domains) <- foldM (supplySort belowLevel) ((parameterPrefix, parameterType), []) targets
+  result <- eval scope resultMotive
   (applied, _) <-
     foldM
-      ( \(term, termType) (_, fields) ->
-          fmap fst . applyMethod scope (term, termType) $ \methodType -> (,()) <$> belowMethod scope methodType fields []
+      ( \partial (_, fields) ->
+          fmap fst . applyMethod scope partial $ \methodType -> (,()) <$> belowMethod root (inductiveIndexPlicities splitInfo) result scope methodType fields []
       )
       (prefix, prefixType)
-      (inductiveConstructorInfo splitInfo)
-  let below = Apply Explicit (shiftTerm 1 applied) (Local 0)
-      now = Apply Explicit (shiftTerm 1 resultMotive) (Local 0)
-  let motive = Core.Lambda Explicit domain (Core.RecordType [("below", below), ("now", now)])
-  _ <- inferCore scope motive
-  pure motive
+      (concatMap (inductiveConstructorInfo . snd) targets)
+  let (_, arguments) = termSpine applied
+  motives <- forM domains \(target, plicities, motiveType) -> do
+    motive <- telescope scope motiveType [] \current inputs -> do
+      let shift = depth current - depth scope
+          prefix = [(plicity, shiftTerm shift argument) | (plicity, argument) <- arguments]
+          below = applyArguments (Global (inductionSymbol target) levels) (prefix ++ inputs)
+          now = if target == root then applyArguments (shiftTerm shift resultMotive) inputs else Core.RecordType []
+      pure (Core.RecordType [("below", below), ("now", now)])
+    _ <- inferCore scope motive
+    value <- eval scope motive
+    pure (target, motive, (plicities, value))
+  motive <- maybe (E.failure "missing structural motive") pure (lookup root [(target, term) | (target, term, _) <- motives])
+  pure (motive, Memo root [(target, value) | (target, _, value) <- motives] [])
   where
+    -- motive domains include each target's own dependent index telescope.
+    -- walking the checked type preserveth both its domains and plicities.
+    telescope current ty inputs finish =
+      E.force ty >>= \case
+        N.VPi plicity domain codomain -> do
+          annotation <- quote current domain
+          (inner, next) <- bindDomain current Nothing domain codomain
+          Core.Lambda plicity annotation <$> telescope inner next (inputs ++ [(plicity, depth current)]) finish
+        N.VSort _ -> finish current [(plicity, Local (depth current - level - 1)) | (plicity, level) <- inputs]
+        _ -> E.failure "invalid course-of-values motive telescope"
+    supplySort level ((term, ty), domains) (target, info) =
+      E.force ty >>= \case
+        N.VPi Explicit motiveType codomain -> do
+          motive <- telescope scope motiveType [] \_ _ -> pure (Sort level)
+          inferred <- inferCore scope motive
+          E.unify (scopeContext scope) inferred motiveType
+          next <- eval scope motive >>= E.instantiate codomain
+          pure ((Apply Explicit term motive, next), domains ++ [(target, inductiveIndexPlicities info, motiveType)])
+        _ -> E.failure "invalid inductive motive type"
     -- bind the fields and their type-valued hypotheses, then build the record.
-    belowMethod current _ [] children = do
-      entries <- forM (zip [0 :: Int ..] (reverse children)) \(index, (field, hypothesis)) -> do
-        now <- applyResult (N.VNeutral (N.NLocal field))
-        nowTerm <- quote current now
-        pure (childName index, Core.RecordType [("below", Local (depth current - hypothesis - 1)), ("now", nowTerm)])
+    belowMethod root plicities result current _ [] children = do
+      entries <- forM (zip [0 :: Int ..] (reverse children)) \(index, (target, field, hypothesis)) -> do
+        let fieldTerm = Local (depth current - field - 1)
+            hypothesisTerm = Local (depth current - hypothesis - 1)
+        fieldType <- inferCore current fieldTerm
+        record <- childRecord root plicities result target current fieldType fieldTerm hypothesisTerm
+        pure (childName index, record)
       pure (Core.RecordType entries)
-    belowMethod current ty (field@(_, annotation, _) : rest) children = do
+    belowMethod root plicities result current ty (field@(_, _, target) : rest) children = do
       (fieldLevel, hypothesis, inner, next, wrap) <- methodField current ty field
-      -- only a direct recursive field hath a record of its own.
-      let direct = case annotation of
-            Pi {} -> False
-            _ -> True
-      wrap <$> belowMethod inner next rest ([(fieldLevel, level) | Just level <- [hypothesis], direct] ++ children)
-    applyResult argument =
-      eval scope resultMotive >>= \case
-        N.VLambda _ _ closure -> E.instantiate closure argument
-        _ -> E.failure "invalid recursive motive"
+      wrap <$> belowMethod root plicities result inner next rest ([(family, fieldLevel, level) | Just family <- [target], Just level <- [hypothesis]] ++ children)
+    -- a function child's record taketh the field's own dependent arguments.
+    -- its type-valued hypothesis and result motive see the same applications.
+    childRecord root plicities result target current ty field hypothesis =
+      E.force ty >>= \case
+        N.VPi plicity domain codomain -> do
+          annotation <- quote current domain
+          (inner, next) <- bindDomain current Nothing domain codomain
+          let apply term = Apply plicity (shiftTerm 1 term) (Local 0)
+          Pi plicity annotation <$> childRecord root plicities result target inner next (apply field) (apply hypothesis)
+        _ -> do
+          now <-
+            if target == root
+              then eval current field >>= applyIndexedMotive current plicities result >>= quote current
+              else pure (Core.RecordType [])
+          pure (Core.RecordType [("below", hypothesis), ("now", now)])
 
 -- `children f arguments` becometh the hypothesis applied to quantified inputs.
 recursiveCall :: ExpressionChecker -> Scope -> Recursion -> [Argument] -> Elaboration (Term, N.Value)
 recursiveCall checker scope Recursion {..} arguments = do
   unless (all ((== Explicit) . argumentPlicity) arguments) (E.failure "a recursive call cannot supply implicit arguments")
   let explicit = map argumentExpression arguments
-  unless (length explicit >= length recursionRoles) (E.failure "a recursive call must supply every explicit input")
-  passed <-
-    fmap concat . sequence $
-      [ case role of
-          Structural -> pure []
-          Index _ -> pure []
-          Quantified -> pure [Argument Explicit argument]
-          Fixed level -> do
-            value <- localLevel argument
-            unless (value == Just level) (E.failure "a recursive call must pass fixed inputs unchanged")
-            pure []
-      | (role, argument) <- zip recursionRoles explicit
-      ]
+  unless (all (== Quantified) (drop (length explicit) recursionRoles)) (E.failure "a recursive call must supply its structural, fixed, and index inputs")
+  passed <- fmap concat . forM (zip recursionRoles explicit) $ \(role, argument) ->
+    case role of
+      Structural -> pure []
+      Index _ -> pure []
+      Quantified -> pure [Argument Explicit argument]
+      Fixed level -> do
+        value <- localLevel argument
+        unless (value == Just level) (E.failure "a recursive call must pass fixed inputs unchanged")
+        pure []
   let rest = passed ++ map (Argument Explicit) (drop (length recursionRoles) explicit)
       structural = [argument | (Structural, argument) <- zip recursionRoles explicit]
   case (recursionMemo, structural) of
     (Just memo, [argument]) -> do
       value <- inferStructural argument
       memoRecord scope memo value >>= \case
-        Just record -> do
+        Just (target, record) | target == memoRoot memo -> do
+          checkIndices value
           recordType <- inferCore scope record
           E.force recordType >>= \case
             N.VRecordType [("below", _), ("now", now)] -> applyTerm checker scope (Project record "now") now rest []
             _ -> E.failure "invalid memoised motive"
-        Nothing -> E.failure "a recursive call must pass a descendant of the matched input"
+        _ -> E.failure "a recursive call must pass a descendant of the matched input"
     _ -> directCall rest structural
   where
     inferStructural argument = do
@@ -304,25 +306,28 @@ recursiveCall checker scope Recursion {..} arguments = do
             Just hypothesis <- lookup level recursionHypotheses ->
               pure (hypothesis, arguments)
         _ -> E.failure "a recursive call must pass a direct child of the matched input"
-      -- an explicit index argument must be the child's own index; the
-      -- hypothesis already standeth at that index.
-      let indexArguments = [(position, argument) | (Index position, argument) <- zip recursionRoles (map argumentExpression arguments)]
-      unless (null indexArguments) do
+      checkIndices value
+      -- a function child's hypothesis first taketh the child's inputs.
+      arguments <- traverse (\(plicity, value) -> (plicity,) <$> quote scope value) childArguments
+      let term = applyArguments (Local (depth scope - hypothesis - 1)) arguments
+      ty <- inferCore scope term
+      applyTerm checker scope term ty rest []
+    -- both kinds of evidence require the declaration's entire index shape.
+    -- a supplied leaf denoteth the matched part, not the full index.
+    checkIndices value =
+      unless (null recursionIndices) do
         childTerm <- quote scope value
         childType <- inferCore scope childTerm
         indices <-
           familyOf (checkerEnvironment checker) childType >>= \case
             Just Split {splitIndices} -> pure splitIndices
             Nothing -> E.failure "a recursive call must pass a child of the indexed family"
-        forM_ indexArguments \(position, argument) -> do
+        bindings <- indexBindings (checkerEnvironment checker) recursionIndices indices
+        forM_ [(leaf, argument) | (Index leaf, argument) <- zip recursionRoles (map argumentExpression arguments)] \(leaf, argument) -> do
           (term, _) <- inferTerm checker scope argument
           written <- eval scope term
-          E.unify (scopeContext scope) written (indices !! position)
-      -- a function child's hypothesis first taketh the child's inputs.
-      arguments <- traverse (\(plicity, value) -> (plicity,) <$> quote scope value) childArguments
-      let term = applyArguments (Local (depth scope - hypothesis - 1)) arguments
-      ty <- inferCore scope term
-      applyTerm checker scope term ty rest []
+          matched <- maybe (E.failure "missing recursive index leaf") pure (lookup leaf bindings)
+          E.unify (scopeContext scope) written matched
     localLevel argument =
       inferStructural argument <&> \case
         N.VNeutral (N.NLocal level) -> Just level

@@ -1,92 +1,234 @@
+# a tour of tung. each section addeth one idea. run it with
+# `tung byspel/tutorial.tung`; check it with `tung --check byspel/tutorial.tung`.
+# `#` beginneth a comment. `##` before a declaration documenteth it.
+
+# 0. modules
+# `use` bringeth in a bookhoard module. its names are usable bare, or
+# qualified by the module's last name: `list~empty`. a second word after the
+# path chooseth another qualifier, as `hashmap` here.
+use deed/misfaresome.tung
+use deed/onstand.tung
 use ground.tung
-# imported as `list`
 use ilk/list.tung
-# imported as `hashmap`
-use ilk/table.tung hashmap
+use ilk/maybe.tung
+use ilk/product.tung
+use ilk/sum.tung
+use ilk/wordbook.tung hashmap
+use is.tung
+use numeric/withstand.tung
 
-# use imported values
-let l ≔ list~empty
-let h ≔ hashmap~empty
+# 1. values
+# `let name ≔ value` defineth a name. `:` writeth its type.
+let count: ℕ ≔ 42 # a natural number, never below naught
+let tale: ℤ ≔ -7 # a whole number always hath a sign: +7 or -7
+let half: float ≔ 0.5
+let letter: unicode ≔ `λ
+let message: string ≔ 'hello!'
+let truth: 𝟚 ≔ yea # 𝟚 hath two values, yea and nay
 
-# define variables
-let tale: ℤ ≔ +42
-let message ≔ 'hello!'
+# 2. calling functions
+# the second word of a sequence is the function: `a f b` calleth f with a
+# and b. so `+2 + +3` is `+` applied to `+2` and `+3`.
+let five: ℤ ≔ +2 + +3
+# brackets group as usual.
+let nine: ℤ ≔ (+2 + +1) · +3
+# `$` passeth the result on to the next function: `a f $ g` is `g (f a)`.
+let shown: string ≔ +2 + +3 $ to_string
+# `<{f, a, b, c}` foldeth from the left: `(a f b) f c`.
+# `>{f, a, b, c}` foldeth from the right: `a f (b f c)`.
+let ten: ℤ ≔ <{+, +1, +2, +3, +4}
 
-# define functions
-let sameness: [@α: *, a: α, α] ≔ a
-let constant: [@α: *, @β: *, a: α, b: β, α] ≔ a
-# infer type inputs or supply them with `@`
-let greeting: text ≔ 'hello' constant +42
-let explicit_greeting: text ≔ 'hello' constant @text @ℤ +42
-# combine a positional argument with a typed argument and result
-let eke_after: [x:, y: ℤ, ℤ] ≔ x + y
+# 3. functions
+# a function type is written in brackets: `[ℤ, ℤ]` taketh an ℤ and giveth an
+# ℤ. a slot with a name, `x:`, bindeth that input in the body.
+let double: [x: ℤ, ℤ] ≔ x + x
+# a slot without a name is supplied by a lambda `{input ^ result}`.
+let triple: [ℤ, ℤ] ≔ {x ^ (x + x) + x}
+# a slot's type or the result may be left out when it can be inferred.
+let quadruple: [x: ℤ] ≔ x double $ double
+# functions take their inputs one at a time, so giving fewer inputs maketh a
+# new function.
+let add_two: [ℤ, ℤ] ≔ +2 +
+# `fall` writeth a whole function, with its type, as one expression.
+let add_three ≔ fall x: ℤ, ℤ ^ x + +3
 
-# `yield` a value from a local block
-let seven ≔ (
-  let six ≔ +2 × +3
+# 4. type inputs
+# `@α: *` is a type input: `*` is the type of types. the function below
+# worketh for every type α, and α is inferred at each call.
+let sameness₀: [@α: *, a: α, α] ≔ a
+let withstand: [@α: *, @β: *, a: α, _: β, α] ≔ a
+let greeting: string ≔ 'hello' withstand +42
+# a type input may also be given explicitly with `@`.
+let explicit_greeting: string ≔ 'hello' withstand @string @ℤ +42
+
+# 5. local definitions
+# `( let … yield result )` defineth names that only the result seeth.
+let seven: ℤ ≔ (
+  let six ≔ +2 · +3
   yield six + +1
 )
 
-# define a type alias
-let powerset: [a: *, *] ≔ a → 𝟚
-
-# define algebraic data types
-ilk 𝟘: * {}
-ilk 𝟚: * {
-  yea: 𝟚,
-  nay: 𝟚
+# 6. matching
+# `match value { pattern ^ result, … }` chooseth the first row that fitteth.
+let sign: [x: ℤ, string] ≔ match x {
+  +0 ^ 'naught',
+  _  ^ 'other' # `_` fitteth anything
 }
-ilk maybe: [a: *, *] {
-  empty: a maybe,
-  some: [a, a maybe]
-}
-
-# match a value
-let ¬: [𝟚, 𝟚] ≔ {
+# `{ rows }` is a function that matcheth its inputs directly.
+let ¬′: [𝟚, 𝟚] ≔ {
   yea ^ nay,
   nay ^ yea
 }
-# or equivalently
-let ¬′: [x: 𝟚, 𝟚] ≔ match x {
-  yea ^ nay,
-  nay ^ yea
-}
-# `;` joineth rows that share a result
+# `;` joineth rows that share one result.
 let both: [𝟚, 𝟚, 𝟚] ≔ {
   yea, yea ^ yea,
   yea, nay;
   nay, _   ^ nay
 }
 
-# define records
-let person: * ≔ r{name: text, age: ℤ}
-let someone: person ≔ r{name ≔ 'tung', age ≔ +1}
-let older ≔ r{≔ someone, age ≔ +2}
-let age ≔ older.age
-
-# define a type class
-flock hath_describe: [a: *, *] {
-  let describe: [a, text]
+# 7. recursion
+# a function may call itself on a smaller part of its input. `n heir`
+# matcheth a natural above naught and nameth the one below it, so each call
+# getteth closer to naught and the function always endeth.
+let factorial: [ℕ, ℕ] ≔ {
+  0      ^ 1,
+  n heir ^ (n heir) · (n factorial)
 }
 
-# implement a type class
-bizen: 𝟚 hath_describe {
+# 8. new types
+# `ilk` declareth a type and its constructors. each constructor hath a type
+# that endeth in the ilk itself.
+ilk shape: * {
+  circle: [float, shape],
+  rectangle: [float, float, shape]
+}
+# `turn` is a full turn of the circle, 6.28…; a circle's area is half a
+# turn times its radius squared.
+let area: [shape, float] ≔ {
+  r circle      ^ ((turn · r) · r) · 0.5,
+  w rectangle h ^ w · h
+}
+# an ilk may take type inputs, as lists and `maybe` do.
+ilk pair: [α: *, *] {
+  pair_of: [α, α, α pair]
+}
+# a type input that a constructor changeth is an index. the length of a
+# `row` is part of its type, so `first` needeth no case for an empty row.
+ilk row: [α: *, ℕ, *] {
+  stop: α row 0,
+  more: [@n: ℕ, α, α row n, α row (n heir)]
+}
+let first: [@α: *, @n: ℕ, r: α row (n heir), α] ≔ match r {
+  a more _ ^ a
+}
+
+# 9. fields
+# an ilk with one constructor whose inputs have names hath fields, read
+# with `.`. a changed value is built anew.
+ilk person: * {
+  person_of: [name: string, age: ℕ, person]
+}
+let someone: person ≔ 'tung' person_of 1
+let older: person ≔ someone.name person_of (someone.age + 1)
+
+# 10. lists, maybe, and words
+# `‥` putteth a value before a list; `>{‥, …, list~empty}` writeth a whole
+# list. `list~empty` is qualified because wordbooks have an `empty` too.
+let numbers: ℤ list ≔ >{‥, +1, +2, +3, list~empty}
+let doubled: ℤ list ≔ numbers warp double
+# `maybe` holdeth `some` value or `none`.
+let found: ℤ maybe ≔ numbers find {x ^ +2 ≤ x}
+# a wordbook mappeth keys to values.
+let ages: string hashmap~wordbook ℕ ≔ hashmap~empty hashmap~put 'tung' 1
+
+# 11. flocks and bizens
+# a flock nameth operations that many types can have; a bizen giveth them for
+# one type. this is what other languages call a type class and an instance.
+flock hath_describe: [α: *, *] {
+  let describe: [α, string]
+}
+bizen: shape hath_describe {
   let describe ≔ {
-    yea ^ 'yea',
-    nay ^ 'nay'
+    _ circle      ^ 'circle',
+    _ rectangle _ ^ 'rectangle'
   }
 }
+# `@: α hath_describe` asketh that α hath a bizen; the caller's is passed in.
+let describe_twice: [@α: *, @: α hath_describe, a: α, string] ≔
+  (a describe) · (a describe)
 
-# a deed is an action that the runner performeth. `then` sequenceth deeds
-let greet: [name: text, 𝟙 deed] ≔ ('hello, ' write) then (name write_line)
+# 12. proofs
+# `x = y` is the type of proofs that x and y are the same. `eftbend` proveth
+# an equation that holdeth by computing both sides.
+let two_and_two: (+2 + +2) = +4 ≔ eftbend
+# a flock may also state laws: members whose types are equations. every
+# bizen must prove them.
+flock hath_flip: [α: *, *] {
+  let flip: [α, α]
+  let flip_flip: [x: α, (x flip $ flip) = x]
+}
+bizen: 𝟚 hath_flip {
+  let flip ≔ ¬′
+  let flip_flip ≔ {
+    yea ^ eftbend,
+    nay ^ eftbend
+  }
+}
+# a proof about every natural useth recursion: the call on `n` proveth the
+# smaller case, and `leibnitz` applieth `heir` to both of its sides.
+let naught_+: [n: ℕ, (0 + n) = n] ≔ match n {
+  0      ^ eftbend,
+  m heir ^ {x: ℕ ^ x heir} leibnitz (m naught_+)
+}
+# `sorry` standeth in for any value or proof not yet written, and
+# `orsetting name: type` assumeth one. `--check` listeth both, and
+# `--no-sorry` refuseth them.
 
-# `bind` passeth a deed's result to the next deed
-let roll: 𝟙 deed ≔ random bind { luck ^ luck to_text $ write_line }
-
-# `main` is the entry point
-let main: 𝟙 deed ≔ >{then,
+# 13. deeds
+# a deed is an action that the runner performeth, such as writing. building a
+# deed doth nothing; only `main` is performed.
+# `then` doth two deeds in order.
+let greet: [name: string, 𝟙 deed] ≔ ('hello, ' write) then (name write_line)
+# `bind` passeth a deed's result to a function that chooseth the next deed.
+let roll: 𝟙 deed ≔ random bind {luck ^ luck to_string $ write_line}
+# `>{then, …}` doth many deeds in order.
+let report: 𝟙 deed ≔ >{then,
   'tung' greet,
-  seven to_text $ write_line,
+  seven to_string $ write_line,
+  (5 factorial) to_string $ write_line
+}
+
+# 14. failure and state
+# `ε misfaresome α` is a deed that may stop with a misfare `ε`; `bind` skippeth
+# the rest after a misfare, and `handle` recovereth.
+let checked_age: [n: ℕ, string misfaresome ℕ] ≔ match n ≤ 150 {
+  yea ^ n sheer,
+  nay ^ 'too old' misfare
+}
+let ages_report: 𝟙 deed ≔
+  (200 checked_age $ misfaresome~handle {_ ^ 0 sheer} $ misfaresome~run) bind {
+    why incast₀ ^ why write_line,
+    n incast₁   ^ n to_string $ write_line
+  }
+# `σ onstand α` is a deed that readeth and changeth a state `σ`.
+let counted: ℕ onstand ℕ ≔ >{then, {n ^ n + 1} tweak, {n ^ n + 1} tweak, get}
+let count_report: 𝟙 deed ≔
+  (counted onstand~run 10) bind {p ^ p forthcast₀ $ to_string $ write_line}
+
+# 15. tasks
+# `fork` startetth a deed alongside; `wait` taketh its result as `maybe`.
+let background: 𝟙 deed ≔
+  (seven sheer) fork $ bind wait $ bind {
+    n some ^ n to_string $ write_line,
+    none   ^ 'cancelled' write_line
+  }
+
+# `main` is where a program beginneth.
+let main: 𝟙 deed ≔ >{then,
+  report,
   message write_line,
+  ages_report,
+  count_report,
+  background,
   roll
 }

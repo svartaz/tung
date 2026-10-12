@@ -13,30 +13,28 @@ concurrency:
 
 jobs:
   test:
-    name: ${{ matrix.check }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    name: ${{ matrix.check }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
         include:
-          - check: compiler
-            target: compiler-test
-          - check: byspel
-            target: byspel-test
-          - check: editor
-            target: editor-test
-          - check: prose
-            target: prose-test
-          - check: formula
-            target: formula-check
+          - { check: compiler, target: compiler-test, os: ubuntu-latest }
+          - { check: compiler, target: compiler-test, os: macos-latest }
+          - { check: byspel, target: byspel-test, os: ubuntu-latest }
+          - { check: byspel, target: byspel-test, os: macos-latest }
+          - { check: editor, target: editor-test, os: ubuntu-latest }
+          - { check: format, target: format-check, os: ubuntu-latest }
+          - { check: prose, target: prose-test, os: ubuntu-latest }
+          - { check: formula, target: formula-check, os: ubuntu-latest }
 
     steps:
       - name: check out source
         uses: actions/checkout@v6
 
       - name: set up haskell
-        if: matrix.check == 'compiler' || matrix.check == 'editor' || matrix.check == 'byspel'
+        if: matrix.check == 'compiler' || matrix.check == 'editor' || matrix.check == 'byspel' || matrix.check == 'format'
         uses: haskell-actions/setup@v2
         with:
           ghc-version: 9.12.4
@@ -48,6 +46,10 @@ jobs:
         with:
           node-version: 26.4.0
           cache: npm
+
+      - name: set up ormolu
+        if: matrix.check == 'format'
+        run: cabal install ormolu --install-method=copy --installdir="$HOME/.local/bin" && echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: set up ruby
         if: matrix.check == 'formula'

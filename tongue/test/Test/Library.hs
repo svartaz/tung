@@ -11,12 +11,71 @@ import System.Directory (canonicalizePath, createDirectory, createDirectoryIfMis
 import System.Exit (ExitCode (..))
 import System.FilePath (takeDirectory, takeFileName, (</>))
 import System.Process (readProcessWithExitCode)
-import Test.Harness (Group, Test, expect)
+import Test.Harness (Group, Test, expect, expectEq)
 import Test.Harness qualified as Harness
-import Tung (loadProjectFile, projectImports, resolveLibraryRoots)
+import Tung (loadProjectFile, projectImports, proofAxiomPolicy, resolveLibraryRoots)
 
 group :: IO Group
-group = Harness.group "library" [pinnedCheckout, gitSubdirectory, distinctGitSubdirectories, conflictingGitSubdirectoryNames, escapedGitSubdirectory, localPathDependency, transitivePathDependency, sharedTransitivePin, conflictingTransitivePins, conflictingAliasedPins, conflictingRepositoryNames, conflictingLibrarySources, conflictingPathNames, conflictingPathAndGitSources, invalidManifest, invalidPathSource, duplicateManifestKey, unknownManifestField, malformedManifest, transitiveCheckout]
+group =
+  Harness.group "library" $
+    [pinnedCheckout, gitSubdirectory, distinctGitSubdirectories, conflictingGitSubdirectoryNames, escapedGitSubdirectory, localPathDependency, transitivePathDependency, sharedTransitivePin, conflictingTransitivePins, conflictingAliasedPins, conflictingRepositoryNames, conflictingLibrarySources, conflictingPathNames, conflictingPathAndGitSources, invalidManifest, invalidPathSource, duplicateManifestKey, unknownManifestField, malformedManifest, transitiveCheckout, proofPolicyForms, proofPolicyNearestProject]
+      ++ map
+        (uncurry invalidProofPolicy)
+        [ ("null", "expected Object"),
+          ("{ axiom: [] }", "unknown proof field 'axiom'"),
+          ("{ axioms: null }", "expected Array"),
+          ("{ axioms: [1] }", "expected String"),
+          ("{ axioms: [trusted, trusted] }", "duplicate proof axiom names")
+        ]
+
+proofPolicyForms :: Test
+proofPolicyForms = withDirectory \root -> do
+  let owner = root </> "main.tung"
+  writeFile owner "let answer ≔ +1"
+  absent <- proofAxiomPolicy owner
+  forms <-
+    traverse
+      ( \policy -> do
+          writeFile (root </> "tung.yaml") ("dependencies: {}\n" ++ policy)
+          proofAxiomPolicy owner
+      )
+      ["", "proof: {}\n", "proof: { axioms: [] }\n", "proof: { axioms: [trusted, 'ground~≍_to_='] }\n"]
+  expectEq
+    "distinguish absent and empty proof axiom policies and preserve names"
+    [Right Nothing, Right Nothing, Right Nothing, Right (Just []), Right (Just ["trusted", "ground~≍_to_="])]
+    (absent : forms)
+
+proofPolicyNearestProject :: Test
+proofPolicyNearestProject = withDirectory \root -> do
+  let library = root </> "library"
+      project = root </> "forthcast"
+      source = project </> "src"
+      owner = source </> "main.tung"
+      dependencies = "dependencies: { sample: { path: ../library } }\n"
+  mapM_ (createDirectoryIfMissing True) [library, source]
+  writeFile owner "let answer ≔ +1"
+  writeFile (root </> "tung.yaml") "dependencies: {}\nproof: { axioms: [outer] }\n"
+  writeFile (library </> "tung.yaml") "dependencies: {}\nproof: { axioms: [] }\n"
+  writeFile (project </> "tung.yaml") (dependencies ++ "proof: { axioms: [trusted] }\n")
+  selected <- proofAxiomPolicy owner
+  roots <- resolveLibraryRoots owner
+  writeFile (project </> "tung.yaml") dependencies
+  absent <- proofAxiomPolicy owner
+  expectedRoot <- canonicalizePath library
+  expectEq
+    "only the nearest project manifest governeth its proof policy"
+    (Right (Just ["trusted"]), Right [expectedRoot], Right Nothing)
+    (selected, roots, absent)
+
+invalidProofPolicy :: String -> String -> Test
+invalidProofPolicy policy fragment = withDirectory \root -> do
+  let owner = root </> "main.tung"
+  writeFile owner "let answer ≔ +1"
+  writeFile (root </> "tung.yaml") ("dependencies: {}\nproof: " ++ policy ++ "\n")
+  selected <- proofAxiomPolicy owner
+  roots <- resolveLibraryRoots owner
+  expect ("rejecteth malformed proof policy " ++ policy) $
+    all (either (isInfixOf fragment) (const False)) [() <$ selected, () <$ roots]
 
 pinnedCheckout :: Test
 pinnedCheckout = withDirectory \root -> do

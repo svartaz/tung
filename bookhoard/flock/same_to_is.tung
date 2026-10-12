@@ -1,26 +1,64 @@
 use flock/hath_same.tung
+use ilk/three.tung
 use ilk/two.tung
 use is.tung
 
-## boolean sameness that agreeth with identity, as lean's `LawfulBEq`: `≍`
-## yieldeth `yea` exactly for identical values.
-show flock same_to_is: [α: *, @: α hath_≍, *] {
-  let same_is: [a: α, b: α, same: (a ≍ b) = yea, a = b]
-  let same_eftbend: [a: α, (a ≍ a) = yea]
-}
+## a boolean property that holdeth of one side of an identity holdeth of the
+## other.
+show let yea_throughbear: [@α: *, @a: α, @b: α, f: [α, 𝟚], same: a = b, held: (a f) = yea, (b f) = yea] ≔
+  ((f leibnitz same) evenmete) throughgo held
 
-let two_same_is: [a: 𝟚, b: 𝟚, same: (a ≍ b) = yea, a = b] ≔
-  match a, b {
-    yea, yea ^ eftbend,
-    nay, nay ^ eftbend,
-    yea, nay ^ match same {},
-    nay, yea ^ match same {}
+## both conditions hold when `c if t nay` holdeth: the first,
+show let yea_if_former: [c: 𝟚, t: 𝟚, held: (c if t nay) = yea, c = yea] ≔
+  match c {
+    yea ^ eftbend,
+    nay ^ match held {}
   }
 
-bizen: 𝟚 same_to_is {
-  let same_is ≔ two_same_is
-  let same_eftbend ≔ {
+## and the second.
+show let yea_if_latter: [c: 𝟚, t: 𝟚, held: (c if t nay) = yea, t = yea] ≔
+  match c {
+    yea ^ held,
+    nay ^ match held {}
+  }
+
+## boolean sameness that agreeth with identity, as lean's `LawfulBEq`: `≍`
+## yieldeth `yea` exactly for identical values.
+show flock ≍_to_=: [α: *, @: α hath_≍, *] {
+  let ≍_=: [a: α, b: α, same: (a ≍ b) = yea, a = b]
+  let ≍_eftbend: [a: α, (a ≍ a) = yea]
+}
+
+bizen: 𝟚 ≍_to_= {
+  let ≍_=: [a:, b:, same:] ≔
+    match a, b {
+      yea, yea ^ eftbend,
+      nay, nay ^ eftbend,
+      yea, nay ^ match same {},
+      nay, yea ^ match same {}
+    }
+  let ≍_eftbend ≔ {
     yea ^ eftbend,
     nay ^ eftbend
+  }
+}
+
+bizen: 𝟛 ≍_to_= {
+  let ≍_=: [a:, b:, same:] ≔
+    match a, b {
+      fore, fore ^ eftbend,
+      mid,  mid  ^ eftbend,
+      aft,  aft  ^ eftbend,
+      fore, mid  ^ match same {},
+      fore, aft  ^ match same {},
+      mid,  fore ^ match same {},
+      mid,  aft  ^ match same {},
+      aft,  fore ^ match same {},
+      aft,  mid  ^ match same {}
+    }
+  let ≍_eftbend ≔ {
+    fore ^ eftbend,
+    mid  ^ eftbend,
+    aft  ^ eftbend
   }
 }

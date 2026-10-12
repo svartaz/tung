@@ -5,6 +5,7 @@ module Test.Diagnostic (group) where
 import Data.Aeson (Value, eitherDecode, encode, object, (.=))
 import Data.Map.Strict qualified as Map
 import Test.Compile (compileProjectDetailed)
+import Test.DependentSupport (equalitySource)
 import Test.Harness (Group, Test, expectEq)
 import Test.Harness qualified as Harness
 import Tung
@@ -32,18 +33,18 @@ diagnosticCases :: [Test]
 diagnosticCases =
   [ expectEq name (Just (kind, Nothing, span)) (summary <$> diagnose source Map.empty)
   | (name, source, kind, span) <-
-      [ ("named type error", "let worth:text ≔ 1", TypeDiagnostic, SourceSpan 17 18),
-        ("later repeated name", "let worth ≔ 1 let other:text ≔ worth", TypeDiagnostic, SourceSpan 31 36),
-        ("term after type alias", "let count:* ≔ ℤ let worth:text ≔ ℤ", TypeDiagnostic, SourceSpan 33 34),
-        ("term after data declaration", "ilk item: * { worth: item } let other:text ≔ worth", TypeDiagnostic, SourceSpan 45 50),
-        ("unicode source offset", "let 😀 ≔ 1 let worth:text ≔ 😀", TypeDiagnostic, SourceSpan 28 30),
+      [ ("named type error", "let worth:string ≔ 1", TypeDiagnostic, SourceSpan 19 20),
+        ("later repeated name", "let worth ≔ 1 let other:string ≔ worth", TypeDiagnostic, SourceSpan 33 38),
+        ("term after type alias", "let count:* ≔ ℤ let worth:string ≔ ℤ", TypeDiagnostic, SourceSpan 35 36),
+        ("term after data declaration", "ilk item: * { worth: item } let other:string ≔ worth", TypeDiagnostic, SourceSpan 47 52),
+        ("unicode source offset", "let 😀 ≔ 1 let worth:string ≔ 😀", TypeDiagnostic, SourceSpan 30 32),
         ("lexer eof position", "\n  'unterminated", ParseDiagnostic, SourceSpan 16 16),
         ("lexer unicode eof position", "'😀", ParseDiagnostic, SourceSpan 3 3),
         ("parser retaineth the later failure position", "let worth ≔ 1 let other ≔ )", ParseDiagnostic, SourceSpan 26 27),
-        ("last expression span excludeth trailing whitespace", "let 😀 ≔ 1 let worth:text ≔ 😀   \n", TypeDiagnostic, SourceSpan 28 30),
-        ("last expression span excludeth trailing comments", "let 😀 ≔ 1 let worth:text ≔ 😀 /* tail */", TypeDiagnostic, SourceSpan 28 30),
+        ("last expression span excludeth trailing whitespace", "let 😀 ≔ 1 let worth:string ≔ 😀   \n", TypeDiagnostic, SourceSpan 30 32),
+        ("last expression span excludeth trailing comments", "let 😀 ≔ 1 let worth:string ≔ 😀 /* tail */", TypeDiagnostic, SourceSpan 30 32),
         ("nested ascription retaineth its inner location", "let bad:ℕ ≔ (let n ≔ 'wrong' yield (n:ℕ))", TypeDiagnostic, SourceSpan 36 37),
-        ("a law failure retaineth its expression location", "flock bad:[α:*, *] { let rule:[x:α, x = *] }", TypeDiagnostic, SourceSpan 40 41)
+        ("a law failure retaineth its expression location", equalitySource ++ "flock bad:[α:*, *] { let rule:[x:α, x = *] }", TypeDiagnostic, SourceSpan (length equalitySource + 40) (length equalitySource + 41))
       ]
   ]
   where
@@ -52,7 +53,7 @@ diagnosticCases =
 importedCases :: [Test]
 importedCases =
   [ expectEq ("imported diagnostic " ++ path ++ ": " ++ dependency) (Just (Just path, span)) (summary <$> diagnose "use dep.tung" imports)
-  | (dependency, span) <- [("let worth ≔ 1 let other ≔ )", SourceSpan 26 27), ("let worth:text ≔ 1", SourceSpan 17 18), ("'😀", SourceSpan 3 3)],
+  | (dependency, span) <- [("let worth ≔ 1 let other ≔ )", SourceSpan 26 27), ("let worth:string ≔ 1", SourceSpan 19 20), ("'😀", SourceSpan 3 3)],
     (path, imports) <-
       [ ("dep.tung", Map.singleton "dep.tung" dependency),
         ("nested.tung", Map.fromList [("dep.tung", "use nested.tung"), ("nested.tung", dependency)])
@@ -77,7 +78,7 @@ acceptedCases :: [Test]
 acceptedCases =
   [ expectEq name Nothing (diagnose source imports)
   | (name, source, imports) <-
-      [ ("located fremmed declaration", "let plus:[ℤ, ℤ, ℤ] ≔ 'eke_integer' fremmed", Map.empty),
+      [ ("located fremmed declaration", "let plus:[ℤ, ℤ, ℤ] ≔ 'eke_wholetale' fremmed", Map.empty),
         ( "adjacent declaration evidence",
           "ilk truth: * { yea: truth, nay: truth } flock less:[a:*, *] { let <:[a, a, truth] } bizen:ℤ less { let <: [x:, y:] ≔ yea } let checked:[score: ℤ, ℤ] ≔ match score < +0 { yea ^ score, nay ^ score }",
           Map.empty
@@ -92,7 +93,7 @@ acceptedCases =
 literalFailure :: Test
 literalFailure =
   expectEq
-    "diagnostic text cannot be mistaken for an encoded location"
+    "diagnostic string cannot be mistaken for an encoded location"
     (Left (CompileFailure CheckFailure Nothing (Just (SourceSpan 4 7)) "in let 'bad': unknown host key '\31\&bad offsets\31\&'"))
     (compileProjectDetailed Map.empty RootModule "let bad:ℤ ≔ '\\31;bad offsets\\31;' fremmed" Map.empty)
 

@@ -14,5 +14,5 @@ show not_found
 show with_header
 
 ## serve http/1.1 over ipv4 with one request per connection. the deed endeth
-## only when serving stopth, with a message saying why.
-show let serve: [ℕ, [_request, _response deed], text deed] ≔ 'serve' fremmed
+## only when serving stoppeth, with a message saying why.
+show let serve: [ℕ, [_request, _response deed], string deed] ≔ 'serve' fremmed

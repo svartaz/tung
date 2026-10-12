@@ -1,0 +1,115 @@
+use flock/order/hath_at_most.tung
+use flock/order/order_half.tung
+use flock/order/order_whole.tung
+use flock/same_to_is.tung
+use ilk/list.tung
+use ilk/set_list.tung
+use ilk/set_list_setting.tung
+use ilk/two.tung
+use is.tung
+
+## every element of the first list belongeth to the second.
+show let enclosed: [@α: *, @: α order_whole, α list, α list, 𝟚] ≔ {
+  empty,    _ ^ yea,
+  a ‥ rest, m ^ (m inhold a) if (rest enclosed m) nay
+}
+
+## enclosure preserveth successful ordered search, even before sorting.
+show let enclosed_limb: [
+  @α: *, @: α order_whole,
+  l: α list, m: α list, x: α,
+  enclosure: (l enclosed m) = yea, limb: (l inhold x) = yea,
+  (m inhold x) = yea
+] ≔ match l {
+  empty    ^ match limb {},
+  a ‥ rest ^ (x ≤ a) inlook @𝟚 @({_: 𝟚 ^ (m inhold x) = yea}) {
+    yea, below ^ (
+      let head ≔ (({b: 𝟚 ^ b if (a ≤ x) (rest inhold x)} leibnitz below) evenmete)
+      throughgo limb
+      yield {y: α ^ m inhold y} yea_throughbear (a ≤_= x head below)
+      ((m inhold a) yea_if_former (rest enclosed m) enclosure)
+    ),
+    nay, below ^ rest enclosed_limb m x
+    ((m inhold a) yea_if_latter (rest enclosed m) enclosure)
+    ((({b: 𝟚 ^ b if (a ≤ x) (rest inhold x)} leibnitz below) evenmete)
+      throughgo limb)
+  }
+}
+
+## a member of a sorted tail remaineth a member after its first element.
+show let inhold_tail: [
+  @α: *, @: α order_whole,
+  a: α, l: α list, x: α,
+  sorted: ((a ‥ l) sorted) = yea, limb: (l inhold x) = yea,
+  ((a ‥ l) inhold x) = yea
+] ≔ (
+  let below ≔ a strict_right x (a sorted_strict_limb l x sorted limb)
+  yield ({b: 𝟚 ^ b if (a ≤ x) (l inhold x)} leibnitz below) throughgo limb
+)
+
+## pointwise membership sufficeth for enclosure of a sorted list.
+show let enclosed_by: [
+  @α: *, @: α order_whole,
+  l: α list, m: α list, sorted: (l sorted) = yea,
+  limbs: [x: α, limb: (l inhold x) = yea, (m inhold x) = yea],
+  (l enclosed m) = yea
+] ≔ match l {
+  empty    ^ eftbend,
+  a ‥ rest ^ (
+    let first ≔ a limbs (a inhold_first rest)
+    let tail ≔ rest enclosed_by m (a sorted_tail rest sorted)
+    {x, limb ^ x limbs (a inhold_tail rest x sorted limb)}
+    yield ({b: 𝟚 ^ b if (rest enclosed m) nay} leibnitz first) throughgo tail
+  )
+}
+
+## a sorted list encloseth itself.
+show let enclosed_eftbend: [
+  @α: *, @: α order_whole, l: α list, sorted: (l sorted) = yea,
+  (l enclosed l) = yea
+] ≔ l enclosed_by l sorted {_, limb ^ limb}
+
+## enclosure is transitive.
+show let enclosed_throughgo: [
+  @α: *, @: α order_whole,
+  l: α list, m: α list, n: α list,
+  first: (l enclosed m) = yea, latter: (m enclosed n) = yea,
+  (l enclosed n) = yea
+] ≔ match l {
+  empty    ^ eftbend,
+  a ‥ rest ^ (
+    let limb ≔ m enclosed_limb n a latter
+    ((m inhold a) yea_if_former (rest enclosed m) first)
+    let tail ≔ rest enclosed_throughgo m n
+    ((m inhold a) yea_if_latter (rest enclosed m) first) latter
+    yield ({b: 𝟚 ^ b if (rest enclosed n) nay} leibnitz limb) throughgo tail
+  )
+}
+
+## mutual enclosure giveth boolean set sameness.
+show let enclosed_witherevenmete: [
+  @α: *, @: α order_whole,
+  l: α list, m: α list,
+  ((l enclosed m) ≤ ((m enclosed l) ≤ ((l enclosed m) if (m enclosed l) nay))) = yea
+] ≔ match l enclosed m, m enclosed l {
+  yea, yea;
+  yea, nay;
+  nay, _   ^ eftbend
+}
+
+## mutual enclosure of canonical lists giveth identity.
+show let enclosed_=: [
+  @α: *, @: α order_whole,
+  l: α list, m: α list,
+  left: (l sorted) = yea, right: (m sorted) = yea,
+  forth: (l enclosed m) = yea, back: (m enclosed l) = yea,
+  l = m
+] ≔ l extensional m left right {x ^
+  (l inhold x) inlook @𝟚 @({b: 𝟚 ^ b = (m inhold x)}) {
+    yea, limb   ^ (l enclosed_limb m x forth limb) evenmete,
+    nay, absent ^ (m inhold x) inlook @𝟚 @({b: 𝟚 ^ nay = b}) {
+      yea, limb ^ match (absent evenmete) throughgo (m enclosed_limb l x back limb) {},
+      nay, _    ^ eftbend
+    }
+  }
+}

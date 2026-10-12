@@ -1,0 +1,85 @@
+use is.tung
+## function fields retain descendant records at each argument.
+ilk tree: * {tip: tree, node: [tree, [ℕ, tree], tree]}
+
+let depth: [x: tree, ℕ] ≔ match x {
+  tip             ^ 0,
+  _ node children ^ match 0 children {
+    tip            ^ 1,
+    _ node smaller ^ (((0 smaller) depth) heir) heir
+  }
+}
+
+## after the decreasing input, a recursive call may leave an accumulator open.
+let hoard: [ℕ, ℕ, ℕ] ≔ {
+  0,      total ^ total,
+  n heir, total ^ (let rest ≔ n hoard yield (total heir) rest)
+}
+
+let deep_hoard: [x: tree, total: ℕ, ℕ] ≔ match x {
+  tip             ^ total,
+  _ node children ^ match 0 children {
+    tip            ^ total heir,
+    _ node smaller ^ (let rest ≔ (0 smaller) deep_hoard
+      yield ((total heir) heir) rest)
+  }
+}
+
+let leaf: tree ≔ tip node {_ ^ tip}
+let sample: tree ≔ tip node {_ ^ leaf}
+
+## dependent matches carry the record with the computed child and its aliases.
+let proof: [x: tree, x = x] ≔ match x {
+  tip             ^ eftbend,
+  _ node children ^ (
+    let call ≔ children
+    let child ≔ 0 call
+    let known: child = child ≔ match child {
+      tip            ^ eftbend,
+      _ node smaller ^ (let child_known ≔ (0 smaller) proof yield eftbend)
+    }
+    yield eftbend
+  )
+}
+
+## pointwise records preserve implicit inputs and dependent input types.
+ilk fan: [ℕ, *] {
+  stop: [@i: ℕ, i fan],
+  more: [[@i: ℕ, i = i, i fan], 0 fan]
+}
+
+let fan_depth: [@n: ℕ, n fan, ℕ] ≔ {
+  stop          ^ 0,
+  children more ^ match eftbend children @0 {
+    stop         ^ 1,
+    smaller more ^ (((eftbend smaller @1) fan_depth) heir) heir
+  }
+}
+
+let fan_leaf: 0 fan ≔ {_ ^ stop} more
+let branches: [@i: ℕ, known: i = i, i fan] ≔ match i {
+  0      ^ fan_leaf,
+  _ heir ^ stop
+}
+let fan_sample: 0 fan ≔ branches more
+
+## function fields may occur inside an ordinary positive inholder.
+ilk thunk: [α: *, *] {hold: [[ℕ, α], α thunk]}
+ilk rose: * {bud: rose, bloom: [rose thunk, rose]}
+
+let height: [rose, ℕ] ≔ {
+  bud                   ^ 0,
+  (children hold) bloom ^ match 0 children {
+    bud                  ^ 1,
+    (smaller hold) bloom ^ (((0 smaller) height) heir) heir
+  }
+}
+
+let rose_leaf: rose ≔ ({_ ^ bud} hold @rose) bloom
+let rose_sample: rose ≔ ({_ ^ rose_leaf} hold @rose) bloom
+
+## an open quantified input keepeth the child's specialised dependent type.
+let retain: [n: ℕ, known: n = n, ℕ] ≔ match n {
+  0      ^ 0,
+  m heir ^ (let rest: [m = m, ℕ] ≔ m retain yield eftbend rest)
+}

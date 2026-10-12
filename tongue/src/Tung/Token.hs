@@ -171,9 +171,6 @@ consumedSpan (Token (Just (TokenCursor (SourceSpan start _) _ finalEnd)) _ : _) 
    in Just (SourceSpan start end)
 consumedSpan _ _ = Nothing
 
-withTokenSpan :: SourceSpan -> Token -> Token
-withTokenSpan span@(SourceSpan start end) (Token _ kind) = Token (Just (TokenCursor span start end)) kind
-
 withoutTokenSpan :: Token -> Token
 withoutTokenSpan (Token _ kind) = Token Nothing kind
 
@@ -216,7 +213,7 @@ locateTokens source toks = withCursors 0 (map convertSpan toks)
     offsets = utf16Offsets source
     convertSpan LocatedToken {locatedSpan = SourceSpan start end, locatedToken} =
       let span = SourceSpan (offsets IntMap.! start) (offsets IntMap.! end)
-       in LocatedToken span (withTokenSpan span locatedToken)
+       in LocatedToken span locatedToken
     withCursors previous tokens = case tokens of
       [] -> []
       _ -> attach previous (spanEnd (locatedSpan (last tokens))) tokens
@@ -249,7 +246,7 @@ rawTokenParser =
 
 specialOpenParser :: Lexer Token
 specialOpenParser = M.try do
-  marker <- M.choice (map C.string ["r", "<", ">"])
+  marker <- M.choice (map C.string ["<", ">"])
   _ <- C.char '{'
   pure (TBraceKeyword marker)
 

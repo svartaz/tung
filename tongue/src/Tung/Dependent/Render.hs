@@ -36,9 +36,14 @@ render display names = \case
     let name = fresh names Nothing
      in "(let " ++ name ++ " ≔ " ++ render display names value ++ " yield " ++ render display (name : names) body ++ ")"
   term@Apply {} -> case spine term [] of
-    (function, []) -> atom display names function
-    (function, first : rest) -> unwords (atom display names first : atom display names function : map (atom display names) rest)
+    (Global symbol _, value : rest)
+      | Just field <- accessorField symbol ->
+          application (atom display names value ++ "." ++ field) rest
+    (function, arguments) -> application (atom display names function) arguments
   term -> atom display names term
+  where
+    application function [] = function
+    application function (first : rest) = unwords (atom display names first : function : map (atom display names) rest)
 
 -- a term that needeth no parentheses as an argument.
 atom :: (SymbolId -> String) -> [String] -> Term -> String
@@ -54,8 +59,17 @@ atom display names = \case
   Field index value -> atom display names value ++ ".#" ++ show index
   term@(Pi {}) -> render display names term
   term@(Lambda {}) -> render display names term
-  term@(Apply {}) | (_, []) <- spine term [] -> render display names term
+  term@(Apply {})
+    | (_, []) <- spine term [] -> render display names term
+    | (Global symbol _, [_]) <- spine term [], Just _ <- accessorField symbol -> render display names term
   term -> "(" ++ render display names term ++ ")"
+
+-- source names contain no dot; `type.field` is a hidden generated accessor.
+-- its receiver and field suffice even when the type hath an imported alias.
+accessorField :: SymbolId -> Maybe String
+accessorField symbol = case break (== '.') (symbolName symbol) of
+  (owner, '.' : field) | not (null owner), not (null field) -> Just field
+  _ -> Nothing
 
 -- explicit arguments only, in order.
 spine :: Term -> [Term] -> (Term, [Term])

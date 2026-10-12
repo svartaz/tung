@@ -1,0 +1,59 @@
+use flock/algebra/whole/hath_eke.tung
+use flock/algebra/whole/hath_fold.tung
+use flock/algebra/whole/hath_naught.tung
+use flock/algebra/whole/hath_one.tung
+use flock/algebra/whole/monoid_eke.tung
+use flock/algebra/whole/monoid_fold.tung
+use flock/algebra/whole/semigroup_eke.tung
+use ilk/two.tung
+use is.tung
+
+show flock semiring: [α: *, @: α monoid_+, @: α monoid_·, *] {
+  let +_swap: [a: α, b: α, (a + b) = (b + a)]
+  let ·_+: [a: α, b: α, c: α, (a · (b + c)) = ((a · b) + (a · c))]
+  let +_·: [a: α, b: α, c: α, ((a + b) · c) = ((a · c) + (b · c))]
+  let naught_·: [a: α, b: α, (naught · a) = naught]
+  let ·_naught: [a: α, b: α, (a · naught) = naught]
+}
+
+bizen: [@β: *, @: β semiring, @α: *, [α, β] semiring] {
+  let +: [f:, g:, a:] ≔ (a f) + (a g)
+  let naught: [_:] ≔ naught
+
+  let +_+: [f:, g:, h:] ≔ {x ^ (x f) +_+ (x g) (x h)} fall_umtake
+  let naught_+: [f:] ≔ {x ^ (x f) naught_+} fall_umtake
+  let +_naught: [f:] ≔ {x ^ (x f) +_naught} fall_umtake
+  let +_swap: [f:, g:] ≔ {x ^ (x f) +_swap (x g)} fall_umtake
+  let ·_+: [f:, g:, h:] ≔ {x ^ (x f) ·_+ (x g) (x h)} fall_umtake
+  let +_·: [f:, g:, h:] ≔ {x ^ (x f) +_· (x g) (x h)} fall_umtake
+  let naught_·: [f:, g:] ≔ {x ^ (x f) naught_· (x g)} fall_umtake
+  let ·_naught: [f:, g:] ≔ {x ^ (x f) ·_naught (x g)} fall_umtake
+}
+
+bizen: 𝟚 semiring {
+  let +_swap ≔ {
+    nay, nay;
+    nay, yea;
+    yea, nay;
+    yea, yea ^ eftbend
+  }
+  let ·_+ ≔ {
+    nay, _,   _;
+    yea, nay, nay;
+    yea, nay, yea;
+    yea, yea, nay;
+    yea, yea, yea ^ eftbend
+  }
+  let +_· ≔ {
+    nay, nay, nay;
+    nay, nay, yea;
+    nay, yea, nay;
+    nay, yea, yea;
+    yea, nay, nay;
+    yea, nay, yea;
+    yea, yea, nay;
+    yea, yea, yea ^ eftbend
+  }
+  let naught_·: [_:, _:] ≔ eftbend
+  let ·_naught ≔ {nay, _; yea, _ ^ eftbend}
+}

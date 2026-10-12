@@ -1,6 +1,5 @@
-// compiler parsing is cached per buffer version; obsolete work is cancelled.
-// import changes only affect name refinement and do not require another parse.
-import { CompilerBridge, SourceRole } from "./checker.ts";
+// compiler roles and workspace resolution supply semantic highlighting.
+import type { SourceRole } from "./checker.ts";
 import { lastQualifiedSegment } from "./syntax.ts";
 
 const tokenTypes = [
@@ -24,43 +23,6 @@ const tokenModifiers = [
   "applied",
   "typeFunction",
 ];
-type HighlightRequest = Pick<
-  ReturnType<CompilerBridge["highlight"]>,
-  "result" | "cancel"
->;
-class HighlightCache {
-  private entries = new Map<
-    string,
-    { text: string; version: number; request: HighlightRequest }
-  >();
-  constructor(
-    private compiler: {
-      highlight(source: string, version: number): HighlightRequest;
-    },
-  ) {}
-  async get(uri: string, text: string, version: number): Promise<SourceRole[]> {
-    let entry = this.entries.get(uri);
-    if (!entry || entry.text !== text || entry.version !== version) {
-      this.invalidate(uri);
-      entry = {
-        text,
-        version,
-        request: this.compiler.highlight(text, version),
-      };
-      this.entries.set(uri, entry);
-    }
-    const roles = await entry.request.result;
-    return this.entries.get(uri) === entry ? roles || [] : [];
-  }
-  invalidate(uri: string) {
-    this.entries.get(uri)?.request.cancel();
-    this.entries.delete(uri);
-  }
-  clear() {
-    for (const uri of this.entries.keys()) this.invalidate(uri);
-  }
-}
-
 // parser roles identify syntax. workspace resolution only refineth names whose
 // constructor identity cannot be decided from syntax alone.
 const buildHighlightRanges = (
@@ -130,4 +92,4 @@ const buildHighlightRanges = (
   }
   return ranges.sort((a, b) => a.line - b.line || a.char - b.char);
 };
-export { HighlightCache, buildHighlightRanges, tokenTypes, tokenModifiers };
+export { buildHighlightRanges, tokenTypes, tokenModifiers };

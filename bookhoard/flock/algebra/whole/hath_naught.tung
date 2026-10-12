@@ -1,0 +1,9 @@
+use ilk/two.tung
+
+show flock hath_naught: [α: *, *] {
+  let naught: α
+}
+
+bizen: 𝟚 hath_naught {
+  let naught ≔ nay
+}

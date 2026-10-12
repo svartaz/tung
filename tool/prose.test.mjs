@@ -16,68 +16,11 @@ const secondPersonObjectAsSubject =
   /(?:^|[.!?]\s+|\b(?:and|but|if|when|while|because|unless|or)\s+)(?:thee|you)\b/i;
 const secondPersonSubjectAsPrepositionalObject =
   /\b(?:to|for|with|from|at|by|before|after|against|among|around|beside|between|near|through|toward|without)\s+(?:thou|ye)\b/i;
-test("prose and source comments use lowercase sentence starts", () => {
-  const failures = proseFiles(root).flatMap((file) =>
-    proseFragments(file).flatMap((fragment) => {
-      const match = sentenceStart.exec(fragment.text);
-      return match ? [`${path.relative(root, file)}:${fragment.line}: ${match[1]}`] : [];
-    }),
-  );
-  assert.deepEqual(failures, []);
-});
-test("prose and source comments use british spelling", () => {
-  const failures = proseFiles(root).flatMap((file) =>
-    proseFragments(file).flatMap((fragment) => {
-      const match = americanSpelling.exec(fragment.text);
-      return match ? [`${path.relative(root, file)}:${fragment.line}: ${match[0]}`] : [];
-    }),
-  );
-  assert.deepEqual(failures, []);
-});
-test("prose and source comments use third-person -eth forms", () => {
-  const failures = proseFiles(root).flatMap((file) =>
-    proseFragments(file).flatMap((fragment) => {
-      const prose = fragment.text.replace(/`[^`]*`/g, "");
-      const match = modernThirdPerson.exec(prose);
-      return match ? [`${path.relative(root, file)}:${fragment.line}: ${match[0]}`] : [];
-    }),
-  );
-  assert.deepEqual(failures, []);
-});
-test("prose and source comments write th, not thorn", () => {
-  const failures = proseFiles(root).flatMap((file) =>
-    proseFragments(file).flatMap((fragment) =>
-      /[þÞ]/.test(fragment.text) ? [`${path.relative(root, file)}:${fragment.line}`] : [],
-    ),
-  );
-  assert.deepEqual(failures, []);
-});
-test("prose giveth thou a -st verb", () => {
-  const failures = proseFiles(root).flatMap((file) =>
-    proseFragments(file).flatMap((fragment) => {
-      const prose = fragment.text.replace(/`[^`]*`/g, "");
-      const match = /\bthou\s+(?:has|have|does|do|are|is|was|can|will|shall|may|must|[a-z]+eth)\b/i.exec(prose);
-      return match ? [`${path.relative(root, file)}:${fragment.line}: ${match[0]}`] : [];
-    }),
-  );
-  assert.deepEqual(failures, []);
-});
-test("prose distinguisheth second-person number and case", () => {
-  const failures = proseFiles(root).flatMap((file) =>
-    proseFragments(file).flatMap((fragment) => {
-      const prose = fragment.text.replace(/`[^`]*`/g, "");
-      const subject = secondPersonObjectAsSubject.exec(prose);
-      const object = secondPersonSubjectAsPrepositionalObject.exec(prose);
-      const match = subject ?? object;
-      return match ? [`${path.relative(root, file)}:${fragment.line}: ${match[0].trim()}`] : [];
-    }),
-  );
-  assert.deepEqual(failures, []);
-});
 const proseFiles = (directory) => {
   return repositoryFiles(directory).filter(
     (file) =>
-      documentationExtensions.has(path.extname(file)) || sourceExtensions.has(path.extname(file)),
+      documentationExtensions.has(path.extname(file)) ||
+      sourceExtensions.has(path.extname(file)),
   );
 };
 const repositoryFiles = (directory) => {
@@ -101,7 +44,9 @@ const proseFragments = (file) => {
     const match = lineMarker.exec(line);
     return match ? [{ line: index + 1, text: match[1] }] : [];
   });
-  const blockPattern = file.endsWith(".hs") ? /\{-(?!#)([\s\S]*?)-\}/g : /\/\*([\s\S]*?)\*\//g;
+  const blockPattern = file.endsWith(".hs")
+    ? /\{-(?!#)([\s\S]*?)-\}/g
+    : /\/\*([\s\S]*?)\*\//g;
   const blocks = [...text.matchAll(blockPattern)].map((match) => ({
     line: text.slice(0, match.index).split(/\r?\n/).length,
     text: match[1].replace(/^\s*[|*]\s?/gm, "").trim(),
@@ -131,3 +76,57 @@ const markdownFragments = (text) => {
     ];
   });
 };
+
+// read each fragment once; each writing rule keepeth its own test and diagnostic.
+const fragments = proseFiles(root).flatMap((file) =>
+  proseFragments(file).map((fragment) => ({
+    ...fragment,
+    file: path.relative(root, file),
+    prose: fragment.text.replace(/`[^`]*`/g, ""),
+  })),
+);
+for (const [name, find] of [
+  [
+    "prose and source comments use lowercase sentence starts",
+    ({ text }) => sentenceStart.exec(text)?.[1],
+  ],
+  [
+    "prose and source comments use british spelling",
+    ({ text }) => americanSpelling.exec(text)?.[0],
+  ],
+  [
+    "prose and source comments use third-person -eth forms",
+    ({ prose }) => modernThirdPerson.exec(prose)?.[0],
+  ],
+  [
+    "prose and source comments use e, em, and es",
+    ({ prose }) => /\b(?:he|him|his|she|her|hers)\b/i.exec(prose)?.[0],
+  ],
+  [
+    "prose and source comments write th, not thorn",
+    ({ text }) => (/[þÞ]/.test(text) ? "" : undefined),
+  ],
+  [
+    "prose giveth thou a -st verb",
+    ({ prose }) =>
+      /\bthou\s+(?:has|have|does|do|are|is|was|can|will|shall|may|must|[a-z]+eth)\b/i.exec(
+        prose,
+      )?.[0],
+  ],
+  [
+    "prose distinguisheth second-person number and case",
+    ({ prose }) =>
+      (secondPersonObjectAsSubject.exec(prose) ??
+        secondPersonSubjectAsPrepositionalObject.exec(prose))?.[0].trim(),
+  ],
+]) {
+  test(name, () => {
+    const failures = fragments.flatMap((fragment) => {
+      const match = find(fragment);
+      return match === undefined
+        ? []
+        : [`${fragment.file}:${fragment.line}${match ? `: ${match}` : ""}`];
+    });
+    assert.deepEqual(failures, []);
+  });
+}

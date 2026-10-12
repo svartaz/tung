@@ -1,9 +1,11 @@
+{-# LANGUAGE MagicHash #-}
 {-# LANGUAGE PatternSynonyms #-}
 
 -- | nominal module and symbol identities, shared by source lookup and the core.
 module Tung.Identity
   ( ModuleId (..),
     SymbolId (SymbolId, symbolModule, symbolName),
+    internSymbols,
     inductionSymbol,
     inducedFamily,
     modelSymbol,
@@ -13,7 +15,8 @@ where
 
 import Data.Bits (xor)
 import Data.Char (ord)
-import Data.List (foldl')
+import Data.Map.Strict qualified as Map
+import GHC.Exts (isTrue#, reallyUnsafePtrEquality#)
 
 -- primitive definitions belong to no source file.
 data ModuleId = RootModule | SourceModule FilePath | PrimitiveModule
@@ -41,13 +44,34 @@ instance Show SymbolId where
       showString "SymbolId {symbolModule = " . showsPrec 0 owner . showString ", symbolName = " . showsPrec 0 name . showString "}"
 
 instance Eq SymbolId where
-  SymbolIdHashed leftHash leftModule leftName == SymbolIdHashed rightHash rightModule rightName =
-    leftHash == rightHash && leftName == rightName && leftModule == rightModule
+  left@(SymbolIdHashed leftHash leftModule leftName) == right@(SymbolIdHashed rightHash rightModule rightName) =
+    shared left right || leftHash == rightHash && same leftName rightName && same leftModule rightModule
 
 -- the order is by hash, then name, then module: any total order serveth maps.
+-- a found lookup endeth in equal identities, whose names and modules are
+-- usually the very values a module's checking shared, so a pointer test
+-- skippeth walking the long module path.
 instance Ord SymbolId where
-  compare (SymbolIdHashed leftHash leftModule leftName) (SymbolIdHashed rightHash rightModule rightName) =
-    compare leftHash rightHash <> compare leftName rightName <> compare leftModule rightModule
+  compare left@(SymbolIdHashed leftHash leftModule leftName) right@(SymbolIdHashed rightHash rightModule rightName)
+    | shared left right = EQ
+    | otherwise = compare leftHash rightHash <> ordered leftName rightName <> ordered leftModule rightModule
+    where
+      ordered left right = if shared left right then EQ else compare left right
+
+same :: (Eq a) => a -> a -> Bool
+same left right = shared left right || left == right
+
+shared :: a -> a -> Bool
+shared left right = isTrue# (reallyUnsafePtrEquality# left right)
+
+-- reuse an environment's keys, without a process-wide pool. values hold only
+-- identities, so a delayed traversal cannot retain the original definitions.
+-- absent identities retain their nominal meaning; interning never changeth
+-- equality or ordering, so maps may retain their existing key order.
+internSymbols :: Map.Map SymbolId a -> SymbolId -> SymbolId
+internSymbols symbols = \symbol -> Map.findWithDefault symbol symbol canonical
+  where
+    canonical = Map.mapWithKey (\symbol _ -> symbol) symbols
 
 -- the eliminator of an ilk or flock, written `unbuild name`. its spelling
 -- containeth a space, so no source name can collide with it or name it.

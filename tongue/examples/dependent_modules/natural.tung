@@ -1,14 +1,14 @@
 show ilk nat: * {
-  zero: nat,
+  naught: nat,
   heir: [nat, nat]
 }
 
 show let plus: [x: nat, y: nat, nat] ≔ match x {
-  zero   ^ y,
+  naught ^ y,
   n heir ^ (n plus y) heir
 }
 
 ## private: not visible to importers.
 let double: [x: nat, nat] ≔ x plus x
 
-show let four: nat ≔ ((zero heir) heir) double
+show let four: nat ≔ ((naught heir) heir) double

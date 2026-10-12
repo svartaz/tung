@@ -5,7 +5,7 @@ show let →: [α: *, β: *, *] ≔ [α, β]
 show let call: [@α: *, @β: *, a: α, f: [α, β], β] ≔
   a f
 
-show let constant: [@α: *, @β: *, a: α, _: β, α] ≔
+show let withstand: [@α: *, @β: *, a: α, _: β, α] ≔
   a
 
 show let flip: [

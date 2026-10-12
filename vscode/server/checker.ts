@@ -2,12 +2,14 @@
 import * as childProcess from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 interface PendingRequest {
   resolve: (value: CompilerResult) => void;
   command: CompilerCommand;
   version: number;
 }
-type CompilerCommand = "check" | "type" | "format" | "highlight" | "cancel";
+type CompilerCommand =
+  "check" | "type" | "proof" | "format" | "highlight" | "cancel";
 interface CompilerDiagnostic {
   kind: "parse" | "type" | "goal";
   path?: string;
@@ -15,9 +17,24 @@ interface CompilerDiagnostic {
   end: number;
   message: string;
 }
+interface ProofDependency {
+  symbol: { module: string; name: string };
+  name: string;
+  type: string;
+  kind: "sorry" | "axiom" | "host";
+  host?: string;
+}
+interface ProofResult {
+  kind: "proof";
+  audit: { name: string; type: string; dependencies: ProofDependency[] };
+  verified: boolean;
+  message: string;
+  report: string;
+}
 type CompilerResult =
   | { kind: "check"; diagnostics: CompilerDiagnostic[] }
   | { kind: "type"; type: string }
+  | ProofResult
   | { kind: "format"; source: string }
   | { kind: "highlight"; roles: SourceRole[] }
   | { kind: "error"; message: string };
@@ -60,10 +77,35 @@ class CompilerBridge {
     return Boolean(this.findExecutable());
   }
   check(model, imports, version = 0) {
-    return this.request("check", model.text, imports, "", version);
+    return this.request(
+      "check",
+      model.text,
+      imports,
+      "",
+      version,
+      documentPath(model.uri),
+    );
   }
   typeOf(model, imports, name, version = 0) {
-    return this.request("type", model.text, imports, name, version);
+    return this.request(
+      "type",
+      model.text,
+      imports,
+      name,
+      version,
+      documentPath(model.uri),
+    );
+  }
+  proof(model, imports, name, version = 0, allowedAxioms?: string[]) {
+    return this.request(
+      "proof",
+      model.text,
+      imports,
+      name,
+      version,
+      documentPath(model.uri),
+      allowedAxioms,
+    );
   }
   format(source, version = 0) {
     const request = this.request("format", source, [], "", version);
@@ -83,7 +125,15 @@ class CompilerBridge {
       ),
     };
   }
-  request(command: CompilerCommand, source, imports, name, version) {
+  request(
+    command: CompilerCommand,
+    source,
+    imports,
+    name,
+    version,
+    path?: string,
+    allowedAxioms?: string[],
+  ) {
     const executable = this.findExecutable();
     if (!executable) {
       return {
@@ -105,7 +155,16 @@ class CompilerBridge {
     );
     this.pending.set(requestId, { resolve: resolveResult, command, version });
     process.stdin.write(
-      sessionRequest(requestId, version, command, name, source, imports),
+      sessionRequest(
+        requestId,
+        version,
+        command,
+        name,
+        source,
+        imports,
+        path,
+        allowedAxioms,
+      ),
     );
     return {
       process,
@@ -314,6 +373,17 @@ const isRole = (value: unknown): value is SourceRole =>
   isRange(value[0], value[1]) &&
   typeof value[2] === "string" &&
   isStrings(value[3]);
+const isProofDependency = (value: unknown): value is ProofDependency =>
+  isObject(value) &&
+  isObject(value.symbol) &&
+  typeof value.symbol.module === "string" &&
+  typeof value.symbol.name === "string" &&
+  typeof value.name === "string" &&
+  typeof value.type === "string" &&
+  ["sorry", "axiom", "host"].includes(value.kind as string) &&
+  (value.kind === "host"
+    ? typeof value.host === "string"
+    : value.host === undefined);
 const isResult = (value: unknown): value is CompilerResult => {
   if (!isObject(value)) return false;
   switch (value.kind) {
@@ -324,6 +394,17 @@ const isResult = (value: unknown): value is CompilerResult => {
       );
     case "type":
       return typeof value.type === "string";
+    case "proof":
+      return (
+        isObject(value.audit) &&
+        typeof value.audit.name === "string" &&
+        typeof value.audit.type === "string" &&
+        Array.isArray(value.audit.dependencies) &&
+        value.audit.dependencies.every(isProofDependency) &&
+        typeof value.verified === "boolean" &&
+        typeof value.message === "string" &&
+        typeof value.report === "string"
+      );
     case "format":
       return typeof value.source === "string";
     case "highlight":
@@ -341,7 +422,26 @@ const isCompilerResponse = (value: unknown): value is CompilerResponse =>
   (value.id as number) > 0 &&
   Number.isSafeInteger(value.version) &&
   isResult(value.result);
-const sessionRequest = (id, version, command, name, source, imports) =>
+// a file document nameth its path, so the session can reuse the project's
+// interface cache.
+const documentPath = (uri: string | undefined) => {
+  if (!uri?.startsWith("file:")) return undefined;
+  try {
+    return fileURLToPath(uri);
+  } catch {
+    return undefined;
+  }
+};
+const sessionRequest = (
+  id,
+  version,
+  command,
+  name,
+  source,
+  imports,
+  path?: string,
+  allowedAxioms?: string[],
+) =>
   JSON.stringify({
     protocol: 1,
     id,
@@ -350,11 +450,14 @@ const sessionRequest = (id, version, command, name, source, imports) =>
     name,
     source,
     imports: Object.fromEntries(imports),
+    ...(path === undefined ? {} : { path }),
+    ...(allowedAxioms === undefined ? {} : { allowedAxioms }),
   }) + "\n";
 export {
   CompilerBridge,
   CompilerDiagnostic,
   CompilerResult,
+  ProofResult,
   SourceRole,
   sessionRequest,
 };

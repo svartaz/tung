@@ -10,6 +10,7 @@ module Tung.Dependent
     mapChildren,
     SymbolId (..),
     ModuleId (..),
+    inductionSymbol,
     Environment,
     emptyEnvironment,
     Inferred (..),
@@ -20,7 +21,9 @@ module Tung.Dependent
     normalise,
     InductiveDeclaration (..),
     defineInductive,
+    defineInductives,
     inferInductive,
+    inferInductives,
     universeNormalise,
     universeSatisfiable,
     universeEntails,
@@ -30,3 +33,4 @@ where
 import Tung.Dependent.Check
 import Tung.Dependent.Inductive
 import Tung.Dependent.Syntax (HostLiteral (..), children, mapChildren)
+import Tung.Identity (inductionSymbol)

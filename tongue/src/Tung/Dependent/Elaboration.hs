@@ -5,6 +5,7 @@
 module Tung.Dependent.Elaboration
   ( Elaboration,
     runElaboration,
+    recover,
     currentGlobals,
     kernel,
     failure,
@@ -16,6 +17,7 @@ module Tung.Dependent.Elaboration
     newMeta,
     newMetaWithout,
     evaluate,
+    evaluateGlued,
     instantiate,
     quote,
     quoteFolded,
@@ -42,12 +44,16 @@ module Tung.Dependent.Elaboration
     HoleSite (..),
     recordHole,
     takeHoles,
+    takeReferences,
   )
 where
 
+import Control.Applicative ((<|>))
 import Control.Monad (filterM, foldM, forM, unless, when)
 import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.State.Strict (StateT, get, mapStateT, modify', put, runStateT)
+import Control.Monad.Trans.Except (ExceptT, catchE, runExceptT, throwE, withExceptT)
+import Control.Monad.Trans.State.Strict (State, StateT, runState, runStateT)
+import Control.Monad.Trans.State.Strict qualified as State
 import Data.Functor.Const (Const (..))
 import Data.Map.Strict qualified as Map
 import Data.Maybe (isNothing)
@@ -60,7 +66,7 @@ import Tung.Dependent.Syntax
 import Tung.Dependent.Universe qualified as U
 import Tung.Identity (SymbolId)
 import Tung.Primitive (HostBinding (..), HostSignature (..), findForeignBinding, pureOperation)
-import Tung.Token (SourceFailure, SourceSpan)
+import Tung.Token (SourceFailure (..), SourceSpan)
 
 data MetaEntry = MetaEntry
   { metaDomains :: [Term],
@@ -98,7 +104,10 @@ data Inference = Inference
     -- instance search and approximation solve them, not abstraction.
     carriers :: Set.Set Int,
     -- each `sorry` checked so far, newest first, for goal display.
-    holeSites :: [HoleSite]
+    holeSites :: [HoleSite],
+    -- checked input references survive normalisation of annotations and
+    -- local bindings. speculative trials roll them back with their solutions.
+    checkedReferences :: Set.Set SymbolId
   }
 
 -- a `sorry` with its source span, context, local names (innermost first),
@@ -118,17 +127,48 @@ data InstanceGoal = InstanceGoal
     goalType :: N.Value
   }
 
-type Elaboration = StateT Inference (StateT U.Universes (Either SourceFailure))
+-- a failed declaration retaineth its goal sites for diagnostics. speculative
+-- checking still restoreth both states explicitly in `trial`.
+type Elaboration = ExceptT SourceFailure (StateT Inference (State U.Universes))
 
 runElaboration :: (SymbolId -> String) -> Globals -> Elaboration a -> Either SourceFailure (a, [Constraint])
-runElaboration display globals action = do
-  ((result, _), constraints) <- runStateT (runStateT action initial) (U.universes [])
-  pure (result, U.universeConstraints constraints)
+runElaboration display globals action =
+  let ((result, _), constraints) = runState (runStateT (runExceptT action) initial) (U.universes [])
+   in (,U.universeConstraints constraints) <$> result
   where
-    initial = Inference display globals 0 0 0 Map.empty [] Set.empty 0 0 Map.empty False [] Set.empty []
+    initial = Inference display globals 0 0 0 Map.empty [] Set.empty 0 0 Map.empty False [] Set.empty [] Set.empty
+
+-- recover a diagnostic within the same inference state, without producing a
+-- checked term. callers may render the goals already encountered.
+recover :: Elaboration a -> Elaboration (Either SourceFailure a)
+recover action = catchE (Right <$> action) (pure . Left)
+
+get :: Elaboration Inference
+get = lift State.get
+
+put :: Inference -> Elaboration ()
+put = lift . State.put
+
+modify' :: (Inference -> Inference) -> Elaboration ()
+modify' = lift . State.modify'
+
+takeReferences :: Elaboration (Set.Set SymbolId)
+takeReferences = checkedReferences <$> get
+
+recordReferences :: Term -> Elaboration ()
+recordReferences term = modify' (\state -> state {checkedReferences = Set.union (checkedReferences state) (references term)})
+  where
+    references = \case
+      Global symbol _ -> Set.singleton symbol
+      Literal symbol _ -> Set.singleton symbol
+      value -> Set.unions (map (references . snd) (children value))
 
 kernel :: K.Typing a -> Elaboration a
-kernel = lift . mapStateT Error.fromString
+kernel action = do
+  constraints <- lift (lift State.get)
+  (result, constraints') <- either raise pure (Error.fromString (runStateT action constraints))
+  lift (lift (State.put constraints'))
+  pure result
 
 addInstanceGoal :: InstanceGoal -> Elaboration ()
 addInstanceGoal goal = modify' (\state -> state {instanceGoals = goal : instanceGoals state})
@@ -159,7 +199,7 @@ takeInstanceGoals = do
 -- retain the innermost failing expression's location through source context
 -- and speculative checking. the kernel needeth no source-location dependency.
 located :: SourceSpan -> Elaboration a -> Elaboration a
-located span = mapStateT (mapStateT (Error.atSpan span))
+located span = withExceptT (\message -> message {failureSpan = failureSpan message <|> Just span})
 
 -- run an action and keep its effects only if it succeedeth. instance search
 -- useth this to try candidates without leaking a failed unification.
@@ -176,10 +216,11 @@ speculate action = either (const Nothing) Just <$> trial action
 trial :: Elaboration a -> Elaboration (Either SourceFailure (a, Elaboration ()))
 trial action = do
   inference <- get
-  constraints <- lift get
-  pure case runStateT (runStateT action inference) constraints of
+  constraints <- lift (lift State.get)
+  let ((result, inference'), constraints') = runState (runStateT (runExceptT action) inference) constraints
+  pure case result of
     Left message -> Left message
-    Right ((result, inference'), constraints') -> Right (result, put inference' >> lift (put constraints'))
+    Right result -> Right (result, put inference' >> lift (lift (State.put constraints')))
 
 -- shared fixed-point scheduling. each phase retaineth its own queue and
 -- progress rule; no last-resort search is moved before ordinary constraints.
@@ -191,14 +232,14 @@ probe :: Elaboration a -> Elaboration Bool
 probe action = either (const False) (const True) <$> trial action
 
 failure :: String -> Elaboration a
-failure = lift . lift . Error.failure
+failure = either raise pure . Error.failure
 
 -- rethrow a speculative failure without losing its source location.
 raise :: SourceFailure -> Elaboration a
-raise = lift . lift . Left
+raise = throwE
 
 fromEither :: Either String a -> Elaboration a
-fromEither = lift . lift . Error.fromString
+fromEither = either raise pure . Error.fromString
 
 freshLevel :: Elaboration Level
 freshLevel = do
@@ -235,8 +276,17 @@ normaliser = N.Normaliser <$> resolver <*> currentGlobals
 
 evaluate :: K.Context -> Term -> Elaboration N.Value
 evaluate K.Context {contextValues} term = do
+  recordReferences term
   normal <- normaliser
   fromEither (N.evaluateWith normal contextValues term)
+
+-- a worth whose definitions stay folded until forced, for an argument that
+-- only instantiateth a codomain.
+evaluateGlued :: K.Context -> Term -> Elaboration N.Value
+evaluateGlued K.Context {contextValues} term = do
+  recordReferences term
+  normal <- normaliser
+  fromEither (N.evaluateGlued normal contextValues term)
 
 instantiate :: N.Closure -> N.Value -> Elaboration N.Value
 instantiate closure argument = do
@@ -266,6 +316,7 @@ operations =
     { K.failCheck = failure,
       K.liftCheck = fromEither,
       K.evaluateCheck = evaluate,
+      K.argumentCheck = evaluateGlued,
       K.quoteCheck = quote,
       K.instantiateCheck = instantiate,
       K.forceCheck = force,
@@ -276,7 +327,7 @@ operations =
     }
 
 infer :: K.Context -> Term -> Elaboration N.Value
-infer = K.inferTermWith operations
+infer context term = recordReferences term >> K.inferTermWith operations context term
 
 -- definitions are already substituted in semantic contexts. only distinct
 -- rigid levels are captured, so aliases neither duplicate nor invent binders.
@@ -498,6 +549,14 @@ unifyForced context left right = do
       | name == otherName,
         value == otherValue =
           pure True
+    -- constructor-headed numeric indices expose holes in their fields;
+    -- literal comparisons still take the constant-time case above.
+    congruent literal@N.VLiteral {} neutral@N.VNeutral {}
+      | N.VNeutral constructor <- N.constructorForm literal =
+          congruent (N.VNeutral constructor) neutral
+    congruent neutral@N.VNeutral {} literal@N.VLiteral {}
+      | N.VNeutral constructor <- N.constructorForm literal =
+          congruent neutral (N.VNeutral constructor)
     congruent left right = do
       let depth = length (K.contextTypes context)
       a <- quote depth left
@@ -523,10 +582,12 @@ blockedComputation context value = do
       (N.NField _ value, _) -> changing (N.VNeutral value)
       (N.NGlobal name _, arguments) -> case definitionBody <$> Map.lookup name globals of
         Just (Eliminator family)
-          | Just Definition {definitionBody = TypeConstructor InductiveInfo {..}} <- Map.lookup family globals,
-            let arity = inductiveParameterCount + 1 + length inductiveConstructorInfo + length inductiveIndexPlicities + 1,
-            (_, scrutinee) : _ <- drop (arity - 1) arguments ->
-              changing scrutinee
+          | Right info@InductiveInfo {..} <- inductiveInfo globals family -> do
+              methods <- fromEither (inductiveMethods globals info)
+              let arity = inductiveParameterCount + length inductiveFamilies + length methods + length inductiveIndexPlicities + 1
+              case drop (arity - 1) arguments of
+                (_, scrutinee) : _ -> changing scrutinee
+                _ -> pure False
         Just (Host "literal_case" _) | length arguments >= 6 -> anyM containsMeta (map snd (take 2 (drop 2 arguments)))
         Just (Host key _)
           | Just _ <- pureOperation key,
@@ -576,7 +637,7 @@ solvePattern context identity arguments right = do
     _ -> pure False
 
 -- a hole of function type applied to inputs that are not all distinct
--- locals, as a property `?p b` meeting the goal of `transport`, is solved by
+-- locals, as a property `?p b` meeting the goal of `throughbear`, is solved by
 -- abstracting those inputs from the other side, as lean's `▸` doth. the side
 -- is searched as written first and as a normal form second, so `first p`
 -- is found inside `(first ‥ rest) sift p`. every abstracted input must

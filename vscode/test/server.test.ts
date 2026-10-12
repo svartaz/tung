@@ -20,9 +20,9 @@ test("server implementeth the editor workflow over stdio", async (context) => {
   const depPath = path.join(root, "dep.tung");
   const mainPath = path.join(root, "main.tung");
   const depText =
-    "show ilk tally: * { zero: tally }\nshow ilk truth: * { yea: truth, nay: truth }\nshow ilk parcel: [a:*, *] { wrap: [a, a parcel] }\nshow let sameness:[x: ℤ, ℤ] ≔ x\nshow let answer:ℤ ≔ +42\nshow flock hath_convert:[a:*, *] { let convert:[a, a] }\n";
+    "show ilk tally: * { naught: tally }\nshow ilk truth: * { yea: truth, nay: truth }\nshow ilk parcel: [a:*, *] { wrap: [a, a parcel] }\nshow let sameness:[x: ℤ, ℤ] ≔ x\nshow let answer:ℤ ≔ +42\nshow flock hath_convert:[a:*, *] { let convert:[a, a] }\n";
   const mainText =
-    "use dep.tung\nlet worth:ℤ ≔ answer\nlet count:tally ≔ zero\nlet ratio:float ≔ 1.5\nlet truth_to_text:[truth, text] ≔ { yea ^ 'yea', nay ^ 'nay' }\nlet shipment:ℤ parcel ≔ +1 wrap\nlet hath_≍:ℤ ≔ +1 sameness # \"unicode 𝟙\\n\"\nlet select:[left: ℤ, middle: ℤ, right: ℤ, ℤ] ≔ middle\nlet picker: [ℤ, ℤ, ℤ, ℤ] ≔ { first, second, third ^ second }\nbizen:ℤ hath_convert { let convert: [x:] ≔ x }\nshow ilk _box: [a:*, *] {\n  box: [a, a _box]\n}\n";
+    "use dep.tung\nlet worth:ℤ ≔ answer\nlet count:tally ≔ naught\nlet ratio:float ≔ 1.5\nlet truth_to_string:[truth, string] ≔ { yea ^ 'yea', nay ^ 'nay' }\nlet shipment:ℤ parcel ≔ +1 wrap\nlet hath_≍:ℤ ≔ +1 sameness # \"unicode 𝟙\\n\"\nlet select:[left: ℤ, middle: ℤ, right: ℤ, ℤ] ≔ middle\nlet picker: [ℤ, ℤ, ℤ, ℤ] ≔ { first, second, third ^ second }\nbizen:ℤ hath_convert { let convert:[x:] ≔ x }\nshow ilk _box: [a:*, *] {\n  box: [a, a _box]\n}\n";
   fs.writeFileSync(depPath, depText);
   fs.writeFileSync(mainPath, mainText);
   const depUri = pathToFileURL(depPath).href;
@@ -95,6 +95,22 @@ test("server implementeth the editor workflow over stdio", async (context) => {
     },
   });
   assert.deepEqual((await cleanDiagnostics).diagnostics, []);
+  const proof = await request("tung/checkProof", {
+    textDocument: { uri: mainUri },
+    position: positionOf(mainText, "answer"),
+    allowedAxioms: [],
+  });
+  assert.equal(proof.kind, "proof");
+  assert.equal(proof.audit.name, "worth");
+  assert.equal(proof.verified, true);
+  assert.match(proof.report, /proof: worth\ntype: ℤ/);
+  const selectedProof = await request("tung/checkProof", {
+    textDocument: { uri: mainUri },
+    name: "answer",
+    allowedAxioms: [],
+  });
+  assert.equal(selectedProof.audit.name, "answer");
+  assert.equal(selectedProof.verified, true);
   const staleDiskGuard = nextDiagnostics(
     connection,
     mainUri,
@@ -105,7 +121,7 @@ test("server implementeth the editor workflow over stdio", async (context) => {
     textDocument: { uri: depUri, version: 2 },
     contentChanges: [
       {
-        text: depText.replace("answer:ℤ ≔ +42", "answer:text ≔ 'changed'"),
+        text: depText.replace("answer:ℤ ≔ +42", "answer:string ≔ 'changed'"),
       },
     ],
   });
@@ -354,7 +370,7 @@ test("server implementeth the editor workflow over stdio", async (context) => {
   );
   const badText = mainText.replace(
     "let worth:ℤ ≔ answer",
-    "let worth:text ≔ answer",
+    "let worth:string ≔ answer",
   );
   connection.sendNotification("textDocument/didChange", {
     textDocument: { uri: mainUri, version: 2 },
@@ -396,15 +412,188 @@ test("server implementeth the editor workflow over stdio", async (context) => {
     position: positionOf(holeText, "sorry"),
   });
   assert.match(goalHover.contents.value, /goal: ℤ\n {2}x: ℤ/);
+  const unfinishedProof = await request("tung/checkProof", {
+    textDocument: { uri: mainUri },
+    position: positionOf(holeText, "sorry"),
+  });
+  assert.equal(unfinishedProof.kind, "proof");
+  assert.equal(unfinishedProof.audit.name, "twice");
+  assert.equal(unfinishedProof.verified, false);
+  assert.match(unfinishedProof.report, /unfinished proof: sorry/);
+  let version = 4;
+  for (const [kind, text] of [
+    ["type", `let broken:ℤ ≔ 'wrong'\n${holeText}`],
+    ["parse", `${holeText}\nlet broken:ℤ ≔`],
+  ]) {
+    const recoveredDiagnostics = nextDiagnostics(
+      connection,
+      mainUri,
+      ({ diagnostics }) => diagnostics.length === 2,
+    );
+    connection.sendNotification("textDocument/didChange", {
+      textDocument: { uri: mainUri, version: ++version },
+      contentChanges: [{ text }],
+    });
+    const [error, recoveredGoal] = (await recoveredDiagnostics).diagnostics;
+    assert.equal(error.severity, 1);
+    assert.match(error.message, new RegExp(`^${kind} error:`));
+    assert.equal(recoveredGoal.severity, 3);
+    assert.equal(recoveredGoal.message, goal.message);
+    assert.deepEqual(recoveredGoal.range.start, positionOf(text, "sorry"));
+    const recoveredHover = await request("textDocument/hover", {
+      textDocument: { uri: mainUri },
+      position: positionOf(text, "sorry"),
+    });
+    assert.match(recoveredHover.contents.value, /goal: ℤ\n {2}x: ℤ/);
+    const rejectedProof = await request("tung/checkProof", {
+      textDocument: { uri: mainUri },
+      name: "twice",
+    });
+    assert.equal(rejectedProof.kind, "error");
+  }
+  const importedGoalText = `use dep.tung\n${holeText}`;
+  const importErrorWithGoal = nextDiagnostics(
+    connection,
+    depUri,
+    ({ diagnostics }) => diagnostics.some(({ severity }) => severity === 1),
+  );
+  const rootGoalWithImportError = nextDiagnostics(
+    connection,
+    mainUri,
+    ({ diagnostics }) =>
+      diagnostics.length === 1 && diagnostics[0].severity === 3,
+  );
+  fs.writeFileSync(depPath, importedSource);
+  connection.sendNotification("workspace/didChangeWatchedFiles", {
+    changes: [{ uri: depUri, type: 2 }],
+  });
+  connection.sendNotification("textDocument/didChange", {
+    textDocument: { uri: mainUri, version: ++version },
+    contentChanges: [{ text: importedGoalText }],
+  });
+  assert.deepEqual(
+    (await importErrorWithGoal).diagnostics[0].range.start,
+    positionOf(importedSource, "'wrong'"),
+  );
+  const [importIndependentGoal] = (await rootGoalWithImportError).diagnostics;
+  assert.equal(importIndependentGoal.message, goal.message);
+  assert.deepEqual(
+    importIndependentGoal.range.start,
+    positionOf(importedGoalText, "sorry"),
+  );
+  const clearedRootGoals = nextDiagnostics(
+    connection,
+    mainUri,
+    ({ diagnostics }) => diagnostics.length === 0,
+  );
+  const clearedImportError = nextDiagnostics(
+    connection,
+    depUri,
+    ({ diagnostics }) => diagnostics.length === 0,
+  );
   connection.sendNotification("textDocument/didClose", {
     textDocument: { uri: mainUri },
   });
+  await Promise.all([clearedRootGoals, clearedImportError]);
   await connection.sendRequest("shutdown");
   connection.sendNotification("exit");
   await once(server, "exit");
   connection.dispose();
   assert.equal(stderr, "");
 });
+test(
+  "proof reports are discarded when an unsaved import changeth during checking",
+  { timeout: 10000 },
+  async (context) => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-proof-lsp-"));
+    context.after(() => fs.rmSync(root, { recursive: true, force: true }));
+    const marker = path.join(root, "started");
+    const release = path.join(root, "release");
+    const executable = path.join(root, "tung");
+    fs.writeFileSync(
+      executable,
+      `#!${process.execPath}
+if (process.argv.includes("--library-paths")) process.exit(0);
+const fs = require("node:fs");
+require("node:readline").createInterface({input:process.stdin}).on("line", line => {
+  const request = JSON.parse(line);
+  const reply = result => process.stdout.write(JSON.stringify({protocol:1,id:request.id,version:request.version,result}) + "\\n");
+  if (request.command === "highlight") reply({kind:"highlight",roles:[]});
+  if (request.command === "check") reply({kind:"check",diagnostics:[]});
+  if (request.command === "proof") {
+    fs.writeFileSync(${JSON.stringify(marker)}, "");
+    const timer = setInterval(() => {
+      if (!fs.existsSync(${JSON.stringify(release)})) return;
+      clearInterval(timer);
+      reply({kind:"proof",audit:{name:"proved",type:"ℤ",dependencies:[]},verified:true,message:"proof ok",report:"proof ok\\n"});
+    }, 5);
+  }
+});
+`,
+    );
+    fs.chmodSync(executable, 0o755);
+    const server = childProcess.spawn(
+      process.execPath,
+      [path.join(__dirname, "..", "server", "main.js"), "--stdio"],
+      { stdio: ["pipe", "pipe", "pipe"] },
+    );
+    context.after(() => server.kill());
+    const connection = createMessageConnection(
+      new StreamMessageReader(server.stdout),
+      new StreamMessageWriter(server.stdin),
+    );
+    context.after(() => connection.dispose());
+    connection.listen();
+    const uri = pathToFileURL(path.join(root, "main.tung")).href;
+    const depUri = pathToFileURL(path.join(root, "dep.tung")).href;
+    fs.writeFileSync(path.join(root, "dep.tung"), "show let exported:ℤ ≔ +1");
+    await connection.sendRequest("initialize", {
+      processId: process.pid,
+      rootUri: pathToFileURL(root).href,
+      capabilities: {},
+      initializationOptions: { executablePath: executable },
+    });
+    connection.sendNotification("initialized", {});
+    for (const [documentUri, text] of [
+      [depUri, "show let exported:ℤ ≔ +1"],
+      [uri, "use dep.tung\nlet proved:ℤ ≔ exported"],
+    ]) {
+      connection.sendNotification("textDocument/didOpen", {
+        textDocument: {
+          uri: documentUri,
+          languageId: "tung",
+          version: 1,
+          text,
+        },
+      });
+    }
+    const watcher = fs.watch(root);
+    context.after(() => watcher.close());
+    const started = once(watcher, "change");
+    const proof = connection.sendRequest<LspTestResult>("tung/checkProof", {
+      textDocument: { uri },
+      name: "proved",
+    });
+    await started;
+    assert.equal(fs.existsSync(marker), true);
+    connection.sendNotification("textDocument/didChange", {
+      textDocument: { uri: depUri, version: 2 },
+      contentChanges: [{ text: "show let exported:ℤ ≔ +2" }],
+    });
+    await connection.sendRequest("textDocument/documentSymbol", {
+      textDocument: { uri: depUri },
+    });
+    fs.writeFileSync(release, "");
+    assert.deepEqual(await proof, {
+      kind: "error",
+      message: "the proof source or its imports changed; check the proof again",
+    });
+    await connection.sendRequest("shutdown");
+    connection.sendNotification("exit");
+    await once(server, "exit");
+  },
+);
+
 test("server resolveth a nested forthcast's git-pinned library", async (context) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-lsp-library-"));
   context.after(() => fs.rmSync(root, { recursive: true, force: true }));
@@ -490,25 +679,35 @@ test("server resolveth a nested forthcast's git-pinned library", async (context)
   await once(server, "exit");
   connection.dispose();
 });
+const diagnosticWaiters = new WeakMap<
+  object,
+  Set<(params: LspTestResult) => void>
+>();
 const nextDiagnostics = (
   connection,
   uri,
   accept: (params: LspTestResult) => boolean = () => true,
 ) => {
+  let waiters = diagnosticWaiters.get(connection);
+  if (!waiters) {
+    waiters = new Set();
+    diagnosticWaiters.set(connection, waiters);
+    connection.onNotification("textDocument/publishDiagnostics", (params) => {
+      for (const receive of waiters) receive(params);
+    });
+  }
   return new Promise<LspTestResult>((resolve, reject) => {
-    const timeout = setTimeout(
-      () => reject(new Error(`timed out waiting for diagnostics for ${uri}`)),
-      30000,
-    );
-    const disposable = connection.onNotification(
-      "textDocument/publishDiagnostics",
-      (params) => {
-        if (params.uri !== uri || !accept(params)) return;
-        clearTimeout(timeout);
-        disposable.dispose();
-        resolve(params);
-      },
-    );
+    const timeout = setTimeout(() => {
+      waiters.delete(receive);
+      reject(new Error(`timed out waiting for diagnostics for ${uri}`));
+    }, 30000);
+    const receive = (params) => {
+      if (params.uri !== uri || !accept(params)) return;
+      clearTimeout(timeout);
+      waiters.delete(receive);
+      resolve(params);
+    };
+    waiters.add(receive);
   });
 };
 const requestQueue = (connection, method) => {

@@ -4,7 +4,13 @@ import generatedLanguageNames from "../generated/language-names.json";
 const keywords = new Set(generatedLanguageNames.keywords);
 const primitiveTypes = new Set(generatedLanguageNames.primitiveTypes);
 const specialNameChars = new Set([...generatedLanguageNames.specialNameChars]);
-const declarationKeywords = new Set(["let", "ilk", "flock", "bizen", "orsetting"]);
+const declarationKeywords = new Set([
+  "let",
+  "ilk",
+  "flock",
+  "bizen",
+  "orsetting",
+]);
 const fileDeclarationKeywords = new Set([
   "use",
   "yield",
@@ -14,7 +20,6 @@ const fileDeclarationKeywords = new Set([
 const closeForOpen = new Map([
   ["(", ")"],
   ["[", "]"],
-  ["r{", "}"],
   ["<{", "}"],
   [">{", "}"],
   ["{", "}"],
@@ -264,42 +269,14 @@ const findFileDeclarationBoundary = (
   return tokens.length;
 };
 
-// `bizen:head {` or `bizen:[@parameters, @:requirements, head] {`. the
-// parameters run from `open` to `close`, the head from `head` to `headEnd`.
-const findInstanceHeader = (tokens, start) => {
-  if (tokens[start]?.text !== ":") return undefined;
-  const bracket = start + 1;
-  if (tokens[bracket]?.text === "[" && tokens[bracket + 1]?.text === "@") {
-    const end = findMatching(tokens, bracket);
-    if (end >= 0 && tokens[end + 1]?.text === "{") {
-      let lastComma = -1;
-      for (let index = bracket + 1; index < end; index += 1) {
-        if (tokens[index].text === ",") lastComma = index;
-        else if (isOpen(tokens[index].text)) {
-          const matching = findMatching(tokens, index);
-          if (matching < 0) return undefined;
-          index = matching;
-        }
-      }
-      if (lastComma >= 0)
-        return {
-          open: bracket,
-          close: lastComma,
-          head: lastComma + 1,
-          headEnd: end,
-          body: end + 1,
-        };
-    }
-  }
-  const end = findFileDeclarationBoundary(tokens, start);
-  const head = start + 1;
-  for (let index = head; index < end; index += 1) {
-    if (tokens[index].text === "{")
-      return { head, headEnd: index, body: index };
-    if (!isOpen(tokens[index].text)) continue;
-    const matching = findMatching(tokens, index);
-    if (matching < 0) return undefined;
-    index = matching;
+// instance headers end at their own braced body. delimiter depths keep nested
+// types separate, and the next declaration boundeth an incomplete header.
+const findInstanceHeader = (tokens, start, depths = tokenDepths(tokens)) => {
+  const baseDepth = depths[start] ?? 0;
+  const end = findFileDeclarationBoundary(tokens, start, depths, baseDepth);
+  for (let index = start; index < end; index += 1) {
+    if (depths[index] === baseDepth && tokens[index].text === "{")
+      return { body: index };
   }
   return undefined;
 };

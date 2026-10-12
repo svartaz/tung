@@ -13,9 +13,9 @@ show let deed_bind: [@α: *, @β: *, α deed, [α, β deed], β deed] ≔ 'deed_
 ## repeat a deed: the step receiveth the repeated deed. only a deed may loop.
 show let deed_steadfast: [@α: *, [α deed, α deed], α deed] ≔ 'deed_steadfast' fremmed
 
-show let write: [text, 𝟙 deed] ≔ 'write' fremmed
+show let write: [string, 𝟙 deed] ≔ 'write' fremmed
 ## none once input endeth.
-show let read: (text maybe) deed ≔ 'read' fremmed
+show let read: (string maybe) deed ≔ 'read' fremmed
 ## a float in [0, 1).
 show let random: float deed ≔ 'random' fremmed
 ## milliseconds.
@@ -28,7 +28,7 @@ show let wait: [@α: *, α task, (α maybe) deed] ≔ 'wait' fremmed
 show let wait_for: [@α: *, α task, ℕ, (α maybe) deed] ≔ 'wait_for' fremmed
 show let outstrike: [@α: *, α task, 𝟙 deed] ≔ 'outstrike' fremmed
 
-show let deal_remainder_integer: [ℤ, ℤ, (ℤ ∏ ℤ) maybe] ≔ 'deal_remainder_integer' fremmed
+show let deal_leftover_wholetale: [ℤ, ℤ, (ℤ ∏ ℤ) maybe] ≔ 'deal_leftover_wholetale' fremmed
 show let eke_float: [float, float, float] ≔ 'eke_float' fremmed
 show let offdraw_float: [float, float, float] ≔ 'offdraw_float' fremmed
 show let fold_float: [float, float, float] ≔ 'fold_float' fremmed
@@ -40,14 +40,14 @@ show let logarithm_float: [float, float] ≔ 'logarithm_float' fremmed
 show let ⌊: [float, ℤ maybe] ≔ '⌊' fremmed
 show let same_float: [float, float, 𝟚] ≔ 'same_float' fremmed
 show let at_most_float: [float, float, 𝟚] ≔ 'at_most_float' fremmed
-show let text_to_float: [text, float maybe] ≔ 'text_to_float' fremmed
-show let integer_to_text: [ℤ, text] ≔ 'integer_to_text' fremmed
-show let float_to_text: [float, text] ≔ 'float_to_text' fremmed
+show let string_to_float: [string, float maybe] ≔ 'string_to_float' fremmed
+show let wholetale_to_string: [ℤ, string] ≔ 'wholetale_to_string' fremmed
+show let float_to_string: [float, string] ≔ 'float_to_string' fremmed
 show let unicode_to_natural: [unicode, ℕ] ≔ 'unicode_to_natural' fremmed
 show let natural_to_unicode: [ℕ, unicode maybe] ≔ 'natural_to_unicode' fremmed
-show let behead_text: [text, (unicode ∏ text) maybe] ≔ 'behead_text' fremmed
-show let join_text: [text, text, text] ≔ 'join_text' fremmed
-show let same_text: [text, text, 𝟚] ≔ 'same_text' fremmed
+show let behead_string: [string, (unicode ∏ string) maybe] ≔ 'behead_string' fremmed
+show let yoke_string: [string, string, string] ≔ 'yoke_string' fremmed
+show let same_string: [string, string, 𝟚] ≔ 'same_string' fremmed
 show let same_unicode: [unicode, unicode, 𝟚] ≔ 'same_unicode' fremmed
-show let at_most_text: [text, text, 𝟚] ≔ 'at_most_text' fremmed
+show let at_most_string: [string, string, 𝟚] ≔ 'at_most_string' fremmed
 show let at_most_unicode: [unicode, unicode, 𝟚] ≔ 'at_most_unicode' fremmed

@@ -11,9 +11,9 @@ use is.tung
 ## a powerset represented by its membership predicate.
 show let powerset: [α: *, *] ≔ [α, 𝟚]
 
-show let empty: [@α: *, α powerset] ≔ nay constant
+show let empty: [@α: *, α powerset] ≔ nay withstand
 
-show let all: [@α: *, α powerset] ≔ yea constant
+show let all: [@α: *, α powerset] ≔ yea withstand
 
 show let onesome: [@α: *, @: α hath_≍, α, α powerset] ≔ ≍
 

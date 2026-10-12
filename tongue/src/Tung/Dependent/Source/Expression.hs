@@ -1,4 +1,4 @@
--- | bidirectional checking of source expressions: application, records,
+-- | bidirectional checking of source expressions: application, fields,
 -- matches, local definitions, and recursion.
 module Tung.Dependent.Source.Expression
   ( inferExpression,
@@ -9,11 +9,11 @@ module Tung.Dependent.Source.Expression
   )
 where
 
-import Control.Monad (forM, forM_, unless)
+import Control.Monad (forM_, unless)
 import Data.Functor ((<&>))
-import Data.List (elemIndex, partition, sortOn)
+import Data.List (elemIndex, partition)
 import Data.Map.Strict qualified as Map
-import Data.Maybe (catMaybes, isJust, isNothing)
+import Data.Maybe (isJust, isNothing)
 import Data.Set qualified as Set
 import Tung.Dependent.Check qualified as K
 import Tung.Dependent.Elaboration qualified as E
@@ -33,21 +33,6 @@ import Tung.Identity (inductionSymbol)
 -- annotation and every occurrence of a universe-polymorphic global.
 type Elaboration = E.Elaboration
 
-recordFields :: N.Value -> Elaboration [(String, N.Value)]
-recordFields ty =
-  E.force ty >>= \case
-    N.VRecordType fields -> pure fields
-    _ -> E.failure "a record operation requireth a record"
-
--- record fields are sorted; a repeated name is an error.
-canonicalFields :: [(String, a)] -> Elaboration [(String, a)]
-canonicalFields fields = do
-  let sorted = sortOn fst fields
-      names = map fst sorted
-  case [name | (name, next) <- zip names (drop 1 names), name == next] of
-    name : _ -> E.failure ("record field '" ++ name ++ "' is repeated")
-    [] -> pure sorted
-
 -- the pattern compiler reuseth these operations for row bodies and scrutinees.
 patternChecker :: K.Environment -> Names -> Patterns.ExpressionChecker
 patternChecker environment names =
@@ -58,15 +43,9 @@ holes = \case
   Meta {} -> True
   term -> any (holes . snd) (children term)
 
--- in a type position, `r{}` is the empty record type rather than the empty record.
-inferType :: K.Environment -> Names -> Scope -> Expression -> Elaboration (Term, N.Value)
-inferType environment names scope expression = inferExpression environment names scope case expression of
-  RecordExpression [] -> RecordTypeExpression []
-  other -> other
-
 inferAnnotation :: K.Environment -> Names -> Scope -> Expression -> Elaboration (Term, N.Value)
 inferAnnotation environment names scope expression = do
-  (term, kind) <- inferType environment names scope expression
+  (term, kind) <- inferExpression environment names scope expression
   requireUniverse scope kind
   (term,) <$> eval scope term
 
@@ -105,9 +84,9 @@ inferExpression environment names scope@Scope {scopeContext = context, scopeName
     pure (Sort level, N.VSort (LSucc level))
   Product parameters result -> productTerm scope parameters
     where
-      productTerm current [] = inferType environment names current result
+      productTerm current [] = inferExpression environment names current result
       productTerm current (Parameter {..} : remaining) = do
-        (domain, domainType) <- inferType environment names current parameterType
+        (domain, domainType) <- inferExpression environment names current parameterType
         domainLevel <- requireUniverse current domainType
         domainValue <- eval current domain
         (codomain, codomainType) <- productTerm (extend current parameterName domainValue) remaining
@@ -148,45 +127,32 @@ inferExpression environment names scope@Scope {scopeContext = context, scopeName
     level <- E.freshLevel
     (ty, tyValue) <- E.newMeta context (N.VSort level)
     pure (Apply Implicit (Global H.sorrySymbol [level]) ty, tyValue)
-  RecordTypeExpression fields -> do
-    sorted <- canonicalFields fields
-    elaborated <- forM sorted \(name, field) -> do
-      (term, kind) <- inferExpression environment names scope field
-      level <- requireUniverse scope kind
-      pure ((name, term), level)
-    pure (Core.RecordType (map fst elaborated), N.VSort (K.universeNormalise (foldr LMax LZero (map snd elaborated))))
-  RecordExpression fields -> do
-    sorted <- canonicalFields fields
-    elaborated <- forM sorted \(name, field) -> do
-      (term, ty) <- inferExpression environment names scope field
-      pure ((name, term), (name, ty))
-    pure (Core.Record (map fst elaborated), N.VRecordType (map snd elaborated))
+  -- `value.field` applieth the accessor its ilk declared, found by the
+  -- value's type.
   Projection record name -> do
     (term, ty) <- inferExpression environment names scope record
-    fields <- recordFields ty
-    case lookup name fields of
-      Just fieldType -> pure (Project term name, fieldType)
-      Nothing -> E.failure ("record hath no field '" ++ name ++ "'")
-  RecordUpdate base changes -> do
-    (baseTerm, baseType) <- inferExpression environment names scope base
-    fields <- recordFields baseType
-    let removed = [name | RemoveField name <- changes]
-        set = [(name, value) | SetField name value <- changes]
-        changed = removed ++ map fst set
-    unless (length changed == Set.size (Set.fromList changed)) (E.failure "a record update changeth each field at most once")
-    case [name | name <- removed, name `notElem` map fst fields] of
-      name : _ -> E.failure ("record hath no field '" ++ name ++ "' to remove")
-      [] -> pure ()
-    -- the base is bound once; kept fields project from that local.
-    annotation <- quote scope baseType
-    baseValue <- eval scope baseTerm
-    let current = define scope Nothing baseValue baseType
-        kept = [((name, Project (Local 0) name), (name, ty)) | (name, ty) <- fields, name `notElem` changed]
-    added <- forM set \(name, value) -> do
-      (term, ty) <- inferExpression environment names current value
-      pure ((name, term), (name, ty))
-    let result = sortOn (fst . fst) (kept ++ added)
-    pure (Let annotation baseTerm (Core.Record (map fst result)), N.VRecordType (map snd result))
+    accessor <-
+      E.force ty >>= \case
+        N.VNeutral neutral
+          | (N.NGlobal family _, _) <- N.neutralSpine neutral,
+            let accessor = K.SymbolId (K.symbolModule family) (K.symbolName family ++ "." ++ name),
+            Just definition <- Map.lookup accessor (globals environment) ->
+              pure (accessor, definition)
+        _ -> E.failure ("the value hath no field '" ++ name ++ "'")
+    levels <- E.freshLevels (definitionUniverses (snd accessor))
+    let function = Global (fst accessor) levels
+    functionType <- inferCore scope function
+    value <- eval scope term
+    let project applied current =
+          E.force current >>= \case
+            N.VPi Implicit domain codomain -> do
+              (hole, holeValue) <- E.newMeta (scopeContext scope) domain
+              E.instantiate codomain holeValue >>= project (Apply Implicit applied hole)
+            N.VPi Explicit domain codomain -> do
+              E.unify (scopeContext scope) domain ty
+              (Apply Explicit applied term,) <$> E.instantiate codomain value
+            _ -> E.failure "a field accessor requireth its value"
+    project function functionType
   -- `_` only discardeth an input; it is no term or type.
   Wildcard -> E.failure "`_` discardeth an input and is not a term"
   Inferred -> do
@@ -197,33 +163,10 @@ inferExpression environment names scope@Scope {scopeContext = context, scopeName
   -- without an expected type, every row shareth one inferred result type.
   Match scrutinees rows -> do
     level <- E.freshLevel
-    matched <- fmap catMaybes . forM scrutinees $ \case
-      Name name | Just index <- elemIndex (Just name) locals -> pure (Just (length locals - index - 1))
-      _ -> pure Nothing
+    let matched = [length locals - index - 1 | Name name <- scrutinees, Just index <- [elemIndex (Just name) locals]]
     (_, resultType) <- E.newMetaWithout (scopeContext scope) matched (N.VSort level)
     term <- Patterns.checkMatch (patternChecker environment names) scope scrutinees rows resultType
     pure (term, resultType)
-  MatchFor scrutinee known rows -> do
-    level <- E.freshLevel
-    (_, resultType) <- E.newMeta (scopeContext scope) (N.VSort level)
-    term <- matchFor environment names scope scrutinee known rows resultType
-    pure (term, resultType)
-
--- `match e for known { rows }` matcheth a fresh copy `x` of the scrutinee, as
--- lean's `match h : e with` doth: the rows form a case function of type
--- `[x: τ, known: e = x, T]`, applied to `e` and `eftbend`. each row thus
--- learneth `known: e = pattern`; `e` itself is not refined in place.
-matchFor :: K.Environment -> Names -> Scope -> Expression -> String -> [Row] -> N.Value -> Elaboration Term
-matchFor environment names scope scrutinee known rows expected = do
-  (scrutineeTerm, scrutineeType) <- inferExpression environment names scope scrutinee
-  domain <- quote scope scrutineeType
-  level <- requireUniverse scope =<< inferCore scope domain
-  result <- quote scope expected
-  let equation left right = Apply Explicit (Apply Explicit (Apply Implicit (Global H.identitySymbol [level]) (shiftTerm 1 domain)) left) right
-      caseType = Pi Explicit domain (Pi Explicit (equation (shiftTerm 1 scrutineeTerm) (Local 0)) (shiftTerm 2 result))
-  caseFunction <- eval scope caseType >>= Patterns.checkCases (patternChecker environment names) scope [row {rowPatterns = rowPatterns row ++ [Name known]} | row <- rows]
-  let reflected = Apply Implicit (Apply Implicit (Global H.reflectSymbol [level]) domain) scrutineeTerm
-  pure (Apply Explicit (Apply Explicit caseFunction scrutineeTerm) reflected)
 
 -- a recursive call is applied through its hypothesis instead.
 recursiveApplication :: Scope -> Expression -> Bool
@@ -305,7 +248,7 @@ applyTo environment names scope@Scope {scopeContext = context} goal function fun
           pure (term, value, explicit, implicit, (expression, domain, value, afterGoal) : deferred, False)
         else do
           term <- checkExpression environment names scope expression domain
-          value <- eval scope term
+          value <- evalArgument scope term
           pure (term, value, explicit, implicit, deferred, False)
     -- a case function cannot split an input whose type is still a hole.
     unknownCaseInput expression domain = case expression of
@@ -319,7 +262,7 @@ applyTo environment names scope@Scope {scopeContext = context} goal function fun
       _ -> pure False
 
 -- a function whose result applieth one of its own implicit type families,
--- as `transport` applieth its property, is a motive function, as lean's
+-- as `throughbear` applieth its property, is a motive function, as lean's
 -- `elab_as_elim` nameth it. the explicit inputs whose types mention the family
 -- are checked after the result meeteth the expected type, so occurrence
 -- abstraction findeth the family in the goal rather than in an input. a family
@@ -405,9 +348,7 @@ checkExpression environment names scope expression expected = E.force expected >
             Just annotation -> do
               (_, actual) <- inferAnnotation environment names scope annotation
               E.unify (scopeContext scope) actual domain
-          let current = extend scope binderName domain
-              argument = N.VNeutral (N.NLocal (depth scope))
-          resultType <- E.instantiate codomain argument
+          (current, resultType) <- bindDomain scope binderName domain codomain
           bodyTerm <- checkExpression environment names current (Lambda remaining body) resultType
           pure (Core.Lambda plicity domainTerm bodyTerm)
         _ -> inferred expected
@@ -417,17 +358,10 @@ checkExpression environment names scope expression expected = E.force expected >
       Ascription body annotation -> checkAscription environment names scope body annotation expected (checkExpression environment names)
       Block declarations body -> fst <$> localDefinitions environment names scope declarations (\current -> (,expected) <$> checkExpression environment names current body expected)
       Cases rows -> Patterns.checkCases (patternChecker environment names) scope rows expected
-      RecordExpression fields
-        | N.VRecordType expectedFields <- expected -> do
-            sorted <- canonicalFields fields
-            unless (map fst sorted == map fst expectedFields) (E.failure "record fields differ from the expected record type")
-            Core.Record <$> forM (zip sorted expectedFields) \((name, field), (_, fieldType)) -> (name,) <$> checkExpression environment names scope field fieldType
       -- an unknown expected type would depend on the matched values; the
       -- match inferreth a result type without them instead.
       Match {} | flexible expected -> inferred expected
       Match scrutinees rows -> Patterns.checkMatch (patternChecker environment names) scope scrutinees rows expected
-      MatchFor {} | flexible expected -> inferred expected
-      MatchFor scrutinee known rows -> matchFor environment names scope scrutinee known rows expected
       -- an expected implicit input is introduced before any other expression is
       -- checked, so a polymorphic value meeteth a polymorphic type.
       _
@@ -436,8 +370,7 @@ checkExpression environment names scope expression expected = E.force expected >
     -- an omitted implicit binder shifteth the context but introduceth no name.
     introduceImplicit domain codomain = do
       domainTerm <- quote scope domain
-      let current = extend scope Nothing domain
-      resultType <- E.instantiate codomain (N.VNeutral (N.NLocal (depth scope)))
+      (current, resultType) <- bindDomain scope Nothing domain codomain
       Core.Lambda Implicit domainTerm <$> checkExpression environment names current expression resultType
     flexible = \case
       N.VNeutral neutral | (N.NMeta _ _, _) <- N.neutralSpine neutral -> True
@@ -457,15 +390,20 @@ checkAscription environment names scope body annotation expected checkBody =
   E.force expected >>= \case
     N.VPi Implicit domain codomain | not (writtenImplicit annotation) -> do
       domainTerm <- quote scope domain
-      let current = extend scope Nothing domain
-      resultType <- E.instantiate codomain (N.VNeutral (N.NLocal (depth scope)))
+      (current, resultType) <- bindDomain scope Nothing domain codomain
       Core.Lambda Implicit domainTerm <$> checkAscription environment names current body annotation resultType checkBody
     expected -> do
       (_, annotationValue) <- inferAnnotation environment names scope annotation
       E.force annotationValue >>= \case
-        written@(N.VPi Implicit _ _) -> do
-          term <- checkBody scope body written
-          specialise names scope term written expected
+        -- a header whose slots leave their types to inference taketh them
+        -- from the expected type when the two agree, so the body is checked
+        -- against known slot types.
+        written@(N.VPi Implicit _ _) ->
+          E.attempt (E.unify (scopeContext scope) written expected) >>= \case
+            Just () -> checkBody scope body expected
+            Nothing -> do
+              term <- checkBody scope body written
+              specialise names scope term written expected
         written -> do
           E.unify (scopeContext scope) written expected
           checkBody scope body expected
@@ -537,8 +475,6 @@ checkRecursiveExpression environment names scope name body expected = case body 
   Ascription inner annotation -> checkAscription environment names scope inner annotation expected (\current -> checkRecursiveExpression environment names current name)
   _ -> Patterns.elaborateRecursive (patternChecker environment names) scope name expected body
 
--- recursion and sibling lookup use free names, respecting source binders.
+-- recursion detection useth free names, respecting source binders.
 referencedNames :: K.Environment -> Names -> Expression -> Set.Set String
 referencedNames environment names = freeNames (isJust . Patterns.constructorNamed environment names) Set.empty
-
--- flocks and bizens -------------------------------------------------------

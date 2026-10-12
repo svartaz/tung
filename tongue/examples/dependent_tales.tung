@@ -6,25 +6,25 @@ use ilk/one.tung
 use ilk/product.tung
 use ilk/two.tung
 
-let +: [ℤ, ℤ, ℤ] ≔ 'eke_integer' fremmed
-let -: [ℤ, ℤ, ℤ] ≔ 'offdraw_integer' fremmed
-let ×: [ℤ, ℤ, ℤ] ≔ 'fold_integer' fremmed
-let deal_remainder: [ℤ, ℤ, (ℤ ∏ ℤ) maybe] ≔ 'deal_remainder_integer' fremmed
-let ≤: [ℤ, ℤ, 𝟚] ≔ 'at_most_integer' fremmed
-let ≍: [ℤ, ℤ, 𝟚] ≔ 'same_integer' fremmed
-let to_text: [ℤ, text] ≔ 'integer_to_text' fremmed
+let +: [ℤ, ℤ, ℤ] ≔ 'eke_wholetale' fremmed
+let -: [ℤ, ℤ, ℤ] ≔ 'offdraw_wholetale' fremmed
+let ·: [ℤ, ℤ, ℤ] ≔ 'fold_wholetale' fremmed
+let deal_leftover: [ℤ, ℤ, (ℤ ∏ ℤ) maybe] ≔ 'deal_leftover_wholetale' fremmed
+let ≤: [ℤ, ℤ, 𝟚] ≔ 'at_most_wholetale' fremmed
+let ≍: [ℤ, ℤ, 𝟚] ≔ 'same_wholetale' fremmed
+let to_string: [ℤ, string] ≔ 'wholetale_to_string' fremmed
 let ⊕: [float, float, float] ≔ 'eke_float' fremmed
 let ⌊: [float, ℤ maybe] ≔ '⌊' fremmed
-let ·: [text, text, text] ≔ 'join_text' fremmed
-let behead: [text, (unicode ∏ text) maybe] ≔ 'behead_text' fremmed
+let yoke: [string, string, string] ≔ 'yoke_string' fremmed
+let behead: [string, (unicode ∏ string) maybe] ≔ 'behead_string' fremmed
 let code: [unicode, ℕ] ≔ 'unicode_to_natural' fremmed
 
 ## unsigned digits are a natural; an integer literal hath a sign.
 let ⊞: [ℕ, ℕ, ℕ] ≔ 'eke_natural' fremmed
 let ⊟: [ℕ, ℕ, ℕ] ≔ 'offdraw_natural' fremmed
-let to_integer: [ℕ, ℤ] ≔ 'natural_to_integer' fremmed
-let to_natural: [ℤ, ℕ maybe] ≔ 'integer_to_natural' fremmed
+let to_wholetale: [ℕ, ℤ] ≔ 'natural_to_wholetale' fremmed
+let to_natural: [ℤ, ℕ maybe] ≔ 'wholetale_to_natural' fremmed
 
 ## a type may depend on a computed comparison.
-let sized: [n: ℤ, *] ≔ match n ≤ +0 { yea ^ text, nay ^ ℤ }
-let five: (+1 sized) ≔ +2 + +3
+let by_greatness: [n: ℤ, *] ≔ match n ≤ +0 { yea ^ string, nay ^ ℤ }
+let five: (+1 by_greatness) ≔ +2 + +3

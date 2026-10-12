@@ -1,5 +1,6 @@
 use flock/algebra/half/category.tung
 use flock/algebra/half/semigroupoid.tung
+use is.tung
 
 ## a binary type constructor covariant in both arguments.
 show flock bifunctor: [φ: [*, *, *], *] {

@@ -16,7 +16,7 @@ lexCases =
     ("type parameter prefix is syntax", "@a", [TAt, TIdent "a"]),
     ("kind star is syntax", "*", [TKindStar]),
     ("prefixed names and greek parameters are ordinary names", "*person list~*list @α:*", [TIdent "*person", TIdent "list~*list", TAt, TIdent "α", TColon, TKindStar]),
-    ("type composition useth ordinary brace tokens", ">{pair,ℤ,text}:*", [TBraceKeyword ">", TIdent "pair", TComma, TIdent "ℤ", TComma, TIdent "text", TRBrace, TColon, TKindStar]),
+    ("type composition useth ordinary brace tokens", ">{pair,ℤ,string}:*", [TBraceKeyword ">", TIdent "pair", TComma, TIdent "ℤ", TComma, TIdent "string", TRBrace, TColon, TKindStar]),
     ("kind marker leaveth compound names intact", "@a:* ‥ …* magma~·", [TAt, TIdent "a", TColon, TKindStar, TIdent "‥", TIdent "…*", TIdent "magma~·"]),
     ("the function arrow is an ordinary name", "ℤ → ℤ", [TIdent "ℤ", TIdent "→", TIdent "ℤ"]),
     ("pipe is an ordinary name", "|", [TIdent "|"]),
@@ -32,7 +32,6 @@ lexCases =
     ("double minus remaineth a name", "--1", [TIdent "--1"]),
     ("list prepend is one name", "‥", [TIdent "‥"]),
     ("backslash is an ordinary name", "\\\\", [TIdent "\\\\"]),
-    ("record opener stayeth one token", "r{", [TBraceKeyword "r"]),
     ("anonymous function opener is a brace", "{", [TLBrace]),
     ("left association opener stayeth one token", "<{", [TBraceKeyword "<"]),
     ("right association opener stayeth one token", ">{", [TBraceKeyword ">"]),
@@ -43,17 +42,17 @@ lexCases =
     ("unicode escapes", "`\\n `\\r `\\t `\\' `\\\\", map TUnicode ['\n', '\r', '\t', '\'', '\\']),
     ("unicode decimal code points", "`\\65; `\\23383; `\\128512;", [TUnicode 'A', TUnicode '字', TUnicode '😀']),
     ("raw astral unicode code point", "`😀", [TUnicode '😀']),
-    ("text escapes", "'\\n\\r\\t\\'\\\\'", [TText "\n\r\t'\\"]),
-    ("text decimal code points", "'\\65;\\23383;'", [TText "A字"]),
-    ("unicode text", "'λ字'", [TText "λ字"]),
+    ("string escapes", "'\\n\\r\\t\\'\\\\'", [TText "\n\r\t'\\"]),
+    ("string decimal code points", "'\\65;\\23383;'", [TText "A字"]),
+    ("unicode string", "'λ字'", [TText "λ字"]),
     ("all keywords", unwords keywordNames, map keywordToken keywordNames)
   ]
 
 lexErrors :: [(String, String)]
 lexErrors =
   [ ("path-qualified namespace", "ilk/list~empty"),
-    ("unterminated text", "'no"),
-    ("unknown text escape", "'\\q'"),
+    ("unterminated string", "'no"),
+    ("unknown string escape", "'\\q'"),
     ("empty unicode escape", "`\\;"),
     ("unterminated decimal unicode escape", "`\\65"),
     ("braced unicode escape", "`\\{65}"),

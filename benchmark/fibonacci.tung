@@ -7,4 +7,4 @@ let fibonacci: [ℕ, ℕ] ≔ {
 }
 
 let main: 𝟙 deed ≔
-  40 fibonacci $ to_text $ write_line
+  40 fibonacci $ to_string $ write_line

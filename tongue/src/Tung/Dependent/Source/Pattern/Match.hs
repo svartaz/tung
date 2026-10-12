@@ -25,7 +25,7 @@ import Data.Foldable (foldrM)
 import Data.Functor ((<&>))
 import Data.List (elemIndex, nub, nubBy)
 import Data.Map.Strict qualified as Map
-import Data.Maybe (catMaybes)
+import Data.Maybe (catMaybes, fromMaybe, isJust)
 import Data.Set qualified as Set
 import GHC.TypeLits qualified
 import Tung.Dependent.Check qualified as K
@@ -40,7 +40,7 @@ import Tung.Dependent.Source.Scope
 import Tung.Dependent.Source.Syntax
 import Tung.Dependent.Syntax hiding (Lambda, Literal)
 import Tung.Dependent.Syntax qualified as Core
-import Tung.Identity (SymbolId (..))
+import Tung.Identity (SymbolId (..), inducedFamily)
 import Tung.Primitive (naturalSuccessorId, naturalZeroId)
 
 type Elaboration = E.Elaboration
@@ -63,10 +63,15 @@ constructorNamed environment names name = do
   pure identity
 
 -- a name that is not a constructor bindeth a variable, even when it shadoweth
--- a local or global value.
+-- a local or global value. an ambiguous name is rejected only when one of its
+-- meanings is a constructor; otherwise it can only bind.
 resolvePattern :: K.Environment -> Names -> Expression -> Elaboration PatternTree
 resolvePattern environment names = \case
-  Name name | Just (AmbiguousName modules) <- lookupName name names -> E.failure (ambiguousName name modules)
+  Name name
+    | Just (AmbiguousName modules) <- lookupName name names,
+      any (\space -> isJust (constructorNamed environment names (space ++ "~" ++ name))) modules ->
+        E.failure (ambiguousName name modules)
+    | Just (AmbiguousName _) <- lookupName name names -> pure (PVariable (bindingName (Just name)))
   Wildcard -> pure (PVariable Nothing)
   -- a natural literal is `0` or the successor of its predecessor.
   LiteralExpression (NaturalValue value) -> pure (naturalPattern value)
@@ -163,7 +168,7 @@ intersectPattern left right =
         _ -> Nothing
 
 -- explicit patterns fill explicit fields; omitted implicit fields are wildcards.
-assignFields :: [(Plicity, Term, Bool)] -> [(Plicity, PatternTree)] -> Elaboration [PatternTree]
+assignFields :: [(Plicity, Term, Maybe SymbolId)] -> [(Plicity, PatternTree)] -> Elaboration [PatternTree]
 assignFields fields subpatterns = do
   let explicitFields = length [() | (Explicit, _, _) <- fields]
       explicitPatterns = [pattern | (Explicit, pattern) <- subpatterns]
@@ -183,7 +188,7 @@ checkCases :: ExpressionChecker -> Scope -> [Row] -> N.Value -> Elaboration Term
 checkCases checker@ExpressionChecker {checkerEnvironment = environment, checkerNames = names} scope rows expected = do
   resolved <- matchRows environment names rows
   (current, inputs, resultType) <- bindCaseInputs scope (rowArity rows) expected
-  let columns = [Column level domain | (level, Explicit, domain) <- inputs]
+  let columns = [Column level domain Nothing | (level, Explicit, domain) <- inputs]
   (term, used) <- compileMatch checker current columns resolved resultType
   requireUsed resolved used
   wrapInputs inputs term
@@ -208,8 +213,8 @@ bindCaseInputs start count expected = go start count expected []
         N.VPi plicity domain codomain -> do
           let level = depth current
               remaining' = if plicity == Explicit then remaining - 1 else remaining
-          resultType <- E.instantiate codomain (N.VNeutral (N.NLocal level))
-          go (extend current Nothing domain) remaining' resultType ((level, plicity, domain) : inputs)
+          (inner, resultType) <- bindDomain current Nothing domain codomain
+          go inner remaining' resultType ((level, plicity, domain) : inputs)
         _ -> E.failure "a case function needs a function type with one input per pattern"
 
 -- a scrutinee that is already a local is matched in place, so the result
@@ -245,15 +250,27 @@ checkMatch checker@ExpressionChecker {checkerEnvironment = environment, checkerN
       annotation <- quote current ty
       let level = depth current
       case value of
-        N.VNeutral (N.NLocal local) -> bindScrutinees current remaining (Column local ty : columns) goal continue
-        _ ->
+        N.VNeutral (N.NLocal local) -> bindScrutinees current remaining (Column local ty Nothing : columns) goal continue
+        _ -> do
+          records <- memoRecords current value
           generalise current value ty goal >>= \case
+            Nothing | null records -> Let annotation term <$> bindScrutinees (define current Nothing value ty) remaining (Column level ty Nothing : columns) goal continue
             -- the computed scrutinee becometh an input, so each row seeth its
-            -- constructor in the goal, as agda's `with` doth.
-            Just abstracted -> do
-              body <- bindScrutinees (extend current Nothing ty) remaining (Column level ty : columns) abstracted continue
-              pure (Apply Explicit (Core.Lambda Explicit annotation body) term)
-            Nothing -> Let annotation term <$> bindScrutinees (define current Nothing value ty) remaining (Column level ty : columns) goal continue
+            -- constructor in the goal, as agda's `with` doth. carried records
+            -- need this input even when the ordinary goal stayeth constant.
+            abstracted -> do
+              -- a fresh value needeth records at that value, not at the old
+              -- computation. bind both, then apply them to the checked pair.
+              let fresh = N.VNeutral (N.NLocal level)
+                  bindRecords inner [] = bindScrutinees inner remaining (Column level ty Nothing : columns) (fromMaybe goal abstracted) continue
+                  bindRecords inner ((name, memo, target, _) : rest) = do
+                    recordType <- applyMemo inner memo target fresh
+                    domain <- eval inner recordType
+                    let recordLevel = depth inner
+                        entered = remember name [(fresh, (target, recordLevel, []))] (extend inner Nothing domain)
+                    Core.Lambda Explicit recordType <$> bindRecords entered rest
+              body <- bindRecords (extend current Nothing ty) records
+              pure (foldl (Apply Explicit) (Apply Explicit (Core.Lambda Explicit annotation body) term) [record | (_, _, _, record) <- records])
     -- the goal over a new input in place of each occurrence of a stuck
     -- computation. constructors and literals are not abstracted, nor is a
     -- goal that doth not mention the value or would be ill-typed without it.
@@ -295,6 +312,9 @@ requireUsed rows used = case [matchRowId row | row <- rows, matchRowId row `Set.
 -- without rows, only a column of an empty family can still be split.
 compileMatch :: ExpressionChecker -> Scope -> [Column] -> [MatchRow] -> N.Value -> Elaboration (Term, Set.Set Int)
 compileMatch checker@ExpressionChecker {checkerEnvironment = environment} scope columns [] expected = do
+  -- a column's type may wait on a known dictionary before its indices
+  -- compute through the selected operations.
+  settleInstances checker
   empty <- filterM (emptyColumn . columnType . snd) (zip [0 ..] columns)
   case empty of
     (index, _) : _ -> splitColumn checker scope columns [] expected index Nothing
@@ -320,7 +340,7 @@ compileMatch checker@ExpressionChecker {checkerEnvironment = environment} scope 
     isVariable = \case
       IndexVariable _ -> True
       _ -> False
-compileMatch checker scope columns rows@(row : _) expected =
+compileMatch checker@ExpressionChecker {checkerEnvironment = environment} scope columns rows@(row : _) expected =
   case [(index, inner) | (index, pattern) <- zip [0 ..] (matchPatterns row), let inner = snd (unnamed pattern), refutable inner] of
     (index, PLiteral literal) : _ -> splitLiteral checker scope columns rows expected index literal
     [] -> do
@@ -333,7 +353,23 @@ compileMatch checker scope columns rows@(row : _) expected =
                  ]
       term <- bindAll scope bindings
       pure (term, Set.singleton (matchRowId row))
-    (index, _) : _ -> splitColumn checker scope columns rows expected index Nothing
+    (index, _) : _ ->
+      case columnConstructor (columns !! index) of
+        Nothing -> splitColumn checker scope columns rows expected index Nothing
+        Just (constructor, values) -> do
+          let Column level ty _ = columns !! index
+          records <- memoRecords scope (columnValue scope level)
+          if not (null records)
+            -- a carried recursion record must be split with the value so its
+            -- descendants retain their respective induction hypotheses.
+            then splitColumn checker scope columns rows expected index Nothing
+            else do
+              Split {splitInfo} <- columnFamily environment ty
+              fields <- maybe (E.failure "missing constructor fields") pure (lookup constructor (inductiveConstructorInfo splitInfo))
+              let selected = [candidate | candidate <- rows, case snd (unnamed (matchPatterns candidate !! index)) of PConstructor name _ -> name == constructor; _ -> True]
+              rows' <- traverse (expandConstructorRow index fields (columnValue scope level) ty) selected
+              bindKnown scope values [] \current fieldColumns ->
+                compileMatch checker current (take index columns ++ fieldColumns ++ drop (index + 1) columns) rows' expected
   where
     refutable = \case
       PConstructor {} -> True
@@ -344,12 +380,42 @@ compileMatch checker scope columns rows@(row : _) expected =
       annotation <- quote current ty
       valueTerm <- quote current value
       Let annotation valueTerm <$> bindAll (define current (Just name) value ty) rest
+    -- transparent constructor columns already have known fields. decomposing
+    -- them needeth no eliminator and cannot introduce unreachable cases.
+    bindKnown current [] fields continue = continue current (reverse fields)
+    bindKnown current (value : rest) fields continue = do
+      term <- quote current value
+      ty <- inferCore current term
+      annotation <- quote current ty
+      let level = depth current
+      known <- constructorView environment value
+      first (Let annotation term) <$> bindKnown (define current Nothing value ty) rest (Column level ty known : fields) continue
+
+-- every enclosing recursive definition may carry evidence for this value.
+memoRecords :: Scope -> N.Value -> Elaboration [(String, Memo, SymbolId, Term)]
+memoRecords scope value = fmap catMaybes . forM (scopeRecursions scope) $ \Recursion {..} -> case recursionMemo of
+  Just memo -> memoRecord scope memo value <&> fmap (\(target, record) -> (recursionName, memo, target, record))
+  Nothing -> pure Nothing
+
+-- each enclosing recursion retaineth its own checked descendant projections.
+remember :: String -> [(N.Value, (SymbolId, Int, [String]))] -> Scope -> Scope
+remember name entries current =
+  current {scopeRecursions = [if recursionName recursion == name then recursion {recursionMemo = (\memo -> memo {memoEntries = entries ++ memoEntries memo}) <$> recursionMemo recursion} else recursion | recursion <- scopeRecursions current]}
+
+expandConstructorRow :: Int -> [(Plicity, Term, Maybe SymbolId)] -> N.Value -> N.Value -> MatchRow -> Elaboration MatchRow
+expandConstructorRow index fields constructed columnTy row@MatchRow {..} = do
+  let (aliases, pattern) = unnamed (matchPatterns !! index)
+  (subpatterns, bound) <- case pattern of
+    PConstructor _ subpatterns -> (,aliases) <$> assignFields fields subpatterns
+    PVariable name -> pure (map (const (PVariable Nothing)) fields, aliases ++ maybe [] pure name)
+    _ -> E.failure "a literal pattern cannot match an inductive type"
+  pure row {matchPatterns = take index matchPatterns ++ subpatterns ++ drop (index + 1) matchPatterns, matchBindings = matchBindings ++ [(binding, constructed, columnTy) | binding <- bound]}
 
 -- a literal row splitteth its column in two: rows that accept the literal, and
 -- rows that accept any other value. `literal_case` chooseth between them.
 splitLiteral :: ExpressionChecker -> Scope -> [Column] -> [MatchRow] -> N.Value -> Int -> HostLiteral -> Elaboration (Term, Set.Set Int)
 splitLiteral checker scope columns rows expected index literal = do
-  let Column level ty = columns !! index
+  let Column level ty _ = columns !! index
       literalTy = N.VNeutral (N.NGlobal (literalType literal) [])
       value = columnValue scope level
   E.unify (scopeContext scope) ty literalTy
@@ -377,9 +443,9 @@ splitLiteral checker scope columns rows expected index literal = do
 
 -- the motive abstracteth the split column from the expected type. recursion
 -- supplieth its own motive and records induction hypotheses for children.
-splitColumn :: ExpressionChecker -> Scope -> [Column] -> [MatchRow] -> N.Value -> Int -> Maybe (Term, Scope -> [(Int, Int)] -> Scope) -> Elaboration (Term, Set.Set Int)
+splitColumn :: ExpressionChecker -> Scope -> [Column] -> [MatchRow] -> N.Value -> Int -> Maybe (Term, Maybe Memo, Scope -> [(Int, Int)] -> Scope) -> Elaboration (Term, Set.Set Int)
 splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope columns rows expected index recursive = do
-  let Column level ty = columns !! index
+  let Column level ty _ = columns !! index
   Split {..} <- columnFamily environment ty
   levels <- E.freshUniverses splitEliminator
   parameterTerms <- traverse (quote scope) splitParameters
@@ -400,80 +466,51 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
           unless (length (nub leaves) == length leaves && level `notElem` leaves) (E.failure "matching needs the variables in the indices of an indexed family to be distinct")
           bound <- allM (\leaf -> E.force (columnValue scope leaf) <&> \case N.VNeutral (N.NLocal same) -> same == leaf; _ -> False) leaves
           unless bound (E.failure "matching needs the variables in the indices of an indexed family to be inputs")
-          when (maybe False (const True) recursive) (E.failure "recursion cannot yet match a value whose indices are constructors")
           pure (Just indexPatterns)
   let indexLevels = maybe simple (concatMap patternLeaves) unified
   -- an index variable that a parameter also useth would need axiom K, which
   -- stayeth unprovable.
   when (any (`elem` parameterLevels) indexLevels) (E.failure "matching would equate an index with a parameter, which needeth axiom K")
   generalised <- case recursive of
-    Nothing -> fmap catMaybes . forM (scopeRecursions scope) $ \Recursion {..} -> case recursionMemo of
-      Just memo -> memoRecord scope memo (columnValue scope level) <&> fmap (recursionName,memo,)
-      Nothing -> pure Nothing
+    Nothing -> memoRecords scope (columnValue scope level)
     Just _ -> pure []
-  -- inputs whose types mention the indices or the value are reverted into the
-  -- motive and rebound in each branch at their refined types, as `known` in
-  -- `{yea, known ^ ...}` with `known: (x p) = b` seeth `(x p) = yea`. a split
-  -- that also carrieth course-of-values records revertth nothing.
+  -- indexed matches revert inputs that depend on their indices or value.
+  -- carried records form the inner telescope, after those reverted inputs.
   dependents <-
     if maybe False (const True) recursive || (null indexLevels && not (null generalised))
       then pure []
-      else
-        foldM
-          ( \found candidate -> do
-              let candidateType = K.contextTypes (scopeContext scope) !! (depth scope - candidate - 1)
-              mentioned <- map (\index -> depth scope - index - 1) . freeIndices <$> quote scope candidateType
-              bound <-
-                E.force (columnValue scope candidate) <&> \case
-                  N.VNeutral (N.NLocal same) -> same == candidate
-                  _ -> False
-              pure (if bound && any (`elem` (indexLevels ++ [level] ++ found)) mentioned then found ++ [candidate] else found)
-          )
-          []
-          [candidate | candidate <- [0 .. depth scope - 1], candidate `notElem` (level : indexLevels), candidate > minimum (level : indexLevels)]
+      else dependentInputs scope (level : indexLevels)
   motive <- case recursive of
-    Just (motive, _) -> pure motive
+    Just (motive, _, _) -> pure motive
     Nothing -> do
-      domain <- quote scope ty
-      -- the motive keepeth definitions by name, so each branch goal still
-      -- nameth them.
-      result <- quoteFolded scope expected
-      if maybe False (const True) unified
-        then do
-          unless (null generalised) (E.failure "course-of-values recursion cannot match an indexed family")
-          unifiedMotive environment scope level Split {..} levels parameterTerms (maybe [] id unified) dependents expected
-        else
-          if not (null indexLevels && null dependents)
-            then do
-              indexDomains <- forM indexLevels \indexLevel -> quote scope (K.contextTypes (scopeContext scope) !! (depth scope - indexLevel - 1))
-              dependentDomains <- forM dependents \dependent -> quote scope (K.contextTypes (scopeContext scope) !! (depth scope - dependent - 1))
-              let binders = indexLevels ++ [level] ++ dependents
-                  abstracted = abstractLevels (depth scope) binders result
-                  domains = zipWith (\position term -> abstractLevels (depth scope) (take position binders) term) [0 ..] (indexDomains ++ [domain] ++ dependentDomains)
-                  (lambdaDomains, piDomains) = splitAt (length indexLevels + 1) domains
-                  plicities = inductiveIndexPlicities splitInfo ++ [Explicit]
-              unless (null generalised) (E.failure "course-of-values recursion cannot match an indexed family")
-              pure (foldr (\(plicity, binderDomain) -> Core.Lambda plicity binderDomain) (foldr (Pi Explicit) abstracted piDomains) (zip plicities lambdaDomains))
-            else do
-              let abstracted = abstractLevels (depth scope) [level] result
-              -- every enclosing recursion whose memo containeth the matched value
-              -- contributeth a record binder; nested recursion needeth all of them.
-              let bindRecords _ [] = pure (shiftTerm (length generalised) abstracted)
-                  bindRecords current ((_, memo, _) : rest) = do
-                    record <- applyMemo current memo (N.VNeutral (N.NLocal (depth scope)))
-                    recordType <- eval current record
-                    Pi Explicit record <$> bindRecords (extend current Nothing recordType) rest
-              Core.Lambda Explicit domain <$> bindRecords (extend scope Nothing ty) generalised
-  let prefix = Apply Explicit (foldl (Apply Implicit) (Global splitEliminator levels) parameterTerms) motive
-  prefixType <- inferCore scope prefix
+      -- every enclosing recursion whose memo containeth the matched value
+      -- contributeth a checked record binder. index abstraction then refineth
+      -- that same telescope with the ordinary goal.
+      let bindRecords current [] = quoteFolded current expected
+          bindRecords current ((_, memo, target, _) : rest) = do
+            record <- applyMemo current memo target (columnValue current level)
+            recordType <- eval current record
+            Pi Explicit record <$> bindRecords (extend current Nothing recordType) rest
+      result <- bindRecords scope generalised >>= eval scope
+      unifiedMotive environment scope level Split {..} levels parameterTerms (maybe (map IndexVariable simple) id unified) dependents result
+  let memo = case recursive of
+        Just (_, memo, _) -> memo
+        Nothing -> Nothing
+  (prefix, prefixType) <- eliminatorPrefix scope Split {..} levels parameterTerms motive (columnValue scope level) memo
+  methods <- E.fromEither (inductiveMethods (globals environment) splitInfo)
   ((applied, appliedType), used) <-
     foldM
       ( \(partial, used) (constructor, fields) ->
           fmap (Set.union used) <$> applyMethod scope partial \methodType ->
-            constructorMethod unified generalised dependents indexLevels constructor fields methodType ty Split {..}
+            if constructor `elem` map fst (inductiveConstructorInfo splitInfo)
+              then constructorMethod unified generalised dependents indexLevels constructor fields methodType ty Split {..}
+              else
+                (,Set.empty) <$> case memo of
+                  Just _ -> memoMethod scope methodType fields []
+                  Nothing -> trivialMethod scope methodType fields
       )
       ((prefix, prefixType), Set.empty)
-      (inductiveConstructorInfo splitInfo)
+      methods
   -- the eliminator taketh the indices, then the matched value.
   let indexTargets = case unified of
         Just _ -> zip (inductiveIndexPlicities splitInfo) splitIndices
@@ -493,7 +530,7 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
       targets
   (term, resultType) <-
     foldM
-      ( \(term, ty) (_, _, record) -> do
+      ( \(term, ty) (_, _, _, record) -> do
           recordValue <- eval scope record
           E.force ty >>= \case
             N.VPi Explicit _ codomain -> (Apply Explicit term record,) <$> E.instantiate codomain recordValue
@@ -504,29 +541,60 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
   case recursive of
     Nothing -> E.unify (scopeContext scope) resultType expected
     Just _ -> pure ()
-  -- written index targets carry their own universe holes; checking the whole
-  -- application relateth them to the family's parameters.
-  when (maybe False (const True) unified) (() <$ inferCore scope term)
+  -- the complete application relateth motive and method universes to the
+  -- family's parameters, including the reverted record telescope.
+  _ <- inferCore scope term
   pure (term, used)
   where
+    -- each record carrieth the direct child records in their field order.
+    memoResult current hypotheses now =
+      Record [("below", Record [(childName child, Local (depth current - hypothesis - 1)) | (child, hypothesis) <- zip [0 ..] hypotheses]), ("now", now)]
+    memoNow ty =
+      E.force ty >>= \case
+        N.VRecordType [("below", _), ("now", now)] -> pure now
+        _ -> E.failure "invalid memoised motive"
+    -- peer methods retain descendant records but compute no source result.
+    memoMethod current _ [] hypotheses = pure (memoResult current (reverse hypotheses) (Record []))
+    memoMethod current ty (field : rest) hypotheses = do
+      (_, hypothesis, inner, next, wrap) <- methodField current ty field
+      wrap <$> memoMethod inner next rest (maybe hypotheses (: hypotheses) hypothesis)
     constructorMethod unified generalised dependents indexLevels constructor fields methodType columnTy Split {..} = do
       let selected = [row | row <- rows, keeps row]
           keeps row = case snd (unnamed (matchPatterns row !! index)) of
             PConstructor name _ -> name == constructor
             PLiteral _ -> False
             _ -> True
-      bindFields scope methodType fields [] [] \current fieldLevels hypotheses branchType -> do
-        let fieldValues = [N.VNeutral (N.NLocal fieldLevel) | fieldLevel <- fieldLevels]
+      forced <- case unified of
+        Nothing -> pure Map.empty
+        Just indexPatterns -> do
+          let fieldValues = [N.VNeutral (N.NLocal (depth scope + position)) | position <- [0 .. length fields - 1]]
+          constructorFit environment Split {..} indexPatterns constructor fieldValues >>= \case
+            IndexFits forced -> pure forced
+            IndexImpossible forced -> pure forced
+            IndexUndecidable -> E.failure ("matching cannot decide whether " ++ symbolName constructor ++ " fiteth the indices")
+      let fieldPatterns = [Map.lookup (depth scope + position) forced | position <- [0 .. length fields - 1]]
+      bindFields scope methodType fields fieldPatterns [] [] \current fieldLevels hypotheses branchType -> do
+        let fieldValues = map (columnValue current) fieldLevels
+            recursiveFields = [field | field@(_, _, Just _) <- fields]
+            childHypotheses = [(target, field, hypothesis) | ((_, _, Just target), (field, hypothesis)) <- zip recursiveFields hypotheses]
+            memoBody = memoResult current [hypothesis | (_, _, hypothesis) <- childHypotheses]
         possible <- case unified of
           Just indexPatterns -> constructorPossible environment Split {..} indexPatterns constructor fieldValues
           Nothing -> pure True
         if not possible
-          then -- the motive computeth the trivial `[goal, goal]` here.
-            E.force branchType >>= \case
-              N.VPi Explicit trivial _ -> do
-                trivialTerm <- quote current trivial
-                pure (Core.Lambda Explicit trivialTerm (Local 0), Set.empty)
-              _ -> E.failure "invalid impossible case"
+          then do
+            -- off-domain records retain their descendants; only `now` is
+            -- trivial. a deeper descendant may re-enter the declared domain.
+            now <- case recursive of
+              Just (_, Just _, _) -> memoNow branchType
+              _ -> pure branchType
+            trivial <-
+              E.force now >>= \case
+                N.VPi Explicit domain _ -> do
+                  annotation <- quote current domain
+                  pure (Core.Lambda Explicit annotation (Local 0))
+                _ -> E.failure "invalid impossible case"
+            pure (case recursive of Just (_, Just _, _) -> memoBody trivial; _ -> trivial, Set.empty)
           else do
             when (null selected) (E.failure ("the match is not exhaustive: missing " ++ symbolName constructor))
             let constructed = constructorValue constructor splitLevels splitParameters (zip (map fieldPlicity fields) fieldValues)
@@ -536,28 +604,36 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
                 then pure columnTy
                 else quote current constructed >>= inferCore current
             -- each index input named in scope seeth the constructor's index.
-            refinements <- case unified of
+            refinedIndices <- case unified of
               Nothing
                 | not (null indexLevels) ->
                     familyOf environment constructedType <&> \case
-                      Just Split {splitIndices = refined} ->
-                        [ (name, value, K.contextTypes (scopeContext scope) !! (depth scope - indexLevel - 1))
-                        | (indexLevel, value) <- zip indexLevels refined,
-                          Just name <- [scopeNames scope !! (depth scope - indexLevel - 1)]
-                        ]
+                      Just Split {splitIndices = refined} -> zip indexLevels refined
                       Nothing -> []
+              Just indexPatterns -> matchedIndexBindings environment Split {..} indexPatterns constructor fieldValues
               _ -> pure []
-            rows' <- map (\row -> row {matchBindings = matchBindings row ++ refinements}) <$> traverse (expandRow fields constructed constructedType) selected
-            let fieldColumns = [Column fieldLevel (K.contextTypes (scopeContext current) !! (depth current - fieldLevel - 1)) | fieldLevel <- fieldLevels]
-                columns' = take index columns ++ fieldColumns ++ drop (index + 1) columns
-            -- in course-of-values recursion each direct recursive field's
-            -- record is its hypothesis.
-            let directHypotheses = [hypothesis | ((_, annotation, _), hypothesis) <- zip [field | field@(_, _, True) <- fields] hypotheses, direct annotation]
+            -- a later index's type may itself depend on an earlier index.
+            -- infer the refined value's type rather than retain its old domain.
+            refinements <- forM [(name, value) | (indexLevel, value) <- refinedIndices, Just name <- [scopeNames scope !! (depth scope - indexLevel - 1)]] \(name, value) -> do
+              ty <- inferCore current =<< quote current value
+              pure (name, value, ty)
+            rows' <- map (\row -> row {matchBindings = matchBindings row ++ refinements}) <$> traverse (expandConstructorRow index fields constructed constructedType) selected
+            fieldColumns <- forM fieldLevels \fieldLevel -> do
+              known <- constructorView environment (columnValue current fieldLevel)
+              pure (Column fieldLevel (K.contextTypes (scopeContext current) !! (depth current - fieldLevel - 1)) known)
+            let columns' = take index columns ++ fieldColumns ++ drop (index + 1) columns
             case recursive of
-              Just (_, enter) -> do
+              Just (_, _, enter) -> do
+                -- peer hypotheses serve joint induction. a source function
+                -- can recurse only on children of its own structural family.
+                let ownHypotheses =
+                      [ hypothesis
+                      | ((_, _, target), hypothesis) <- zip recursiveFields hypotheses,
+                        target == inducedFamily splitEliminator
+                      ]
                 -- recursion rebindeth quantified inputs after the fields. their
                 -- columns move by the number of fields that replaced the split column.
-                let inner = enter current hypotheses
+                let inner = enter current ownHypotheses
                     moved position = if position < index then position else position + length fields - 1
                     quantified = case scopeRecursions inner of
                       recursion : _ -> recursionQuantified recursion
@@ -565,63 +641,143 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
                     rebind entered ty = bindQuantified entered ty [(moved position, plicity) | (position, plicity) <- quantified] columns' rows'
                 case scopeRecursions inner of
                   Recursion {recursionName, recursionMemo = Just _} : _ -> do
-                    now <-
-                      E.force branchType >>= \case
-                        N.VRecordType [("below", _), ("now", now)] -> pure now
-                        _ -> E.failure "invalid memoised motive"
-                    let entries = [(N.VNeutral (N.NLocal field), (hypothesis, [])) | (field, hypothesis) <- directHypotheses]
+                    now <- memoNow branchType
+                    let entries = [(N.VNeutral (N.NLocal field), (target, hypothesis, [])) | (target, field, hypothesis) <- childHypotheses]
                     (body, used) <- rebind (remember recursionName entries inner) now
-                    let below = Record [(childName child, Local (depth current - hypothesis - 1)) | (child, (_, hypothesis)) <- zip [0 ..] directHypotheses]
-                    pure (Record [("below", below), ("now", body)], used)
+                    pure (memoBody body, used)
                   _ -> rebind inner branchType
-              Nothing -> case generalised of
-                [] -> revert current branchType dependents columns' rows'
-                -- the carried record of the split value now nameth the record of
-                -- each recursive field.
-                records ->
-                  let bindRecords entered ty [] = compileMatch checker entered columns' rows' ty
-                      bindRecords entered ty ((name, _, _) : rest) =
+              Nothing ->
+                revert current branchType dependents columns' rows' ((columnLevel (columns !! index), constructed) : refinedIndices) \entered result moved refined replacements ->
+                  let bindRecords inner ty [] = compileMatch checker inner moved refined ty
+                      bindRecords inner ty ((name, _, target, _) : rest) = do
+                        -- specialised metadata retaineth children beneath an
+                        -- ordinary container whose eliminator hath no such IH.
+                        info <- E.fromEither (inductiveInfo (globals environment) target)
+                        specialised <- maybe (E.failure "missing memo constructor") pure (lookup constructor (inductiveConstructorInfo info))
+                        let children = [(childTarget, field) | ((_, _, Just childTarget), field) <- zip specialised fieldLevels]
                         E.force ty >>= \case
                           N.VPi Explicit recordType codomain -> do
-                            recordTerm <- quote entered recordType
-                            let recordLevel = depth entered
-                                afterRecord = extend entered Nothing recordType
-                                entries =
-                                  (constructed, (recordLevel, []))
-                                    : [(N.VNeutral (N.NLocal field), (recordLevel, ["below", childName child])) | (child, (field, _)) <- zip [0 ..] directHypotheses]
-                            resultType <- E.instantiate codomain (N.VNeutral (N.NLocal recordLevel))
+                            recordTerm <- quote inner recordType
+                            let recordLevel = depth inner
+                                known =
+                                  (constructed, (target, recordLevel, []))
+                                    : [(columnValue current field, (childTarget, recordLevel, ["below", childName child])) | (child, (childTarget, field)) <- zip [0 ..] children]
+                            entries <- forM known \(value, place) -> (,place) <$> refineValue inner replacements value
+                            (afterRecord, resultType) <- bindDomain inner Nothing recordType codomain
                             (body, used) <- bindRecords (remember name entries afterRecord) resultType rest
                             pure (Core.Lambda Explicit recordTerm body, used)
                           _ -> E.failure "invalid generalised motive"
-                   in bindRecords current branchType records
-    direct = \case
-      Pi {} -> False
-      _ -> True
-    remember name entries current =
-      current {scopeRecursions = [if recursionName recursion == name then recursion {recursionMemo = (\memo -> memo {memoEntries = entries ++ memoEntries memo}) <$> recursionMemo recursion} else recursion | recursion <- scopeRecursions current]}
-    -- each reverted input is rebound under its name at its refined type; a
-    -- column that was that input followeth it.
-    revert current ty [] columns' rows' = compileMatch checker current columns' rows' ty
-    revert current ty (dependent : rest) columns' rows' = do
+                   in bindRecords entered result generalised
+    -- each reverted input and its direct-child evidence move together. old
+    -- context slots stay captured; visible definitions are rebuilt with checked
+    -- lets after the new telescope is bound, so aliases see the refined fields.
+    revert current ty [] columns' rows' replacements continue = do
+      refined <- forM rows' \row -> do
+        bindings <- forM (matchBindings row) \(name, value, annotation) ->
+          (name,,) <$> refineValue current replacements value <*> refineValue current replacements annotation
+        pure row {matchBindings = bindings}
+      recursions <- forM (scopeRecursions current) \recursion -> do
+        memo <- traverse (refineMemo current replacements) (recursionMemo recursion)
+        pure recursion {recursionMemo = memo}
+      refineAliases current {scopeRecursions = recursions} replacements \inner -> continue inner ty columns' refined replacements
+    revert current ty (dependent : rest) columns' rows' replacements continue = do
       let name = scopeNames scope !! (depth scope - dependent - 1)
       (domainTerm, domain, inner, resultType) <- bindInput "invalid reverted motive" Explicit name current ty
-      let moved = [if columnLevel == dependent then Column (depth current) domain else column | column@(Column columnLevel _) <- columns']
-      first (Core.Lambda Explicit domainTerm) <$> revert inner resultType rest moved rows'
+      let level = depth current
+          moved = [if columnLevel == dependent then Column level domain Nothing else column | column@(Column columnLevel _ _) <- columns']
+          move old = if old == dependent then level else old
+          entered = inner {scopeRecursions = [recursion {recursionHypotheses = [(move field, move hypothesis) | (field, hypothesis) <- recursionHypotheses recursion]} | recursion <- scopeRecursions inner]}
+      first (Core.Lambda Explicit domainTerm) <$> revert entered resultType rest moved rows' ((dependent, N.VNeutral (N.NLocal level)) : replacements) continue
+    -- a reverted hidden record moveth with its descendant. quoted values are
+    -- substituted together, so aliases cannot retain stale index locals.
+    refineMemo current replacements memo@Memo {memoEntries} = do
+      entries <- forM memoEntries \(value, (target, level, path)) -> do
+        refined <- refineValue current replacements value
+        let moved = case lookup level replacements of
+              Just (N.VNeutral (N.NLocal new)) -> new
+              _ -> level
+        pure (refined, (target, moved, path))
+      pure memo {memoEntries = entries}
+    refineAliases current replacements continue = bindAliases current aliases
+      where
+        aliases =
+          [ (name, value)
+          | (position, (Just name, value)) <- zip [0 ..] (zip (scopeNames scope) (K.contextValues (scopeContext scope))),
+            name `notElem` catMaybes (take position (scopeNames scope)),
+            case value of
+              N.VNeutral (N.NLocal same) -> same /= depth scope - position - 1
+              _ -> True
+          ]
+        bindAliases entered [] = continue entered
+        bindAliases entered ((name, value) : rest) = do
+          original <- quote entered value
+          let mentioned = map (\index -> depth entered - index - 1) (freeIndices original)
+          if not (any (`elem` map fst replacements) mentioned)
+            then bindAliases entered rest
+            else do
+              refined <- refineValue entered replacements value
+              term <- quote entered refined
+              ty <- inferCore entered term
+              annotation <- quote entered ty
+              first (Let annotation term) <$> bindAliases (define entered (Just name) refined ty) rest
+    refineValue current replacements value = do
+      term <- quote current value
+      let values = [maybe (columnValue current old) id (lookup old replacements) | old <- reverse [0 .. depth current - 1]]
+      E.evaluate (K.Context values (K.contextTypes (scopeContext current))) term
     bindQuantified current ty [] columns' rows' = compileMatch checker current columns' rows' ty
     bindQuantified current ty ((column, plicity) : rest) columns' rows' = do
       (domainTerm, domain, inner, resultType) <- bindInput "invalid recursive motive" plicity Nothing current ty
       -- the column index shifteth when the split column became fields.
-      let replaced = [if position == column then Column (depth current) domain else existing | (position, existing) <- zip [0 ..] columns']
+      let replaced = [if position == column then Column (depth current) domain Nothing else existing | (position, existing) <- zip [0 ..] columns']
       first (Core.Lambda plicity domainTerm) <$> bindQuantified inner resultType rest replaced rows'
     fieldPlicity (plicity, _, _) = plicity
-    bindFields current ty [] levels hypotheses continue = continue current (reverse levels) (reverse hypotheses) ty
-    bindFields current ty (field : rest) levels hypotheses continue = do
-      (fieldLevel, hypothesis, inner, next, wrap) <- methodField current ty field
-      first wrap <$> bindFields inner next rest (fieldLevel : levels) (maybe hypotheses (\level -> (fieldLevel, level) : hypotheses) hypothesis) continue
-    expandRow fields constructed columnTy row@MatchRow {..} = do
-      let (aliases, pattern) = unnamed (matchPatterns !! index)
-      (subpatterns, bound) <- case pattern of
-        PConstructor _ subpatterns -> (,aliases) <$> assignFields fields subpatterns
-        PVariable name -> pure (map (const (PVariable Nothing)) fields, aliases ++ maybe [] pure name)
-        _ -> E.failure "a literal pattern cannot match an inductive type"
-      pure row {matchPatterns = take index matchPatterns ++ subpatterns ++ drop (index + 1) matchPatterns, matchBindings = matchBindings ++ [(binding, constructed, columnTy) | binding <- bound]}
+    -- a constrained field is split before its later fields and hypothesis,
+    -- so the remaining method type refineth their domains by ordinary beta
+    -- reduction. the rebuilt field is a transparent column for written rows.
+    bindFields current ty [] _ levels hypotheses continue = continue current (reverse levels) (reverse hypotheses) ty
+    bindFields current ty (field@(plicity, _, recursive) : rest) patterns levels hypotheses continue =
+      case patterns of
+        Just pattern@IndexConstructor {} : remaining -> do
+          (domainTerm, domain, afterField, next) <- bindInput "invalid eliminator method" plicity Nothing current ty
+          (body, used) <- splitField afterField (depth current) next pattern \inner value resultType -> do
+            annotation <- quote inner domain
+            term <- quote inner value
+            let fieldLevel = depth inner
+                rebound = define inner Nothing value domain
+            (entered, next', hypothesis, wrap) <-
+              if isJust recursive
+                then do
+                  (hypothesisTerm, _, entered, next') <- bindInput "invalid induction hypothesis" Explicit Nothing rebound resultType
+                  pure (entered, next', Just (depth rebound), Core.Lambda Explicit hypothesisTerm)
+                else pure (rebound, resultType, Nothing, id)
+            first (Let annotation term . wrap) <$> bindFields entered next' rest remaining (fieldLevel : levels) (maybe hypotheses (\level -> (fieldLevel, level) : hypotheses) hypothesis) continue
+          pure (Core.Lambda plicity domainTerm body, used)
+        _ -> do
+          (fieldLevel, hypothesis, inner, next, wrap) <- methodField current ty field
+          first wrap <$> bindFields inner next rest (drop 1 patterns) (fieldLevel : levels) (maybe hypotheses (\level -> (fieldLevel, level) : hypotheses) hypothesis) continue
+    splitField current target result (IndexConstructor wanted subpatterns) continue = do
+      let domain = K.contextTypes (scopeContext current) !! (depth current - target - 1)
+      Split {..} <- columnFamily environment domain
+      unless (null splitIndices) (E.failure "an index pattern cannot match a value of an indexed family")
+      levels <- E.freshUniverses splitEliminator
+      parameterTerms <- traverse (quote current) splitParameters
+      annotation <- quote current domain
+      resultTerm <- quoteFolded current result
+      let motive = Core.Lambda Explicit annotation (abstractLevels (depth current) [target] resultTerm)
+      (prefix, prefixType) <- eliminatorPrefix current Split {..} levels parameterTerms motive (columnValue current target) Nothing
+      methods <- E.fromEither (inductiveMethods (globals environment) splitInfo)
+      ((applied, _), used) <-
+        foldM
+          ( \(partial, used) (constructor, fields) ->
+              fmap (Set.union used) <$> applyMethod current partial \methodType ->
+                if constructor `elem` map fst (inductiveConstructorInfo splitInfo)
+                  then
+                    let patterns = if constructor == wanted then map Just subpatterns else []
+                     in bindFields current methodType fields patterns [] [] \inner fieldLevels _ branchType ->
+                          continue inner (constructorValue constructor splitLevels splitParameters (zip (map fieldPlicity fields) (map (columnValue inner) fieldLevels))) branchType
+                  else (,Set.empty) <$> trivialMethod current methodType fields
+          )
+          ((prefix, prefixType), Set.empty)
+          methods
+      pure (Apply Explicit applied (Local (depth current - target - 1)), used)
+    splitField _ _ _ IndexVariable {} _ = E.failure "invalid forced index field"

@@ -6,8 +6,10 @@ module Test.DependentSupport
     rejectContaining,
     eraseLevels,
     compileAs,
+    equalitySource,
     Library,
     loadLibrary,
+    libraryModule,
     withModules,
     compileWith,
     sameNormalIn,
@@ -27,9 +29,8 @@ import Data.List (isInfixOf)
 import Data.Map.Strict qualified as Map
 import System.Directory (doesFileExist, getCurrentDirectory)
 import System.FilePath (takeDirectory, (</>))
-import Test.Compile (compileModules, compileProjectWith, compileSource)
+import Test.Compile (bookhoardSources, compileProjectWith, compileSource, loadBookhoard)
 import Test.Harness (Test, expect)
-import Tung (readLibraryImports)
 import Tung.Dependent
 import Tung.Dependent.Run (HostIO (..), Request, Response, Runtime, runMain)
 import Tung.Dependent.Source (SourceProgram, normaliseSourceExpression)
@@ -58,14 +59,23 @@ eraseLevels = \case
 compileAs :: FilePath -> String -> Either String SourceProgram
 compileAs = compileSource . SourceModule
 
+-- isolated source tests may supply this ordinary family as an explicit fixture.
+-- bookhoard tests check the real declaration and its dependent lemmas.
+equalitySource :: String
+equalitySource = "show ilk =:[@α:*, x:α, α,*] { eftbend:x = @α x }\n"
+
 -- bookhoard sources and the modules a group useth, compiled once.
 data Library = Library (Map.Map String String) (Map.Map String SourceProgram)
 
 loadLibrary :: [String] -> IO Library
 loadLibrary paths = do
-  sources <- readLibraryImports "." >>= either fail pure
-  compiled <- either fail pure (compileModules sources paths)
-  pure (Library sources compiled)
+  compiled <- loadBookhoard paths >>= either fail pure
+  pure (Library bookhoardSources compiled)
+
+-- a checked owning module retaineth private helpers for model and proof tests.
+libraryModule :: Library -> String -> Either String SourceProgram
+libraryModule (Library _ compiled) path =
+  maybe (Left ("library module was not loaded: " ++ path)) Right (Map.lookup path compiled)
 
 -- further sources beside bookhoard, keyed by use path. a changed source
 -- invalidateth every cached module, including its transitive dependants.

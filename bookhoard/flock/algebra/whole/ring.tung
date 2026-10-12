@@ -1,0 +1,12 @@
+use flock/algebra/whole/group_eke.tung
+use flock/algebra/whole/hath_offdraw.tung
+use flock/algebra/whole/semiring.tung
+use ilk/two.tung
+use is.tung
+
+## a semiring whose addition is a group. functions have no pointwise ring:
+## its two paths to the codomain's addition, through `semiring` and through
+## `group_+`, are separate dictionaries that the checker cannot equate.
+show flock ring: [α: *, @: α semiring, @: α group_+, *] {}
+
+bizen: 𝟚 ring {}

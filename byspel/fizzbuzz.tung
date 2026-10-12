@@ -4,9 +4,9 @@ use ilk/list.tung
 use ilk/maybe.tung
 use ilk/product.tung
 
-let can_deal: [@α: *, @: α hath_%, @: α hath_zero, @: α hath_≍, divisor: α, dividend: α, 𝟚] ≔
-  match dividend % divisor {
-    (_ both rest) some ^ rest ≍ zero,
+let can_deal: [@α: *, @: α hath_%, @: α hath_naught, @: α hath_≍, dealer: α, dealt: α, 𝟚] ≔
+  match dealt % dealer {
+    (_ both rest) some ^ rest ≍ naught,
     none               ^ nay
   }
 
@@ -17,22 +17,22 @@ ilk _fizzbuzz: * {
   raw: [ℤ, _fizzbuzz]
 }
 
-bizen: _fizzbuzz hath_to_text {
-  let to_text ≔ {
+bizen: _fizzbuzz hath_to_string {
+  let to_string ≔ {
     fizz     ^ 'fizz',
     buzz     ^ 'buzz',
     fizzbuzz ^ 'fizzbuzz',
-    i raw    ^ i to_text
+    i raw    ^ i to_string
   }
 }
 
-let to_fizzbuzz: [integer: ℤ, _fizzbuzz] ≔
-  match +3 can_deal integer, +5 can_deal integer {
+let to_fizzbuzz: [wholetale: ℤ, _fizzbuzz] ≔
+  match +3 can_deal wholetale, +5 can_deal wholetale {
     yea, yea ^ fizzbuzz,
     yea, nay ^ fizz,
     nay, yea ^ buzz,
-    nay, nay ^ integer raw
+    nay, nay ^ wholetale raw
   }
 
 let main: 𝟙 deed ≔
-  +0 till +32 $ warp (to_fizzbuzz ▷ to_text) $ each write_line
+  +0 till +32 $ warp (to_fizzbuzz ▷ to_string) $ each write_line

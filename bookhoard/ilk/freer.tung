@@ -16,16 +16,16 @@ show ilk freer: [φ: [*, *], α: *, *] {
 
 ## run the continuation on the result, after every request.
 show let bind: [@φ: [*, *], @α: *, @β: *, φ freer α, [α, φ freer β], φ freer β] ≔ {
-  worth done,            next ^ worth next,
-  request more continue, next ^ request more { answer ^ (answer continue) bind next }
+  worth done,               next ^ worth next,
+  request more throughwone, next ^ request more { answer ^ (answer throughwone) bind next }
 }
 
 ## a program of one request, whose answer is its result.
 show let lift: [@φ: [*, *], @α: *, request: α φ, φ freer α] ≔
   request more done
 
-show let warp: [@φ: [*, *], @α: *, @β: *, forewrit: φ freer α, change: [α, β], φ freer β] ≔
-  forewrit bind { worth ^ (worth change) done }
+show let warp: [@φ: [*, *], @α: *, @β: *, forewrit: φ freer α, tweak: [α, β], φ freer β] ≔
+  forewrit bind { worth ^ (worth tweak) done }
 
 show let flat: [@φ: [*, *], @α: *, forewrit: φ freer (φ freer α), φ freer α] ≔
   forewrit bind sameness
@@ -33,8 +33,8 @@ show let flat: [@φ: [*, *], @α: *, forewrit: φ freer (φ freer α), φ freer 
 ## mapping the identity keepeth a program, by induction on its requests.
 let helpsetting_warp_sameness: [@φ: [*, *], @α: *, forewrit: φ freer α, (forewrit warp {x ^ x}) = forewrit] ≔
   match forewrit {
-    _ done                ^ eftbend,
-    request more continue ^ (request more) leibnitz ({answer ^ (answer continue) helpsetting_warp_sameness} fall_umtake)
+    _ done                   ^ eftbend,
+    request more throughwone ^ (request more) leibnitz ({answer ^ (answer throughwone) helpsetting_warp_sameness} fall_umtake)
   }
 
 ## mapping twice is mapping once with the composite.
@@ -42,15 +42,15 @@ let warp_warp: [@φ: [*, *], @α: *, @β: *, @γ: *, forewrit: φ freer α, f: [
   ((forewrit warp f) warp g) = (forewrit warp {x ^ x f $ g})
 ] ≔
   match forewrit {
-    _ done                ^ eftbend,
-    request more continue ^ (request more) leibnitz ({answer ^ (answer continue) warp_warp f g} fall_umtake)
+    _ done                   ^ eftbend,
+    request more throughwone ^ (request more) leibnitz ({answer ^ (answer throughwone) warp_warp f g} fall_umtake)
   }
 
 ## flattening a program whose results are wrapped in `done` keepeth it.
 let warp_done_flat: [@φ: [*, *], @α: *, forewrit: φ freer α, ((forewrit warp done) flat) = forewrit] ≔
   match forewrit {
-    _ done                ^ eftbend,
-    request more continue ^ (request more) leibnitz ({answer ^ (answer continue) warp_done_flat} fall_umtake)
+    _ done                   ^ eftbend,
+    request more throughwone ^ (request more) leibnitz ({answer ^ (answer throughwone) warp_done_flat} fall_umtake)
   }
 
 ## interpret a program: `handle` answereth each request by calling its
@@ -62,14 +62,14 @@ show let gather: [
   φ freer α,
   β
 ] ≔ {
-  leaf, _,      worth done            ^ worth leaf,
-  leaf, handle, request more continue ^ request handle { answer ^ leaf gather handle (answer continue) }
+  leaf, _,      worth done               ^ worth leaf,
+  leaf, handle, request more throughwone ^ request handle { answer ^ leaf gather handle (answer throughwone) }
 }
 
 ## general mapping and right-identity proofs need function extensionality
 ## to turn pointwise continuation proofs into equality of `more` programs.
 bizen: [@φ: [*, *], (φ freer) functor] {
-  let warp: [forewrit:, change:] ≔ forewrit warp change
+  let warp: [forewrit:, tweak:] ≔ forewrit warp tweak
 
   let warp_sameness ≔ helpsetting_warp_sameness
 }
@@ -77,8 +77,8 @@ bizen: [@φ: [*, *], (φ freer) functor] {
 bizen: [@φ: [*, *], (φ freer) atfoldsome] {
   let sheer ≔ done
 
-  let atfold: [forewrit:, changes:] ≔
-    changes bind { change ^ forewrit warp change }
+  let atfold: [forewrit:, tweaks:] ≔
+    tweaks bind { tweak ^ forewrit warp tweak }
 
   let atfold_sameness_sheer ≔ helpsetting_warp_sameness
 

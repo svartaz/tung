@@ -7,7 +7,7 @@ import Test.DependentSupport
 import Test.Harness (Group, Test, expect, expectEq)
 import Test.Harness qualified as Harness
 import Tung.Dependent
-import Tung.Dependent.Source (SourceProgram, normaliseSourceExpression, parseExpression, sourceDefinitions, sourceEnvironment)
+import Tung.Dependent.Source (SourceProgram, normaliseSourceExpression, sourceDefinitions, sourceEnvironment)
 
 group :: IO Group
 group = do
@@ -16,8 +16,7 @@ group = do
 
 tests :: String -> [Test]
 tests source =
-  [ checked "the ordinary list library containeth kernel-checked definitions" "",
-    checked "one list family storeth values, types, and type constructors" $
+  [ checked "one list family storeth values, types, and type constructors" $
       "let values:nat list ≔ "
         ++ values
         ++ "\n"
@@ -27,44 +26,36 @@ tests source =
         ++ "let constructors:[*, *] list ≔ "
         ++ constructors
         ++ "\n",
-    same "supplied and inferred implicit list elements agree" "" values "zero ‥ @nat ((zero heir) ‥ @nat (∅ @nat))",
-    expectEq "composition associateth ordinary applications independently of lists" (Right [True, True]) $
+    same "supplied and inferred implicit list elements agree" "" values "naught ‥ @nat ((naught heir) ‥ @nat (∅ @nat))",
+    expectEq "athang computeth at worth and type levels" (Right [True, True]) $
       traverse
-        (uncurry (equalIn (extended "ilk pair:[α:*, β:*, *] {}\n")))
-        [ ("<{pair, nat, bool, nat}", "(nat pair bool) pair nat"),
-          (">{pair, nat, bool, nat}", "nat pair (bool pair nat)")
-        ],
-    expectEq "composition requireth two operands and closing braces" [True, True, True] $
-      map (isLeft . parseExpression) [">{}", ">{‥, zero}", ">{‥, zero, ∅"],
-    expectEq "append computeth at worth and type levels" (Right [True, True]) $
-      traverse
-        (uncurry (equalIn base))
-        [ ("(>{‥, zero, ∅}) · (>{‥, zero heir, ∅})", values),
+        (uncurry (equalIn (extended "")))
+        [ ("(>{‥, naught, ∅}) · (>{‥, naught heir, ∅})", values),
           ("(>{‥, nat, ∅}) · (>{‥, bool, ∅})", types)
         ],
-    same "warp computeth from the ordinary list eliminator" "" (values ++ " warp heir") ">{‥, zero heir, (zero heir) heir, ∅}",
+    same "warp computeth from the ordinary list eliminator" "" (values ++ " warp heir") ">{‥, naught heir, (naught heir) heir, ∅}",
     same "warp can turn type constructors into types" "" (constructors ++ " warp {F:[*, *] ^ nat F}") ">{‥, nat list, nat, ∅}",
-    same "fold replaceth constructors by its supplied methods" "" (values ++ " gather zero {_, rest ^ rest heir}") "(zero heir) heir",
-    expectEq "open append retaineth an induction neutral and a checked type" (Right True) $ do
+    same "fold replaceth constructors by its supplied methods" "" (values ++ " gather naught {_, rest ^ rest heir}") "(naught heir) heir",
+    expectEq "open athang retaineth an induction neutral and a checked type" (Right True) $ do
       program <- extended openAppend
-      result <- normaliseSourceExpression program "append_empty"
+      result <- normaliseSourceExpression program "athang_empty"
       infer (sourceEnvironment program) result >>= validate (sourceEnvironment program)
       identity <- normaliseSourceExpression program "{xs:nat list ^ xs}"
       pure (eraseLevels result /= eraseLevels identity),
-    same "open append computeth after its list is substituted" openAppend (values ++ " append_empty") values,
-    checked "append and warp aliases convert inside family indices" $
+    same "open athang computeth after its list is substituted" openAppend (values ++ " athang_empty") values,
+    checked "athang and warp aliases convert inside family indices" $
       indexed
-        ++ "let appended ≔ (>{‥, nat, ∅}) · (>{‥, bool, ∅})\n"
+        ++ "let athanged ≔ (>{‥, nat, ∅}) · (>{‥, bool, ∅})\n"
         ++ "let mapped ≔ row warp {α:* ^ α}\n"
-        ++ "let first:appended tag ≔ witness\n"
+        ++ "let first:athanged tag ≔ witness\n"
         ++ "let second:mapped tag ≔ witness\n",
     rejected "list indices preserve element order" (indexed ++ "let bad:(>{‥, bool, nat, ∅}) tag ≔ witness\n"),
     rejected "list indices preserve duplicate elements" (indexed ++ "let bad:(>{‥, nat, nat, bool, ∅}) tag ≔ witness\n"),
-    rejected "a list cannot mix incompatible element types" "let bad ≔ >{‥, zero, nat, ∅}\n",
+    rejected "a list cannot mix incompatible element types" "let bad ≔ >{‥, naught, nat, ∅}\n",
     rejected "a list cannot put its universe inside itself" "let bad ≔ (let U ≔ * yield U ‥ @U (∅ @U))\n"
   ]
   where
-    base = compile (source ++ naturalSource)
+    extended "" = compile (source ++ naturalSource)
     extended suffix = compile (source ++ naturalSource ++ suffix)
     checked label suffix = expectEq label (Right ()) $ do
       program <- extended suffix
@@ -75,18 +66,18 @@ tests source =
 naturalSource, openAppend, indexed, values, types, constructors :: String
 naturalSource =
   """
-  ilk nat:* { zero: nat, heir:[nat, nat] }
+  ilk nat:* { naught: nat, heir:[nat, nat] }
   ilk bool:* { no: bool, yes: bool }
 
   """
-openAppend = "let append_empty:[xs:nat list, nat list] ≔ xs · (∅ @nat)\n"
+openAppend = "let athang_empty:[xs:nat list, nat list] ≔ xs · (∅ @nat)\n"
 indexed =
   """
   let row:* list ≔ >{‥, nat, bool, ∅}
   ilk tag:[* list, *] { witness:row tag }
 
   """
-values = ">{‥, zero, zero heir, ∅}"
+values = ">{‥, naught, naught heir, ∅}"
 types = ">{‥, nat, bool, ∅}"
 constructors = ">{‥, list, {α:* ^ α}, ∅ @([*, *])}"
 

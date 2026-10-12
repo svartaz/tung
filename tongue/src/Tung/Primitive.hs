@@ -91,9 +91,9 @@ twoData = HostData "ilk/two.tung" "𝟚"
 listData = HostData "ilk/list.tung" "list"
 optionData = HostData "ilk/maybe.tung" "maybe"
 productData = HostData "ilk/product.tung" "∏"
--- a fallible host deed returneth `text ∑ α`: an error message or a result.
+-- a fallible host deed returneth `string ∑ α`: an error message or a result.
 sumData = HostData "ilk/sum.tung" "∑"
-tableData = HostData "ilk/table.tung" "table"
+tableData = HostData "ilk/wordbook.tung" "wordbook"
 
 processResultData, requestData, responseData :: HostData
 processResultData = HostData "process/result.tung" "_process_result"
@@ -130,7 +130,7 @@ hostDataSchemas =
   where
     a = HostVar "a"
     b = HostVar "b"
-    text = HostCon "text"
+    text = HostCon "string"
     headers = app tableData [text, text]
     app dataType = HostApp (canonicalDataTypeName dataType)
     schema dataType variables constructors =
@@ -145,7 +145,7 @@ opaqueTypeFamilyNames :: [String]
 opaqueTypeFamilyNames = ["deed", "task"]
 
 primitiveTypeNames :: [String]
-primitiveTypeNames = ["ℕ", "ℤ", "float", "unicode", "text"] ++ opaqueTypeFamilyNames
+primitiveTypeNames = ["ℕ", "ℤ", "float", "unicode", "string"] ++ opaqueTypeFamilyNames
 
 hostTypeId :: String -> Maybe SymbolId
 hostTypeId name = dataTypeId <$> find matches hostData
@@ -236,7 +236,7 @@ hostBindings =
          deed "outstrike" ["a"] [task (variable "a")] (action one),
          deed "read_file" [] [text] (action (outcome text)),
          deed "write_file" [] [text, text] (action (outcome one)),
-         deed "append_file" [] [text, text] (action (outcome one)),
+         deed "athang_file" [] [text, text] (action (outcome one)),
          deed "arguments" [] [] (action (list text)),
          deed "environment" [] [text] (action (option text)),
          deed "exit" ["a"] [natural] (action (variable "a")),
@@ -247,7 +247,7 @@ hostBindings =
     natural = HostCon "ℕ"
     integer = HostCon "ℤ"
     float = HostCon "float"
-    text = HostCon "text"
+    text = HostCon "string"
     one = HostCon (canonicalDataTypeName oneData)
     variable = HostVar
     action value = HostApp "deed" [value]
@@ -314,7 +314,7 @@ unicode :: Codec Char
 unicode = Codec (HostCon "unicode") HostUnicode \case HostUnicode value -> Just value; _ -> Nothing
 
 text :: Codec String
-text = Codec (HostCon "text") HostText \case HostText value -> Just value; _ -> Nothing
+text = Codec (HostCon "string") HostText \case HostText value -> Just value; _ -> Nothing
 
 truth :: Codec Bool
 truth = Codec (HostCon twoName) HostTruth \case HostTruth value -> Just value; _ -> Nothing
@@ -339,13 +339,13 @@ pureBindings :: [(HostBinding, [HostValue] -> Maybe HostValue)]
 pureBindings =
   map
     eraseBinding
-    [ UnaryBinding "natural_to_integer" natural integer toInteger,
-      UnaryBinding "integer_to_natural" integer (optionCodec natural) \a -> if a >= 0 then Just (fromInteger a) else Nothing,
-      BinaryBinding "eke_integer" integer integer integer (+),
-      BinaryBinding "offdraw_integer" integer integer integer (-),
+    [ UnaryBinding "natural_to_wholetale" natural integer toInteger,
+      UnaryBinding "wholetale_to_natural" integer (optionCodec natural) \a -> if a >= 0 then Just (fromInteger a) else Nothing,
+      BinaryBinding "eke_wholetale" integer integer integer (+),
+      BinaryBinding "offdraw_wholetale" integer integer integer (-),
       BinaryBinding "offdraw_natural" natural natural natural \a b -> if b > a then 0 else a - b,
-      BinaryBinding "fold_integer" integer integer integer (*),
-      BinaryBinding "deal_remainder_integer" integer integer (optionCodec (pairCodec integer integer)) \a b -> if b == 0 then Nothing else Just (euclidean a b),
+      BinaryBinding "fold_wholetale" integer integer integer (*),
+      BinaryBinding "deal_leftover_wholetale" integer integer (optionCodec (pairCodec integer integer)) \a b -> if b == 0 then Nothing else Just (euclidean a b),
       BinaryBinding "eke_float" float float float (+),
       BinaryBinding "offdraw_float" float float float (-),
       BinaryBinding "fold_float" float float float (*),
@@ -356,29 +356,29 @@ pureBindings =
       UnaryBinding "exponent_float" float float exp,
       UnaryBinding "logarithm_float" float float log,
       UnaryBinding "⌊" float (optionCodec integer) \a -> if isNaN a || isInfinite a then Nothing else Just (floor a),
-      BinaryBinding "same_integer" integer integer truth (==),
-      UnaryBinding "integer_to_text" integer text show,
-      UnaryBinding "float_to_text" float text show,
+      BinaryBinding "same_wholetale" integer integer truth (==),
+      UnaryBinding "wholetale_to_string" integer text show,
+      UnaryBinding "float_to_string" float text show,
       UnaryBinding "unicode_to_natural" unicode natural (fromIntegral . ord),
       UnaryBinding "natural_to_unicode" natural (optionCodec unicode) (unicodeScalar . toInteger),
-      UnaryBinding "behead_text" text (optionCodec (pairCodec unicode text)) \case first : rest -> Just (first, rest); [] -> Nothing,
-      UnaryBinding "text_to_list" text (listCodec unicode) id,
-      UnaryBinding "list_to_text" (listCodec unicode) text id,
-      BinaryBinding "join_text" text text text (++),
-      BinaryBinding "same_text" text text truth (==),
+      UnaryBinding "behead_string" text (optionCodec (pairCodec unicode text)) \case first : rest -> Just (first, rest); [] -> Nothing,
+      UnaryBinding "string_to_list" text (listCodec unicode) id,
+      UnaryBinding "list_to_string" (listCodec unicode) text id,
+      BinaryBinding "yoke_string" text text text (++),
+      BinaryBinding "same_string" text text truth (==),
       BinaryBinding "same_unicode" unicode unicode truth (==),
-      BinaryBinding "at_most_text" text text truth (<=),
+      BinaryBinding "at_most_string" text text truth (<=),
       BinaryBinding "at_most_unicode" unicode unicode truth (<=),
-      BinaryBinding "at_most_integer" integer integer truth (<=),
+      BinaryBinding "at_most_wholetale" integer integer truth (<=),
       BinaryBinding "same_float" float float truth (==),
       BinaryBinding "at_most_float" float float truth (<=),
-      UnaryBinding "text_to_float" text (optionCodec float) readMaybe,
+      UnaryBinding "string_to_float" text (optionCodec float) readMaybe,
       BinaryBinding "same_natural" natural natural truth (==),
       BinaryBinding "at_most_natural" natural natural truth (<=),
       BinaryBinding "eke_natural" natural natural natural (+),
       BinaryBinding "fold_natural" natural natural natural (*),
-      BinaryBinding "deal_remainder_natural" natural natural (optionCodec (pairCodec natural natural)) \a b -> if b == 0 then Nothing else Just (a `div` b, a `mod` b),
-      UnaryBinding "natural_to_text" natural text show
+      BinaryBinding "deal_leftover_natural" natural natural (optionCodec (pairCodec natural natural)) \a b -> if b == 0 then Nothing else Just (a `div` b, a `mod` b),
+      UnaryBinding "natural_to_string" natural text show
     ]
   where
     -- the remainder is never negative.

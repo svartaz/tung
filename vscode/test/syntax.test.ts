@@ -27,8 +27,8 @@ test("right composition participateth in delimiter navigation", () => {
 });
 
 test("bracket lookups agree for nested and unmatched delimiters", () => {
-  const tokens = tokenize("(r{worth} { unmatched ) } )");
-  const opening = tokens.filter(({ text }) => ["(", "r{", "{"].includes(text));
+  const tokens = tokenize("(<{worth} { unmatched ) } )");
+  const opening = tokens.filter(({ text }) => ["(", "<{", "{"].includes(text));
   const closing = tokens.filter(({ text }) => [")", "}"].includes(text));
 
   assert.deepEqual(

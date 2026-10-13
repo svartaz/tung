@@ -35,7 +35,7 @@ diagnosticCases =
   | (name, source, kind, span) <-
       [ ("named type error", "let worth:string ≔ 1", TypeDiagnostic, SourceSpan 19 20),
         ("later repeated name", "let worth ≔ 1 let other:string ≔ worth", TypeDiagnostic, SourceSpan 33 38),
-        ("term after type alias", "let count:* ≔ ℤ let worth:string ≔ ℤ", TypeDiagnostic, SourceSpan 35 36),
+        ("term after type alias", "let rime:* ≔ ℤ let worth:string ≔ ℤ", TypeDiagnostic, SourceSpan 35 36),
         ("term after data declaration", "ilk item: * { worth: item } let other:string ≔ worth", TypeDiagnostic, SourceSpan 47 52),
         ("unicode source offset", "let 😀 ≔ 1 let worth:string ≔ 😀", TypeDiagnostic, SourceSpan 30 32),
         ("lexer eof position", "\n  'unterminated", ParseDiagnostic, SourceSpan 16 16),
@@ -52,11 +52,11 @@ diagnosticCases =
 
 importedCases :: [Test]
 importedCases =
-  [ expectEq ("imported diagnostic " ++ path ++ ": " ++ dependency) (Just (Just path, span)) (summary <$> diagnose "use dep.tung" imports)
+  [ expectEq ("imported diagnostic " ++ path ++ ": " ++ dependency) (Just (Just path, span)) (summary <$> diagnose "bring dep.tung" imports)
   | (dependency, span) <- [("let worth ≔ 1 let other ≔ )", SourceSpan 26 27), ("let worth:string ≔ 1", SourceSpan 19 20), ("'😀", SourceSpan 3 3)],
     (path, imports) <-
       [ ("dep.tung", Map.singleton "dep.tung" dependency),
-        ("nested.tung", Map.fromList [("dep.tung", "use nested.tung"), ("nested.tung", dependency)])
+        ("nested.tung", Map.fromList [("dep.tung", "bring nested.tung"), ("nested.tung", dependency)])
       ]
   ]
   where
@@ -66,9 +66,9 @@ importFailureCases :: [Test]
 importFailureCases =
   [ expectEq name (Just (path, span)) (summary <$> diagnose source imports)
   | (name, source, imports, path, span) <-
-      [ ("missing root import", "use absent.tung", Map.empty, Nothing, SourceSpan 4 10),
-        ("missing nested import", "use dep.tung", Map.singleton "dep.tung" "use absent.tung", Just "dep.tung", SourceSpan 4 10),
-        ("a cycle is located in the importing module", "use a.tung", Map.fromList [("a.tung", "use b.tung"), ("b.tung", "use a.tung")], Just "b.tung", SourceSpan 4 5)
+      [ ("missing root import", "bring missing.tung", Map.empty, Nothing, SourceSpan 4 10),
+        ("missing nested import", "bring dep.tung", Map.singleton "dep.tung" "bring missing.tung", Just "dep.tung", SourceSpan 4 10),
+        ("a cycle is located in the importing module", "bring a.tung", Map.fromList [("a.tung", "bring b.tung"), ("b.tung", "bring a.tung")], Just "b.tung", SourceSpan 4 5)
       ]
   ]
   where
@@ -84,7 +84,7 @@ acceptedCases =
           Map.empty
         ),
         ( "adjacent imported evidence",
-          "use dep.tung\nlet checked:truth ≔ +1 < +0",
+          "bring dep.tung\nlet checked:truth ≔ +1 < +0",
           Map.singleton "dep.tung" "show ilk truth: * { yea: truth, nay: truth } show flock less:[a:*, *] { let ≤:[a, a, truth] } show let <:[@a:*, @:a less, x: a, y: a, truth] ≔ x ≤ y bizen:ℤ less { let ≤: [x:, y:] ≔ yea }"
         )
       ]
@@ -106,7 +106,7 @@ unlocatedCases =
     expectEq
       "an unlocated imported failure useth its empty owning source"
       (Diagnostic ParseDiagnostic (Just "dep.tung") (SourceSpan 0 0) "parse error: source:9:4: invalid input")
-      (failureDiagnostic "use dep.tung" (Map.singleton "dep.tung" "") (CompileFailure ParseFailure (Just "dep.tung") Nothing "source:9:4: invalid input"))
+      (failureDiagnostic "bring dep.tung" (Map.singleton "dep.tung" "") (CompileFailure ParseFailure (Just "dep.tung") Nothing "source:9:4: invalid input"))
   ]
 
 encodedCases :: [Test]

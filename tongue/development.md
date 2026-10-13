@@ -125,7 +125,7 @@ and erased execution have separate public facades: `Tung.Dependent.Source` and
 ## projects and imports
 
 `Tung.Project` discovereth raw sources before checking. it applieth the
-[module search rules](language.md#libraries-and-imports) to each `use`.
+[module search rules](language.md#libraries-and-imports) to each `bring`.
 a `Project` holdeth root text, reachable imported text, and file paths for
 reporting diagnostics.
 
@@ -286,12 +286,12 @@ results; dependent groups cover kernel and source rules directly.
 `TUNG_TEST_GROUP` rejecteth every unknown name and an empty explicit selection.
 fixture source replacements invalidate compiled dependencies in both shared
 test helpers. executable tests compare predictable byspel output and exit
-status exactly; `word_count` receiveth a real file.
+status exactly; `word_rime` receiveth a real file.
 
 ## formatting and editor protocol
 
 `Tung.Format` is the authoritative two-space formatter for the cli and editor.
-it preserveth comments and incomplete source, sorteth contiguous `use` blocks,
+it preserveth comments and incomplete source, sorteth contiguous `bring` blocks,
 aligneth the columns and `^` of consecutive case rows that share indentation
 and column count, and remaineth idempotent. it invoketh neither parsing nor type checking.
 
@@ -365,7 +365,7 @@ directories. a git pin may select one `subdir` of a repository. the
 [language reference](language.md#libraries-and-imports)
 defineth manifest syntax and observable conflict rules.
 
-the flat `use` namespace cannot distinguish two revisions of one library. raw
+the flat `bring` namespace cannot distinguish two revisions of one library. raw
 commit hashes have no useful version order. the resolver cannot choose a newer
 pin or silently override an exact requirement. one library name must also
 resolve to the same local path throughout the graph.

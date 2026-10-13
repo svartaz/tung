@@ -102,9 +102,9 @@ test("ilk-returning let declarations have type roles", async () => {
 });
 test("declaration annotations retain compiler roles for prefixed names and greek parameters", async () => {
   const source =
-    "let count:* ≔ ℤ\n" +
+    "let rime:* ≔ ℤ\n" +
     "let sameness:[@α:*, x:α, α] ≔ x\n" +
-    "let answer:count ≔ +42 sameness @count";
+    "let answer:rime ≔ +42 sameness @rime";
   const labels = await sourceLabels(source);
   assert.deepEqual(labels("count"), ["type:declaration", "type:", "type:"]);
   assert.deepEqual(labels("α"), [

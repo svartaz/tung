@@ -2,6 +2,8 @@
 ## passed unapplied, as in `bizen: → semigroupoid`.
 show let →: [α: *, β: *, *] ≔ [α, β]
 
+show let ←: [β: *, α: *, *] ≔ [α, β]
+
 show let call: [@α: *, @β: *, a: α, f: [α, β], β] ≔
   a f
 

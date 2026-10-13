@@ -1,5 +1,5 @@
-use flock/functor.tung
-use ilk/two.tung
+bring flock/functor.tung
+bring ilk/two.tung
 
 show flock hath_sift: [φ: [*, *], @: φ functor, *] {
   let sift: [@α: *, α φ, [α, 𝟚], α φ]

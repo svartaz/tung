@@ -1,4 +1,4 @@
-use ilk/natural.tung
+bring ilk/kindful.tung
 
 show flock hath_greatness: [α: *, *] {
   let greatness: [α, ℕ]

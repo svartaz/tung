@@ -1,4 +1,4 @@
-show let turn: float ≔ 6.28318530717958647692
+show let spin: float ≔ 6.28318530717958647692
 
 show let napier: float ≔ 2.71828182845904523536
 

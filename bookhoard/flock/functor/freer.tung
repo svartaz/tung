@@ -1,26 +1,26 @@
-use flock/algebra/half/category.tung
-use flock/algebra/half/semigroupoid.tung
-use flock/functor.tung
-use flock/functor/atfoldsome.tung
-use flock/functor/monad.tung
-use is.tung
+bring flock/algebra/half/category.tung
+bring flock/algebra/half/semigroupoid.tung
+bring flock/functor.tung
+bring flock/functor/atfoldsome.tung
+bring flock/functor/monad.tung
+bring is.tung
 
-## a computation: either a result, or one request and the continuation that
+## a computation: either an outcome, or one request and the continuation that
 ## receiveth its answer. a request `ξ φ` asketh for a `ξ`; φ need not be a
-## functor, and the ilk stayeth strictly positive, so every fall below
+## functor, and the ilk stayeth tightly positive, so every fall below
 ## selfcalleth structurally.
 show ilk freer: [φ: [*, *], α: *, *] {
   done: [α, φ freer α],
   more: [@ξ: *, ξ φ, [ξ, φ freer α], φ freer α]
 }
 
-## run the continuation on the result, after every request.
+## run the continuation on the outcome, after every request.
 show let bind: [@φ: [*, *], @α: *, @β: *, φ freer α, [α, φ freer β], φ freer β] ≔ {
   worth done,               next ^ worth next,
   request more throughwone, next ^ request more { answer ^ (answer throughwone) bind next }
 }
 
-## a forewrit of one request, whose answer is its result.
+## a forewrit of one request, whose answer is its outcome.
 show let lift: [@φ: [*, *], @α: *, request: α φ, φ freer α] ≔
   request more done
 
@@ -46,7 +46,7 @@ let warp_warp: [@φ: [*, *], @α: *, @β: *, @γ: *, forewrit: φ freer α, f: [
     request more throughwone ^ (request more) leibnitz ({answer ^ (answer throughwone) warp_warp f g} fall_umtake)
   }
 
-## flattening a forewrit whose results are wrapped in `done` keepeth it.
+## flattening a forewrit whose outcomes are wrapped in `done` keepeth it.
 let warp_done_flat: [@φ: [*, *], @α: *, forewrit: φ freer α, ((forewrit warp done) flat) = forewrit] ≔
   match forewrit {
     _ done                   ^ eftbend,
@@ -54,7 +54,7 @@ let warp_done_flat: [@φ: [*, *], @α: *, forewrit: φ freer α, ((forewrit warp
   }
 
 ## interpret a forewrit: `handle` answereth each request by calling its
-## continuation, and `leaf` turneth the result into the answer.
+## continuation, and `leaf` turneth the outcome into the answer.
 show let gather: [
   @φ: [*, *], @α: *, @β: *,
   [α, β],
@@ -66,8 +66,8 @@ show let gather: [
   leaf, handle, request more throughwone ^ request handle { answer ^ leaf gather handle (answer throughwone) }
 }
 
-## general warping and right-sameness proofs need fall umtaking
-## to turn pointwise continuation proofs into sameness of `more` forewrits.
+## general warping and right-sameness seethings need fall umtaking
+## to make pointwise continuation seethings into sameness of `more` forewrits.
 bizen: [@φ: [*, *], (φ freer) functor] {
   let warp: [forewrit:, tweak:] ≔ forewrit warp tweak
 

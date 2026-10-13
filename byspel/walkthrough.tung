@@ -3,23 +3,23 @@
 # `#` beginneth a comment. `##` before a declaration documenteth it.
 
 # 0. modules
-# `use` bringeth in a bookhoard module. its names are usable bare, or
+# `bring` bringeth in a bookhoard module. its names are usable bare, or
 # qualified by the module's last name: `list~empty`. a second word after the
 # path chooseth another qualifier, as `hashmap` here.
-use deed/misfaresome.tung
-use deed/onstand.tung
-use ground.tung
-use ilk/list.tung
-use ilk/maybe.tung
-use ilk/product.tung
-use ilk/sum.tung
-use ilk/wordbook.tung hashmap
-use is.tung
-use numeric/withstand.tung
+bring deed/misfaresome.tung
+bring deed/onstand.tung
+bring ilk/list.tung
+bring ilk/maybe.tung
+bring ilk/product.tung
+bring ilk/sum.tung
+bring ilk/wordbook.tung hashmap
+bring is.tung
+bring numeric/withstand.tung
+bring often.tung
 
 # 1. values
 # `let name ≔ value` defineth a name. `:` writeth its type.
-let count: ℕ ≔ 42 # a natural number, never below naught
+let rime: ℕ ≔ 42 # a natural number, never below naught
 let tale: ℤ ≔ -7 # a whole number always hath a sign: +7 or -7
 let half: float ≔ 0.5
 let letter: unicode ≔ `λ
@@ -42,7 +42,7 @@ let ten: ℤ ≔ <{+, +1, +2, +3, +4}
 # a function type is written in brackets: `[ℤ, ℤ]` taketh an ℤ and giveth an
 # ℤ. a slot with a name, `x:`, bindeth that input in the body.
 let double: [x: ℤ, ℤ] ≔ x + x
-# a slot without a name is supplied by a lambda `{input ^ result}`.
+# a slot without a name is supplied by a lambda `{input ^ outcome}`.
 let triple: [ℤ, ℤ] ≔ {x ^ (x + x) + x}
 # a slot's type or the result may be left out when it can be inferred.
 let quadruple: [x: ℤ] ≔ x double $ double
@@ -62,15 +62,15 @@ let greeting: string ≔ 'hello' withstand +42
 let explicit_greeting: string ≔ 'hello' withstand @string @ℤ +42
 
 # 5. local definitions
-# `( let … yield result )` defineth names that only the result seeth.
+# `( let … yield outcome )` defineth names that only the result seeth.
 let seven: ℤ ≔ (
   let six ≔ +2 · +3
   yield six + +1
 )
 
 # 6. matching
-# `match value { pattern ^ result, … }` chooseth the first row that fitteth.
-let sign: [x: ℤ, string] ≔ match x {
+# `match value { pattern ^ outcome, … }` chooseth the first row that fitteth.
+let mark: [x: ℤ, string] ≔ match x {
   +0 ^ 'naught',
   _  ^ 'other' # `_` fitteth anything
 }
@@ -102,10 +102,10 @@ ilk shape: * {
   circle: [float, shape],
   rectangle: [float, float, shape]
 }
-# `turn` is a full turn of the circle, 6.28…; a circle's area is half a
+# `spin` is a full turn of the circle, 6.28…; a circle's area is half a
 # turn times its radius squared.
 let area: [shape, float] ≔ {
-  r circle      ^ ((turn · r) · r) · 0.5,
+  r circle      ^ ((spin · r) · r) · 0.5,
   w rectangle h ^ w · h
 }
 # an ilk may take type inputs, as lists and `maybe` do.
@@ -118,9 +118,7 @@ ilk row: [α: *, ℕ, *] {
   stop: α row 0,
   more: [@n: ℕ, α, α row n, α row (n heir)]
 }
-let first: [@α: *, @n: ℕ, r: α row (n heir), α] ≔ match r {
-  a more _ ^ a
-}
+let first: [@α: *, @n: ℕ, a more _: α row (n heir), α] ≔ a
 
 # 9. fields
 # an ilk with one constructor whose inputs have names hath fields, read
@@ -182,7 +180,7 @@ let naught_+: [n: ℕ, (0 + n) = n] ≔ match n {
 }
 # `sorry` standeth in for any value or proof not yet written, and
 # `orsetting name: type` assumeth one. `--check` listeth both, and
-# `--no-sorry` refuseth them. `tung --check-proof naught_+ byspel/walkthrough.tung`
+# `--no-sorry` refuseth them. `tung --check-seething naught_+ byspel/walkthrough.tung`
 # listeth what one proof reacheth; `--no-axioms` also refuseth any `orsetting`.
 
 # 13. deeds
@@ -212,9 +210,9 @@ let ages_report: 𝟙 deed ≔
     n incast₁   ^ n to_string $ write_line
   }
 # `σ onstand α` is a deed that readeth and changeth a state `σ`.
-let counted: ℕ onstand ℕ ≔ >{then, {n ^ n + 1} tweak, {n ^ n + 1} tweak, get}
-let count_report: 𝟙 deed ≔
-  (counted onstand~run 10) bind {p ^ p forthcast₀ $ to_string $ write_line}
+let rimed: ℕ onstand ℕ ≔ >{then, {n ^ n + 1} tweak, {n ^ n + 1} tweak, get}
+let rime_report: 𝟙 deed ≔
+  (rimed onstand~run 10) bind {p ^ p forthcast₀ $ to_string $ write_line}
 
 # 15. tasks
 # `fork` startetth a deed alongside; `wait` taketh its result as `maybe`.
@@ -229,7 +227,7 @@ let main: 𝟙 deed ≔ >{then,
   eftbare,
   message write_line,
   ages_report,
-  count_report,
+  rime_report,
   background,
   roll
 }

@@ -34,7 +34,7 @@ let laps: [0 cycle, ℕ] ≔ {
   (child up) down ^ (child laps) heir
 }
 
-let turns: [k: ℕ, x: (k heir) cycle, ℕ] ≔ match x {
+let spins: [k: ℕ, x: (k heir) cycle, ℕ] ≔ match x {
   stop up         ^ 0,
-  (child down) up ^ (0 turns child) heir
+  (child down) up ^ (0 spins child) heir
 }

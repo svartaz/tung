@@ -1,29 +1,29 @@
-use combinator.tung
-use flock/algebra/half/category.tung
-use flock/algebra/half/semigroupoid.tung
-use flock/algebra/whole/hath_eke.tung
-use flock/algebra/whole/hath_fold.tung
-use flock/algebra/whole/hath_offdraw.tung
-use flock/algebra/whole/monoid_fold.tung
-use flock/algebra/whole/semigroup_fold.tung
-use flock/functor.tung
-use flock/functor/atfoldsome.tung
-use flock/functor/downshaper.tung
-use flock/functor/hath_sift.tung
-use flock/functor/hath_throughwend.tung
-use flock/functor/monad.tung
-use flock/hath_greatness.tung
-use flock/hath_inhold.tung
-use flock/hath_same.tung
-use flock/order/hath_at_most.tung
-use flock/same_to_is.tung
-use ilk/maybe.tung
-use ilk/natural.tung
-use ilk/one.tung
-use ilk/product.tung
-use ilk/two.tung
-use ilk/wholetale.tung
-use is.tung
+bring combinator.tung
+bring flock/algebra/half/category.tung
+bring flock/algebra/half/semigroupoid.tung
+bring flock/algebra/whole/hath_eke.tung
+bring flock/algebra/whole/hath_fold.tung
+bring flock/algebra/whole/hath_offdraw.tung
+bring flock/algebra/whole/monoid_fold.tung
+bring flock/algebra/whole/semigroup_fold.tung
+bring flock/functor.tung
+bring flock/functor/atfoldsome.tung
+bring flock/functor/downshaper.tung
+bring flock/functor/hath_sift.tung
+bring flock/functor/hath_throughwend.tung
+bring flock/functor/monad.tung
+bring flock/hath_greatness.tung
+bring flock/hath_inhold.tung
+bring flock/hath_same.tung
+bring flock/order/hath_at_most.tung
+bring flock/same_to_is.tung
+bring ilk/kindful.tung
+bring ilk/maybe.tung
+bring ilk/one.tung
+bring ilk/product.tung
+bring ilk/two.tung
+bring ilk/wholetale.tung
+bring is.tung
 
 ## finite linked lists.
 show ilk list: [α: *, *] {
@@ -32,33 +32,33 @@ show ilk list: [α: *, *] {
 }
 
 let holds: [@α: *, @: α hath_≍, α list, α, 𝟚] ≔ {
-  empty,        _ ^ nay,
-  first ‥ rest, a ^ (a ≍ first) if yea (rest holds a)
+  empty,            _ ^ nay,
+  first ‥ leftover, a ^ (a ≍ first) if yea (leftover holds a)
 }
 
 bizen: [@α: *, @: α hath_≍, (α list) hath_∋ α] {
   let ∋ ≔ holds
 }
 
-## `count` wholetales from start.
-let count_up: [ℤ, ℕ, ℤ list] ≔ {
+## `rime` wholetales from start.
+let rime_up: [ℤ, ℕ, ℤ list] ≔ {
   _,     0      ^ empty,
-  start, n heir ^ start ‥ (start + +1 $ count_up n)
+  start, n heir ^ start ‥ (start + +1 $ rime_up n)
 }
 
 ## wholetale range from start up to stop, excluding stop.
 show let till: [start: ℤ, stop: ℤ, ℤ list] ≔
   match (start -+ stop) to_ℕ {
-    none       ^ empty,
-    count some ^ start count_up count
+    none      ^ empty,
+    rime some ^ start rime_up rime
   }
 
 ## build a one-element list.
 show let onesome: [@α: *, a: α, α list] ≔ a ‥ empty
 
 let athang: [@α: *, α list, α list, α list] ≔ {
-  empty,        m ^ m,
-  first ‥ rest, m ^ first ‥ (rest athang m)
+  empty,            m ^ m,
+  first ‥ leftover, m ^ first ‥ (leftover athang m)
 }
 
 bizen: [@α: *, (α list) semigroup_·] {
@@ -66,7 +66,7 @@ bizen: [@α: *, (α list) semigroup_·] {
 
   let ·_·: [a:, b:, c:] ≔
     {l: α list ^ (l · (b · c)) = ((l · b) · c)} unbuild list eftbend
-      {first, _, proof ^ (first ‥) leibnitz proof} a
+      {first, _, seething ^ (first ‥) leibnitz seething} a
 }
 
 bizen: [@α: *, (α list) monoid_·] {
@@ -76,12 +76,12 @@ bizen: [@α: *, (α list) monoid_·] {
 
   let ·_one: [a:] ≔
     {l: α list ^ (l · empty) = l} unbuild list eftbend
-      {first, _, proof ^ (first ‥) leibnitz proof} a
+      {first, _, seething ^ (first ‥) leibnitz seething} a
 }
 
 let warp: [@α: *, @β: *, α list, [α, β], β list] ≔ {
-  empty,        _ ^ empty,
-  first ‥ rest, f ^ (first f) ‥ (rest warp f)
+  empty,            _ ^ empty,
+  first ‥ leftover, f ^ (first f) ‥ (leftover warp f)
 }
 
 bizen: list functor {
@@ -89,17 +89,17 @@ bizen: list functor {
 
   let warp_sameness: [@α:, a:] ≔
     {l: α list ^ (l warp sameness) = l} unbuild list eftbend
-      {first, _, proof ^ (first ‥) leibnitz proof} a
+      {first, _, seething ^ (first ‥) leibnitz seething} a
 }
 
 let atfold: [@α: *, @β: *, α list, [α, β] list, β list] ≔ {
-  _, empty        ^ empty,
-  l, first ‥ rest ^ (l warp first) athang (l atfold rest)
+  _, empty            ^ empty,
+  l, first ‥ leftover ^ (l warp first) athang (l atfold leftover)
 }
 
 let flat: [@α: *, (α list) list, α list] ≔ {
-  empty        ^ empty,
-  first ‥ rest ^ first athang (rest flat)
+  empty            ^ empty,
+  first ‥ leftover ^ first athang (leftover flat)
 }
 
 bizen: list monad {
@@ -111,31 +111,31 @@ bizen: list monad {
 
   let sheer_bind: [@α:, @β:, a:, f:] ≔
     {l: β list ^ (l · empty) = l} unbuild list eftbend
-      {first, _, proof ^ (first ‥) leibnitz proof} (a f)
+      {first, _, seething ^ (first ‥) leibnitz seething} (a f)
 
   let warp_sheer_flat: [@α:, a:] ≔
     {l: α list ^ (l warp sheer $ flat) = l} unbuild list eftbend
-      {first, _, proof ^ (first ‥) leibnitz proof} a
+      {first, _, seething ^ (first ‥) leibnitz seething} a
 
   let atfold_sameness_sheer: [@α:, a:] ≔
     {l: α list ^ (l atfold (sameness sheer)) = l} unbuild list eftbend
-      {first, _, proof ^ (first ‥) leibnitz proof} a
+      {first, _, seething ^ (first ‥) leibnitz seething} a
 
   let sheer_atfold_sheer: [_:, _:] ≔ eftbend
 
   let atfold_atfold: [@α:, @β:, @γ:, a:, f:, g:] ≔
     {l: α list ^ <{atfold, l, f sheer, g sheer} = (l atfold (f ▷ g $ sheer))} unbuild list eftbend
-      {first, _, proof ^ ((first f $ g) ‥) leibnitz proof} a
+      {first, _, seething ^ ((first f $ g) ‥) leibnitz seething} a
   let sheer_atfold: [@α:, @β:, a:, fs:] ≔
     {l: [α, β] list ^ ((a sheer) atfold l) = (l warp (a call))} unbuild list eftbend
-      {first, _, proof ^ ((a first) ‥) leibnitz proof} fs
+      {first, _, seething ^ ((a first) ‥) leibnitz seething} fs
 }
 
 let sift: [@α: *, α list, [α, 𝟚], α list] ≔ {
-  empty,        _ ^ empty,
-  first ‥ rest, f ^ match first f {
-    yea ^ first ‥ (rest sift f),
-    nay ^ rest sift f
+  empty,            _ ^ empty,
+  first ‥ leftover, f ^ match first f {
+    yea ^ first ‥ (leftover sift f),
+    nay ^ leftover sift f
   }
 }
 
@@ -155,46 +155,46 @@ show let head: [@α: *, α list, α maybe] ≔ {
 
 ## list without its first element, if present.
 show let tail: [@α: *, α list, (α list) maybe] ≔ {
-  empty    ^ none,
-  _ ‥ rest ^ rest some
+  empty        ^ none,
+  _ ‥ leftover ^ leftover some
 }
 
 show let behead: [@α: *, α list, (α ∏ (α list)) maybe] ≔ {
-  empty        ^ none,
-  first ‥ rest ^ (first both rest) some
+  empty            ^ none,
+  first ‥ leftover ^ (first both leftover) some
 }
 
-## first count elements.
+## first rime elements.
 show let take: [@α: *, α list, ℕ, α list] ≔ {
-  _,            0;
-  empty,        _ ^ empty,
-  first ‥ rest, n ^ first ‥ (rest take (n ∸ 1))
+  _,                0;
+  empty,            _ ^ empty,
+  first ‥ leftover, n ^ first ‥ (leftover take (n ∸ 1))
 }
 
-## list after removing count elements.
+## list after ridding rime elements.
 show let drop: [@α: *, α list, ℕ, α list] ≔ {
-  l,        0 ^ l,
-  empty,    _ ^ empty,
-  _ ‥ rest, n ^ rest drop (n ∸ 1)
+  l,            0 ^ l,
+  empty,        _ ^ empty,
+  _ ‥ leftover, n ^ leftover drop (n ∸ 1)
 }
 
 ## first element accepted by an umbsay.
 show let find: [@α: *, α list, [α, 𝟚], α maybe] ≔ {
-  empty,        _ ^ none,
-  first ‥ rest, f ^ match first f {
+  empty,            _ ^ none,
+  first ‥ leftover, f ^ match first f {
     yea ^ first some,
-    nay ^ rest find f
+    nay ^ leftover find f
   }
 }
 
 let gather₀: [@α: *, @β: *, α list, β, [α, β, β], β] ≔ {
-  empty,        b, _ ^ b,
-  first ‥ rest, b, f ^ first f (rest gather₀ b f)
+  empty,            b, _ ^ b,
+  first ‥ leftover, b, f ^ first f (leftover gather₀ b f)
 }
 
 let gather₁: [@α: *, @β: *, α list, β, [β, α, β], β] ≔ {
-  empty,        b, _ ^ b,
-  first ‥ rest, b, f ^ rest gather₁ (b f first) f
+  empty,            b, _ ^ b,
+  first ‥ leftover, b, f ^ leftover gather₁ (b f first) f
 }
 
 bizen: list downshaper {
@@ -203,8 +203,8 @@ bizen: list downshaper {
 }
 
 let throughwend: [@μ: [*, *], @: μ atfoldsome, @α: *, @β: *, α list, [α, β μ], (β list) μ] ≔ {
-  empty,        _ ^ empty sheer,
-  first ‥ rest, f ^ (first f) lift₂ (rest throughwend f) ‥
+  empty,            _ ^ empty sheer,
+  first ‥ leftover, f ^ (first f) lift₂ (leftover throughwend f) ‥
 }
 
 bizen: list hath_throughwend {
@@ -235,16 +235,16 @@ show let at: [@α: *, l: α list, index: ℕ, α maybe] ≔
 show let last: [@α: *, l: α list, α maybe] ≔
   l gather₁ none { _, α ^ α some }
 
-## repeat a worth count times.
-show let replicate: [@α: *, α, ℕ, α list] ≔ {
+## repeat a worth rime times.
+show let eftfold: [@α: *, α, ℕ, α list] ≔ {
   _, 0      ^ empty,
-  a, n heir ^ a ‥ (a replicate n)
+  a, n heir ^ a ‥ (a eftfold n)
 }
 
-## split worths accepted and rejected by an umbsay.
+## split worths accepted and forsaken by an umbsay.
 show let partition: [@α: *, l: α list, f: [α, 𝟚], (α list) ∏ (α list)] ≔
-  l gather₀ (empty both empty) { α, accepted both rejected ^
-    (α f) if ((α ‥ accepted) both rejected) (accepted both (α ‥ rejected))
+  l gather₀ (empty both empty) { α, accepted both forsaken ^
+    (α f) if ((α ‥ accepted) both forsaken) (accepted both (α ‥ forsaken))
   }
 
 ## split a list of products into two lists.

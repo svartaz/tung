@@ -1,16 +1,16 @@
-use flock/algebra/whole/hath_eke.tung
-use flock/algebra/whole/hath_fold.tung
-use flock/algebra/whole/hath_fold.tung
-use flock/algebra/whole/hath_naught.tung
-use flock/algebra/whole/hath_one.tung
-use flock/algebra/whole/monoid_eke.tung
-use flock/algebra/whole/monoid_fold.tung
-use flock/algebra/whole/monoid_fold.tung
-use flock/algebra/whole/semigroup_fold.tung
-use flock/order/semilattice_bounded_upper.tung
-use flock/order/semilattice_lower.tung
-use flock/order/semilattice_upper.tung
-use flock/order/semilattice_upper_bounded.tung
+bring flock/algebra/whole/hath_eke.tung
+bring flock/algebra/whole/hath_fold.tung
+bring flock/algebra/whole/hath_fold.tung
+bring flock/algebra/whole/hath_naught.tung
+bring flock/algebra/whole/hath_one.tung
+bring flock/algebra/whole/monoid_eke.tung
+bring flock/algebra/whole/monoid_fold.tung
+bring flock/algebra/whole/monoid_fold.tung
+bring flock/algebra/whole/semigroup_fold.tung
+bring flock/order/semilattice_hemmed_upper.tung
+bring flock/order/semilattice_lower.tung
+bring flock/order/semilattice_upper.tung
+bring flock/order/semilattice_upper_hemmed.tung
 
 show flock downshaper: [φ: [*, *], *] {
   let gather₀: [@α: *, @β: *, α φ, β, [α, β, β], β]
@@ -25,11 +25,11 @@ show let gather_warp: [@β: *, @: β monoid_·, @φ: [*, *], @: φ downshaper, @
 
 ## combine every worth with ∧; an empty collection yieldeth ⊤.
 show let …∧: [
-  @φ: [*, *], @: φ downshaper, @α: *, @: α semilattice_bounded_upper, af: α φ, α
+  @φ: [*, *], @: φ downshaper, @α: *, @: α semilattice_hemmed_upper, af: α φ, α
 ] ≔ af gather₁ ⊤ ∧
 
 ## combine every worth with ∨; an empty collection yieldeth ⟂.
-show let …∨: [@φ: [*, *], @: φ downshaper, @α: *, @: α semilattice_upper_bounded, af: α φ, α] ≔ af gather₁ ⟂ ∨
+show let …∨: [@φ: [*, *], @: φ downshaper, @α: *, @: α semilattice_upper_hemmed, af: α φ, α] ≔ af gather₁ ⟂ ∨
 
 ## eke every worth in a gatherable collection.
 show let …+: [@φ: [*, *], @: φ downshaper, @α: *, @: α monoid_+, af: α φ, α] ≔ af gather₁ naught +

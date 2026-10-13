@@ -1,19 +1,19 @@
-use flock/algebra/whole/hath_eke.tung
-use flock/algebra/whole/hath_fold.tung
-use flock/algebra/whole/hath_fold.tung
-use flock/algebra/whole/semigroup_fold.tung
-use flock/functor.tung
-use flock/hath_greatness.tung
-use flock/hath_same.tung
-use flock/order/hath_at_most.tung
-use flock/order/order_half.tung
-use flock/order/order_whole.tung
-use ilk/list.tung
-use ilk/maybe.tung
-use ilk/natural.tung
-use ilk/product.tung
-use ilk/three.tung
-use ilk/two.tung
+bring flock/algebra/whole/hath_eke.tung
+bring flock/algebra/whole/hath_fold.tung
+bring flock/algebra/whole/hath_fold.tung
+bring flock/algebra/whole/semigroup_fold.tung
+bring flock/functor.tung
+bring flock/hath_greatness.tung
+bring flock/hath_same.tung
+bring flock/order/hath_at_most.tung
+bring flock/order/order_half.tung
+bring flock/order/order_whole.tung
+bring ilk/kindful.tung
+bring ilk/list.tung
+bring ilk/maybe.tung
+bring ilk/product.tung
+bring ilk/three.tung
+bring ilk/two.tung
 
 ## a finite wordbook kept as a weight-balanced search tree, ordered by its keys.
 ## each node holdeth its weight, the tale of its entries.
@@ -108,21 +108,21 @@ show let put: [@α: *, @: α order_whole, @β: *, t: α tree β, key: α, worth:
     }
   }
 
-# the least entry and the rest of the tree, if any.
+# the least entry and the leftover of the tree, if any.
 let behead: [@α: *, @β: *, t: α tree β, ((α ∏ β) ∏ (α tree β)) maybe] ≔
   match t {
     leaf           ^ none,
     _ node k v l r ^ match l behead {
-      none                   ^ ((k both v) both r) some,
-      (least both rest) some ^ (least both (k balance v rest r)) some
+      none                       ^ ((k both v) both r) some,
+      (least both leftover) some ^ (least both (k balance v leftover r)) some
     }
   }
 
 # two trees whose keys are ordered one before the other, yoked.
 let glue: [@α: *, @β: *, left: α tree β, right: α tree β, α tree β] ≔
   match right behead {
-    none                        ^ left,
-    ((k both v) both rest) some ^ k balance v left rest
+    none                            ^ left,
+    ((k both v) both leftover) some ^ k balance v left leftover
   }
 
 ## the tree without a key.

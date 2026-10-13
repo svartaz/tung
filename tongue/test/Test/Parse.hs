@@ -35,7 +35,7 @@ accepted =
     ("sorry is an expression", "let answer:ℤ ≔ sorry"),
     ("string-keyed fremmed let", "let plus:[ℤ, ℤ, ℤ] ≔ 'eke_wholetale' fremmed"),
     ("adjacent declarations and final yield", "let x ≔ +1 let y ≔ +2 yield x + y"),
-    ("type aliases", "let count:* ≔ ℤ let answer:count ≔ +42 let powerset:[a:*, *] ≔ a → 𝟚"),
+    ("type aliases", "let rime:* ≔ ℤ let answer:rime ≔ +42 let powerset:[a:*, *] ≔ a → 𝟚"),
     ("type composition aliases", "let paired:* ≔ >{pair, ℤ, string, unicode} let nested:* ≔ >{pair, >{pair, ℤ, string}, string}"),
     ("algebraic data", "ilk maybe: [a:*, *] { none: a maybe, some: [a, a maybe] }"),
     ("adjacent constructor signatures", "ilk list: [a:*, *] { empty: a list, ‥: [a, a list, a list] }"),
@@ -56,8 +56,8 @@ accepted =
     ("bizen uses second-is-function order", "flock convert:[a:*, b:*, *] { let convert:[a, b] } bizen:ℤ convert string { let convert: [x:] ≔ 'x' }"),
     ("bizen heads may be function types", "bizen:[@a:*, a, a] marker {} bizen:ℤ marker [@a:*, a, a] (ℤ list) {}"),
     ("adjacent bizen members", "bizen:ℤ linked { let first: [@a:*, @:a hath_≍, x:] ≔ x let second: [x:] ≔ x first }"),
-    ("show prefixeth declarations", "show let answer ≔ +42 show let count:* ≔ ℤ show ilk maybe: [a:*, *] { none: a maybe, some: [a, a maybe] } show flock hath_≍:[a:*, *] { let ≍:[a, a, 𝟚] }"),
-    ("re-exports", "use file.tung show file~worth show file~first, file~second"),
+    ("show prefixeth declarations", "show let answer ≔ +42 show let rime:* ≔ ℤ show ilk maybe: [a:*, *] { none: a maybe, some: [a, a maybe] } show flock hath_≍:[a:*, *] { let ≍:[a, a, 𝟚] }"),
+    ("re-exports", "bring file.tung show file~worth show file~first, file~second"),
     ("matches", "yield match +1, 'yes' { +0, 'yes' ^ +1, _, _ ^ +0 }"),
     ("anonymous curried function", "yield {x, y, z ^ z}"),
     ("empty consuming match", "yield match x {}"),
@@ -82,16 +82,16 @@ rejected =
     ("flock member requireth a bracketed type", "flock bad:[a:*, *] { let member a }"),
     ("a flock signature endeth in a kind", "flock bad:[a:*] {}"),
     ("member brackets require a final result expression", "flock bad:[a:*, *] { let rule:[x:a] }"),
-    ("use requireth a path", "use"),
+    ("bring requireth a path", "bring"),
     ("bizen evidence cannot be shown", "show bizen:ℤ missing {}"),
     ("fremmed let requireth an annotation", "let plus ≔ 'eke_wholetale' fremmed"),
     ("fremmed marker cannot be nested", "let bad:ℤ ≔ ('eke_wholetale' fremmed)"),
     ("fremmed let must be file-level", "let outer: [_:] ≔ (let plus:[ℤ, ℤ, ℤ] ≔ 'eke_wholetale' fremmed yield +1)"),
-    ("use alias must be unqualified", "use ilk/list.tung list~short"),
-    ("use alias must be slash-free", "use ilk/list.tung sequence/list"),
-    ("qualified namespace must be slash-free", "use ilk/list.tung yield ilk/list~empty"),
+    ("use alias must be unqualified", "bring ilk/list.tung list~short"),
+    ("use alias must be slash-free", "bring ilk/list.tung sequence/list"),
+    ("qualified namespace must be slash-free", "bring ilk/list.tung yield ilk/list~empty"),
     ("show requireth a name", "show"),
-    ("show cannot prefix use", "show use ground.tung"),
+    ("show cannot prefix use", "show bring often.tung"),
     ("show cannot prefix an expression", "show +42"),
     ("local block requireth yield", "yield (let x ≔ +1 x)"),
     ("ilk requireth a body", "ilk maybe"),
@@ -112,9 +112,9 @@ rejected =
 importCases :: [Test]
 importCases =
   [ expectEq ("complete use " ++ source) (Right [ImportDeclaration path alias]) (parseSource source)
-  | path <- ["ground.tung", "ilk/list.tung", "a.extra.tung", "pkg.one/query.tung"],
+  | path <- ["often.tung", "ilk/list.tung", "a.extra.tung", "pkg.one/query.tung"],
     alias <- [Nothing, Just "chosen"],
-    let source = "use " ++ path ++ maybe "" (" " ++) alias
+    let source = "bring " ++ path ++ maybe "" (" " ++) alias
   ]
 
 -- each expression and its location-free sketch, function first.

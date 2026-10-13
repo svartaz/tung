@@ -4,10 +4,10 @@ import { findDefinition, tokenAtPosition } from "../server/analysis.ts";
 import { analyzed } from "./compiler.ts";
 test("declaration annotations expose definitions and scoped parameters in incomplete buffers", async () => {
   const source = [
-    "show let count:* ≔ ℤ",
+    "show let rime:* ≔ ℤ",
     "show let sameness:[@α:*, x:α, α] ≔ x",
     "let hath_+: [x:, y:ℤ, ℤ] ≔ x + y",
-    "let answer:count ≔ +42",
+    "let answer:rime ≔ +42",
     "let outside ≔ x",
   ].join("\n");
   const model = await analyzed(source, "file:///annotations.tung");
@@ -39,11 +39,11 @@ test("declaration annotations expose definitions and scoped parameters in incomp
 });
 test("analysis recordeth shown owners, members, parameters, and imports", async () => {
   const source =
-    "use ground.tung show flock order_half:[a:*, @:a hath_≍, *] { let ≤:[a, a, 𝟚] } let <: [a:, b:] ≔ a ≤ b";
+    "bring often.tung show flock order_half:[a:*, @:a hath_≍, *] { let ≤:[a, a, 𝟚] } let <: [a:, b:] ≔ a ≤ b";
   const model = await analyzed(source, "file:///model.tung");
   assert.deepEqual(
     model.imports.map(({ path }) => path),
-    ["ground.tung"],
+    ["often.tung"],
   );
   assert(
     model.definitions.some(

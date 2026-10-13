@@ -1,6 +1,6 @@
-use flock/algebra/half/category.tung
-use flock/algebra/half/semigroupoid.tung
-use is.tung
+bring flock/algebra/half/category.tung
+bring flock/algebra/half/semigroupoid.tung
+bring is.tung
 
 ## a twostead ilk maker covariant in both arguments.
 show flock bifunctor: [φ: [*, *, *], *] {

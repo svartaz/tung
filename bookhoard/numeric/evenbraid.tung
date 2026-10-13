@@ -1,12 +1,12 @@
-use _fremmed.tung
-use flock/algebra/whole/hath_deal.tung
-use flock/algebra/whole/hath_eke.tung
-use flock/algebra/whole/hath_fold.tung
-use flock/algebra/whole/hath_naught.tung
-use flock/algebra/whole/hath_offdraw.tung
-use flock/algebra/whole/hath_one.tung
-use flock/elementary.tung
-use flock/hath_length.tung
+bring _fremmed.tung
+bring flock/algebra/whole/hath_deal.tung
+bring flock/algebra/whole/hath_eke.tung
+bring flock/algebra/whole/hath_fold.tung
+bring flock/algebra/whole/hath_naught.tung
+bring flock/algebra/whole/hath_offdraw.tung
+bring flock/algebra/whole/hath_one.tung
+bring flock/elementary.tung
+bring flock/hath_length.tung
 
 show ilk evenbraid: [α: *, *] {
   +i: [α, α, α evenbraid]

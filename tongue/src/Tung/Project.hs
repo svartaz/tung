@@ -65,11 +65,11 @@ loadImport :: [FilePath] -> FilePath -> FilePath -> FilePath -> Loader ()
 loadImport roots owner base importPath = do
   candidates <- importCandidates roots base importPath
   case candidates of
-    [] -> failLoader ("missing use '" ++ importPath ++ "' from '" ++ owner ++ "'")
+    [] -> failLoader ("missing bring '" ++ importPath ++ "' from '" ++ owner ++ "'")
     [candidate] -> loadCandidate candidate
     paths ->
       failLoader
-        ( "ambiguous use '"
+        ( "ambiguous bring '"
             ++ importPath
             ++ "' found at "
             ++ intercalate ", " (map (\path -> "'" ++ path ++ "'") paths)
@@ -82,7 +82,7 @@ loadImport roots owner base importPath = do
         Just (other, _)
           | other /= absolute ->
               failLoader
-                ( "ambiguous use '"
+                ( "ambiguous bring '"
                     ++ importPath
                     ++ "' resolveth to both '"
                     ++ other
@@ -96,7 +96,7 @@ loadImport roots owner base importPath = do
         Just other
           | other /= importPath ->
               failLoader
-                ( "use paths '"
+                ( "bring paths '"
                     ++ other
                     ++ "' and '"
                     ++ importPath

@@ -1,9 +1,9 @@
-use flock/functor/downshaper.tung
-use flock/functor/hath_throughwend.tung
-use ground.tung
-use ilk/list.tung
-use ilk/maybe.tung
-use ilk/sum.tung
+bring flock/functor/downshaper.tung
+bring flock/functor/hath_throughwend.tung
+bring ilk/list.tung
+bring ilk/maybe.tung
+bring ilk/sum.tung
+bring often.tung
 
 ilk team: * {
   north: team,
@@ -30,9 +30,9 @@ ilk scoreline: * {
 
 ilk outstruck_game: * { call_off: [home: team, away: team, reason: string, outstruck_game] }
 
-ilk match_result: * {
-  finished: [scoreline, match_result],
-  outstruck: [outstruck_game, match_result]
+ilk match_outcome: * {
+  finished: [scoreline, match_outcome],
+  outstruck: [outstruck_game, match_outcome]
 }
 
 ilk standing: * { stand: [team: team, played: ℤ, points: ℤ, standing] }
@@ -66,7 +66,7 @@ let scoreline_of: [g: game, string ∑ scoreline] ≔
     }
   }
 
-let settle: [g: game, match_result] ≔
+let settle: [g: game, match_outcome] ≔
   match g scoreline_of {
     line incast₁   ^ line finished,
     reason incast₀ ^ (g.home call_off g.away reason) outstruck
@@ -78,11 +78,11 @@ let delay_of: [luck: float, ℕ] ≔
     none       ^ 0
   }
 
-let start: [g: game, (match_result task) deed] ≔ random bind {
+let start: [g: game, (match_outcome task) deed] ≔ random bind {
   luck ^ ((luck delay_of) sleep) then (g settle $ sheer) $ fork
 }
 
-let eke_result: [standing, match_result, standing] ≔ {
+let eke_outcome: [standing, match_outcome, standing] ≔ {
   s, _ outstruck   ^ s,
   s, line finished ^ match s.team same_team line.home, s.team same_team line.away {
     yea, _   ^ s.team stand (s.played + +1) (s.points + line.home_points),
@@ -91,10 +91,10 @@ let eke_result: [standing, match_result, standing] ≔ {
   }
 }
 
-let atfold_result: [standings: standing list, outcome: match_result, standing list] ≔
-  standings warp { s ^ s eke_result outcome }
+let atfold_outcome: [standings: standing list, outcome: match_outcome, standing list] ≔
+  standings warp { s ^ s eke_outcome outcome }
 
-let print_result: [match_result, 𝟙 deed] ≔ {
+let print_outcome: [match_outcome, 𝟙 deed] ≔ {
   line finished ^ >{then,
     line.home to_string $ write,
     ' ' write,
@@ -144,22 +144,22 @@ let initial_standings: standing list ≔
   }
 
 ## a cancelled or crashed task leaveth no results.
-let finished_results: [waited: (match_result maybe) list, match_result list] ≔
+let finished_outcomes: [waited: (match_outcome maybe) list, match_outcome list] ≔
   match waited sequence {
-    results some ^ results,
-    none         ^ empty
+    outcomes some ^ outcomes,
+    none          ^ empty
   }
 
-let eftbare: [results: match_result list, 𝟙 deed] ≔ >{then,
+let eftbare: [outcomes: match_outcome list, 𝟙 deed] ≔ >{then,
   '' write_line,
   'results' write_line,
-  results each print_result,
+  outcomes each print_outcome,
   '' write_line,
   'standings' write_line,
-  results gather₁ initial_standings atfold_result $ each print_standing
+  outcomes gather₁ initial_standings atfold_outcome $ each print_standing
 }
 
 let main: 𝟙 deed ≔ >{then,
   'launching match jobs' write_line,
-  fixtures throughwend start $ bind { tasks ^ tasks throughwend wait } $ warp finished_results $ bind eftbare
+  fixtures throughwend start $ bind { tasks ^ tasks throughwend wait } $ warp finished_outcomes $ bind eftbare
 }

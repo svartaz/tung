@@ -1,22 +1,22 @@
-use flock/algebra/half/category.tung
-use flock/algebra/whole/hath_fold.tung
-use flock/algebra/whole/hath_one.tung
-use flock/algebra/whole/monoid_fold.tung
-use flock/algebra/whole/semigroup_fold.tung
-use flock/functor.tung
-use flock/functor/atfoldsome.tung
-use flock/functor/bifunctor.tung
-use flock/functor/downshaper.tung
-use flock/functor/hath_throughwend.tung
-use flock/functor/monad.tung
-use flock/hath_same.tung
-use flock/order/lattice.tung
-use flock/order/lattice_distributive.tung
-use flock/order/semilattice_lower.tung
-use flock/order/semilattice_upper.tung
-use flock/same_to_is.tung
-use ilk/two.tung
-use is.tung
+bring flock/algebra/half/category.tung
+bring flock/algebra/whole/hath_fold.tung
+bring flock/algebra/whole/hath_one.tung
+bring flock/algebra/whole/monoid_fold.tung
+bring flock/algebra/whole/semigroup_fold.tung
+bring flock/functor.tung
+bring flock/functor/atfoldsome.tung
+bring flock/functor/bifunctor.tung
+bring flock/functor/downshaper.tung
+bring flock/functor/hath_throughwend.tung
+bring flock/functor/monad.tung
+bring flock/hath_same.tung
+bring flock/order/lattice.tung
+bring flock/order/lattice_spreadsome.tung
+bring flock/order/semilattice_lower.tung
+bring flock/order/semilattice_upper.tung
+bring flock/same_to_is.tung
+bring ilk/two.tung
+bring is.tung
 
 show ilk ∏: [α: *, β: *, *] {
   both: [α, β, α ∏ β]
@@ -128,9 +128,9 @@ bizen: [@α: *, @: α lattice, @β: *, @: β lattice, (α ∏ β) lattice] {
 }
 
 bizen: [
-  @α: *, @: α lattice_distributive,
-  @β: *, @: β lattice_distributive,
-  (α ∏ β) lattice_distributive
+  @α: *, @: α lattice_spreadsome,
+  @β: *, @: β lattice_spreadsome,
+  (α ∏ β) lattice_spreadsome
 ] {
   let ∧_∨: [a₀ both b₀:, a₁ both b₁:, a₂ both b₂:] ≔ (a₀ ∧_∨ a₁ a₂) helpsetting_both_= (b₀ ∧_∨ b₁ b₂)
 
@@ -156,14 +156,9 @@ bizen: [@α: *, @: α hath_≍, @β: *, @: β hath_≍, (α ∏ β) hath_≍] {
 }
 
 bizen: [@α: *, @: α ≍_to_=, @β: *, @: β ≍_to_=, (α ∏ β) ≍_to_=] {
-  let ≍_=: [x:, y:, held:] ≔
-    match x, y {
-      a both b, c both d ^
-        ({z: α ^ z both b} leibnitz (a ≍_= c ((a ≍ c) yea_if_former (b ≍ d) held)))
-          throughgo ((c both) leibnitz (b ≍_= d ((a ≍ c) yea_if_latter (b ≍ d) held)))
-    }
-  let ≍_eftbend: [x:] ≔
-    match x {
-      a both b ^ {w: 𝟚 ^ w if (b ≍ b) nay} yea_throughbear ((a ≍_eftbend) evenmete) (b ≍_eftbend)
-    }
+  let ≍_=: [a both b:, c both d:, held:] ≔
+    ({z: α ^ z both b} leibnitz (a ≍_= c ((a ≍ c) yea_if_former (b ≍ d) held)))
+      throughgo ((c both) leibnitz (b ≍_= d ((a ≍ c) yea_if_latter (b ≍ d) held)))
+  let ≍_eftbend: [a both b:] ≔
+    {w: 𝟚 ^ w if (b ≍ b) nay} yea_throughbear ((a ≍_eftbend) evenmete) (b ≍_eftbend)
 }

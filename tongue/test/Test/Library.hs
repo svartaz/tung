@@ -39,10 +39,10 @@ proofPolicyForms = withDirectory \root -> do
           writeFile (root </> "tung.yaml") ("dependencies: {}\n" ++ policy)
           proofAxiomPolicy owner
       )
-      ["", "proof: {}\n", "proof: { axioms: [] }\n", "proof: { axioms: [trusted, 'ground~≍_to_='] }\n"]
+      ["", "proof: {}\n", "proof: { axioms: [] }\n", "proof: { axioms: [trusted, 'often~≍_to_='] }\n"]
   expectEq
     "distinguish absent and empty proof axiom policies and preserve names"
-    [Right Nothing, Right Nothing, Right Nothing, Right (Just []), Right (Just ["trusted", "ground~≍_to_="])]
+    [Right Nothing, Right Nothing, Right Nothing, Right (Just []), Right (Just ["trusted", "often~≍_to_="])]
     (absent : forms)
 
 proofPolicyNearestProject :: Test
@@ -90,7 +90,7 @@ pinnedCheckout = withDirectory \root -> do
   commitAll repository "first"
   commit <- runGit ["-C", repository, "rev-parse", "HEAD"]
   writeFile manifest (yamlManifest [("sample", "file://" ++ repository, map toUpper commit)])
-  writeFile owner "use worth.tung let answer ≔ worth + +1"
+  writeFile owner "bring worth.tung let answer ≔ worth + +1"
   first <- resolveLibraryRoots owner
   imported <- case first of
     Left message -> pure (Left message)
@@ -120,7 +120,7 @@ gitSubdirectory = withDirectory \root -> do
   commitAll repository "bookhoard"
   commit <- runGit ["-C", repository, "rev-parse", "HEAD"]
   writeFile (project </> "tung.yaml") (yamlSubdirManifest [("bookhoard", repository, commit, "bookhoard")])
-  writeFile owner "use worth.tung let answer ≔ worth"
+  writeFile owner "bring worth.tung let answer ≔ worth"
   roots <- resolveLibraryRoots owner
   imported <- importedSource roots owner "worth.tung"
   pure $ case (roots, imported) of
@@ -142,7 +142,7 @@ distinctGitSubdirectories = withDirectory \root -> do
   commitAll repository "two libraries"
   commit <- runGit ["-C", repository, "rev-parse", "HEAD"]
   writeFile (project </> "tung.yaml") (yamlSubdirManifest [("first", repository, commit, "first"), ("second", repository, commit, "second")])
-  writeFile owner "use first.tung use second.tung let answer ≔ one + two"
+  writeFile owner "bring first.tung bring second.tung let answer ≔ one + two"
   roots <- resolveLibraryRoots owner
   one <- importedSource roots owner "first.tung"
   two <- importedSource roots owner "second.tung"
@@ -202,7 +202,7 @@ localPathDependency = withDirectory \root -> do
         path: ../source
 
     """
-  writeFile owner "use worth.tung let answer ≔ worth + +1"
+  writeFile owner "bring worth.tung let answer ≔ worth + +1"
   first <- resolveLibraryRoots owner
   firstImport <- importedSource first owner "worth.tung"
   writeFile source "show let worth ≔ +99"
@@ -222,7 +222,7 @@ transitivePathDependency = withDirectory \root -> do
       owner = project </> "main.tung"
   mapM_ createDirectory [dependency, parent, project]
   writeFile (dependency </> "dep.tung") "show let answer ≔ +42"
-  writeFile (parent </> "parent.tung") "use dep.tung show let worth ≔ answer"
+  writeFile (parent </> "parent.tung") "bring dep.tung show let worth ≔ answer"
   writeFile
     (parent </> "tung.yaml")
     """
@@ -239,7 +239,7 @@ transitivePathDependency = withDirectory \root -> do
         path: ../parent
 
     """
-  writeFile owner "use parent.tung let result ≔ worth"
+  writeFile owner "bring parent.tung let outcome ≔ worth"
   roots <- resolveLibraryRoots owner
   imported <- importedSource roots owner "dep.tung"
   pure $ case (roots, imported) of
@@ -316,13 +316,13 @@ transitiveCheckout = withDirectory \root -> do
   commitAll dependency "dependency"
   dependencyCommit <- runGit ["-C", dependency, "rev-parse", "HEAD"]
   initRepository parent
-  writeFile (parent </> "parent.tung") "use dep.tung show let worth ≔ answer"
+  writeFile (parent </> "parent.tung") "bring dep.tung show let worth ≔ answer"
   writeFile (parent </> "tung.yaml") (yamlManifest [("dependency", dependency, dependencyCommit)])
   commitAll parent "parent"
   parentCommit <- runGit ["-C", parent, "rev-parse", "HEAD"]
   createDirectory project
   writeFile (project </> "tung.yaml") (yamlManifest [("parent", "../parent", parentCommit)])
-  writeFile owner "use parent.tung let result ≔ worth"
+  writeFile owner "bring parent.tung let outcome ≔ worth"
   resolved <- resolveLibraryRoots owner
   imported <- case resolved of
     Left message -> pure (Left message)

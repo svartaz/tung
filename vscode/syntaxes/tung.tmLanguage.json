@@ -87,7 +87,7 @@
     "import-path": {
       "patterns": [
         {
-          "match": "\\b(use)\\b(\\s+)([^\\s#]+)(?:([ \\t]+)([^\\s#]+))?",
+          "match": "\\b(bring)\\b(\\s+)([^\\s#]+)(?:([ \\t]+)([^\\s#]+))?",
           "captures": {
             "1": {
               "name": "keyword.declaration.tung"
@@ -106,7 +106,7 @@
     "declaration-keyword": {
       "patterns": [
         {
-          "match": "(?<![^\\s#()\\[\\]{}:,;≔$`'@^.])(?:let|use|ilk|flock|bizen|orsetting|show)(?![^\\s#()\\[\\]{}:,;≔$`'@^.])",
+          "match": "(?<![^\\s#()\\[\\]{}:,;≔$`'@^.])(?:let|bring|ilk|flock|bizen|orsetting|show)(?![^\\s#()\\[\\]{}:,;≔$`'@^.])",
           "name": "keyword.declaration.tung"
         }
       ]

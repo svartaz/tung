@@ -157,7 +157,7 @@ fixedIndexTests example =
         pure (literalResults ++ customResults)
     )
     : ( do
-          actual <- Harness.evaluateSource ("use is.tung\n" ++ vector ++ definitions ++ "yield " ++ pair ++ " second") Map.empty
+          actual <- Harness.evaluateSource ("bring is.tung\n" ++ vector ++ definitions ++ "yield " ++ pair ++ " second") Map.empty
           expectEq "the runner computeth fixed-index constructor fields" "eval ok: +7" actual
       )
     : [ rejectContaining label reason (compiled (vector ++ source))
@@ -216,7 +216,7 @@ fixedIndexTests example =
 recursiveArityTests :: [Test]
 recursiveArityTests =
   [ rejectContaining "recursive matches validate written columns" reason $
-      compiled ("ilk nat:* { naught:nat, heir:[nat, nat] } let count:[x:nat, nat] ≔ match x { " ++ rows ++ " }")
+      compiled ("ilk nat:* { naught:nat, heir:[nat, nat] } let rime:[x:nat, nat] ≔ match x { " ++ rows ++ " }")
   | (reason, rows) <-
       [ ("one pattern per scrutinee", "naught, _ ^ naught, n heir, _ ^ n count"),
         ("every case must have the same number of patterns", "naught ^ naught, n heir, _ ^ n count")
@@ -265,9 +265,9 @@ repeatedScrutineeTests =
         naught,_ ^ naught,
         _ heir,worth ^ worth
       }
-      let count:[x:nat, nat] ≔ match x,x {
+      let rime:[x:nat, nat] ≔ match x,x {
         _,naught ^ naught,
-        n heir,m heir ^ (m count) heir
+        n heir,m heir ^ (m rime) heir
       }
       let deep:[x:nat, nat] ≔ match x,x {
         naught,_ ^ naught,
@@ -288,4 +288,4 @@ repeatedScrutineeTests =
       """
 
 compiled :: String -> Either String SourceProgram
-compiled source = compileProject (SourceModule "dependent_match.tung") ("use is.tung\n" ++ source) (Map.singleton "is.tung" equalitySource)
+compiled source = compileProject (SourceModule "dependent_match.tung") ("bring is.tung\n" ++ source) (Map.singleton "is.tung" equalitySource)

@@ -1,8 +1,8 @@
-use flock/hath_same.tung
-use flock/order/hath_at_most.tung
-use ilk/three.tung
-use ilk/two.tung
-use is.tung
+bring flock/hath_same.tung
+bring flock/order/hath_at_most.tung
+bring ilk/three.tung
+bring ilk/two.tung
+bring is.tung
 
 ## a decidable half order.
 show flock order_half: [α: *, @: α hath_≤, *] {

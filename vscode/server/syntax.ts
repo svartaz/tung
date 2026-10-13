@@ -12,7 +12,7 @@ const declarationKeywords = new Set([
   "orsetting",
 ]);
 const fileDeclarationKeywords = new Set([
-  "use",
+  "bring",
   "yield",
   "show",
   ...declarationKeywords,

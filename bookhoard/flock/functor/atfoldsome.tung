@@ -1,8 +1,8 @@
-use combinator.tung
-use flock/algebra/half/category.tung
-use flock/algebra/half/semigroupoid.tung
-use flock/functor.tung
-use is.tung
+bring combinator.tung
+bring flock/algebra/half/category.tung
+bring flock/algebra/half/semigroupoid.tung
+bring flock/functor.tung
+bring is.tung
 
 show flock atfoldsome: [φ: [*, *], @: φ functor, *] {
   let sheer: [@α: *, α, α φ]

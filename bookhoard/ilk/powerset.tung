@@ -1,12 +1,12 @@
-use combinator.tung
-use flock/algebra/half/semigroupoid.tung
-use flock/hath_inhold.tung
-use flock/hath_same.tung
-use flock/order/complement.tung
-use flock/order/semilattice_lower.tung
-use flock/order/semilattice_upper.tung
-use ilk/two.tung
-use is.tung
+bring combinator.tung
+bring flock/algebra/half/semigroupoid.tung
+bring flock/hath_inhold.tung
+bring flock/hath_same.tung
+bring flock/order/semilattice_lower.tung
+bring flock/order/semilattice_upper.tung
+bring flock/order/withfill.tung
+bring ilk/two.tung
+bring is.tung
 
 ## a powerset represented by its limbship umbsay.
 show let powerset: [α: *, *] ≔ [α, 𝟚]
@@ -29,7 +29,7 @@ show let rid: [@α: *, @: α hath_≍, s: α powerset, a: α, α powerset] ≔
 
 show let ∖: [@α: *, p₀: α powerset, p₁: α powerset, α powerset] ≔ p₀ ∧ (p₁ ¬)
 
-bizen: [@α: *, (α powerset) complement] {
+bizen: [@α: *, (α powerset) withfill] {
   let ¬: [p:] ≔ p ▷ ¬
 
   let ∧_¬: [a:] ≔ {x ^ (x a) ∧_¬} fall_umtake

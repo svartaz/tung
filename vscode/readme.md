@@ -38,7 +38,7 @@ the extension provideth:
 - declaration, definition, type-definition, implementation, and reference
   navigation;
 - document and workspace symbols, highlights, and checked rename;
-- document links for `use`, formatting, and supported quick fixes; and
+- document links for `bring`, formatting, and supported quick fixes; and
 - a `Run Tung File` command and editor play button.
 
 completion and navigation follow local and declared-library imports. unsaved

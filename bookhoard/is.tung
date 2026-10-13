@@ -10,13 +10,13 @@ show let leibnitz: [
   f: [α, β], eftbend: a = b, (a f) = (b f)
 ] ≔ eftbend
 
-## eftwend a sameness proof.
+## eftwend a sameness seething.
 show let evenmete: [
   @α: *, @a: α, @b: α,
   eftbend: a = b, b = a
 ] ≔ eftbend
 
-## yoke two sameness proofs.
+## yoke two sameness seethings.
 show let throughgo: [
   @α: *, @a: α, @b: α, @c: α,
   eftbend: a = b, q: b = c, a = c
@@ -30,7 +30,7 @@ show let throughbear: [
   eftbend: a = b, a property, b property
 ] ≔ {x ^ x}
 
-## a computed worth with the proof of what it is, so that a case fall can
+## a computed worth with the seething of what it is, so that a case fall can
 ## match the worth and still know it: in
 ## `e inlook { yea, known ^ …, nay, known ^ … }` each case seeth `known`
 ## as `e = yea` or `e = nay`. the property is found as for `throughbear`.

@@ -1,4 +1,4 @@
-use is.tung
+bring is.tung
 ## function fields retain descendant records at each argument.
 ilk tree: * {tip: tree, node: [tree, [ℕ, tree], tree]}
 
@@ -13,15 +13,15 @@ let depth: [x: tree, ℕ] ≔ match x {
 ## after the decreasing input, a recursive call may leave an accumulator open.
 let hoard: [ℕ, ℕ, ℕ] ≔ {
   0,      whole ^ whole,
-  n heir, whole ^ (let rest ≔ n hoard yield (whole heir) rest)
+  n heir, whole ^ (let leftover ≔ n hoard yield (whole heir) leftover)
 }
 
 let deep_hoard: [x: tree, whole: ℕ, ℕ] ≔ match x {
   tip             ^ whole,
   _ node children ^ match 0 children {
     tip            ^ whole heir,
-    _ node smaller ^ (let rest ≔ (0 smaller) deep_hoard
-      yield ((whole heir) heir) rest)
+    _ node smaller ^ (let leftover ≔ (0 smaller) deep_hoard
+      yield ((whole heir) heir) leftover)
   }
 }
 
@@ -29,14 +29,14 @@ let leaf: tree ≔ tip node {_ ^ tip}
 let sample: tree ≔ tip node {_ ^ leaf}
 
 ## dependent matches carry the record with the computed child and its aliases.
-let proof: [x: tree, x = x] ≔ match x {
+let seething: [x: tree, x = x] ≔ match x {
   tip             ^ eftbend,
   _ node children ^ (
     let call ≔ children
     let child ≔ 0 call
     let known: child = child ≔ match child {
       tip            ^ eftbend,
-      _ node smaller ^ (let child_known ≔ (0 smaller) proof yield eftbend)
+      _ node smaller ^ (let child_known ≔ (0 smaller) seething yield eftbend)
     }
     yield eftbend
   )
@@ -81,5 +81,5 @@ let rose_sample: rose ≔ ({_ ^ rose_leaf} hold @rose) bloom
 ## an open quantified input keepeth the child's specialised dependent type.
 let retain: [n: ℕ, known: n = n, ℕ] ≔ match n {
   0      ^ 0,
-  m heir ^ (let rest: [m = m, ℕ] ≔ m retain yield eftbend rest)
+  m heir ^ (let leftover: [m = m, ℕ] ≔ m retain yield eftbend leftover)
 }

@@ -1,9 +1,9 @@
-use _fremmed.tung
-use flock/algebra/whole/hath_fold.tung
-use ilk/natural.tung
-use ilk/one.tung
+bring _fremmed.tung
+bring flock/algebra/whole/hath_fold.tung
+bring ilk/kindful.tung
+bring ilk/one.tung
 
-## a non-normalised span measured in milliseconds.
+## a non-normalised span meted in milliseconds.
 show ilk _milliseconds: * {
   milliseconds: [ℕ, _milliseconds]
 }

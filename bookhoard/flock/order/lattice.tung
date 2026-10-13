@@ -1,10 +1,10 @@
-use flock/order/hath_at_most.tung
-use flock/order/order_half.tung
-use flock/order/order_whole.tung
-use flock/order/semilattice_lower.tung
-use flock/order/semilattice_upper.tung
-use ilk/two.tung
-use is.tung
+bring flock/order/hath_at_most.tung
+bring flock/order/order_half.tung
+bring flock/order/order_whole.tung
+bring flock/order/semilattice_lower.tung
+bring flock/order/semilattice_upper.tung
+bring ilk/two.tung
+bring is.tung
 
 ## a carrier with compatible infimum and supremum semilattices.
 show flock lattice: [α: *, @: α semilattice_lower, @: α semilattice_upper, *] {

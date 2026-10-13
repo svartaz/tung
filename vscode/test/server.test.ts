@@ -22,7 +22,7 @@ test("server implementeth the editor workflow over stdio", async (context) => {
   const depText =
     "show ilk tally: * { naught: tally }\nshow ilk truth: * { yea: truth, nay: truth }\nshow ilk parcel: [a:*, *] { wrap: [a, a parcel] }\nshow let sameness:[x: ℤ, ℤ] ≔ x\nshow let answer:ℤ ≔ +42\nshow flock hath_convert:[a:*, *] { let convert:[a, a] }\n";
   const mainText =
-    "use dep.tung\nlet worth:ℤ ≔ answer\nlet count:tally ≔ naught\nlet ratio:float ≔ 1.5\nlet truth_to_string:[truth, string] ≔ { yea ^ 'yea', nay ^ 'nay' }\nlet shipment:ℤ parcel ≔ +1 wrap\nlet hath_≍:ℤ ≔ +1 sameness # \"unicode 𝟙\\n\"\nlet select:[left: ℤ, middle: ℤ, right: ℤ, ℤ] ≔ middle\nlet picker: [ℤ, ℤ, ℤ, ℤ] ≔ { first, second, third ^ second }\nbizen:ℤ hath_convert { let convert:[x:] ≔ x }\nshow ilk _box: [a:*, *] {\n  box: [a, a _box]\n}\n";
+    "bring dep.tung\nlet worth:ℤ ≔ answer\nlet rime:tally ≔ naught\nlet ratio:float ≔ 1.5\nlet truth_to_string:[truth, string] ≔ { yea ^ 'yea', nay ^ 'nay' }\nlet shipment:ℤ parcel ≔ +1 wrap\nlet hath_≍:ℤ ≔ +1 sameness # \"unicode 𝟙\\n\"\nlet select:[left: ℤ, middle: ℤ, right: ℤ, ℤ] ≔ middle\nlet picker: [ℤ, ℤ, ℤ, ℤ] ≔ { first, second, third ^ second }\nbizen:ℤ hath_convert { let convert:[x:] ≔ x }\nshow ilk _box: [a:*, *] {\n  box: [a, a _box]\n}\n";
   fs.writeFileSync(depPath, depText);
   fs.writeFileSync(mainPath, mainText);
   const depUri = pathToFileURL(depPath).href;
@@ -204,8 +204,8 @@ test("server implementeth the editor workflow over stdio", async (context) => {
     undefined,
   );
   for (
-    let character = "use ".length;
-    character < "use dep.tung".length;
+    let character = "bring ".length;
+    character < "bring dep.tung".length;
     character += 1
   ) {
     assert.equal(semanticAt.has(positionKey({ line: 0, character })), false);
@@ -382,7 +382,7 @@ test("server implementeth the editor workflow over stdio", async (context) => {
     badResult.diagnostics[0].range.start,
     positionOf(badText, "answer"),
   );
-  const completeUse = "use dep.tung";
+  const completeUse = "bring dep.tung";
   const useDiagnostics = nextDiagnostics(
     connection,
     mainUri,
@@ -451,7 +451,7 @@ test("server implementeth the editor workflow over stdio", async (context) => {
     });
     assert.equal(rejectedProof.kind, "error");
   }
-  const importedGoalText = `use dep.tung\n${holeText}`;
+  const importedGoalText = `bring dep.tung\n${holeText}`;
   const importErrorWithGoal = nextDiagnostics(
     connection,
     depUri,
@@ -556,7 +556,7 @@ require("node:readline").createInterface({input:process.stdin}).on("line", line 
     connection.sendNotification("initialized", {});
     for (const [documentUri, text] of [
       [depUri, "show let exported:ℤ ≔ +1"],
-      [uri, "use dep.tung\nlet proved:ℤ ≔ exported"],
+      [uri, "bring dep.tung\nlet proved:ℤ ≔ exported"],
     ]) {
       connection.sendNotification("textDocument/didOpen", {
         textDocument: {
@@ -627,7 +627,7 @@ test("server resolveth a nested forthcast's git-pinned library", async (context)
     `dependencies:\n  sample:\n    repo: ../library\n    hash: "${commit}"\n`,
   );
   const mainPath = path.join(project, "main.tung");
-  const source = "use worth.tung let answer:ℤ ≔ worth";
+  const source = "bring worth.tung let answer:ℤ ≔ worth";
   fs.writeFileSync(mainPath, source);
   const uri = pathToFileURL(mainPath).href;
   const server = childProcess.spawn(

@@ -62,9 +62,9 @@ let fibonacci: [nat, nat] ≔ {
   (n heir) heir ^ ((n heir) fibonacci) plus (n fibonacci)
 }
 
-let pairs: [@α: *, l: α list, count: nat, nat] ≔ match l {
-  _ ‥ (_ ‥ tail) ^ tail pairs (count heir),
-  _              ^ count
+let pairs: [@α: *, l: α list, rime: nat, nat] ≔ match l {
+  _ ‥ (_ ‥ tail) ^ tail pairs (rime heir),
+  _              ^ rime
 }
 
 ilk vec: [α: *, [nat, *]] {

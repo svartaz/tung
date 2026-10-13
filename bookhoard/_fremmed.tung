@@ -1,8 +1,8 @@
-use ilk/maybe.tung
-use ilk/one.tung
-use ilk/product.tung
-use ilk/task.tung
-use ilk/two.tung
+bring ilk/maybe.tung
+bring ilk/one.tung
+bring ilk/product.tung
+bring ilk/task.tung
+bring ilk/two.tung
 
 show task
 
@@ -28,7 +28,6 @@ show let wait: [@α: *, α task, (α maybe) deed] ≔ 'wait' fremmed
 show let wait_for: [@α: *, α task, ℕ, (α maybe) deed] ≔ 'wait_for' fremmed
 show let outstrike: [@α: *, α task, 𝟙 deed] ≔ 'outstrike' fremmed
 
-show let deal_leftover_wholetale: [ℤ, ℤ, (ℤ ∏ ℤ) maybe] ≔ 'deal_leftover_wholetale' fremmed
 show let eke_float: [float, float, float] ≔ 'eke_float' fremmed
 show let offdraw_float: [float, float, float] ≔ 'offdraw_float' fremmed
 show let fold_float: [float, float, float] ≔ 'fold_float' fremmed
@@ -43,11 +42,6 @@ show let at_most_float: [float, float, 𝟚] ≔ 'at_most_float' fremmed
 show let string_to_float: [string, float maybe] ≔ 'string_to_float' fremmed
 show let wholetale_to_string: [ℤ, string] ≔ 'wholetale_to_string' fremmed
 show let float_to_string: [float, string] ≔ 'float_to_string' fremmed
-show let unicode_to_natural: [unicode, ℕ] ≔ 'unicode_to_natural' fremmed
-show let natural_to_unicode: [ℕ, unicode maybe] ≔ 'natural_to_unicode' fremmed
+show let unicode_to_kindful: [unicode, ℕ] ≔ 'unicode_to_kindful' fremmed
+show let kindful_to_unicode: [ℕ, unicode maybe] ≔ 'kindful_to_unicode' fremmed
 show let behead_string: [string, (unicode ∏ string) maybe] ≔ 'behead_string' fremmed
-show let yoke_string: [string, string, string] ≔ 'yoke_string' fremmed
-show let same_string: [string, string, 𝟚] ≔ 'same_string' fremmed
-show let same_unicode: [unicode, unicode, 𝟚] ≔ 'same_unicode' fremmed
-show let at_most_string: [string, string, 𝟚] ≔ 'at_most_string' fremmed
-show let at_most_unicode: [unicode, unicode, 𝟚] ≔ 'at_most_unicode' fremmed

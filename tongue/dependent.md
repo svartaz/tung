@@ -135,9 +135,12 @@ machine-checked proof of consistency or subject reduction.
 
 - annotations and bodies use one expression parser and lexical namespace.
 - module definitions resolve to `SymbolId` in dependency order, so source
-  order doth not matter. a declaration that useth a flock member waiteth for
-  the module's bizens of that flock, except one that itself needeth the
-  declaration by name. local bindings
+  order doth not matter. a declaration that useth a flock member, or an
+  imported name whose checked type requireth the flock through an `@:` slot,
+  waiteth for the module's bizens of that flock, except one that itself
+  needeth the declaration by name. a local name's requirement is not
+  counted: each use is ordered by name, and a caller's own requirement often
+  meeteth it. local bindings
   are sequential and shadow visible names. unknown names are errors. types, flocks, constructors, flock
   members, and lets share one namespace: a module that declareth a top-level
   name twice, such as a flock and its member or an ilk and its constructor,
@@ -217,16 +220,16 @@ ilk ℕ: * {
   heir: [ℕ, ℕ]
 }
 
-let rebuild: [x: ℕ, ℕ] ≔
+let eftbuild: [x: ℕ, ℕ] ≔
   {_: ℕ ^ ℕ} unbuild ℕ naught {n, ih ^ ih heir} x
 
 ilk sameness: [α: *, x: α, α, *] {
   refl: α sameness x x
 }
 
-let throughbear: [@α: *, @x: α, @y: α, proof: α sameness x y,
+let throughbear: [@α: *, @x: α, @y: α, seething: α sameness x y,
   family: [α, *], worth: x family, y family] ≔
-  {z, _ ^ z family} unbuild sameness @α @x worth y proof
+  {z, _ ^ z family} unbuild sameness @α @x worth y seething
 ```
 
 - `ilk name:signature { ... }` declareth one family. constructors share the
@@ -794,7 +797,7 @@ and the result. universe levels are not compared. the program chooseth every
 name.
 
 - primitive types match by name. a host data type, such as `𝟙`, `𝟚`,
-  `maybe`, `∏`, `∑`, `list`, `wordbook`, `_process_result`,
+  `maybe`, `∏`, `∑`, `list`, `wordbook`, `_process_outcome`,
   `_request`, or `_response`, matcheth only the `ilk` of that name declared in
   its bookhoard file, such as `ilk/maybe.tung`. a lookalike declared
   elsewhere is a different type.
@@ -818,12 +821,14 @@ name.
   literal, or a list of literals, so `+2 + +2` converteth with `+4` and a type
   may depend on an integer comparison. on other inputs a binding with a model
   unfoldeth the model, glued so goals still show its name; another stayeth
-  neutral. the model is the binding's body after `fremmed`, elaborated as a
-  let named by the binding, so a self-call is structural recursion, and
-  stored as the hidden global `model name`, which goals print as `name`. the
-  host check still requireth the model to be transparent, with the binding's
-  universe parameters and normalised type, and only a pure operation may
-  have one.
+  neutral. the model is the binding's body after `fremmed`, checked as a let
+  named by the binding against the binding's checked type, so a self-call is
+  structural recursion, and stored as the hidden global `model name`, which
+  goals print as `name`. that type's universe parameters stay rigid, so the
+  model shareth them even when the annotation nameth several
+  universe-polymorphic families, as `(ℕ ∏ ℕ) maybe`. the host check still
+  requireth the model to be transparent, with the binding's universe
+  parameters and normalised type, and only a pure operation may have one.
   bookhoard's tests check that each model agreeth with its native operation on
   generated literals; the kernel trusteth that agreement as it trusteth the
   native operation.
@@ -862,8 +867,8 @@ ordinary case function. a constant result family may require a written motive.
 function extensionality remaineth the named axiom `fall_umtake`.
 
 well-founded recursion is ordinary library code in
-[`ilk/accessible.tung`](../bookhoard/ilk/accessible.tung).
-`wellgrounded_selfcall` recurseth structurally on accessibility evidence.
+[`ilk/grounded.tung`](../bookhoard/ilk/grounded.tung).
+`wellgrounded_selfcall` recurseth structurally on groundedness evidence.
 `wellgrounded_selfcall_by` taketh an explicit result motive `[α, *]` and a
 measure `[α, μ]`; its recursive callback requireth a proof that the new measure
 is smaller. identity elimination keepeth computed measures usable after a

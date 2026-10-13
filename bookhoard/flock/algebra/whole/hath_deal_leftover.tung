@@ -1,5 +1,5 @@
-use ilk/maybe.tung
-use ilk/product.tung
+bring ilk/maybe.tung
+bring ilk/product.tung
 
 ## euclidean quotient and leftover computed together.
 show flock hath_%: [α: *, *] {

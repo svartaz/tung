@@ -1,4 +1,4 @@
-use _fremmed.tung
+bring _fremmed.tung
 
 show flock hath_÷: [α: *, *] {
   let ÷: [α, α, α]

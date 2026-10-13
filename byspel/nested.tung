@@ -18,7 +18,7 @@ let eke: [n: ℕ, m: ℕ, ℕ] ≔
 
 ## joint induction taketh the rose motive, the list motive, then the node,
 ## empty, and cons methods. each method receiveth its child hypotheses.
-let count: [rose, ℕ] ≔
+let rime: [rose, ℕ] ≔
   {_: rose ^ ℕ} unbuild rose
     {_: rose list ^ ℕ}
     {xs: rose list ^ {below: ℕ ^ below heir}}

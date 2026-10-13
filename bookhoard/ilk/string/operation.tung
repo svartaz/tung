@@ -1,19 +1,19 @@
-use _fremmed.tung
-use flock/algebra/half/semigroupoid.tung
-use flock/algebra/whole/hath_fold.tung
-use flock/algebra/whole/semigroup_fold.tung
-use flock/functor.tung
-use flock/functor/downshaper.tung
-use flock/functor/hath_sift.tung
-use flock/hath_greatness.tung
-use flock/hath_same.tung
-use flock/order/complement.tung
-use flock/order/semilattice_upper.tung
-use ilk/list.tung
-use ilk/maybe.tung
-use ilk/natural.tung
-use ilk/string/structure.tung
-use ilk/two.tung
+bring _fremmed.tung
+bring flock/algebra/half/semigroupoid.tung
+bring flock/algebra/whole/hath_fold.tung
+bring flock/algebra/whole/semigroup_fold.tung
+bring flock/functor.tung
+bring flock/functor/downshaper.tung
+bring flock/functor/hath_sift.tung
+bring flock/hath_greatness.tung
+bring flock/hath_same.tung
+bring flock/order/semilattice_upper.tung
+bring flock/order/withfill.tung
+bring ilk/kindful.tung
+bring ilk/list.tung
+bring ilk/maybe.tung
+bring ilk/string/building.tung
+bring ilk/two.tung
 
 ## true when string hath no unicode code points.
 show let is_empty_string: [t: string, 𝟚] ≔
@@ -22,16 +22,16 @@ show let is_empty_string: [t: string, 𝟚] ≔
     _ some ^ nay
   }
 
-## count unicode code points, not bytes or utf-16 units.
+## rime unicode code points, not bytes or utf-16 units.
 bizen: string hath_greatness {
   let greatness: [t:] ≔ t string_to_list $ greatness
 }
 
-show let take_string: [t: string, count: ℕ, string] ≔
-  t string_to_list $ take count $ list_to_string
+show let take_string: [t: string, rime: ℕ, string] ≔
+  t string_to_list $ take rime $ list_to_string
 
-show let drop_string: [t: string, count: ℕ, string] ≔
-  t string_to_list $ drop count $ list_to_string
+show let drop_string: [t: string, rime: ℕ, string] ≔
+  t string_to_list $ drop rime $ list_to_string
 
 show let eftwend_string: [t: string, string] ≔
   t string_to_list $ eftwend $ list_to_string
@@ -47,8 +47,8 @@ let split_unicode_by: [
   sheds: [unicode, 𝟚],
   (unicode list) list] ≔
   match l {
-    empty        ^ empty ‥ empty,
-    staff ‥ rest ^ match rest split_unicode_by sheds {
+    empty            ^ empty ‥ empty,
+    staff ‥ leftover ^ match leftover split_unicode_by sheds {
       empty              ^ (staff ‥ empty) ‥ empty,
       current ‥ previous ^ match staff sheds {
         yea ^ empty ‥ (current ‥ previous),

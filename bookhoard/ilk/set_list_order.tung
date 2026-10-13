@@ -1,73 +1,73 @@
-use flock/order/hath_at_most.tung
-use flock/order/order_half.tung
-use flock/order/order_whole.tung
-use flock/same_to_is.tung
-use ilk/list.tung
-use ilk/set_list.tung
-use ilk/set_list_setting.tung
-use ilk/two.tung
-use is.tung
+bring flock/order/hath_at_most.tung
+bring flock/order/order_half.tung
+bring flock/order/order_whole.tung
+bring flock/same_to_is.tung
+bring ilk/list.tung
+bring ilk/set_list.tung
+bring ilk/set_list_setting.tung
+bring ilk/two.tung
+bring is.tung
 
 ## every element of the first list belongeth to the other.
 show let underset: [@α: *, @: α order_whole, α list, α list, 𝟚] ≔ {
-  empty,    _ ^ yea,
-  a ‥ rest, m ^ (m inhold a) if (rest underset m) nay
+  empty,        _ ^ yea,
+  a ‥ leftover, m ^ (m inhold a) if (leftover underset m) nay
 }
 
-## an underset keepeth successful ordered search, even before sorting.
+## an underset keepeth successful ordered search, even before rowing.
 show let underset_limb: [
   @α: *, @: α order_whole,
   l: α list, m: α list, x: α,
   beneath: (l underset m) = yea, limb: (l inhold x) = yea,
   (m inhold x) = yea
 ] ≔ match l {
-  empty    ^ match limb {},
-  a ‥ rest ^ (x ≤ a) inlook @𝟚 @({_: 𝟚 ^ (m inhold x) = yea}) {
+  empty        ^ match limb {},
+  a ‥ leftover ^ (x ≤ a) inlook @𝟚 @({_: 𝟚 ^ (m inhold x) = yea}) {
     yea, below ^ (
-      let head ≔ (({b: 𝟚 ^ b if (a ≤ x) (rest inhold x)} leibnitz below) evenmete)
+      let head ≔ (({b: 𝟚 ^ b if (a ≤ x) (leftover inhold x)} leibnitz below) evenmete)
       throughgo limb
       yield {y: α ^ m inhold y} yea_throughbear (a ≤_= x head below)
-      ((m inhold a) yea_if_former (rest underset m) beneath)
+      ((m inhold a) yea_if_former (leftover underset m) beneath)
     ),
-    nay, below ^ rest underset_limb m x
-    ((m inhold a) yea_if_latter (rest underset m) beneath)
-    ((({b: 𝟚 ^ b if (a ≤ x) (rest inhold x)} leibnitz below) evenmete)
+    nay, below ^ leftover underset_limb m x
+    ((m inhold a) yea_if_latter (leftover underset m) beneath)
+    ((({b: 𝟚 ^ b if (a ≤ x) (leftover inhold x)} leibnitz below) evenmete)
       throughgo limb)
   }
 }
 
-## a limb of a sorted tail remaineth a limb after its first element.
+## a limb of a rowed tail remaineth a limb after its first element.
 show let inhold_tail: [
   @α: *, @: α order_whole,
   a: α, l: α list, x: α,
-  sorted: ((a ‥ l) sorted) = yea, limb: (l inhold x) = yea,
+  rowed: ((a ‥ l) rowed) = yea, limb: (l inhold x) = yea,
   ((a ‥ l) inhold x) = yea
 ] ≔ (
-  let below ≔ a strict_right x (a sorted_strict_limb l x sorted limb)
+  let below ≔ a tight_right x (a rowed_tight_limb l x rowed limb)
   yield ({b: 𝟚 ^ b if (a ≤ x) (l inhold x)} leibnitz below) throughgo limb
 )
 
-## pointwise limbship sufficeth for undersetting a sorted list.
+## pointwise limbship sufficeth for undersetting a rowed list.
 show let underset_by: [
   @α: *, @: α order_whole,
-  l: α list, m: α list, sorted: (l sorted) = yea,
+  l: α list, m: α list, rowed: (l rowed) = yea,
   limbs: [x: α, limb: (l inhold x) = yea, (m inhold x) = yea],
   (l underset m) = yea
 ] ≔ match l {
-  empty    ^ eftbend,
-  a ‥ rest ^ (
-    let first ≔ a limbs (a inhold_first rest)
-    let tail ≔ rest underset_by m (a sorted_tail rest sorted)
-    {x, limb ^ x limbs (a inhold_tail rest x sorted limb)}
-    yield ({b: 𝟚 ^ b if (rest underset m) nay} leibnitz first) throughgo tail
+  empty        ^ eftbend,
+  a ‥ leftover ^ (
+    let first ≔ a limbs (a inhold_first leftover)
+    let tail ≔ leftover underset_by m (a rowed_tail leftover rowed)
+    {x, limb ^ x limbs (a inhold_tail leftover x rowed limb)}
+    yield ({b: 𝟚 ^ b if (leftover underset m) nay} leibnitz first) throughgo tail
   )
 }
 
-## a sorted list is an underset of itself.
+## a rowed list is an underset of itself.
 show let underset_eftbend: [
-  @α: *, @: α order_whole, l: α list, sorted: (l sorted) = yea,
+  @α: *, @: α order_whole, l: α list, rowed: (l rowed) = yea,
   (l underset l) = yea
-] ≔ l underset_by l sorted {_, limb ^ limb}
+] ≔ l underset_by l rowed {_, limb ^ limb}
 
 ## undersetting goeth through.
 show let underset_throughgo: [
@@ -76,17 +76,17 @@ show let underset_throughgo: [
   first: (l underset m) = yea, latter: (m underset n) = yea,
   (l underset n) = yea
 ] ≔ match l {
-  empty    ^ eftbend,
-  a ‥ rest ^ (
+  empty        ^ eftbend,
+  a ‥ leftover ^ (
     let limb ≔ m underset_limb n a latter
-    ((m inhold a) yea_if_former (rest underset m) first)
-    let tail ≔ rest underset_throughgo m n
-    ((m inhold a) yea_if_latter (rest underset m) first) latter
-    yield ({b: 𝟚 ^ b if (rest underset n) nay} leibnitz limb) throughgo tail
+    ((m inhold a) yea_if_former (leftover underset m) first)
+    let tail ≔ leftover underset_throughgo m n
+    ((m inhold a) yea_if_latter (leftover underset m) first) latter
+    yield ({b: 𝟚 ^ b if (leftover underset n) nay} leibnitz limb) throughgo tail
   )
 }
 
-## mutual undersetting giveth boolean set sameness.
+## evensided undersetting giveth boolean set sameness.
 show let underset_witherevenmete: [
   @α: *, @: α order_whole,
   l: α list, m: α list,
@@ -97,18 +97,18 @@ show let underset_witherevenmete: [
   nay, _   ^ eftbend
 }
 
-## mutual undersetting of canonical lists giveth sameness.
+## evensided undersetting of canonical lists giveth sameness.
 show let underset_=: [
   @α: *, @: α order_whole,
   l: α list, m: α list,
-  left: (l sorted) = yea, right: (m sorted) = yea,
+  left: (l rowed) = yea, right: (m rowed) = yea,
   forth: (l underset m) = yea, back: (m underset l) = yea,
   l = m
 ] ≔ l umtake m left right {x ^
   (l inhold x) inlook @𝟚 @({b: 𝟚 ^ b = (m inhold x)}) {
-    yea, limb   ^ (l underset_limb m x forth limb) evenmete,
-    nay, absent ^ (m inhold x) inlook @𝟚 @({b: 𝟚 ^ nay = b}) {
-      yea, limb ^ match (absent evenmete) throughgo (m underset_limb l x back limb) {},
+    yea, limb    ^ (l underset_limb m x forth limb) evenmete,
+    nay, missing ^ (m inhold x) inlook @𝟚 @({b: 𝟚 ^ nay = b}) {
+      yea, limb ^ match (missing evenmete) throughgo (m underset_limb l x back limb) {},
       nay, _    ^ eftbend
     }
   }

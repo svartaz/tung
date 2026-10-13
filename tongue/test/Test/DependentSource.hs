@@ -36,7 +36,7 @@ shadowingTests =
 
 elaborationTests :: [Test]
 elaborationTests =
-  [ rejectContaining "identity requireth an explicit import" "unknown name '='" (compileSource sourceModule "let proof:0 = 0 ≔ eftbend"),
+  [ rejectContaining "identity requireth an explicit import" "unknown name '='" (compileSource sourceModule "let seething:0 = 0 ≔ eftbend"),
     expectEq "definitions retain their source identities" (Right [SymbolId sourceModule "alias", SymbolId sourceModule "sameness"]) $ do
       program <- compileSource sourceModule (aliasSource ++ identitySource)
       pure (map fst (sourceDefinitions program)),
@@ -79,10 +79,10 @@ implicitInferenceTests =
     normal "higher-rank arguments retain their polymorphism" (implicitIdentitySource ++ "let Id ≔ [@α:*, α, α]\nlet pass:[f:Id, Id] ≔ f") "sameness pass" implicitIdentity,
     normal "a higher-rank lambda can be checked and passed" "let Id ≔ [@α:*, α, α]\nlet run:[f:Id, x:*, *] ≔ x f" "{@α ^ {x ^ x}} run *" (Sort LZero),
     normal "checking introduceth an omitted implicit lambda binder" "let Id ≔ [@α:*, α, α]\nlet run:[f:Id, x:*, *] ≔ x f" "{x ^ x} run *" (Sort LZero),
-    normal "a neutral family determineth an omitted worth" "let forward:[α:*, F:[α, *], @x:α, worth:x F, x F] ≔ worth\nlet recover:[α:*, F:[α, *], x:α, worth:x F, x F] ≔ α forward F worth" "recover" familyIdentity,
+    normal "a neutral family determineth an omitted worth" "let forward:[α:*, F:[α, *], @x:α, worth:x F, x F] ≔ worth\nlet handler:[α:*, F:[α, *], x:α, worth:x F, x F] ≔ α forward F worth" "handler" familyIdentity,
     normal "local aliases do not duplicate an inference spine" (implicitIdentitySource ++ "let through:[α:*, x:α, α] ≔ (let y ≔ x yield y sameness)") "through" explicitIdentity,
-    normal "family inference solveth a pattern beneath a binder" "let family_id:[α:*, @F:[α, *], [x:α, x F, x F]] ≔ {x ^ {v ^ v}}\nlet recover:[α:*, G:[α, *], [x:α, x G, x G]] ≔ α family_id" "recover" familyIdentity,
-    normal "a later pattern solution dischargeth a delayed family equation" "let accept:[@F:[*, *], x:*, v:x F, w:[y:*, y F, y F], x F] ≔ v\nlet recover:[v:*, w:[y:*, *, *], *] ≔ * accept v w" "recover" (Lambda Explicit (Sort LZero) (Lambda Explicit (Pi Explicit (Sort LZero) (Pi Explicit (Sort LZero) (Sort LZero))) (Local 1))),
+    normal "family inference solveth a pattern beneath a binder" "let family_id:[α:*, @F:[α, *], [x:α, x F, x F]] ≔ {x ^ {v ^ v}}\nlet handler:[α:*, G:[α, *], [x:α, x G, x G]] ≔ α family_id" "handler" familyIdentity,
+    normal "a later pattern solution dischargeth a delayed family equation" "let accept:[@F:[*, *], x:*, v:x F, w:[y:*, y F, y F], x F] ≔ v\nlet handler:[v:*, w:[y:*, *, *], *] ≔ * accept v w" "handler" (Lambda Explicit (Sort LZero) (Lambda Explicit (Pi Explicit (Sort LZero) (Pi Explicit (Sort LZero) (Sort LZero))) (Local 1))),
     reject "family agreement at one argument doth not determine the family" (compile "let use:[@F:[*, *], v:* F, * F] ≔ v\nlet bad:[G:[*, *], v:* G, * G] ≔ v use"),
     reject "a discarded implicit argument cannot be guessed" (inferIn "let erase:[@α:*, x:*, *] ≔ x" "* erase"),
     reject "one inferred type cannot same distinct rigid types" (compile "let hath_≍:[@α:*, x:α, y:α, α] ≔ x\nlet bad:[α:*, β:*, x:α, y:β, α] ≔ x hath_≍ y"),
@@ -93,7 +93,7 @@ implicitInferenceTests =
 delayedComputationTests :: [Test]
 delayedComputationTests =
   [ expectEq "conversion resumeth after a dictionary is selected" (Right ()) $
-      () <$ compile ("flock provided:[α:*, *] { let get:α } bizen:ℤ provided { let get ≔ +2 } let proof:(get @ℤ) = +2 ≔ eftbend"),
+      () <$ compile ("flock provided:[α:*, *] { let get:α } bizen:ℤ provided { let get ≔ +2 } let seething:(get @ℤ) = +2 ≔ eftbend"),
     expectEq "a solution typed by an unselected dictionary waiteth for instance search" (Right ()) $
       ()
         <$ compile
@@ -102,7 +102,7 @@ delayedComputationTests =
           let hath_≍:[@α:*, a:α, α] ≔ a
           flock mapping:[φ:[*, *], *] { let over:[@α:*, @β:*, α φ, [α, β], β φ] }
           bizen:box mapping { let over:[a boxed:, f:] ≔ (a f) boxed }
-          let proof:[@α:*, b:α box, (b over hath_≍) = b] ≔ match b {a boxed ^ eftbend}
+          let seething:[@α:*, b:α box, (b over hath_≍) = b] ≔ match b {a boxed ^ eftbend}
           """,
     expectEq "same eliminator results do not equate their delayed inputs" (Right True) do
       program <- compile (choices ++ "let answer ≔ eftbend accept right_evidence left_evidence")
@@ -170,7 +170,7 @@ inspectTests library =
       traverse (uncurry (sameNormalIn program)) [("yea dependent", "0"), ("nay dependent", "'x'"), ("yea retained", "(eftbend:yea = yea)")]
   ]
   where
-    compile source = compileWith library "inlook.tung" ("use is.tung\nilk two:* {yea:two, nay:two}\nlet flip:[b:two,two] ≔ match b {yea ^ nay, nay ^ yea}\n" ++ source)
+    compile source = compileWith library "inlook.tung" ("bring is.tung\nilk two:* {yea:two, nay:two}\nlet flip:[b:two,two] ≔ match b {yea ^ nay, nay ^ yea}\n" ++ source)
 
 proofAuditTests :: [Test]
 proofAuditTests =
@@ -200,7 +200,7 @@ proofAuditTests =
       program <- compile "orsetting hidden:*\nilk box:* { pack:[hidden,box] }\nlet soothed:[x:box,x = x] ≔ eftbend"
       dependencies <$> auditProof program "soothed",
     expectEq "native computation in a proof type retaineth its trusted operation" (Right [(SymbolId sourceModule "add", HostDependency "eke_natural")]) do
-      program <- compile "let add:[ℕ,ℕ,ℕ] ≔ 'eke_natural' fremmed\nlet soothed:(0 add 0) = 0 ≔ eftbend"
+      program <- compile "let add:[ℕ,ℕ,ℕ] ≔ 'eke_kindful' fremmed\nlet soothed:(0 add 0) = 0 ≔ eftbend"
       dependencies <$> auditProof program "soothed",
     expectEq "a reduced named type alias retaineth its source assumption" (Right [(SymbolId sourceModule "hidden", AxiomDependency)]) do
       program <-
@@ -226,7 +226,7 @@ proofAuditTests =
       """
     hostModel =
       """
-      let add:[ℕ,ℕ,ℕ] ≔ 'eke_natural' fremmed {_,_ ^ sorry}
+      let add:[ℕ,ℕ,ℕ] ≔ 'eke_kindful' fremmed {_,_ ^ sorry}
       let selected:[ℕ,ℕ,ℕ] ≔ add
       """
 
@@ -272,7 +272,7 @@ recoveryTests =
         bizen:[@α:*,α related string] { let choose ≔ {x ^ x} }
         bizen:ℕ related ℕ { let choose ≔ {x ^ x} }
         let wanted:[ℕ,ℕ] ≔ choose @ℕ @string
-        let proof:[x:ℕ,ℕ] ≔ (let selected:ℕ ≔ x wanted yield sorry)
+        let seething:[x:ℕ,ℕ] ≔ (let selected:ℕ ≔ x wanted yield sorry)
         let broken:ℕ ≔ 'wrong'
         """
   ]
@@ -319,9 +319,9 @@ rejectionTests =
         <$> compile
           """
           ilk lst:[α:*, *] { nil:α lst, cons:[α, α lst, α lst] }
-          let app:[@α:*, l:α lst, r:α lst, α lst] ≔ match l { nil ^ r, x cons rest ^ x cons (rest app r) }
+          let app:[@α:*, l:α lst, r:α lst, α lst] ≔ match l { nil ^ r, x cons leftover ^ x cons (leftover app r) }
           let assoc:[@α:*, a:α lst, b:α lst, c:α lst, (a app (b app c)) = ((a app b) app c)] ≔
-            match a { nil ^ sorry, first cons rest ^ sorry }
+            match a { nil ^ sorry, first cons leftover ^ sorry }
           """,
     expectEq "goals show fields, chained fields, and calls through fields" (Right ["p.age = p.age", "h.child.age = h.child.age", "(x f).age = (x f).age", "(x h.run y) = (x h.run y)"]) $
       map holeGoal . reverse . sourceHoles
@@ -349,7 +349,7 @@ rejectionTests =
       map holeGoal . sourceHoles
         <$> compileProject
           sourceModule
-          (equalitySource ++ "use people.tung other\nlet proof:[p:other~person, p.age = p.age] ≔ sorry")
+          (equalitySource ++ "bring people.tung other\nlet seething:[p:other~person, p.age = p.age] ≔ sorry")
           (Map.singleton "people.tung" "show ilk person:* { person_of:[age:ℤ, person] }"),
     expectEq "a sorry recordeth its goal and named context" (Right [("α", [("α", "*"), ("b", "α box"), ("a", "α")])]) $
       map (\Hole {holeGoal, holeContext} -> (holeGoal, holeContext)) . sourceHoles
@@ -375,7 +375,7 @@ sourceModule :: ModuleId
 sourceModule = SourceModule "example.tung"
 
 compile :: String -> Either String SourceProgram
-compile source = compileProject sourceModule ("use is.tung\n" ++ source) (Map.singleton "is.tung" equalitySource)
+compile source = compileProject sourceModule ("bring is.tung\n" ++ source) (Map.singleton "is.tung" equalitySource)
 
 inferIn :: String -> String -> Either String Inferred
 inferIn source expression = compile source >>= (`inferSourceExpression` expression)

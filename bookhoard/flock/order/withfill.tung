@@ -1,0 +1,24 @@
+bring flock/order/lattice_hemmed.tung
+bring flock/order/semilattice_hemmed_upper.tung
+bring flock/order/semilattice_lower.tung
+bring flock/order/semilattice_upper.tung
+bring flock/order/semilattice_upper_hemmed.tung
+bring ilk/two.tung
+bring is.tung
+
+## a hemmed lattice with a chosen withfill for every worth.
+show flock withfill: [α: *, @: α lattice_hemmed, *] {
+  let ¬: [α, α]
+  let ∧_¬: [a: α, (a ∧ (a ¬)) = ⟂]
+  let ∨_¬: [a: α, (a ∨ (a ¬)) = ⊤]
+}
+
+bizen: 𝟚 withfill {
+  let ¬ ≔ {
+    yea ^ nay,
+    nay ^ yea
+  }
+
+  let ∧_¬ ≔ {yea; nay ^ eftbend}
+  let ∨_¬ ≔ {yea; nay ^ eftbend}
+}

@@ -1,8 +1,8 @@
-use combinator.tung
-use flock/order/hath_at_most.tung
-use flock/order/order_whole.tung
-use ilk/two.tung
-use is.tung
+bring combinator.tung
+bring flock/order/hath_at_most.tung
+bring flock/order/order_whole.tung
+bring ilk/two.tung
+bring is.tung
 
 ## a carrier whose every pair hath a supremum.
 show flock semilattice_upper: [α: *, *] {
@@ -65,7 +65,7 @@ let helpsetting_∨_∨: [@α: *, @: α order_whole, a: α, b: α, c: α,
 bizen: [@α: *, @: α order_whole, α semilattice_upper] {
   let ∨: [a:, b:] ≔ (a ≤ b) if b a
 
-  # each comparison result chooseth a, so matching on it sootheth the law.
+  # each comparison outcome chooseth a, so matching on it sootheth the law.
   let ∨_swallow: [a:] ≔ match a ≤ a {yea ^ eftbend, nay ^ eftbend}
   let ∨_swap ≔ helpsetting_∨_swap
   let ∨_∨ ≔ helpsetting_∨_∨

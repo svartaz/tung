@@ -25,7 +25,7 @@ generatedIdempotence = expect "formatter is idempotent for generated structural 
       ]
     declarations =
       [ ["show ilk box: [a:*, *] {", "box: [a, a box]", "}"],
-        ["let result ≔", "match worth {", "yea; nay ^ 1", "}"],
+        ["let outcome ≔", "match worth {", "yea; nay ^ 1", "}"],
         ["let handled ≔", "risky bind {", "message incast₀ ^ 0", "}"],
         ["flock sameness:[a:*, *] {", "let sameness:[@a:*, a, a]", "let rule:[@a:*, x:a,", "(x sameness) = x]", "}"]
       ]
@@ -43,7 +43,7 @@ cases =
         l, 0 ^ l,
         _, 0;
         empty, _ ^ empty,
-        _ ‥ rest, n ^ rest drop (n - 1)
+        _ ‥ leftover, n ^ leftover drop (n - 1)
       }
       """,
       """
@@ -51,7 +51,7 @@ cases =
         l,        0 ^ l,
         _,        0;
         empty,    _ ^ empty,
-        _ ‥ rest, n ^ rest drop (n - 1)
+        _ ‥ leftover, n ^ leftover drop (n - 1)
       }
       """
     ),
@@ -109,14 +109,14 @@ cases =
     ),
     ( "a row body after its separator is indented",
       """
-      let result ≔ match worth {
+      let outcome ≔ match worth {
       yea ^
       1,
       nay ^ 0
       }
       """,
       """
-      let result ≔ match worth {
+      let outcome ≔ match worth {
         yea ^
           1,
         nay ^ 0
@@ -223,21 +223,21 @@ cases =
     ),
     ( "sort use declarations",
       """
-      use zebra.tung zebra
-      use alpha.tung
+      bring zebra.tung zebra
+      bring alpha.tung
 
       ## a separate use block.
-      use delta.tung
-      use beta.tung beta
+      bring delta.tung
+      bring beta.tung beta
 
       """,
       """
-      use alpha.tung
-      use zebra.tung zebra
+      bring alpha.tung
+      bring zebra.tung zebra
 
       ## a separate use block.
-      use beta.tung beta
-      use delta.tung
+      bring beta.tung beta
+      bring delta.tung
 
       """
     ),
@@ -381,7 +381,7 @@ cases =
     ),
     ( "decimal unicode and block comments",
       """
-      let result ≔
+      let outcome ≔
       match staff {
       `\\32; ^ 1,
       _ ^ 0
@@ -393,7 +393,7 @@ cases =
 
       """,
       """
-      let result ≔
+      let outcome ≔
         match staff {
           `\\32; ^ 1,
           _     ^ 0

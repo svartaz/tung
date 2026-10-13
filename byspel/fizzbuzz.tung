@@ -1,13 +1,13 @@
-use flock/algebra/half/semigroupoid.tung
-use ground.tung
-use ilk/list.tung
-use ilk/maybe.tung
-use ilk/product.tung
+bring flock/algebra/half/semigroupoid.tung
+bring ilk/list.tung
+bring ilk/maybe.tung
+bring ilk/product.tung
+bring often.tung
 
 let can_deal: [@α: *, @: α hath_%, @: α hath_naught, @: α hath_≍, dealer: α, dealt: α, 𝟚] ≔
   match dealt % dealer {
-    (_ both rest) some ^ rest ≍ naught,
-    none               ^ nay
+    (_ both leftover) some ^ leftover ≍ naught,
+    none                   ^ nay
   }
 
 ilk _fizzbuzz: * {

@@ -1,4 +1,4 @@
-use is.tung
+bring is.tung
 let +: [ℤ, ℤ, ℤ] ≔ 'eke_wholetale' fremmed
 
 ## an ilk with one constructor and no indices hath an accessor for each named

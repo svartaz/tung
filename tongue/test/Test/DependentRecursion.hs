@@ -15,8 +15,8 @@ group = do
   memo <- exampleSource "index_memo.tung"
   functions <- exampleSource "function_recursion.tung"
   wellFounded <- exampleSource "wellgrounded.tung"
-  accessible <- loadLibrary ["ilk/accessible.tung", "ilk/list_setting.tung", "ilk/natural.tung", "ground.tung"]
-  Harness.group "dependent-recursion" (wellFoundedTests accessible wellFounded ++ boundedTests accessible ++ positiveTests ++ indexRecursionTests accessible indexed ++ indexMemoTests memo ++ functionRecursionTests accessible functions ++ rejectionTests)
+  grounded <- loadLibrary ["ilk/grounded.tung", "ilk/list_setting.tung", "ilk/kindful.tung", "often.tung"]
+  Harness.group "dependent-recursion" (wellFoundedTests grounded wellFounded ++ boundedTests grounded ++ positiveTests ++ indexRecursionTests grounded indexed ++ indexMemoTests memo ++ functionRecursionTests grounded functions ++ rejectionTests)
 
 -- library measure recursion retaineth checked decrease proofs and dependent results.
 wellFoundedTests :: Library -> String -> [Test]
@@ -66,12 +66,12 @@ boundedTests library =
     compile extra = compileWith library "under.tung" (prelude ++ extra)
     prelude =
       """
-      use flock/hath_greatness.tung
-      use ground.tung
-      use ilk/accessible.tung
-      use ilk/list.tung
-      use ilk/list_setting.tung
-      use ilk/natural.tung
+      bring flock/hath_greatness.tung
+      bring often.tung
+      bring ilk/grounded.tung
+      bring ilk/list.tung
+      bring ilk/list_setting.tung
+      bring ilk/kindful.tung
       let halve: [n:ℕ, ℕ] ≔
         {_ ^ ℕ} wellgrounded_selfcall_by {x ^ x} under_wellgrounded
           {n, selfcall ^ match n {
@@ -83,7 +83,7 @@ boundedTests library =
         {_:ℕ list ^ ℕ} wellgrounded_selfcall_by greatness under_wellgrounded
           {l, selfcall ^ match l {
             empty ^ 0,
-            x ‥ rest ^ x + (rest selfcall (x ‥_greatness_under rest))
+            x ‥ leftover ^ x + (leftover selfcall (x ‥_greatness_under leftover))
           }} l
 
       """
@@ -120,7 +120,7 @@ functionRecursionTests library example =
             ("a generic function input cannot inherit pointwise evidence", "let bad:[tree,ℕ] ≔ {tip ^ 0, _ node children ^ (let run:[call:[ℕ,tree],ℕ] ≔ (0 call) bad yield children run)}"),
             ("a function descendant must retain its actual index", "let bad:[n:ℕ,x:n fan,ℕ] ≔ match x {stop ^ 0, children more ^ match eftbend children @0 {stop ^ 1, smaller more ^ 0 bad (eftbend smaller @1)}}"),
             ("a recursive name without a decreasing input cannot be passed as a value", "let bad:[ℕ,ℕ] ≔ {0 ^ 0, n heir ^ (let run ≔ bad yield n run)}"),
-            ("a partial call cannot omit its structural input", "ilk chain:[ℕ,*] {stop:0 chain, step:[n:ℕ,n chain,(n heir) chain]}\nlet bad:[n:ℕ,x:n chain,total:ℕ,ℕ] ≔ match x {stop ^ total, k step child ^ (let rest ≔ k bad yield 0 rest)}")
+            ("a partial call cannot omit its structural input", "ilk chain:[ℕ,*] {stop:0 chain, step:[n:ℕ,n chain,(n heir) chain]}\nlet bad:[n:ℕ,x:n chain,total:ℕ,ℕ] ≔ match x {stop ^ total, k step child ^ (let leftover ≔ k bad yield 0 leftover)}")
           ]
       ]
   where
@@ -244,9 +244,9 @@ indexMemoTests example =
       ilk two:[@j:ℕ,m:ℕ,*] {
         to_two:[@n:ℕ,m:ℕ,n one,m two @(n heir)]
       }
-      let count:[@n:ℕ,n one,ℕ] ≔ {
+      let rime:[@n:ℕ,n one,ℕ] ≔ {
         initial ^ 0,
-        _ to_one _ (_ to_two child) ^ (child count) heir
+        _ to_one _ (_ to_two child) ^ (child rime) heir
       }
       """
 
@@ -263,9 +263,9 @@ positiveTests =
         ),
         ("a lambda may shadow the recursive binding", count "(n count) keep ({z ^ z} {count:[nat,nat] ^ naught count})", two ++ " count", two),
         ("a case variable may shadow the recursive binding", count "(n count) keep (naught {count ^ count})", two ++ " count", two),
-        ("a local binding may shadow the recursive binding", count "(let worth ≔ n count let count ≔ naught yield worth keep count)", two ++ " count", two),
-        ("a local initialiser still seeth the outer recursive binding", count "(let count ≔ n count yield count)", two ++ " count", two),
-        ("a direct child's alias denoteth the same recursive input", count "(let smaller ≔ n yield smaller count)", two ++ " count", two),
+        ("a local binding may shadow the recursive binding", count "(let worth ≔ n rime let rime ≔ naught yield worth keep rime)", two ++ " count", two),
+        ("a local initialiser still seeth the outer recursive binding", count "(let rime ≔ n rime yield rime)", two ++ " count", two),
+        ("a direct child's alias denoteth the same recursive input", count "(let smaller ≔ n yield smaller rime)", two ++ " count", two),
         ( "a rebound first child leaveth the second input structural",
           """
           let right:[x:nat, y:nat, nat] ≔ match x,y {
@@ -281,7 +281,7 @@ positiveTests =
           count
             """
             (let local:[nat,nat] ≔ {
-              naught ^ n count,
+              naught ^ n rime,
               m heir ^ m local
             } yield n local)
             """,
@@ -328,7 +328,7 @@ positiveTests =
           "naught heir"
         ),
         ( "a recursive lambda retaineth its binder annotation",
-          "let count:[nat,nat] ≔ {x:nat ^ match x {naught ^ naught, n heir ^ (n count) heir}}",
+          "let rime:[nat,nat] ≔ {x:nat ^ match x {naught ^ naught, n heir ^ (n rime) heir}}",
           two ++ " count",
           two
         ),
@@ -367,17 +367,17 @@ rejectionTests :: [Test]
 rejectionTests =
   [ reject label (compile source)
   | (label, source) <-
-      [ ("a shadowing worth is not the former child", count "(let n ≔ naught yield n count)"),
+      [ ("a shadowing worth is not the former child", count "(let n ≔ naught yield n rime)"),
         ("an explicit index argument must be the child's index", vector ++ "let greatness:[@α:*, n:nat, v:α vec n, nat] ≔ match v { nil ^ n, k cons _ t ^ (naught greatness t) heir }"),
         ("an index input cannot be matched by a constructor", vector ++ "let greatness:[@α:*, n:nat, v:α vec n, nat] ≔ { naught, nil ^ naught, _, k cons _ t ^ (k greatness t) heir }"),
-        ("a recursive lambda cannot ignore a wrong binder annotation", "let count:[nat,nat] ≔ {x:string ^ match x {naught ^ naught, n heir ^ (n count) heir}}"),
+        ("a recursive lambda cannot ignore a wrong binder annotation", "let rime:[nat,nat] ≔ {x:string ^ match x {naught ^ naught, n heir ^ (n rime) heir}}"),
         ("a rebuilt matched input is not a descendant", count "(n heir) count"),
         ( "an inner child is not an outer induction hypothesis",
           count
             """
             (let local:[nat,nat] ≔ {
               naught ^ naught,
-              m heir ^ (m count) keep (m local)
+              m heir ^ (m rime) keep (m local)
             } yield n local)
             """
         )
@@ -385,7 +385,7 @@ rejectionTests =
   ]
 
 count :: String -> String
-count body = "let count:[x:nat,nat] ≔ match x { naught ^ naught, n heir ^ (" ++ body ++ ") heir }"
+count body = "let rime:[x:nat,nat] ≔ match x { naught ^ naught, n heir ^ (" ++ body ++ ") heir }"
 
 vector, pair :: String
 vector = "ilk vec:[α:*, [nat, *]] { nil:α vec naught, cons:[n:nat, head:α, tail:α vec n, α vec (n heir)] }\n"

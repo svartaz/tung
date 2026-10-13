@@ -377,7 +377,7 @@ keywordTokens :: [(String, Token)]
 keywordTokens =
   [ ("let", TLet),
     ("show", TExport),
-    ("use", TImport),
+    ("bring", TImport),
     ("ilk", TType),
     ("yield", TYield),
     ("fremmed", TForeign),

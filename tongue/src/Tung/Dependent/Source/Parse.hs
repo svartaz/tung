@@ -216,7 +216,7 @@ oneDeclaration tokens = case tokens of
   TExport : rest@(keyword : _) | keyword `elem` [TLet, TType, TClass, TOrsend] -> shown rest
   TExport : rest@(TIdent _ : _) -> (\(names, following) -> (ReExportDeclaration names, following)) <$> reexported [] rest
   TExport : _ -> failAt tokens "show must precede a let, ilk, flock, or orsetting declaration or a name"
-  _ -> failAt tokens "expected a declaration: let, ilk, flock, bizen, orsetting, use, or show"
+  _ -> failAt tokens "expected a declaration: let, ilk, flock, bizen, orsetting, bring, or show"
 
 -- `show a, b` re-exporteth visible names.
 reexported :: [String] -> Parser [String]
@@ -303,13 +303,13 @@ importDeclaration tokens = case tokens of
     markFirst "import" [] tokens
     result <- go first rest
     case result of
-      (ImportDeclaration path _, _) | not (".tung" `isSuffixOf` path) -> failAt tokens ("use path '" ++ path ++ "' must end in '.tung'")
+      (ImportDeclaration path _, _) | not (".tung" `isSuffixOf` path) -> failAt tokens ("bring path '" ++ path ++ "' must end in '.tung'")
       _ -> pure result
-  _ -> failAt tokens "expected a use path"
+  _ -> failAt tokens "expected a bring path"
   where
     go path (TDot : TIdent segment : remaining) = go (path ++ "." ++ segment) remaining
     go path aliased@(TIdent alias : remaining)
-      | any (`elem` "~/") alias = failAt aliased ("use alias '" ++ alias ++ "' must be one plain name")
+      | any (`elem` "~/") alias = failAt aliased ("bring alias '" ++ alias ++ "' must be one plain name")
       | otherwise = markFirst "namespace" ["declaration"] aliased >> pure (ImportDeclaration path (Just alias), remaining)
     go path remaining = pure (ImportDeclaration path Nothing, remaining)
 
@@ -766,7 +766,7 @@ block tokens = do
   (bindings, rest) <- declarations tokens
   when (any isInductive bindings) (failAt tokens "ilk declarations must be top-level")
   when (any isHost bindings) (failAt tokens "fremmed bindings must be top-level")
-  when (any isModuleLevel bindings) (failAt tokens "use and show must be top-level")
+  when (any isModuleLevel bindings) (failAt tokens "bring and show must be top-level")
   case rest of
     TYield : afterYield -> do
       (body, afterBody) <- expression afterYield

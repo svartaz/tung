@@ -5,7 +5,7 @@ tung is a lazily evaluating functional programming language equipped with predic
 ## a first program
 
 ```tung
-use ground.tung
+bring often.tung
 
 let double: [x:, ℤ] ≔ x + x
 

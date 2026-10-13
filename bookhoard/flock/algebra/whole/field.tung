@@ -1,7 +1,7 @@
-use flock/algebra/whole/hath_deal.tung
-use flock/algebra/whole/hath_fold.tung
-use flock/algebra/whole/ring.tung
-use is.tung
+bring flock/algebra/whole/hath_deal.tung
+bring flock/algebra/whole/hath_fold.tung
+bring flock/algebra/whole/ring.tung
+bring is.tung
 
 show flock field: [α: *, @: α ring, @: α hath_÷, *] {
   let ÷_·: [dealt: α, dealer: α,

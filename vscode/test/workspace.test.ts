@@ -29,7 +29,7 @@ test("changing an import retaineth unchanged role snapshots", async () => {
   const requests = [];
   let imported = "show let old ≔ +1";
   const documents = [
-    { uri: "main", version: 1, getText: () => "use dep.tung" },
+    { uri: "main", version: 1, getText: () => "bring dep.tung" },
     { uri: "dep", version: 1, getText: () => imported },
   ];
   const workspace = new WorkspaceIndex(
@@ -56,7 +56,7 @@ test("changing an import retaineth unchanged role snapshots", async () => {
   workspace.invalidateFiles();
   await workspace.ready();
   assert.deepEqual(requests, [
-    ["use dep.tung", 1],
+    ["bring dep.tung", 1],
     ["show let old ≔ +1", 1],
     [imported, 2],
   ]);
@@ -69,7 +69,7 @@ test("requirements resolve imported types and declared parameters", async (conte
   } = await fixture(context, {
     "dep.tung": "show ilk box: * { box: box }",
     "main.tung":
-      "use dep.tung flock child:[@:box hath_≍, a:*, @:a hath_≍, *] {let f:[a, a]}",
+      "bring dep.tung flock child:[@:box hath_≍, a:*, @:a hath_≍, *] {let f:[a, a]}",
   });
   const model = getModel();
   const box = model.tokens.find((token) => token.text === "box");
@@ -132,7 +132,7 @@ test("workspace leaveth duplicate imported bare names ambiguous", async (context
   const { workspace, model } = await fixture(context, {
     "left.tung": "show let worth ≔ +1",
     "right.tung": "show let worth ≔ +2",
-    "main.tung": "use left.tung use right.tung let answer ≔ worth",
+    "main.tung": "bring left.tung bring right.tung let answer ≔ worth",
   });
   assert.equal(workspace.resolveVisible(model(), "worth").length, 2);
   assert.equal(workspace.resolveVisible(model(), "left~worth").length, 1);
@@ -145,12 +145,12 @@ test("workspace re-exports every same-spelled role", async (context) => {
   assert.deepEqual(shown.map(({ role }) => role).sort(), ["type", "variable"]);
 });
 test("library modules do not become an implicit prelude", async (context) => {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-ground-"));
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-often-"));
   context.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const library = path.join(root, "library");
   fs.mkdirSync(library);
   fs.writeFileSync(
-    path.join(library, "ground.tung"),
+    path.join(library, "often.tung"),
     "show let offered ≔ +1 let hidden ≔ +2",
   );
   const workspace = new WorkspaceIndex(
@@ -176,7 +176,7 @@ test("library module paths keep their exact file names", async (context) => {
   fs.mkdirSync(library, { recursive: true });
   fs.writeFileSync(path.join(library, "_fremmed.tung"), "show let worth ≔ +1");
   const main = path.join(root, "main.tung");
-  fs.writeFileSync(main, "use foreign.tung");
+  fs.writeFileSync(main, "bring foreign.tung");
   const workspace = new WorkspaceIndex(
     { get: () => undefined, all: () => [] },
     compiler,
@@ -197,7 +197,7 @@ test("library roots resolve exact paths and duplicate names stay ambiguous", asy
   for (const directory of [project, first, second]) fs.mkdirSync(directory);
   const main = path.join(project, "main.tung");
   const module = path.join(first, "extra.tung");
-  fs.writeFileSync(main, "use extra.tung yield extra~worth");
+  fs.writeFileSync(main, "bring extra.tung yield extra~worth");
   fs.writeFileSync(module, "show let worth ≔ +1");
   const workspace = new WorkspaceIndex(
     { get: () => undefined, all: () => [] },

@@ -1,5 +1,5 @@
-use ilk/list.tung
-use ilk/maybe.tung
+bring ilk/list.tung
+bring ilk/maybe.tung
 
 ## host arguments, settings, and process ending.
 show let arguments: (string list) deed ≔ 'arguments' fremmed

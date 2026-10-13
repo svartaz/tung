@@ -13,7 +13,7 @@ import Tung.Dependent.Source (CompileFailure (..), DependencyKind (..), FailureK
 
 group :: IO Harness.Group
 group = do
-  files <- traverse (\name -> (name,) <$> exampleSource ("modules/" ++ name)) ["host.tung", "natural.tung", "main.tung"]
+  files <- traverse (\name -> (name,) <$> exampleSource ("modules/" ++ name)) ["host.tung", "kindful.tung", "main.tung"]
   library <- loadLibrary ["_fremmed.tung", "ilk/one.tung"]
   Harness.group "dependent-module" (exampleRun library files : replacedFixture library : tests ++ mutualModuleTests ++ proofAuditTests ++ cachedTests ++ map generatedGraph graphs)
 
@@ -32,7 +32,7 @@ replacedFixture library =
       (withModules [("ilk/one.tung", "show ilk 𝟙:* {}\n")] library)
       "replaced_fixture.tung"
       """
-      use ilk/one.tung
+      bring ilk/one.tung
       let worth:𝟙 ≔ only
 
       """
@@ -40,25 +40,25 @@ replacedFixture library =
 tests :: [Test]
 tests =
   [ expectEq "shown names are visible bare and qualified" (Right True) $
-      checked "use bool.tung\nlet a:bool ≔ yes\nlet b:bool~bool ≔ bool~no\n" [bool],
+      checked "bring bool.tung\nlet a:bool ≔ yes\nlet b:bool~bool ≔ bool~no\n" [bool],
     expectEq "an alias replaceth the default namespace" (Right True) $
-      checked "use bool.tung truth\nlet a:truth~bool ≔ truth~yes\n" [bool],
+      checked "bring bool.tung truth\nlet a:truth~bool ≔ truth~yes\n" [bool],
     rejectContaining "the default namespace is gone after an alias" "unknown name 'bool~yes'" $
-      compile "use bool.tung truth\nlet a ≔ bool~yes\n" [bool],
+      compile "bring bool.tung truth\nlet a ≔ bool~yes\n" [bool],
     rejectContaining "unshown names stay private" "unknown name 'secret'" $
-      compile "use bool.tung\nlet a ≔ secret\n" [bool],
+      compile "bring bool.tung\nlet a ≔ secret\n" [bool],
     rejectContaining "a bare name shown by two modules is ambiguous" "ambiguous name 'yes'" $
-      compile "use bool.tung\nuse other.tung\nlet a ≔ yes\n" [bool, other],
+      compile "bring bool.tung\nbring other.tung\nlet a ≔ yes\n" [bool, other],
     rejectContaining "re-export ambiguity nameth visible aliases" "right~yes and left~yes" $
-      compile "use first.tung left\nuse second.tung right\nlet a ≔ yes" [bool, other, ("first.tung", "use bool.tung show bool~yes"), ("second.tung", "use other.tung show other~yes")],
+      compile "bring first.tung left\nbring second.tung right\nlet a ≔ yes" [bool, other, ("first.tung", "bring bool.tung show bool~yes"), ("second.tung", "bring other.tung show other~yes")],
     expectEq "qualification resolveth an ambiguous name" (Right True) $
-      checked "use bool.tung\nuse other.tung\nlet a:bool~bool ≔ bool~yes\n" [bool, other],
+      checked "bring bool.tung\nbring other.tung\nlet a:bool~bool ≔ bool~yes\n" [bool, other],
     expectEq "a local definition shadoweth a bare import" (Right True) $
-      checked "use bool.tung\nilk mine:* { yes: mine }\nlet a:mine ≔ yes\n" [bool],
+      checked "bring bool.tung\nilk mine:* { yes: mine }\nlet a:mine ≔ yes\n" [bool],
     rejectContaining "local names still cannot repeat" "top-level name repeateth" $
       compile "let a ≔ *\nlet a ≔ *\n" [],
     expectEq "one module imported twice keepeth one sameness" (Right True) $
-      checked "use bool.tung\nuse wrap.tung\nlet a:bool ≔ yes keep\n" [bool, ("wrap.tung", "use bool.tung\nshow let keep:[bool, bool] ≔ {x ^ x}\n")],
+      checked "bring bool.tung\nbring wrap.tung\nlet a:bool ≔ yes keep\n" [bool, ("wrap.tung", "bring bool.tung\nshow let keep:[bool, bool] ≔ {x ^ x}\n")],
     expectEq "a forward assumption is scheduled before its users" (Right True) $
       checked (equalitySource ++ "let soothed:[x:T,x = x] ≔ eftbend\norsetting T:*") [],
     expectEq "later lambda annotations seeth earlier binders" (Right True) do
@@ -70,19 +70,19 @@ tests =
     expectEq "a bizen may precede a helper that useth its flock at another type" (Right True) $
       checked "flock keeps: [α: *, *] { let keep: [α, α] }\nilk a: * { x: a }\nilk b: * { y: b }\nbizen: b keeps { let keep ≔ helper }\nlet helper: [b, b] ≔ {v ^ match x keep { x ^ v }}\nbizen: a keeps { let keep: [v:] ≔ v }\n" [],
     expectEq "an ambiguous name that is no constructor still bindeth a recursive input" (Right True) $
-      checked "use a.tung\nuse b.tung\nilk nat:* { z: nat, s: [nat, nat] }\nlet count: [n: nat, same: nat, nat] ≔ match n { z ^ same, m s ^ m count same }\n" [("a.tung", "show let same ≔ *\n"), ("b.tung", "show let same ≔ *\n")],
+      checked "bring a.tung\nbring b.tung\nilk nat:* { z: nat, s: [nat, nat] }\nlet rime: [n: nat, same: nat, nat] ≔ match n { z ^ same, m s ^ m rime same }\n" [("a.tung", "show let same ≔ *\n"), ("b.tung", "show let same ≔ *\n")],
     rejectContaining "an ambiguous constructor in a pattern is rejected" "ambiguous name 'yes'" $
-      compile "use bool.tung\nuse other.tung\nlet pick: [bool, bool] ≔ { yes ^ no, x ^ x }\n" [bool, other],
-    rejectContaining "a use cycle is rejected" "use cycle: a.tung -> b.tung -> a.tung" $
-      compile "use a.tung\n" [("a.tung", "use b.tung\n"), ("b.tung", "use a.tung\n")],
+      compile "bring bool.tung\nbring other.tung\nlet pick: [bool, bool] ≔ { yes ^ no, x ^ x }\n" [bool, other],
+    rejectContaining "a use cycle is rejected" "bring cycle: a.tung -> b.tung -> a.tung" $
+      compile "bring a.tung\n" [("a.tung", "bring b.tung\n"), ("b.tung", "bring a.tung\n")],
     rejectContaining "a missing module is reported" "missing use" $
-      compile "use absent.tung\n" [],
-    rejectContaining "errors name the module" "in use 'broken.tung'" $
-      compile "use broken.tung\n" [("broken.tung", "let bad ≔ unknown\n")],
+      compile "bring missing.tung\n" [],
+    rejectContaining "errors name the module" "in bring 'broken.tung'" $
+      compile "bring broken.tung\n" [("broken.tung", "let bad ≔ unknown\n")],
     rejectContaining "show precedeth a declaration" "show must precede" $
-      parseSource "show use bool.tung\n",
-    rejectContaining "use sameness top-level" "use and show must be top-level" $
-      parseSource "let a ≔ (use bool.tung yield *)\n"
+      parseSource "show bring bool.tung\n",
+    rejectContaining "use sameness top-level" "bring and show must be top-level" $
+      parseSource "let a ≔ (bring bool.tung yield *)\n"
   ]
   where
     bool = ("bool.tung", "show ilk bool:* { no: bool, yes: bool }\nlet secret ≔ *\n")
@@ -91,10 +91,10 @@ tests =
 mutualModuleTests :: [Test]
 mutualModuleTests =
   [ expectEq "shown mutual families retain their own constructors and imported matches" (Right True) do
-      program <- compile "use mutual.tung" [mutual]
+      program <- compile "bring mutual.tung" [mutual]
       sameNormalIn program "mutual~sample parent" "naught_even",
     rejectContaining "an unshown sibling family remaineth private" "unknown name 'odd'" $
-      compile "use mutual.tung\nlet bad ≔ odd" [mutual],
+      compile "bring mutual.tung\nlet bad ≔ odd" [mutual],
     expectEq "declaration cycle diagnostics retain the first name's span" (Right expected) $
       case compileProjectDetailed Map.empty (SourceModule "cycle.tung") "let a:* ≔ b\nlet b:* ≔ a" Map.empty of
         Left failure -> Right failure
@@ -140,9 +140,9 @@ proofAuditTests =
     expected = sortOn fst [(SymbolId (SourceModule "base.tung") name, AxiomDependency) | name <- ["hidden", "visible"]]
     source =
       """
-      use forward.tung shared
+      bring forward.tung shared
       let soothed:ℕ ≔ shared~visible shared~exposed
-      let public_proof:ℕ ≔ shared~visible
+      let public_seething:ℕ ≔ shared~visible
       """
     modules =
       [ ( "base.tung",
@@ -154,27 +154,27 @@ proofAuditTests =
           show let exposed:[ℕ,ℕ] ≔ {_ ^ helper}
           """
         ),
-        ("forward.tung", "use base.tung source\nshow source~exposed\nshow source~visible")
+        ("forward.tung", "bring base.tung source\nshow source~exposed\nshow source~visible")
       ]
 
 cachedTests :: [Test]
 cachedTests =
   [ expectEq "conflicting cached dependencies cannot prove an empty type" (Right expected) do
       cached <- cache "show ilk tag:* {}" "show ilk empty:* {} show let explode:[tag,empty] ≔ {}"
-      case compileProjectDetailed cached RootModule "use a.tung\nuse b.tung\nlet impossible:b~empty ≔ a~worth b~explode" Map.empty of
+      case compileProjectDetailed cached RootModule "bring a.tung\nbring b.tung\nlet impossible:b~empty ≔ a~worth b~explode" Map.empty of
         Left failure -> Right failure
         Right _ -> Left "accepted conflicting cached dependencies",
     expectEq "an identical cached diamond keepeth its checked identities" (Right True) do
       cached <- cache inhabited "show let keep:[tag,tag] ≔ {x ^ x}"
-      program <- compileProjectWith cached RootModule "use a.tung\nuse b.tung\nlet answer ≔ a~worth b~keep" Map.empty
+      program <- compileProjectWith cached RootModule "bring a.tung\nbring b.tung\nlet answer ≔ a~worth b~keep" Map.empty
       sameNormalIn program "answer" "a~worth"
   ]
   where
-    expected = CompileFailure CheckFailure Nothing (Just (SourceSpan 15 16)) "conflicting definition of 'tag' in use 'b.tung'"
+    expected = CompileFailure CheckFailure Nothing (Just (SourceSpan 15 16)) "conflicting definition of 'tag' in bring 'b.tung'"
     inhabited = "show ilk tag:* { only:tag }"
     cache dependency source = do
-      left <- compileProject (SourceModule "a.tung") "use dep.tung show let worth:tag ≔ only" (Map.singleton "dep.tung" inhabited)
-      right <- compileProject (SourceModule "b.tung") ("use dep.tung " ++ source) (Map.singleton "dep.tung" dependency)
+      left <- compileProject (SourceModule "a.tung") "bring dep.tung show let worth:tag ≔ only" (Map.singleton "dep.tung" inhabited)
+      right <- compileProject (SourceModule "b.tung") ("bring dep.tung " ++ source) (Map.singleton "dep.tung" dependency)
       pure (Map.fromList [("a.tung", left), ("b.tung", right)])
 
 compile :: String -> [(String, String)] -> Either String SourceProgram
@@ -212,7 +212,7 @@ generatedGraph edges = expectEq ("generated module graph " ++ show edges) (Right
               "let secret ≔ *"
             ]
               ++ ["show let r" ++ show target ++ ": " ++ name target ++ "~t" ++ show target ++ " ≔ " ++ name target ++ "~v" ++ show target | target <- imported index]
-       in intercalate "\n" (["use " ++ path target | target <- imported index] ++ order declarations)
+       in intercalate "\n" (["bring " ++ path target | target <- imported index] ++ order declarations)
     agree = \case
       first : rest -> all (== first) rest
       [] -> True
@@ -221,7 +221,7 @@ generatedGraph edges = expectEq ("generated module graph " ++ show edges) (Right
     build (declarationOrder, importOrder, aliased) = do
       let modules = [(path index, module' declarationOrder index) | index <- [0 .. 2]]
           worth index = space aliased index ++ "~v" ++ show index
-          root = intercalate "\n" (importOrder ["use " ++ path index ++ (if aliased then " " ++ space aliased index else "") | index <- [0 .. 2]] ++ ["let answer ≔ (" ++ worth 0 ++ " both " ++ worth 1 ++ ") both " ++ worth 2])
+          root = intercalate "\n" (importOrder ["bring " ++ path index ++ (if aliased then " " ++ space aliased index else "") | index <- [0 .. 2]] ++ ["let answer ≔ (" ++ worth 0 ++ " both " ++ worth 1 ++ ") both " ++ worth 2])
           chains = [(space aliased importer ++ "~r" ++ show target, space aliased target ++ "~v" ++ show target) | (importer, target) <- edges]
       program <- compile (root ++ "\nilk pair: [α: *, β: *, *] { both: [α, β, α pair β] }") modules
       same <- traverse (uncurry (sameNormalIn program)) chains

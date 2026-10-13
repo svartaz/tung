@@ -80,12 +80,12 @@ for (const byspel of byspels) {
   });
 }
 
-test("word_count readeth its file and counteth repeated words", (context) => {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "tung-word-count-"));
+test("word_rime readeth its file and rimeth repeated words", (context) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "tung-word-rime-"));
   context.after(() => fs.rmSync(directory, { recursive: true, force: true }));
   const file = path.join(directory, "words.txt");
   fs.writeFileSync(file, "a b a\n");
-  assert.deepEqual(run(["byspel/word_count.tung", file]), {
+  assert.deepEqual(run(["byspel/word_rime.tung", file]), {
     output: "a:2\nb:1\n",
     error: "",
     status: 0,

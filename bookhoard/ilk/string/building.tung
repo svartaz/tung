@@ -1,0 +1,83 @@
+bring _fremmed.tung
+bring flock/algebra/whole/hath_fold.tung
+bring flock/algebra/whole/hath_one.tung
+bring flock/algebra/whole/monoid_fold.tung
+bring flock/algebra/whole/semigroup_fold.tung
+bring flock/hath_same.tung
+bring flock/order/hath_at_most.tung
+bring flock/order/order_half.tung
+bring flock/order/order_whole.tung
+bring ilk/list.tung
+bring ilk/list_order.tung
+bring ilk/maybe.tung
+bring ilk/product.tung
+bring ilk/two.tung
+bring ilk/unicode.tung
+bring is.tung
+
+show let string_to_list: [string, unicode list] ≔ 'string_to_list' fremmed
+show let list_to_string: [unicode list, string] ≔ 'list_to_string' fremmed
+
+## a string is its list of unicode scalars. the host's `string` is opaque, so
+## both round trips are listed assumptions; the laws below are soothed from
+## them and the list laws.
+show orsetting list_string: [s: string, ((s string_to_list) list_to_string) = s]
+show orsetting string_list: [l: unicode list, ((l list_to_string) string_to_list) = l]
+
+show let same_string: [string, string, 𝟚] ≔ 'same_string' fremmed {
+  a, b ^ (a string_to_list) ≍ (b string_to_list)
+}
+
+show let at_most_string: [string, string, 𝟚] ≔ 'at_most_string' fremmed {
+  a, b ^ (a string_to_list) ≤ (b string_to_list)
+}
+
+show let yoke_string: [string, string, string] ≔ 'yoke_string' fremmed {
+  a, b ^ ((a string_to_list) · (b string_to_list)) list_to_string
+}
+
+bizen: string hath_≍ {
+  let ≍ ≔ same_string
+}
+
+bizen: string hath_≤ {
+  let ≤ ≔ at_most_string
+}
+
+## strings with one list of scalars are one string.
+let helpsetting_=: [a: string, b: string, same: (a string_to_list) = (b string_to_list), a = b] ≔ >{throughgo,
+  (a list_string) evenmete,
+  list_to_string leibnitz same,
+  b list_string
+}
+
+bizen: string order_half {
+  let ≤_eftbend: [a:] ≔ (a string_to_list) ≤_eftbend
+  let ≤_witherevenmete: [a:, b:] ≔ (a string_to_list) ≤_witherevenmete (b string_to_list)
+  let ≤_throughgo: [a:, b:, c:] ≔ (a string_to_list) ≤_throughgo (b string_to_list) (c string_to_list)
+}
+
+bizen: string order_whole {
+  let ≤_whole: [a:, b:] ≔ (a string_to_list) ≤_whole (b string_to_list)
+  let ≤_=: [a:, b:, below:, above:] ≔
+    a helpsetting_= b ((a string_to_list) ≤_= (b string_to_list) below above)
+}
+
+bizen: string semigroup_· {
+  let · ≔ yoke_string
+
+  let ·_·: [a:, b:, c:] ≔ >{throughgo,
+    {x: unicode list ^ ((a string_to_list) hath_fold~· x) list_to_string}
+    leibnitz (((b string_to_list) hath_fold~· (c string_to_list)) string_list),
+    list_to_string leibnitz ((a string_to_list) ·_· (b string_to_list) (c string_to_list)),
+    {x: unicode list ^ (x hath_fold~· (c string_to_list)) list_to_string}
+    leibnitz ((((a string_to_list) hath_fold~· (b string_to_list)) string_list) evenmete)
+  }
+}
+
+bizen: string monoid_· {
+  let one ≔ ''
+
+  let one_·: [a:] ≔ a list_string
+  let ·_one: [a:] ≔ (list_to_string leibnitz ((a string_to_list) ·_one)) throughgo (a list_string)
+}

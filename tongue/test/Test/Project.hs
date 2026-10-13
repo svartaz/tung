@@ -46,14 +46,14 @@ nestedImports = withProject files "main.tung" \result ->
   expectEq "loadeth nested relative imports" (Right expected) (projectContents <$> result)
   where
     files =
-      [ ("main.tung", "use lib/a.tung let main: [_:] ≔ only"),
-        ("lib/a.tung", "use b.tung show let a ≔ b"),
+      [ ("main.tung", "bring lib/a.tung let main: [_:] ≔ only"),
+        ("lib/a.tung", "bring b.tung show let a ≔ b"),
         ("lib/b.tung", "show let b ≔ +1")
       ]
     expected =
-      ( "use lib/a.tung let main: [_:] ≔ only",
+      ( "bring lib/a.tung let main: [_:] ≔ only",
         Map.fromList
-          [ ("lib/a.tung", "use b.tung show let a ≔ b"),
+          [ ("lib/a.tung", "bring b.tung show let a ≔ b"),
             ("b.tung", "show let b ≔ +1")
           ]
       )
@@ -61,7 +61,7 @@ nestedImports = withProject files "main.tung" \result ->
     projectContents project = (projectSource project, projectImports project)
 
 preparedProject :: Test
-preparedProject = withProject [("main.tung", "use dep.tung let answer ≔ worth"), ("dep.tung", "show let worth ≔ +41")] "main.tung" \case
+preparedProject = withProject [("main.tung", "bring dep.tung let answer ≔ worth"), ("dep.tung", "show let worth ≔ +41")] "main.tung" \case
   Left message -> pure (Just message)
   Right Project {projectPath, projectSource, projectImports} ->
     expectEq "prepared project checketh and inspecteth a type" (Right "ℤ") (compileProject (SourceModule projectPath) projectSource projectImports >>= (`typeOfName` "answer"))
@@ -70,7 +70,7 @@ localImportPaths :: Test
 localImportPaths = withDirectory \root -> do
   let mainPath = root </> "main.tung"
       depPath = root </> "dep.tung"
-  writeProject root [("main.tung", "use dep.tung"), ("dep.tung", "show let worth ≔ +1")]
+  writeProject root [("main.tung", "bring dep.tung"), ("dep.tung", "show let worth ≔ +1")]
   canonicalMain <- canonicalizePath mainPath
   canonicalDep <- canonicalizePath depPath
   result <- loadProjectFile [] mainPath
@@ -88,7 +88,7 @@ moduleRootImport = withDirectory \root -> do
   let project = root </> "forthcast"
       modules = root </> "modules"
       source = "show let shared ≔ +7"
-  writeProject root [("forthcast/main.tung", "use shared.tung"), ("modules/shared.tung", source)]
+  writeProject root [("forthcast/main.tung", "bring shared.tung"), ("modules/shared.tung", source)]
   result <- loadProjectFile [modules] (project </> "main.tung")
   expectEq "loadeth an import from a module root" (Just source) (either (const Nothing) (Map.lookup "shared.tung" . projectImports) result)
 
@@ -99,7 +99,7 @@ localShadowsModuleRoot = withDirectory \root -> do
       localSource = "show let shared ≔ +2"
   writeProject
     root
-    [ ("forthcast/main.tung", "use shared.tung"),
+    [ ("forthcast/main.tung", "bring shared.tung"),
       ("forthcast/shared.tung", localSource),
       ("modules/shared.tung", "show let shared ≔ +1")
     ]
@@ -113,26 +113,26 @@ ambiguousModuleRoots = withDirectory \root -> do
       right = root </> "right"
   writeProject
     root
-    [ ("forthcast/main.tung", "use shared.tung"),
+    [ ("forthcast/main.tung", "bring shared.tung"),
       ("left/shared.tung", "show let left ≔ +1"),
       ("right/shared.tung", "show let right ≔ +2")
     ]
   result <- loadProjectFile [left, right] (project </> "main.tung")
-  expect "rejecteth duplicate module-root matches" (either (isInfixOf "ambiguous use 'shared.tung'") (const False) result)
+  expect "rejecteth duplicate module-root matches" (either (isInfixOf "ambiguous bring 'shared.tung'") (const False) result)
 
 missingImport :: Test
-missingImport = withProject [("main.tung", "use absent.tung")] "main.tung" \result ->
+missingImport = withProject [("main.tung", "bring missing.tung")] "main.tung" \result ->
   expect "reporteth the owner of a missing use" (either (isInfixOf "from '") (const False) result)
 
 ambiguousRelativeImport :: Test
 ambiguousRelativeImport = withProject files "main.tung" \result ->
-  expect "rejecteth one use spelling for two files" (either (isInfixOf "ambiguous use 'shared.tung'") (const False) result)
+  expect "rejecteth one use spelling for two files" (either (isInfixOf "ambiguous bring 'shared.tung'") (const False) result)
   where
     files =
-      [ ("main.tung", "use left/a.tung use right/b.tung"),
-        ("left/a.tung", "use shared.tung"),
+      [ ("main.tung", "bring left/a.tung bring right/b.tung"),
+        ("left/a.tung", "bring shared.tung"),
         ("left/shared.tung", "show let left ≔ +1"),
-        ("right/b.tung", "use shared.tung"),
+        ("right/b.tung", "bring shared.tung"),
         ("right/shared.tung", "show let right ≔ +2")
       ]
 
@@ -143,7 +143,7 @@ canonicalAlias = withDirectory \root -> do
       aliasPath = root </> "alias.tung"
   writeProject
     root
-    [ ("main.tung", "use source.tung use alias.tung"),
+    [ ("main.tung", "bring source.tung bring alias.tung"),
       ("source.tung", "show let worth ≔ +1")
     ]
   createFileLink sourcePath aliasPath
@@ -199,8 +199,8 @@ interfaceRoundTrip = withDirectory \root -> do
     sources =
       [ ( "a.tung",
           """
-          use b.tung base
-          use c.tung different
+          bring b.tung base
+          bring c.tung different
           show base~two
           show base~one
           show base~keep
@@ -236,8 +236,8 @@ interfaceRoundTrip = withDirectory \root -> do
     rootProgram compiled = compileProjectWith compiled RootModule rootSource Map.empty
     rootSource =
       """
-      use a.tung shared
-      use c.tung different
+      bring a.tung shared
+      bring c.tung different
       let answer:shared~two ≔ shared~a shared~keep
       let number:ℤ ≔ shared~number
       """
@@ -273,7 +273,7 @@ interfaceProofAudit = withDirectory \root -> do
         (map checked [compiled, loaded])
   where
     sources =
-      [ ("a.tung", "use b.tung source\nshow source~visible\nshow source~computed\nshow let theorem:ℕ ≔ source~secret"),
+      [ ("a.tung", "bring b.tung source\nshow source~visible\nshow source~computed\nshow let theorem:ℕ ≔ source~secret"),
         ( "b.tung",
           equalitySource
             ++ """
@@ -282,12 +282,12 @@ interfaceProofAudit = withDirectory \root -> do
                let ignore:[ℕ,*] ≔ {_ ^ ℕ}
                let annotation:* ≔ hidden ignore
                show let secret:annotation ≔ 0
-               let add:[ℕ,ℕ,ℕ] ≔ 'eke_natural' fremmed
+               let add:[ℕ,ℕ,ℕ] ≔ 'eke_kindful' fremmed
                show let computed:(0 add 0) = 0 ≔ eftbend
                """
         )
       ]
-    source = "use a.tung shared\nlet selected:ℕ ≔ shared~theorem\nlet allowed:ℕ ≔ shared~visible\nlet computed ≔ shared~computed"
+    source = "bring a.tung shared\nlet selected:ℕ ≔ shared~theorem\nlet allowed:ℕ ≔ shared~visible\nlet computed ≔ shared~computed"
     checked compiled = do
       program <- compileProjectWith compiled RootModule source Map.empty
       selected <- auditProof program "selected"
@@ -312,11 +312,11 @@ interfaceKeys =
     "an interface key followeth its sources and build"
     [True, True, True, True]
     [ changed (Map.insert "b.tung" "show let b ≔ +2"),
-      changed (Map.insert "a.tung" "use b.tung show let a ≔ b let c ≔ a"),
+      changed (Map.insert "a.tung" "bring b.tung show let a ≔ b let c ≔ a"),
       key "other" base /= key "build" base,
       Map.notMember "a.tung" (cacheKeys "build" (Map.map sourceSnapshot (Map.delete "b.tung" base)))
     ]
   where
-    base = Map.fromList [("a.tung", "use b.tung show let a ≔ b"), ("b.tung", "show let b ≔ +1")]
+    base = Map.fromList [("a.tung", "bring b.tung show let a ≔ b"), ("b.tung", "show let b ≔ +1")]
     key build sources = Map.lookup "a.tung" (cacheKeys build (Map.map sourceSnapshot sources))
     changed edit = key "build" (edit base) /= key "build" base

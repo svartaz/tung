@@ -96,7 +96,7 @@ sumData = HostData "ilk/sum.tung" "∑"
 tableData = HostData "ilk/wordbook.tung" "wordbook"
 
 processResultData, requestData, responseData :: HostData
-processResultData = HostData "process/result.tung" "_process_result"
+processResultData = HostData "process/outcome.tung" "_process_outcome"
 requestData = HostData "web/request.tung" "_request"
 responseData = HostData "web/response.tung" "_response"
 
@@ -123,7 +123,7 @@ hostDataSchemas =
     schema productData ["a", "b"] [("both", [a, b])],
     schema sumData ["a", "b"] [("incast₀", [a]), ("incast₁", [b])],
     schema tableData ["a", "b"] [("from_list", [app listData [app productData [a, b]]])],
-    schema processResultData [] [("process_result", [HostCon "ℤ", text, text])],
+    schema processResultData [] [("process_outcome", [HostCon "ℤ", text, text])],
     schema requestData [] [("request", [text, text, headers, text])],
     schema responseData [] [("response", [HostCon "ℕ", headers, text])]
   ]
@@ -185,7 +185,7 @@ leftConstructorId = constructorId sumData "incast₀"
 rightConstructorId = constructorId sumData "incast₁"
 
 processResultConstructorId, requestConstructorId, responseConstructorId, tableConstructorId :: SymbolId
-processResultConstructorId = constructorId processResultData "process_result"
+processResultConstructorId = constructorId processResultData "process_outcome"
 requestConstructorId = constructorId requestData "request"
 responseConstructorId = constructorId responseData "response"
 tableConstructorId = constructorId tableData "from_list"
@@ -339,12 +339,12 @@ pureBindings :: [(HostBinding, [HostValue] -> Maybe HostValue)]
 pureBindings =
   map
     eraseBinding
-    [ UnaryBinding "natural_to_wholetale" natural integer toInteger,
-      UnaryBinding "wholetale_to_natural" integer (optionCodec natural) \a -> if a >= 0 then Just (fromInteger a) else Nothing,
+    [ UnaryBinding "kindful_to_wholetale" natural integer toInteger,
+      UnaryBinding "wholetale_to_kindful" integer (optionCodec natural) \a -> if a >= 0 then Just (fromInteger a) else Nothing,
       BinaryBinding "eke_wholetale" integer integer integer (+),
       BinaryBinding "offdraw_wholetale" integer integer integer (-),
-      UnaryBinding "negate_wholetale" integer integer negate,
-      BinaryBinding "offdraw_natural" natural natural natural \a b -> if b > a then 0 else a - b,
+      UnaryBinding "flip_wholetale" integer integer negate,
+      BinaryBinding "offdraw_kindful" natural natural natural \a b -> if b > a then 0 else a - b,
       BinaryBinding "fold_wholetale" integer integer integer (*),
       BinaryBinding "deal_leftover_wholetale" integer integer (optionCodec (pairCodec integer integer)) \a b -> if b == 0 then Nothing else Just (euclidean a b),
       BinaryBinding "eke_float" float float float (+),
@@ -360,8 +360,8 @@ pureBindings =
       BinaryBinding "same_wholetale" integer integer truth (==),
       UnaryBinding "wholetale_to_string" integer text show,
       UnaryBinding "float_to_string" float text show,
-      UnaryBinding "unicode_to_natural" unicode natural (fromIntegral . ord),
-      UnaryBinding "natural_to_unicode" natural (optionCodec unicode) (unicodeScalar . toInteger),
+      UnaryBinding "unicode_to_kindful" unicode natural (fromIntegral . ord),
+      UnaryBinding "kindful_to_unicode" natural (optionCodec unicode) (unicodeScalar . toInteger),
       UnaryBinding "behead_string" text (optionCodec (pairCodec unicode text)) \case first : rest -> Just (first, rest); [] -> Nothing,
       UnaryBinding "string_to_list" text (listCodec unicode) id,
       UnaryBinding "list_to_string" (listCodec unicode) text id,
@@ -374,12 +374,12 @@ pureBindings =
       BinaryBinding "same_float" float float truth (==),
       BinaryBinding "at_most_float" float float truth (<=),
       UnaryBinding "string_to_float" text (optionCodec float) readMaybe,
-      BinaryBinding "same_natural" natural natural truth (==),
-      BinaryBinding "at_most_natural" natural natural truth (<=),
-      BinaryBinding "eke_natural" natural natural natural (+),
-      BinaryBinding "fold_natural" natural natural natural (*),
-      BinaryBinding "deal_leftover_natural" natural natural (optionCodec (pairCodec natural natural)) \a b -> if b == 0 then Nothing else Just (a `div` b, a `mod` b),
-      UnaryBinding "natural_to_string" natural text show
+      BinaryBinding "same_kindful" natural natural truth (==),
+      BinaryBinding "at_most_kindful" natural natural truth (<=),
+      BinaryBinding "eke_kindful" natural natural natural (+),
+      BinaryBinding "fold_kindful" natural natural natural (*),
+      BinaryBinding "deal_leftover_kindful" natural natural (optionCodec (pairCodec natural natural)) \a b -> if b == 0 then Nothing else Just (a `div` b, a `mod` b),
+      UnaryBinding "kindful_to_string" natural text show
     ]
   where
     -- the remainder is never negative.

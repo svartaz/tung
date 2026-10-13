@@ -1,5 +1,5 @@
-use ilk/three.tung
-use ilk/two.tung
+bring ilk/three.tung
+bring ilk/two.tung
 
 show flock hath_≍: [α: *, *] {
   let ≍: [α, α, 𝟚]

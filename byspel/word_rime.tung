@@ -1,0 +1,36 @@
+bring deed/file.tung
+bring deed/system.tung
+bring flock/algebra/whole/hath_fold.tung
+bring flock/functor/downshaper.tung
+bring ilk/list.tung
+bring ilk/maybe.tung
+bring ilk/product.tung
+bring ilk/string/operation.tung
+bring ilk/sum.tung
+bring ilk/wordbook.tung
+bring often.tung
+
+let rime_word: [rimes: string wordbook ℤ, word: string, string wordbook ℤ] ≔
+  match rimes lookup word {
+    none      ^ rimes put word +1,
+    rime some ^ rimes put word (rime + +1)
+  }
+
+let rime_words: [content: string, string wordbook ℤ] ≔ (
+  let words ≔ content words_string
+  yield words gather₁ wordbook~empty rime_word
+)
+
+let write_rime: [entry: string ∏ ℤ, 𝟙 deed] ≔ >{then,
+  (entry forthcast₀) often~write,
+  ':' often~write,
+  (entry forthcast₁) to_string $ write_line
+}
+
+let main: 𝟙 deed ≔ arguments bind {
+  list~empty ^ 'usage: tung word_count.tung <file>' write_line,
+  path ‥ _   ^ path file~read $ bind {
+    message incast₀ ^ 'error:' · message $ write_line,
+    content incast₁ ^ content rime_words $ entries $ each write_rime
+  }
+}

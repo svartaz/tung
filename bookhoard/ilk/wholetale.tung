@@ -1,41 +1,44 @@
-use _fremmed.tung
-use flock/algebra/whole/hath_deal_leftover.tung
-use flock/algebra/whole/hath_eke.tung
-use flock/algebra/whole/hath_fold.tung
-use flock/algebra/whole/hath_naught.tung
-use flock/algebra/whole/hath_offdraw.tung
-use flock/algebra/whole/hath_one.tung
-use flock/algebra/whole/monoid_eke.tung
-use flock/algebra/whole/monoid_fold.tung
-use flock/algebra/whole/ring.tung
-use flock/algebra/whole/semigroup_eke.tung
-use flock/algebra/whole/semigroup_fold.tung
-use flock/algebra/whole/semiring.tung
-use flock/hath_same.tung
-use flock/hath_to_string.tung
-use flock/order/hath_at_most.tung
-use flock/order/order_half.tung
-use flock/order/order_whole.tung
-use flock/same_to_is.tung
-use ilk/maybe.tung
-use ilk/natural.tung
-use ilk/two.tung
-use is.tung
+bring _fremmed.tung
+bring flock/algebra/whole/euclidean.tung
+bring flock/algebra/whole/group_eke.tung
+bring flock/algebra/whole/hath_deal_leftover.tung
+bring flock/algebra/whole/hath_eke.tung
+bring flock/algebra/whole/hath_fold.tung
+bring flock/algebra/whole/hath_naught.tung
+bring flock/algebra/whole/hath_offdraw.tung
+bring flock/algebra/whole/hath_one.tung
+bring flock/algebra/whole/monoid_eke.tung
+bring flock/algebra/whole/monoid_fold.tung
+bring flock/algebra/whole/ring.tung
+bring flock/algebra/whole/semigroup_eke.tung
+bring flock/algebra/whole/semigroup_fold.tung
+bring flock/algebra/whole/semiring.tung
+bring flock/hath_same.tung
+bring flock/hath_to_string.tung
+bring flock/order/hath_at_most.tung
+bring flock/order/order_half.tung
+bring flock/order/order_whole.tung
+bring flock/same_to_is.tung
+bring ilk/kindful.tung
+bring ilk/maybe.tung
+bring ilk/product.tung
+bring ilk/two.tung
+bring is.tung
 
 ## `ℤ` is a primitive ilk with arbitrary precision whose worths are
 ## `n overnaught` and `n heir_undernaught`, the latter being `-(n + 1)`. each
 ## binding with a body after `fremmed` computeth natively on literals and, on
 ## other inputs, unfoldeth that structural model.
-## convert a natural to a wholetale.
-show let to_ℤ: [ℕ, ℤ] ≔ 'natural_to_wholetale' fremmed overnaught
+## convert a kindful to a wholetale.
+show let to_ℤ: [ℕ, ℤ] ≔ 'kindful_to_wholetale' fremmed overnaught
 
-## convert a nonnegative wholetale to a natural.
-show let to_ℕ: [ℤ, ℕ maybe] ≔ 'wholetale_to_natural' fremmed {
+## convert a nonnegative wholetale to a kindful.
+show let to_ℕ: [ℤ, ℕ maybe] ≔ 'wholetale_to_kindful' fremmed {
   n overnaught       ^ n some,
   _ heir_undernaught ^ none
 }
 
-## `m - n` for naturals, as a wholetale.
+## `m - n` for kindfuls, as a wholetale.
 ## it splitteth on `n` first, so `m difference 0` is `m overnaught` for any `m`.
 let difference: [ℕ, ℕ, ℤ] ≔ {
   m, 0      ^ m overnaught,
@@ -45,28 +48,28 @@ let difference: [ℕ, ℕ, ℤ] ≔ {
   }
 }
 
-## the negation of a natural, as a wholetale.
-let negate_ℕ: [ℕ, ℤ] ≔ {
+## the flipping of a kindful, as a wholetale.
+let flip_ℕ: [ℕ, ℤ] ≔ {
   0      ^ 0 overnaught,
   k heir ^ k heir_undernaught
 }
 
-let eking: [ℤ, ℤ, ℤ] ≔ 'eke_wholetale' fremmed {
+let eke: [ℤ, ℤ, ℤ] ≔ 'eke_wholetale' fremmed {
   m overnaught,       n overnaught       ^ (m + n) overnaught,
   m overnaught,       n heir_undernaught ^ m difference (n heir),
   m heir_undernaught, n overnaught       ^ n difference (m heir),
   m heir_undernaught, n heir_undernaught ^ ((m + n) heir) heir_undernaught
 }
 
-let offdrawing: [ℤ, ℤ, ℤ] ≔ 'offdraw_wholetale' fremmed {
-  a, n overnaught       ^ a eking (n negate_ℕ),
-  a, n heir_undernaught ^ a eking ((n heir) overnaught)
+let offdraw: [ℤ, ℤ, ℤ] ≔ 'offdraw_wholetale' fremmed {
+  a, n overnaught       ^ a eke (n flip_ℕ),
+  a, n heir_undernaught ^ a eke ((n heir) overnaught)
 }
 
-let folding: [ℤ, ℤ, ℤ] ≔ 'fold_wholetale' fremmed {
+let fold: [ℤ, ℤ, ℤ] ≔ 'fold_wholetale' fremmed {
   m overnaught,       n overnaught       ^ (m · n) overnaught,
-  m overnaught,       n heir_undernaught ^ (m · (n heir)) negate_ℕ,
-  m heir_undernaught, n overnaught       ^ ((m heir) · n) negate_ℕ,
+  m overnaught,       n heir_undernaught ^ (m · (n heir)) flip_ℕ,
+  m heir_undernaught, n overnaught       ^ ((m heir) · n) flip_ℕ,
   m heir_undernaught, n heir_undernaught ^ ((m heir) · (n heir)) overnaught
 }
 
@@ -91,7 +94,7 @@ bizen: ℤ hath_≤ {
   let ≤ ≔ is_at_most
 }
 
-## the laws below are soothed by sign cases, using the `ℕ` laws.
+## the laws below are soothed by mark cases, using the `ℕ` laws.
 let helpsetting_≤_eftbend: [a: ℤ, (a ≤ a) = yea] ≔
   match a {
     n overnaught       ^ n ≤_eftbend,
@@ -166,7 +169,7 @@ let helpsetting_+_swap: [a: ℤ, b: ℤ, (a + b) = (b + a)] ≔
 let helpsetting_naught_·: [a: ℤ, (+0 · a) = +0] ≔
   match a {
     n overnaught       ^ overnaught leibnitz (n naught_·: (0 · n) = 0),
-    n heir_undernaught ^ negate_ℕ leibnitz ((n heir) naught_·: (0 · (n heir)) = 0)
+    n heir_undernaught ^ flip_ℕ leibnitz ((n heir) naught_·: (0 · (n heir)) = 0)
   }
 
 let helpsetting_·_naught: [a: ℤ, (a · +0) = +0] ≔
@@ -178,13 +181,13 @@ let helpsetting_·_naught: [a: ℤ, (a · +0) = +0] ≔
 let helpsetting_one_·: [a: ℤ, (+1 · a) = a] ≔
   match a {
     n overnaught       ^ overnaught leibnitz (n one_·),
-    n heir_undernaught ^ negate_ℕ leibnitz ((n heir) one_·)
+    n heir_undernaught ^ flip_ℕ leibnitz ((n heir) one_·)
   }
 
 let helpsetting_·_one: [a: ℤ, (a · +1) = a] ≔
   match a {
     m overnaught       ^ overnaught leibnitz (m ·_one),
-    m heir_undernaught ^ negate_ℕ leibnitz ((m heir) ·_one)
+    m heir_undernaught ^ flip_ℕ leibnitz ((m heir) ·_one)
   }
 
 let difference_self: [m: ℕ, (m difference m) = +0] ≔
@@ -193,14 +196,14 @@ let difference_self: [m: ℕ, (m difference m) = +0] ≔
     k heir ^ k difference_self
   }
 
-## negation turneth the sign. it computeth natively on literals; the model
-## below is what proofs unfold.
-let negating: [ℤ, ℤ] ≔ 'negate_wholetale' fremmed {
-  n overnaught       ^ n negate_ℕ,
+## flipping turneth the mark. it computeth natively on literals; the model
+## below is what seethings unfold.
+let flip: [ℤ, ℤ] ≔ 'flip_wholetale' fremmed {
+  n overnaught       ^ n flip_ℕ,
   n heir_undernaught ^ (n heir) overnaught
 }
 
-let helpsetting_+_negating: [a: ℤ, (a eking (a negating)) = +0] ≔
+let helpsetting_+_flip: [a: ℤ, (a eke (a flip)) = +0] ≔
   match a {
     0 overnaught        ^ eftbend,
     (k heir) overnaught ^ (k heir) difference_self,
@@ -296,14 +299,14 @@ let helpsetting_heir_·: [a: ℕ, b: ℕ, ((a heir) · b) = ((a · b) + b)] ≔
     }
   }
 
-## eking the same natural to both sides keepeth a difference.
+## eking the same kindful to both sides keepeth a difference.
 let difference_outstrike: [x: ℕ, y: ℕ, k: ℕ, ((x + k) difference (y + k)) = (x difference y)] ≔
   match k {
     0      ^ eftbend,
     j heir ^ x difference_outstrike y j
   }
 
-let negate_difference: [n: ℕ, (n negate_ℕ) = (0 difference n)] ≔
+let flip_difference: [n: ℕ, (n flip_ℕ) = (0 difference n)] ≔
   match n {
     0      ^ eftbend,
     _ heir ^ eftbend
@@ -312,13 +315,13 @@ let negate_difference: [n: ℕ, (n negate_ℕ) = (0 difference n)] ≔
 let helpsetting_·_overnaught: [p: ℕ, q: ℕ, r: ℕ, ((p difference q) · (r overnaught)) = ((p · r) difference (q · r))] ≔
   match q, p {
     0,      _      ^ ({x: ℕ ^ (p · r) difference x} leibnitz (r helpsetting_ℕ_naught_·)) evenmete,
-    t heir, 0      ^ (((t heir) · r) negate_difference) throughgo (({x: ℕ ^ x difference ((t heir) · r)} leibnitz (r helpsetting_ℕ_naught_·)) evenmete),
+    t heir, 0      ^ (((t heir) · r) flip_difference) throughgo (({x: ℕ ^ x difference ((t heir) · r)} leibnitz (r helpsetting_ℕ_naught_·)) evenmete),
     t heir, j heir ^ (j helpsetting_·_overnaught t r) throughgo (((j helpsetting_heir_· r) difference_both (t helpsetting_heir_· r)) throughgo ((j · r) difference_outstrike (t · r) r) $ evenmete)
   }
 
 let helpsetting_·_undernaught: [p: ℕ, q: ℕ, r: ℕ, ((p difference q) · (r heir_undernaught)) = ((q · (r heir)) difference (p · (r heir)))] ≔
   match q, p {
-    0,      _      ^ ((p · (r heir)) negate_difference) throughgo (({x: ℕ ^ x difference (p · (r heir))} leibnitz ((r heir) helpsetting_ℕ_naught_·)) evenmete),
+    0,      _      ^ ((p · (r heir)) flip_difference) throughgo (({x: ℕ ^ x difference (p · (r heir))} leibnitz ((r heir) helpsetting_ℕ_naught_·)) evenmete),
     t heir, 0      ^ ({x: ℕ ^ ((t heir) · (r heir)) difference x} leibnitz ((r heir) helpsetting_ℕ_naught_·)) evenmete,
     t heir, j heir ^ (j helpsetting_·_undernaught t r) throughgo (((t helpsetting_heir_· (r heir)) difference_both (j helpsetting_heir_· (r heir))) throughgo ((t · (r heir)) difference_outstrike (j · (r heir)) (r heir)) $ evenmete)
   }
@@ -329,9 +332,9 @@ let helpsetting_·_differences: [p: ℕ, q: ℕ, r: ℕ, s: ℕ, ((p difference 
     0,      _      ^ (p helpsetting_·_overnaught q r) throughgo (({x: ℕ ^ (p · r) difference x} leibnitz ((q · r) helpsetting_ℕ_naught_+)) evenmete),
     u heir, 0      ^ (p helpsetting_·_undernaught q u) throughgo (({x: ℕ ^ x difference (p · (u heir))} leibnitz ((q · (u heir)) helpsetting_ℕ_naught_+)) evenmete),
     u heir, v heir ^ (
-      let regrouped ≔ ((p · v) exchange p (q · u) q) difference_both ((p · u) exchange p (q · v) q)
+      let eftgrouped ≔ ((p · v) exchange p (q · u) q) difference_both ((p · u) exchange p (q · v) q)
       let outstruck ≔ ((p · v) + (q · u)) difference_outstrike ((p · u) + (q · v)) (p + q)
-      yield (p helpsetting_·_differences q v u) throughgo ((regrouped throughgo outstruck) evenmete)
+      yield (p helpsetting_·_differences q v u) throughgo ((eftgrouped throughgo outstruck) evenmete)
     )
   }
 
@@ -339,13 +342,13 @@ let helpsetting_·_·_differences: [
   p₁: ℕ, q₁: ℕ, p₂: ℕ, q₂: ℕ, p₃: ℕ, q₃: ℕ,
   ((p₁ difference q₁) · ((p₂ difference q₂) · (p₃ difference q₃))) = (((p₁ difference q₁) · (p₂ difference q₂)) · (p₃ difference q₃))
 ] ≔ (
-  let overnaught_part: [((p₁ · ((p₂ · p₃) + (q₂ · q₃))) + (q₁ · ((p₂ · q₃) + (q₂ · p₃)))) = ((((p₁ · p₂) + (q₁ · q₂)) · p₃) + (((p₁ · q₂) + (q₁ · p₂)) · q₃))] ≔
+  let overnaught_deal: [((p₁ · ((p₂ · p₃) + (q₂ · q₃))) + (q₁ · ((p₂ · q₃) + (q₂ · p₃)))) = ((((p₁ · p₂) + (q₁ · q₂)) · p₃) + (((p₁ · q₂) + (q₁ · p₂)) · q₃))] ≔
     >{throughgo,
       (p₁ helpsetting_ℕ_·_+ (p₂ · p₃) (q₂ · q₃)) helpsetting_ℕ_+_both (q₁ helpsetting_ℕ_·_+ (p₂ · q₃) (q₂ · p₃)),
       ((p₁ helpsetting_ℕ_·_· p₂ p₃) helpsetting_ℕ_+_both (p₁ helpsetting_ℕ_·_· q₂ q₃)) helpsetting_ℕ_+_both ((q₁ helpsetting_ℕ_·_· p₂ q₃) helpsetting_ℕ_+_both (q₁ helpsetting_ℕ_·_· q₂ p₃)),
       ((p₁ · p₂) · p₃) exchange_outer ((p₁ · q₂) · q₃) ((q₁ · p₂) · q₃) ((q₁ · q₂) · p₃),
       ((p₁ · p₂) helpsetting_ℕ_+_· (q₁ · q₂) p₃) helpsetting_ℕ_+_both ((p₁ · q₂) helpsetting_ℕ_+_· (q₁ · p₂) q₃) $ evenmete}
-  let undernaught_part: [((p₁ · ((p₂ · q₃) + (q₂ · p₃))) + (q₁ · ((p₂ · p₃) + (q₂ · q₃)))) = ((((p₁ · p₂) + (q₁ · q₂)) · q₃) + (((p₁ · q₂) + (q₁ · p₂)) · p₃))] ≔
+  let undernaught_deal: [((p₁ · ((p₂ · q₃) + (q₂ · p₃))) + (q₁ · ((p₂ · p₃) + (q₂ · q₃)))) = ((((p₁ · p₂) + (q₁ · q₂)) · q₃) + (((p₁ · q₂) + (q₁ · p₂)) · p₃))] ≔
     >{throughgo,
       (p₁ helpsetting_ℕ_·_+ (p₂ · q₃) (q₂ · p₃)) helpsetting_ℕ_+_both (q₁ helpsetting_ℕ_·_+ (p₂ · p₃) (q₂ · q₃)),
       ((p₁ helpsetting_ℕ_·_· p₂ q₃) helpsetting_ℕ_+_both (p₁ helpsetting_ℕ_·_· q₂ p₃)) helpsetting_ℕ_+_both ((q₁ helpsetting_ℕ_·_· p₂ p₃) helpsetting_ℕ_+_both (q₁ helpsetting_ℕ_·_· q₂ q₃)),
@@ -354,7 +357,7 @@ let helpsetting_·_·_differences: [
   yield >{throughgo,
     {x: ℤ ^ (p₁ difference q₁) · x} leibnitz (p₂ helpsetting_·_differences q₂ p₃ q₃),
     p₁ helpsetting_·_differences q₁ ((p₂ · p₃) + (q₂ · q₃)) ((p₂ · q₃) + (q₂ · p₃)),
-    overnaught_part difference_both undernaught_part,
+    overnaught_deal difference_both undernaught_deal,
     ((p₁ · p₂) + (q₁ · q₂)) helpsetting_·_differences ((p₁ · q₂) + (q₁ · p₂)) p₃ q₃ $ evenmete,
     {x: ℤ ^ x · (p₃ difference q₃)} leibnitz (p₁ helpsetting_·_differences q₁ p₂ q₂) $ evenmete}
 )
@@ -385,57 +388,57 @@ let helpsetting_+_·_differences: [
   (p₁ helpsetting_·_differences q₁ p₃ q₃) helpsetting_+_both (p₂ helpsetting_·_differences q₂ p₃ q₃) $ evenmete
 }
 
-## each wholetale is the difference of its parts: `m overnaught` is
+## each wholetale is the difference of its deals: `m overnaught` is
 ## `m difference 0` and `n heir_undernaught` is `0 difference (n heir)`.
-let overnaught_part: [ℤ, ℕ] ≔ {
+let overnaught_deal: [ℤ, ℕ] ≔ {
   m overnaught       ^ m,
   _ heir_undernaught ^ 0
 }
 
-let undernaught_part: [ℤ, ℕ] ≔ {
+let undernaught_deal: [ℤ, ℕ] ≔ {
   _ overnaught       ^ 0,
   n heir_undernaught ^ n heir
 }
 
-let parts: [a: ℤ, a = ((a overnaught_part) difference (a undernaught_part))] ≔
+let deals: [a: ℤ, a = ((a overnaught_deal) difference (a undernaught_deal))] ≔
   match a {
     _ overnaught       ^ eftbend,
     _ heir_undernaught ^ eftbend
   }
 
-## the same inputs give the same results of a three-input fall.
+## the same inputs give the same outcomes of a three-input fall.
 let congruence: [@a: ℤ, @a′: ℤ, @b: ℤ, @b′: ℤ, @c: ℤ, @c′: ℤ, f: [ℤ, ℤ, ℤ, ℤ], p: a = a′, q: b = b′, r: c = c′, (a f b c) = (a′ f b′ c′)] ≔
   >{throughgo,
     {x: ℤ ^ x f b c} leibnitz p,
     {y: ℤ ^ a′ f y c} leibnitz q,
     {z: ℤ ^ a′ f b′ z} leibnitz r}
 
-## a law of differences holdeth for wholetales by writing each as its parts.
-let through_parts: [
+## a law of differences holdeth for wholetales by writing each as its deals.
+let through_deals: [
   left: [ℤ, ℤ, ℤ, ℤ], right: [ℤ, ℤ, ℤ, ℤ], a: ℤ, b: ℤ, c: ℤ,
-  law: (((a overnaught_part) difference (a undernaught_part)) left ((b overnaught_part) difference (b undernaught_part)) ((c overnaught_part) difference (c undernaught_part)))
-  = (((a overnaught_part) difference (a undernaught_part)) right ((b overnaught_part) difference (b undernaught_part)) ((c overnaught_part) difference (c undernaught_part))),
+  law: (((a overnaught_deal) difference (a undernaught_deal)) left ((b overnaught_deal) difference (b undernaught_deal)) ((c overnaught_deal) difference (c undernaught_deal)))
+  = (((a overnaught_deal) difference (a undernaught_deal)) right ((b overnaught_deal) difference (b undernaught_deal)) ((c overnaught_deal) difference (c undernaught_deal))),
   (a left b c) = (a right b c)
 ] ≔ >{throughgo,
-  left congruence (a parts) (b parts) (c parts),
+  left congruence (a deals) (b deals) (c deals),
   law,
-  right congruence (a parts) (b parts) (c parts) $ evenmete}
+  right congruence (a deals) (b deals) (c deals) $ evenmete}
 
 let helpsetting_+_+: [a: ℤ, b: ℤ, c: ℤ, (a + (b + c)) = ((a + b) + c)] ≔
-  {x, y, z ^ x + (y + z)} through_parts {x, y, z ^ (x + y) + z} a b c
-    ((a overnaught_part) helpsetting_+_+_differences (a undernaught_part) (b overnaught_part) (b undernaught_part) (c overnaught_part) (c undernaught_part))
+  {x, y, z ^ x + (y + z)} through_deals {x, y, z ^ (x + y) + z} a b c
+    ((a overnaught_deal) helpsetting_+_+_differences (a undernaught_deal) (b overnaught_deal) (b undernaught_deal) (c overnaught_deal) (c undernaught_deal))
 
 let helpsetting_·_·: [a: ℤ, b: ℤ, c: ℤ, (a · (b · c)) = ((a · b) · c)] ≔
-  {x, y, z ^ x · (y · z)} through_parts {x, y, z ^ (x · y) · z} a b c
-    ((a overnaught_part) helpsetting_·_·_differences (a undernaught_part) (b overnaught_part) (b undernaught_part) (c overnaught_part) (c undernaught_part))
+  {x, y, z ^ x · (y · z)} through_deals {x, y, z ^ (x · y) · z} a b c
+    ((a overnaught_deal) helpsetting_·_·_differences (a undernaught_deal) (b overnaught_deal) (b undernaught_deal) (c overnaught_deal) (c undernaught_deal))
 
 let helpsetting_·_+: [a: ℤ, b: ℤ, c: ℤ, (a · (b + c)) = ((a · b) + (a · c))] ≔
-  {x, y, z ^ x · (y + z)} through_parts {x, y, z ^ (x · y) + (x · z)} a b c
-    ((a overnaught_part) helpsetting_·_+_differences (a undernaught_part) (b overnaught_part) (b undernaught_part) (c overnaught_part) (c undernaught_part))
+  {x, y, z ^ x · (y + z)} through_deals {x, y, z ^ (x · y) + (x · z)} a b c
+    ((a overnaught_deal) helpsetting_·_+_differences (a undernaught_deal) (b overnaught_deal) (b undernaught_deal) (c overnaught_deal) (c undernaught_deal))
 
 let helpsetting_+_·: [a: ℤ, b: ℤ, c: ℤ, ((a + b) · c) = ((a · c) + (b · c))] ≔
-  {x, y, z ^ (x + y) · z} through_parts {x, y, z ^ (x · z) + (y · z)} a b c
-    ((a overnaught_part) helpsetting_+_·_differences (a undernaught_part) (b overnaught_part) (b undernaught_part) (c overnaught_part) (c undernaught_part))
+  {x, y, z ^ (x + y) · z} through_deals {x, y, z ^ (x · z) + (y · z)} a b c
+    ((a overnaught_deal) helpsetting_+_·_differences (a undernaught_deal) (b overnaught_deal) (b undernaught_deal) (c overnaught_deal) (c undernaught_deal))
 
 bizen: ℤ order_half {
   let ≤_eftbend ≔ helpsetting_≤_eftbend
@@ -448,8 +451,161 @@ bizen: ℤ order_whole {
   let ≤_= ≔ helpsetting_≤_=
 }
 
+## the mark cases of euclidean dealing, from the kindful quotient `q` and
+## leftover `r` of the dealt tale's size by the dealer's size `e heir`. a
+## dealt `m heir_undernaught`, which is `-(m + 1)`, turneth its leftover
+## around to `e ∸ r`, so the leftover is never undernaught.
+let over_over: [q both r: ℕ ∏ ℕ, ℤ ∏ ℤ] ≔ (q overnaught) both (r overnaught)
+let over_under: [q both r: ℕ ∏ ℕ, ℤ ∏ ℤ] ≔ (q flip_ℕ) both (r overnaught)
+let under_over: [e: ℕ, q both r: ℕ ∏ ℕ, ℤ ∏ ℤ] ≔ (q heir_undernaught) both ((e ∸ r) overnaught)
+let under_under: [e: ℕ, q both r: ℕ ∏ ℕ, ℤ ∏ ℤ] ≔ ((q heir) overnaught) both ((e ∸ r) overnaught)
+
+let mark: [p: (ℕ ∏ ℕ) maybe, f: [ℕ ∏ ℕ, ℤ ∏ ℤ], (ℤ ∏ ℤ) maybe] ≔ match p { none ^ none, x some ^ (x f) some }
+
+let deal_leftover: [ℤ, ℤ, (ℤ ∏ ℤ) maybe] ≔ 'deal_leftover_wholetale' fremmed {
+  _,                  0 overnaught        ^ none,
+  m overnaught,       (e heir) overnaught ^ (m % (e heir)) mark over_over,
+  m overnaught,       e heir_undernaught  ^ (m % (e heir)) mark over_under,
+  m heir_undernaught, (e heir) overnaught ^ (m % (e heir)) mark (e under_over),
+  m heir_undernaught, e heir_undernaught  ^ (m % (e heir)) mark (e under_under)
+}
+
 bizen: ℤ hath_% {
-  let % ≔ deal_leftover_wholetale
+  let % ≔ deal_leftover
+}
+
+## the three euclidean laws of a dealt outcome `p`.
+let eftbuilt: [dealt: ℤ, dealer: ℤ, p: (ℤ ∏ ℤ) maybe, *] ≔
+  (match p { none ^ dealt, (quotient both leftover) some ^ (quotient · dealer) + leftover }) = dealt
+let nonnegative: [p: (ℤ ∏ ℤ) maybe, *] ≔
+  (match p { none ^ yea, (_ both leftover) some ^ naught ≤ leftover }) = yea
+let hemmed: [dealer: ℤ, p: (ℤ ∏ ℤ) maybe, *] ≔
+  (match p { none ^ yea, (_ both leftover) some ^ (naught ≤ dealer) if (leftover < dealer) (leftover < (dealer -+ naught)) }) = yea
+
+## `(q + 1) · (e + 1)` is `(e ∸ r) + (m + 1)` when `m = q · (e + 1) + r` and `r ≤ e`.
+let helpsetting_grown: [m: ℕ, e: ℕ, q: ℕ, r: ℕ, eftbuild: ((q · (e heir)) + r) = m, below: (r ≤ e) = yea,
+  ((q heir) · (e heir)) = ((e ∸ r) + (m heir))] ≔ >{throughgo,
+  q heir_· (e heir),
+  {x: ℕ ^ ((q · (e heir)) + x) heir} leibnitz ((e ∸_+ r below) evenmete),
+  {x: ℕ ^ x heir} leibnitz ((q · (e heir)) +_+ (e ∸ r) r),
+  {x: ℕ ^ (x + r) heir} leibnitz ((q · (e heir)) +_swap (e ∸ r)),
+  {x: ℕ ^ x heir} leibnitz (((e ∸ r) +_+ (q · (e heir)) r) evenmete),
+  {x: ℕ ^ ((e ∸ r) + x) heir} leibnitz eftbuild
+}
+
+## `-((q + 1) · (e + 1)) + (e ∸ r)` is `-(m + 1)`.
+let helpsetting_eftbuilt_under: [m: ℕ, e: ℕ, q: ℕ, r: ℕ, eftbuild: ((q · (e heir)) + r) = m, below: (r ≤ e) = yea,
+  (((((q heir) · (e heir)) overnaught) -) + ((e ∸ r) overnaught)) = (m heir_undernaught)] ≔ >{throughgo,
+  {x: ℕ ^ ((x overnaught) -) + ((e ∸ r) overnaught)} leibnitz (m helpsetting_grown e q r eftbuild below),
+  {x: ℤ ^ x + ((e ∸ r) overnaught)} leibnitz (((e ∸ r) overnaught) -_over_+ ((m heir) overnaught)),
+  ((((m heir) overnaught) -) +_+ (((e ∸ r) overnaught) -) ((e ∸ r) overnaught)) evenmete,
+  {x: ℤ ^ (((m heir) overnaught) -) + x} leibnitz (((e ∸ r) overnaught) ring~-_+),
+  (((m heir) overnaught) -) +_naught
+}
+
+let helpsetting_eftbuilt_over_over: [m: ℕ, e: ℕ, p: (ℕ ∏ ℕ) maybe, dealt: (m % (e heir)) = p,
+  (m overnaught) eftbuilt ((e heir) overnaught) (p mark over_over)] ≔
+  match p {
+    none            ^ eftbend,
+    (q both r) some ^ overnaught leibnitz (m %_eftbuild e q r dealt)
+  }
+
+let helpsetting_eftbuilt_over_under: [m: ℕ, e: ℕ, p: (ℕ ∏ ℕ) maybe, dealt: (m % (e heir)) = p,
+  (m overnaught) eftbuilt (e heir_undernaught) (p mark over_under)] ≔
+  match p {
+    none            ^ eftbend,
+    (q both r) some ^ ({x: ℤ ^ x + (r overnaught)} leibnitz ((q overnaught) -_·_- ((e heir) overnaught)))
+    throughgo (overnaught leibnitz (m %_eftbuild e q r dealt))
+  }
+
+let helpsetting_eftbuilt_under_over: [m: ℕ, e: ℕ, p: (ℕ ∏ ℕ) maybe, dealt: (m % (e heir)) = p,
+  (m heir_undernaught) eftbuilt ((e heir) overnaught) (p mark (e under_over))] ≔
+  match p {
+    none            ^ eftbend,
+    (q both r) some ^ ({x: ℤ ^ x + ((e ∸ r) overnaught)} leibnitz (((q heir) overnaught) -_· ((e heir) overnaught)))
+    throughgo (m helpsetting_eftbuilt_under e q r (m %_eftbuild e q r dealt) (m %_leftover e q r dealt))
+  }
+
+let helpsetting_eftbuilt_under_under: [m: ℕ, e: ℕ, p: (ℕ ∏ ℕ) maybe, dealt: (m % (e heir)) = p,
+  (m heir_undernaught) eftbuilt (e heir_undernaught) (p mark (e under_under))] ≔
+  match p {
+    none            ^ eftbend,
+    (q both r) some ^ ({x: ℤ ^ x + ((e ∸ r) overnaught)} leibnitz (((q heir) overnaught) ·_- ((e heir) overnaught)))
+    throughgo (m helpsetting_eftbuilt_under e q r (m %_eftbuild e q r dealt) (m %_leftover e q r dealt))
+  }
+
+## a leftover at most `e` is below `e heir`.
+let helpsetting_<_heir: [r: ℕ, e: ℕ, below: (r ≤ e) = yea, ((r overnaught) < ((e heir) overnaught)) = yea] ≔
+  match r, e {
+    0,      _      ^ eftbend,
+    _ heir, 0      ^ match below {},
+    j heir, k heir ^ j helpsetting_<_heir k below
+  }
+
+## against an undernaught dealer `e heir_undernaught`, `dealer -+ naught` is `0 + (e heir)`.
+let helpsetting_<_spun: [r: ℕ, e: ℕ, below: (r ≤ e) = yea,
+  ((r overnaught) < ((e heir_undernaught) -+ naught)) = yea] ≔
+  (heir leibnitz ((e naught_+) evenmete))
+    throughbear @ℕ @(e heir) @((0 + e) heir) @({x: ℕ ^ ((r overnaught) < (x overnaught)) = yea})
+    (r helpsetting_<_heir e below)
+
+let helpsetting_nonnegative: [f: [ℕ ∏ ℕ, ℤ ∏ ℤ], kept: [q: ℕ, r: ℕ, (match (q both r) f { _ both leftover ^ naught ≤ leftover }) = yea],
+  p: (ℕ ∏ ℕ) maybe, (p mark f) nonnegative] ≔
+  match p {
+    none            ^ eftbend,
+    (q both r) some ^ q kept r
+  }
+
+let helpsetting_hemmed_over_over: [m: ℕ, e: ℕ, p: (ℕ ∏ ℕ) maybe, dealt: (m % (e heir)) = p,
+  ((e heir) overnaught) hemmed (p mark over_over)] ≔
+  match p {
+    none            ^ eftbend,
+    (q both r) some ^ r helpsetting_<_heir e (m %_leftover e q r dealt)
+  }
+
+let helpsetting_hemmed_over_under: [m: ℕ, e: ℕ, p: (ℕ ∏ ℕ) maybe, dealt: (m % (e heir)) = p,
+  (e heir_undernaught) hemmed (p mark over_under)] ≔
+  match p {
+    none            ^ eftbend,
+    (q both r) some ^ r helpsetting_<_spun e (m %_leftover e q r dealt)
+  }
+
+let helpsetting_hemmed_under_over: [e: ℕ, p: (ℕ ∏ ℕ) maybe, ((e heir) overnaught) hemmed (p mark (e under_over))] ≔
+  match p {
+    none            ^ eftbend,
+    (_ both r) some ^ (e ∸ r) helpsetting_<_heir e (e ∸_≤ r)
+  }
+
+let helpsetting_hemmed_under_under: [e: ℕ, p: (ℕ ∏ ℕ) maybe, (e heir_undernaught) hemmed (p mark (e under_under))] ≔
+  match p {
+    none            ^ eftbend,
+    (_ both r) some ^ (e ∸ r) helpsetting_<_spun e (e ∸_≤ r)
+  }
+
+bizen: ℤ euclidean {
+  let %_·_+: [dealt:, dealer:] ≔ match dealt, dealer {
+    _,                  0 overnaught        ^ eftbend,
+    m overnaught,       (e heir) overnaught ^ m helpsetting_eftbuilt_over_over e (m % (e heir)) eftbend,
+    m overnaught,       e heir_undernaught  ^ m helpsetting_eftbuilt_over_under e (m % (e heir)) eftbend,
+    m heir_undernaught, (e heir) overnaught ^ m helpsetting_eftbuilt_under_over e (m % (e heir)) eftbend,
+    m heir_undernaught, e heir_undernaught  ^ m helpsetting_eftbuilt_under_under e (m % (e heir)) eftbend
+  }
+
+  let %_nonnegative: [dealt:, dealer:] ≔ match dealt, dealer {
+    _,                  0 overnaught        ^ eftbend,
+    m overnaught,       (e heir) overnaught ^ over_over helpsetting_nonnegative {_, _ ^ eftbend} (m % (e heir)),
+    m overnaught,       e heir_undernaught  ^ over_under helpsetting_nonnegative {_, _ ^ eftbend} (m % (e heir)),
+    m heir_undernaught, (e heir) overnaught ^ (e under_over) helpsetting_nonnegative {_, _ ^ eftbend} (m % (e heir)),
+    m heir_undernaught, e heir_undernaught  ^ (e under_under) helpsetting_nonnegative {_, _ ^ eftbend} (m % (e heir))
+  }
+
+  let %_hemmed: [dealt:, dealer:] ≔ match dealt, dealer {
+    _,                  0 overnaught        ^ eftbend,
+    m overnaught,       (e heir) overnaught ^ m helpsetting_hemmed_over_over e (m % (e heir)) eftbend,
+    m overnaught,       e heir_undernaught  ^ m helpsetting_hemmed_over_under e (m % (e heir)) eftbend,
+    m heir_undernaught, (e heir) overnaught ^ e helpsetting_hemmed_under_over (m % (e heir)),
+    m heir_undernaught, e heir_undernaught  ^ e helpsetting_hemmed_under_under (m % (e heir))
+  }
 }
 
 ## string for people omiteth the `+` that a wholetale literal requireth.
@@ -458,7 +614,7 @@ bizen: ℤ hath_to_string {
 }
 
 bizen: ℤ hath_+ {
-  let + ≔ eking
+  let + ≔ eke
 }
 
 bizen: ℤ hath_naught {
@@ -466,7 +622,7 @@ bizen: ℤ hath_naught {
 }
 
 bizen: ℤ hath_· {
-  let · ≔ folding
+  let · ≔ fold
 }
 
 bizen: ℤ hath_one {
@@ -494,20 +650,20 @@ bizen: ℤ semiring {
 }
 
 bizen: ℤ hath_- {
-  let - ≔ negating
-  let -+: [b:, a:] ≔ a offdrawing b
+  let - ≔ flip
+  let -+: [b:, a:] ≔ a offdraw b
 }
 
 bizen: ℤ ring {
-  let +_- ≔ helpsetting_+_negating
-  let -_+: [a:] ≔ ((a negating) +_swap a) throughgo (a helpsetting_+_negating)
+  let +_- ≔ helpsetting_+_flip
+  let -_+: [a:] ≔ ((a flip) +_swap a) throughgo (a helpsetting_+_flip)
   let -+_+: [b:, a:] ≔ match b {
-    n overnaught       ^ a helpsetting_+_swap (n negate_ℕ),
+    n overnaught       ^ a helpsetting_+_swap (n flip_ℕ),
     n heir_undernaught ^ a helpsetting_+_swap ((n heir) overnaught)
   }
 }
 
-## boolean sameness of wholetales agreeth with `=`, by sign cases.
+## boolean sameness of wholetales agreeth with `=`, by mark cases.
 let helpsetting_≍_=: [a: ℤ, b: ℤ, same: (a ≍ b) = yea, a = b] ≔
   match a, b {
     m overnaught,       n overnaught       ^ overnaught leibnitz (m ≍_= n same),

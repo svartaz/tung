@@ -1,15 +1,15 @@
-use flock/algebra/whole/group_eke.tung
-use flock/algebra/whole/hath_eke.tung
-use flock/algebra/whole/hath_fold.tung
-use flock/algebra/whole/hath_naught.tung
-use flock/algebra/whole/hath_offdraw.tung
-use flock/algebra/whole/hath_one.tung
-use flock/algebra/whole/monoid_eke.tung
-use flock/algebra/whole/monoid_fold.tung
-use flock/algebra/whole/ring.tung
-use flock/algebra/whole/semigroup_fold.tung
-use flock/algebra/whole/semiring.tung
-use is.tung
+bring flock/algebra/whole/group_eke.tung
+bring flock/algebra/whole/hath_eke.tung
+bring flock/algebra/whole/hath_fold.tung
+bring flock/algebra/whole/hath_naught.tung
+bring flock/algebra/whole/hath_offdraw.tung
+bring flock/algebra/whole/hath_one.tung
+bring flock/algebra/whole/monoid_eke.tung
+bring flock/algebra/whole/monoid_fold.tung
+bring flock/algebra/whole/ring.tung
+bring flock/algebra/whole/semigroup_fold.tung
+bring flock/algebra/whole/semiring.tung
+bring is.tung
 
 ## a module over a ring: an additive group `μ` that the ring `ρ` acteth on by
 ## `∘`. the acting distributeth over both ekings, composeth with the
@@ -53,7 +53,7 @@ show let ∘_naught: [@ρ: *, @μ: *, @: ρ module μ, r: ρ,
   (doubled throughgo ((naught_+ @μ (r ∘ (naught: μ))) evenmete))
 )
 
-## a negated scalar negateth the result.
+## a flipped scalar flippeth the outcome.
 show let -_∘: [@ρ: *, @μ: *, @: ρ module μ, r: ρ, a: μ,
   ((r -) ∘ a) = ((r ∘ a) -)] ≔
   (r ∘ a) -_alone ((r -) ∘ a) >{throughgo,
@@ -62,7 +62,7 @@ show let -_∘: [@ρ: *, @μ: *, @: ρ module μ, r: ρ, a: μ,
     a naught_∘
   }
 
-## scaling a negated worth negateth the result.
+## scaling a flipped worth flippeth the outcome.
 show let ∘_-: [@ρ: *, @μ: *, @: ρ module μ, r: ρ, a: μ,
   (r ∘ (a -)) = ((r ∘ a) -)] ≔
   (r ∘ a) -_alone (r ∘ (a -)) >{throughgo,
@@ -71,7 +71,7 @@ show let ∘_-: [@ρ: *, @μ: *, @: ρ module μ, r: ρ, a: μ,
     r ∘_naught
   }
 
-## the negated unit scalar negateth.
+## the flipped unit scalar flippeth.
 show let one_-_∘: [@ρ: *, @μ: *, @: ρ module μ, a: μ,
   (((one: ρ) -) ∘ a) = (a -)] ≔
   (one -_∘ a) throughgo ({v: μ ^ v -} leibnitz (a one_∘))

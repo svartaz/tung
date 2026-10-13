@@ -1,16 +1,16 @@
-use _fremmed.tung
-use flock/algebra/whole/hath_eke.tung
-use flock/algebra/whole/hath_fold.tung
-use flock/algebra/whole/hath_naught.tung
-use flock/algebra/whole/hath_offdraw.tung
-use flock/algebra/whole/hath_one.tung
-use flock/algebra/whole/monoid_eke.tung
-use flock/algebra/whole/monoid_fold.tung
-use flock/algebra/whole/semiring.tung
-use flock/hath_from_string.tung
-use flock/hath_same.tung
-use flock/hath_to_string.tung
-use flock/order/hath_at_most.tung
+bring _fremmed.tung
+bring flock/algebra/whole/hath_eke.tung
+bring flock/algebra/whole/hath_fold.tung
+bring flock/algebra/whole/hath_naught.tung
+bring flock/algebra/whole/hath_offdraw.tung
+bring flock/algebra/whole/hath_one.tung
+bring flock/algebra/whole/monoid_eke.tung
+bring flock/algebra/whole/monoid_fold.tung
+bring flock/algebra/whole/semiring.tung
+bring flock/hath_from_string.tung
+bring flock/hath_same.tung
+bring flock/hath_to_string.tung
+bring flock/order/hath_at_most.tung
 
 ## ieee floats keep their useful operations without claiming exact semiring laws.
 bizen: float hath_+ {

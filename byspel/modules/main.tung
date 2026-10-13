@@ -1,10 +1,10 @@
-use host.tung
-use natural.tung tale
+bring host.tung
+bring kindful.tung tale
 
 ## bare names come from an unambiguous import; qualified names always work.
-let repeat: [count: nat, doing: 𝟙 deed, 𝟙 deed] ≔ match count {
-  naught ^ only deed_sheer,
-  n heir ^ doing then (n repeat doing)
+let repeat: [nat, 𝟙 deed, 𝟙 deed] ≔ {
+  naught, _     ^ only deed_sheer,
+  n heir, doing ^ doing then (n repeat doing)
 }
 
 let main: 𝟙 deed ≔ >{

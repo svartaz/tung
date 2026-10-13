@@ -1,10 +1,11 @@
 ## runner deeds beyond the console, through bookhoard's host bindings.
-use _fremmed.tung
-use deed/file.tung
-use ilk/maybe.tung
-use ilk/one.tung
-use ilk/product.tung
-use ilk/sum.tung
+bring _fremmed.tung
+bring deed/file.tung
+bring ilk/maybe.tung
+bring ilk/one.tung
+bring ilk/product.tung
+bring ilk/string/building.tung
+bring ilk/sum.tung
 
 let then: [@α: *, @β: *, first: α deed, next: β deed, β deed] ≔
   first deed_bind {_ ^ next}
@@ -33,7 +34,7 @@ let main: 𝟙 deed ≔
     'absent.txt' file~read $ eftbare,
     ('from a task' deed_sheer) fork $ await,
     match 'tung' behead_string {
-      none               ^ 'empty' line,
-      (_ both rest) some ^ rest line
+      none                   ^ 'empty' line,
+      (_ both leftover) some ^ leftover line
     }
   }

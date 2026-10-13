@@ -25,22 +25,22 @@ test("textmate immediately scopeth lexical syntax", async () => {
   const loaded = await loadGrammar();
   for (const [source, name, scope] of [
     [
-      "use flock/functor.tung functor",
+      "bring flock/functor.tung functor",
       "flock/functor.tung",
       "string.unquoted.import-path.tung",
     ],
-    ["use flock/functor.tung functor", "functor", "entity.name.namespace.tung"],
+    ["bring flock/functor.tung functor", "functor", "entity.name.namespace.tung"],
     ["let worth ≔ '𝟙\\128512;'", "'𝟙", "string.quoted.single.tung"],
     ["let worth ≔ `\\128512;", "`\\128512;", "constant.character.tung"],
     ["let worth ≔ 12.5", "12.5", "constant.numeric.float.tung"],
     ["let worth ≔ +12", "+12", "constant.numeric.wholetale.tung"],
-    ["let worth ≔ 12", "12", "constant.numeric.natural.tung"],
-    ["# a comment", "#", "comment.line.number-sign.tung"],
+    ["let worth ≔ 12", "12", "constant.numeric.kindful.tung"],
+    ["# a comment", "#", "comment.line.number-mark.tung"],
     ["/* a comment */", "a comment", "comment.block.tung"],
     ["show let sameness:[x:ℤ, ℤ] ≔ x", "let", "keyword.declaration.tung"],
     ["match worth {x ^ x}", "match", "keyword.control.tung"],
     ["let main: 𝟙 deed ≔ only sheer", "deed", "keyword.control.tung"],
-    ["let proof ≔ sorry", "sorry", "keyword.control.tung"],
+    ["let seething ≔ sorry", "sorry", "keyword.control.tung"],
     ["let gather ≔ unbuild list", "unbuild", "keyword.control.tung"],
     ["@a:*", "*", "keyword.other.tung"],
     ["@a:*", "@", "keyword.other.tung"],
@@ -68,7 +68,7 @@ test("textmate leaveth name roles to the compiler", async () => {
     "show let read:[string path:_path, (string ∑ string) deed] ≔",
     "show let yoke:[string₀ path:_path, string₁ path:_path, _path] ≔",
     "x ‥ xs · list~‥",
-    "let count:* ≔ ℤ",
+    "let rime:* ≔ ℤ",
     "let sameness:[@α:*, x:α, α] ≔ x",
   ]) {
     const result = loaded.tokenizeLine(source, state);

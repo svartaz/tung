@@ -6,7 +6,7 @@ boundaries and their comparison with purescript and mathlib. the
 
 ## library surface
 
-`ground.tung` re-publisheth common modules. it is an ordinary import, not an
+`often.tung` re-publisheth common modules. it is an ordinary import, not an
 implicit prelude. each public flock liveth below `flock/`; its file name useth
 the ascii spelling of its flock name.
 
@@ -32,17 +32,17 @@ the ascii spelling of its flock name.
 - `yoneda.tung` stateth the yoneda lemma for a functor on types: `lift` and
   `unlift` convert between `α φ` and `φ yoneda α`, the transformations from
   the functions out of `α`. `unlift_lift` followeth from `warp_sameness`;
-  `lift_unlift` needeth the transformation's `natural` proof and holdeth at
+  `lift_unlift` needeth the transformation's `kindful` proof and holdeth at
   each input, since function extensionality doth not reach implicit inputs.
   `functor` hath no composition law, so a lift's naturality is not proved.
 - `yoneda_co.tung` is the dual: `φ yoneda_co α` keepeth a hidden `β φ` beside a
   function `[β, α]`, so it is a functor for any `φ`; mapping composeth the
   function. `unlift` needeth `φ functor`. `unlift_lift` holdeth; the other
   round trip holdeth only after `unlift`, since tung hath no quotient types.
-- `ilk/accessible.tung` provideth well-founded recursion.
+- `ilk/grounded.tung` provideth well-founded recursion.
   `wellgrounded_selfcall_by` lifteth it through a computed measure, with an
   explicit dependent result motive and a decrease proof at each call.
-  `ilk/natural.tung` showeth `under`, the strict order as a relation, with
+  `ilk/kindful.tung` showeth `under`, the strict order as a relation, with
   `under_wellgrounded`; `ilk/list_setting.tung` showeth `‥_greatness` and
   `‥_greatness_under`, since `greatness` is a left fold and a tail's size is not below
   its list's by conversion alone. the [language document](../tongue/language.md#let-declarations)
@@ -89,12 +89,12 @@ the ascii spelling of its flock name.
   `module.tung` proveth `naught_∘`, `∘_naught`, `-_∘`, `∘_-`, and `one_-_∘`.
   `category.tung` proveth `sameness_alone`, and `groupoid.tung`
   `witherwend_alone`, `witherwend_witherwend`, `sameness_witherwend`, and
-  `witherwend_over_▷`. `ilk/natural.tung` showeth `heir_incast`, `heir_+`,
+  `witherwend_over_▷`. `ilk/kindful.tung` showeth `heir_incast`, `heir_+`,
   `outstrike_+`, `+_∸`, and `·_swap`; `ilk/list_setting.tung` showeth
-  `warp_greatness`, `greatness_·`, and `eftwend_greatness`. `group_likeshaper.tung` defineth `likeshaped`, `kernel`, and `image` for
+  `warp_greatness`, `greatness_·`, and `eftwend_greatness`. `group_likeshaper.tung` defineth `likeshaped`, `kernel`, and `shadow` for
   `group_·`, and proveth `one_f`, `/_f`, that the kernel is a normal
-  subgroup (`kernel_one`, `kernel_·`, `kernel_/`, `kernel_turn`), that the
-  image is a subgroup (`image_one`, `image_·`, `image_/`), and the first
+  subgroup (`kernel_one`, `kernel_·`, `kernel_/`, `kernel_spin`), that the
+  image is a subgroup (`shadow_one`, `shadow_·`, `shadow_/`), and the first
   isomorphism theorem in coset form: `(a f) = (b f)` exactly when
   `a /· b` lieth in the kernel (`fibre_kernel`, `kernel_fibre`). tung hath no
   quotient types, so the quotient group is the kernel-coset relation. each parent is required, so `monoid_·` requireth
@@ -111,13 +111,17 @@ the ascii spelling of its flock name.
 
 - a shown name is read qualified by its module, so it doth not repeat the
   module: `ilk/wholetale.tung` showeth `to_ℕ`, read `wholetale~to_ℕ`, not
-  `wholetale_to_natural`. a host binding taketh that name directly; the
+  `wholetale_to_kindful`. a host binding taketh that name directly; the
   library keepeth no second alias for it.
 - a let whose body is one anonymous function of a single row bindeth its
   inputs in the header instead: `let +_+: [f:, g:, h:] ≔ …`, not
   `let +_+ ≔ {f, g, h ^ …}`. the lambda stayeth only where a header would need
   a written type the lambda inferreth, as a pattern input after implicit type
   inputs, `{@β ^ {entries from_list ^ …}}`.
+- a let whose body is a match of one row on its header inputs destructeth
+  them in the header instead: `let deal_step: [e: ℕ, q both r: ℕ ∏ ℕ, ℕ ∏ ℕ]`,
+  not `p: ℕ ∏ ℕ` with `match p { q both r ^ … }`. the input keepeth its name
+  only when a later slot or the result nameth it.
 - a let whose named inputs are matched at once is a case function over bare
   slots: `let f: [ℕ, ℕ, ℕ] ≔ {m, 0 ^ m, …}`, not
   `let f: [m: ℕ, n: ℕ, ℕ] ≔ match n {…}`. an input keepeth its name when the
@@ -158,7 +162,7 @@ it in `upper` for union.
 
 `set` requireth one lawful `order_whole` dictionary for its element type.
 its hidden carrier storeth an increasing list of distinct elements with a
-checked invariant. `from_list` sorteth and removeth duplicates; `to_list`
+checked invariant. `from_list` roweth and riddeth duplicates; `to_list`
 returneth canonical order. insertion, filtering, union, and intersection
 preserve the invariant. membership useth the same order dictionary, rather
 than arbitrary list membership or a separate boolean comparison.
@@ -190,21 +194,29 @@ by cases. generic min/max idempotence holdeth for either comparison result.
 [`ilk/list_setting.tung`](ilk/list_setting.tung) proveth standalone list
 theorems without `sorry`: no confusion and injectivity of `‥`, appending,
 mapping, both folds, filtering, reversing, and repetition. law names are terms
-too. [`ilk/natural.tung`](ilk/natural.tung) proveth the ℕ order and semiring
+too. [`ilk/kindful.tung`](ilk/kindful.tung) proveth the ℕ order and semiring
 laws by induction on structural operation models;
-[`ilk/wholetale.tung`](ilk/wholetale.tung) proveth the ℤ order and ring laws from
-sign cases and natural-number laws. bookhoard tests compare both carriers'
-models with native operations and reject false and ill-founded list proofs.
+[`ilk/wholetale.tung`](ilk/wholetale.tung) proveth the ℤ order, ring, and
+euclidean laws from sign cases and natural-number laws. ℕ dealing is modelled
+by selfcalling on the dealt tale, and ℤ dealing by the sign cases of ℕ
+dealing; the leftover of a dealt `m heir_undernaught` is turned around to
+`e ∸ r`, so it is never undernaught. bookhoard tests compare every model with
+its native operation and reject false and ill-founded list proofs.
 
-remaining `sorry` statements have distinct boundaries:
+[`ilk/list_order.tung`](ilk/list_order.tung) ordereth lists
+lexicographically from `≤` alone and proveth its whole-order laws from the
+worths' order. [`ilk/unicode.tung`](ilk/unicode.tung) modelleth scalar
+sameness and order by code points, and
+[`ilk/string/building.tung`](ilk/string/building.tung) modelleth string
+sameness, order, and yoking by scalar lists, so their order and monoid laws
+follow. the host's `unicode` and `string` are opaque, so three listed
+`orsetting`s carry their round trips: `kindful_unicode`, `list_string`, and
+`string_list`.
 
-| statements                          | boundary                                                        |
-| ----------------------------------- | --------------------------------------------------------------- |
-| string, unicode, and euclidean laws | native operations without a model reduce only on literal inputs |
-
-the [flock rules](../tongue/dependent.md#flocks-and-bizens) specify proof
-checking and runtime use. `sorry` is an assumption, so checking an instance doth
-not establish its remaining laws.
+bookhoard hath no `sorry`. the
+[flock rules](../tongue/dependent.md#flocks-and-bizens) specify proof checking
+and runtime use; a bizen that assumeth a law with `sorry` is reported, and
+checking it doth not establish that law.
 
 follow the [proof checking guide](../tongue/language.md#proof-checking) to audit
 a named theorem or a declaration applying a chosen bizen's law.

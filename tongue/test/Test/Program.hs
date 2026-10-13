@@ -12,7 +12,7 @@ import Test.Harness qualified as Harness
 
 group :: IO Group
 group = do
-  library <- loadLibrary ["ground.tung", "deed/misfaresome.tung", "deed/onstand.tung"]
+  library <- loadLibrary ["often.tung", "deed/misfaresome.tung", "deed/onstand.tung"]
   Harness.group
     "program"
     ( map integerCase integerTerms
@@ -24,7 +24,7 @@ group = do
     )
 
 integerCase :: (String, Integer) -> Test
-integerCase (source, expected) = safeResult ("generated ℤ " ++ source) ("use ground.tung yield " ++ source) ("eval ok: " ++ integerSource expected)
+integerCase (source, expected) = safeResult ("generated ℤ " ++ source) ("bring often.tung yield " ++ source) ("eval ok: " ++ integerSource expected)
 
 languageCase :: (String, String, String) -> Test
 languageCase (name, source, expected) = safeResult name source expected
@@ -56,13 +56,13 @@ integerTerms = binary ++ nested
 
 languagePrograms :: [(String, String, String)]
 languagePrograms =
-  [ ("checked declaration annotations and inferred functions", "use ground.tung let count:* ≔ ℤ let sameness: [@α: *, x: α, α] ≔ x let choose:[@α:*, @β:*, x:α, _:β, α] ≔ x let hath_+: [x:, y:count, count] ≔ x + y let tale:count ≔ (let worth ≔ +3 yield worth sameness) let result ≔ tale hath_+ (+4 choose @ℤ @string 'ignored') yield result", "eval ok: +7"),
+  [ ("checked declaration annotations and inferred functions", "bring often.tung let rime:* ≔ ℤ let sameness: [@α: *, x: α, α] ≔ x let choose:[@α:*, @β:*, x:α, _:β, α] ≔ x let hath_+: [x:, y:rime, rime] ≔ x + y let tale:rime ≔ (let worth ≔ +3 yield worth sameness) let outcome ≔ tale hath_+ (+4 choose @ℤ @string 'ignored') yield outcome", "eval ok: +7"),
     ("checked field access", "ilk pair: * { pair_of: [left: ℤ, right: ℤ, pair] } let worth ≔ +1 pair_of +2 yield worth.right", "eval ok: +2"),
     ("checked exhaustive match", "ilk 𝟚: * { yea: 𝟚, nay: 𝟚 } yield match nay { yea ^ +1, nay ^ +2 }", "eval ok: +2"),
     ("checked ℤ match", "yield match +1 { +0 ^ +10, +1 ^ +20, _ ^ +30 }", "eval ok: +20"),
     ("checked class evidence", "flock hath_sameness:[a:*, *] { let sameness:[a, a] } bizen:ℤ hath_sameness { let sameness: [x:] ≔ x } yield +7 sameness", "eval ok: +7"),
     ("checked value retaineth unused required evidence", "ilk unit: * { only: unit } flock capability:[a:*, *] {} bizen:ℤ capability {} let empty:[@a:*, @:a capability, unit] ≔ only yield empty @ℤ", "eval ok: only"),
-    ("checked annotated local selfcalling", "use ground.tung yield (let count:[ℕ, ℕ] ≔ { 0 ^ 0, n heir ^ n count } yield 2 count)", "eval ok: 0"),
+    ("checked annotated local selfcalling", "bring often.tung yield (let rime:[ℕ, ℕ] ≔ { 0 ^ 0, n heir ^ n rime } yield 2 rime)", "eval ok: 0"),
     ( "checked nested deep selfcalling with repeated scrutinees",
       """
       ilk nat:* { naught:nat, heir:[nat,nat] }
@@ -81,10 +81,10 @@ languagePrograms =
       """,
       "eval ok: +4"
     ),
-    ("checked annotated initializer seeth its preceding binding", "use ground.tung yield (let worth:ℤ ≔ +1 let worth:ℤ ≔ worth + +1 yield worth)", "eval ok: +2"),
+    ("checked annotated initializer seeth its preceding binding", "bring often.tung yield (let worth:ℤ ≔ +1 let worth:ℤ ≔ worth + +1 yield worth)", "eval ok: +2"),
     ("checked binders sharing a declaration's name", "let +:[ℤ, ℤ, ℤ] ≔ 'eke_wholetale' fremmed let keep:[keep:ℤ, ℤ] ≔ keep let outer:[ℤ, ℤ] ≔ {x ^ (let inner ≔ {inner ^ inner} yield x inner)} let worth ≔ (let worth ≔ +1 yield worth) yield (+1 keep) + (worth outer)", "eval ok: +2"),
     ("checked bizen member calleth sibling", "flock linked:[a:*, *] { let first:[a, a] let second:[a, a] } bizen:ℤ linked { let first: [x:] ≔ x let second: [x:] ≔ x first } yield +7 second", "eval ok: +7"),
-    ("checked non-finite floor yieldeth none", "use ground.tung use ilk/maybe.tung let parsed:float maybe ≔ 'Infinity' from_string yield match parsed bind ⌊ { n some ^ n, none ^ +0 }", "eval ok: +0")
+    ("checked non-finite floor yieldeth none", "bring often.tung bring ilk/maybe.tung let parsed:float maybe ≔ 'Infinity' from_string yield match parsed bind ⌊ { n some ^ n, none ^ +0 }", "eval ok: +0")
   ]
 
 booleanProductPrograms :: [(String, String, String)]
@@ -118,12 +118,12 @@ lawPrograms = twoLaws ++ concatMap carrierLaws carriers
   where
     prelude =
       unlines
-        [ "use combinator.tung",
-          "use flock/algebra/half/category.tung",
-          "use flock/algebra/half/semigroupoid.tung",
-          "use ground.tung",
-          "use ilk/list.tung",
-          "use ilk/maybe.tung",
+        [ "bring combinator.tung",
+          "bring flock/algebra/half/category.tung",
+          "bring flock/algebra/half/semigroupoid.tung",
+          "bring often.tung",
+          "bring ilk/list.tung",
+          "bring ilk/maybe.tung",
           "let f: [ℤ, ℤ] ≔ {x ^ x + +1}",
           "let g: [ℤ, ℤ] ≔ {x ^ x · +2}"
         ]
@@ -165,7 +165,7 @@ lawPrograms = twoLaws ++ concatMap carrierLaws carriers
 dictionaryPrograms :: [(String, String, String)]
 dictionaryPrograms =
   [ ( "generated dictionary " ++ show step ++ " from " ++ show start,
-      "use ground.tung flock hath_bump:[α: *, *] { let bump:[α, α] } bizen:ℤ hath_bump { let bump: [x:] ≔ x + "
+      "bring often.tung flock hath_bump:[α: *, *] { let bump:[α, α] } bizen:ℤ hath_bump { let bump: [x:] ≔ x + "
         ++ integerSource step
         ++ " } let twice:[@α: *, @: α hath_bump, x: α, α] ≔ (x bump) bump yield "
         ++ integerSource start
@@ -184,8 +184,8 @@ importPrograms =
   where
     module' index =
       ( "chain" ++ show index ++ ".tung",
-        "use ground.tung\n"
-          ++ (if index > 1 then "use chain" ++ show (index - 1) ++ ".tung\nshow let worth: ℤ ≔ chain" ++ show (index - 1) ++ "~worth + " else "show let worth: ℤ ≔ +0 + ")
+        "bring often.tung\n"
+          ++ (if index > 1 then "bring chain" ++ show (index - 1) ++ ".tung\nshow let worth: ℤ ≔ chain" ++ show (index - 1) ++ "~worth + " else "show let worth: ℤ ≔ +0 + ")
           ++ integerSource index
           ++ "\n"
       )
@@ -193,7 +193,7 @@ importPrograms =
 importCase :: (String, Integer, Map.Map String String) -> Test
 importCase (name, expected, modules) = do
   let count = Map.size modules
-  actual <- evaluateSource ("use chain" ++ show count ++ ".tung\nyield chain" ++ show count ++ "~worth") modules
+  actual <- evaluateSource ("bring chain" ++ show count ++ ".tung\nyield chain" ++ show count ++ "~worth") modules
   pure (if actual == "eval ok: " ++ integerSource expected then Nothing else Just (name ++ ": expected " ++ integerSource expected ++ ", got " ++ actual))
 
 -- a single deed and a sequence preserve the exact writing order.
@@ -216,12 +216,12 @@ layeredCase library (name, performed, expected) =
   where
     prelude =
       """
-      use deed/misfaresome.tung
-      use deed/onstand.tung
-      use flock/functor/monad.tung
-      use ground.tung
-      use ilk/product.tung
-      use ilk/sum.tung
+      bring deed/misfaresome.tung
+      bring deed/onstand.tung
+      bring flock/functor/monad.tung
+      bring often.tung
+      bring ilk/product.tung
+      bring ilk/sum.tung
       let tick: ℕ onstand 𝟙 ≔ {n ^ n + 1} tweak
       let eftbare: [string ∑ 𝟙, 𝟙 deed] ≔ {e incast₀ ^ e write, _ incast₁ ^ '!' write}
 
@@ -237,5 +237,5 @@ deedCase library written =
         performed = case deeds of
           [single] -> single
           _ -> ">{then, " ++ intercalate ", " deeds ++ "}"
-    program <- compileWith library "deeds.tung" ("use ground.tung\nshow let main: 𝟙 deed ≔ " ++ performed ++ "\n")
+    program <- compileWith library "deeds.tung" ("bring often.tung\nshow let main: 𝟙 deed ≔ " ++ performed ++ "\n")
     runSimulated program []

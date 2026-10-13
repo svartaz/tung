@@ -312,7 +312,7 @@ const findHeaderEnd = (tokens, depths, start, end, baseDepth) => {
 const collectImports = (tokens, depths) => {
   const imports = [];
   for (const token of tokens) {
-    if (token.text !== "use") continue;
+    if (token.text !== "bring") continue;
     const { pathTokens, aliasToken } = useParts(tokens, token.index, depths);
     const importPath = pathTokens.map(({ text }) => text).join("");
     if (!importPath) continue;

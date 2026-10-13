@@ -1,5 +1,6 @@
-use combinator.tung
-use is.tung
+bring combinator.tung
+bring is.tung
+
 show flock semigroupoid: [⇨: [*, *, *], *] {
   let ▷: [@α: *, @β: *, @γ: *, α ⇨ β, β ⇨ γ, α ⇨ γ]
 

@@ -112,10 +112,15 @@ checkDeclaration owner program = \case
       requireUniverse emptyScope kind
       pure result
     -- the model is a hidden definition; a call of the binding's own name in
-    -- it is structural recursion.
+    -- it is structural recursion. it is checked against the binding's checked
+    -- type, whose universe parameters stay rigid, so both share them even
+    -- when the annotation nameth several universe-polymorphic families.
     let modelIdentity = modelSymbol identity
     modelled <- for hostModel \body -> do
-      (result, modelReferences) <- elaborateDependencies program (inferDefinition programEnvironment globalNames emptyScope hostName (Just hostAnnotation) body)
+      (result, modelReferences) <- elaborateDependencies program do
+        expected <- E.evaluate K.emptyContext (K.inferredTerm signature)
+        term <- checkDefinition programEnvironment globalNames emptyScope hostName body expected
+        pure (term, expected)
       modelEnvironment <- fromString (lowerSurplus (K.inferredUniverses signature) result >>= K.defineInferred programEnvironment modelIdentity)
       pure (modelEnvironment, modelReferences)
     environment <- fromString (H.defineHost (maybe programEnvironment fst modelled) identity hostKey (modelIdentity <$ hostModel) signature)

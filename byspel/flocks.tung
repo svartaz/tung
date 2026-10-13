@@ -1,4 +1,4 @@
-use is.tung
+bring is.tung
 ilk 𝟚: * { yea: 𝟚, nay: 𝟚 }
 
 ilk maybe: [α: *, *] {

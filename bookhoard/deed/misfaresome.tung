@@ -1,13 +1,13 @@
-use _fremmed.tung
-use combinator.tung
-use deed.tung
-use flock/algebra/half/category.tung
-use flock/algebra/half/semigroupoid.tung
-use flock/functor.tung
-use flock/functor/atfoldsome.tung
-use flock/functor/monad.tung
-use ilk/sum.tung
-use is.tung
+bring _fremmed.tung
+bring combinator.tung
+bring deed.tung
+bring flock/algebra/half/category.tung
+bring flock/algebra/half/semigroupoid.tung
+bring flock/functor.tung
+bring flock/functor/atfoldsome.tung
+bring flock/functor/monad.tung
+bring ilk/sum.tung
+bring is.tung
 
 ## a deed that may fail with a fault `ε` instead of yielding an `α`. it
 ## wrappeth `(ε ∑ α) deed`, so that it hath its own monad: `bind` stoppeth at
@@ -16,7 +16,7 @@ show ilk misfaresome: [ε: *, α: *, *] {
   inwrap: [(ε ∑ α) deed, ε misfaresome α]
 }
 
-## the deed beneath, which yieldeth the fault or the result.
+## the deed beneath, which yieldeth the fault or the outcome.
 show let run: [@ε: *, @α: *, m inwrap: ε misfaresome α, (ε ∑ α) deed] ≔ m
 
 ## fail with a fault.
@@ -27,10 +27,10 @@ show let misfare: [@ε: *, @α: *, e: ε, ε misfaresome α] ≔
 show let lift: [@ε: *, @α: *, doing: α deed, ε misfaresome α] ≔
   (doing deed_bind (incast₁ ▷ deed_sheer)) inwrap
 
-## run `m`; on a fault, run `recover` on it instead.
-show let handle: [@ε: *, @ε′: *, @α: *, m: ε misfaresome α, recover: [ε, ε′ misfaresome α], ε′ misfaresome α] ≔
+## run `m`; on a fault, run `handler` on it instead.
+show let handle: [@ε: *, @ε′: *, @α: *, m: ε misfaresome α, handler: [ε, ε′ misfaresome α], ε′ misfaresome α] ≔
   ((m run) deed_bind {
-    e incast₀ ^ (e recover) run,
+    e incast₀ ^ (e handler) run,
     a incast₁ ^ (a incast₁) deed_sheer
   }) inwrap
 
@@ -85,7 +85,7 @@ let give_tweak: [@ε: *, @α: *, @β: *, a: α, f: [α, β], ((a give: ε misfar
 let give_flatten: [@ε: *, @α: *, m: ε misfaresome α, ((m give: ε misfaresome (ε misfaresome α)) flatten) = m] ≔
   ({x ^ x inwrap} leibnitz ((m incast₁) deed_sheer_bind unfold)) throughgo (m inwrap_run)
 
-## giving a result and unfolding it yieldeth it again.
+## giving an outcome and unfolding it yieldeth it again.
 let helpsetting_give_unfold: [@ε: *, @α: *, s: ε ∑ α,
   (((s warp give) deed_sheer) deed_bind unfold) = (s deed_sheer)] ≔
   match s {

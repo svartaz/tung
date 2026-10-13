@@ -14,7 +14,7 @@ import Tung.Dependent.Source (inferSourceExpression, normaliseSourceExpression, 
 group :: IO Harness.Group
 group = do
   example <- exampleSource "deed_loop.tung"
-  library <- loadLibrary ["_fremmed.tung", "ilk/one.tung", "ilk/maybe.tung"]
+  library <- loadLibrary ["_fremmed.tung", "ilk/one.tung", "ilk/maybe.tung", "ilk/product.tung"]
   Harness.group "dependent_deed" (hostSchemaTests ++ yieldTests ++ tests library example)
 
 -- public erasure requireth a complete, validated typing judgement.
@@ -105,11 +105,15 @@ tests library example =
     -- a model is the binding's body: checked against its annotation, with
     -- calls of its own name as structural recursion, for a pure operation.
     rejectContaining "a model is checked against the binding's type" "cannot unify" $
-      compile "let plus:[ℕ, ℕ, ℕ] ≔ 'eke_natural' fremmed {a, b ^ +1}\n",
+      compile "let plus:[ℕ, ℕ, ℕ] ≔ 'eke_kindful' fremmed {a, b ^ +1}\n",
+    -- the model shareth the binding's checked type, so its universe
+    -- parameters agree even when the annotation nameth several families.
+    expectEq "a model's annotation may name several universe-polymorphic families" (Right ()) $
+      () <$ compile (prelude ++ "bring ilk/product.tung\nlet deal:[ℕ, ℕ, (ℕ ∏ ℕ) maybe] ≔ 'deal_leftover_kindful' fremmed {_, _ ^ none}\n"),
     rejectContaining "only a sheer operation hath a model" "cannot have a model" $
       compile "let wrap:[@α:*, a: α, α deed] ≔ 'deed_sheer' fremmed sorry\n",
     rejectContaining "without a model, a fremmed annotation cannot bind inputs" "cannot bind inputs" $
-      parseSource "let plus:[m: ℕ, n: ℕ, ℕ] ≔ 'eke_natural' fremmed\n",
+      parseSource "let plus:[m: ℕ, n: ℕ, ℕ] ≔ 'eke_kindful' fremmed\n",
     rejectContaining "a fremmed binding requireth an annotation" "requireth a type annotation" $
       parseSource "let deed ≔ 'deed' fremmed\n",
     rejectContaining "fremmed cannot appear inside an expression" "only an annotated top-level let" $
@@ -138,12 +142,12 @@ hostSchemaTests =
     rejectContaining "a data family cannot counterfeit an opaque task handle" "requireth a different type" $
       compileProject
         (SourceModule "host_schema.tung")
-        "use ilk/task.tung let fork:[@α:*, α deed, (α task) deed] ≔ 'fork' fremmed"
+        "bring ilk/task.tung let fork:[@α:*, α deed, (α task) deed] ≔ 'fork' fremmed"
         (Map.singleton "ilk/task.tung" "show ilk task:[α:*, *] { done:[α, α task] }"),
     malformed
       "a canonical maybe requireth its named constructors"
       """
-      use ilk/maybe.tung
+      bring ilk/maybe.tung
       let read:(string maybe) deed ≔ 'read' fremmed
 
       """
@@ -151,7 +155,7 @@ hostSchemaTests =
     malformed
       "a canonical list requireth its element field type"
       """
-      use ilk/list.tung
+      bring ilk/list.tung
       let to_string:[unicode list, string] ≔ 'list_to_string' fremmed
 
       """
@@ -159,29 +163,29 @@ hostSchemaTests =
     malformed
       "nested host schemas validate their stored data"
       """
-      use web/request.tung
-      use web/response.tung
+      bring web/request.tung
+      bring web/response.tung
       let serve:[ℕ, [_request, _response deed], string deed] ≔ 'serve' fremmed
 
       """
       [ ( "web/request.tung",
           """
-          use ilk/wordbook.tung
+          bring ilk/wordbook.tung
           show ilk _request:* { request:[string, string, string wordbook string, string, _request] }
 
           """
         ),
         ( "web/response.tung",
           """
-          use ilk/wordbook.tung
+          bring ilk/wordbook.tung
           show ilk _response:* { response:[ℕ, string wordbook string, string, _response] }
 
           """
         ),
         ( "ilk/wordbook.tung",
           """
-          use ilk/list.tung
-          use ilk/product.tung
+          bring ilk/list.tung
+          bring ilk/product.tung
           show ilk wordbook:[α:*, β:*, *] { from_list:[(α ∏ β) list, α wordbook β] }
 
           """
@@ -196,7 +200,7 @@ hostSchemaTests =
   where
     truthBinding =
       """
-      use ilk/two.tung
+      bring ilk/two.tung
       let same:[ℤ, ℤ, 𝟚] ≔ 'same_wholetale' fremmed
 
       """
@@ -209,4 +213,4 @@ withoutMain = unlines . takeWhile (not . isPrefixOf "let main:") . lines
 
 -- bookhoard's host bindings, unit, and option.
 prelude :: String
-prelude = "use _fremmed.tung\nuse ilk/one.tung\nuse ilk/maybe.tung\n"
+prelude = "bring _fremmed.tung\nbring ilk/one.tung\nbring ilk/maybe.tung\n"

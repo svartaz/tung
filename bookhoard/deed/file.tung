@@ -1,5 +1,5 @@
-use ilk/one.tung
-use ilk/sum.tung
+bring ilk/one.tung
+bring ilk/sum.tung
 
 ## file access. a misfare yieldeth its error message on the left.
 show let read: [string, (string ∑ string) deed] ≔ 'read_file' fremmed

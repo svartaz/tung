@@ -1,18 +1,18 @@
-use flock/algebra/whole/hath_fold.tung
-use flock/algebra/whole/monoid_fold.tung
-use flock/algebra/whole/semigroup_fold.tung
-use flock/functor.tung
-use flock/functor/atfoldsome.tung
-use flock/functor/downshaper.tung
-use flock/functor/hath_sift.tung
-use flock/functor/hath_throughwend.tung
-use flock/functor/monad.tung
-use flock/hath_same.tung
-use flock/order/complement.tung
-use flock/same_to_is.tung
-use ilk/one.tung
-use ilk/two.tung
-use is.tung
+bring flock/algebra/whole/hath_fold.tung
+bring flock/algebra/whole/monoid_fold.tung
+bring flock/algebra/whole/semigroup_fold.tung
+bring flock/functor.tung
+bring flock/functor/atfoldsome.tung
+bring flock/functor/downshaper.tung
+bring flock/functor/hath_sift.tung
+bring flock/functor/hath_throughwend.tung
+bring flock/functor/monad.tung
+bring flock/hath_same.tung
+bring flock/order/withfill.tung
+bring flock/same_to_is.tung
+bring ilk/one.tung
+bring ilk/two.tung
+bring is.tung
 
 ## a maybe worth.
 show ilk maybe: [α: *, *] {
@@ -145,7 +145,7 @@ show let or_else: [@α: *, α maybe, [𝟙, α], α] ≔ {
   a some, _        ^ a
 }
 
-## options are the same when both are absent or hold the same worth.
+## options are the same when both are missing or hold the same worth.
 show let same: [@α: *, @: α hath_≍, α maybe, α maybe, 𝟚] ≔ {
   none,   none   ^ yea,
   a some, b some ^ a ≍ b,

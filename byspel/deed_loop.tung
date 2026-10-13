@@ -1,7 +1,7 @@
 ## host deeds come from bookhoard. the catalogue checketh each binding's type.
-use _fremmed.tung
-use ilk/maybe.tung
-use ilk/one.tung
+bring _fremmed.tung
+bring ilk/maybe.tung
+bring ilk/one.tung
 
 ## sequencing discardeth the first result.
 let then: [@α: *, @β: *, first: α deed, next: β deed, β deed] ≔ first deed_bind {_ ^ next}
@@ -12,8 +12,8 @@ ilk nat: * {
 }
 
 ## bounded repetition is ordinary structural induction producing a deed.
-let times: [doing: 𝟙 deed, count: nat, 𝟙 deed] ≔
-  {_: nat ^ 𝟙 deed} unbuild nat (only deed_sheer) {_, rest ^ doing then rest} count
+let times: [doing: 𝟙 deed, rime: nat, 𝟙 deed] ≔
+  {_: nat ^ 𝟙 deed} unbuild nat (only deed_sheer) {_, leftover ^ doing then leftover} rime
 
 ## an unbounded loop useth the deed fixed point. it endeth when input endeth.
 let echo: 𝟙 deed ≔ {again ^ read deed_bind {

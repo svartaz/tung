@@ -75,14 +75,14 @@ tests library example =
       compiled (example ++ "let bad ≔ someone person.name\n"),
     expectEq "an importer projecteth a shown ilk's fields" (Right True) do
       let shown = withModules [("people.tung", "show ilk person: * { person_of: [name: string, age: ℤ, person] }\n")] library
-      program <- compileWith shown "importer.tung" "use people.tung\nlet someone: person ≔ 'tung' person_of +1\nlet name: string ≔ someone.name\n"
+      program <- compileWith shown "importer.tung" "bring people.tung\nlet someone: person ≔ 'tung' person_of +1\nlet name: string ≔ someone.name\n"
       sameNormalIn program "name" "'tung'",
     expectEq "the runner projecteth fields" (Right (Right 0, "tung")) $
-      compileWith library "dependent_fields.tung" (example ++ "use ilk/one.tung\nlet write:[string, 𝟙 deed] ≔ 'write' fremmed\nlet main:𝟙 deed ≔ someone.name write\n")
+      compileWith library "dependent_fields.tung" (example ++ "bring ilk/one.tung\nlet write:[string, 𝟙 deed] ≔ 'write' fremmed\nlet main:𝟙 deed ≔ someone.name write\n")
         >>= (`runSimulated` [])
   ]
   where
-    compiled source = compileWith library "dependent_fields.tung" ("use is.tung\n" ++ source)
+    compiled source = compileWith library "dependent_fields.tung" ("bring is.tung\n" ++ source)
     computes label expression expected = expectEq label (Right True) do
       program <- compiled example
       sameNormalIn program expression expected

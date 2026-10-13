@@ -12,7 +12,7 @@ import Tung.Dependent.Source (SourceProgram, inferSourceExpression, sourceDefini
 
 group :: IO Harness.Group
 group = do
-  mutual <- exampleSource "mutual.tung"
+  mutual <- exampleSource "evensided.tung"
   nested <- exampleSource "nested.tung"
   Harness.group "dependent-inductive-source" (tests ++ mutualTests mutual ++ nestedTests nested)
 
@@ -44,7 +44,7 @@ tests =
           ( naturalSource
               ++ """
                  ilk bool:* { no: bool, yes: bool }
-                 ilk tag:[*, *] { natural_tag:nat tag }
+                 ilk tag:[*, *] { kindful_tag:nat tag }
 
                  """
           )
@@ -125,15 +125,15 @@ mutualTests example =
     parameterisedSource =
       """
       ilk branch:[α:*, *] { node:[value:α, children:[ℕ, α forest], α branch] }
-      ilk forest:[α:*, *] { empty:α forest, link:[first:α branch, rest:α forest, α forest] }
+      ilk forest:[α:*, *] { empty:α forest, link:[first:α branch, leftover:α forest, α forest] }
       let probe:[@α:*, α branch, ℕ] ≔
         {_:α branch ^ ℕ} unbuild branch @α {_:α forest ^ ℕ}
           {value:α ^ {children:[ℕ, α forest] ^ {below:[ℕ, ℕ] ^ (0 below) heir}}}
           0
-          {first:α branch ^ {first_below:ℕ ^ {rest:α forest ^ {rest_below:ℕ ^ first_below}}}}
+          {first:α branch ^ {first_below:ℕ ^ {leftover:α forest ^ {leftover_below:ℕ ^ first_below}}}}
       let length:[@α:*, α forest, ℕ] ≔ {
         empty ^ 0,
-        _ link rest ^ (rest length) heir
+        _ link leftover ^ (leftover length) heir
       }
 
       """
@@ -208,14 +208,14 @@ nestedTests example =
     ++ [ reject label (compile (example ++ source))
        | (label, source) <-
            [ ("nested evidence cannot justify the whole input", "let bad:[v:rose,ℕ] ≔ match v { empty node ^ 0, (_ cons _) node ^ v bad }"),
-             ("nested evidence cannot justify the reconstructed root", "let bad:[rose,ℕ] ≔ { empty node ^ 0, (x cons rest) node ^ ((x cons @rose rest) node) bad }"),
+             ("nested evidence cannot justify the reconstructed root", "let bad:[rose,ℕ] ≔ { empty node ^ 0, (x cons leftover) node ^ ((x cons @rose leftover) node) bad }"),
              ("nested evidence cannot justify an unrelated input", "let bad:[v:rose,other:rose,ℕ] ≔ match v { empty node ^ 0, (_ cons _) node ^ other bad other }"),
              ( "a generic list helper cannot inherit outer descendant evidence",
                """
                let bad:[rose,ℕ] ≔ { xs node ^
                  (let sum:[rose list,ℕ] ≔ {
                    empty ^ 0,
-                   first cons rest ^ (first bad) add (rest sum)
+                   first cons leftover ^ (first bad) add (leftover sum)
                  } yield xs sum)
                }
                """
@@ -227,7 +227,7 @@ nestedTests example =
       """
       ilk thunk:[α:*, *] { hold:[[ℕ, α], α thunk] }
       ilk tree:* { tip:tree, node:[tree thunk, tree] }
-      let count:[tree, ℕ] ≔
+      let rime:[tree, ℕ] ≔
         {_:tree ^ ℕ} unbuild tree {_:tree thunk ^ ℕ}
           0 {stored:tree thunk ^ {below:ℕ ^ below heir}}
           {call:[ℕ, tree] ^ {below:[ℕ, ℕ] ^ 0 below}}
@@ -241,14 +241,14 @@ nestedTests example =
         (empty cons _) node ^ 1,
         ((first cons _) cons _) node ^ (first depth) heir
       }
-      let count:[tree, ℕ] ≔
+      let rime:[tree, ℕ] ≔
         {_:tree ^ ℕ} unbuild tree
           {_: (tree list) list ^ ℕ} {_:tree list ^ ℕ}
           {xs:(tree list) list ^ {below:ℕ ^ below heir}}
           0
-          {first:tree list ^ {first_below:ℕ ^ {rest:(tree list) list ^ {rest_below:ℕ ^ first_below add rest_below}}}}
+          {first:tree list ^ {first_below:ℕ ^ {leftover:(tree list) list ^ {leftover_below:ℕ ^ first_below add leftover_below}}}}
           0
-          {first:tree ^ {first_below:ℕ ^ {rest:tree list ^ {rest_below:ℕ ^ first_below add rest_below}}}}
+          {first:tree ^ {first_below:ℕ ^ {leftover:tree list ^ {leftover_below:ℕ ^ first_below add leftover_below}}}}
       let add:[n:ℕ, m:ℕ, ℕ] ≔
         {_:ℕ ^ ℕ} unbuild ℕ m {_:ℕ ^ {below:ℕ ^ below heir}} n
 
@@ -261,7 +261,7 @@ vectorSource = "ilk vec:[α:*, [nat, *]] { nil:α vec naught, cons:[n:nat, head:
 vectorProofSource = "ilk vec_proof:[α:*, [nat, *]] { nil:α vec_proof naught, cons:[n:nat, tail:α vec_proof n, proof:(n hath_≍ @nat n), α vec_proof (n heir)] }\n"
 identitySource = "ilk hath_≍:[@α:*, x:α, [α, *]] { refl:(x hath_≍ @α x) }\n"
 vectorHead = "let head:[@α:*, @n:nat, v:α vec (n heir), α] ≔ match v { _ cons a _ ^ a }\n"
-transportSource = "let throughbear:[F:[nat, *], worth:naught F, naught F] ≔ {y:nat ^ {proof:(naught hath_≍ @nat y) ^ y F}} unbuild hath_≍ @nat @naught worth naught (refl @nat @naught)\n"
+transportSource = "let throughbear:[F:[nat, *], worth:naught F, naught F] ≔ {y:nat ^ {seething:(naught hath_≍ @nat y) ^ y F}} unbuild hath_≍ @nat @naught worth naught (refl @nat @naught)\n"
 
 naturalFold, vectorOne, vectorFold, vectorProofOne, vectorProofFold :: String
 naturalFold = "{n:nat ^ nat} unbuild nat naught {n:nat ^ {ih:nat ^ ih heir}} ((naught heir) heir)"

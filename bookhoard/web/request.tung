@@ -1,4 +1,4 @@
-use ilk/wordbook.tung
+bring ilk/wordbook.tung
 
 ## an incoming http request with its method, target, headers, and utf-8 body.
 show ilk _request: * {

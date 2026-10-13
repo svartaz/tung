@@ -18,8 +18,8 @@ group = Harness.group "harness" [selection, fixtureOverrides]
 -- a changed dependency must invalidate its importer without changing later tests.
 fixtureOverrides :: Harness.Test
 fixtureOverrides = do
-  let direct = "use ilk/two.tung let answer:𝟚 ≔ nay"
-      transitive = "use flock/algebra/whole/hath_naught.tung"
+  let direct = "bring ilk/two.tung let answer:𝟚 ≔ nay"
+      transitive = "bring flock/algebra/whole/hath_naught.tung"
       changed = Map.singleton "ilk/two.tung" "show ilk 𝟚:* { true:𝟚, false:𝟚 }"
   before <- evaluate (Harness.checkSource False transitive Map.empty)
   directResult <- evaluate (Harness.checkSource False direct changed)

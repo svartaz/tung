@@ -36,7 +36,7 @@ group = do
       : classLayoutCase files
       : equalityCases library
       ++ soundnessCases library
-      ++ accessibilityCases library
+      ++ groundedCases library
       ++ yonedaCases library
       ++ moduleCases library
       ++ groupCases library
@@ -69,7 +69,7 @@ equalityCases library =
       compile "let bad ≔ (eftbend @ℤ @+1) throughgo (eftbend @ℤ @+2)"
   ]
   where
-    compile source = compileWith library "is_test.tung" ("use is.tung\n" ++ source)
+    compile source = compileWith library "is_test.tung" ("bring is.tung\n" ++ source)
 
 -- canonical finite sets prove their laws in identity, with no added assumptions.
 setCases :: Library -> [Test]
@@ -100,18 +100,18 @@ setCases library =
     compile source = compileWith library "set_test.tung" (imports ++ "\n" ++ source)
     imports =
       """
-      use ilk/set.tung
-      use ilk/list.tung
-      use ilk/two.tung
-      use flock/hath_inhold.tung
-      use flock/hath_same.tung
-      use flock/order/order_whole.tung
-      use flock/order/semilattice_lower.tung
-      use flock/order/semilattice_upper.tung
-      use flock/order/semilattice_upper_bounded.tung
-      use flock/order/lattice_distributive.tung
-      use flock/same_to_is.tung
-      use is.tung
+      bring ilk/set.tung
+      bring ilk/list.tung
+      bring ilk/two.tung
+      bring flock/hath_inhold.tung
+      bring flock/hath_same.tung
+      bring flock/order/order_whole.tung
+      bring flock/order/semilattice_lower.tung
+      bring flock/order/semilattice_upper.tung
+      bring flock/order/semilattice_upper_hemmed.tung
+      bring flock/order/lattice_spreadsome.tung
+      bring flock/same_to_is.tung
+      bring is.tung
       """
     values =
       """
@@ -132,10 +132,12 @@ setCases library =
 -- structural model otherwise; the two must agree, and proofs may use the model.
 numberCases :: Library -> [Test]
 numberCases library =
-  [ agreement "ℕ" (libraryModule library "ilk/natural.tung") ["is_same", "is_at_most", "eking", "offdrawing", "folding"] (0, 12) (show :: Int -> String),
-    agreement "ℤ" (libraryModule library "ilk/wholetale.tung") ["is_same", "is_at_most", "eking", "offdrawing", "folding"] (-12, 12) signed,
+  [ agreement "ℕ" (libraryModule library "ilk/kindful.tung") ["is_same", "is_at_most", "eke", "offdraw", "fold", "deal_leftover"] (0, 12) (show :: Int -> String),
+    agreement "ℤ" (libraryModule library "ilk/wholetale.tung") ["is_same", "is_at_most", "eke", "offdraw", "fold", "deal_leftover"] (-12, 12) signed,
+    agreement "unicode" (libraryModule library "ilk/unicode.tung") ["same_unicode", "at_most_unicode"] (0, 3) (\index -> ['`', staffs !! index]),
+    agreement "string" (libraryModule library "ilk/string/building.tung") ["same_string", "at_most_string", "yoke_string"] (0, 40) (\index -> "'" ++ spelled index ++ "'"),
     expectEq "a modelled operation is proved by computation and by induction" (Right ()) $
-      () <$ compileWith library "natural_proof.tung" proofs
+      () <$ compileWith library "kindful_seething.tung" proofs
   ]
   where
     agreement label models operations range literal =
@@ -145,6 +147,10 @@ numberCases library =
            in QuickCheck.counterexample native ((models >>= \program -> agrees program operation (literal left) (literal right) native) QuickCheck.=== Right True)
     signed :: Int -> String
     signed value = (if value < 0 then "" else "+") ++ show value
+    -- scalars from several planes, so code-point order is exercised.
+    staffs = "zλ😀a"
+    spelled 0 = ""
+    spelled index = staffs !! ((index - 1) `mod` 4) : spelled ((index - 1) `div` 4)
     -- on literals, source checking computeth natively, so the hidden model is
     -- applied in the kernel.
     agrees program operation left right native = do
@@ -160,9 +166,9 @@ numberCases library =
       pure (eraseLevels modelled == eraseLevels expected)
     proofs =
       """
-      use ilk/natural.tung
-      use flock/algebra/whole/hath_eke.tung
-      use is.tung
+      bring ilk/kindful.tung
+      bring flock/algebra/whole/hath_eke.tung
+      bring is.tung
       let right_naught: [n: ℕ, (n + 0) = n] ≔ eftbend
       let left_naught: [n: ℕ, (0 + n) = n] ≔
         match n {
@@ -195,8 +201,8 @@ yonedaCases library =
       compileCo "let bad: [c: maybe yoneda_co ℤ, ((c yoneda_co~unlift) yoneda_co~lift) = c] ≔ eftbend"
   ]
   where
-    compile source = compileWith library "yoneda_test.tung" ("use ilk/maybe.tung\nuse ground.tung\nuse yoneda.tung\n" ++ source)
-    compileCo source = compileWith library "coyoneda_test.tung" ("use ilk/maybe.tung\nuse ground.tung\nuse yoneda_co.tung\n" ++ source)
+    compile source = compileWith library "yoneda_test.tung" ("bring ilk/maybe.tung\nbring often.tung\nbring yoneda.tung\n" ++ source)
+    compileCo source = compileWith library "coyoneda_test.tung" ("bring ilk/maybe.tung\nbring often.tung\nbring yoneda_co.tung\n" ++ source)
 
 -- the group theorems hold for signs under multiplication; a monoid whose
 -- values lack inverses cannot be a group.
@@ -208,30 +214,30 @@ groupCases library =
         (uncurry (sameNormalIn program))
         [("(minus · minus) /", "plus"), ("minus /· plus", "minus")],
     expectEq "group theorems apply to a concrete group" (Right ()) $
-      () <$ compile "let twice: ((minus /) /) = minus ≔ minus /_/\nlet turned: ((plus · minus) /) = ((minus /) · (plus /)) ≔ plus /_over_· minus",
+      () <$ compile "let twice: ((minus /) /) = minus ≔ minus /_/\nlet spun: ((plus · minus) /) = ((minus /) · (plus /)) ≔ plus /_over_· minus",
     expectEq "the homomorphism theorems apply to a concrete homomorphism" (Right ()) $
-      () <$ compile "use flock/algebra/whole/group_likeshaper.tung\nlet trivial: [sign, sign] ≔ {_ ^ plus}\nlet hom: trivial likeshaped ≔ {_, _ ^ eftbend}\nlet sent: ((one: sign) trivial) = one ≔ trivial one_f hom\nlet same: (plus trivial) = (minus trivial) ≔ trivial kernel_fibre hom plus minus (trivial fibre_kernel hom plus minus eftbend)",
+      () <$ compile "bring flock/algebra/whole/group_likeshaper.tung\nlet trivial: [mark, mark] ≔ {_ ^ plus}\nlet hom: trivial likeshaped ≔ {_, _ ^ eftbend}\nlet sent: ((one: mark) trivial) = one ≔ trivial one_f hom\nlet same: (plus trivial) = (minus trivial) ≔ trivial kernel_fibre hom plus minus (trivial fibre_kernel hom plus minus eftbend)",
     rejectContaining "a map that turneth signs is no homomorphism" "cannot unify" $
-      compile "use flock/algebra/whole/group_likeshaper.tung\nlet turn: [sign, sign] ≔ {plus ^ minus, minus ^ plus}\nlet bad: turn likeshaped ≔ {_, _ ^ eftbend}",
+      compile "bring flock/algebra/whole/group_likeshaper.tung\nlet spin: [mark, mark] ≔ {plus ^ minus, minus ^ plus}\nlet bad: spin likeshaped ≔ {_, _ ^ eftbend}",
     rejectContaining "a value without an inverse maketh no group" "cannot unify" $
-      compileWith library "group_test.tung" "use ground.tung\nuse is.tung\nuse flock/algebra/whole/group_fold.tung\nbizen: 𝟚 group_· { let /: [a:] ≔ a let ·_/ ≔ {yea ^ eftbend, nay ^ eftbend} let /_· ≔ {yea ^ eftbend, nay ^ eftbend} }"
+      compileWith library "group_test.tung" "bring often.tung\nbring is.tung\nbring flock/algebra/whole/group_fold.tung\nbizen: 𝟚 group_· { let /: [a:] ≔ a let ·_/ ≔ {yea ^ eftbend, nay ^ eftbend} let /_· ≔ {yea ^ eftbend, nay ^ eftbend} }"
   ]
   where
     compile source = compileWith library "group_test.tung" (sign ++ source)
     sign =
       """
-      use flock/algebra/whole/group_fold.tung
-      use flock/algebra/whole/hath_fold.tung
-      use flock/algebra/whole/hath_one.tung
-      use flock/algebra/whole/monoid_fold.tung
-      use flock/algebra/whole/semigroup_fold.tung
-      use is.tung
-      ilk sign: * { plus: sign, minus: sign }
-      bizen: sign hath_· { let · ≔ {plus, b ^ b, minus, plus ^ minus, minus, minus ^ plus} }
-      bizen: sign hath_one { let one ≔ plus }
-      bizen: sign semigroup_· { let ·_· ≔ {plus, _, _; minus, plus, _; minus, minus, plus; minus, minus, minus ^ eftbend} }
-      bizen: sign monoid_· { let one_· ≔ {plus; minus ^ eftbend} let ·_one ≔ {plus; minus ^ eftbend} }
-      bizen: sign group_· { let /: [a:] ≔ a let ·_/ ≔ {plus; minus ^ eftbend} let /_· ≔ {plus; minus ^ eftbend} }
+      bring flock/algebra/whole/group_fold.tung
+      bring flock/algebra/whole/hath_fold.tung
+      bring flock/algebra/whole/hath_one.tung
+      bring flock/algebra/whole/monoid_fold.tung
+      bring flock/algebra/whole/semigroup_fold.tung
+      bring is.tung
+      ilk mark: * { plus: mark, minus: mark }
+      bizen: mark hath_· { let · ≔ {plus, b ^ b, minus, plus ^ minus, minus, minus ^ plus} }
+      bizen: mark hath_one { let one ≔ plus }
+      bizen: mark semigroup_· { let ·_· ≔ {plus, _, _; minus, plus, _; minus, minus, plus; minus, minus, minus ^ eftbend} }
+      bizen: mark monoid_· { let one_· ≔ {plus; minus ^ eftbend} let ·_one ≔ {plus; minus ^ eftbend} }
+      bizen: mark group_· { let /: [a:] ≔ a let ·_/ ≔ {plus; minus ^ eftbend} let /_· ≔ {plus; minus ^ eftbend} }
 
       """
 
@@ -246,23 +252,23 @@ moduleCases library =
       compile "let bad: float ≔ 2.0 ∘ 3.0"
   ]
   where
-    compile source = compileWith library "module_test.tung" ("use ground.tung\nuse flock/algebra/whole/module.tung\n" ++ source)
+    compile source = compileWith library "module_test.tung" ("bring often.tung\nbring flock/algebra/whole/module.tung\n" ++ source)
 
 -- a relation with nothing smaller is well-founded, and recursion on it runneth
 -- the step once.
-accessibilityCases :: Library -> [Test]
-accessibilityCases library =
+groundedCases :: Library -> [Test]
+groundedCases library =
   [ expectEq "well-founded selfcalling computeth its step" (Right True) do
-      program <- compileWith library "accessible_test.tung" source
+      program <- compileWith library "grounded_test.tung" source
       sameNormalIn program "answer" "4"
   ]
   where
     source =
       """
-      use ilk/accessible.tung
-      use ilk/naught.tung
+      bring ilk/grounded.tung
+      bring ilk/naught.tung
       let never: [_: ℕ, _: ℕ, *] ≔ 𝟘
-      let founded: ℕ wellgrounded never ≔ {x ^ {y, impossible ^ impossible ({}: [𝟘, ℕ accessible never y])} access}
+      let founded: ℕ wellgrounded never ≔ {x ^ {y, impossible ^ impossible ({}: [𝟘, ℕ grounded never y])} ground}
       let answer: ℕ ≔ founded wellgrounded_selfcall {x, _ ^ x heir} 3
       """
 
@@ -281,11 +287,11 @@ soundnessCases library =
     rejectContaining "a list is not its own double" "cannot unify" $
       compile "let bad: [l: ℕ list, (l · l) = l] ≔ eftbend",
     rejectContaining "athanging is not commutative" "cannot unify" $
-      compile "let bad: [a: ℕ list, b: ℕ list, (a · b) = (b · a)] ≔ match a { empty ^ (b ·_empty) evenmete, first ‥ rest ^ (first ‥) leibnitz (rest bad b) }",
+      compile "let bad: [a: ℕ list, b: ℕ list, (a · b) = (b · a)] ≔ match a { empty ^ (b ·_empty) evenmete, first ‥ leftover ^ (first ‥) leibnitz (leftover bad b) }",
     rejectContaining "distinct lists are not same" "cannot unify 1 with 2" $
       compile "let bad: (1 ‥ empty) = (2 ‥ empty) ≔ eftbend",
     rejectContaining "reversing is not the sameness" "cannot unify" $
-      compile "let bad: [l: ℕ list, (l eftwend) = l] ≔ match l { empty ^ eftbend, first ‥ rest ^ (first ‥) leibnitz (rest bad) }",
+      compile "let bad: [l: ℕ list, (l eftwend) = l] ≔ match l { empty ^ eftbend, first ‥ leftover ^ (first ‥) leibnitz (leftover bad) }",
     rejectContaining "selfcalling on the same list cannot prove the empty type" "a recursive call must pass a direct child" $
       compile "let bad: [l: ℕ list, 𝟘] ≔ l bad",
     rejectContaining "selfcalling on a larger list cannot prove the empty type" "a recursive call must pass a direct child" $
@@ -299,19 +305,19 @@ soundnessCases library =
     rejectContaining "a list of one type is not a list of another" "cannot unify ℕ with" $
       compile "let bad: [ℕ list, 𝟚 list] ≔ {l ^ l}",
     rejectContaining "a host binding cannot inhabit an empty type" "requireth a different type" $
-      compileAs "soundness_host.tung" "ilk void: * {}\nlet bad: void ≔ 'eke_natural' fremmed"
+      compileAs "soundness_host.tung" "ilk void: * {}\nlet bad: void ≔ 'eke_kindful' fremmed"
   ]
   where
     compile source =
       compileWith library "soundness_test.tung" $
         unlines
-          [ "use is.tung",
-            "use flock/algebra/whole/hath_fold.tung",
-            "use ilk/list.tung",
-            "use ilk/list_setting.tung",
-            "use ilk/natural.tung",
-            "use ilk/two.tung",
-            "use ilk/naught.tung"
+          [ "bring is.tung",
+            "bring flock/algebra/whole/hath_fold.tung",
+            "bring ilk/list.tung",
+            "bring ilk/list_setting.tung",
+            "bring ilk/kindful.tung",
+            "bring ilk/two.tung",
+            "bring ilk/naught.tung"
           ]
           ++ source
 
@@ -327,8 +333,8 @@ loadedSourcesCase files imports = do
         _ -> Just ("loaded bookhoard source differs from " ++ path)
 
 registryCase :: [(FilePath, String)] -> IO Test
-registryCase registeredFiles = case lookup "ground.tung" [(name, path) | (path, name) <- registeredFiles] of
-  Nothing -> pure (pure (Just "the declared bookhoard library lacks ground.tung"))
+registryCase registeredFiles = case lookup "often.tung" [(name, path) | (path, name) <- registeredFiles] of
+  Nothing -> pure (pure (Just "the declared bookhoard library lacks often.tung"))
   Just groundPath -> do
     files <- discover (takeDirectory groundPath)
     let registered = sort (nub (map fst registeredFiles))
@@ -354,13 +360,13 @@ symmetricDifference left right = filter (`notElem` right) left ++ filter (`notEl
 noUmbrellaDependencyCase :: [(FilePath, String)] -> Test
 noUmbrellaDependencyCase files = listToMaybe . catMaybes <$> traverse checkModule files
   where
-    checkModule (_, "ground.tung") = pure Nothing
+    checkModule (_, "often.tung") = pure Nothing
     checkModule (path, _) = do
       source <- readFile path
       pure $ case Source.parseSource source of
         Left message -> Just ("parse " ++ path ++ ": " ++ message)
         Right declarations
-          | "ground.tung" `elem` concatMap importedPaths declarations -> Just (path ++ " imports the ground umbrella")
+          | "often.tung" `elem` concatMap importedPaths declarations -> Just (path ++ " imports the ground umbrella")
           | otherwise -> Nothing
 
 groundDeedExportsCase :: Map.Map String String -> Test
@@ -370,13 +376,13 @@ groundDeedExportsCase imports =
     actual -> Just ("ground deed exports: " ++ actual)
   where
     source =
-      "use ground.tung "
+      "bring often.tung "
         ++ "let echo:𝟙 deed ≔ read bind { _ ^ >{then, 'a' write_line, random, 0 sleep, only sheer} } "
         ++ "let task:(ℤ task) deed ≔ (+1 sheer) fork"
 
 systemExplicitCase :: Map.Map String String -> Test
 systemExplicitCase imports =
-  pure $ case Harness.checkSource False "use ground.tung let args ≔ arguments" imports of
+  pure $ case Harness.checkSource False "bring often.tung let args ≔ arguments" imports of
     actual | "type error:" `isPrefixOf` actual -> Nothing
     actual -> Just ("ground unexpectedly exports system deeds: " ++ actual)
 
@@ -387,7 +393,7 @@ runnerDeedsCase imports =
     actual -> Just ("runner deeds: " ++ actual)
   where
     source =
-      "use ground.tung use deed/clock.tung use deed/process.tung use deed/system.tung use web/server.tung use ilk/list.tung use ilk/maybe.tung "
+      "bring often.tung bring deed/clock.tung bring deed/process.tung bring deed/system.tung bring web/server.tung bring ilk/list.tung bring ilk/maybe.tung "
         ++ "let route:[_: _request, _response deed] ≔ 'ok' ok $ sheer "
         ++ "let main:𝟙 deed ≔ >{then, arguments, 'TUNG_SETTING' environment, unix_time, 'true' process~run empty, 8080 serve route $ void}"
 

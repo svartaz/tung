@@ -1,8 +1,8 @@
-use flock/algebra/whole/hath_eke.tung
-use flock/algebra/whole/hath_naught.tung
-use flock/algebra/whole/semigroup_eke.tung
-use ilk/two.tung
-use is.tung
+bring flock/algebra/whole/hath_eke.tung
+bring flock/algebra/whole/hath_naught.tung
+bring flock/algebra/whole/semigroup_eke.tung
+bring ilk/two.tung
+bring is.tung
 
 show flock monoid_+: [α: *, @: α semigroup_+, @: α hath_naught, *] {
   let naught_+: [a: α, (naught + a) = a]

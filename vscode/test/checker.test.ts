@@ -156,11 +156,11 @@ test("checker reuseth one versioned session and cancellable requests", async (co
 });
 
 test("source and unsaved import changes invalidate the compiled cache", async () => {
-  const imported = "use dep.tung\nlet worth ≔ exported";
+  const imported = "bring dep.tung\nlet worth ≔ exported";
   for (const [source, annotation, value, expected] of [
     [imported, "ℤ", "+1", "ℤ"],
     [imported, "string", "'new'", "string"],
-    ["use dep.tung\nlet worth ≔ +2", "string", "'new'", "ℤ"],
+    ["bring dep.tung\nlet worth ≔ +2", "string", "'new'", "ℤ"],
   ]) {
     const imports = [
       ["dep.tung", `show let exported:${annotation} ≔ ${value}`],
@@ -176,7 +176,7 @@ test("source and unsaved import changes invalidate the compiled cache", async ()
 });
 
 test("a corrected import cleareth a cached failure", async () => {
-  const source = "use dep.tung\nlet worth ≔ exported";
+  const source = "bring dep.tung\nlet worth ≔ exported";
   const broken = [["dep.tung", "show let exported ≔ missing"]];
   const first = await compiler.check({ text: source }, broken).result;
   assert(first.kind === "check");
@@ -193,7 +193,7 @@ test("a corrected import cleareth a cached failure", async () => {
     { kind: "type", type: "ℤ" },
   );
   const edited = await compiler.check(
-    { text: "use dep.tung\nlet worth ≔ absent" },
+    { text: "bring dep.tung\nlet worth ≔ missing" },
     corrected,
   ).result;
   assert(edited.kind === "check");

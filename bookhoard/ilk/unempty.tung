@@ -1,20 +1,20 @@
-use combinator.tung
-use flock/algebra/half/category.tung
-use flock/algebra/half/semigroupoid.tung
-use flock/algebra/whole/hath_fold.tung
-use flock/algebra/whole/semigroup_fold.tung
-use flock/functor.tung
-use flock/functor/atfoldsome.tung
-use flock/functor/downshaper.tung
-use flock/functor/hath_throughwend.tung
-use flock/functor/monad.tung
-use flock/hath_inhold.tung
-use flock/hath_same.tung
-use flock/same_to_is.tung
-use ilk/list.tung
-use ilk/maybe.tung
-use ilk/two.tung
-use is.tung
+bring combinator.tung
+bring flock/algebra/half/category.tung
+bring flock/algebra/half/semigroupoid.tung
+bring flock/algebra/whole/hath_fold.tung
+bring flock/algebra/whole/semigroup_fold.tung
+bring flock/functor.tung
+bring flock/functor/atfoldsome.tung
+bring flock/functor/downshaper.tung
+bring flock/functor/hath_throughwend.tung
+bring flock/functor/monad.tung
+bring flock/hath_inhold.tung
+bring flock/hath_same.tung
+bring flock/same_to_is.tung
+bring ilk/list.tung
+bring ilk/maybe.tung
+bring ilk/two.tung
+bring is.tung
 
 ## a list with a statically known first element.
 show ilk unempty: [α: *, *] {
@@ -26,122 +26,122 @@ show let onesome: [@α: *, a: α, α unempty] ≔
   a ‥′ empty
 
 ## expose a unempty list as an ordinary list.
-show let to_list: [@α: *, (first ‥′ rest): α unempty, α list] ≔
-  first ‥ rest
+show let to_list: [@α: *, (first ‥′ leftover): α unempty, α list] ≔
+  first ‥ leftover
 
 ## make a unempty list when the input hath a first element.
 show let from_list: [@α: *, α list, (α unempty) maybe] ≔ {
-  empty        ^ none,
-  first ‥ rest ^ (first ‥′ rest) some
+  empty            ^ none,
+  first ‥ leftover ^ (first ‥′ leftover) some
 }
 
 show let head: [@α: *, (first ‥′ _): α unempty, α] ≔ first
 
-show let tail: [@α: *, (_ ‥′ rest): α unempty, α list] ≔ rest
+show let tail: [@α: *, (_ ‥′ leftover): α unempty, α list] ≔ leftover
 
 bizen: [@α: *, @: (α list) hath_∋ α, (α unempty) hath_∋ α] {
   let ∋: [thing:, a:] ≔ (thing to_list) ∋ a
 }
 
 bizen: unempty functor {
-  let warp: [first ‥′ rest:, f:] ≔
-    (first f) ‥′ (rest warp f)
+  let warp: [first ‥′ leftover:, f:] ≔
+    (first f) ‥′ (leftover warp f)
 
-  let warp_sameness: [@α:, first ‥′ rest:] ≔
+  let warp_sameness: [@α:, first ‥′ leftover:] ≔
     (first ‥′) leibnitz (
       {l: α list ^ (l functor~warp sameness) = l} unbuild list eftbend
-      {head, _, proof ^ (head ‥) leibnitz proof} rest
+      {head, _, seething ^ (head ‥) leibnitz seething} leftover
     )
 }
 
 bizen: [@α: *, (α unempty) semigroup_·] {
-  let ·: [first ‥′ rest:, right:] ≔
-    first ‥′ (rest · (right to_list))
+  let ·: [first ‥′ leftover:, right:] ≔
+    first ‥′ (leftover · (right to_list))
 
-  let ·_·: [first ‥′ rest:, next ‥′ middle:, last ‥′ end:] ≔
+  let ·_·: [first ‥′ leftover:, next ‥′ middle:, last ‥′ end:] ≔
     (first ‥′) leibnitz (
       {l: α list ^
         (l hath_fold~· ((next ‥ middle) hath_fold~· (last ‥ end)))
         = ((l hath_fold~· (next ‥ middle)) hath_fold~· (last ‥ end))
       }
-      unbuild list eftbend {head, _, proof ^ (head ‥) leibnitz proof} rest
+      unbuild list eftbend {head, _, seething ^ (head ‥) leibnitz seething} leftover
     )
 }
 
 bizen: unempty atfoldsome {
   let sheer ≔ onesome
-  let atfold: [first ‥′ rest:, f ‥′ fs:] ≔
+  let atfold: [first ‥′ leftover:, f ‥′ fs:] ≔
     (first f) ‥′ (
-      (rest warp f) · ((first ‥ rest) atfold fs)
+      (leftover warp f) · ((first ‥ leftover) atfold fs)
     )
 
-  let atfold_sameness_sheer: [@α:, first ‥′ rest:] ≔
+  let atfold_sameness_sheer: [@α:, first ‥′ leftover:] ≔
     (first ‥′) leibnitz (
       {l: α list ^ ((l warp sameness) · empty) = l} unbuild list eftbend
-      {head, _, proof ^ (head ‥) leibnitz proof} rest
+      {head, _, seething ^ (head ‥) leibnitz seething} leftover
     )
 
   let sheer_atfold_sheer: [_:, _:] ≔ eftbend
 
-  let atfold_atfold: [@α:, @β:, @γ:, first ‥′ rest:, f:, g:] ≔
+  let atfold_atfold: [@α:, @β:, @γ:, first ‥′ leftover:, f:, g:] ≔
     ((first f $ g) ‥′) leibnitz (
       {l: α list ^ (((l warp f) · empty) warp g $ · empty) = ((l warp (f ▷ g)) · empty)}
       unbuild list eftbend
-      {head, _, proof ^ ((head f $ g) ‥) leibnitz proof} rest
+      {head, _, seething ^ ((head f $ g) ‥) leibnitz seething} leftover
     )
 
   let sheer_atfold: [@α:, @β:, a:, f ‥′ fs:] ≔
     ((a f) ‥′) leibnitz (
       {l: [α, β] list ^ ((a list~onesome) atfoldsome~atfold l) = (l warp (a call))}
       unbuild list eftbend
-      {head, _, proof ^ ((a head) ‥) leibnitz proof} fs
+      {head, _, seething ^ ((a head) ‥) leibnitz seething} fs
     )
 }
 
 bizen: unempty monad {
-  let flat: [first ‥′ rest:] ≔ rest gather₁ first ·
+  let flat: [first ‥′ leftover:] ≔ leftover gather₁ first ·
 
   let sheer_bind: [_:, _:] ≔ eftbend
 
-  let warp_sheer_flat: [first ‥′ rest:] ≔
-    rest gather_onesomes (first onesome)
+  let warp_sheer_flat: [first ‥′ leftover:] ≔
+    leftover gather_onesomes (first onesome)
 }
 
-## list athang equations for the unempty flattening proof.
+## list athang equations for the unempty flattening seething.
 let helpsetting_·_empty: [@α: *, l: α list, (l · empty) = l] ≔ match l {
-  empty        ^ eftbend,
-  first ‥ rest ^ (first ‥) leibnitz (rest helpsetting_·_empty)
+  empty            ^ eftbend,
+  first ‥ leftover ^ (first ‥) leibnitz (leftover helpsetting_·_empty)
 }
 
 let helpsetting_·_·: [@α: *, a: α list, b: α list, c: α list,
   (a · (b · c)) = ((a · b) · c)
 ] ≔ match a {
-  empty        ^ eftbend,
-  first ‥ rest ^ (first ‥) leibnitz (rest helpsetting_·_· b c)
+  empty            ^ eftbend,
+  first ‥ leftover ^ (first ‥) leibnitz (leftover helpsetting_·_· b c)
 }
 
 ## gathering onesome lists athangeth every element to the initial worth.
 let gather_onesomes: [@α: *, l: α list, start: α unempty,
   (l warp onesome $ gather₁ start ·) =
-  (match start {first ‥′ rest ^ first ‥′ (rest · l)})
+  (match start {first ‥′ leftover ^ first ‥′ (leftover · l)})
 ] ≔ match l, start {
-  empty,       first ‥′ rest ^ ((first ‥′) leibnitz (rest helpsetting_·_empty)) evenmete,
-  next ‥ tail, first ‥′ rest ^
-    (tail gather_onesomes ((first ‥′ rest) · (next onesome))) throughgo
-      ((first ‥′) leibnitz ((rest helpsetting_·_· (next ‥ empty) tail) evenmete))
+  empty,       first ‥′ leftover ^ ((first ‥′) leibnitz (leftover helpsetting_·_empty)) evenmete,
+  next ‥ tail, first ‥′ leftover ^
+    (tail gather_onesomes ((first ‥′ leftover) · (next onesome))) throughgo
+      ((first ‥′) leibnitz ((leftover helpsetting_·_· (next ‥ empty) tail) evenmete))
 }
 
 bizen: unempty downshaper {
-  let gather₀: [first ‥′ rest:, b:, f:] ≔
-    first f (rest gather₀ b f)
+  let gather₀: [first ‥′ leftover:, b:, f:] ≔
+    first f (leftover gather₀ b f)
 
-  let gather₁: [first ‥′ rest:, b:, f:] ≔
-    rest gather₁ (b f first) f
+  let gather₁: [first ‥′ leftover:, b:, f:] ≔
+    leftover gather₁ (b f first) f
 }
 
 bizen: unempty hath_throughwend {
-  let throughwend: [first ‥′ rest:, f:] ≔
-    (first f) lift₂ (rest throughwend f) ‥′
+  let throughwend: [first ‥′ leftover:, f:] ≔
+    (first f) lift₂ (leftover throughwend f) ‥′
 }
 
 ## sameness followeth the lists underneath.
@@ -154,14 +154,8 @@ bizen: [@α: *, @: α hath_≍, (α unempty) hath_≍] {
 }
 
 bizen: [@α: *, @: α ≍_to_=, (α unempty) ≍_to_=] {
-  let ≍_=: [x:, y:, held:] ≔
-    match x, y {
-      a ‥′ l, b ‥′ m ^ match (a ‥ l) ≍_= (b ‥ m) held {
-        eftbend ^ eftbend
-      }
-    }
-  let ≍_eftbend: [x:] ≔
-    match x {
-      a ‥′ l ^ (a ‥ l) ≍_eftbend
-    }
+  let ≍_=: [a ‥′ l:, b ‥′ m:, held:] ≔ match (a ‥ l) ≍_= (b ‥ m) held {
+    eftbend ^ eftbend
+  }
+  let ≍_eftbend: [a ‥′ l:] ≔ (a ‥ l) ≍_eftbend
 }

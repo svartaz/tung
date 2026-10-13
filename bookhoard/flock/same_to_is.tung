@@ -1,7 +1,7 @@
-use flock/hath_same.tung
-use ilk/three.tung
-use ilk/two.tung
-use is.tung
+bring flock/hath_same.tung
+bring ilk/three.tung
+bring ilk/two.tung
+bring is.tung
 
 ## a boolean property that holdeth of one side of a sameness holdeth of the
 ## other.

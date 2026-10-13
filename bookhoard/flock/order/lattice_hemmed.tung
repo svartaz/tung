@@ -1,0 +1,14 @@
+bring flock/order/lattice.tung
+bring flock/order/semilattice_hemmed_upper.tung
+bring flock/order/semilattice_upper_hemmed.tung
+bring ilk/three.tung
+bring ilk/two.tung
+
+## a lattice with greatest and least worths.
+show flock lattice_hemmed: [α: *, @: α lattice, @: α semilattice_hemmed_upper, @: α semilattice_upper_hemmed, *] {}
+
+bizen: [@β: *, @: β lattice_hemmed, @α: *, [α, β] lattice_hemmed] {}
+
+bizen: 𝟚 lattice_hemmed {}
+
+bizen: 𝟛 lattice_hemmed {}

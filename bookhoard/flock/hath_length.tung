@@ -1,8 +1,8 @@
-use flock/algebra/whole/hath_offdraw.tung
-use flock/order/hath_at_most.tung
-use ilk/float.tung
-use ilk/two.tung
-use ilk/wholetale.tung
+bring flock/algebra/whole/hath_offdraw.tung
+bring flock/order/hath_at_most.tung
+bring ilk/float.tung
+bring ilk/two.tung
+bring ilk/wholetale.tung
 
 show flock hath_‖: [α: *, β: *, *] {
   let ‖: [α, β]

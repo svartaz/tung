@@ -1,9 +1,9 @@
-use flock/algebra/whole/group_fold.tung
-use flock/algebra/whole/hath_fold.tung
-use flock/algebra/whole/hath_one.tung
-use flock/algebra/whole/monoid_fold.tung
-use flock/algebra/whole/semigroup_fold.tung
-use is.tung
+bring flock/algebra/whole/group_fold.tung
+bring flock/algebra/whole/hath_fold.tung
+bring flock/algebra/whole/hath_one.tung
+bring flock/algebra/whole/monoid_fold.tung
+bring flock/algebra/whole/semigroup_fold.tung
+bring is.tung
 
 ## a fall between groups that keepeth products.
 show let likeshaped: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], *] ≔
@@ -14,8 +14,8 @@ show let kernel: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], a
   (a f) = one
 
 ## `y` is reached by `f`: some `a` hath `a f = y`.
-show ilk image: [@α: *, @β: *, f: [α, β], y: β, *] {
-  reach: [a: α, reached: (a f) = y, f image y]
+show ilk shadow: [@α: *, @β: *, f: [α, β], y: β, *] {
+  reach: [a: α, reached: (a f) = y, f shadow y]
 }
 
 ## a likeshaper sendeth `one` to `one`: `(one f) · (one f) = one f`, and
@@ -60,7 +60,7 @@ show let kernel_/: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β],
 }
 
 ## the kernel is normal: it is closed under turning by any worth.
-show let kernel_turn: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f likeshaped, a: α, b: α,
+show let kernel_spin: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f likeshaped, a: α, b: α,
   in_a: f kernel a, f kernel ((b · a) · (b /))] ≔ >{throughgo,
   (b · a) hom (b /),
   {z: β ^ z · ((b /) f)} leibnitz (b hom a),
@@ -70,35 +70,31 @@ show let kernel_turn: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, �
   (b f) ·_/
 }
 
-## the image holdeth `one`.
-show let image_one: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f likeshaped,
-  f image (one: β)] ≔
+## the shadow holdeth `one`.
+show let shadow_one: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f likeshaped,
+  f shadow (one: β)] ≔
   one reach (f one_f hom)
 
-## the image is closed under products.
-show let image_·: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f likeshaped, y: β, z: β,
-  in_y: f image y, in_z: f image z, f image (y · z)] ≔
-  match in_y, in_z {
-    a reach p, b reach q ^ (a · b) reach >{throughgo,
-      a hom b,
-      {w: β ^ w · (b f)} leibnitz p,
-      {w: β ^ y · w} leibnitz q
-    }
+## the shadow is closed under products.
+show let shadow_·: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f likeshaped, y: β, z: β,
+  a reach p: f shadow y, b reach q: f shadow z, f shadow (y · z)] ≔
+  (a · b) reach >{throughgo,
+    a hom b,
+    {w: β ^ w · (b f)} leibnitz p,
+    {w: β ^ y · w} leibnitz q
   }
 
-## the image is closed under witherwends.
-show let image_/: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f likeshaped, y: β,
-  in_y: f image y, f image (y /)] ≔
-  match in_y {
-    a reach p ^ (a /) reach ((f /_f hom a) throughgo ({w: β ^ w /} leibnitz p))
-  }
+## the shadow is closed under witherwends.
+show let shadow_/: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f likeshaped, y: β,
+  a reach p: f shadow y, f shadow (y /)] ≔
+  (a /) reach ((f /_f hom a) throughgo ({w: β ^ w /} leibnitz p))
 
 ## the first evenshaper setting, without quotient ilks: two worths have
-## one image exactly when they lie in one coset of the kernel. so the warp from
-## the kernel's cosets to the image, sending a coset to the image of any
+## one shadow exactly when they lie in one coset of the kernel. so the warp from
+## the kernel's cosets to the shadow, sending a coset to the shadow of any
 ## limb, is well defined (`fibre_kernel`) and injective (`kernel_fibre`);
-## it is a likeshaper onto the image, a subgroup, by `likeshaped` and
-## `image_·`.
+## it is a likeshaper onto the shadow, a subgroup, by `likeshaped` and
+## `shadow_·`.
 show let fibre_kernel: [@α: *, @: α group_·, @β: *, @: β group_·,
   f: [α, β], hom: f likeshaped, a: α, b: α,
   same: (a f) = (b f), f kernel (a /· b)

@@ -1,15 +1,15 @@
-use flock/algebra/half/category.tung
-use flock/functor.tung
-use flock/functor/downshaper.tung
-use flock/functor/hath_sift.tung
-use flock/hath_greatness.tung
-use flock/hath_inhold.tung
-use flock/hath_same.tung
-use ilk/list.tung
-use ilk/maybe.tung
-use ilk/product.tung
-use ilk/two.tung
-use is.tung
+bring flock/algebra/half/category.tung
+bring flock/functor.tung
+bring flock/functor/downshaper.tung
+bring flock/functor/hath_sift.tung
+bring flock/hath_greatness.tung
+bring flock/hath_inhold.tung
+bring flock/hath_same.tung
+bring ilk/list.tung
+bring ilk/maybe.tung
+bring ilk/product.tung
+bring ilk/two.tung
+bring is.tung
 
 ## a list-backed finite association wordbook.
 show ilk wordbook: [α: *, β: *, *] {
@@ -54,8 +54,8 @@ bizen: [@α: *, (α wordbook) functor] {
   let warp_sameness: [@β:, entries from_list:] ≔
     from_list leibnitz (
       {l: (α ∏ β) list ^ (l functor~warp {pair ^ pair functor~warp sameness}) = l}
-      unbuild list eftbend {first, _, proof ^ match first {
-        a both b ^ ((a both b) ‥) leibnitz proof
+      unbuild list eftbend {first, _, seething ^ match first {
+        a both b ^ ((a both b) ‥) leibnitz seething
       }} entries
     )
 }

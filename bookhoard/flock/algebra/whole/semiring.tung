@@ -1,12 +1,12 @@
-use flock/algebra/whole/hath_eke.tung
-use flock/algebra/whole/hath_fold.tung
-use flock/algebra/whole/hath_naught.tung
-use flock/algebra/whole/hath_one.tung
-use flock/algebra/whole/monoid_eke.tung
-use flock/algebra/whole/monoid_fold.tung
-use flock/algebra/whole/semigroup_eke.tung
-use ilk/two.tung
-use is.tung
+bring flock/algebra/whole/hath_eke.tung
+bring flock/algebra/whole/hath_fold.tung
+bring flock/algebra/whole/hath_naught.tung
+bring flock/algebra/whole/hath_one.tung
+bring flock/algebra/whole/monoid_eke.tung
+bring flock/algebra/whole/monoid_fold.tung
+bring flock/algebra/whole/semigroup_eke.tung
+bring ilk/two.tung
+bring is.tung
 
 show flock semiring: [α: *, @: α monoid_+, @: α monoid_·, *] {
   let +_swap: [a: α, b: α, (a + b) = (b + a)]

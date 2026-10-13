@@ -1,27 +1,27 @@
-use flock/algebra/whole/hath_deal_leftover.tung
-use flock/algebra/whole/hath_eke.tung
-use flock/algebra/whole/hath_fold.tung
-use flock/algebra/whole/hath_naught.tung
-use flock/algebra/whole/hath_offdraw.tung
-use flock/algebra/whole/hath_one.tung
-use flock/algebra/whole/monoid_eke.tung
-use flock/algebra/whole/monoid_fold.tung
-use flock/algebra/whole/semiring.tung
-use flock/hath_same.tung
-use flock/hath_to_string.tung
-use flock/order/hath_at_most.tung
-use flock/order/order_half.tung
-use flock/order/order_whole.tung
-use flock/order/semilattice_upper_bounded.tung
-use flock/same_to_is.tung
-use ilk/accessible.tung
-use ilk/maybe.tung
-use ilk/product.tung
-use ilk/two.tung
-use is.tung
+  use flock/algebra/whole/hath_deal_leftover.tung
+    use flock/algebra/whole/hath_eke.tung
+    use flock/algebra/whole/hath_fold.tung
+    use flock/algebra/whole/hath_naught.tung
+    use flock/algebra/whole/hath_offdraw.tung
+    use flock/algebra/whole/hath_one.tung
+    use flock/algebra/whole/monoid_eke.tung
+    use flock/algebra/whole/monoid_fold.tung
+    use flock/algebra/whole/semiring.tung
+    use flock/hath_same.tung
+    use flock/hath_to_string.tung
+    use flock/order/hath_at_most.tung
+    use flock/order/order_half.tung
+    use flock/order/order_whole.tung
+    use flock/order/semilattice_upper_bounded.tung
+    use flock/same_to_is.tung
+    use ilk/grounded.tung
+    use ilk/maybe.tung
+    use ilk/product.tung
+    use ilk/two.tung
+    use is.tung
 
 ## ℕ is a primitive ilk with arbitrary precision. its operations are host
-## bindings; these bizens give it sameness, order, and semiring structure.
+## bindings; these bizens give it sameness, order, and semiring building.
 ## a binding with a body after `fremmed` computeth natively on literals and,
 ## on other inputs, unfoldeth that structural model, so proofs can reason
 ## about it.
@@ -55,7 +55,22 @@ let folding: [ℕ, ℕ, ℕ] ≔ 'fold_natural' fremmed {
   m, k heir ^ (m folding k) eking m
 }
 
-let dealing_leftover: [ℕ, ℕ, (ℕ ∏ ℕ) maybe] ≔ 'deal_leftover_natural' fremmed
+## one step of dealing by `e heir`: the leftover groweth until it reacheth
+## `e`, and then the quotient groweth instead.
+let dealing_step: [e: ℕ, p: ℕ ∏ ℕ, ℕ ∏ ℕ] ≔ match p {
+  q both r ^ (r ≍ e) if ((q heir) both 0) (q both (r heir))
+}
+
+## the quotient and leftover of dealing a tale by `e heir`.
+let dealing: [ℕ, ℕ, ℕ ∏ ℕ] ≔ {
+  0,      _ ^ 0 both 0,
+  n heir, e ^ e dealing_step (n dealing e)
+}
+
+let dealing_leftover: [ℕ, ℕ, (ℕ ∏ ℕ) maybe] ≔ 'deal_leftover_natural' fremmed {
+  _, 0      ^ none,
+  n, e heir ^ (n dealing e) some
+}
 let spelling: [ℕ, string] ≔ 'natural_to_string' fremmed
 
 bizen: ℕ hath_≍ {
@@ -288,10 +303,10 @@ let helpsetting_+_turn: [x: ℕ, j: ℕ, k: ℕ, ((x + j) + k) = ((x + k) + j)] 
 }
 
 ## folding by an heir eketh one more copy.
-let helpsetting_heir_·: [k: ℕ, a: ℕ, ((k heir) · a) = ((k · a) + a)] ≔
+show let heir_·: [k: ℕ, a: ℕ, ((k heir) · a) = ((k · a) + a)] ≔
   match a {
     0      ^ eftbend,
-    j heir ^ ({y: ℕ ^ y + (k heir)} leibnitz (k helpsetting_heir_· j))
+    j heir ^ ({y: ℕ ^ y + (k heir)} leibnitz (k heir_· j))
     throughgo ({y: ℕ ^ y heir} leibnitz ((k · j) helpsetting_+_turn j k))
   }
 
@@ -299,7 +314,7 @@ let helpsetting_heir_·: [k: ℕ, a: ℕ, ((k heir) · a) = ((k · a) + a)] ≔
 show let ·_swap: [a: ℕ, b: ℕ, (a · b) = (b · a)] ≔
   match b {
     0      ^ (a helpsetting_naught_·) evenmete,
-    k heir ^ ({y: ℕ ^ y + a} leibnitz (a ·_swap k)) throughgo ((k helpsetting_heir_· a) evenmete)
+    k heir ^ ({y: ℕ ^ y + a} leibnitz (a ·_swap k)) throughgo ((k heir_· a) evenmete)
   }
 
 ## `a` is under `b` when `a` is smaller: `(a heir) ≤ b`. as a relation it is
@@ -319,12 +334,94 @@ show let under_heir: [a: ℕ, a under (a heir)] ≔ a helpsetting_≤_eftbend
 show let under_throughgo: [a: ℕ, b: ℕ, c: ℕ, a under b, b under c, a under c] ≔
   {k₀, k₁ ^ (a heir) ≤_yea_throughgo b c k₀ (b ≤_yea_throughgo (b heir) c (b helpsetting_≤_heir) k₁)}
 
-## everything under `n` is accessible, by inleading on `n`.
-let helpsetting_under_accessible: [n: ℕ, m: ℕ, below: m under n, ℕ accessible under m] ≔
+## everything under `n` is grounded, by inleading on `n`.
+let helpsetting_under_grounded: [n: ℕ, m: ℕ, below: m under n, ℕ grounded under m] ≔
   match n {
     0      ^ match below {},
-    k heir ^ {y: ℕ, q: y under m ^ k helpsetting_under_accessible y ((y heir) ≤_yea_throughgo m k q below)} access
+    k heir ^ {y: ℕ, q: y under m ^ k helpsetting_under_grounded y ((y heir) ≤_yea_throughgo m k q below)} ground
   }
 
 show let under_wellgrounded: ℕ wellgrounded under ≔
-  {n ^ {m: ℕ, below: m under n ^ n helpsetting_under_accessible m below} access}
+  {n ^ {m: ℕ, below: m under n ^ n helpsetting_under_grounded m below} ground}
+
+## `p` holdeth a quotient and leftover that rebuild `n` when dealing by `e heir`.
+let rebuilding: [n: ℕ, e: ℕ, q both r: ℕ ∏ ℕ, *] ≔ { ^ ((q · (e heir)) + r) = n }
+
+## `p` holdeth a leftover at most `e`.
+let bounding: [e: ℕ, _ both r: ℕ ∏ ℕ, *] ≔ {  ^ (r ≤ e) = yea }
+
+## a tale at most `e` that is not `e` hath its heir at most `e`.
+let helpsetting_≤_≭: [r: ℕ, e: ℕ, below: (r ≤ e) = yea, apart: (r ≍ e) = nay, ((r heir) ≤ e) = yea] ≔
+  match r, e {
+    0,      0      ^ match apart {},
+    0,      _ heir ^ eftbend,
+    _ heir, 0      ^ match below {},
+    j heir, k heir ^ j helpsetting_≤_≭ k below apart
+  }
+
+let helpsetting_dealing_step_rebuilding: [n: ℕ, e: ℕ, p: ℕ ∏ ℕ, held: n rebuilding e p,
+  (n heir) rebuilding e (e dealing_step p)] ≔
+  match p {
+    q both r ^ (r ≍ e) inlook @𝟚 @({c: 𝟚 ^ (n heir) rebuilding e (c if ((q heir) both 0) (q both (r heir)))}) {
+      yea, known ^ >{throughgo,
+        {y: ℕ ^ y + (q heir)} leibnitz (q heir_· e),
+        {y: ℕ ^ y heir} leibnitz ((q · e) helpsetting_+_turn e q),
+        {y: ℕ ^ (((q · e) + q) + y) heir} leibnitz ((r helpsetting_≍_= e known) evenmete),
+        heir leibnitz held
+      },
+      nay, _ ^ heir leibnitz held
+    }
+  }
+
+let helpsetting_dealing_step_bounding: [e: ℕ, p: ℕ ∏ ℕ, held: e bounding p, e bounding (e dealing_step p)] ≔
+  match p {
+    q both r ^ (r ≍ e) inlook @𝟚 @({c: 𝟚 ^ e bounding (c if ((q heir) both 0) (q both (r heir)))}) {
+      yea, _     ^ eftbend,
+      nay, known ^ r helpsetting_≤_≭ e held known
+    }
+  }
+
+let helpsetting_dealing_rebuilding: [n: ℕ, e: ℕ, n rebuilding e (n dealing e)] ≔
+  match n {
+    0      ^ (e heir) helpsetting_naught_·,
+    k heir ^ k helpsetting_dealing_step_rebuilding e (k dealing e) (k helpsetting_dealing_rebuilding e)
+  }
+
+let helpsetting_dealing_bounding: [n: ℕ, e: ℕ, e bounding (n dealing e)] ≔
+  match n {
+    0      ^ eftbend,
+    k heir ^ e helpsetting_dealing_step_bounding (k dealing e) (k helpsetting_dealing_bounding e)
+  }
+
+## the dealt pair of `n % (e heir)` as a bare pair.
+let helpsetting_%_pair: [n: ℕ, e: ℕ, q: ℕ, r: ℕ, dealt: (n % (e heir)) = ((q both r) some),
+  (n dealing e) = (q both r)] ≔
+  {m: (ℕ ∏ ℕ) maybe ^ match m { none ^ n dealing e, x some ^ x }} leibnitz dealt
+
+## the quotient and leftover of dealing by `e heir` rebuild the dealt tale.
+show let %_rebuild: [n: ℕ, e: ℕ, q: ℕ, r: ℕ, dealt: (n % (e heir)) = ((q both r) some),
+  ((q · (e heir)) + r) = n] ≔
+  (n helpsetting_%_pair e q r dealt) throughbear @(ℕ ∏ ℕ) @(n dealing e) @(q both r) @({x: ℕ ∏ ℕ ^ n rebuilding e x})
+    (n helpsetting_dealing_rebuilding e)
+
+## the leftover of dealing by `e heir` is at most `e`.
+show let %_leftover: [n: ℕ, e: ℕ, q: ℕ, r: ℕ, dealt: (n % (e heir)) = ((q both r) some),
+  (r ≤ e) = yea] ≔
+  (n helpsetting_%_pair e q r dealt) throughbear @(ℕ ∏ ℕ) @(n dealing e) @(q both r) @({x: ℕ ∏ ℕ ^ e bounding x})
+    (n helpsetting_dealing_bounding e)
+
+## taking away at most `e` and eking it back giveth `e`.
+show let ∸_+: [e: ℕ, r: ℕ, below: (r ≤ e) = yea, ((e ∸ r) + r) = e] ≔
+  match e, r {
+    _,      0      ^ eftbend,
+    0,      _ heir ^ match below {},
+    j heir, k heir ^ heir leibnitz (j ∸_+ k below)
+  }
+
+## taking away never groweth a tale.
+show let ∸_≤: [e: ℕ, r: ℕ, ((e ∸ r) ≤ e) = yea] ≔
+  match e, r {
+    _,      0      ^ e helpsetting_≤_eftbend,
+    0,      _ heir ^ eftbend,
+    j heir, k heir ^ (j ∸ k) ≤_yea_throughgo j (j heir) (j ∸_≤ k) (j helpsetting_≤_heir)
+  }

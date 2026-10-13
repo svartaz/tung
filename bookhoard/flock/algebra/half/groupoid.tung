@@ -1,6 +1,6 @@
-use flock/algebra/half/category.tung
-use flock/algebra/half/semigroupoid.tung
-use is.tung
+bring flock/algebra/half/category.tung
+bring flock/algebra/half/semigroupoid.tung
+bring is.tung
 
 show flock groupoid: [⇨: [*, *, *], @: ⇨ category, *] {
   let witherwend: [@α: *, @β: *, α ⇨ β, β ⇨ α]
@@ -30,7 +30,7 @@ show let sameness_witherwend: [@⇨: [*, *, *], @: ⇨ groupoid, @α: *,
   ((sameness: α ⇨ α) witherwend) = sameness] ≔
   (sameness witherwend_alone sameness (sameness sameness_▷)) evenmete
 
-## the witherwend of a composite is the composite of the witherwends, turned around.
+## the witherwend of a composite is the composite of the witherwends, spun around.
 show let witherwend_over_▷: [@⇨: [*, *, *], @: ⇨ groupoid, @α: *, @β: *, @γ: *,
   f: α ⇨ β, g: β ⇨ γ, ((f ▷ g) witherwend) = ((g witherwend) ▷ (f witherwend))] ≔
   ((f ▷ g) witherwend_alone ((g witherwend) ▷ (f witherwend)) >{throughgo,

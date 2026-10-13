@@ -1,8 +1,8 @@
-use flock/hath_same.tung
-use flock/hath_to_string.tung
-use flock/same_to_is.tung
-use ilk/two.tung
-use is.tung
+bring flock/hath_same.tung
+bring flock/hath_to_string.tung
+bring flock/same_to_is.tung
+bring ilk/two.tung
+bring is.tung
 
 show ilk 𝟙: * {
   only: 𝟙
@@ -19,9 +19,6 @@ bizen: 𝟙 hath_≍ {
 }
 
 bizen: 𝟙 ≍_to_= {
-  let ≍_=: [a:, b:, _:] ≔
-    match a, b {
-      only, only ^ eftbend
-    }
+  let ≍_=: [only:, only:, _:] ≔ eftbend
   let ≍_eftbend: [_:] ≔ eftbend
 }

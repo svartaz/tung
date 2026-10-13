@@ -1,14 +1,14 @@
-use flock/order/hath_at_most.tung
-use flock/order/lattice.tung
-use flock/order/order_half.tung
-use flock/order/order_whole.tung
-use flock/order/semilattice_lower.tung
-use flock/order/semilattice_upper.tung
-use ilk/two.tung
-use is.tung
+bring flock/order/hath_at_most.tung
+bring flock/order/lattice.tung
+bring flock/order/order_half.tung
+bring flock/order/order_whole.tung
+bring flock/order/semilattice_lower.tung
+bring flock/order/semilattice_upper.tung
+bring ilk/two.tung
+bring is.tung
 
 ## a lattice whose infimum and supremum distribute over each other.
-show flock lattice_distributive: [α: *, @: α lattice, *] {
+show flock lattice_spreadsome: [α: *, @: α lattice, *] {
   let ∧_∨: [a: α, b: α, c: α,
     (a ∧ (b ∨ c)) = ((a ∧ b) ∨ (a ∧ c))]
 
@@ -16,7 +16,7 @@ show flock lattice_distributive: [α: *, @: α lattice, *] {
     (a ∨ (b ∧ c)) = ((a ∨ b) ∧ (a ∨ c))]
 }
 
-bizen: [@β: *, @: β lattice_distributive, @α: *, [α, β] lattice_distributive] {
+bizen: [@β: *, @: β lattice_spreadsome, @α: *, [α, β] lattice_spreadsome] {
   let ∧_∨: [f:, g:, h:] ≔
     {a ^ (a f) ∧_∨ (a g) (a h)} fall_umtake
 
@@ -72,7 +72,7 @@ let helpsetting_∨_∧: [@α: *, @: α order_whole, a: α, b: α, c: α,
     }
   }
 
-bizen: [@α: *, @: α order_whole, α lattice_distributive] {
+bizen: [@α: *, @: α order_whole, α lattice_spreadsome] {
   let ∧_∨ ≔ helpsetting_∧_∨
   let ∨_∧ ≔ helpsetting_∨_∧
 }

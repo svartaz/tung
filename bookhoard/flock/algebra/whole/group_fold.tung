@@ -1,8 +1,8 @@
-use flock/algebra/whole/hath_fold.tung
-use flock/algebra/whole/hath_one.tung
-use flock/algebra/whole/monoid_fold.tung
-use flock/algebra/whole/semigroup_fold.tung
-use is.tung
+bring flock/algebra/whole/hath_fold.tung
+bring flock/algebra/whole/hath_one.tung
+bring flock/algebra/whole/monoid_fold.tung
+bring flock/algebra/whole/semigroup_fold.tung
+bring is.tung
 
 ## a group: a monoid whose every worth hath a witherwend on both sides.
 show flock group_·: [α: *, @: α monoid_·, *] {
@@ -61,7 +61,7 @@ show let /_/: [@α: *, @: α group_·, a: α, ((a /) /) = a] ≔
 show let one_/: [@α: *, @: α group_·, (one /) = one] ≔
   (one /_alone one (one one_·)) evenmete
 
-## the witherwend of a product is the product of the witherwends, turned around.
+## the witherwend of a product is the product of the witherwends, spun around.
 show let /_over_·: [@α: *, @: α group_·, a: α, b: α,
   ((a · b) /) = ((b /) · (a /))] ≔
   ((a · b) /_alone ((b /) · (a /)) >{throughgo,

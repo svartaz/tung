@@ -50,12 +50,12 @@ runnableFileCase imports path = do
 
 mainEntry :: Imports -> Test
 mainEntry imports = do
-  actual <- runMainSource "use ground.tung let main:𝟙 deed ≔ only sheer" imports
+  actual <- runMainSource "bring often.tung let main:𝟙 deed ≔ only sheer" imports
   pure $ if actual == "ok 0" then Nothing else Just ("main entry: " ++ actual)
 
 rejectedMain :: Imports -> Test
 rejectedMain imports = do
-  actual <- runMainSource "use ground.tung let main:𝟙 deed ≔ missing" imports
+  actual <- runMainSource "bring often.tung let main:𝟙 deed ≔ missing" imports
   pure $ if "type error:" `isPrefixOf` actual then Nothing else Just ("rejected main reached evaluation: " ++ actual)
 
 fibonacciSampleResult :: Imports -> Test
@@ -71,7 +71,7 @@ fileRoundTrip imports = do
       file = "'" ++ path ++ "'"
       -- `each` athangeth in list order.
       source =
-        "use ground.tung use deed/file.tung use ilk/list.tung yield >{then, "
+        "bring often.tung bring deed/file.tung bring ilk/list.tung yield >{then, "
           ++ (file ++ " file~write 'hello', ")
           ++ ("(' ' ‥ ('world' ‥ empty)) each { part ^ " ++ file ++ " file~athang part $ void }, ")
           ++ (file ++ " file~read}")
@@ -85,12 +85,12 @@ webServerRoundTrip imports = do
   port <- unusedPort
   let source =
         """
-        use ground.tung
-        use deed/clock.tung
-        use ilk/maybe.tung
-        use ilk/wordbook.tung
-        use web/request.tung
-        use web/server.tung
+        bring often.tung
+        bring deed/clock.tung
+        bring ilk/maybe.tung
+        bring ilk/wordbook.tung
+        bring web/request.tung
+        bring web/server.tung
 
         let route:[incoming: _request, _response deed] ≔ unix_time warp { _ ^
           match ((incoming request~method) ≍ 'POST') ∧ ((incoming request~target) ≍ '/echo') {

@@ -1,20 +1,20 @@
-use ilk/accessible.tung
-use is.tung
+bring ilk/grounded.tung
+bring is.tung
 
 ilk onestead: * { nought: onestead, after: [onestead, onestead] }
 
 ## `b before a` when `a` is `b after`.
 ilk before: [onestead, onestead, *] { step: [@n: onestead, n before (n after)] }
 
-let nothing_before: [y: onestead, y before nought, onestead accessible before y] ≔ {}
+let nothing_before: [y: onestead, y before nought, onestead grounded before y] ≔ {}
 
-let reach: [n: onestead, onestead accessible before n] ≔ match n {
-  nought  ^ nothing_before access,
-  m after ^ {y: onestead, p: y before (m after) ^ match p { step ^ m reach }} access
+let reach: [n: onestead, onestead grounded before n] ≔ match n {
+  nought  ^ nothing_before ground,
+  m after ^ {y: onestead, p: y before (m after) ^ match p { step ^ m reach }} ground
 }
 
 ## a direct measure useth the same decrease proof at each recursive call.
-let count: [n: onestead, onestead] ≔
+let rime: [n: onestead, onestead] ≔
   {_ ^ onestead} wellgrounded_selfcall_by {x ^ x} reach
     {n, selfcall ^ match n {
       nought  ^ nought,
@@ -41,7 +41,7 @@ let shifted: [n: onestead, onestead] ≔
 ilk parcel: * { pack: [onestead, parcel] }
 let weight: [parcel, onestead] ≔ {n pack ^ n}
 
-let unpack_count: [p: parcel, onestead] ≔
+let unpack_rime: [p: parcel, onestead] ≔
   {_ ^ onestead} wellgrounded_selfcall_by weight reach
     {p, selfcall ^ match p {n pack ^ match n {
       nought  ^ nought,

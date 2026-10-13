@@ -12,7 +12,7 @@ a `.tung` file containeth declarations. declarations are private unless shown:
 - `show let …`, `show ilk …`, and `show flock …` export declarations.
 - `show ilk` also exporteth its constructors and eliminator.
 - `show name` re-exporteth a visible name; `show ns~name` exporteth it as `name`.
-- ordinary `use` doth not re-export names.
+- ordinary `bring` doth not re-export names.
 
 lets, ilks, constructors, flocks, and members share one namespace. each
 module declareth a top-level name once. declared names are unqualified.
@@ -21,12 +21,12 @@ beside member `naught`, to avoid collisions.
 
 ## libraries and imports
 
-`use path.tung alias` importeth a module. the alias is optional; without it,
+`bring path.tung alias` importeth a module. the alias is optional; without it,
 the last path segment before the first dot is the namespace.
 
 ```tung
-use ilk/list.tung
-use ilk/wordbook.tung hashmap
+bring ilk/list.tung
+bring ilk/wordbook.tung hashmap
 
 let xs ≔ list~empty
 let entries ≔ hashmap~empty
@@ -38,11 +38,11 @@ let entries ≔ hashmap~empty
   qualification still reacheth the import.
 - re-exports retain their defining identities. shared dependencies must agree
   on those identities; identical dependencies reached along several paths work.
-- missing, conflicting, and cyclic imports are reported at the owning `use`.
+- missing, conflicting, and cyclic imports are reported at the owning `bring`.
 
 lookup searcheth paths relative to the importing file, declared library roots,
 then `TUNG_PATH`. one import path resolving to different files is ambiguous.
-`ground.tung` is an optional import; there is no automatic prelude.
+`often.tung` is an optional import; there is no automatic prelude.
 
 ### manifests
 
@@ -64,7 +64,7 @@ dependencies:
 - use either `path` or `repo` with `hash`.
 - optional `subdir` selecteth a directory within the pinned checkout. it
   cannot contain `..` or escape the checkout through symlinks.
-- `use` paths are relative to the selected library root.
+- `bring` paths are relative to the selected library root.
 
 tung findeth the nearest manifest above the source file. each dependency may
 have its own manifest. git checkouts live in `.tung/libraries/` beside the
@@ -196,7 +196,7 @@ may take value inputs or requirements and may be partially applied.
 `(term: type)` ascribeth any expression. `α ∏ β` applieth the product type;
 `a both b` constructeth a product value.
 
-`→` is defined in `combinator.tung` and re-exported by `ground.tung`:
+`→` is defined in `combinator.tung` and re-exported by `often.tung`:
 
 ```tung
 show let →: [α: *, β: *, *] ≔ [α, β]
@@ -262,10 +262,10 @@ lets are rejected. exact indexed, mutual-family, nested-container, and
 function-field rules live under
 [pattern matching and recursion](dependent.md#pattern-matching-and-recursion).
 
-well-founded recursion is library code in `ilk/accessible.tung`.
+well-founded recursion is library code in `ilk/grounded.tung`.
 `wellgrounded_selfcall_by` taketh a result motive, measure, well-foundedness
 proof, step, and input. the step's recursive call requireth a smaller-measure
-proof. `ilk/natural.tung` provideth `under_wellgrounded`;
+proof. `ilk/kindful.tung` provideth `under_wellgrounded`;
 `ilk/list_setting.tung` provideth `‥_greatness_under` for list tails.
 see [the checked example](../byspel/wellgrounded.tung).
 
@@ -326,7 +326,7 @@ let classify: [string, ℤ] ≔ {'yes' ^ +1, _ ^ +0}
 - `^` separateth patterns from their result. `;` yoketh alternative complete
   rows with one result.
 - a variable bindeth once per row; `_` discardeth a value.
-- constructors follow ordinary second-is-function order, as `x ‥ rest`.
+- constructors follow ordinary second-is-function order, as `x ‥ leftover`.
 - natural, integer, and string literals may be matched exactly.
 - rows must be exhaustive and non-redundant. integer and string literal rows
   need a catch-all. `0` with `n heir` covereth all naturals.
@@ -363,7 +363,7 @@ and value:
 
 ```tung
 let doubled: [l: ℕ list, ℕ list] ≔
-  {_: ℕ list ^ ℕ list} unbuild list empty {x, _, rest ^ x ‥ (x ‥ rest)} l
+  {_: ℕ list ^ ℕ list} unbuild list empty {x, _, leftover ^ x ‥ (x ‥ leftover)} l
 ```
 
 `name` may be qualified. `unbuild ℕ` and `unbuild =` also work. other names
@@ -438,15 +438,15 @@ and depth limits are specified under
 
 ## equality
 
-`use is.tung` bringeth the ordinary indexed identity type `=` and its sole
-constructor `eftbend`; `ground.tung` re-exporteth them.
+`bring is.tung` bringeth the ordinary indexed identity type `=` and its sole
+constructor `eftbend`; `often.tung` re-exporteth them.
 `eftbend` proveth an equation that holdeth by computation. matching it rewriteth
 one endpoint to the other. matching equal constructors equateth their fields;
 different constructors make the branch impossible. `≍` is Boolean equality;
 `≔` defineth a name.
 
 ```tung
-use is.tung
+bring is.tung
 let one: ℕ ≔ 1
 let checked: one = 1 ≔ eftbend
 let evenmete: [@α: *, @x: α, @y: α, p: x = y, y = x] ≔
@@ -582,9 +582,9 @@ an annotated top-level let may bind a foreign operation:
 
 ```tung
 let write: [string, 𝟙 deed] ≔ 'write' fremmed
-let eke_natural: [ℕ, ℕ, ℕ] ≔ 'eke_natural' fremmed {
+let eke_kindful: [ℕ, ℕ, ℕ] ≔ 'eke_kindful' fremmed {
   m, 0      ^ m,
-  m, k heir ^ (m eke_natural k) heir
+  m, k heir ^ (m eke_kindful k) heir
 }
 ```
 
@@ -596,7 +596,7 @@ the model. the runner always useth the native operation.
 
 `ℕ`, `ℤ`, `float`, `unicode`, and `string` are primitive types. their
 operations and bizens come from explicit library imports, usually
-`ground.tung`. `deed` and `task` are opaque primitive families of kind
+`often.tung`. `deed` and `task` are opaque primitive families of kind
 `[*, *]`; they have no constructor or eliminator. tasks are controlled by
 `fork`, `wait`, `wait_for`, and `outstrike`.
 

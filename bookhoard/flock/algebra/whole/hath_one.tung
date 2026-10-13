@@ -1,4 +1,4 @@
-use ilk/two.tung
+bring ilk/two.tung
 
 show flock hath_one: [α: *, *] {
   let one: α

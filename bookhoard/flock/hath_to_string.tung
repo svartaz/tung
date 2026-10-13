@@ -1,4 +1,4 @@
-use ilk/two.tung
+bring ilk/two.tung
 
 show flock hath_to_string: [α: *, *] {
   let to_string: [α, string]

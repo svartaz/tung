@@ -22,7 +22,7 @@ import Tung.Dependent.Source.Error (CompileFailure (..), FailureKind (..))
 import Tung.Dependent.Source.Error qualified as Error
 import Tung.Dependent.Source.Parse (SourceSnapshot (..))
 import Tung.Dependent.Source.Syntax
-import Tung.Dependent.Syntax (Definition (..))
+import Tung.Dependent.Syntax (Definition (..), Plicity (..), Term (..))
 import Tung.Identity (ModuleId (..), SymbolId (..), inducedFamily)
 import Tung.Name qualified as Name
 import Tung.Token (SourceFailure, SourceSpan)
@@ -53,11 +53,11 @@ compileImportsAt check compiled modules = foldM (compileImport []) compiled
   where
     compileImport stack done (span, path)
       | Map.member path done = pure done
-      | path `elem` stack = Left (CompileFailure CheckFailure Nothing span ("use cycle: " ++ intercalate " -> " (reverse (path : stack))))
+      | path `elem` stack = Left (CompileFailure CheckFailure Nothing span ("bring cycle: " ++ intercalate " -> " (reverse (path : stack))))
       | otherwise = do
           -- an absent source and a cycle are faults in the importing module,
           -- so neither may acquire the missing or repeated module's path.
-          imported <- maybe (Left (CompileFailure CheckFailure Nothing span ("missing use '" ++ path ++ "'"))) Right (Map.lookup path modules)
+          imported <- maybe (Left (CompileFailure CheckFailure Nothing span ("missing bring '" ++ path ++ "'"))) Right (Map.lookup path modules)
           inModule path do
             (declarations, _) <- parsed imported
             done' <- foldM (compileImport (path : stack)) done (importEdges declarations)
@@ -65,7 +65,7 @@ compileImportsAt check compiled modules = foldM (compileImport []) compiled
             pure (Map.insert path program done')
     -- the innermost existing module keepeth its path; outer modules extend the
     -- message without changing the owner or source span.
-    inModule path = first (\failure -> failure {failurePath = maybe (Just path) Just (failurePath failure), failureText = "in use '" ++ path ++ "': " ++ failureText failure})
+    inModule path = first (\failure -> failure {failurePath = maybe (Just path) Just (failurePath failure), failureText = "in bring '" ++ path ++ "': " ++ failureText failure})
 
 importEdges :: [(Maybe SourceSpan, Declaration)] -> [(Maybe SourceSpan, String)]
 importEdges declarations = [(span, importPath) | (span, ImportDeclaration {importPath}) <- declarations]
@@ -107,7 +107,7 @@ recoverModule check owner declarations compiled = do
 moduleEnvironment :: [(Maybe SourceSpan, Declaration)] -> Map.Map String SourceProgram -> Either CompileFailure SourceProgram
 moduleEnvironment declarations compiled = do
   imports <- forM [(span, path, alias) | (span, ImportDeclaration path alias) <- declarations] \(span, path, alias) ->
-    (span,Name.importAlias path alias,path,) <$> maybe (Left (CompileFailure CheckFailure Nothing span ("missing use '" ++ path ++ "'"))) Right (Map.lookup path compiled)
+    (span,Name.importAlias path alias,path,) <$> maybe (Left (CompileFailure CheckFailure Nothing span ("missing bring '" ++ path ++ "'"))) Right (Map.lookup path compiled)
   -- every namespace nameth one module, including when an import is repeated.
   foldM claimNamespace Map.empty imports
   definitions <- foldM mergeGlobals H.primitiveDefinitions imports
@@ -135,16 +135,17 @@ moduleEnvironment declarations compiled = do
           conflicts = Map.keys (Map.filter id (Map.intersectionWith (/=) definitions imported))
        in -- a family conflicteth with its eliminator; the family is named.
           case filter (isNothing . inducedFamily) conflicts ++ conflicts of
-            symbol : _ -> Left (CompileFailure CheckFailure Nothing span ("conflicting definition of '" ++ symbolName symbol ++ "' in use '" ++ path ++ "'"))
+            symbol : _ -> Left (CompileFailure CheckFailure Nothing span ("conflicting definition of '" ++ symbolName symbol ++ "' in bring '" ++ path ++ "'"))
             [] -> pure (Map.union definitions imported)
     claimNamespace claimed (span, space, path, _) = case Map.lookup space claimed of
-      Just other | path /= other -> Left (CompileFailure CheckFailure Nothing span ("use namespace '" ++ space ++ "' nameth both '" ++ other ++ "' and '" ++ path ++ "'"))
+      Just other | path /= other -> Left (CompileFailure CheckFailure Nothing span ("bring namespace '" ++ space ++ "' nameth both '" ++ other ++ "' and '" ++ path ++ "'"))
       _ -> pure (Map.insert space path claimed)
 
 -- declarations are checked in dependency order, so source order doth not
 -- matter. a declaration followeth the declarations whose names it useth, and a
--- let or bizen that useth a flock member followeth the module's bizens of that
--- flock. a cycle of ilks is checked together; every other cycle is rejected.
+-- let or bizen that useth a flock member, or an imported name whose type
+-- requireth the flock, followeth the module's bizens of that flock. a cycle of ilks is
+-- checked together; every other cycle is rejected.
 -- among ready groups, source order winneth, as it doth within each group.
 data DeclarationGroup = DeclarationGroup
   { groupIndices :: Set.Set Int,
@@ -198,9 +199,10 @@ declarationGroups program located = go (sortOn (Set.findMin . groupIndices) (map
     instancesOf = Map.fromListWith (++) [(className, [index]) | (index, declaration@BizenDeclaration {}) <- indexed, Just className <- [instanceClass declaration]]
     -- flock laws and member types use the flock's own dictionary, and data
     -- declarations use no dictionary, so only lets and bizens wait for bizens.
-    -- a member's use waiteth for the module's bizens of its flock, except a
-    -- bizen that itself needeth this declaration by name, as a helper proof
-    -- used by its own flock's bizen; that bizen cannot be the one it useth.
+    -- a member's use, or a use of an imported name that requireth a flock, waiteth for
+    -- the module's bizens of that flock, except a bizen that itself needeth
+    -- this declaration by name, as a helper proof used by its own flock's
+    -- bizen; that bizen cannot be the one it useth.
     dependencies index declaration =
       let used = mentioned declaration
           usesInstances = case unshown declaration of
@@ -208,8 +210,26 @@ declarationGroups program located = go (sortOn (Set.findMin . groupIndices) (map
             BizenDeclaration {} -> True
             _ -> False
        in nameDependencies Map.! index
-            ++ [instanceIndex | usesInstances, name <- used, Set.notMember name shadowed, Just className <- [Map.lookup name members], instanceIndex <- Map.findWithDefault [] className instancesOf, not (reaches instanceIndex index)]
+            ++ [instanceIndex | usesInstances, name <- used, className <- flocksUsedBy name, instanceIndex <- Map.findWithDefault [] className instancesOf, not (reaches instanceIndex index)]
             ++ [instanceIndex | Just className <- [instanceClass declaration], ancestor <- ancestors className, instanceIndex <- Map.findWithDefault [] ancestor instancesOf]
+    flocksUsedBy name =
+      [className | Set.notMember name shadowed, Just className <- [Map.lookup name members]] ++ requiredFlocks name
+    -- the flocks of an imported global's anonymous implicit slots, from its
+    -- checked type. a local name is already ordered by each use, and its
+    -- requirements are often met by the caller's own requirements.
+    requiredFlocks name
+      | Map.member name definers = []
+      | otherwise = case bindingSymbol =<< lookupName name (globalNames program) of
+          Just symbol | Just Definition {definitionType} <- Map.lookup symbol (globals (programEnvironment program)) -> checkedRequirements definitionType
+          _ -> []
+    checkedRequirements = \case
+      Pi Implicit domain codomain -> [symbolName family | Just family <- [checkedHead domain], Map.member family instances] ++ checkedRequirements codomain
+      Pi _ _ codomain -> checkedRequirements codomain
+      _ -> []
+    checkedHead = \case
+      Apply _ function _ -> checkedHead function
+      Global symbol _ -> Just symbol
+      _ -> Nothing
     nameDependencies = Map.fromList [(index, [definer | name <- mentioned declaration, Just definer <- [Map.lookup name definers]]) | (index, declaration) <- indexed]
     -- whether one declaration needeth another through names alone.
     reaches from target = go' Set.empty [from]

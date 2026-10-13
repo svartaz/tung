@@ -30,7 +30,7 @@ numericIndexTests =
     )
     : [ rejectContaining label "cannot unify" (compiled source)
       | (label, source) <-
-          [ ("naught cannot inhabit a successor index", "let bad:0 natural_index ≔ natural_case"),
+          [ ("naught cannot inhabit a successor index", "let bad:0 kindful_index ≔ kindful_case"),
             ("a positive constructor cannot inhabit a negative index", "let bad:-3 wholetale_index ≔ positive_case")
           ]
       ]
@@ -38,15 +38,15 @@ numericIndexTests =
     compiled = compileAs "dependent_numeric_index.tung" . (source ++)
     source =
       """
-      ilk natural_index:[ℕ, *] { natural_case:[@n:ℕ, (n heir) natural_index] }
+      ilk kindful_index:[ℕ, *] { kindful_case:[@n:ℕ, (n heir) kindful_index] }
       ilk wholetale_index:[ℤ, *] {
         positive_case:[@n:ℕ, (n overnaught) wholetale_index],
         negative_case:[@n:ℕ, (n heir_undernaught) wholetale_index]
       }
-      let natural_value:2 natural_index ≔ natural_case
+      let kindful_value:2 kindful_index ≔ kindful_case
       let positive_value:+2 wholetale_index ≔ positive_case
       let negative_value:-3 wholetale_index ≔ negative_case
-      let natural_read:[@n:ℕ, (n heir) natural_index, ℕ] ≔ {_ ^ n}
+      let kindful_read:[@n:ℕ, (n heir) kindful_index, ℕ] ≔ {_ ^ n}
       let positive_read:[@n:ℕ, (n overnaught) wholetale_index, ℕ] ≔ {_ ^ n}
       let negative_read:[@n:ℕ, (n heir_undernaught) wholetale_index, ℕ] ≔ {_ ^ n}
 
@@ -134,10 +134,10 @@ hostEncodingProgram =
   compileProject
     RootModule
     """
-    use ilk/two.tung
-    use ilk/maybe.tung
-    use ilk/product.tung
-    use ilk/list.tung
+    bring ilk/two.tung
+    bring ilk/maybe.tung
+    bring ilk/product.tung
+    bring ilk/list.tung
     let compare:[ℤ,ℤ,𝟚] ≔ 'same_wholetale' fremmed
     let deal:[ℤ,ℤ,(ℤ ∏ ℤ) maybe] ≔ 'deal_leftover_wholetale' fremmed
     let scalars:[string,unicode list] ≔ 'string_to_list' fremmed

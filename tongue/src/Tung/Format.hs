@@ -118,7 +118,7 @@ sortUseBlocks = go Code
 
     sortableUseLine line =
       let content = trim line
-       in startsWord "use" content && case lineLexicalState Code content of
+       in startsWord "bring" content && case lineLexicalState Code content of
             Code -> True
             _ -> False
 
@@ -230,7 +230,7 @@ leadingClosures :: String -> Int
 leadingClosures = length . takeWhile (`elem` ("})" :: String))
 
 declarationHead :: String -> Bool
-declarationHead line = any (`startsHead` line) ["use", "yield", "show", "let", "ilk", "flock", "bizen", "orsetting"]
+declarationHead line = any (`startsHead` line) ["bring", "yield", "show", "let", "ilk", "flock", "bizen", "orsetting"]
 
 commentHead :: String -> Bool
 commentHead line = "#" `isPrefixOf` line || "/*" `isPrefixOf` line

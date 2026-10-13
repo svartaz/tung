@@ -1,6 +1,6 @@
-use flock/algebra/whole/hath_eke.tung
-use ilk/two.tung
-use is.tung
+bring flock/algebra/whole/hath_eke.tung
+bring ilk/two.tung
+bring is.tung
 
 show flock semigroup_+: [α: *, @: α hath_+, *] {
   let +_+: [a: α, b: α, c: α, (a + (b + c)) = ((a + b) + c)]

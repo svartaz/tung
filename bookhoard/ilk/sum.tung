@@ -1,15 +1,15 @@
-use flock/algebra/half/category.tung
-use flock/functor.tung
-use flock/functor/atfoldsome.tung
-use flock/functor/bifunctor.tung
-use flock/functor/downshaper.tung
-use flock/functor/hath_throughwend.tung
-use flock/functor/monad.tung
-use flock/hath_same.tung
-use flock/order/complement.tung
-use flock/same_to_is.tung
-use ilk/two.tung
-use is.tung
+bring flock/algebra/half/category.tung
+bring flock/functor.tung
+bring flock/functor/atfoldsome.tung
+bring flock/functor/bifunctor.tung
+bring flock/functor/downshaper.tung
+bring flock/functor/hath_throughwend.tung
+bring flock/functor/monad.tung
+bring flock/hath_same.tung
+bring flock/order/withfill.tung
+bring flock/same_to_is.tung
+bring ilk/two.tung
+bring is.tung
 
 show ilk ∑: [α: *, β: *, *] {
   incast₀: [α, α ∑ β],

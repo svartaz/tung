@@ -1,5 +1,5 @@
-use ilk/string/structure.tung
-use ilk/wordbook.tung
+bring ilk/string/building.tung
+bring ilk/wordbook.tung
 
 ## an http response with its status, headers, and utf-8 body.
 show ilk _response: * {

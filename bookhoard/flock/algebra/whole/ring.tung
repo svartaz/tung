@@ -1,15 +1,15 @@
-use flock/algebra/whole/group_eke.tung
-use flock/algebra/whole/hath_eke.tung
-use flock/algebra/whole/hath_fold.tung
-use flock/algebra/whole/hath_naught.tung
-use flock/algebra/whole/hath_offdraw.tung
-use flock/algebra/whole/hath_one.tung
-use flock/algebra/whole/monoid_fold.tung
-use flock/algebra/whole/semiring.tung
-use ilk/two.tung
-use is.tung
+bring flock/algebra/whole/group_eke.tung
+bring flock/algebra/whole/hath_eke.tung
+bring flock/algebra/whole/hath_fold.tung
+bring flock/algebra/whole/hath_naught.tung
+bring flock/algebra/whole/hath_offdraw.tung
+bring flock/algebra/whole/hath_one.tung
+bring flock/algebra/whole/monoid_fold.tung
+bring flock/algebra/whole/semiring.tung
+bring ilk/two.tung
+bring is.tung
 
-## a semiring with negation. `ring` reacheth `+` only through `semiring`;
+## a semiring with flipping. `ring` reacheth `+` only through `semiring`;
 ## the bizen below maketh every ring a `group_+` through that same eking,
 ## so laws about a ring and its additive group share one dictionary.
 show flock ring: [α: *, @: α semiring, @: α hath_-, *] {
@@ -39,7 +39,7 @@ bizen: 𝟚 ring {
   let -+_+: [_:, _:] ≔ eftbend
 }
 
-## a negated left factor negateth the product.
+## a flipped left factor flippeth the product.
 show let -_·: [@α: *, @: α ring, a: α, b: α, ((a -) · b) = ((a · b) -)] ≔
   (a · b) group_eke~-_alone ((a -) · b) >{throughgo,
     ((a -) +_· a b) evenmete,
@@ -47,7 +47,7 @@ show let -_·: [@α: *, @: α ring, a: α, b: α, ((a -) · b) = ((a · b) -)] �
     b naught_·
   }
 
-## a negated right factor negateth the product.
+## a flipped right factor flippeth the product.
 show let ·_-: [@α: *, @: α ring, a: α, b: α, (a · (b -)) = ((a · b) -)] ≔
   (a · b) group_eke~-_alone (a · (b -)) >{throughgo,
     (a ·_+ (b -) b) evenmete,
@@ -55,13 +55,13 @@ show let ·_-: [@α: *, @: α ring, a: α, b: α, (a · (b -)) = ((a · b) -)] �
     a ·_naught
   }
 
-## two negations in a product outstrike each other.
+## two flippings in a product outstrike each other.
 show let -_·_-: [@α: *, @: α ring, a: α, b: α, ((a -) · (b -)) = (a · b)] ≔ >{throughgo,
   (a -) ·_- b,
   {x ^ x -} leibnitz (a -_· b),
   (a · b) group_eke~-_-
 }
 
-## the negated unit negateth.
+## the flipped unit flippeth.
 show let one_-_·: [@α: *, @: α ring, a: α, ((one -) · a) = (a -)] ≔
   (one -_· a) throughgo ({x ^ x -} leibnitz (a one_·))

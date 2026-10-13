@@ -4,6 +4,7 @@ module Tung.Dependent.Source.Expression
   ( inferExpression,
     checkExpression,
     inferDefinition,
+    checkDefinition,
   )
 where
 
@@ -431,9 +432,9 @@ localDefinitions _ _ scope [] body = body scope
 localDefinitions _ _ _ (InductiveDeclaration {} : _) _ = E.failure "ilk declarations must be top-level"
 localDefinitions _ _ _ (HostDeclaration {} : _) _ = E.failure "fremmed bindings must be top-level"
 localDefinitions _ _ _ (AssumptionDeclaration {} : _) _ = E.failure "orsetting assumptions must be top-level"
-localDefinitions _ _ _ (ImportDeclaration {} : _) _ = E.failure "use and show must be top-level"
-localDefinitions _ _ _ (ShownDeclaration {} : _) _ = E.failure "use and show must be top-level"
-localDefinitions _ _ _ (ReExportDeclaration {} : _) _ = E.failure "use and show must be top-level"
+localDefinitions _ _ _ (ImportDeclaration {} : _) _ = E.failure "bring and show must be top-level"
+localDefinitions _ _ _ (ShownDeclaration {} : _) _ = E.failure "bring and show must be top-level"
+localDefinitions _ _ _ (ReExportDeclaration {} : _) _ = E.failure "bring and show must be top-level"
 localDefinitions _ _ _ (FlockDeclaration {} : _) _ = E.failure "flock and bizen must be top-level"
 localDefinitions _ _ _ (BizenDeclaration {} : _) _ = E.failure "flock and bizen must be top-level"
 localDefinitions environment names scope (Declaration {..} : remaining) body = do
@@ -447,25 +448,32 @@ localDefinitions environment names scope (Declaration {..} : remaining) body = d
 -- outer binding, including active recursion evidence, still referreth to it.
 inferDefinition :: K.Environment -> Names -> Scope -> String -> Maybe Expression -> Expression -> Elaboration (Term, N.Value)
 inferDefinition environment names scope name written body =
-  -- a let's own name refereth to itself, shadowing an imported name, as
-  -- every later reference doth; only a local binding hideth it.
-  let visible = Just name `elem` scopeNames scope || isJust (recursiveBinding name scope)
-      (annotated, source) = case (written, body) of
+  let (annotated, source) = case (written, body) of
         (Nothing, Ascription inner annotation) -> (Just annotation, inner)
         _ -> (written, body)
-      recursive = not visible && name `Set.member` referencedNames environment names source
    in case annotated of
         Nothing
-          | recursive -> E.failure "a recursive definition needs a type annotation"
+          | recursiveDefinition environment names scope name source -> E.failure "a recursive definition needs a type annotation"
           | otherwise -> inferExpression environment names scope source
         Just annotation -> do
           (_, expected) <- inferAnnotation environment names scope annotation
           settleAnnotation environment names
-          term <-
-            if recursive
-              then checkRecursiveExpression environment names scope name source expected
-              else checkExpression environment names scope source expected
+          term <- checkDefinition environment names scope name source expected
           pure (term, expected)
+
+-- a let's body against its known type. a free reference to its own name is
+-- structural recursion.
+checkDefinition :: K.Environment -> Names -> Scope -> String -> Expression -> N.Value -> Elaboration Term
+checkDefinition environment names scope name source expected
+  | recursiveDefinition environment names scope name source = checkRecursiveExpression environment names scope name source expected
+  | otherwise = checkExpression environment names scope source expected
+
+-- a let's own name refereth to itself, shadowing an imported name, as every
+-- later reference doth; only a local binding hideth it.
+recursiveDefinition :: K.Environment -> Names -> Scope -> String -> Expression -> Bool
+recursiveDefinition environment names scope name source =
+  let visible = Just name `elem` scopeNames scope || isJust (recursiveBinding name scope)
+   in not visible && name `Set.member` referencedNames environment names source
 
 checkRecursiveExpression :: K.Environment -> Names -> Scope -> String -> Expression -> N.Value -> Elaboration Term
 checkRecursiveExpression environment names scope name body expected = case body of

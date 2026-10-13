@@ -1,6 +1,6 @@
-use flock/hath_same.tung
-use ilk/three.tung
-use ilk/two.tung
+bring flock/hath_same.tung
+bring ilk/three.tung
+bring ilk/two.tung
 
 ## a decidable at-most operation, without order laws.
 show flock hath_≤: [α: *, @: α hath_≍, *] {

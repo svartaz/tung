@@ -4,6 +4,5 @@ bring flock/algebra/whole/ring.tung
 bring is.tung
 
 show flock field: [α: *, @: α ring, @: α hath_÷, *] {
-  let ÷_·: [dealt: α, dealer: α,
-    ((dealt ÷ dealer) · dealer) = dealt]
+  let ÷_·: [dealt: α, dealer: α, ((dealt ÷ dealer) · dealer) = dealt]
 }

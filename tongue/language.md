@@ -176,7 +176,7 @@ against an annotation. its header is one name; inputs belong in the annotation.
 - named and implicit slots precede bare slots. after a named slot, the result
   may be omitted for inference.
 - a bracket containing one bare expression is that expression, not a function.
-- the formatter writeth `x: α`, with no space before `:` and one after it.
+- the neatener writeth `x: α`, with no space before `:` and one after it.
 
 a let's type must be determined. unknown types are never implicitly
 quantified: write polymorphic parameters explicitly. all names in an annotation
@@ -467,27 +467,29 @@ and `inlook`. function extensionality `fall_umtake` is a named axiom.
 ### holes and recovery
 
 each `sorry` recordeth its expected type and named local context. `--check`
-printeth `path:line:column:line:column: goal: type`, followed by indented
-`name: type` lines. the editor showeth the same goal and context. goals keep
+printeth `path:line:column:line:column: goal: ilk`, followed by indented
+`name: ilk` lines. the editor showeth the same goal and context. goals keep
 useful definition names, including recursive calls.
 
 diagnostics may retain independent goals beside a parse or type error.
 failed declarations and their dependants remain unavailable; broken imports
 provide no partial names. recovery resumeth at unindented declarations outside
 balanced delimiters. unfinished strings, comments, or delimiters may limit it.
-execution, proof checking, and type queries still require strict checking.
+execution and `--name` still require strict checking.
 
 ## proof checking
 
-`tung --check-proof name file.tung` auditeth any named checked declaration;
+`tung --name name file.tung` auditeth any named checked declaration;
 no `main` is needed. qualified imports and private local names may be selected.
-the whole file must parse and type-check.
+the whole file must parse and type-check. a proof is checked with
+`tung --no-sorry --name name file.tung`.
 
-the report giveth the declaration's type and reachable dependencies:
+the report beginneth `name: …` and `ilk: …`, then listeth the reachable
+dependencies, then endeth `name ok` or `name error: …`:
 
-- `orsetting`: named axioms;
-- `sorry`: unfinished definitions, always a failure;
-- `host`: trusted host constants, reported independently of axiom policy.
+- `orsetting`: named axioms, checked against the orsetting policy;
+- `sorry`: unfinished definitions, a failure under `--no-sorry`;
+- `host`: trusted host constants, reported independently of either policy.
 
 the closure includeth types, bodies, checking references, selected dictionaries,
 host models, and inductive rules across imports. unused unrelated declarations
@@ -496,29 +498,30 @@ retain their checked group. private transitive names appear as `path::name`.
 a successful audit certifieth a term under its reported assumptions; it doth
 not establish their consistency.
 
-the root project's manifest may restrict named axioms:
+the root project's manifest may restrict orsettings:
 
 ```yaml
 dependencies: {}
 proof:
-  axioms: [is~fall_umtake]
+  orsettings: [is~fall_umtake]
 ```
 
-- an absent policy alloweth named axioms; `axioms: []` alloweth none.
-- entries resolve to visible named axioms by identity. unknown, ambiguous,
-  duplicate, and non-axiom entries are errors.
-- private transitive axioms must become visible before a policy may allow them.
-- repeated `--allow-axiom name` options before `--check-proof` replace the
-  project policy. `--no-axioms` selecteth an empty policy; do not combine them.
+- an absent policy alloweth every orsetting; `orsettings: []` alloweth none.
+- entries resolve to visible orsettings by identity. unknown, ambiguous,
+  duplicate, and non-orsetting entries are errors.
+- private transitive orsettings must become visible before a policy may allow
+  them.
+- repeated `--allow-orset name` options before `--name` replace the
+  project policy. `--no-orset` selecteth an empty policy; do not combine them.
 - status 0 meaneth successful checking and audit; other results return 1.
-- `--no-sorry --check-proof` still auditeth only the selected closure.
+- `--no-sorry --name` faileth only on `sorry` in the selected closure.
 
 ```sh
-tung --no-axioms --check-proof naught_+ byspel/walkthrough.tung
+tung --no-sorry --no-orset --name naught_+ byspel/walkthrough.tung
 ```
 
 VS Code's `Tung: Check Proof` auditeth the selected name or let at the cursor
-with the project policy. it includeth unsaved sources and showeth the compiler
+as `--no-sorry --name` doth, with the project policy. it includeth unsaved sources and showeth the compiler
 report in `Tung Proof`. source changes during checking discard the result.
 
 ## deeds
@@ -553,7 +556,7 @@ library transformers preserve this sequencing:
 
 - `deed/misfaresome.tung`: `ε misfaresome α` wrappeth `(ε ∑ α) deed`.
   `misfare` faileth, `handle` handleth a fault, and `bind` stoppeth at it.
-- `deed/onstand.tung`: `σ onstand α` wrappeth `[σ, (α ∏ σ) deed]`.
+- `deed/hade.tung`: `σ hade α` wrappeth `[σ, (α ∏ σ) deed]`.
   `get`, `put`, and `tweak` read and change the state.
 - both provide `lift` and `run`; qualify these when both modules are imported.
 
@@ -567,16 +570,17 @@ errors print diagnostics and return status 1. trailing command arguments reach
 a final interactive `yield` performeth a deed or fully computeth a value
 before printing it.
 
-`--check`, `--check-module`, and `--check-stdin` return 0 after successful
-checking and 1 on rejection. their output includeth:
+`--check` and `--check-stdin` check a module or a program: a file without
+`main` is a module, and a `main` it declareth must be runnable as above. they
+return 0 after successful checking and 1 on rejection. their output includeth:
 
-- `type ok` after success;
+- `ilk ok` after success;
 - `sorry: name` for shown declarations, bizens, or `main` depending on `sorry`;
-- `orsetting: name: type` for axioms declared in the checked file;
+- `orsetting: name: ilk` for orsettings declared in the checked file;
 - the recorded [hole goals](#holes-and-recovery).
 
 `--no-sorry` turneth reported `sorry` dependencies into failure and refuseth
-execution when `main` dependeth on them. it still alloweth named axioms.
+execution when `main` dependeth on them. it still alloweth orsettings.
 
 an annotated top-level let may bind a foreign operation:
 

@@ -10,6 +10,12 @@ show flock monoid_+: [α: *, @: α semigroup_+, @: α hath_naught, *] {
 }
 
 bizen: 𝟚 monoid_+ {
-  let naught_+ ≔ {nay; yea ^ eftbend}
-  let +_naught ≔ {nay; yea ^ eftbend}
+  let naught_+ ≔ {
+    nay;
+    yea ^ eftbend
+  }
+  let +_naught ≔ {
+    nay;
+    yea ^ eftbend
+  }
 }

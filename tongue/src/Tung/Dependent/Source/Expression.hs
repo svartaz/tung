@@ -93,7 +93,7 @@ inferExpression environment names scope@Scope {scopeContext = context, scopeName
         pure (Pi parameterPlicity domain codomain, N.VSort (K.universeNormalise (LMax domainLevel codomainLevel)))
   Lambda binders _
     | any (Patterns.constructorBinder environment names) binders ->
-        E.failure "a function matching constructors needs a type annotation"
+        E.failure "a function matching constructors needs an ilk annotation"
   Lambda [] body -> inferExpression environment names scope body
   Lambda (Binder {..} : remaining) body -> do
     (domain, domainValue) <- case binderAnnotation of
@@ -158,7 +158,7 @@ inferExpression environment names scope@Scope {scopeContext = context, scopeName
     level <- E.freshLevel
     (term, _) <- E.newMeta (scopeContext scope) (N.VSort level)
     pure (term, N.VSort level)
-  Cases _ -> E.failure "a case function needs a type annotation"
+  Cases _ -> E.failure "a case function needs an ilk annotation"
   -- without an expected type, every row shareth one inferred result type.
   Match scrutinees rows -> do
     level <- E.freshLevel
@@ -453,7 +453,7 @@ inferDefinition environment names scope name written body =
         _ -> (written, body)
    in case annotated of
         Nothing
-          | recursiveDefinition environment names scope name source -> E.failure "a recursive definition needs a type annotation"
+          | recursiveDefinition environment names scope name source -> E.failure "a recursive definition needs an ilk annotation"
           | otherwise -> inferExpression environment names scope source
         Just annotation -> do
           (_, expected) <- inferAnnotation environment names scope annotation

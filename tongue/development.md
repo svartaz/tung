@@ -27,8 +27,8 @@ coordinateth its scripts with the haskell build and formula check.
 | ----------------------- | ----------------------------------------------------------------------- |
 | `make build`            | buildeth the compiler and editor                                        |
 | `make test`             | runneth compiler, byspel, prose, editor, and formula checks             |
-| `make check`            | runneth `make test`, `make format-check`, and `git diff --check`        |
-| `make format-check`     | checketh ormolu and canonical tung formatting without changing files    |
+| `make check`            | runneth `make test`, `make neaten-check`, and `git diff --check`        |
+| `make neaten-check`     | checketh ormolu and canonical tung neatening without changing files     |
 | `make compiler-test`    | testeth parsing, typing, evaluation, bookhoard modules, and integration |
 | `make byspel-test`      | runneth the deterministic byspels and checketh their results            |
 | `make editor-test`      | runneth the VS Code extension tests                                     |
@@ -48,7 +48,7 @@ checks as separate jobs. the homebrew workflow also testeth formula installation
 
 | path         | purpose                                                          |
 | ------------ | ---------------------------------------------------------------- |
-| `tongue/`    | haskell compiler, evaluator, formatter, repl, runner, and tests  |
+| `tongue/`    | haskell compiler, evaluator, neatener, repl, runner, and tests   |
 | `bookhoard/` | standard library source and design guide                         |
 | `vscode/`    | npm workspace for the VS Code extension                          |
 | `Formula/`   | homebrew formula                                                 |
@@ -208,8 +208,9 @@ erase them. `Source.Elaborate` returneth them with each checked result, and
 `Source.Declaration` attacheth them to the inserted symbols in `SourceProgram`.
 `Source.Module` and `Source.Cache` preserve this graph across imports.
 `Source.Proof.auditProof` traverseth it beside checked types and bodies;
-`verifyProof` applieth the axiom policy. `Main` rendereth one report for both
-the cli and editor. proof auditing addeth no kernel typing or conversion rule.
+`verifyProof` applieth the orsetting policy and, when strict, refuseth `sorry`.
+`Main` rendereth one report for both `--name` and the editor; the editor's
+`proof` command is always strict. proof auditing addeth no kernel typing or conversion rule.
 
 `Source.recoverSnapshotHoles` provideth diagnostic goals after a checking error.
 `Parse.recoverSnapshot` retaineth complete declarations at unindented heads
@@ -288,15 +289,54 @@ fixture source replacements invalidate compiled dependencies in both shared
 test helpers. executable tests compare predictable byspel output and exit
 status exactly; `word_rime` receiveth a real file.
 
-## formatting and editor protocol
+## neatening and editor protocol
 
-`Tung.Format` is the authoritative two-space formatter for the cli and editor.
-it preserveth comments and incomplete source, sorteth contiguous `bring` blocks,
-aligneth the columns and `^` of consecutive case rows that share indentation
-and column count, and remaineth idempotent. it invoketh neither parsing nor type checking.
+`Tung.Format` is the canonical two-space neatener for the cli and editor. it
+parseth the source first and refuseth source that doth not parse, reporting
+the parse error and changing nothing. its output followeth only the tokens,
+their brackets, and the comments between them, so two sources with one
+concrete syntax tree have one neat form: whitespace never changeth it, and
+neatening is idempotent. a final check refuseth any output whose tokens differ
+from the source's.
 
-`tung --editor-session` provideth diagnostics, inferred types, highlighting,
-and formatting through utf-8 json lines. each line is one complete message;
+- a comment on the line of the token before it trails that token; any other
+  comment leadeth the next token and standeth at its item's indentation. these
+  two attachments are the only layout the neatener readeth from the source.
+- one blank line parteth top-level declarations; consecutive `bring`s stay
+  together, sorted by path; no other blank line surviveth.
+- each bracket either fitteth on its line or breaketh. a broken brace or
+  parenthesis putteth each item on its own line, two columns in, and closeth on
+  its own line; a broken square bracket filleth its slots and wrappeth between
+  them. a broken block is indented from the line it beginneth on and closeth
+  at that line's indentation, even when that line continueth a wrapped head.
+  a declaration body of more than one item, a body holding declarations,
+  and a case block of more than one row always break. a declaration body and a
+  `match` body are padded, as `{ … }`; other braces are not.
+- an item beginneth after a `,` or `;`, or at a declaration keyword. a `,`
+  between a row's patterns before its `^`, or between `match` scrutinees, doth
+  not end an item.
+- a `let` or `orsetting` that fitteth stayeth on one line. otherwise its
+  `≔ body` taketh a line of its own, two columns in, and its `: annotation`
+  stayeth beside its name unless the two do not fit together, when it too
+  taketh a line two columns in. a body that openeth a brace, a block of
+  declarations, or a `match` openeth it on the `≔` line, and the binding need
+  fit only up to that opening.
+- a row's `^`, and a `≔` outside a declaration, keep their left side on the
+  line and break before the right side, two columns in, unless the right side
+  openeth a block. other terms fill their line and continue two columns in; a
+  `match` head and a brace opening a block stay on the line before them.
+- consecutive case rows of one indentation and column count align their
+  columns and `^` when the aligned rows still fit 80 characters.
+- no line passeth 80 characters while a break remaineth: quoted text is never
+  broken, and a wide `#` or `##` comment wrappeth at its last fitting space.
+
+the layout is a wadler–leijen document: groups lie flat when their content to
+the next possible break fitteth, a comment endeth its line without breaking
+its group, and consecutive line breaks merge. range neatening is not offered,
+since a canonical form doth not keep the source's lines.
+
+`tung --editor-session` provideth diagnostics, inferred ilks, highlighting,
+and neatening through utf-8 json lines. each line is one complete message;
 embedded newlines and control characters are json escapes.
 the compiler and extension must use the same protocol version.
 
@@ -309,20 +349,20 @@ the compiler and extension must use the same protocol version.
   and saveth interfaces in that project's `.tung/cache`, shared with
   command-line runs.
 - responses contain `protocol: 1`, the request `id` and `version`, and `result`.
-  the result's `kind` is `check`, `type`, `proof`, `format`, `highlight`, or `error`.
-- `check` returneth `diagnostics`; `type` returneth `type`; `format` returneth
+  the result's `kind` is `check`, `ilk`, `proof`, `format`, `highlight`, or `error`.
+- `check` returneth `diagnostics`; `ilk` returneth `ilk`; `format` returneth
   `source`; `highlight` returneth `roles`; infrastructure errors return `message`.
-- `proof` taketh `name` and optional `allowedAxioms`; an absent policy useth
-  the nearest project manifest. it returneth `audit` (`name`, `type`, and
+- `proof` taketh `name` and optional `allowedOrsettings`; an absent policy useth
+  the nearest project manifest. it returneth `audit` (`name`, `ilk`, and
   `dependencies`), `verified`, `message`, and the shared cli `report`.
   each dependency hath a nominal `symbol` (`module`, `name`), display `name`,
-  `type`, and `kind` (`sorry`, `axiom`, or `host`); host entries also contain
+  `ilk`, and `kind` (`sorry`, `orsetting`, or `host`); host entries also contain
   their catalogue key in `host`. checking errors return `error`; a completed
   audit that faileth its policy still returneth its dependencies and
   `verified: false`. clients never reconstruct dependency graphs from source.
   the language server discardeth a proof result if the root version or text,
   or any captured import text, changeth during the request.
-- diagnostics contain `kind` (`parse`, `type`, or `goal`), optional import
+- diagnostics contain `kind` (`parse`, `ilk`, or `goal`), optional import
   `path`, utf-16 `start` and `end`, and `message`. an empty array is success.
   goals are informational diagnostics, with their named context in the message.
   a failed check may return the original error beside recoverable root goals.

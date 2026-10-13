@@ -4,18 +4,12 @@ bring ilk/kindful.tung
 bring ilk/one.tung
 
 ## a non-normalised span meted in milliseconds.
-show ilk _milliseconds: * {
-  milliseconds: [ℕ, _milliseconds]
-}
+show ilk _milliseconds: * { milliseconds: [ℕ, _milliseconds] }
 
-show let seconds: [t: ℕ, _milliseconds] ≔
-  t · 1000 $ milliseconds
+show let seconds: [t: ℕ, _milliseconds] ≔ t · 1000 $ milliseconds
 
-show let minutes: [t: ℕ, _milliseconds] ≔
-  t · 60 $ seconds
+show let minutes: [t: ℕ, _milliseconds] ≔ t · 60 $ seconds
 
-show let hours: [t: ℕ, _milliseconds] ≔
-  t · 60 $ minutes
+show let hours: [t: ℕ, _milliseconds] ≔ t · 60 $ minutes
 
-show let sleep_for: [(t milliseconds): _milliseconds, 𝟙 deed] ≔
-  t sleep
+show let sleep_for: [(t milliseconds): _milliseconds, 𝟙 deed] ≔ t sleep

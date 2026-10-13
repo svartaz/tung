@@ -4,9 +4,7 @@ bring flock/same_to_is.tung
 bring ilk/two.tung
 bring is.tung
 
-show ilk 𝟙: * {
-  only: 𝟙
-}
+show ilk 𝟙: * { only: 𝟙 }
 
 show let terminal: [@α: *, _: α, 𝟙] ≔ only
 

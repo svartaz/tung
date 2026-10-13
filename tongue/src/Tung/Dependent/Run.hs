@@ -13,6 +13,7 @@ module Tung.Dependent.Run
     ioHost,
     runMain,
     requireMain,
+    checkMain,
     runYield,
     renderRuntime,
   )
@@ -178,6 +179,11 @@ type Execution m = ExceptT Stop m
 -- a runnable program defineth `main: 𝟙 deed`.
 requireMain :: SourceProgram -> Either String ()
 requireMain = void . checkedMain "a runnable file"
+
+-- a checked file may be a module without `main`; a `main` it defineth must
+-- be runnable.
+checkMain :: SourceProgram -> Either String ()
+checkMain program = maybe (Right ()) (const (requireMain program)) (sourceGlobal program "main")
 
 -- validation and execution share the same checked entry point.
 checkedMain :: String -> SourceProgram -> Either String (Globals, SymbolId)

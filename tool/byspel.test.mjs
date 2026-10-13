@@ -6,8 +6,8 @@ import * as path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
-// every byspel checketh without `sorry`: a file with `main` as a runnable
-// file, any other as a module. predictable output is compared exactly,
+// every byspel checketh without `sorry`, as a program when it defineth
+// `main` and as a module otherwise. predictable output is compared exactly,
 // including examples whose task delays are random.
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const executable = process.env.TUNG_EXECUTABLE;
@@ -45,34 +45,41 @@ west:1 points from 2 games
 `,
 };
 
-function run(args, input = "") {
+function run(args, input = "", timeout = 30000) {
   assert.ok(executable, "TUNG_EXECUTABLE nameth the built compiler");
   const result = spawnSync(executable, args, {
     cwd: root,
     input,
     encoding: "utf8",
-    timeout: 30000,
+    timeout,
   });
   assert.ifError(result.error);
   return { output: result.stdout, error: result.stderr, status: result.status };
 }
 
+// a rebuilt compiler findeth the interface cache cold. checking bookhoard once
+// first fileth its interfaces, so each byspel's limit measureth that byspel
+// alone rather than the whole library.
+test.before(() => {
+  assert.deepEqual(
+    run(["--check", "bookhoard/often.tung"], "", 600000).status,
+    0,
+  );
+});
+
 // running also checketh the whole program and rejecteth `sorry`.
 for (const byspel of byspels) {
   const file = path.join("byspel", `${byspel}.tung`);
   const output = Object.hasOwn(outputs, byspel) ? outputs[byspel] : undefined;
-  const check = /^let main\b/m.test(fs.readFileSync(path.join(root, file), "utf8"))
-    ? "--check"
-    : "--check-module";
   test(`${byspel} ${output === undefined ? "checketh" : "printeth its checked result"}`, () => {
     assert.deepEqual(
       run(
         output === undefined
-          ? ["--no-sorry", check, file]
+          ? ["--no-sorry", "--check", file]
           : ["--no-sorry", file],
       ),
       {
-        output: output ?? "type ok\n",
+        output: output ?? "ilk ok\n",
         error: "",
         status: 0,
       },
@@ -97,7 +104,7 @@ test("checking listeth shown declarations that assume sorry", () => {
     "show let assumed:ℤ ≔ sorry\nshow let built:ℤ ≔ assumed\nlet hidden:ℤ ≔ sorry\nshow let proved:ℤ ≔ +1";
   assert.deepEqual(run(["--check-stdin"], source), {
     output:
-      "type ok\nsorry: assumed\nsorry: built\n<stdin>:1:22:1:27: goal: ℤ\n<stdin>:3:16:3:21: goal: ℤ\n",
+      "ilk ok\nsorry: assumed\nsorry: built\n<stdin>:1:22:1:27: goal: ℤ\n<stdin>:3:16:3:21: goal: ℤ\n",
     error: "",
     status: 0,
   });
@@ -110,11 +117,11 @@ test("checking listeth shown declarations that assume sorry", () => {
 
 test("stdin checking reporteth success and rejection through its exit status", () => {
   for (const [source, output, status] of [
-    ["let worth:ℤ ≔ +1", "type ok\n", 0],
+    ["let worth:ℤ ≔ +1", "ilk ok\n", 0],
     ["let worth ≔", "parse error: expected an expression\n", 1],
     [
       "let worth:ℤ ≔ 'text'",
-      "type error: in let 'worth': cannot unify string with ℤ\n",
+      "ilk error: in let 'worth': cannot unify string with ℤ\n",
       1,
     ],
   ]) {
@@ -136,21 +143,21 @@ test("checking retaineth goals beside errors without accepting the proof", (cont
     fs.writeFileSync(file, source);
     for (const result of [
       run(["--check-stdin"], source),
-      run(["--check-module", file]),
+      run(["--check", file]),
     ]) {
       assert.equal(result.status, 1);
       assert.equal(result.error, "");
-      assert.match(result.output, /(?:type|parse) error:/);
+      assert.match(result.output, /(?:ilk|parse) error:/);
       assert.match(result.output, /goal: ℤ\n  x: ℤ/);
-      assert.doesNotMatch(result.output, /type ok/);
+      assert.doesNotMatch(result.output, /ilk ok/);
     }
-    const proof = run(["--check-proof", "unfinished", file]);
+    const proof = run(["--name", "unfinished", file]);
     assert.equal(proof.status, 1);
-    assert.doesNotMatch(proof.output, /proof ok|goal:/);
+    assert.doesNotMatch(proof.output, /name ok|goal:/);
   }
 });
 
-test("proof checking reporteth one theorem and enforceeth its axiom policy", (context) => {
+test("name checking reporteth one name and enforceeth its policies", (context) => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "tung-proof-"));
   context.after(() => fs.rmSync(directory, { recursive: true, force: true }));
   const file = path.join(directory, "proof.tung");
@@ -160,51 +167,51 @@ test("proof checking reporteth one theorem and enforceeth its axiom policy", (co
 ilk one:* { only:one }
 let proved:only = only ≔ eftbend
 let unfinished:one ≔ sorry
-orsetting axiom:only = only
+orsetting assumed:only = only
 orsetting unused:one
-let dependent:only = only ≔ axiom
+let dependent:only = only ≔ assumed
 `,
   );
   assert.deepEqual(
-    run(["--no-sorry", "--no-axioms", "--check-proof", "proved", file]),
+    run(["--no-sorry", "--no-orset", "--name", "proved", file]),
     {
-      output:
-        "proof: proved\ntype: only = only\ndependencies: none\nproof ok\n",
+      output: "name: proved\nilk: only = only\ndependencies: none\nname ok\n",
       error: "",
       status: 0,
     },
   );
   for (const [options, status, verdict] of [
-    [[], 0, "proof ok"],
-    [["--allow-axiom", "axiom", "--allow-axiom", "unused"], 0, "proof ok"],
-    [["--no-axioms"], 1, "proof error: axiom is not allowed: axiom"],
+    [[], 0, "name ok"],
+    [["--allow-orset", "assumed", "--allow-orset", "unused"], 0, "name ok"],
+    [["--no-orset"], 1, "name error: orsetting is not allowed: assumed"],
     [
-      ["--allow-axiom", "proved"],
+      ["--allow-orset", "proved"],
       1,
-      "proof error: allowed axiom 'proved' is not an orsetting",
+      "name error: allowed name 'proved' is not an orsetting",
     ],
   ]) {
-    assert.deepEqual(run([...options, "--check-proof", "dependent", file]), {
-      output: `proof: dependent\ntype: only = only\norsetting: axiom: only = only\n${verdict}\n`,
+    assert.deepEqual(run([...options, "--name", "dependent", file]), {
+      output: `name: dependent\nilk: only = only\norsetting: assumed: only = only\n${verdict}\n`,
       error: "",
       status,
     });
   }
-  const unfinished = run(["--check-proof", "unfinished", file]);
+  const listed = run(["--name", "unfinished", file]);
+  assert.equal(listed.status, 0);
+  assert.match(listed.output, /name: unfinished\nilk: one\nsorry: sorry:/);
+  assert.match(listed.output, /name ok\n$/);
+  const unfinished = run(["--no-sorry", "--name", "unfinished", file]);
   assert.equal(unfinished.status, 1);
   assert.equal(unfinished.error, "");
-  assert.match(
-    unfinished.output,
-    /proof: unfinished\ntype: one\nsorry: sorry:/,
-  );
-  assert.match(unfinished.output, /proof error: unfinished proof: sorry\n$/);
+  assert.match(unfinished.output, /name: unfinished\nilk: one\nsorry: sorry:/);
+  assert.match(unfinished.output, /name error: unfinished proof: sorry\n$/);
   fs.writeFileSync(
     path.join(directory, "tung.yaml"),
-    "dependencies: {}\nproof:\n  axioms: []\n",
+    "dependencies: {}\nproof:\n  orsettings: []\n",
   );
-  assert.equal(run(["--check-proof", "dependent", file]).status, 1);
+  assert.equal(run(["--name", "dependent", file]).status, 1);
   assert.equal(
-    run(["--allow-axiom", "axiom", "--check-proof", "dependent", file]).status,
+    run(["--allow-orset", "assumed", "--name", "dependent", file]).status,
     0,
   );
 });

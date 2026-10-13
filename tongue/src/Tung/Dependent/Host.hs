@@ -79,10 +79,10 @@ defineHost environment@(K.Environment globals) name key model signature@K.Inferr
   sort <- N.normalise globals 0 inferredType
   case sort of
     Sort _ -> pure ()
-    _ -> Left "host annotation is not a type"
+    _ -> Left "host annotation is not an ilk"
   -- validation checked the annotation; raw normalisation is now safe.
   ty <- N.normalise globals 0 inferredTerm
-  unless (matches hostSignature ty) (Left ("host key '" ++ key ++ "' requireth a different type"))
+  unless (matches hostSignature ty) (Left ("host key '" ++ key ++ "' requireth a different ilk"))
   validateHostData globals hostSignature
   forM_ model \symbol -> do
     when (isNothing (pureOperation key)) (Left ("host key '" ++ key ++ "' is not a pure operation, so it cannot have a model"))
@@ -92,7 +92,7 @@ defineHost environment@(K.Environment globals) name key model signature@K.Inferr
       _ -> Left "a model must be a let definition"
     unless (definitionUniverses == inferredUniverses) (Left "a model must have the binding's universe parameters")
     modelType <- N.normalise globals 0 definitionType
-    unless (modelType == ty) (Left ("a model must have the binding's type"))
+    unless (modelType == ty) (Left ("a model must have the binding's ilk"))
   pure (K.Environment (Map.insert name (Definition inferredUniverses inferredConstraints ty (Host key model)) globals))
   where
     isHost wanted (Host actual _) = wanted == actual
@@ -147,7 +147,7 @@ validateHostData globals HostSignature {..} = void (types Set.empty (hostArgumen
 matchMain :: Globals -> Term -> Either String ()
 matchMain globals ty = do
   normal <- N.normalise globals 0 ty
-  unless (matches (HostSignature [] [] (HostApp "deed" [HostCon oneName])) normal) (Left "main requireth a unit deed type")
+  unless (matches (HostSignature [] [] (HostApp "deed" [HostCon oneName])) normal) (Left "main requireth a unit deed ilk")
 
 -- a normal type matcheth a signature when its implicit type inputs, explicit
 -- inputs, and result agree. data types match by declaration; universe levels

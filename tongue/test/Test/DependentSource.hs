@@ -36,7 +36,7 @@ shadowingTests =
 
 elaborationTests :: [Test]
 elaborationTests =
-  [ rejectContaining "identity requireth an explicit import" "unknown name '='" (compileSource sourceModule "let seething:0 = 0 ≔ eftbend"),
+  [ rejectContaining "identity requireth an explicit import" "unknown name '='" (compileSource sourceModule "let soothing:0 = 0 ≔ eftbend"),
     expectEq "definitions retain their source identities" (Right [SymbolId sourceModule "alias", SymbolId sourceModule "sameness"]) $ do
       program <- compileSource sourceModule (aliasSource ++ identitySource)
       pure (map fst (sourceDefinitions program)),
@@ -83,7 +83,9 @@ implicitInferenceTests =
     normal "local aliases do not duplicate an inference spine" (implicitIdentitySource ++ "let through:[α:*, x:α, α] ≔ (let y ≔ x yield y sameness)") "through" explicitIdentity,
     normal "family inference solveth a pattern beneath a binder" "let family_id:[α:*, @F:[α, *], [x:α, x F, x F]] ≔ {x ^ {v ^ v}}\nlet handler:[α:*, G:[α, *], [x:α, x G, x G]] ≔ α family_id" "handler" familyIdentity,
     normal "a later pattern solution dischargeth a delayed family equation" "let accept:[@F:[*, *], x:*, v:x F, w:[y:*, y F, y F], x F] ≔ v\nlet handler:[v:*, w:[y:*, *, *], *] ≔ * accept v w" "handler" (Lambda Explicit (Sort LZero) (Lambda Explicit (Pi Explicit (Sort LZero) (Pi Explicit (Sort LZero) (Sort LZero))) (Local 1))),
-    reject "family agreement at one argument doth not determine the family" (compile "let use:[@F:[*, *], v:* F, * F] ≔ v\nlet bad:[G:[*, *], v:* G, * G] ≔ v use"),
+    -- with no other progress, `* ?F = * G` splitteth by first-order
+    -- approximation into `?F = G`, as dependent.md specifieth.
+    expectEq "first-order approximation determineth a family from agreement at one argument" (Right ()) (() <$ compile "let pass:[@F:[*, *], v:* F, * F] ≔ v\nlet good:[G:[*, *], v:* G, * G] ≔ v pass"),
     reject "a discarded implicit argument cannot be guessed" (inferIn "let erase:[@α:*, x:*, *] ≔ x" "* erase"),
     reject "one inferred type cannot same distinct rigid types" (compile "let hath_≍:[@α:*, x:α, y:α, α] ≔ x\nlet bad:[α:*, β:*, x:α, y:β, α] ≔ x hath_≍ y"),
     rejectContaining "self-application cannot infer a recursive argument type" "occurs check" (compile "let omega ≔ {x ^ x x}"),
@@ -93,7 +95,7 @@ implicitInferenceTests =
 delayedComputationTests :: [Test]
 delayedComputationTests =
   [ expectEq "conversion resumeth after a dictionary is selected" (Right ()) $
-      () <$ compile ("flock provided:[α:*, *] { let get:α } bizen:ℤ provided { let get ≔ +2 } let seething:(get @ℤ) = +2 ≔ eftbend"),
+      () <$ compile ("flock provided:[α:*, *] { let get:α } bizen:ℤ provided { let get ≔ +2 } let soothing:(get @ℤ) = +2 ≔ eftbend"),
     expectEq "a solution typed by an unselected dictionary waiteth for instance search" (Right ()) $
       ()
         <$ compile
@@ -102,7 +104,7 @@ delayedComputationTests =
           let hath_≍:[@α:*, a:α, α] ≔ a
           flock mapping:[φ:[*, *], *] { let over:[@α:*, @β:*, α φ, [α, β], β φ] }
           bizen:box mapping { let over:[a boxed:, f:] ≔ (a f) boxed }
-          let seething:[@α:*, b:α box, (b over hath_≍) = b] ≔ match b {a boxed ^ eftbend}
+          let soothing:[@α:*, b:α box, (b over hath_≍) = b] ≔ match b {a boxed ^ eftbend}
           """,
     expectEq "same eliminator results do not equate their delayed inputs" (Right True) do
       program <- compile (choices ++ "let answer ≔ eftbend accept right_evidence left_evidence")
@@ -141,7 +143,7 @@ assumptionTests =
     expectEq "an orsetting never unfoldeth" (Right True) do
       program <- compile (twoSource ++ "orsetting excluded: [p: two, two]\nlet uses: two ≔ yea excluded")
       sameNormalIn program "uses" "yea excluded",
-    rejectContaining "an orsetting annotation must be a type" "annotation is not a type" (compile (twoSource ++ "orsetting wrong: yea")),
+    rejectContaining "an orsetting annotation must be a type" "annotation is not an ilk" (compile (twoSource ++ "orsetting wrong: yea")),
     rejectContaining "an orsetting cannot enter a let block" "orsetting assumptions must be top-level" (compile (twoSource ++ "let worth ≔ (let first ≔ yea orsetting inner: two yield first)")),
     rejectContaining "an orsetting name is declared once" "repeat" (compile (twoSource ++ "orsetting yea: two"))
   ]
@@ -177,29 +179,29 @@ proofAuditTests =
   [ expectEq "a proved private declaration ignoreth unrelated assumptions" (Right ("soothed", "0 is~= 0", [], Right ())) do
       program <- compile "orsetting unused:ℕ\nlet unfinished:ℕ ≔ sorry\nlet soothed:0 = 0 ≔ eftbend"
       audited <- auditProof program "soothed"
-      pure (auditName audited, auditType audited, auditDependencies audited, verifyProof program (Just []) audited),
-    expectEq "dictionary proofs retain their axiom and obey an exact policy" (Right ([(SymbolId sourceModule "assumed", AxiomDependency)], [Right (), Right (), Left "axiom is not allowed: assumed"])) do
+      pure (auditName audited, auditType audited, auditDependencies audited, verifyProof program True (Just []) audited),
+    expectEq "dictionary proofs retain their axiom and obey an exact policy" (Right ([(SymbolId sourceModule "assumed", AxiomDependency)], [Right (), Right (), Left "orsetting is not allowed: assumed"])) do
       program <- compile dictionaryProof
       audited <- auditProof program "soothed"
-      pure (dependencies audited, [verifyProof program policy audited | policy <- [Nothing, Just ["assumed"], Just []]]),
+      pure (dependencies audited, [verifyProof program True policy audited | policy <- [Nothing, Just ["assumed"], Just []]]),
     rejectContaining "an axiom policy rejecteth an unknown name" "unknown name 'missing'" do
       program <- compile "let soothed:0 = 0 ≔ eftbend"
-      auditProof program "soothed" >>= verifyProof program (Just ["missing"]),
+      auditProof program "soothed" >>= verifyProof program True (Just ["missing"]),
     rejectContaining "an axiom policy rejecteth a name that is no axiom" "is not an orsetting" do
       program <- compile "let soothed:0 = 0 ≔ eftbend"
-      auditProof program "soothed" >>= verifyProof program (Just ["soothed"]),
-    expectEq "a sorry only in an assumption's type preventeth certification" (Right (expectedTypeDependencies, Left "unfinished proof: sorry")) do
+      auditProof program "soothed" >>= verifyProof program True (Just ["soothed"]),
+    expectEq "a sorry only in an assumption's type preventeth strict certification" (Right (expectedTypeDependencies, [Left "unfinished proof: sorry", Right ()])) do
       program <- compile "orsetting unfinished:(sorry:*)"
       audited <- auditProof program "unfinished"
-      pure (dependencies audited, verifyProof program Nothing audited),
+      pure (dependencies audited, [verifyProof program strict Nothing audited | strict <- [True, False]]),
     expectEq "a host model's sorry preventeth certification and retaineth host trust" (Right (expectedHostDependencies, Left "unfinished proof: sorry")) do
       program <- compile hostModel
       audited <- auditProof program "selected"
-      pure (dependencies audited, verifyProof program Nothing audited),
+      pure (dependencies audited, verifyProof program True Nothing audited),
     expectEq "an inductive field retaineth its private type assumption" (Right [(SymbolId sourceModule "hidden", AxiomDependency)]) do
       program <- compile "orsetting hidden:*\nilk box:* { pack:[hidden,box] }\nlet soothed:[x:box,x = x] ≔ eftbend"
       dependencies <$> auditProof program "soothed",
-    expectEq "native computation in a proof type retaineth its trusted operation" (Right [(SymbolId sourceModule "add", HostDependency "eke_natural")]) do
+    expectEq "native computation in a proof type retaineth its trusted operation" (Right [(SymbolId sourceModule "add", HostDependency "eke_kindful")]) do
       program <- compile "let add:[ℕ,ℕ,ℕ] ≔ 'eke_kindful' fremmed\nlet soothed:(0 add 0) = 0 ≔ eftbend"
       dependencies <$> auditProof program "soothed",
     expectEq "a reduced named type alias retaineth its source assumption" (Right [(SymbolId sourceModule "hidden", AxiomDependency)]) do
@@ -216,7 +218,7 @@ proofAuditTests =
   where
     dependencies = sortOn fst . map (\ProofDependency {dependencySymbol, dependencyKind} -> (dependencySymbol, dependencyKind)) . auditDependencies
     expectedTypeDependencies = sortOn fst [(SymbolId sourceModule "unfinished", AxiomDependency), (SymbolId PrimitiveModule "sorry", SorryDependency)]
-    expectedHostDependencies = sortOn fst [(SymbolId sourceModule "add", HostDependency "eke_natural"), (SymbolId PrimitiveModule "sorry", SorryDependency)]
+    expectedHostDependencies = sortOn fst [(SymbolId sourceModule "add", HostDependency "eke_kindful"), (SymbolId PrimitiveModule "sorry", SorryDependency)]
     dictionaryProof =
       """
       flock law:[α:*,*] { let rule:[x:α,x = x] }
@@ -272,7 +274,7 @@ recoveryTests =
         bizen:[@α:*,α related string] { let choose ≔ {x ^ x} }
         bizen:ℕ related ℕ { let choose ≔ {x ^ x} }
         let wanted:[ℕ,ℕ] ≔ choose @ℕ @string
-        let seething:[x:ℕ,ℕ] ≔ (let selected:ℕ ≔ x wanted yield sorry)
+        let soothing:[x:ℕ,ℕ] ≔ (let selected:ℕ ≔ x wanted yield sorry)
         let broken:ℕ ≔ 'wrong'
         """
   ]
@@ -297,7 +299,7 @@ rejectionTests =
   [ reject "types and values cannot redeclare one name" (compile "let shared ≔ *\nlet shared:[α:*, *] ≔ α"),
     reject "unknown names are rejected" (compile "let unknown ≔ missing"),
     reject "source definitions cannot refer to themselves" (compile "let loop ≔ loop"),
-    rejectContaining "a binder annotation cannot see its own binder" "needs a type annotation" (compile "let loop ≔ {loop:loop ^ loop}"),
+    rejectContaining "a binder annotation cannot see its own binder" "needs an ilk annotation" (compile "let loop ≔ {loop:loop ^ loop}"),
     reject "self-application is rejected before normalisation" (compile "let omega ≔ {x:* ^ x x}"),
     reject "a product domain must itself be a type" (compile "let bad:[x:{y:* ^ y}, *] ≔ *"),
     reject "a type cannot inhabit itself" (compile "let bad:[u:*, u] ≔ u"),
@@ -314,7 +316,7 @@ rejectionTests =
       () <$ compile ("let one: ℕ ≔ 1\nlet checked: one = 1 ≔ eftbend"),
     rejectContaining "eftbend cannot prove unequal values" "cannot unify 1 with 2" $
       compile ("let wrong: 1 = 2 ≔ eftbend"),
-    expectEq "goals keep definitions folded unless they reach a constructor or variable" (Right ["(b app c) = (b app c)", "(first cons (rest app (b app c))) = (first cons ((rest app b) app c))"]) $
+    expectEq "goals keep definitions folded unless they reach a constructor or variable" (Right ["(b app c) = (b app c)", "(first cons (leftover app (b app c))) = (first cons ((leftover app b) app c))"]) $
       map holeGoal . reverse . sourceHoles
         <$> compile
           """
@@ -349,7 +351,7 @@ rejectionTests =
       map holeGoal . sourceHoles
         <$> compileProject
           sourceModule
-          (equalitySource ++ "bring people.tung other\nlet seething:[p:other~person, p.age = p.age] ≔ sorry")
+          (equalitySource ++ "bring people.tung other\nlet soothing:[p:other~person, p.age = p.age] ≔ sorry")
           (Map.singleton "people.tung" "show ilk person:* { person_of:[age:ℤ, person] }"),
     expectEq "a sorry recordeth its goal and named context" (Right [("α", [("α", "*"), ("b", "α box"), ("a", "α")])]) $
       map (\Hole {holeGoal, holeContext} -> (holeGoal, holeContext)) . sourceHoles

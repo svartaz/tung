@@ -5,15 +5,13 @@ ilk list: [α: *, *] {
 }
 
 ## induction descendeth through the left list.
-let ·: [@α: *, left: α list, right: α list, α list] ≔
-  {_: α list ^ α list} unbuild list @α right
-    {head, _, leftover ^ head ‥ @α leftover} left
+let ·: [@α: *, left: α list, right: α list, α list] ≔ {_: α list ^ α list}
+  unbuild list @α right {head, _, leftover ^ head ‥ @α leftover} left
 
-let warp: [@α: *, @β: *, l: α list, f: [α, β], β list] ≔
-  {_: α list ^ β list} unbuild list @α (∅ @β)
-    {head, _, leftover ^ (head f) ‥ @β leftover} l
+let warp: [@α: *, @β: *, l: α list, f: [α, β], β list] ≔ {_: α list ^ β list}
+  unbuild list @α (∅ @β) {head, _, leftover ^ (head f) ‥ @β leftover} l
 
 ## fold replaceth ∅ with empty and ‥ with step, from right to left.
-let gather: [@α: *, @β: *, l: α list, empty: β, step: [α, β, β], β] ≔
-  {_: α list ^ β} unbuild list @α empty
-    {head, _, leftover ^ head step leftover} l
+let gather: [@α: *, @β: *, l: α list, empty: β, step: [α, β, β], β] ≔ {
+  _: α list ^ β
+} unbuild list @α empty {head, _, leftover ^ head step leftover} l

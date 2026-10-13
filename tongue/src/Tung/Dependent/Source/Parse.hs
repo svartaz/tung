@@ -283,7 +283,7 @@ bizenHeader fallback priority tokens = case tokens of
         case afterMembers of
           TRBrace : remaining -> pure (BizenDeclaration priority fallback ty (map snd located), remaining)
           _ -> failAt afterMembers "expected '}' after bizen members"
-      _ -> failAt afterType "expected '{' after bizen type"
+      _ -> failAt afterType "expected '{' after bizen ilk"
   _ -> failAt tokens "expected ':' after bizen"
 
 -- `orsetting name: type` nameth an assumption. the type may not bind inputs.
@@ -345,7 +345,7 @@ constructorDeclarations named@(TIdent name : TColon : tokens) = do
       pure (constructor : remaining, following)
     TRBrace : rest -> pure ([constructor], rest)
     _ -> failAt afterAnnotation "expected ',' or '}' after constructor"
-constructorDeclarations tokens@(TIdent name : _) = failAt tokens ("constructor '" ++ name ++ "' requireth a type, as in '" ++ name ++ ":type'")
+constructorDeclarations tokens@(TIdent name : _) = failAt tokens ("constructor '" ++ name ++ "' requireth an ilk, as in '" ++ name ++ ":ilk'")
 constructorDeclarations tokens = failAt tokens "expected constructor name"
 
 -- a let header is one name; arguments are annotation slots.
@@ -375,7 +375,7 @@ letDeclaration tokens = do
           pure (HostDeclaration name ty key (Just lowered), afterModel)
       | any bindsInput written -> failAt bodyTokens "a fremmed annotation without a model cannot bind inputs"
       | otherwise -> pure (HostDeclaration name ty key Nothing, remaining)
-    (TText _ : TForeign : _, Nothing) -> failAt bodyTokens "a fremmed binding requireth a type annotation"
+    (TText _ : TForeign : _, Nothing) -> failAt bodyTokens "a fremmed binding requireth an ilk annotation"
     _ -> do
       (body, remaining) <- (if typeDefinition then typeRoles else id) (expression bodyTokens)
       when (not typeDefinition && not (maybe False callable ty) && callable body) (markFirst "function" ["declaration", "applied"] tokens)
@@ -630,7 +630,7 @@ parameter (TAt : TColon : rest) = do
   (ty, remaining) <- typeRoles (expression rest)
   markClass ty
   pure (Parameter Implicit Nothing ty, remaining)
-parameter tokens@(TAt : _) = failAt tokens "implicit parameters require '@name:type' or '@:requirement'"
+parameter tokens@(TAt : _) = failAt tokens "implicit parameters require '@name:ilk' or '@:requirement'"
 parameter (token@(TIdent name) : TColon : rest) = namedParameter Explicit token name rest
 parameter tokens = do
   (ty, rest) <- typeRoles (expression tokens)
@@ -745,7 +745,7 @@ fall tokens = do
           binders = [Binder parameterPlicity (parameterName >>= bindingName) Nothing | Parameter {parameterPlicity, parameterName} <- parameters]
       (body, remaining) <- expression afterItems
       pure (Ascription (Lambda binders body) (Product parameters result), remaining)
-    _ -> failAt tokens "fall requireth at least one input and a final result type"
+    _ -> failAt tokens "fall requireth at least one input and a final result ilk"
 
 fallItems :: Parser [Parameter]
 fallItems = closedItems TMapsTo "expected ',' or '^' after fall item" parameter

@@ -1,4 +1,7 @@
-ilk bool: * { no: bool, yes: bool }
+ilk bool: * {
+  no: bool,
+  yes: bool
+}
 
 ilk nat: * {
   naught: nat,
@@ -11,7 +14,10 @@ ilk list: [α: *, *] {
 }
 
 ## a case function matcheth its inputs in order.
-let not: [bool, bool] ≔ { no ^ yes, yes ^ no }
+let not: [bool, bool] ≔ {
+  no  ^ yes,
+  yes ^ no
+}
 
 ## `;` yoketh rows that share a result.
 let both: [bool, bool, bool] ≔ {
@@ -73,9 +79,7 @@ ilk vec: [α: *, [nat, *]] {
 }
 
 ## a fixed length determineth the constructor's predecessor and tail length.
-let predecessor_two: [@α: *, α vec ((naught heir) heir), nat] ≔ {
-  n cons _ _ ^ n
-}
+let predecessor_two: [@α: *, α vec ((naught heir) heir), nat] ≔ {n cons _ _ ^ n}
 
 let tail_two: [@α: *, α vec ((naught heir) heir), α vec (naught heir)] ≔ {
   _ cons _ tail ^ tail

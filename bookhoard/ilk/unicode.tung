@@ -11,15 +11,18 @@ bring is.tung
 ## a unicode scalar is named by its code point. the host's `unicode` is
 ## opaque, so this round trip is a listed assumption; the laws below are
 ## soothed from it and the `ℕ` laws.
-show orsetting kindful_unicode: [a: unicode, ((a unicode_to_kindful) kindful_to_unicode) = (a some)]
+show orsetting kindful_unicode
+  : [a: unicode, ((a unicode_to_kindful) kindful_to_unicode) = (a some)]
 
-show let same_unicode: [unicode, unicode, 𝟚] ≔ 'same_unicode' fremmed {
-  a, b ^ (a unicode_to_kindful) ≍ (b unicode_to_kindful)
-}
+show let same_unicode: [unicode, unicode, 𝟚]
+  ≔ 'same_unicode' fremmed {
+    a, b ^ (a unicode_to_kindful) ≍ (b unicode_to_kindful)
+  }
 
-show let at_most_unicode: [unicode, unicode, 𝟚] ≔ 'at_most_unicode' fremmed {
-  a, b ^ (a unicode_to_kindful) ≤ (b unicode_to_kindful)
-}
+show let at_most_unicode: [unicode, unicode, 𝟚]
+  ≔ 'at_most_unicode' fremmed {
+    a, b ^ (a unicode_to_kindful) ≤ (b unicode_to_kindful)
+  }
 
 bizen: unicode hath_≍ {
   let ≍ ≔ same_unicode
@@ -30,8 +33,13 @@ bizen: unicode hath_≤ {
 }
 
 ## scalars with one code point are one scalar.
-let helpsetting_=: [a: unicode, b: unicode, same: (a unicode_to_kindful) = (b unicode_to_kindful), a = b] ≔
-  {m: unicode maybe ^ match m { none ^ a, x some ^ x }} leibnitz >{throughgo,
+let helpsetting_=
+  : [a: unicode, b: unicode,
+    same: (a unicode_to_kindful) = (b unicode_to_kindful), a = b]
+  ≔ {m: unicode maybe ^ match m {
+    none   ^ a,
+    x some ^ x
+  }} leibnitz >{throughgo,
     (a kindful_unicode) evenmete,
     kindful_to_unicode leibnitz same,
     b kindful_unicode
@@ -39,12 +47,16 @@ let helpsetting_=: [a: unicode, b: unicode, same: (a unicode_to_kindful) = (b un
 
 bizen: unicode order_half {
   let ≤_eftbend: [a:] ≔ (a unicode_to_kindful) ≤_eftbend
-  let ≤_witherevenmete: [a:, b:] ≔ (a unicode_to_kindful) ≤_witherevenmete (b unicode_to_kindful)
-  let ≤_throughgo: [a:, b:, c:] ≔ (a unicode_to_kindful) ≤_throughgo (b unicode_to_kindful) (c unicode_to_kindful)
+  let ≤_withevenmete: [a:, b:]
+    ≔ (a unicode_to_kindful) ≤_withevenmete (b unicode_to_kindful)
+  let ≤_throughgo: [a:, b:, c:]
+    ≔ (a unicode_to_kindful) ≤_throughgo (b unicode_to_kindful)
+      (c unicode_to_kindful)
 }
 
 bizen: unicode order_whole {
   let ≤_whole: [a:, b:] ≔ (a unicode_to_kindful) ≤_whole (b unicode_to_kindful)
-  let ≤_=: [a:, b:, below:, above:] ≔
-    a helpsetting_= b ((a unicode_to_kindful) ≤_= (b unicode_to_kindful) below above)
+  let ≤_=: [a:, b:, below:, above:]
+    ≔ a helpsetting_= b
+      ((a unicode_to_kindful) ≤_= (b unicode_to_kindful) below above)
 }

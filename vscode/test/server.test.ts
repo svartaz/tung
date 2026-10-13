@@ -68,7 +68,6 @@ test("server implementeth the editor workflow over stdio", async (context) => {
     "workspaceSymbolProvider",
     "foldingRangeProvider",
     "documentFormattingProvider",
-    "documentRangeFormattingProvider",
   ]) {
     assert.equal(capabilities[capability], true, capability);
   }
@@ -98,16 +97,16 @@ test("server implementeth the editor workflow over stdio", async (context) => {
   const proof = await request("tung/checkProof", {
     textDocument: { uri: mainUri },
     position: positionOf(mainText, "answer"),
-    allowedAxioms: [],
+    allowedOrsettings: [],
   });
   assert.equal(proof.kind, "proof");
   assert.equal(proof.audit.name, "worth");
   assert.equal(proof.verified, true);
-  assert.match(proof.report, /proof: worth\ntype: ℤ/);
+  assert.match(proof.report, /name: worth\nilk: ℤ/);
   const selectedProof = await request("tung/checkProof", {
     textDocument: { uri: mainUri },
     name: "answer",
-    allowedAxioms: [],
+    allowedOrsettings: [],
   });
   assert.equal(selectedProof.audit.name, "answer");
   assert.equal(selectedProof.verified, true);
@@ -126,7 +125,7 @@ test("server implementeth the editor workflow over stdio", async (context) => {
     ],
   });
   await changedHighlight;
-  assert.match((await staleDiskGuard).diagnostics[0].message, /^type error:/);
+  assert.match((await staleDiskGuard).diagnostics[0].message, /^ilk error:/);
   const restoredImport = nextDiagnostics(
     connection,
     mainUri,
@@ -238,7 +237,7 @@ test("server implementeth the editor workflow over stdio", async (context) => {
     position: answerPosition,
   });
   assert.match(hover.contents.value, /let answer:ℤ/);
-  assert.match(hover.contents.value, /inferred type/);
+  assert.match(hover.contents.value, /inferred ilk/);
   const references = await request("textDocument/references", {
     textDocument: { uri: mainUri },
     position: answerPosition,
@@ -319,18 +318,13 @@ test("server implementeth the editor workflow over stdio", async (context) => {
   });
   assert.match(
     formatted[0].newText,
-    /show ilk _box: \[a: \*, \*\] \{\n[ ]{2}box: \[a, a _box\]\n\}/,
+    /show ilk _box: \[a: \*, \*\] \{ box: \[a, a _box\] \}/,
   );
-  const boxStartLine = positionOf(mainText, "show ilk _box").line;
-  const rangeFormatted = await request("textDocument/rangeFormatting", {
-    textDocument: { uri: mainUri },
-    range: {
-      start: { line: boxStartLine, character: 0 },
-      end: { line: mainText.split("\n").length - 1, character: 0 },
-    },
-    options: { tabSize: 2, insertSpaces: true },
-  });
-  assert.match(rangeFormatted[0].newText, /[ ]{2}box: \[a, a _box\]/);
+  assert.equal(
+    capabilities.documentRangeFormattingProvider,
+    undefined,
+    "a canonical neat form hath no range of its own",
+  );
   connection.sendNotification("textDocument/didClose", {
     textDocument: { uri: depUri },
   });
@@ -348,7 +342,7 @@ test("server implementeth the editor workflow over stdio", async (context) => {
     changes: [{ uri: depUri, type: 2 }],
   });
   const importedResult = await importedDiagnostics;
-  assert.match(importedResult.diagnostics[0].message, /^type error:/);
+  assert.match(importedResult.diagnostics[0].message, /^ilk error:/);
   assert.deepEqual(
     importedResult.diagnostics[0].range.start,
     positionOf(importedSource, "'wrong'"),
@@ -377,7 +371,7 @@ test("server implementeth the editor workflow over stdio", async (context) => {
     contentChanges: [{ text: badText }],
   });
   const badResult = await badDiagnostics;
-  assert.match(badResult.diagnostics[0].message, /^type error:/);
+  assert.match(badResult.diagnostics[0].message, /^ilk error:/);
   assert.deepEqual(
     badResult.diagnostics[0].range.start,
     positionOf(badText, "answer"),
@@ -525,7 +519,7 @@ require("node:readline").createInterface({input:process.stdin}).on("line", line 
     const timer = setInterval(() => {
       if (!fs.existsSync(${JSON.stringify(release)})) return;
       clearInterval(timer);
-      reply({kind:"proof",audit:{name:"proved",type:"ℤ",dependencies:[]},verified:true,message:"proof ok",report:"proof ok\\n"});
+      reply({kind:"proof",audit:{name:"proved",ilk:"ℤ",dependencies:[]},verified:true,message:"name ok",report:"name ok\\n"});
     }, 5);
   }
 });

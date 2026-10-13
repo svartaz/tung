@@ -35,7 +35,7 @@ diagnosticCases =
   | (name, source, kind, span) <-
       [ ("named type error", "let worth:string ≔ 1", TypeDiagnostic, SourceSpan 19 20),
         ("later repeated name", "let worth ≔ 1 let other:string ≔ worth", TypeDiagnostic, SourceSpan 33 38),
-        ("term after type alias", "let rime:* ≔ ℤ let worth:string ≔ ℤ", TypeDiagnostic, SourceSpan 35 36),
+        ("term after type alias", "let rime:* ≔ ℤ let worth:string ≔ ℤ", TypeDiagnostic, SourceSpan 34 35),
         ("term after data declaration", "ilk item: * { worth: item } let other:string ≔ worth", TypeDiagnostic, SourceSpan 47 52),
         ("unicode source offset", "let 😀 ≔ 1 let worth:string ≔ 😀", TypeDiagnostic, SourceSpan 30 32),
         ("lexer eof position", "\n  'unterminated", ParseDiagnostic, SourceSpan 16 16),
@@ -66,9 +66,9 @@ importFailureCases :: [Test]
 importFailureCases =
   [ expectEq name (Just (path, span)) (summary <$> diagnose source imports)
   | (name, source, imports, path, span) <-
-      [ ("missing root import", "bring missing.tung", Map.empty, Nothing, SourceSpan 4 10),
-        ("missing nested import", "bring dep.tung", Map.singleton "dep.tung" "bring missing.tung", Just "dep.tung", SourceSpan 4 10),
-        ("a cycle is located in the importing module", "bring a.tung", Map.fromList [("a.tung", "bring b.tung"), ("b.tung", "bring a.tung")], Just "b.tung", SourceSpan 4 5)
+      [ ("missing root import", "bring missing.tung", Map.empty, Nothing, SourceSpan 6 13),
+        ("missing nested import", "bring dep.tung", Map.singleton "dep.tung" "bring missing.tung", Just "dep.tung", SourceSpan 6 13),
+        ("a cycle is located in the importing module", "bring a.tung", Map.fromList [("a.tung", "bring b.tung"), ("b.tung", "bring a.tung")], Just "b.tung", SourceSpan 6 7)
       ]
   ]
   where
@@ -101,7 +101,7 @@ unlocatedCases :: [Test]
 unlocatedCases =
   [ expectEq
       "an unlocated failure's message cannot supply its span"
-      (Diagnostic TypeDiagnostic Nothing (SourceSpan 0 1) "type error: unknown name 'worth' at source:9:4:")
+      (Diagnostic TypeDiagnostic Nothing (SourceSpan 0 1) "ilk error: unknown name 'worth' at source:9:4:")
       (failureDiagnostic "\n  let worth ≔ 1" Map.empty (CompileFailure CheckFailure Nothing Nothing "unknown name 'worth' at source:9:4:")),
     expectEq
       "an unlocated imported failure useth its empty owning source"
@@ -114,8 +114,8 @@ encodedCases =
   [ expectEq name (Right expected) (eitherDecode (encode diagnostic) :: Either String Value)
   | (name, diagnostic, expected) <-
       [ ( "json diagnostic preserveth its path, span, and control characters",
-          Diagnostic TypeDiagnostic (Just "dep\t\"😀.tung") (SourceSpan 4 9) "type error: \"bad\"\n\t\NUL\31\&😀",
-          object ["kind" .= ("type" :: String), "path" .= ("dep\t\"😀.tung" :: String), "start" .= (4 :: Int), "end" .= (9 :: Int), "message" .= ("type error: \"bad\"\n\t\NUL\31\&😀" :: String)]
+          Diagnostic TypeDiagnostic (Just "dep\t\"😀.tung") (SourceSpan 4 9) "ilk error: \"bad\"\n\t\NUL\31\&😀",
+          object ["kind" .= ("ilk" :: String), "path" .= ("dep\t\"😀.tung" :: String), "start" .= (4 :: Int), "end" .= (9 :: Int), "message" .= ("ilk error: \"bad\"\n\t\NUL\31\&😀" :: String)]
         ),
         ( "json parse diagnostic omitth an absent path",
           Diagnostic ParseDiagnostic Nothing (SourceSpan 0 0) "parse error: unexpected end",
@@ -132,5 +132,5 @@ renderedFile :: Test
 renderedFile =
   expectEq
     "rendered file diagnostic"
-    "/tmp/dep.tung:2:3:2:5: type error: bad worth"
-    (renderFileDiagnostic "/tmp/dep.tung" "😀\n  no" (Diagnostic TypeDiagnostic (Just "dep.tung") (SourceSpan 5 7) "type error: bad worth"))
+    "/tmp/dep.tung:2:3:2:5: ilk error: bad worth"
+    (renderFileDiagnostic "/tmp/dep.tung" "😀\n  no" (Diagnostic TypeDiagnostic (Just "dep.tung") (SourceSpan 5 7) "ilk error: bad worth"))

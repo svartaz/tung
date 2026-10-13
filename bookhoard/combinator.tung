@@ -4,18 +4,10 @@ show let →: [α: *, β: *, *] ≔ [α, β]
 
 show let ←: [β: *, α: *, *] ≔ [α, β]
 
-show let call: [@α: *, @β: *, a: α, f: [α, β], β] ≔
-  a f
+show let call: [@α: *, @β: *, a: α, f: [α, β], β] ≔ a f
 
-show let withstand: [@α: *, @β: *, a: α, _: β, α] ≔
-  a
+show let singal: [@α: *, @β: *, a: α, _: β, α] ≔ a
 
-show let flip: [
-  @α: *, @β: *, @γ: *,
-  f: [α, β, γ], b: β, a: α, γ
-] ≔ a f b
+show let flip: [@α: *, @β: *, @γ: *, f: [α, β, γ], b: β, a: α, γ] ≔ a f b
 
-show let duplicate: [
-  @α: *, @β: *,
-  a: α, f: [α, α, β], β
-] ≔ a f a
+show let duplicate: [@α: *, @β: *, a: α, f: [α, α, β], β] ≔ a f a

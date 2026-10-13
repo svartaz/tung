@@ -1,8 +1,8 @@
 bring ilk/maybe.tung
 bring often.tung
 
-let fallback: float deed ≔
-  ('could not read a float; using 0.0' write_line) then (0.0 sheer)
+let fallback: float deed
+  ≔ ('could not read a float; using 0.0' write_line) then (0.0 sheer)
 
 let read_user: float deed ≔ read bind {
   line some ^ match line from_string {
@@ -12,8 +12,8 @@ let read_user: float deed ≔ read bind {
   none ^ fallback
 }
 
-let outcome: [user: float, hidden: float, string] ≔
-  match user ≤ hidden, hidden ≤ user {
+let outcome: [user: float, hidden: float, string]
+  ≔ match user ≤ hidden, hidden ≤ user {
     yea, nay ^ 'lose',
     nay, yea ^ 'win',
     _,   _   ^ 'draw'
@@ -21,5 +21,5 @@ let outcome: [user: float, hidden: float, string] ≔
 
 let main: 𝟙 deed ≔ >{then,
   'input a float between 0.0 and 1.0' write_line,
-  read_user bind { user ^ random warp (user outcome) $ bind write_line }
+  read_user bind {user ^ random warp (user outcome) $ bind write_line}
 }

@@ -1,48 +1,39 @@
 # the sameness ilk `=`, whose only constructor is `eftbend`.
 # matching on `eftbend` replaceth one side of an equation with the other.
-
 show ilk =: [@α: *, a: α, α, *] { eftbend: a = @α a }
 
 ## sameness is kept by atfolding a fall.
-show let leibnitz: [
-  @α: *, @β: *,
-  @a: α, @b: α,
-  f: [α, β], eftbend: a = b, (a f) = (b f)
-] ≔ eftbend
+show let leibnitz
+  : [@α: *, @β: *, @a: α, @b: α, f: [α, β], eftbend: a = b, (a f) = (b f)]
+  ≔ eftbend
 
-## eftwend a sameness seething.
-show let evenmete: [
-  @α: *, @a: α, @b: α,
-  eftbend: a = b, b = a
-] ≔ eftbend
+## eftwend a sameness soothing.
+show let evenmete: [@α: *, @a: α, @b: α, eftbend: a = b, b = a] ≔ eftbend
 
-## yoke two sameness seethings.
-show let throughgo: [
-  @α: *, @a: α, @b: α, @c: α,
-  eftbend: a = b, q: b = c, a = c
-] ≔ q
+## yoke two sameness soothings.
+show let throughgo
+  : [@α: *, @a: α, @b: α, @c: α, eftbend: a = b, q: b = c, a = c]
+  ≔ q
 
 ## a property of one side holdeth for the other. the property is found by
 ## abstracting each occurrence of `b` in the expected ilk, or without one,
 ## each occurrence of `a` in the ilk of the other input.
-show let throughbear: [
-  @α: *, @a: α, @b: α, @property: [α, *],
-  eftbend: a = b, a property, b property
-] ≔ {x ^ x}
+show let throughbear
+  : [@α: *, @a: α, @b: α, @property: [α, *], eftbend: a = b, a property,
+    b property]
+  ≔ {x ^ x}
 
-## a computed worth with the seething of what it is, so that a case fall can
+## a computed worth with the soothing of what it is, so that a case fall can
 ## match the worth and still know it: in
 ## `e inlook { yea, known ^ …, nay, known ^ … }` each case seeth `known`
 ## as `e = yea` or `e = nay`. the property is found as for `throughbear`.
-show let inlook: [
-  @α: *, @property: [α, *],
-  a: α, f: [b: α, a = b, b property], a property
-] ≔ a f eftbend
+show let inlook
+  : [@α: *, @property: [α, *], a: α, f: [b: α, a = b, b property], a property]
+  ≔ a f eftbend
 
-## fall umtaking: a fall that agreeth with another at every input is the same as it.
+## fall umtaking: a fall that agreeth with another at every input is the same as
+## it.
 ## it is a listed assumption, as in agda and lean, where it is not provable
 ## from sameness unbuilding alone.
-show orsetting fall_umtake: [
-  @α: *, @β: *, @f: [α, β], @g: [α, β],
-  [a: α, (a f) = (a g)], f = g
-]
+show orsetting fall_umtake
+  : [@α: *, @β: *, @f: [α, β], @g: [α, β], [a: α, (a f) = (a g)], f = g]

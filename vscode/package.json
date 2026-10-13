@@ -96,11 +96,11 @@
     "semanticTokenModifiers": [
       {
         "id": "applied",
-        "description": "term or type used in function position"
+        "description": "term or ilk used in function position"
       },
       {
         "id": "typeFunction",
-        "description": "parameterised type or flock declaration"
+        "description": "parameterised ilk or flock declaration"
       }
     ],
     "semanticTokenScopes": [

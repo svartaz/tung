@@ -11,7 +11,7 @@ planned work in priority order. current behaviour belongeth to the
 - universe levels stay fully implicit; there is no level syntax. report an
   inconsistent universe as the source `*` occurrences and definitions that
   would make a universe contain itself, and show inferred universe signatures
-  in hover and `--type-of` in that form.
+  in hover and `--name` in that form.
 - report when a shown name's inferred universe constraints change, beside the
   module interface cache, since importers depend on them.
 
@@ -20,15 +20,15 @@ planned work in priority order. current behaviour belongeth to the
 the haskell stage stayeth authoritative until its tung port matcheth every
 tracked `.tung` file and stage test input against an exact oracle.
 
-- port the active formatter to tung first. it is a line scanner with no parser or
-  checker dependency, and `tung --format-stdin` is its oracle. add a
-  differential test that runneth the port on all tracked `.tung` files and the
-  format test inputs and compareth bytes.
-- port the active lexer next, with a token dump command as its oracle. token spans
-  must match exactly in utf-16 units.
+- port the active lexer first, with a token dump command as its oracle. token
+  spans must match exactly in utf-16 units.
 - port the parser with well-founded recursion from `ilk/grounded.tung`.
   recursive descent over a token list is not structural; fuel is a
   stopgap, not the design.
+- port the neatener after them, since it readeth tokens, comments, and the
+  parse. `tung --neaten-stdin` is its oracle: a differential test runneth the
+  port on all tracked `.tung` files and the neaten test inputs and compareth
+  bytes.
 
 ## tooling and maintainability
 

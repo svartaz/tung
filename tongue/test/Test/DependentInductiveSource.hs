@@ -48,7 +48,7 @@ tests =
 
                  """
           )
-      inferSourceExpression program "(natural_tag:bool tag)",
+      inferSourceExpression program "(kindful_tag:bool tag)",
     sameNormal "source sameness throughbear computeth on reflexivity" (naturalSource ++ identitySource ++ transportSource) "throughbear" "{F:[nat, *] ^ {worth:(naught F) ^ worth}}",
     expectEq "types and constructors share one namespace" (Right [True, True]) $
       traverse
@@ -74,7 +74,7 @@ tests =
       compile (naturalSource ++ "ilk bad:* { make:nat }\n"),
     rejectContaining "local inductive declarations cannot enter a let block" "must be top-level" $
       compile "let outer ≔ (let worth ≔ * ilk local:* {} yield worth)",
-    rejectContaining "a constructor requireth a written type" "requireth a type" $
+    rejectContaining "a constructor requireth a written type" "requireth an ilk" $
       compile (naturalSource ++ "ilk tag:[nat, *] { missing }\n")
   ]
 
@@ -85,7 +85,7 @@ mutualTests example =
     (Right (replicate 10 True))
     ( do
         basic <- compile (example ++ deep ++ "ilk unit: * { only: unit }\nlet empty_record:[even,unit] ≔ {_ ^ only}\n")
-        basicResults <- traverse (uncurry (sameNormalIn basic)) [("(" ++ evenTwo ++ ") count_even", "2"), ("(naught_even from_even) count_odd", "1"), ("(naught_even from_even) parent", "naught_even"), ("(((" ++ evenTwo ++ ") from_even) from_odd) deep", "2"), ("naught_even empty_record", "only")]
+        basicResults <- traverse (uncurry (sameNormalIn basic)) [("(" ++ evenTwo ++ ") rime_even", "2"), ("(naught_even from_even) rime_odd", "1"), ("(naught_even from_even) parent", "naught_even"), ("(((" ++ evenTwo ++ ") from_even) from_odd) deep", "2"), ("naught_even empty_record", "only")]
         parameterised <- compile parameterisedSource
         parameterisedResults <-
           traverse
@@ -155,9 +155,9 @@ nestedTests :: String -> [Test]
 nestedTests example =
   [ expectEq "nested induction, patterns, and automatic descendants compute" (Right (replicate 6 True)) $ do
       program <- compile example
-      traverse (uncurry (sameNormalIn program)) [("leaf count", "1"), ("fork count", "3"), ("fork first", "leaf"), ("fork children", "leaf cons @rose (leaf cons @rose (empty @rose))"), ("leaf height", "1"), ("fork height", "2")],
+      traverse (uncurry (sameNormalIn program)) [("leaf rime", "1"), ("fork rime", "3"), ("fork first", "leaf"), ("fork children", "leaf cons @rose (leaf cons @rose (empty @rose))"), ("leaf height", "1"), ("fork height", "2")],
     do
-      actual <- Harness.evaluateSource (example ++ "\nyield fork count") Map.empty
+      actual <- Harness.evaluateSource (example ++ "\nyield fork rime") Map.empty
       expectEq "the runner executes the same nested induction rules" "eval ok: 3" actual,
     do
       actual <- Harness.evaluateSource (example ++ "\nyield fork height") Map.empty
@@ -173,8 +173,8 @@ nestedTests example =
       program <- compile (listSource ++ layered)
       traverse
         (uncurry (sameNormalIn program))
-        [ ("((empty @(tree list)) node) count", "1"),
-          ("(((((empty @(tree list)) node) cons @tree (empty @tree)) cons @(tree list) (empty @(tree list))) node) count", "2"),
+        [ ("((empty @(tree list)) node) rime", "1"),
+          ("(((((empty @(tree list)) node) cons @tree (empty @tree)) cons @(tree list) (empty @(tree list))) node) rime", "2"),
           ("((empty @(tree list)) node) depth", "1"),
           ("(((((empty @(tree list)) node) cons @tree (empty @tree)) cons @(tree list) (empty @(tree list))) node) depth", "2")
         ],
@@ -195,7 +195,7 @@ nestedTests example =
                  """
           )
       traverse (uncurry (sameNormalIn program)) [("sample keep @*", "sample"), ("sample depth @*", "1")],
-    sameNormal "positive container function fields retain pointwise induction" functions "(({_ ^ tip} hold @tree) node) count" "1"
+    sameNormal "positive container function fields retain pointwise induction" functions "(({_ ^ tip} hold @tree) node) rime" "1"
   ]
     ++ [ rejectContaining label reason (compile source)
        | (label, reason, source) <-
@@ -261,7 +261,7 @@ vectorSource = "ilk vec:[α:*, [nat, *]] { nil:α vec naught, cons:[n:nat, head:
 vectorProofSource = "ilk vec_proof:[α:*, [nat, *]] { nil:α vec_proof naught, cons:[n:nat, tail:α vec_proof n, proof:(n hath_≍ @nat n), α vec_proof (n heir)] }\n"
 identitySource = "ilk hath_≍:[@α:*, x:α, [α, *]] { refl:(x hath_≍ @α x) }\n"
 vectorHead = "let head:[@α:*, @n:nat, v:α vec (n heir), α] ≔ match v { _ cons a _ ^ a }\n"
-transportSource = "let throughbear:[F:[nat, *], worth:naught F, naught F] ≔ {y:nat ^ {seething:(naught hath_≍ @nat y) ^ y F}} unbuild hath_≍ @nat @naught worth naught (refl @nat @naught)\n"
+transportSource = "let throughbear:[F:[nat, *], worth:naught F, naught F] ≔ {y:nat ^ {soothing:(naught hath_≍ @nat y) ^ y F}} unbuild hath_≍ @nat @naught worth naught (refl @nat @naught)\n"
 
 naturalFold, vectorOne, vectorFold, vectorProofOne, vectorProofFold :: String
 naturalFold = "{n:nat ^ nat} unbuild nat naught {n:nat ^ {ih:nat ^ ih heir}} ((naught heir) heir)"

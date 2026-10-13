@@ -13,23 +13,17 @@ show flock lattice: [α: *, @: α semilattice_lower, @: α semilattice_upper, *]
 }
 
 bizen: [@β: *, @: β lattice, @α: *, [α, β] lattice] {
-  let ∧_∨_swallow: [f:, g:] ≔
-    {a ^ (a f) ∧_∨_swallow (a g)} fall_umtake
-
-  let ∨_∧_swallow: [f:, g:] ≔
-    {a ^ (a f) ∨_∧_swallow (a g)} fall_umtake
+  let ∧_∨_swallow: [f:, g:] ≔ {a ^ (a f) ∧_∨_swallow (a g)} fall_umtake
+  let ∨_∧_swallow: [f:, g:] ≔ {a ^ (a f) ∨_∧_swallow (a g)} fall_umtake
 }
 
 bizen: [@α: *, @: α order_whole, α lattice] {
-  let ∧_∨_swallow: [a:, b:] ≔
-    (a ≤ b) inlook {
-      yea, k ^ a ∧_yea b k,
-      nay, _ ^ a ∧_yea a (a ≤_eftbend)
-    }
-
-  let ∨_∧_swallow: [a:, b:] ≔
-    (a ≤ b) inlook {
-      yea, _ ^ a ∧_yea a (a ≤_eftbend),
-      nay, k ^ a ∨_nay b k
-    }
+  let ∧_∨_swallow: [a:, b:] ≔ (a ≤ b) inlook {
+    yea, k ^ a ∧_yea b k,
+    nay, _ ^ a ∧_yea a (a ≤_eftbend)
+  }
+  let ∨_∧_swallow: [a:, b:] ≔ (a ≤ b) inlook {
+    yea, _ ^ a ∧_yea a (a ≤_eftbend),
+    nay, k ^ a ∨_nay b k
+  }
 }

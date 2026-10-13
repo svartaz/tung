@@ -354,7 +354,7 @@ newMetaWithout K.Context {..} excluded expected = do
   kind <- infer K.emptyContext fullType >>= force
   case kind of
     N.VSort _ -> pure ()
-    _ -> failure "term inference hole requireth a type"
+    _ -> failure "term inference hole requireth an ilk"
   identity <- nextMeta <$> get
   modify' (\state -> state {nextMeta = identity + 1, metaEntries = Map.insert identity (MetaEntry domains annotation Nothing) (metaEntries state)})
   arguments <- traverse (quote originalDepth) values
@@ -389,12 +389,12 @@ ensurePi _ plicity value =
       meta@MetaEntry {..} <- entry identity
       unless (length arguments == metaArity meta) (failure "wrong term inference telescope arity")
       pattern <- rigidLevels arguments
-      when (isNothing pattern) (failure "nonpattern function type inference requireth an annotation")
+      when (isNothing pattern) (failure "nonpattern function ilk inference requireth an annotation")
       (context, domains) <- telescope metaDomains K.emptyContext
       kind <- evaluate context metaTarget
       force kind >>= \case
         N.VSort _ -> pure ()
-        _ -> failure "unknown function type is not a type"
+        _ -> failure "unknown function ilk is not an ilk"
       domainLevel <- freshLevel
       (domain, domainValue) <- newMeta context (N.VSort domainLevel)
       codomainLevel <- freshLevel
@@ -856,7 +856,7 @@ patternDomains depth mapping = go 0
               result <- instantiate codomain argument
               remaining <- go (position + 1) result rest
               pure (((plicity, renamed) :) <$> remaining)
-        _ -> failure "term inference pattern differeth from its type"
+        _ -> failure "term inference pattern differeth from its ilk"
 
 -- indirect solutions are followed as well; an inference hole cannot conceal
 -- a cycle behind another assigned hole or one of its contextual arguments.

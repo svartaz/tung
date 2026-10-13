@@ -85,7 +85,7 @@ keywordToken :: String -> Token
 keywordToken = \case
   "let" -> TLet
   "show" -> TExport
-  "use" -> TImport
+  "bring" -> TImport
   "ilk" -> TType
   "deed" -> TIdent "deed"
   "yield" -> TYield

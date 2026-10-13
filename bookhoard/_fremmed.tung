@@ -9,39 +9,66 @@ show task
 ## `α deed` is a deed that produceth an α when the runner performeth it.
 ## building or combining deeds performeth nothing.
 show let deed_sheer: [@α: *, α, α deed] ≔ 'deed_sheer' fremmed
-show let deed_bind: [@α: *, @β: *, α deed, [α, β deed], β deed] ≔ 'deed_bind' fremmed
+
+show let deed_bind: [@α: *, @β: *, α deed, [α, β deed], β deed]
+  ≔ 'deed_bind' fremmed
+
 ## repeat a deed: the step receiveth the repeated deed. only a deed may loop.
-show let deed_steadfast: [@α: *, [α deed, α deed], α deed] ≔ 'deed_steadfast' fremmed
+show let deed_steadfast: [@α: *, [α deed, α deed], α deed]
+  ≔ 'deed_steadfast' fremmed
 
 show let write: [string, 𝟙 deed] ≔ 'write' fremmed
+
 ## none once input endeth.
 show let read: (string maybe) deed ≔ 'read' fremmed
+
 ## a float in [0, 1).
 show let random: float deed ≔ 'random' fremmed
+
 ## milliseconds.
 show let sleep: [ℕ, 𝟙 deed] ≔ 'sleep' fremmed
 
 ## a task runneth its deed concurrently. waiting yieldeth none for an outstruck
 ## task, and `wait_for` yieldeth none after its timeout in milliseconds.
 show let fork: [@α: *, α deed, (α task) deed] ≔ 'fork' fremmed
+
 show let wait: [@α: *, α task, (α maybe) deed] ≔ 'wait' fremmed
+
 show let wait_for: [@α: *, α task, ℕ, (α maybe) deed] ≔ 'wait_for' fremmed
+
 show let outstrike: [@α: *, α task, 𝟙 deed] ≔ 'outstrike' fremmed
 
 show let eke_float: [float, float, float] ≔ 'eke_float' fremmed
+
 show let offdraw_float: [float, float, float] ≔ 'offdraw_float' fremmed
+
 show let fold_float: [float, float, float] ≔ 'fold_float' fremmed
+
 show let deal_float: [float, float, float] ≔ 'deal_float' fremmed
+
 show let sine_float: [float, float] ≔ 'sine_float' fremmed
+
 show let arctan_float: [float, float, float] ≔ 'arctan_float' fremmed
+
 show let exponent_float: [float, float] ≔ 'exponent_float' fremmed
+
 show let logarithm_float: [float, float] ≔ 'logarithm_float' fremmed
+
 show let ⌊: [float, ℤ maybe] ≔ '⌊' fremmed
+
 show let same_float: [float, float, 𝟚] ≔ 'same_float' fremmed
+
 show let at_most_float: [float, float, 𝟚] ≔ 'at_most_float' fremmed
+
 show let string_to_float: [string, float maybe] ≔ 'string_to_float' fremmed
+
 show let wholetale_to_string: [ℤ, string] ≔ 'wholetale_to_string' fremmed
+
 show let float_to_string: [float, string] ≔ 'float_to_string' fremmed
+
 show let unicode_to_kindful: [unicode, ℕ] ≔ 'unicode_to_kindful' fremmed
+
 show let kindful_to_unicode: [ℕ, unicode maybe] ≔ 'kindful_to_unicode' fremmed
-show let behead_string: [string, (unicode ∏ string) maybe] ≔ 'behead_string' fremmed
+
+show let behead_string: [string, (unicode ∏ string) maybe]
+  ≔ 'behead_string' fremmed

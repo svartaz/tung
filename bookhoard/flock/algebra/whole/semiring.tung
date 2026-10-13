@@ -19,7 +19,6 @@ show flock semiring: [α: *, @: α monoid_+, @: α monoid_·, *] {
 bizen: [@β: *, @: β semiring, @α: *, [α, β] semiring] {
   let +: [f:, g:, a:] ≔ (a f) + (a g)
   let naught: [_:] ≔ naught
-
   let +_+: [f:, g:, h:] ≔ {x ^ (x f) +_+ (x g) (x h)} fall_umtake
   let naught_+: [f:] ≔ {x ^ (x f) naught_+} fall_umtake
   let +_naught: [f:] ≔ {x ^ (x f) +_naught} fall_umtake
@@ -55,5 +54,8 @@ bizen: 𝟚 semiring {
     yea, yea, yea ^ eftbend
   }
   let naught_·: [_:] ≔ eftbend
-  let ·_naught ≔ {nay; yea ^ eftbend}
+  let ·_naught ≔ {
+    nay;
+    yea ^ eftbend
+  }
 }

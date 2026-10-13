@@ -12,7 +12,8 @@ bring flock/hath_same.tung
 bring flock/hath_to_string.tung
 bring flock/order/hath_at_most.tung
 
-## ieee floats keep their useful operations without claiming exact semiring laws.
+## ieee floats keep their useful operations without claiming exact semiring
+## laws.
 bizen: float hath_+ {
   let + ≔ eke_float
 }

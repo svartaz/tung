@@ -7,7 +7,7 @@ bring is.tung
 ## a decidable half order.
 show flock order_half: [α: *, @: α hath_≤, *] {
   let ≤_eftbend: [a: α, (a ≤ a) = yea]
-  let ≤_witherevenmete: [a: α, b: α, >{≤, a ≤ b, b ≤ a, a ≍ b} = yea]
+  let ≤_withevenmete: [a: α, b: α, >{≤, a ≤ b, b ≤ a, a ≍ b} = yea]
   let ≤_throughgo: [a: α, b: α, c: α, >{≤, a ≤ b, b ≤ c, a, c} = yea]
 }
 
@@ -16,7 +16,7 @@ bizen: 𝟚 order_half {
     yea;
     nay ^ eftbend
   }
-  let ≤_witherevenmete ≔ {
+  let ≤_withevenmete ≔ {
     yea, yea;
     yea, nay;
     nay, yea;
@@ -39,7 +39,7 @@ bizen: 𝟛 order_half {
     mid;
     aft  ^ eftbend
   }
-  let ≤_witherevenmete ≔ {
+  let ≤_withevenmete ≔ {
     fore, fore;
     fore, mid;
     fore, aft;

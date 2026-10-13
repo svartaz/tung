@@ -1,47 +1,52 @@
 bring is.tung
 
 ## `a` is grounded under `smaller` when every `y smaller a` is
-## grounded. selfcalling on a groundedness seething is structural, so a
+## grounded. selfcalling on a groundedness soothing is structural, so a
 ## fall may selfcall on any input that a wellgrounded relation maketh
 ## smaller.
 show ilk grounded: [α: *, smaller: [α, α, *], α, *] {
-  ground: [@a: α, [y: α, y smaller a, α grounded smaller y], α grounded smaller a]
+  ground: [@a: α, [y: α, y smaller a, α grounded smaller y],
+    α grounded smaller a]
 }
 
 ## a relation is wellgrounded when every worth is grounded.
-show let wellgrounded: [α: *, smaller: [α, α, *], *] ≔ [a: α, α grounded smaller a]
+show let wellgrounded: [α: *, smaller: [α, α, *], *]
+  ≔ [a: α, α grounded smaller a]
 
-## selfcalling on a groundedness seething. `step` defineth the outcome at `x`
+## selfcalling on a groundedness soothing. `step` defineth the outcome at `x`
 ## from the outcomes at every smaller worth.
-show let selfcall: [@α: *, @smaller: [α, α, *], @drive: [α, *],
-  step: [a: α, [b: α, b smaller a, b drive], a drive],
-  a: α, smaller_grounded ground: α grounded smaller a, a drive] ≔
-  a step {b, below ^ step selfcall b (b smaller_grounded below)}
+show let selfcall
+  : [@α: *, @smaller: [α, α, *], @drive: [α, *],
+    step: [a: α, [b: α, b smaller a, b drive], a drive], a: α,
+    smaller_grounded ground: α grounded smaller a, a drive]
+  ≔ a step {b, below ^ step selfcall b (b smaller_grounded below)}
 
 ## selfcalling on every worth of a wellgrounded relation.
-show let wellgrounded_selfcall: [@α: *, @smaller: [α, α, *], @drive: [α, *],
-  founded: α wellgrounded smaller,
-  step: [a: α, [b: α, b smaller a, b drive], a drive],
-  a: α, a drive] ≔
-  step selfcall a (a founded)
+show let wellgrounded_selfcall
+  : [@α: *, @smaller: [α, α, *], @drive: [α, *],
+    founded: α wellgrounded smaller,
+    step: [a: α, [b: α, b smaller a, b drive], a drive], a: α, a drive]
+  ≔ step selfcall a (a founded)
 
 ## wellgrounded selfcalling with an explicit outcome drive.
-show let wellgrounded_selfcall_toward: [@α: *, @smaller: [α, α, *],
-  drive: [α, *],
-  founded: α wellgrounded smaller,
-  step: [a: α, [b: α, b smaller a, b drive], a drive],
-  a: α, a drive] ≔
-  founded wellgrounded_selfcall step a
+show let wellgrounded_selfcall_toward
+  : [@α: *, @smaller: [α, α, *], drive: [α, *], founded: α wellgrounded smaller,
+    step: [a: α, [b: α, b smaller a, b drive], a drive], a: α, a drive]
+  ≔ founded wellgrounded_selfcall step a
 
 ## selfcall on any input whose mete is smaller. the outcome may hang on
 ## the input. only the mete needeth a wellgrounded relation.
-show let wellgrounded_selfcall_by: [@α: *, @μ: *, @smaller: [μ, μ, *],
-  drive: [α, *], mete: [α, μ], founded: μ wellgrounded smaller,
-  step: [a: α, [b: α, (b mete) smaller (a mete), b drive], a drive],
-  a: α, a drive] ≔
-## each meted worth carrieth the original input and its equation.
-  ({at ^ [x: α, (x mete) = at, x drive]}) wellgrounded_selfcall_toward founded
-    {at, selfcaller, x, same ^ x step {b, below ^
-      (b mete) selfcaller (match same { eftbend ^ below }) b eftbend
-    }}
-  (a mete) a eftbend
+show let wellgrounded_selfcall_by
+  : [@α: *, @μ: *, @smaller: [μ, μ, *], drive: [α, *], mete: [α, μ],
+    founded: μ wellgrounded smaller,
+    step: [a: α, [b: α, (b mete) smaller (a mete), b drive], a drive], a: α,
+    a drive]
+  ≔
+  ## each meted worth carrieth the original input and its equation.
+  ({at ^ [x: α, (x mete) = at, x drive]}) wellgrounded_selfcall_toward founded {
+    at, selfcaller, x, same ^
+      x step {
+        b, below ^
+          (b mete) selfcaller (match same { eftbend ^ below }) b eftbend
+      }
+  } (a mete) a eftbend

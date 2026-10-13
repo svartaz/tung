@@ -94,11 +94,11 @@ tests library example =
       pure (eraseLevels (inferredType literal) == eraseLevels text),
     rejectContaining "an unknown host key is rejected" "unknown host key 'launch'" $
       compile "let launch:* ≔ 'launch' fremmed\n",
-    rejectContaining "a host type must match its catalogue signature" "requireth a different type" $
+    rejectContaining "a host type must match its catalogue signature" "requireth a different ilk" $
       compile "let sheer:[@α:*, α, α] ≔ 'deed_sheer' fremmed\n",
-    rejectContaining "a deed operation cannot use a different deed type" "requireth a different type" $
+    rejectContaining "a deed operation cannot use a different deed type" "requireth a different ilk" $
       compile "ilk _box:[α:*, *] { box:[α, α _box] }\nlet sheer:[@α:*, α, α _box] ≔ 'deed_sheer' fremmed\n",
-    rejectContaining "host data is identified by its declaration" "requireth a different type" $
+    rejectContaining "host data is identified by its declaration" "requireth a different ilk" $
       compile "ilk 𝟙:* { only:𝟙 }\nlet write:[string, 𝟙 deed] ≔ 'write' fremmed\n",
     rejectContaining "one host key cannot be bound twice" "already bound" $
       compile (prelude ++ "let other:[string, 𝟙 deed] ≔ 'write' fremmed\n"),
@@ -114,7 +114,7 @@ tests library example =
       compile "let wrap:[@α:*, a: α, α deed] ≔ 'deed_sheer' fremmed sorry\n",
     rejectContaining "without a model, a fremmed annotation cannot bind inputs" "cannot bind inputs" $
       parseSource "let plus:[m: ℕ, n: ℕ, ℕ] ≔ 'eke_kindful' fremmed\n",
-    rejectContaining "a fremmed binding requireth an annotation" "requireth a type annotation" $
+    rejectContaining "a fremmed binding requireth an annotation" "requireth an ilk annotation" $
       parseSource "let deed ≔ 'deed' fremmed\n",
     rejectContaining "fremmed cannot appear inside an expression" "only an annotated top-level let" $
       parseSource "let worth:* ≔ ('deed' fremmed)\n",
@@ -122,7 +122,7 @@ tests library example =
       parseSource "let worth ≔ (let write:[string, 𝟙 deed] ≔ 'write' fremmed yield *)\n",
     rejectContaining "a family cannot hide undernaught selfcalling inside a deed" "direct saturated family application" $
       compile (prelude ++ "ilk bad:* { make:[[bad, 𝟙] deed, bad] }\n"),
-    rejectContaining "main requireth a unit deed type" "main requireth a unit deed type" $
+    rejectContaining "main requireth a unit deed type" "main requireth a unit deed ilk" $
       run (prelude ++ "let main:(string maybe) deed ≔ read\n") [],
     rejectContaining "a runnable forewrit requireth main" "requireth a top-level main" $
       run prelude []
@@ -139,7 +139,7 @@ hostSchemaTests =
       "an empty canonical truth type cannot receive a host result"
       truthBinding
       [("ilk/two.tung", "show ilk 𝟚:* {}\n")],
-    rejectContaining "a data family cannot counterfeit an opaque task handle" "requireth a different type" $
+    rejectContaining "a data family cannot counterfeit an opaque task handle" "requireth a different ilk" $
       compileProject
         (SourceModule "host_schema.tung")
         "bring ilk/task.tung let fork:[@α:*, α deed, (α task) deed] ≔ 'fork' fremmed"

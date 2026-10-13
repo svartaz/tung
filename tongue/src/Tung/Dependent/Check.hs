@@ -121,7 +121,7 @@ assume environment@(Environment globals) name signature@Inferred {..} = do
   validate environment signature
   N.normalise globals 0 inferredType >>= \case
     Sort _ -> pure ()
-    _ -> Left "an orsetting annotation is not a type"
+    _ -> Left "an orsetting annotation is not an ilk"
   pure (Environment (Map.insert name (Definition inferredUniverses inferredConstraints inferredTerm Assumption) globals))
 
 defineInferred :: Environment -> SymbolId -> Inferred -> Either String Environment
@@ -298,13 +298,13 @@ inferTermWith operations@Checking {..} context@Context {..} = \case
                         let parameter ty argument =
                               forceCheck ty >>= \case
                                 N.VPi _ _ codomain -> instantiateCheck codomain argument
-                                _ -> failCheck "invalid constructor type"
+                                _ -> failCheck "invalid constructor ilk"
                             walk ty position =
                               forceCheck ty >>= \case
                                 N.VPi _ domain codomain
                                   | position == index -> pure domain
                                   | otherwise -> evaluateCheck context (Field position value) >>= instantiateCheck codomain >>= (`walk` (position + 1))
-                                _ -> failCheck "invalid constructor type"
+                                _ -> failCheck "invalid constructor ilk"
                         afterParameters <- foldlM parameter constructorType (map snd arguments)
                         walk afterParameters 0
                       _ -> failCheck "missing constructor"
@@ -312,7 +312,7 @@ inferTermWith operations@Checking {..} context@Context {..} = \case
       _ -> failCheck "a field projection needeth a one-constructor family without indices"
   Literal name value
     | name == literalType value -> evaluateCheck context (Global name [])
-    | otherwise -> failCheck ("a literal requireth the primitive " ++ symbolName (literalType value) ++ " type")
+    | otherwise -> failCheck ("a literal requireth the primitive " ++ symbolName (literalType value) ++ " ilk")
 
 checkType :: Globals -> Context -> Term -> Typing Level
 checkType globals = checkTypeWith (kernelChecking globals)
@@ -321,7 +321,7 @@ checkTypeWith :: (Monad m) => Checking m -> Context -> Term -> m Level
 checkTypeWith operations@Checking {..} context term =
   inferTermWith operations context term >>= forceCheck >>= \case
     N.VSort level -> pure level
-    _ -> failCheck "annotation is not a type"
+    _ -> failCheck "annotation is not an ilk"
 
 checkTerm :: Globals -> Context -> Term -> Term -> Typing ()
 checkTerm globals = checkTermWith (kernelChecking globals)

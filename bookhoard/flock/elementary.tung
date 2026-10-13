@@ -3,7 +3,7 @@ bring flock/algebra/whole/hath_deal.tung
 bring flock/algebra/whole/hath_fold.tung
 bring flock/algebra/whole/hath_offdraw.tung
 bring ilk/float.tung
-bring numeric/withstand.tung
+bring numeric/singal.tung
 
 show flock elementary: [α: *, @: α hath_÷, *] {
   let exponent: [α, α]
@@ -12,8 +12,8 @@ show flock elementary: [α: *, @: α hath_÷, *] {
   let cosine: [α, α]
 }
 
-show let tangent: [@α: *, @: α elementary, @: α hath_÷, a: α, α] ≔
-  (a sine) ÷ (a cosine)
+show let tangent: [@α: *, @: α elementary, @: α hath_÷, a: α, α]
+  ≔ (a sine) ÷ (a cosine)
 
 bizen: float elementary {
   let exponent ≔ exponent_float

@@ -223,7 +223,7 @@ bindCaseInputs start count expected = go start count expected []
               remaining' = if plicity == Explicit then remaining - 1 else remaining
           (inner, resultType) <- bindDomain current Nothing domain codomain
           go inner remaining' resultType ((level, plicity, domain) : inputs)
-        _ -> E.failure "a case function needs a function type with one input per pattern"
+        _ -> E.failure "a case function needs a function ilk with one input per pattern"
 
 -- a scrutinee that is already a local is matched in place, so the result
 -- type may depend on it. other scrutinees are bound first.
@@ -412,7 +412,7 @@ expandConstructorRow index fields constructed columnTy row@MatchRow {..} = do
   (subpatterns, bound) <- case pattern of
     PConstructor _ subpatterns -> (,aliases) <$> assignFields fields subpatterns
     PVariable name -> pure (map (const (PVariable Nothing)) fields, aliases ++ maybe [] pure name)
-    _ -> E.failure "a literal pattern cannot match an inductive type"
+    _ -> E.failure "a literal pattern cannot match an inductive ilk"
   pure row {matchPatterns = take index matchPatterns ++ subpatterns ++ drop (index + 1) matchPatterns, matchBindings = matchBindings ++ [(binding, constructed, columnTy) | binding <- bound]}
 
 -- a literal row splitteth its column in two: rows that accept the literal, and
@@ -437,7 +437,7 @@ splitLiteral checker scope columns rows expected index literal = do
         _ -> True
       settle row bound = row {matchPatterns = replace (matchPatterns row), matchBindings = matchBindings row ++ [(name, value, ty) | name <- bound]}
       replace patterns = take index patterns ++ [PVariable Nothing] ++ drop (index + 1) patterns
-  when (any (\row -> case snd (unnamed (matchPatterns row !! index)) of PConstructor {} -> True; _ -> False) rows) (E.failure "a constructor pattern cannot match a literal type")
+  when (any (\row -> case snd (unnamed (matchPatterns row !! index)) of PConstructor {} -> True; _ -> False) rows) (E.failure "a constructor pattern cannot match a literal ilk")
   (yes, yesUsed) <- compileMatch checker scope columns [accepted | Just accepted <- map accept rows] expected
   (no, noUsed) <- compileMatch checker scope columns (filter reject rows) expected
   result <- quote scope expected
@@ -528,7 +528,7 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
               | actual == plicity -> do
                   targetTerm <- quote scope targetValue
                   (Apply plicity term targetTerm,) <$> E.instantiate codomain targetValue
-            _ -> E.failure "invalid eliminator target type"
+            _ -> E.failure "invalid eliminator target ilk"
       )
       (applied, appliedType)
       targets

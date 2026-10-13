@@ -8,7 +8,7 @@ bring flock/functor/hath_sift.tung
 bring flock/functor/hath_throughwend.tung
 bring flock/functor/monad.tung
 bring flock/hath_same.tung
-bring flock/order/withfill.tung
+bring flock/order/midfill.tung
 bring flock/same_to_is.tung
 bring ilk/one.tung
 bring ilk/two.tung
@@ -26,7 +26,6 @@ bizen: [@α: *, @: α semigroup_·, (α maybe) semigroup_·] {
     a,      none   ^ a,
     a some, b some ^ a · b $ some
   }
-
   let ·_· ≔ {
     none,   _,      _      ^ eftbend,
     _ some, none,   _      ^ eftbend,
@@ -37,9 +36,7 @@ bizen: [@α: *, @: α semigroup_·, (α maybe) semigroup_·] {
 
 bizen: [@α: *, @: α semigroup_·, (α maybe) monoid_·] {
   let one ≔ none
-
   let one_·: [_:] ≔ eftbend
-
   let ·_one ≔ {
     none   ^ eftbend,
     _ some ^ eftbend
@@ -51,7 +48,6 @@ bizen: maybe functor {
     none,   _ ^ none,
     a some, f ^ a f $ some
   }
-
   let warp_sameness ≔ {
     none   ^ eftbend,
     _ some ^ eftbend
@@ -64,7 +60,6 @@ bizen: maybe atfoldsome {
     a some, f some ^ a f $ some,
     _,      _      ^ none
   }
-
   let atfold_sameness_sheer ≔ {
     none   ^ eftbend,
     _ some ^ eftbend
@@ -85,7 +80,6 @@ bizen: maybe monad {
     none   ^ none,
     a some ^ a
   }
-
   let sheer_bind: [a:, f:] ≔ eftbend
   let warp_sheer_flat ≔ {
     none   ^ eftbend,
@@ -157,16 +151,14 @@ bizen: [@α: *, @: α hath_≍, (α maybe) hath_≍] {
 }
 
 bizen: [@α: *, @: α ≍_to_=, (α maybe) ≍_to_=] {
-  let ≍_=: [x:, y:, same:] ≔
-    match x, y {
-      none,   none   ^ eftbend,
-      a some, b some ^ some leibnitz (a ≍_= b same),
-      none,   _ some ^ match same {},
-      _ some, none   ^ match same {}
-    }
-  let ≍_eftbend: [x:] ≔
-    match x {
-      none   ^ eftbend,
-      a some ^ a ≍_eftbend
-    }
+  let ≍_=: [x:, y:, same:] ≔ match x, y {
+    none,   none   ^ eftbend,
+    a some, b some ^ some leibnitz (a ≍_= b same),
+    none,   _ some ^ match same {},
+    _ some, none   ^ match same {}
+  }
+  let ≍_eftbend: [x:] ≔ match x {
+    none   ^ eftbend,
+    a some ^ a ≍_eftbend
+  }
 }

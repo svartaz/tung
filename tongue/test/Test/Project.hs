@@ -295,11 +295,11 @@ interfaceProofAudit = withDirectory \root -> do
       computed <- auditProof program "computed"
       pure
         ( [[(dependencySymbol, dependencyKind) | ProofDependency {..} <- auditDependencies audited] | audited <- [selected, allowed, computed]],
-          verifyProof program Nothing selected,
-          verifyProof program (Just ["shared~visible"]) allowed
+          verifyProof program True Nothing selected,
+          verifyProof program True (Just ["shared~visible"]) allowed
         )
     expected =
-      ( [[(SymbolId (SourceModule "b.tung") "hidden", AxiomDependency)], [(SymbolId (SourceModule "b.tung") "visible", AxiomDependency)], [(SymbolId (SourceModule "b.tung") "add", HostDependency "eke_natural")]],
+      ( [[(SymbolId (SourceModule "b.tung") "hidden", AxiomDependency)], [(SymbolId (SourceModule "b.tung") "visible", AxiomDependency)], [(SymbolId (SourceModule "b.tung") "add", HostDependency "eke_kindful")]],
         Right (),
         Right ()
       )

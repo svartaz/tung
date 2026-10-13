@@ -7,34 +7,31 @@ bring ilk/product.tung
 bring ilk/string/building.tung
 bring ilk/sum.tung
 
-let then: [@α: *, @β: *, first: α deed, next: β deed, β deed] ≔
-  first deed_bind {_ ^ next}
+let then: [@α: *, @β: *, first: α deed, next: β deed, β deed]
+  ≔ first deed_bind {_ ^ next}
 
-let line: [a: string, 𝟙 deed] ≔
-  (a yoke_string '\n') _fremmed~write
+let line: [a: string, 𝟙 deed] ≔ (a yoke_string '\n') _fremmed~write
 
 ## a fallible deed returneth `string ∑ α`: a message or a result.
-let eftbare: [doing: (string ∑ string) deed, 𝟙 deed] ≔
-  doing deed_bind {
-    message incast₀  ^ message line,
-    contents incast₁ ^ contents line
-  }
+let eftbare: [doing: (string ∑ string) deed, 𝟙 deed] ≔ doing deed_bind {
+  message incast₀  ^ message line,
+  contents incast₁ ^ contents line
+}
 
 ## a cancelled or failed task hath no result.
-let await: [started: (string task) deed, 𝟙 deed] ≔
-  started deed_bind {task ^ (task wait) deed_bind {
+let await: [started: (string task) deed, 𝟙 deed]
+  ≔ started deed_bind {task ^ (task wait) deed_bind {
     none         ^ 'no result' line,
     message some ^ message line
   }}
 
-let main: 𝟙 deed ≔
-  >{then,
-    ('note.txt' file~write 'saved') deed_bind {_ ^ only deed_sheer},
-    'note.txt' file~read $ eftbare,
-    'absent.txt' file~read $ eftbare,
-    ('from a task' deed_sheer) fork $ await,
-    match 'tung' behead_string {
-      none                   ^ 'empty' line,
-      (_ both leftover) some ^ leftover line
-    }
+let main: 𝟙 deed ≔ >{then,
+  ('note.txt' file~write 'saved') deed_bind {_ ^ only deed_sheer},
+  'note.txt' file~read $ eftbare,
+  'absent.txt' file~read $ eftbare,
+  ('from a task' deed_sheer) fork $ await,
+  match 'tung' behead_string {
+    none                   ^ 'empty' line,
+    (_ both leftover) some ^ leftover line
   }
+}

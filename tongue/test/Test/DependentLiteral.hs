@@ -26,7 +26,7 @@ numericIndexTests =
         forM_ (sourceDefinitions program) (validate (sourceEnvironment program) . snd)
         traverse
           (uncurry (sameNormalIn program))
-          [("natural_value natural_read", "1"), ("positive_value positive_read", "2"), ("negative_value negative_read", "2")]
+          [("kindful_value kindful_read", "1"), ("positive_value positive_read", "2"), ("negative_value negative_read", "2")]
     )
     : [ rejectContaining label "cannot unify" (compiled source)
       | (label, source) <-
@@ -74,7 +74,7 @@ tests compiled example =
     computes "unsigned digits are a natural" "2 ⊞ 3" "5",
     computes "natural subtraction stopth at naught" "2 ⊟ 3" "0",
     computes "a natural becometh an integer" "2 to_wholetale" "+2",
-    computes "a undernaught integer is no natural" "-1 to_natural" "(none : ℕ maybe)",
+    computes "a undernaught integer is no natural" "-1 to_kindful" "(none : ℕ maybe)",
     computes "an operation on a variable stayeth neutral" "{n:ℤ ^ n + +0}" "{n:ℤ ^ n + +0}",
     expectEq "a natural is 0 or succeedeth another, and selfcalling on it computeth" (Right True) do
       program <- compiled (example ++ "let double:[n: ℕ, ℕ] ≔ match n { 0 ^ 0, m heir ^ ((m double) heir) heir }\nlet small:[ℕ, string] ≔ { 2 ^ 'two', _ ^ 'other' }\n")
@@ -91,7 +91,7 @@ tests compiled example =
       compiled (example ++ "let wrong:ℤ ≔ 1.5\n"),
     rejectContaining "an unsigned literal is not an integer" "cannot unify" $
       compiled (example ++ "let wrong:ℤ ≔ 1\n"),
-    rejectContaining "a comparison yieldeth bookhoard's 𝟚" "requireth a different type" $
+    rejectContaining "a comparison yieldeth bookhoard's 𝟚" "requireth a different ilk" $
       compiled (example ++ "ilk three:* { a: three, b: three, c: three }\nlet bad:[float, float, three] ≔ 'same_float' fremmed\n"),
     expectEq "the runner computeth sheer host functions" (Right (Right 0, "5")) $
       compiled (example ++ "let write:[string, 𝟙 deed] ≔ 'write' fremmed\nlet main:𝟙 deed ≔ (+2 + +3) to_string $ write\n")

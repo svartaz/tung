@@ -7,8 +7,4 @@ let repeat: [nat, 𝟙 deed, 𝟙 deed] ≔ {
   n heir, doing ^ doing then (n repeat doing)
 }
 
-let main: 𝟙 deed ≔ >{
-  then,
-  tale~four repeat ('tung ' write),
-  '\n' host~write
-}
+let main: 𝟙 deed ≔ >{then, tale~four repeat ('tung ' write), '\n' host~write}

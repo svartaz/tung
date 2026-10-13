@@ -75,7 +75,7 @@ constructorIndices environment Split {..} constructor fieldValues = do
       ( \current value ->
           E.force current >>= \case
             N.VPi _ _ codomain -> E.instantiate codomain value
-            _ -> E.failure "invalid constructor type"
+            _ -> E.failure "invalid constructor ilk"
       )
       ty
       (splitParameters ++ fieldValues)

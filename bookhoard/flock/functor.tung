@@ -4,9 +4,8 @@ bring is.tung
 
 show flock functor: [φ: [*, *], *] {
   let warp: [@α: *, @β: *, α φ, [α, β], β φ]
-
   let warp_sameness: [@α: *, af: α φ, (af warp sameness) = af]
 }
 
-show let void: [@φ: [*, *], @: φ functor, @α: *, af: α φ, 𝟙 φ] ≔
-  af warp {_ ^ only}
+show let void: [@φ: [*, *], @: φ functor, @α: *, af: α φ, 𝟙 φ]
+  ≔ af warp {_ ^ only}

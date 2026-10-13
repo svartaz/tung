@@ -1,456 +1,140 @@
 module Test.Format (group) where
 
-import Data.List (intercalate)
+import Data.Char (isSpace)
 import Test.Harness (Group, Test, expect, expectEq)
 import Test.Harness qualified as Harness
 import Tung (formatSource)
 
 group :: IO Group
-group = Harness.group "format" (map formatCase cases ++ [idempotence, generatedIdempotence])
+group = Harness.group "format" (map neatenCase cases ++ [refusal, idempotence, canonical])
 
-formatCase :: (String, String, String) -> Test
-formatCase (name, source, expected) = expectEq name expected (formatSource source)
+neatenCase :: (String, String, String) -> Test
+neatenCase (name, source, expected) = expectEq name (Right expected) (formatSource source)
+
+refusal :: Test
+refusal = expectEq "source that doth not parse is refused" (Left "expected an expression") (formatSource "let worth ≔ (\n")
 
 idempotence :: Test
-idempotence = expect "formatter is idempotent" (all (\(_, source, _) -> isIdempotent source) cases)
+idempotence = expect "neatening is idempotent" (all (\(_, source, _) -> formatSource source == (formatSource source >>= formatSource)) cases)
 
-generatedIdempotence :: Test
-generatedIdempotence = expect "formatter is idempotent for generated structural sources" (all isIdempotent generatedSources)
+-- the neat form followeth the tokens alone: breaking every space into a
+-- line, or joining every line into one, changeth nothing while each
+-- comment keepeth its place before or after a line end.
+canonical :: Test
+canonical = expect "whitespace never changeth the neat form" (all same cases)
   where
-    generatedSources =
-      [ intercalate "\n" (map (prefix ++) declaration) ++ ending
-      | declaration <- declarations,
-        prefix <- ["", " ", "  ", "\t"],
-        ending <- ["", "\n"]
-      ]
-    declarations =
-      [ ["show ilk box: [a:*, *] {", "box: [a, a box]", "}"],
-        ["let outcome ≔", "match worth {", "yea; nay ^ 1", "}"],
-        ["let handled ≔", "risky bind {", "message incast₀ ^ 0", "}"],
-        ["flock sameness:[a:*, *] {", "let sameness:[@a:*, a, a]", "let rule:[@a:*, x:a,", "(x sameness) = x]", "}"]
-      ]
+    same (_, source, _) = all (\respaced -> formatSource respaced == formatSource source) [respace True source, respace False source]
 
-isIdempotent :: String -> Bool
-isIdempotent source = formatSource formatted == formatted
+respace :: Bool -> String -> String
+respace split = go False
   where
-    formatted = formatSource source
+    go _ [] = []
+    go _ ('\'' : rest) = let (text, remaining) = quoted rest in '\'' : text ++ go False remaining
+    go _ ('#' : rest) = let (comment, remaining) = break (== '\n') rest in '#' : comment ++ '\n' : go True (drop 1 remaining)
+    go _ ('/' : '*' : rest) = let (comment, remaining) = block rest in "/*" ++ comment ++ go False remaining
+    go afterComment text@(character : _)
+      | isSpace character =
+          let (blank, remaining) = span isSpace text
+              beforeComment = take 1 remaining == "#" || take 2 remaining == "/*"
+              broken = '\n' `elem` blank
+           in (if beforeComment then (if broken then "\n" else " ") else if split then "\n  " else if afterComment then "" else " ") ++ go False remaining
+    go _ (character : rest) = character : go False rest
+    block = \case
+      '*' : '/' : rest -> ("*/", rest)
+      character : rest -> let (comment, remaining) = block rest in (character : comment, remaining)
+      [] -> ([], [])
+    quoted = \case
+      '\\' : character : rest -> let (text, remaining) = quoted rest in ('\\' : character : text, remaining)
+      '\'' : rest -> ("'", rest)
+      character : rest -> let (text, remaining) = quoted rest in (character : text, remaining)
+      [] -> ([], [])
 
 cases :: [(String, String, String)]
 cases =
-  [ ( "consecutive case rows align their columns and arrows",
+  [ ( "spacing is fixed and brings are sorted together",
+      "bring ilk/two.tung\n\n\nbring ilk/list.tung\nlet   a:ℕ≔1\nlet b\n  :ℕ ≔\n   2\n",
       """
-      let drop ≔ {
-        l, 0 ^ l,
-        _, 0;
-        empty, _ ^ empty,
-        _ ‥ leftover, n ^ leftover drop (n - 1)
-      }
-      """,
-      """
-      let drop ≔ {
-        l,        0 ^ l,
-        _,        0;
-        empty,    _ ^ empty,
-        _ ‥ leftover, n ^ leftover drop (n - 1)
-      }
+      bring ilk/list.tung
+      bring ilk/two.tung
+
+      let a: ℕ ≔ 1
+
+      let b: ℕ ≔ 2
+
       """
     ),
-    ( "a body after a closed header continueth its declaration",
+    ( "comments keep their tokens and case blocks of several rows break",
+      "## doc for f.\nlet f: [𝟚, ℕ] ≔ { yea ^ 1, nay ^ 0 } # trailing\n# before g\nlet g: [x: ℕ, ℕ] ≔ match x { 0 ^ 0, k heir ^ k }\n",
       """
-      let kept: [
-      x: ℕ,
-      x = x
-      ] ≔ {c: ℕ ^ c = c}
-      throughbear eftbend eftbend
-      let next ≔ 0
-      """,
-      """
-      let kept: [
-        x: ℕ,
-        x = x
-      ] ≔ {c: ℕ ^ c = c}
-        throughbear eftbend eftbend
-      let next ≔ 0
-      """
-    ),
-    ( "brackets opened on one line indent once",
-      """
-      let rule: [d: α,
-      (match d {
-      none ^ yea,
-      _ some ^ nay
-      }) = yea]
-      """,
-      """
-      let rule: [d: α,
-        (match d {
-          none   ^ yea,
-          _ some ^ nay
-        }) = yea]
-      """
-    ),
-    ( "leading closures that close part of a line's brackets return to its level",
-      """
-      let x ≔ match y {
-      z ^ f ({s ^ >{throughgo,
-      a,
-      b
-      }} g)
-      }
-      """,
-      """
-      let x ≔ match y {
-        z ^ f ({s ^ >{throughgo,
-          a,
-          b
-        }} g)
-      }
-      """
-    ),
-    ( "a row body after its separator is indented",
-      """
-      let outcome ≔ match worth {
-      yea ^
-      1,
-      nay ^ 0
-      }
-      """,
-      """
-      let outcome ≔ match worth {
-        yea ^
-          1,
+      ## doc for f.
+      let f: [𝟚, ℕ] ≔ {
+        yea ^ 1,
         nay ^ 0
-      }
-      """
-    ),
-    ( "declaration annotations compact colons and indent the body once",
-      """
-      let sameness : [
-      @α : *,
-      x : α,
-      α] ≔
-      x
-      let answer : ℤ ≔ +42
+      } # trailing
 
-      """,
-      """
-      let sameness: [
-        @α: *,
-        x: α,
-        α] ≔
-        x
-      let answer: ℤ ≔ +42
-
-      """
-    ),
-    ( "braced bodies and composition use one indentation level",
-      """
-      show flock hath_+:[a:*, *] {
-      let +:[a, a, a]
-      }
-      let paired:* ≔ >{
-      pair,
-      ℤ
-      }
-      let string ≔ '{not a block}' # }
-
-      """,
-      """
-      show flock hath_+: [a: *, *] {
-        let +: [a, a, a]
-      }
-      let paired: * ≔ >{
-        pair,
-        ℤ
-      }
-      let string ≔ '{not a block}' # }
-
-      """
-    ),
-    ( "instance colon beginneth a declaration after a continued let",
-      """
-      let worth ≔
-      +1
-      bizen : ℤ ring {
-      let -: [f:, g:] ≔ f
-      }
-
-      """,
-      """
-      let worth ≔
-        +1
-      bizen: ℤ ring {
-        let -: [f:, g:] ≔ f
+      # before g
+      let g: [x: ℕ, ℕ] ≔ match x {
+        0      ^ 0,
+        k heir ^ k
       }
 
       """
     ),
-    ( "instance header brackets use one indentation level",
+    ( "a wide binding putteth its body, and its annotation when wide, on lines of their own",
+      "let exchange: [a: ℕ, b: ℕ, c: ℕ, d: ℕ, ((a + b) + (c + d)) = ((a + c) + (b + d))] ≔ sorry\nlet total: ℕ ≔ first_long_name + second_long_name + third_long_name + fourth_name\nlet chain: [a = d] ≔ >{throughgo, first_long_proof_step, second_long_proof_step, third_long_proof_step}\n",
       """
-      bizen:[@b:*, @:b ring,
-      @a : *, [a, b] ring] {
-      let -: [f:, g:, x:] ≔ (x f) - (x g)
-      }
+      let exchange
+        : [a: ℕ, b: ℕ, c: ℕ, d: ℕ, ((a + b) + (c + d)) = ((a + c) + (b + d))]
+        ≔ sorry
 
-      """,
-      """
-      bizen: [@b: *, @: b ring,
-        @a: *, [a, b] ring] {
-        let -: [f:, g:, x:] ≔ (x f) - (x g)
-      }
+      let total: ℕ
+        ≔ first_long_name + second_long_name + third_long_name + fourth_name
 
-      """
-    ),
-    ( "a type colon hath one space after it",
-      """
-      let hath_+:[x : ℤ, y:  ℤ, ℤ] ≔ (x + y: ℤ)
-      flock sameness:[a:*, *] { let rule:[x : a, x = x] }
-      ilk record:* { make:[field : ℤ, record] }
-      let string ≔ 'x: y' # note: untouched
-      let letter ≔ `:
-      /* note: untouched */
-
-      """,
-      """
-      let hath_+: [x: ℤ, y: ℤ, ℤ] ≔ (x + y: ℤ)
-      flock sameness: [a: *, *] { let rule: [x: a, x = x] }
-      ilk record: * { make: [field: ℤ, record] }
-      let string ≔ 'x: y' # note: untouched
-      let letter ≔ `:
-      /* note: untouched */
-
-      """
-    ),
-    ( "sort use declarations",
-      """
-      bring zebra.tung zebra
-      bring alpha.tung
-
-      ## a separate use block.
-      bring delta.tung
-      bring beta.tung beta
-
-      """,
-      """
-      bring alpha.tung
-      bring zebra.tung zebra
-
-      ## a separate use block.
-      bring beta.tung beta
-      bring delta.tung
-
-      """
-    ),
-    ( "current application syntax",
-      """
-      show let sift:[x:a maybe, f:[a, 𝟚], a maybe] ≔ match x {
-      a some ^ a f $ if (a some) none
-      none   ^ none
-      }
-
-      """,
-      """
-      show let sift: [x: a maybe, f: [a, 𝟚], a maybe] ≔ match x {
-        a some ^ a f $ if (a some) none
-        none   ^ none
+      let chain: [a = d] ≔ >{throughgo,
+        first_long_proof_step,
+        second_long_proof_step,
+        third_long_proof_step
       }
 
       """
     ),
-    ( "expression continuations",
+    ( "wide comments wrap; quoted text and block comments stay whole",
+      "## a comment that runneth past the limit is broken at the last space that fitteth within it.\nlet greeting: string ≔ 'a long quoted greeting that must never be broken across two lines and more'\n/* a block\n   comment */\nlet after ≔ 1\n",
       """
-      let picked ≔
-      match worth {
-      yea ^ +1,
-      nay ^ +0
-      }
-      let handled ≔
-      match risky {
-      worth incast₁ ^ worth,
-      message incast₀ ^ +0
-      }
-      let sameness ≔
-      { x ^ x }
+      ## a comment that runneth past the limit is broken at the last space that
+      ## fitteth within it.
+      let greeting: string
+        ≔ 'a long quoted greeting that must never be broken across two lines and more'
 
-      """,
-      """
-      let picked ≔
-        match worth {
-          yea ^ +1,
-          nay ^ +0
-        }
-      let handled ≔
-        match risky {
-          worth incast₁   ^ worth,
-          message incast₀ ^ +0
-        }
-      let sameness ≔
-        { x ^ x }
+      /* a block
+         comment */
+      let after ≔ 1
 
       """
     ),
-    ( "local result",
+    ( "a flock body breaketh and a short lambda stayeth whole",
+      "flock hath_flip: [α: *, *] { let flip: [α, α] let flip_flip: [x: α, (x flip $ flip) = x] }\nlet twice: [ℕ, ℕ] ≔ {x ^ (x + x)}\n",
       """
-      let main ≔ (
-      let first ≔
-      +1 + +2
-      let second ≔ +3
-      yield first + second
+      flock hath_flip: [α: *, *] {
+        let flip: [α, α]
+        let flip_flip: [x: α, (x flip $ flip) = x]
+      }
+
+      let twice: [ℕ, ℕ] ≔ {x ^ (x + x)}
+
+      """
+    ),
+    ( "a wide block breaketh while its binding keepeth one line",
+      "let kept ≔ (let a ≔ 1 yield a)\nlet wide ≔ (let first_long_name ≔ 1 let second_long_name ≔ 2 let third_long_name ≔ 3 yield first_long_name)\n",
+      """
+      let kept ≔ (let a ≔ 1 yield a)
+
+      let wide ≔ (
+        let first_long_name ≔ 1
+        let second_long_name ≔ 2
+        let third_long_name ≔ 3
+        yield first_long_name
       )
-
-      """,
-      """
-      let main ≔ (
-        let first ≔
-          +1 + +2
-        let second ≔ +3
-        yield first + second
-      )
-
-      """
-    ),
-    ( "nested continuation",
-      """
-      let fixtures ≔
-      first ‥
-      (second ‥
-      (third ‥ empty))
-
-      let next ≔
-      worth
-
-      """,
-      """
-      let fixtures ≔
-        first ‥
-          (second ‥
-            (third ‥ empty))
-
-      let next ≔
-        worth
-
-      """
-    ),
-    ( "split right side",
-      """
-      bizen:(float evenbraid) elementary {
-      let sine: [a evenbraid b:] ≔
-      (((0.0 offdraw_float b) evenbraid a) exponent)
-      sine-from-exponents ((b evenbraid (0.0 offdraw_float a)) exponent)
-      }
-
-      """,
-      """
-      bizen: (float evenbraid) elementary {
-        let sine: [a evenbraid b:] ≔
-          (((0.0 offdraw_float b) evenbraid a) exponent)
-            sine-from-exponents ((b evenbraid (0.0 offdraw_float a)) exponent)
-      }
-
-      """
-    ),
-    ( "multiline law annotation",
-      """
-      flock atfoldsome:[f:[*, *], *] {
-      let rule:[a:a f,
-      (a atfold (sameness sheer)) = a]
-      let sheer_rule:[a:a, (a sheer) = (a sheer)]
-      }
-
-      """,
-      """
-      flock atfoldsome: [f: [*, *], *] {
-        let rule: [a: a f,
-          (a atfold (sameness sheer)) = a]
-        let sheer_rule: [a: a, (a sheer) = (a sheer)]
-      }
-
-      """
-    ),
-    ( "equals signs in strings and comments",
-      """
-      let string ≔ 'a = b' # =
-      let next ≔ +1
-
-      """,
-      """
-      let string ≔ 'a = b' # =
-      let next ≔ +1
-
-      """
-    ),
-    ( "decimal unicode and block comments",
-      """
-      let outcome ≔
-      match staff {
-      `\\32; ^ 1,
-      _ ^ 0
-      }
-      /*
-        {
-      */
-      let next ≔ 1 /* { = */
-
-      """,
-      """
-      let outcome ≔
-        match staff {
-          `\\32; ^ 1,
-          _     ^ 0
-        }
-      /*
-        {
-      */
-      let next ≔ 1 /* { = */
-
-      """
-    ),
-    ( "windows newlines",
-      "ilk box: * {\r\nbox: box\r\n}\r\n",
-      """
-      ilk box: * {
-        box: box
-      }
-
-      """
-    ),
-    ( "blank line endeth continuation",
-      """
-      show let worth ≔
-        +1
-
-      ## the next declaration.
-      show let next ≔ +2
-
-      """,
-      """
-      show let worth ≔
-        +1
-
-      ## the next declaration.
-      show let next ≔ +2
-
-      """
-    ),
-    ( "comment useth structural indentation",
-      """
-      flock sameness: [a: *, *] {
-        let rule: [x: a,
-        # the equation.
-          (x sameness) = x]
-        # the next law.
-        let next_rule: [x: a, (x sameness) = x]
-      }
-
-      """,
-      """
-      flock sameness: [a: *, *] {
-        let rule: [x: a,
-        # the equation.
-          (x sameness) = x]
-        # the next law.
-        let next_rule: [x: a, (x sameness) = x]
-      }
 
       """
     )

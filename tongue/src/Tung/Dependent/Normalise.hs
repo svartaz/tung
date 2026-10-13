@@ -297,7 +297,7 @@ reduceSpine normaliser headDefinition neutral = case neutralSpine neutral of
       | Just literal <- valueLiteral value =
           forceWith normaliser ty >>= \case
             VNeutral (NGlobal name []) | name == literalType literal -> Right (VLiteral name literal)
-            _ -> Left "invalid checked host literal result type"
+            _ -> Left "invalid checked host literal result ilk"
       | Just (constructor, writtenFields) <- hostConstructor value =
           forceWith normaliser ty >>= \case
             VNeutral neutral

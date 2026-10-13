@@ -4,18 +4,14 @@ ilk even: * {
   from_odd: [odd, even]
 }
 
-ilk odd: * {
-  from_even: [even, odd]
-}
+ilk odd: * { from_even: [even, odd] }
 
 ## ordinary matching still selecteth only this family's constructors.
-let parent: [odd, even] ≔ { e from_even ^ e }
+let parent: [odd, even] ≔ {e from_even ^ e}
 
 let step: [@α: *, _: α, n: ℕ, ℕ] ≔ n heir
 
 ## both eliminators take both motives and all three constructor methods.
-let rime_even: [even, ℕ] ≔
-  {_: even ^ ℕ} unbuild even {_: odd ^ ℕ} 0 step step
+let rime_even: [even, ℕ] ≔ {_: even ^ ℕ} unbuild even {_: odd ^ ℕ} 0 step step
 
-let rime_odd: [odd, ℕ] ≔
-  {_: even ^ ℕ} unbuild odd {_: odd ^ ℕ} 0 step step
+let rime_odd: [odd, ℕ] ≔ {_: even ^ ℕ} unbuild odd {_: odd ^ ℕ} 0 step step

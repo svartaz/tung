@@ -1,5 +1,5 @@
 bring _fremmed.tung
-bring flock/order/withfill.tung
+bring flock/order/midfill.tung
 bring ilk/one.tung
 bring ilk/two.tung
 
@@ -10,8 +10,7 @@ show let when: [𝟚, 𝟙 deed, 𝟙 deed] ≔ {
 }
 
 ## a deed that performeth the doing only when the kilter is false.
-show let when_not: [two: 𝟚, doing: 𝟙 deed, 𝟙 deed] ≔
-  (two ¬) when doing
+show let when_not: [two: 𝟚, doing: 𝟙 deed, 𝟙 deed] ≔ (two ¬) when doing
 
 ## pick and run one delayed branch.
 show let branch: [@α: *, [𝟚, [𝟙, α], [𝟙, α], α]] ≔ {

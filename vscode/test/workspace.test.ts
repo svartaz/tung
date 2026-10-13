@@ -98,7 +98,7 @@ test("imports expose shown names under explicit and basename aliases", async (co
     ...Object.fromEntries(
       cases.map(([file, imported, alias, namespace]) => [
         file,
-        `use ${imported}${alias ? ` ${alias}` : ""} yield ${namespace}~answer`,
+        `bring ${imported}${alias ? ` ${alias}` : ""} yield ${namespace}~answer`,
       ]),
     ),
   });

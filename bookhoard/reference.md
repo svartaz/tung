@@ -47,7 +47,7 @@ the ascii spelling of its flock name.
   `‥_greatness_under`, since `greatness` is a left fold and a tail's size is not below
   its list's by conversion alone. the [language document](../tongue/language.md#let-declarations)
   giveth the call notation.
-- `deed/misfaresome.tung` and `deed/onstand.tung` layer failure and state over `deed`
+- `deed/misfaresome.tung` and `deed/hade.tung` layer failure and state over `deed`
   as single-constructor wrappers, so each hath its own functor, applicative,
   and monad bizens. they are specialised to `deed`, not general transformers:
   a transformer over any monad would need its laws for an arbitrary inner

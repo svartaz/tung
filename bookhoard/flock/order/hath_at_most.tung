@@ -7,7 +7,8 @@ show flock hath_≤: [α: *, @: α hath_≍, *] {
   let ≤: [α, α, 𝟚]
 }
 
-show let <: [@α: *, @: α hath_≤, @: α hath_≍, a: α, b: α, 𝟚] ≔ (a ≤ b) if (a ≭ b) nay
+show let <: [@α: *, @: α hath_≤, @: α hath_≍, a: α, b: α, 𝟚]
+  ≔ (a ≤ b) if (a ≭ b) nay
 
 bizen: 𝟚 hath_≤ {
   let ≤ ≔ {

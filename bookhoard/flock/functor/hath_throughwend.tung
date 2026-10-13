@@ -4,8 +4,11 @@ bring flock/functor/atfoldsome.tung
 bring flock/functor/downshaper.tung
 
 show flock hath_throughwend: [φ: [*, *], @: φ functor, @: φ downshaper, *] {
-  let throughwend: [@μ: [*, *], @: μ atfoldsome, @α: *, @β: *, α φ, [α, β μ], (β φ) μ]
+  let throughwend
+    : [@μ: [*, *], @: μ atfoldsome, @α: *, @β: *, α φ, [α, β μ], (β φ) μ]
 }
 
-show let sequence: [@φ: [*, *], @: φ hath_throughwend, @μ: [*, *], @: μ atfoldsome, @α: *, amf: (α μ) φ, (α φ) μ] ≔
-  amf throughwend sameness
+show let sequence
+  : [@φ: [*, *], @: φ hath_throughwend, @μ: [*, *], @: μ atfoldsome, @α: *,
+    amf: (α μ) φ, (α φ) μ]
+  ≔ amf throughwend sameness

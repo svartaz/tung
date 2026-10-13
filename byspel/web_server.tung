@@ -3,14 +3,13 @@ bring often.tung
 bring web/request.tung
 bring web/server.tung
 
-let respond: [r: _request, _response] ≔
-  match (r request~target) ≍ '/' {
-    yea ^ 'hello tung\n' ok,
-    nay ^ 'not found\n' not_found
-  }
+let respond: [r: _request, _response] ≔ match (r request~target) ≍ '/' {
+  yea ^ 'hello tung\n' ok,
+  nay ^ 'not found\n' not_found
+}
 
-let route: [r: _request, _response deed] ≔
-  ('request:' · (r request~target) $ write_line) then (r respond $ sheer)
+let route: [r: _request, _response deed]
+  ≔ ('request:' · (r request~target) $ write_line) then (r respond $ sheer)
 
-let main: 𝟙 deed ≔
-  8080 serve route $ bind { message ^ 'web server:' · message $ write_line }
+let main: 𝟙 deed
+  ≔ 8080 serve route $ bind {message ^ 'web server:' · message $ write_line}

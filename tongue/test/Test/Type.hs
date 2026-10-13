@@ -249,7 +249,7 @@ importCases =
        in "left~_token" `isInfixOf` message && "right~_token" `isInfixOf` message,
     expect "concrete aliases are not rendered as applied constructors" $
       let message = checkSource False "bring middle.tung outer let bad:string ≔ outer~worth" concreteAliasProjection
-       in "type error:" `isPrefixOf` message && not ("outer~boxed<ℤ>" `isInfixOf` message),
+       in "ilk error:" `isPrefixOf` message && not ("outer~boxed<ℤ>" `isInfixOf` message),
     let message = checkSource False "bring middle_left.tung left bring middle_right.tung right let bad:[@a:*, @:a left~hath_sameness, x: a, a] ≔ x right~sameness" reexportClassImports
      in expect ("re-exported constraint mismatch: " ++ message) ("left~hath_sameness" `isInfixOf` message && "right~hath_sameness" `isInfixOf` message),
     expect "imported class-member mismatch nameth both type aliases" $
@@ -270,14 +270,14 @@ importCases =
     typeOkWith "explicit use aliases override colliding defaults" "bring ilk/item.tung ilk_item bring syntax/item.tung syntax_item let left ≔ ilk_item~worth let right ≔ syntax_item~worth" defaultAliasCollisionImports,
     expect "ambiguous imports suggest surface namespaces" $
       let message = checkSource False "bring ilk/kindful.tung bring flock/algebra/whole/semiring.tung let bad ≔ naught" ambiguousZeros
-       in "natural~naught" `isInfixOf` message && "semiring~naught" `isInfixOf` message && not ("/" `isInfixOf` message),
+       in "kindful~naught" `isInfixOf` message && "semiring~naught" `isInfixOf` message && not ("/" `isInfixOf` message),
     typeErrWith "a throughgo flock requireth an explicit re-export" "bring middle.tung flock child:[a:*, @:a hidden, *] { let child:[a, a] }" privateClassImports,
     typeErrWith "a throughgo flock cannot be reached through its private namespace" "bring middle.tung flock child:[a:*, @:a leaf~hidden, *] { let child:[a, a] }" privateClassImports,
     expectPrefix "bad imported source is rejected" "parse error:" (checkSource False "bring bad.tung" (Map.singleton "bad.tung" "let []")),
     typeErrWith "self use cycle is rejected" "bring self.tung" (Map.singleton "self.tung" "bring self.tung"),
     typeErrWith "mutual use cycle is rejected" "bring left.tung" cyclic,
-    expectEq "a unit deed main is runnable" "type ok" (checkSource True (deedPrelude ++ "let main:𝟙 deed ≔ only sheer") unitModule),
-    expectEq "main's deed type may be inferred" "type ok" (checkSource True (deedPrelude ++ "let main ≔ only sheer") unitModule),
+    expectEq "a unit deed main is runnable" "ilk ok" (checkSource True (deedPrelude ++ "let main:𝟙 deed ≔ only sheer") unitModule),
+    expectEq "main's deed type may be inferred" "ilk ok" (checkSource True (deedPrelude ++ "let main ≔ only sheer") unitModule),
     runnableErr "main is not a function" (deedPrelude ++ "let main:[_: 𝟙, 𝟙 deed] ≔ { _ ^ only sheer }"),
     expectEq "reporteth a source type" (Right "[@α: *, α, α]") (inspectType "show let sameness: [@α: *, x: α, α] ≔ x" Map.empty "sameness"),
     expectEq "type display showeth a deed result" (Right "[@α: *, α, α deed]") (inspectType (deedPrelude ++ "let wrap: [@α: *, x: α, α deed] ≔ x sheer") unitModule "wrap"),
@@ -370,7 +370,7 @@ orderCases imports =
         ++ "bizen:rank hath_≍ { let ≍ ≔ { lesser, lesser ^ yea, greater, greater ^ yea, _, _ ^ nay } } "
     partialPrefix =
       rankPrefix
-        ++ "bizen:rank order_half { let ≤ ≔ { lesser, _ ^ yea, greater, greater ^ yea, greater, lesser ^ nay } let ≤_eftbend ≔ sorry let ≤_witherevenmete ≔ sorry let ≤_throughgo ≔ sorry } "
+        ++ "bizen:rank order_half { let ≤ ≔ { lesser, _ ^ yea, greater, greater ^ yea, greater, lesser ^ nay } let ≤_eftbend ≔ sorry let ≤_withevenmete ≔ sorry let ≤_throughgo ≔ sorry } "
     totalPrefix = partialPrefix ++ "bizen:rank order_whole { let ≤_whole ≔ sorry let ≤_= ≔ sorry } "
     setPrefix =
       "bring often.tung bring ilk/set.tung "

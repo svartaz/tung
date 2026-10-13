@@ -325,7 +325,7 @@ specialiseNested globals peers families@(first : _) = do
       context <- lift parameterContext
       lift (K.inferTerm globals context carrier) >>= \case
         N.VSort sort -> lift (K.oblige (LevelEqual sort (familySort first)))
-        _ -> lift (K.failure "nested container application must be a type")
+        _ -> lift (K.failure "nested container application must be an ilk")
       info <- lift (lift (inductiveInfo globals container))
       constructors <- forM (zip [0 :: Int ..] (inductiveConstructorInfo info)) \(index, (original, _)) -> do
         let temporary = SymbolId owner ("#nested_constructor_" ++ root ++ "_" ++ show (length existing) ++ "_" ++ show index)

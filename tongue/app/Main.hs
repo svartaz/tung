@@ -28,18 +28,16 @@ main = do
   arguments <- getArgs
   (strict, allowed, args) <- either (\message -> putStrLn message >> exitFailure) pure (commandOptions arguments)
   case args of
-    ["--check-proof", name, path] -> checkProofFile allowed name path
-    _ | Just _ <- allowed -> putStrLn "axiom options require --check-proof" >> exitFailure
+    ["--name", name, path] -> checkNameFile strict allowed name path
+    _ | Just _ <- allowed -> putStrLn "orsetting options require --name" >> exitFailure
     ["--check-stdin"] -> checkStdin strict
     ["--editor-session"] -> editorSession
     ["--language-metadata"] -> putStr languageMetadata
     ["--library-paths"] -> getCurrentDirectory >>= listLibraryPaths
     ["--library-paths", path] -> listLibraryPaths path
-    ["--check", path] -> checkFile strict True path
-    ["--check-module", path] -> checkFile strict False path
-    ["--type-of", name, path] -> typeOfFile name path
-    ["--format-stdin"] -> getContents >>= putStr . formatSource
-    "--format" : paths | not (null paths) -> mapM_ formatFile paths
+    ["--check", path] -> checkFile strict path
+    ["--neaten-stdin"] -> getContents >>= either (\message -> putStrLn ("neaten error: " ++ message) >> exitFailure) putStr . formatSource
+    "--neaten" : paths | not (null paths) -> mapM formatFile paths >>= \results -> unless (and results) exitFailure
     ["--help"] -> putStr usage
     path : programArgs
       | not ("-" `isPrefixOf` path) -> runFile strict path programArgs
@@ -51,13 +49,13 @@ commandOptions :: [String] -> Either String (Bool, Maybe [String], [String])
 commandOptions = go False Nothing False
   where
     go _ allowed empty ("--no-sorry" : rest) = go True allowed empty rest
-    go strict allowed empty ("--allow-axiom" : name : rest)
+    go strict allowed empty ("--allow-orset" : name : rest)
       | not ("--" `isPrefixOf` name), not empty = go strict (Just (maybe [] id allowed ++ [name])) False rest
-    go _ _ _ ["--allow-axiom"] = Left "--allow-axiom requireth a name"
-    go strict allowed _ ("--no-axioms" : rest)
+    go _ _ _ ["--allow-orset"] = Left "--allow-orset requireth a name"
+    go strict allowed _ ("--no-orset" : rest)
       | maybe True null allowed = go strict (Just []) True rest
-    go _ _ _ ("--allow-axiom" : _) = Left "--allow-axiom requireth a name and cannot accompany --no-axioms"
-    go _ _ _ ("--no-axioms" : _) = Left "--no-axioms cannot accompany --allow-axiom"
+    go _ _ _ ("--allow-orset" : _) = Left "--allow-orset requireth a name and cannot accompany --no-orset"
+    go _ _ _ ("--no-orset" : _) = Left "--no-orset cannot accompany --allow-orset"
     go strict allowed _ args = Right (strict, allowed, args)
 
 -- a project loaded from the library roots of `base`, and the `use` paths it
@@ -122,33 +120,35 @@ runProgram programArgs program = do
         Right 0 -> pure ()
         Right status -> exitWith (ExitFailure (fromInteger status))
 
-formatFile :: FilePath -> IO ()
+-- each file is neatened on its own; one that doth not parse is reported and
+-- left unchanged.
+formatFile :: FilePath -> IO Bool
 formatFile path = do
   source <- readFile path
   _ <- Exception.evaluate (length source)
-  let formatted = formatSource source
-  unless (formatted == source) (writeFile path formatted)
+  case formatSource source of
+    Left message -> putStrLn ("neaten error: " ++ path ++ ": " ++ message) >> pure False
+    Right formatted -> unless (formatted == source) (writeFile path formatted) >> pure True
 
 runFile :: Bool -> FilePath -> [String] -> IO ()
 runFile strict path programArgs = withProgram path \program -> do
   refuseSorry strict program
   runProgram programArgs program
 
--- a runnable file must also define `main: 𝟙 deed`.
-checkFile :: Bool -> Bool -> FilePath -> IO ()
-checkFile strict runnable path = withProject path (`loadProjectFile` path) reportGoals \program -> do
+-- a checked file is a module or a program: a `main` it defineth must be
+-- `𝟙 deed`.
+checkFile :: Bool -> FilePath -> IO ()
+checkFile strict path = withProject path (`loadProjectFile` path) reportGoals \program -> do
   source <- readFile path
-  case (runnable, DependentRun.requireMain program) of
-    (True, Left message) -> typeFailure message
-    _ -> checkedOk strict path source program
+  either typeFailure (const (checkedOk strict path source program)) (DependentRun.checkMain program)
 
--- a checked program printeth `type ok`, each declaration or law that assumeth
+-- a checked program printeth `ilk ok`, each declaration or law that assumeth
 -- `sorry`, and then the goal and named context of each `sorry` in the file.
 -- under `--no-sorry` an assumption faileth instead.
 checkedOk :: Bool -> FilePath -> String -> Dependent.SourceProgram -> IO ()
 checkedOk strict path source program = do
   refuseSorry strict program
-  putStrLn "type ok"
+  putStrLn "ilk ok"
   mapM_ (putStrLn . ("sorry: " ++)) (Dependent.sorryAssumptions program)
   mapM_ (putStrLn . ("orsetting: " ++)) (Dependent.orsendAssumptions program)
   printGoals path source (reverse (Dependent.sourceHoles program))
@@ -169,18 +169,12 @@ refuseSorry strict program = case Dependent.sorryAssumptions program of
     | strict -> mapM_ (putStrLn . ("sorry: " ++)) assumptions >> exitFailure
   _ -> pure ()
 
-typeOfFile :: String -> FilePath -> IO ()
-typeOfFile name path = withProgram path \program ->
-  case Dependent.typeOfName program name of
-    Right ty -> putStrLn ("type: " ++ ty)
-    Left message -> typeFailure message
-
--- one theorem is audited independently of unfinished, unrelated declarations.
-checkProofFile :: Maybe [String] -> String -> FilePath -> IO ()
-checkProofFile override name path = withProgram path \program -> do
+-- one name is audited independently of unfinished, unrelated declarations.
+checkNameFile :: Bool -> Maybe [String] -> String -> FilePath -> IO ()
+checkNameFile strict override name path = withProgram path \program -> do
   policy <- proofPolicy override path
-  case proofResult program policy name of
-    Left message -> putStrLn ("proof error: " ++ message) >> exitFailure
+  case proofResult program strict policy name of
+    Left message -> putStrLn ("name error: " ++ message) >> exitFailure
     Right (audit, verified) -> do
       putStr (proofReport audit verified)
       either (const exitFailure) pure verified
@@ -189,18 +183,18 @@ proofPolicy :: Maybe [String] -> FilePath -> IO (Either String (Maybe [String]))
 proofPolicy (Just names) _ = pure (Right (Just names))
 proofPolicy Nothing path = proofAxiomPolicy path
 
-proofResult :: Dependent.SourceProgram -> Either String (Maybe [String]) -> String -> Either String (Dependent.ProofAudit, Either String ())
-proofResult program policy name = do
+proofResult :: Dependent.SourceProgram -> Bool -> Either String (Maybe [String]) -> String -> Either String (Dependent.ProofAudit, Either String ())
+proofResult program strict policy name = do
   audit <- Dependent.auditProof program name
-  pure (audit, policy >>= \allowed -> Dependent.verifyProof program allowed audit)
+  pure (audit, policy >>= \allowed -> Dependent.verifyProof program strict allowed audit)
 
 -- the cli and editor share the compiler's complete, deterministic report.
 proofReport :: Dependent.ProofAudit -> Either String () -> String
 proofReport audit verified =
   unlines $
-    ["proof: " ++ auditName, "type: " ++ auditType]
+    ["name: " ++ auditName, "ilk: " ++ auditType]
       ++ (if null auditDependencies then ["dependencies: none"] else map dependencyReport auditDependencies)
-      ++ [either ("proof error: " ++) (const "proof ok") verified]
+      ++ [either ("name error: " ++) (const "name ok") verified]
   where
     auditName = Dependent.auditName audit
     auditType = Dependent.auditType audit
@@ -217,7 +211,8 @@ checkStdin :: Bool -> IO ()
 checkStdin strict = do
   source <- getContents
   current <- getCurrentDirectory
-  withProject current (\roots -> loadProjectSource roots (current </> "<stdin>.tung") source) (\_ diagnostic holes -> putStrLn (diagnosticMessage diagnostic) >> printGoals "<stdin>" source holes >> exitFailure) (checkedOk strict "<stdin>" source)
+  withProject current (\roots -> loadProjectSource roots (current </> "<stdin>.tung") source) (\_ diagnostic holes -> putStrLn (diagnosticMessage diagnostic) >> printGoals "<stdin>" source holes >> exitFailure) \program ->
+    either typeFailure (const (checkedOk strict "<stdin>" source program)) (DependentRun.checkMain program)
 
 listLibraryPaths :: FilePath -> IO ()
 listLibraryPaths path =
@@ -226,7 +221,7 @@ listLibraryPaths path =
     Right roots -> mapM_ putStrLn roots
 
 typeFailure :: String -> IO a
-typeFailure message = putStrLn ("type error: " ++ message) >> exitFailure
+typeFailure message = putStrLn ("ilk error: " ++ message) >> exitFailure
 
 projectFailure :: String -> IO a
 projectFailure message = putStrLn ("project error: " ++ message) >> exitFailure
@@ -241,7 +236,7 @@ data EditorRequest = EditorRequest
     requestSource :: String,
     requestImports :: Map.Map String String,
     requestPath :: Maybe FilePath,
-    requestAllowedAxioms :: Maybe [String]
+    requestAllowedOrsettings :: Maybe [String]
   }
 
 instance FromJSON EditorRequest where
@@ -256,7 +251,7 @@ instance FromJSON EditorRequest where
       <*> request .: "source"
       <*> request .: "imports"
       <*> request .:? "path"
-      <*> request .:? "allowedAxioms"
+      <*> request .:? "allowedOrsettings"
 
 -- the session keepeth checked modules by interface key, so editing one file
 -- rechecketh only the modules that depend on it. a request that nameth its
@@ -315,23 +310,23 @@ cancelEditorRequest workers outputLock requestId =
     mapM_ killThread thread
 
 editorResponse :: ImportCache -> EditorRequest -> IO Value
-editorResponse cache EditorRequest {requestCommand, requestName, requestSource = source, requestImports = imports, requestPath, requestAllowedAxioms} =
+editorResponse cache EditorRequest {requestCommand, requestName, requestSource = source, requestImports = imports, requestPath, requestAllowedOrsettings} =
   case requestCommand of
     "check" ->
       compilationReport cache requestPath source imports <&> \(result, holes) ->
         object ["kind" .= ("check" :: String), "diagnostics" .= (either (pure . failureDiagnostic source imports) (const []) result ++ holeGoals holes)]
-    "type" ->
+    "ilk" ->
       compiled cache requestPath source imports <&> \case
         Left failure -> editorError (diagnosticMessage (failureDiagnostic source imports failure))
-        Right program -> either (editorError . ("type error: " ++)) (\ty -> object ["kind" .= ("type" :: String), "type" .= ty]) (Dependent.typeOfName program requestName)
+        Right program -> either (editorError . ("ilk error: " ++)) (\ty -> object ["kind" .= ("ilk" :: String), "ilk" .= ty]) (Dependent.typeOfName program requestName)
     "proof" ->
       compiled cache requestPath source imports >>= \case
         Left failure -> pure (editorError (diagnosticMessage (failureDiagnostic source imports failure)))
         Right program -> do
           path <- maybe getCurrentDirectory pure requestPath
-          policy <- proofPolicy requestAllowedAxioms path
-          pure $ either (editorError . ("proof error: " ++)) (uncurry proofResponse) (proofResult program policy requestName)
-    "format" -> pure (object ["kind" .= ("format" :: String), "source" .= formatSource source])
+          policy <- proofPolicy requestAllowedOrsettings path
+          pure $ either (editorError . ("name error: " ++)) (uncurry proofResponse) (proofResult program True policy requestName)
+    "format" -> pure (either (editorError . ("neaten error: " ++)) (\formatted -> object ["kind" .= ("format" :: String), "source" .= formatted]) (formatSource source))
     "highlight" -> pure (object ["kind" .= ("highlight" :: String), "roles" .= highlightSource source])
     _ -> pure (editorError ("checker session failed: unknown command '" ++ requestCommand ++ "'"))
 
@@ -342,9 +337,9 @@ proofResponse :: Dependent.ProofAudit -> Either String () -> Value
 proofResponse audit verified =
   object
     [ "kind" .= ("proof" :: String),
-      "audit" .= object ["name" .= auditName, "type" .= auditType, "dependencies" .= map dependencyJSON auditDependencies],
+      "audit" .= object ["name" .= auditName, "ilk" .= auditType, "dependencies" .= map dependencyJSON auditDependencies],
       "verified" .= either (const False) (const True) verified,
-      "message" .= either id (const "proof ok") verified,
+      "message" .= either id (const "name ok") verified,
       "report" .= proofReport audit verified
     ]
   where
@@ -355,11 +350,11 @@ proofResponse audit verified =
       object $
         [ "symbol" .= object ["module" .= moduleName owner, "name" .= name],
           "name" .= dependencyName,
-          "type" .= dependencyType
+          "ilk" .= dependencyType
         ]
           ++ case dependencyKind of
             Dependent.SorryDependency -> ["kind" .= ("sorry" :: String)]
-            Dependent.AxiomDependency -> ["kind" .= ("axiom" :: String)]
+            Dependent.AxiomDependency -> ["kind" .= ("orsetting" :: String)]
             Dependent.HostDependency key -> ["kind" .= ("host" :: String), "host" .= key]
     moduleName RootModule = "<root>"
     moduleName (SourceModule path) = path
@@ -406,17 +401,15 @@ usage =
   """
   usage: tung <file.tung> [arguments...]
          tung --check <file.tung>
-         tung --check-module <file.tung>
-         tung --type-of <name> <file.tung>
-         tung --check-proof <name> <file.tung>
-         tung --format <file.tung>...
-         tung --format-stdin
+         tung --name <name> <file.tung>
+         tung --neaten <file.tung>...
+         tung --neaten-stdin
          tung --language-metadata
          tung --library-paths [project-path]
 
-  --no-sorry before a command rejecteth any declaration or law that assumeth sorry.
-  --check-proof always rejecteth reachable sorry and reporteth axioms and hosts.
-  --allow-axiom <name> may precede --check-proof repeatedly; --no-axioms alloweth none.
-  without either option, --check-proof useth the nearest tung.yaml proof policy.
+  --name printeth the name's ilk and the sorry, orsettings, and hosts it reacheth.
+  --no-sorry before a command rejecteth any reachable sorry.
+  --allow-orset <name> may precede --name repeatedly; --no-orset alloweth none.
+  without either option, --name useth the nearest tung.yaml proof policy.
 
   """

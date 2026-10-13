@@ -27,5 +27,5 @@ fixtureOverrides = do
   after <- evaluate (Harness.checkSource False transitive Map.empty)
   Harness.expectEq
     "fixture overrides invalidate direct and transitive imports and stay isolated"
-    ("type ok", [True, True], "type ok")
+    ("ilk ok", [True, True], "ilk ok")
     (before, map (isInfixOf "unknown name 'nay'") [directResult, transitiveResult], after)

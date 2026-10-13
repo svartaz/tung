@@ -241,7 +241,7 @@ memoisedMotive environment scope structuralType resultMotive = do
           E.unify (scopeContext scope) inferred motiveType
           next <- eval scope motive >>= E.instantiate codomain
           pure ((Apply Explicit term motive, next), domains ++ [(target, inductiveIndexPlicities info, motiveType)])
-        _ -> E.failure "invalid inductive motive type"
+        _ -> E.failure "invalid inductive motive ilk"
     -- bind the fields and their type-valued hypotheses, then build the record.
     belowMethod root plicities result current _ [] children = do
       entries <- forM (zip [0 :: Int ..] (reverse children)) \(index, (target, field, hypothesis)) -> do

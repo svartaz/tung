@@ -9,9 +9,14 @@ interface PendingRequest {
   version: number;
 }
 type CompilerCommand =
-  "check" | "type" | "proof" | "format" | "highlight" | "cancel";
+  | "check"
+  | "ilk"
+  | "proof"
+  | "format"
+  | "highlight"
+  | "cancel";
 interface CompilerDiagnostic {
-  kind: "parse" | "type" | "goal";
+  kind: "parse" | "ilk" | "goal";
   path?: string;
   start: number;
   end: number;
@@ -20,20 +25,20 @@ interface CompilerDiagnostic {
 interface ProofDependency {
   symbol: { module: string; name: string };
   name: string;
-  type: string;
-  kind: "sorry" | "axiom" | "host";
+  ilk: string;
+  kind: "sorry" | "orsetting" | "host";
   host?: string;
 }
 interface ProofResult {
   kind: "proof";
-  audit: { name: string; type: string; dependencies: ProofDependency[] };
+  audit: { name: string; ilk: string; dependencies: ProofDependency[] };
   verified: boolean;
   message: string;
   report: string;
 }
 type CompilerResult =
   | { kind: "check"; diagnostics: CompilerDiagnostic[] }
-  | { kind: "type"; type: string }
+  | { kind: "ilk"; ilk: string }
   | ProofResult
   | { kind: "format"; source: string }
   | { kind: "highlight"; roles: SourceRole[] }
@@ -62,8 +67,7 @@ class CompilerBridge {
   configure(tongue, libraryRoots: string[] = [], executablePath?: string) {
     const tongueChanged = tongue !== this.tongue;
     const executableChanged = executablePath !== this.executablePath;
-    const rootsChanged =
-      libraryRoots.length !== this.libraryRoots.length ||
+    const rootsChanged = libraryRoots.length !== this.libraryRoots.length ||
       libraryRoots.some((root, index) => root !== this.libraryRoots[index]);
     if (tongueChanged || rootsChanged || executableChanged) {
       this.dispose();
@@ -86,9 +90,9 @@ class CompilerBridge {
       documentPath(model.uri),
     );
   }
-  typeOf(model, imports, name, version = 0) {
+  ilkOf(model, imports, name, version = 0) {
     return this.request(
-      "type",
+      "ilk",
       model.text,
       imports,
       name,
@@ -96,7 +100,7 @@ class CompilerBridge {
       documentPath(model.uri),
     );
   }
-  proof(model, imports, name, version = 0, allowedAxioms?: string[]) {
+  proof(model, imports, name, version = 0, allowedOrsettings?: string[]) {
     return this.request(
       "proof",
       model.text,
@@ -104,7 +108,7 @@ class CompilerBridge {
       name,
       version,
       documentPath(model.uri),
-      allowedAxioms,
+      allowedOrsettings,
     );
   }
   format(source, version = 0) {
@@ -112,7 +116,7 @@ class CompilerBridge {
     return {
       ...request,
       result: request.result.then((result) =>
-        result.kind === "format" ? result.source : undefined,
+        result.kind === "format" ? result.source : undefined
       ),
     };
   }
@@ -121,7 +125,7 @@ class CompilerBridge {
     return {
       ...request,
       result: request.result.then((result): SourceRole[] | undefined =>
-        result.kind === "highlight" ? result.roles : undefined,
+        result.kind === "highlight" ? result.roles : undefined
       ),
     };
   }
@@ -132,7 +136,7 @@ class CompilerBridge {
     name,
     version,
     path?: string,
-    allowedAxioms?: string[],
+    allowedOrsettings?: string[],
   ) {
     const executable = this.findExecutable();
     if (!executable) {
@@ -163,7 +167,7 @@ class CompilerBridge {
         source,
         imports,
         path,
-        allowedAxioms,
+        allowedOrsettings,
       ),
     );
     return {
@@ -186,9 +190,9 @@ class CompilerBridge {
       cwd: this.tongue,
       env: this.libraryRoots.length
         ? {
-            ...globalThis.process.env,
-            TUNG_PATH: this.libraryRoots.join(path.delimiter),
-          }
+          ...globalThis.process.env,
+          TUNG_PATH: this.libraryRoots.join(path.delimiter),
+        }
         : globalThis.process.env,
       stdio: ["pipe", "pipe", "pipe"],
     });
@@ -314,8 +318,9 @@ class CompilerBridge {
   }
   findDistExecutable() {
     const root = path.join(this.tongue, "dist-newstyle", "build");
-    return findFile(root, (file) =>
-      file.endsWith(path.join("x", "tung", "build", "tung", "tung")),
+    return findFile(
+      root,
+      (file) => file.endsWith(path.join("x", "tung", "build", "tung", "tung")),
     );
   }
 }
@@ -363,7 +368,7 @@ const isRange = (start: unknown, end: unknown) =>
   (end as number) >= (start as number);
 const isDiagnostic = (value: unknown): value is CompilerDiagnostic =>
   isObject(value) &&
-  ["parse", "type", "goal"].includes(value.kind as string) &&
+  ["parse", "ilk", "goal"].includes(value.kind as string) &&
   (value.path === undefined || typeof value.path === "string") &&
   isRange(value.start, value.end) &&
   typeof value.message === "string";
@@ -379,8 +384,8 @@ const isProofDependency = (value: unknown): value is ProofDependency =>
   typeof value.symbol.module === "string" &&
   typeof value.symbol.name === "string" &&
   typeof value.name === "string" &&
-  typeof value.type === "string" &&
-  ["sorry", "axiom", "host"].includes(value.kind as string) &&
+  typeof value.ilk === "string" &&
+  ["sorry", "orsetting", "host"].includes(value.kind as string) &&
   (value.kind === "host"
     ? typeof value.host === "string"
     : value.host === undefined);
@@ -392,13 +397,13 @@ const isResult = (value: unknown): value is CompilerResult => {
         Array.isArray(value.diagnostics) &&
         value.diagnostics.every(isDiagnostic)
       );
-    case "type":
-      return typeof value.type === "string";
+    case "ilk":
+      return typeof value.ilk === "string";
     case "proof":
       return (
         isObject(value.audit) &&
         typeof value.audit.name === "string" &&
-        typeof value.audit.type === "string" &&
+        typeof value.audit.ilk === "string" &&
         Array.isArray(value.audit.dependencies) &&
         value.audit.dependencies.every(isProofDependency) &&
         typeof value.verified === "boolean" &&
@@ -440,7 +445,7 @@ const sessionRequest = (
   source,
   imports,
   path?: string,
-  allowedAxioms?: string[],
+  allowedOrsettings?: string[],
 ) =>
   JSON.stringify({
     protocol: 1,
@@ -451,13 +456,13 @@ const sessionRequest = (
     source,
     imports: Object.fromEntries(imports),
     ...(path === undefined ? {} : { path }),
-    ...(allowedAxioms === undefined ? {} : { allowedAxioms }),
+    ...(allowedOrsettings === undefined ? {} : { allowedOrsettings }),
   }) + "\n";
 export {
   CompilerBridge,
   CompilerDiagnostic,
   CompilerResult,
   ProofResult,
-  SourceRole,
   sessionRequest,
+  SourceRole,
 };

@@ -199,7 +199,7 @@ insertInductives owner program@SourceProgram {..} declarations = inContext conte
     -- members; its dictionaries are found among the constructor's own fields.
     solveInstances provisional names
     remaining <- E.takeInstanceGoals
-    unless (null remaining) (E.failure "a bizen requirement hath a type that is still unknown; add an annotation")
+    unless (null remaining) (E.failure "a bizen requirement hath an ilk that is still unknown; add an annotation")
     checked <- for raw \(family, parameters, signature, constructors) ->
       (family,parameters,,) <$> E.zonk signature <*> mapM (\(name, ty) -> (name,) <$> E.zonk ty) constructors
     references <- E.takeReferences
@@ -301,7 +301,7 @@ insertClass owner program FlockDeclaration {..} = inContext ("in flock '" ++ flo
         Application (Name "out") [Argument Explicit inner] -> (inner, True)
         ty -> (ty, False)
       parents = [parameterType | Parameter {parameterName = Nothing, parameterType} <- flockParameters]
-  unless (all ((== Explicit) . parameterPlicity) parameters) (failure "flock parameters are written name:type, without '@'")
+  unless (all ((== Explicit) . parameterPlicity) parameters) (failure "flock parameters are written name:ilk, without '@'")
   unless (and [plicity == Implicit | Parameter plicity Nothing _ <- flockParameters]) (failure "a parent requirement is written @:parent")
   fromSource (repeated (localNames program) (flockName : [name | FlockMember name _ <- flockMembers]))
   -- member types may name earlier fields, including laws.
@@ -393,7 +393,7 @@ insertInstance owner program@SourceProgram {..} BizenDeclaration {..} = inContex
   environment <- fromString (K.defineInferred programEnvironment identity result)
   -- two bizens with one pattern would make selection incoherent.
   let existing = maybe [] classInstances (Map.lookup family classes)
-  when (any (sameInstance environment identity) existing) (failure "a bizen with the same type already exists")
+  when (any (sameInstance environment identity) existing) (failure "a bizen with the same ilk already exists")
   let registered = registerInstance False (fromMaybe defaultPriority bizenPriority, bizenFallback) family identity program {programEnvironment = environment, checkedDefinitions = (identity, result) : checkedDefinitions}
   pure registered {programHoles = reverse memberHoles ++ programHoles, programReferences = Map.insert identity references programReferences}
   where
@@ -411,12 +411,12 @@ insertInstance owner program@SourceProgram {..} BizenDeclaration {..} = inContex
     classes = nameClasses globalNames
     resultClass = \case
       Pi Implicit _ codomain -> resultClass codomain
-      Pi Explicit _ _ -> failure "a bizen type taketh only implicit parameters"
+      Pi Explicit _ _ -> failure "a bizen ilk taketh only implicit parameters"
       term
         | (Global family _, _) <- termSpine term,
           Map.member family classes ->
             pure family
-      _ -> failure "a bizen type must end in a flock application"
+      _ -> failure "a bizen ilk must end in a flock application"
     writtenClass = \case
       Product _ result -> writtenClass result
       Application (Name name) _ -> name
@@ -441,14 +441,14 @@ lowerDictionary SourceProgram {..} = bindHeader
                 [] -> (Nothing, [])
           (current, next) <- bindDomain scope name domain codomain
           Core.Lambda Implicit annotation <$> bindHeader current next rest definitions
-        N.VPi Explicit _ _ -> E.failure "a bizen type taketh only implicit parameters"
+        N.VPi Explicit _ _ -> E.failure "a bizen ilk taketh only implicit parameters"
         target -> do
           (_, term, used, bindings) <- build scope target definitions
           case Set.toList (Map.keysSet definitions `Set.difference` used) of
             name : _ -> E.failure ("'" ++ name ++ "' is not a member of this flock or a parent it witnesseth")
             [] -> pure (foldr (\(annotation, value) body -> Let annotation value body) term bindings)
     build scope target definitions = do
-      (family, arguments, info) <- classApplication target >>= maybe (E.failure "a bizen type must end in a flock application") pure
+      (family, arguments, info) <- classApplication target >>= maybe (E.failure "a bizen ilk must end in a flock application") pure
       constructor <- case Map.lookup family (globals programEnvironment) of
         Just Definition {definitionBody = TypeConstructor InductiveInfo {inductiveConstructorInfo = [(constructor, _)]}} -> pure constructor
         _ -> E.failure "a flock requireth one checked constructor"

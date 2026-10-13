@@ -30,21 +30,22 @@ further roots. checking and running use the same roots.
 the extension provideth:
 
 - syntax and semantic highlighting, folding, and selection ranges;
-- compiler-backed diagnostics and inferred types in hover;
+- compiler-backed diagnostics and inferred ilks in hover;
 - the goal and named context of each `sorry`, as information and in hover;
 - `Tung: Check Proof`, with the selected declaration's assumptions and project
-  axiom policy;
+  orsetting policy;
 - completion, signature help, and doc comments in hover;
 - declaration, definition, type-definition, implementation, and reference
   navigation;
 - document and workspace symbols, highlights, and checked rename;
-- document links for `bring`, formatting, and supported quick fixes; and
+- document links for `bring`, whole-document neatening, and supported quick
+  fixes; and
 - a `Run Tung File` command and editor play button.
 
 completion and navigation follow local and declared-library imports. unsaved
 imported files are checked with their current contents. navigation and
 highlighting work while a file is incomplete. compiler results remain
-authoritative for diagnostics, inferred types, and formatting.
+authoritative for diagnostics, inferred ilks, and neatening.
 recoverable `sorry` goals and named contexts appear beside checking errors.
 failed declarations and their dependants remain unavailable; broken imports
 provide no partial names. unfinished delimiters or strings may limit recovery
@@ -55,7 +56,7 @@ to check a proof, place the cursor in its top-level `let`, or select its name,
 then run `Tung: Check Proof`. the `Tung Proof` output showeth the compiler's
 report. unsaved changes are included. "proof checking" in
 `tongue/language.md` explaineth assumptions
-and the optional `tung.yaml` axiom policy.
+and the optional `tung.yaml` orsetting policy.
 
 to run a file, open a saved `.tung` file and select the editor's play button.
 ye can also run `Tung: Run Tung File` from the command palette. the command

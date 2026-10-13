@@ -6,5 +6,4 @@ let fibonacci: [ℕ, ℕ] ≔ {
   (n heir) heir ^ (n fibonacci) + ((n heir) fibonacci)
 }
 
-let main: 𝟙 deed ≔
-  40 fibonacci $ to_string $ write_line
+let main: 𝟙 deed ≔ 40 fibonacci $ to_string $ write_line

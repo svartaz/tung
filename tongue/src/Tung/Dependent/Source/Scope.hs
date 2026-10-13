@@ -120,7 +120,7 @@ requireUniverse Scope {scopeContext} value =
       level <- E.freshLevel
       E.unify scopeContext value (N.VSort level)
       pure level
-    _ -> E.failure "annotation is not a type"
+    _ -> E.failure "annotation is not an ilk"
 
 -- a let-bound local carrieth its value, so conversion seeth through it.
 define :: Scope -> Maybe String -> N.Value -> N.Value -> Scope

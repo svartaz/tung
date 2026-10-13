@@ -97,13 +97,13 @@ tests example =
       compiled (example ++ "let loop:[x:nat, nat] ≔ match x { naught ^ naught, n heir ^ (n heir) loop }\n"),
     rejectContaining "selfcalling on a rebuilt matched worth is rejected" "must pass a direct child" $
       compiled (example ++ "let loop:[nat, nat] ≔ { naught ^ naught, naught heir ^ naught, (n heir) heir ^ ((n heir) heir) loop }\n"),
-    rejectContaining "a recursive definition needs an annotation" "needs a type annotation" $
+    rejectContaining "a recursive definition needs an annotation" "needs an ilk annotation" $
       compiled (example ++ "let loop ≔ loop\n"),
     rejectContaining "a recursive name is not a worth" "must only be called" $
       compiled (example ++ "let bad:[x:nat, [nat, nat]] ≔ match x { naught ^ {y ^ y}, n heir ^ bad }\n"),
     rejectContaining "constructor patterns need every explicit field" "needs 1 explicit arguments" $
       compiled (example ++ "let bad:[nat, bool] ≔ { heir ^ yes, naught ^ no }\n"),
-    rejectContaining "a constructor function needs an annotation" "needs a type annotation" $
+    rejectContaining "a constructor function needs an annotation" "needs an ilk annotation" $
       compiled (example ++ "let bad ≔ { no ^ yes, yes ^ no }\n"),
     expectEq "a constructor index keepeth the constructors that fit it" (Right True) $
       compiled (example ++ tags ++ "let marked:[yes tag, bool] ≔ { mark ^ yes }\n")
@@ -218,8 +218,8 @@ recursiveArityTests =
   [ rejectContaining "recursive matches validate written columns" reason $
       compiled ("ilk nat:* { naught:nat, heir:[nat, nat] } let rime:[x:nat, nat] ≔ match x { " ++ rows ++ " }")
   | (reason, rows) <-
-      [ ("one pattern per scrutinee", "naught, _ ^ naught, n heir, _ ^ n count"),
-        ("every case must have the same number of patterns", "naught ^ naught, n heir, _ ^ n count")
+      [ ("one pattern per scrutinee", "naught, _ ^ naught, n heir, _ ^ n rime"),
+        ("every case must have the same number of patterns", "naught ^ naught, n heir, _ ^ n rime")
       ]
   ]
 
@@ -234,7 +234,7 @@ repeatedScrutineeTests =
           (uncurry (sameNormalIn program))
           [ (two ++ " pick", one),
             (two ++ " whole", two),
-            (two ++ " count", two),
+            (two ++ " rime", two),
             (four ++ " deep", two),
             (two ++ " hoard " ++ one, "(" ++ two ++ " heir)"),
             ("(" ++ one ++ " wrap @naught) extract", one),

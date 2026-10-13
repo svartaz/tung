@@ -12,7 +12,7 @@ import Test.Harness qualified as Harness
 
 group :: IO Group
 group = do
-  library <- loadLibrary ["often.tung", "deed/misfaresome.tung", "deed/onstand.tung"]
+  library <- loadLibrary ["often.tung", "deed/misfaresome.tung", "deed/hade.tung"]
   Harness.group
     "program"
     ( map integerCase integerTerms
@@ -201,8 +201,8 @@ importCase (name, expected, modules) = do
 -- exact output.
 layeredPrograms :: [(String, String, String)]
 layeredPrograms =
-  [ ("onstand handeth each step the state left by the last", "(>{then, tick, tick, get} onstand~run 10) bind {p ^ p forthcast₀ $ to_string $ write}", "12"),
-    ("put replaceth and lift keepeth the state", "(>{then, 4 put, ('x' write) onstand~lift, get} onstand~run 0) bind {p ^ p forthcast₀ $ to_string $ write}", "x4"),
+  [ ("hade handeth each step the state left by the last", "(>{then, tick, tick, get} hade~run 10) bind {p ^ p forthcast₀ $ to_string $ write}", "12"),
+    ("put replaceth and lift keepeth the state", "(>{then, 4 put, ('x' write) hade~lift, get} hade~run 0) bind {p ^ p forthcast₀ $ to_string $ write}", "x4"),
     ("a misfare skippeth every later deed", "(>{then, ('a' write) misfaresome~lift, ('stop' misfare: string misfaresome 𝟙), ('b' write) misfaresome~lift} misfaresome~run) bind eftbare", "astop"),
     ("handle runneth its handler only on a misfare", "(>{then, ('a' write) misfaresome~lift, 'stop' misfare} handle {e ^ (e write) misfaresome~lift} $ misfaresome~run) bind eftbare", "astop!"),
     ("handle leaveth a result alone", "((('a' write) misfaresome~lift: 𝟙 misfaresome 𝟙) handle {_ ^ ('never' write) misfaresome~lift} $ misfaresome~run) bind eftbare", "a!")
@@ -217,12 +217,12 @@ layeredCase library (name, performed, expected) =
     prelude =
       """
       bring deed/misfaresome.tung
-      bring deed/onstand.tung
+      bring deed/hade.tung
       bring flock/functor/monad.tung
       bring often.tung
       bring ilk/product.tung
       bring ilk/sum.tung
-      let tick: ℕ onstand 𝟙 ≔ {n ^ n + 1} tweak
+      let tick: ℕ hade 𝟙 ≔ {n ^ n + 1} tweak
       let eftbare: [string ∑ 𝟙, 𝟙 deed] ≔ {e incast₀ ^ e write, _ incast₁ ^ '!' write}
 
       """

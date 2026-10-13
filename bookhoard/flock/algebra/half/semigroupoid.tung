@@ -3,16 +3,12 @@ bring is.tung
 
 show flock semigroupoid: [⇨: [*, *, *], *] {
   let ▷: [@α: *, @β: *, @γ: *, α ⇨ β, β ⇨ γ, α ⇨ γ]
-
-  let ▷_▷: [
-    @α: *, @β: *, @γ: *, @δ: *,
-    f: α ⇨ β, g: β ⇨ γ, h: γ ⇨ δ,
-    (f ▷ (g ▷ h)) = ((f ▷ g) ▷ h)
-  ]
+  let ▷_▷
+    : [@α: *, @β: *, @γ: *, @δ: *, f: α ⇨ β, g: β ⇨ γ, h: γ ⇨ δ,
+      (f ▷ (g ▷ h)) = ((f ▷ g) ▷ h)]
 }
 
 bizen fallback: → semigroupoid {
   let ▷: [f:, g:, a:] ≔ a f $ g
-
   let ▷_▷: [_:, _:, _:] ≔ eftbend
 }

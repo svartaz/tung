@@ -5,7 +5,8 @@ bring ilk/three.tung
 bring ilk/two.tung
 
 ## a lattice with greatest and least worths.
-show flock lattice_hemmed: [α: *, @: α lattice, @: α semilattice_hemmed_upper, @: α semilattice_upper_hemmed, *] {}
+show flock lattice_hemmed: [α: *, @: α lattice, @: α semilattice_hemmed_upper,
+  @: α semilattice_upper_hemmed, *] {}
 
 bizen: [@β: *, @: β lattice_hemmed, @α: *, [α, β] lattice_hemmed] {}
 

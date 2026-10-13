@@ -77,7 +77,7 @@ setCases library =
   [ expectEq "finite set laws have no holes or axioms" (Right ()) do
       program <- compile laws
       audits <- traverse (Source.auditProof program) ["yoke_swap", "meet_swap", "yoke_associate", "distribute", "least", "same_sound"]
-      mapM_ (Source.verifyProof program (Just [])) audits,
+      mapM_ (Source.verifyProof program True (Just [])) audits,
     expectEq "finite sets normalise order, repetition, and empty yokes" (Right (replicate 6 True)) do
       program <- compile values
       traverse
@@ -137,7 +137,7 @@ numberCases library =
     agreement "unicode" (libraryModule library "ilk/unicode.tung") ["same_unicode", "at_most_unicode"] (0, 3) (\index -> ['`', staffs !! index]),
     agreement "string" (libraryModule library "ilk/string/building.tung") ["same_string", "at_most_string", "yoke_string"] (0, 40) (\index -> "'" ++ spelled index ++ "'"),
     expectEq "a modelled operation is proved by computation and by induction" (Right ()) $
-      () <$ compileWith library "kindful_seething.tung" proofs
+      () <$ compileWith library "kindful_soothing.tung" proofs
   ]
   where
     agreement label models operations range literal =
@@ -216,9 +216,9 @@ groupCases library =
     expectEq "group theorems apply to a concrete group" (Right ()) $
       () <$ compile "let twice: ((minus /) /) = minus ≔ minus /_/\nlet spun: ((plus · minus) /) = ((minus /) · (plus /)) ≔ plus /_over_· minus",
     expectEq "the homomorphism theorems apply to a concrete homomorphism" (Right ()) $
-      () <$ compile "bring flock/algebra/whole/group_likeshaper.tung\nlet trivial: [mark, mark] ≔ {_ ^ plus}\nlet hom: trivial likeshaped ≔ {_, _ ^ eftbend}\nlet sent: ((one: mark) trivial) = one ≔ trivial one_f hom\nlet same: (plus trivial) = (minus trivial) ≔ trivial kernel_fibre hom plus minus (trivial fibre_kernel hom plus minus eftbend)",
+      () <$ compile "bring group_likeshaper.tung\nlet trivial: [mark, mark] ≔ {_ ^ plus}\nlet hom: trivial likeshaped ≔ {_, _ ^ eftbend}\nlet sent: ((one: mark) trivial) = one ≔ trivial one_f hom\nlet same: (plus trivial) = (minus trivial) ≔ trivial kernel_fibre hom plus minus (trivial fibre_kernel hom plus minus eftbend)",
     rejectContaining "a map that turneth signs is no homomorphism" "cannot unify" $
-      compile "bring flock/algebra/whole/group_likeshaper.tung\nlet spin: [mark, mark] ≔ {plus ^ minus, minus ^ plus}\nlet bad: spin likeshaped ≔ {_, _ ^ eftbend}",
+      compile "bring group_likeshaper.tung\nlet spin: [mark, mark] ≔ {plus ^ minus, minus ^ plus}\nlet bad: spin likeshaped ≔ {_, _ ^ eftbend}",
     rejectContaining "a value without an inverse maketh no group" "cannot unify" $
       compileWith library "group_test.tung" "bring often.tung\nbring is.tung\nbring flock/algebra/whole/group_fold.tung\nbizen: 𝟚 group_· { let /: [a:] ≔ a let ·_/ ≔ {yea ^ eftbend, nay ^ eftbend} let /_· ≔ {yea ^ eftbend, nay ^ eftbend} }"
   ]
@@ -304,7 +304,7 @@ soundnessCases library =
       compile "let bad: [f: [ℕ, ℕ], g: [ℕ, ℕ], [n: ℕ, (n f) = (n g)], f = g] ≔ {_ ^ eftbend}",
     rejectContaining "a list of one type is not a list of another" "cannot unify ℕ with" $
       compile "let bad: [ℕ list, 𝟚 list] ≔ {l ^ l}",
-    rejectContaining "a host binding cannot inhabit an empty type" "requireth a different type" $
+    rejectContaining "a host binding cannot inhabit an empty type" "requireth a different ilk" $
       compileAs "soundness_host.tung" "ilk void: * {}\nlet bad: void ≔ 'eke_kindful' fremmed"
   ]
   where
@@ -372,7 +372,7 @@ noUmbrellaDependencyCase files = listToMaybe . catMaybes <$> traverse checkModul
 groundDeedExportsCase :: Map.Map String String -> Test
 groundDeedExportsCase imports =
   pure $ case Harness.checkSource False source imports of
-    "type ok" -> Nothing
+    "ilk ok" -> Nothing
     actual -> Just ("ground deed exports: " ++ actual)
   where
     source =
@@ -383,13 +383,13 @@ groundDeedExportsCase imports =
 systemExplicitCase :: Map.Map String String -> Test
 systemExplicitCase imports =
   pure $ case Harness.checkSource False "bring often.tung let args ≔ arguments" imports of
-    actual | "type error:" `isPrefixOf` actual -> Nothing
+    actual | "ilk error:" `isPrefixOf` actual -> Nothing
     actual -> Just ("ground unexpectedly exports system deeds: " ++ actual)
 
 runnerDeedsCase :: Map.Map String String -> Test
 runnerDeedsCase imports =
   pure $ case Harness.checkSource True source imports of
-    "type ok" -> Nothing
+    "ilk ok" -> Nothing
     actual -> Just ("runner deeds: " ++ actual)
   where
     source =

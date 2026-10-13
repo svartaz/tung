@@ -1,5 +1,9 @@
 bring is.tung
-ilk 𝟚: * { yea: 𝟚, nay: 𝟚 }
+
+ilk 𝟚: * {
+  yea: 𝟚,
+  nay: 𝟚
+}
 
 ilk maybe: [α: *, *] {
   none: α maybe,
@@ -9,14 +13,16 @@ ilk maybe: [α: *, *] {
 ## a flock nameth the members that each bizen supplieth.
 flock hath_≍: [α: *, *] {
   let ≍: [α, α, 𝟚]
-
   let ≍_eftbend: [x: α, (x ≍ x) = yea]
 }
 
 ## an anonymous requirement `@:` is found by instance search.
-let ≭: [@α: *, @: α hath_≍, a: α, b: α, 𝟚] ≔ match a ≍ b { yea ^ nay, nay ^ yea }
+let ≭: [@α: *, @: α hath_≍, a: α, b: α, 𝟚] ≔ match a ≍ b {
+  yea ^ nay,
+  nay ^ yea
+}
 
-## a bizen seetheth each law of its flock. `eftbend` seetheth a law that holdeth
+## a bizen sootheth each law of its flock. `eftbend` sootheth a law that holdeth
 ## by computation.
 bizen: 𝟚 hath_≍ {
   let ≍ ≔ {
@@ -24,7 +30,6 @@ bizen: 𝟚 hath_≍ {
     nay, nay ^ yea,
     _,   _   ^ nay
   }
-
   let ≍_eftbend ≔ {
     yea ^ eftbend,
     nay ^ eftbend
@@ -38,7 +43,6 @@ bizen: [@α: *, @: α hath_≍, (α maybe) hath_≍] {
     a some, b some ^ a ≍ b,
     _,      _      ^ nay
   }
-
   let ≍_eftbend ≔ {
     none   ^ eftbend,
     a some ^ a ≍_eftbend
@@ -66,4 +70,5 @@ bizen: maybe atfoldsome {
 }
 
 ## the functor cometh from the applicative requirement.
-let lift: [@φ: [*, *], @: φ atfoldsome, @α: *, @β: *, a: α, f: [α, β], β φ] ≔ (a sheer) warp f
+let lift: [@φ: [*, *], @: φ atfoldsome, @α: *, @β: *, a: α, f: [α, β], β φ]
+  ≔ (a sheer) warp f

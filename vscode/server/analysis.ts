@@ -17,25 +17,35 @@ import {
 } from "./syntax.ts";
 const ownedKinds = new Set(["ilk", "flock"]);
 const localRoles = new Set(["parameter", "typeParameter"]);
+// lsp role names stay in the protocol; people read them in tung's terms.
+const roleNames = {
+  type: "ilk",
+  typeParameter: "ilk input",
+  class: "flock",
+  enumMember: "constructor",
+  method: "limb",
+};
+const roleLabel = (role: string) => roleNames[role] ?? role;
 const keywordHelp = {
-  use: "import a tung file; its last path segment is the default namespace, and an optional alias overrideth it.",
-  show: "publish a declaration, or re-export every visible term, type, and flock with a name.",
+  bring:
+    "import a tung file; its last path segment is the default namespace, and an optional alias overrideth it.",
+  show: "publish a declaration, or re-export every visible term, ilk, and flock with a name.",
   yield: "introduce a block result.",
   sorry:
-    "stand for an omitted proof or definition of any type; performing it is a runtime error.",
+    "stand for an omitted proof or definition of any ilk; performing it is a runtime error.",
   orsetting:
-    "assume a named constant of a type without a proof; `--check` lists it and `--no-sorry` allows it.",
+    "assume a named constant of an ilk without a proof; `--check` lists it, `--no-sorry` alloweth it, and `--no-orset` refuseth it in a proof check.",
   unbuild:
-    "name the eliminator of an ilk or flock: `motive unbuild name methods target` performeth structural induction.",
+    "name the eliminator of an ilk or flock: `drive unbuild name methods target` performeth structural induction.",
   flock: "declare a flock and its members.",
   fremmed:
     "bind an annotated file-level let to the host function named by a preceding string key.",
   bizen: "provide evidence and member definitions for a flock.",
   match:
     "match one or more values against exhaustive pattern rows; `;` joineth rows that share a result.",
-  fall: "write a typed function: inputs, a final result type, `^`, and the body.",
-  let: "bind a value, curried function, or type alias.",
-  ilk: "declare an algebraic data type.",
+  fall: "write an annotated function: inputs, a final result ilk, `^`, and the body.",
+  let: "bind a value, curried function, or ilk alias.",
+  ilk: "declare an inductive ilk and its constructors.",
 };
 const analyzeDocument = (
   text: string,
@@ -443,13 +453,13 @@ const definitionScope = (tokens, region, role) => {
   };
 };
 const declarationDetail = (text, tokens, token, region, role) => {
-  if (!region) return `${role} ${lastQualifiedSegment(token.text)}`;
+  if (!region) return `${roleLabel(role)} ${lastQualifiedSegment(token.text)}`;
   const end = tokens[region.headerEnd]?.offset ?? token.endOffset;
   const header = text
     .slice(region.startOffset, end)
     .replace(/\s+/g, " ")
     .trim();
-  return header || `${role} ${lastQualifiedSegment(token.text)}`;
+  return header || `${roleLabel(role)} ${lastQualifiedSegment(token.text)}`;
 };
 const smallestRegion = (regions, offset, kind = undefined) => {
   return regions
@@ -534,6 +544,7 @@ export {
   analyzeDocument,
   findDefinition,
   keywordHelp,
+  roleLabel,
   nameRange,
   smallestRegion,
   tokenAtPosition,

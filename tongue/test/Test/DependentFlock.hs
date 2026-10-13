@@ -35,7 +35,7 @@ tests example =
           (Map.singleton "named.tung" "show flock named:[α:*, *] { let name:α }\nshow let chosen:[@α:*, @:α named, α] ≔ name\n")
       sameNormalIn program "early" "make",
     expectEq "a shown flock, its laws and bizens cross modules" (Right True) do
-      program <- compileProject (SourceModule "main.tung") "bring is.tung\nlet seething:(nay ≍ nay) = yea ≔ nay ≍_eftbend\nbring same.tung\nlet hath_≍:𝟚 ≔ nay ≍ nay\n" (Map.fromList [("same.tung", "bring is.tung\n" ++ shown), ("is.tung", equalitySource)])
+      program <- compileProject (SourceModule "main.tung") "bring is.tung\nlet soothing:(nay ≍ nay) = yea ≔ nay ≍_eftbend\nbring same.tung\nlet hath_≍:𝟚 ≔ nay ≍ nay\n" (Map.fromList [("same.tung", "bring is.tung\n" ++ shown), ("is.tung", equalitySource)])
       sameNormalIn program "hath_≍" "yea",
     expectEq "a rejected candidate doth not affect a later bizen" (Right True) do
       program <-
@@ -54,7 +54,7 @@ tests example =
       compiled (example ++ pair ++ "bizen:𝟚 pair { let one ≔ yea\nlet two ≔ yea\nlet three ≔ yea }\n"),
     rejectContaining "a missing bizen is reported" "no bizen of flock 'hath_≍'" $
       compiled (example ++ "ilk unit:* { only: unit }\nlet bad:𝟚 ≔ only ≍ only\n"),
-    rejectContaining "a second bizen of one type is rejected" "a bizen with the same type already exists" $
+    rejectContaining "a second bizen of one type is rejected" "a bizen with the same ilk already exists" $
       compiled (example ++ "bizen:𝟚 hath_≍ { let ≍ ≔ {_, _ ^ yea}\nlet ≍_eftbend ≔ sorry }\n"),
     rejectContaining "a member must have its declared type" "in bizen of" $
       compiled (example ++ "bizen:(𝟚 maybe) maybe hath_≍ { let ≍ ≔ yea\nlet ≍_eftbend ≔ sorry }\n"),
@@ -76,7 +76,7 @@ tests example =
             let rule:[left:α box, right:α box, match left, right { x wrap, y wrap ^ x = x }]
           }
           bizen:ℤ reflexive { let rule ≔ { x wrap, y wrap ^ eftbend } }
-          let seething:+1 = +1 ≔ (+1 wrap) rule (+2 wrap)
+          let soothing:+1 = +1 ≔ (+1 wrap) rule (+2 wrap)
           """,
     rejectContaining "both law sides share one type" "cannot unify 𝟚 with" $
       compiled (example ++ "flock bad:[α:*, *] {\nlet f:[α, α]\nlet rule:[x:α, (x f) = yea]\n}\n"),
@@ -139,7 +139,7 @@ selectionTests =
     rejectContaining "two flocks cannot share a law name" "top-level name repeateth 'rule'" $
       compiled (lawClasses ++ "flock third:[α:*, *] { let rule:[x:α, x = x] }"),
     expectEq "a law is projected like any other member" (Right ()) $
-      () <$ compiled (lawClasses ++ firstInstance ++ "let seething:[(only left) = yea] ≔ rule @unit only"),
+      () <$ compiled (lawClasses ++ firstInstance ++ "let soothing:[(only left) = yea] ≔ rule @unit only"),
     expectEq "an inline parent's law useth the projected dictionary and its arguments" (Right True) do
       program <-
         compiled
@@ -163,7 +163,7 @@ selectionTests =
         ["dictionary", "parent_1", "field_worth"],
     -- a member that nameth itself useth the flock, as any visible name doth; as
     -- in lean, a recursive member is an ordinary recursive let.
-    rejectContaining "a member naming itself refereth to the flock" "no bizen of flock 'count'" $
+    rejectContaining "a member naming itself refereth to the flock" "no bizen of flock 'rime'" $
       compiled (countClass ++ "bizen:ℕ rime { let length:[ℕ, ℕ] ≔ { 0 ^ 0, n heir ^ (n length) heir } }"),
     expectEq "a recursive member is a recursive let" (Right True) do
       program <- compiled (countClass ++ "let kindful_length:[ℕ, ℕ] ≔ { 0 ^ 0, n heir ^ (n kindful_length) heir } bizen:ℕ rime { let length ≔ kindful_length }")
@@ -204,7 +204,7 @@ selectionTests =
 
       """
     firstInstance = "bizen:unit first { let left ≔ {_ ^ yea} let rule ≔ {_ ^ eftbend} } "
-    countClass = "flock count:[α:*, *] { let length:[α, ℕ] } "
+    countClass = "flock rime:[α:*, *] { let length:[α, ℕ] } "
     choice = "flock choice:[α:*, β:*, *] { let selected:ℤ } "
     converting output = "flock convert:[α:*, β:*" ++ output ++ ", *] { let into:[α, β] } bizen:ℤ convert string { let into: [_:] ≔ 'one' } let worth ≔ +1 into"
     blanket = "bizen:[@α:*, @β:*, α choice β] { let selected ≔ +0 } "
@@ -232,18 +232,18 @@ constructionTests =
             let keep:[x:] ≔ x
             let rule:[x:] ≔ eftbend
           }
-          let seething:3 = 3 ≔ 3 rule
+          let soothing:3 = 3 ≔ 3 rule
           """
-      sameNormalIn program "proof" "(eftbend:3 = 3)",
+      sameNormalIn program "soothing" "(eftbend:3 = 3)",
     expectEq "dictionary fields may supply a type, its value, and a dependent proof" (Right True) do
       program <-
         compiled
           """
           flock chosen:* { let carrier:* let item:carrier let rule:item = item }
           bizen:chosen { let rule ≔ eftbend let item ≔ 3 let carrier ≔ ℕ }
-          let seething:3 = 3 ≔ rule
+          let soothing:3 = 3 ≔ rule
           """
-      sameNormalIn program "proof" "(eftbend:3 = 3)"
+      sameNormalIn program "soothing" "(eftbend:3 = 3)"
   ]
 
 compiled :: String -> Either String SourceProgram

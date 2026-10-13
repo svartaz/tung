@@ -22,10 +22,10 @@ group =
       ++ map
         (uncurry invalidProofPolicy)
         [ ("null", "expected Object"),
-          ("{ axiom: [] }", "unknown proof field 'axiom'"),
-          ("{ axioms: null }", "expected Array"),
-          ("{ axioms: [1] }", "expected String"),
-          ("{ axioms: [trusted, trusted] }", "duplicate proof axiom names")
+          ("{ orsetting: [] }", "unknown proof field 'orsetting'"),
+          ("{ orsettings: null }", "expected Array"),
+          ("{ orsettings: [1] }", "expected String"),
+          ("{ orsettings: [trusted, trusted] }", "duplicate proof orsetting names")
         ]
 
 proofPolicyForms :: Test
@@ -39,7 +39,7 @@ proofPolicyForms = withDirectory \root -> do
           writeFile (root </> "tung.yaml") ("dependencies: {}\n" ++ policy)
           proofAxiomPolicy owner
       )
-      ["", "proof: {}\n", "proof: { axioms: [] }\n", "proof: { axioms: [trusted, 'often~≍_to_='] }\n"]
+      ["", "proof: {}\n", "proof: { orsettings: [] }\n", "proof: { orsettings: [trusted, 'often~≍_to_='] }\n"]
   expectEq
     "distinguish absent and empty proof axiom policies and preserve names"
     [Right Nothing, Right Nothing, Right Nothing, Right (Just []), Right (Just ["trusted", "often~≍_to_="])]
@@ -54,9 +54,9 @@ proofPolicyNearestProject = withDirectory \root -> do
       dependencies = "dependencies: { sample: { path: ../library } }\n"
   mapM_ (createDirectoryIfMissing True) [library, source]
   writeFile owner "let answer ≔ +1"
-  writeFile (root </> "tung.yaml") "dependencies: {}\nproof: { axioms: [outer] }\n"
-  writeFile (library </> "tung.yaml") "dependencies: {}\nproof: { axioms: [] }\n"
-  writeFile (project </> "tung.yaml") (dependencies ++ "proof: { axioms: [trusted] }\n")
+  writeFile (root </> "tung.yaml") "dependencies: {}\nproof: { orsettings: [outer] }\n"
+  writeFile (library </> "tung.yaml") "dependencies: {}\nproof: { orsettings: [] }\n"
+  writeFile (project </> "tung.yaml") (dependencies ++ "proof: { orsettings: [trusted] }\n")
   selected <- proofAxiomPolicy owner
   roots <- resolveLibraryRoots owner
   writeFile (project </> "tung.yaml") dependencies

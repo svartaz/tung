@@ -46,9 +46,9 @@ elaborateHolesReport program@SourceProgram {..} action = (finish =<< checked, ho
       (term, ty, metadata) <- action
       solveInstances programEnvironment globalNames
       remaining <- E.takeInstanceGoals
-      unless (null remaining) (E.failure "a bizen requirement hath a type that is still unknown; add an annotation")
+      unless (null remaining) (E.failure "a bizen requirement hath an ilk that is still unknown; add an annotation")
       open <- E.unsolved
-      unless (null open) (E.failure "a type is still unknown; write the polymorphic parameters, as [@α: *, x: α, α], or add an annotation")
+      unless (null open) (E.failure "an ilk is still unknown; write the polymorphic parameters, as [@α: *, x: α, α], or add an annotation")
       annotation <- E.quote 0 ty
       term <- E.zonk term
       annotation <- E.zonk annotation

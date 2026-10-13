@@ -28,13 +28,13 @@ bring flock/order/hath_at_most.tung
 bring flock/order/lattice.tung
 bring flock/order/lattice_hemmed.tung
 bring flock/order/lattice_spreadsome.tung
+bring flock/order/midfill.tung
 bring flock/order/order_half.tung
 bring flock/order/order_whole.tung
 bring flock/order/semilattice_hemmed_upper.tung
 bring flock/order/semilattice_lower.tung
 bring flock/order/semilattice_upper.tung
 bring flock/order/semilattice_upper_hemmed.tung
-bring flock/order/withfill.tung
 bring ilk/float.tung
 bring ilk/kindful.tung
 bring ilk/naught.tung
@@ -46,53 +46,83 @@ bring ilk/wholetale.tung
 bring is.tung
 
 show 𝟘
+
 show initial
 
 show 𝟙
+
 show only
+
 show terminal
 
 show 𝟚
+
 show yea, nay
 
 show 𝟛
+
 show fore, mid, aft
 
 show task
 
 show hath_≍
+
 show hath_≤, order_half, order_whole
+
 show semilattice_lower, semilattice_upper, lattice, lattice_spreadsome
-show semilattice_hemmed_upper, semilattice_upper_hemmed, lattice_hemmed, withfill
+
+show semilattice_hemmed_upper, semilattice_upper_hemmed, lattice_hemmed, midfill
+
 show hath_to_string, hath_from_string
+
 show hath_+, hath_naught, monoid_+, hath_·, hath_one, monoid_·, semiring
+
 show hath_-, -+, ∸, ring, hath_÷, field, hath_%, euclidean
+
 show functor, bifunctor, atfoldsome, monad, hath_∋
+
 show elementary
 
 show →
+
 show ¬, if
+
 show when, when_not, branch
 
 show write, write_line, read
+
 show random
+
 show fork, wait, outstrike, wait_for, sleep
+
 show ≍, ≭
+
 show ≤, <, compare, clamp, ∧, ∨, ⟂, ⊤
+
 show ∋
 
 show +, naught, ·, one, -, ÷, %
+
 show sine, cosine, tangent, exponent, logarithm, ⌊
+
 show to_ℕ, to_ℤ
 
 show to_string
+
 show from_string
+
 show unicode_to_kindful, kindful_to_unicode
+
 show behead_string, string_to_list, list_to_string
+
 show warp
+
 show biwarp
+
 show sheer, atfold, lift₂, lift₃, keep_first, keep_other
+
 show flat, bind, then, void
+
 show deed_steadfast
 
 show =, eftbend

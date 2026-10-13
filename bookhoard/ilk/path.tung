@@ -7,22 +7,18 @@ bring ilk/string/building.tung
 bring ilk/sum.tung
 
 ## a path kept distinct from arbitrary string at api boundaries.
-show ilk _path: * {
-  path: [string, _path]
-}
+show ilk _path: * { path: [string, _path] }
 
 bizen: _path hath_to_string {
   let to_string: [t path:] ≔ t
 }
 
-show let yoke: [t₀ path: _path, t₁ path: _path, _path] ≔
-  t₀ · '/' $ · t₁ $ path
+show let yoke: [t₀ path: _path, t₁ path: _path, _path] ≔ t₀ · '/' $ · t₁ $ path
 
-show let read: [t path: _path, (string ∑ string) deed] ≔
-  t file~read
+show let read: [t path: _path, (string ∑ string) deed] ≔ t file~read
 
-show let write: [t path: _path, contents: string, (string ∑ 𝟙) deed] ≔
-  t file~write contents
+show let write: [t path: _path, contents: string, (string ∑ 𝟙) deed]
+  ≔ t file~write contents
 
-show let athang: [t path: _path, contents: string, (string ∑ 𝟙) deed] ≔
-  t file~athang contents
+show let athang: [t path: _path, contents: string, (string ∑ 𝟙) deed]
+  ≔ t file~athang contents

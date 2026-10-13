@@ -25,17 +25,17 @@ test("a file request nameth its path", () => {
   const request = sessionRequest(8, 1, "check", "", "", [], "/project/a.tung");
   assert.equal(JSON.parse(request).path, "/project/a.tung");
 });
-test("proof requests distinguish inherited and empty axiom policies", () => {
+test("proof requests distinguish inherited and empty orsetting policies", () => {
   const inherited = JSON.parse(sessionRequest(9, 2, "proof", "proved", "", []));
   const restricted = JSON.parse(
     sessionRequest(10, 2, "proof", "proved", "", [], undefined, []),
   );
-  assert.equal(inherited.allowedAxioms, undefined);
-  assert.deepEqual(restricted.allowedAxioms, []);
+  assert.equal(inherited.allowedOrsettings, undefined);
+  assert.deepEqual(restricted.allowedOrsettings, []);
 });
 test("proof checking reporteth the selected closure and its policy verdict", async () => {
   const model = {
-    text: "ilk =:[@α:*, x:α, α,*] { eftbend:x = @α x }\nilk one:* { only:one }\nlet proved:only = only ≔ eftbend\nlet unfinished:one ≔ sorry\norsetting axiom:only = only\nlet dependent:only = only ≔ axiom",
+    text: "ilk =:[@α:*, x:α, α,*] { eftbend:x = @α x }\nilk one:* { only:one }\nlet proved:only = only ≔ eftbend\nlet unfinished:one ≔ sorry\norsetting assumed:only = only\nlet dependent:only = only ≔ assumed",
   };
   const proved = await compiler.proof(model, [], "proved", 0, []).result;
   assert.equal(proved.kind, "proof");
@@ -43,16 +43,16 @@ test("proof checking reporteth the selected closure and its policy verdict", asy
   assert.equal(proved.verified, true);
   assert.deepEqual(proved.audit, {
     name: "proved",
-    type: "only = only",
+    ilk: "only = only",
     dependencies: [],
   });
   assert.equal(
     proved.report,
-    "proof: proved\ntype: only = only\ndependencies: none\nproof ok\n",
+    "name: proved\nilk: only = only\ndependencies: none\nname ok\n",
   );
   for (const [allowed, verified] of [
     [[], false],
-    [["axiom"], true],
+    [["assumed"], true],
   ] as const) {
     const result = await compiler.proof(model, [], "dependent", 0, [...allowed])
       .result;
@@ -61,13 +61,13 @@ test("proof checking reporteth the selected closure and its policy verdict", asy
     assert.equal(result.verified, verified);
     assert.deepEqual(result.audit.dependencies, [
       {
-        symbol: { module: "<root>", name: "axiom" },
-        name: "axiom",
-        type: "only = only",
-        kind: "axiom",
+        symbol: { module: "<root>", name: "assumed" },
+        name: "assumed",
+        ilk: "only = only",
+        kind: "orsetting",
       },
     ]);
-    assert.match(result.report, /orsetting: axiom: only = only/);
+    assert.match(result.report, /orsetting: assumed: only = only/);
   }
   const unfinished = await compiler.proof(model, [], "unfinished").result;
   assert.equal(unfinished.kind, "proof");
@@ -132,13 +132,13 @@ test("checker reuseth one versioned session and cancellable requests", async (co
   assert(bridge.findExecutable(), "install tung or set TUNG_EXECUTABLE");
   const model = { text: "let worth:ℤ ≔ +1" };
   const checked = bridge.check(model, [], 3);
-  const typed = bridge.typeOf(model, [], "worth", 3);
+  const typed = bridge.ilkOf(model, [], "worth", 3);
   const formatted = bridge.format("show ilk box: [a:*, *] { box: a box }\n", 3);
   assert.equal(checked.process, typed.process);
   assert.equal(checked.process, formatted.process);
   assert.equal(checked.version, 3);
   assert.deepEqual(await checked.result, { kind: "check", diagnostics: [] });
-  assert.deepEqual(await typed.result, { kind: "type", type: "ℤ" });
+  assert.deepEqual(await typed.result, { kind: "ilk", ilk: "ℤ" });
   assert.equal(
     await formatted.result,
     "show ilk box: [a: *, *] { box: a box }\n",
@@ -166,10 +166,10 @@ test("source and unsaved import changes invalidate the compiled cache", async ()
       ["dep.tung", `show let exported:${annotation} ≔ ${value}`],
     ];
     assert.deepEqual(
-      await compiler.typeOf({ text: source }, imports, "worth").result,
+      await compiler.ilkOf({ text: source }, imports, "worth").result,
       {
-        kind: "type",
-        type: expected,
+        kind: "ilk",
+        ilk: expected,
       },
     );
   }
@@ -189,8 +189,8 @@ test("a corrected import cleareth a cached failure", async () => {
   );
   const corrected = [["dep.tung", "show let exported:ℤ ≔ +3"]];
   assert.deepEqual(
-    await compiler.typeOf({ text: source }, corrected, "worth").result,
-    { kind: "type", type: "ℤ" },
+    await compiler.ilkOf({ text: source }, corrected, "worth").result,
+    { kind: "ilk", ilk: "ℤ" },
   );
   const edited = await compiler.check(
     { text: "bring dep.tung\nlet worth ≔ missing" },
@@ -198,7 +198,7 @@ test("a corrected import cleareth a cached failure", async () => {
   ).result;
   assert(edited.kind === "check");
   assert.equal(edited.diagnostics[0].path, undefined);
-  assert.match(edited.diagnostics[0].message, /unknown name 'absent'/);
+  assert.match(edited.diagnostics[0].message, /unknown name 'missing'/);
 });
 
 // actual subprocesses exercise stream decoding and session teardown together.
@@ -261,15 +261,15 @@ test(
       `
     requests.push(request);
     if (requests.length === 2) {
-      for (const request of requests.reverse()) reply(request, {kind:"type", type:request.name});
+      for (const request of requests.reverse()) reply(request, {kind:"ilk", ilk:request.name});
     }
   `,
     );
-    const first = bridge.typeOf({ text: "" }, [], "ℤ", 3);
-    const second = bridge.typeOf({ text: "" }, [], "string", 4);
+    const first = bridge.ilkOf({ text: "" }, [], "ℤ", 3);
+    const second = bridge.ilkOf({ text: "" }, [], "string", 4);
     assert.deepEqual(await Promise.all([first.result, second.result]), [
-      { kind: "type", type: "ℤ" },
-      { kind: "type", type: "string" },
+      { kind: "ilk", ilk: "ℤ" },
+      { kind: "ilk", ilk: "string" },
     ]);
   },
 );
@@ -283,8 +283,8 @@ test(
       "JSON.stringify({})",
       "JSON.stringify({...response, protocol:2})",
       "JSON.stringify({...response, version:0})",
-      'JSON.stringify({...response, result:{kind:"type", type:"ℤ"}})',
-      'JSON.stringify({...response, result:{kind:"check", diagnostics:[{kind:"type", start:9, end:2, message:"bad"}]}})',
+      'JSON.stringify({...response, result:{kind:"ilk", ilk:"ℤ"}})',
+      'JSON.stringify({...response, result:{kind:"check", diagnostics:[{kind:"ilk", start:9, end:2, message:"bad"}]}})',
     ];
     for (const corrupted of corruptions) {
       const bridge = fixtureBridge(

@@ -1,4 +1,5 @@
--- runnable byspels and host-backed deeds cross the full compiler boundary here.
+-- byspels and host-backed deeds cross the full compiler boundary here. each
+-- byspel is checked as `tung --check` checketh it.
 module Test.Integration (group) where
 
 import Control.Concurrent (forkFinally, killThread, threadDelay)
@@ -16,7 +17,7 @@ import System.FilePath (takeExtension)
 import System.IO.Error (isDoesNotExistError)
 import System.Process (readProcess)
 import System.Timeout qualified as Timeout
-import Test.Harness (Group, Test, checkSource, evaluateSource, runMainSource)
+import Test.Harness (Group, Test, checkFileSource, evaluateSource, runMainSource)
 import Test.Harness qualified as Harness
 import Tung (readLibraryImports)
 
@@ -29,8 +30,10 @@ group = do
     map (runnableFileCase imports) (byspels ++ benchmarks)
       ++ [mainEntry imports, rejectedMain imports, fibonacciSampleResult imports, fileRoundTrip imports, webServerRoundTrip imports]
 
+-- a byspel in a folder bringeth its siblings, which only the runner's own
+-- project loading findeth; `tool/byspel.test.mjs` checketh those.
 byspelFiles :: IO [FilePath]
-byspelFiles = tungFiles "../byspel"
+byspelFiles = filter ((== 2) . length . filter (== '/')) <$> tungFiles "../byspel"
 
 benchmarkFiles :: IO [FilePath]
 benchmarkFiles = tungFiles "../benchmark"
@@ -44,9 +47,9 @@ tungFiles directory = do
 runnableFileCase :: Imports -> FilePath -> Test
 runnableFileCase imports path = do
   source <- readFile path
-  pure $ case checkSource True source imports of
-    "type ok" -> Nothing
-    actual -> Just ("runnable file " ++ path ++ ": " ++ actual)
+  pure $ case checkFileSource source imports of
+    "ilk ok" -> Nothing
+    actual -> Just ("byspel " ++ path ++ ": " ++ actual)
 
 mainEntry :: Imports -> Test
 mainEntry imports = do
@@ -56,7 +59,7 @@ mainEntry imports = do
 rejectedMain :: Imports -> Test
 rejectedMain imports = do
   actual <- runMainSource "bring often.tung let main:𝟙 deed ≔ missing" imports
-  pure $ if "type error:" `isPrefixOf` actual then Nothing else Just ("rejected main reached evaluation: " ++ actual)
+  pure $ if "ilk error:" `isPrefixOf` actual then Nothing else Just ("rejected main reached evaluation: " ++ actual)
 
 fibonacciSampleResult :: Imports -> Test
 fibonacciSampleResult imports = do

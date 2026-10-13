@@ -57,9 +57,9 @@ validationCase name shouldPass source =
   let imports = Map.fromList [(path, "") | path <- snapshotImportPaths (sourceSnapshot source)]
       result = checkSource False source (Map.difference imports libraryPaths)
    in pure $ case (shouldPass, result) of
-        (True, "type ok") -> Nothing
+        (True, "ilk ok") -> Nothing
         (True, message) -> Just (name ++ ": unexpected rejection: " ++ message)
-        (False, "type ok") -> Just (name ++ ": unexpected acceptance")
+        (False, "ilk ok") -> Just (name ++ ": unexpected acceptance")
         _ -> Nothing
   where
     libraryPaths = Map.fromList [(path, ()) | path <- ["ilk/list.tung", "often.tung", "is.tung"]]

@@ -75,7 +75,7 @@ tests =
       compile "bring bool.tung\nbring other.tung\nlet pick: [bool, bool] ≔ { yes ^ no, x ^ x }\n" [bool, other],
     rejectContaining "a use cycle is rejected" "bring cycle: a.tung -> b.tung -> a.tung" $
       compile "bring a.tung\n" [("a.tung", "bring b.tung\n"), ("b.tung", "bring a.tung\n")],
-    rejectContaining "a missing module is reported" "missing use" $
+    rejectContaining "a missing module is reported" "missing bring" $
       compile "bring missing.tung\n" [],
     rejectContaining "errors name the module" "in bring 'broken.tung'" $
       compile "bring broken.tung\n" [("broken.tung", "let bad ≔ unknown\n")],
@@ -130,10 +130,10 @@ proofAuditTests =
       pure (sortOn fst [(dependencySymbol, dependencyKind) | ProofDependency {..} <- auditDependencies audited]),
     expectEq "an axiom policy resolveth a re-export by its visible alias" (Right ()) do
       program <- base
-      auditProof program "public_proof" >>= verifyProof program (Just ["shared~visible"]),
+      auditProof program "public_soothing" >>= verifyProof program True (Just ["shared~visible"]),
     reject "allowing a re-exported axiom doth not allow a private dependency" do
       program <- base
-      auditProof program "soothed" >>= verifyProof program (Just ["shared~visible"])
+      auditProof program "soothed" >>= verifyProof program True (Just ["shared~visible"])
   ]
   where
     base = compile source modules
@@ -142,7 +142,7 @@ proofAuditTests =
       """
       bring forward.tung shared
       let soothed:ℕ ≔ shared~visible shared~exposed
-      let public_seething:ℕ ≔ shared~visible
+      let public_soothing:ℕ ≔ shared~visible
       """
     modules =
       [ ( "base.tung",
@@ -170,7 +170,7 @@ cachedTests =
       sameNormalIn program "answer" "a~worth"
   ]
   where
-    expected = CompileFailure CheckFailure Nothing (Just (SourceSpan 15 16)) "conflicting definition of 'tag' in bring 'b.tung'"
+    expected = CompileFailure CheckFailure Nothing (Just (SourceSpan 19 20)) "conflicting definition of 'tag' in bring 'b.tung'"
     inhabited = "show ilk tag:* { only:tag }"
     cache dependency source = do
       left <- compileProject (SourceModule "a.tung") "bring dep.tung show let worth:tag ≔ only" (Map.singleton "dep.tung" inhabited)

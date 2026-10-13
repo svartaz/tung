@@ -90,19 +90,20 @@ auditProof program@SourceProgram {globalNames} name = do
           _ -> symbolName symbol
     ordering ProofDependency {..} = (dependencyKind, dependencyName, symbolModule dependencySymbol, symbolName dependencySymbol)
 
--- a missing policy alloweth named axioms. an explicit policy is resolved in
--- the root namespace, then compared by nominal identity, never by basename.
--- host operations are reported trust dependencies, not unfinished proofs.
-verifyProof :: SourceProgram -> Maybe [String] -> ProofAudit -> Either String ()
-verifyProof program allowed audited = do
+-- `sorry` is a failure only when `strict`. a missing policy alloweth named
+-- axioms. an explicit policy is resolved in the root namespace, then compared
+-- by nominal identity, never by basename. host operations are reported trust
+-- dependencies, not unfinished proofs.
+verifyProof :: SourceProgram -> Bool -> Maybe [String] -> ProofAudit -> Either String ()
+verifyProof program strict allowed audited = do
   permitted <- traverse (fmap Set.fromList . traverse allow) allowed
   let problems =
         [ case dependencyKind of
             SorryDependency -> "unfinished proof: " ++ dependencyName
-            _ -> "axiom is not allowed: " ++ dependencyName
+            _ -> "orsetting is not allowed: " ++ dependencyName
         | ProofDependency {..} <- auditDependencies audited,
           case dependencyKind of
-            SorryDependency -> True
+            SorryDependency -> strict
             AxiomDependency -> maybe False (Set.notMember dependencySymbol) permitted
             HostDependency _ -> False
         ]
@@ -112,7 +113,7 @@ verifyProof program allowed audited = do
       symbol <- resolve program name
       case Map.lookup symbol (globals (sourceEnvironment program)) of
         Just Definition {definitionBody = Assumption} -> Right symbol
-        _ -> Left ("allowed axiom '" ++ name ++ "' is not an orsetting")
+        _ -> Left ("allowed name '" ++ name ++ "' is not an orsetting")
 
 resolve :: SourceProgram -> String -> Either String SymbolId
 resolve SourceProgram {globalNames} name = case lookupName name globalNames of

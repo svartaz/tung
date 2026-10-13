@@ -227,9 +227,9 @@ ilk sameness: [α: *, x: α, α, *] {
   refl: α sameness x x
 }
 
-let throughbear: [@α: *, @x: α, @y: α, seething: α sameness x y,
+let throughbear: [@α: *, @x: α, @y: α, soothing: α sameness x y,
   family: [α, *], worth: x family, y family] ≔
-  {z, _ ^ z family} unbuild sameness @α @x worth y seething
+  {z, _ ^ z family} unbuild sameness @α @x worth y soothing
 ```
 
 - `ilk name:signature { ... }` declareth one family. constructors share the

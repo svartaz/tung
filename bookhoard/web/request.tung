@@ -5,14 +5,11 @@ show ilk _request: * {
   request: [string, string, string wordbook string, string, _request]
 }
 
-show let method: [method request _ _ _: _request, string] ≔
-  method
+show let method: [method request _ _ _: _request, string] ≔ method
 
-show let target: [_ request target _ _: _request, string] ≔
-  target
+show let target: [_ request target _ _: _request, string] ≔ target
 
-show let headers: [_ request _ headers _: _request, string wordbook string] ≔
-  headers
+show let headers: [_ request _ headers _: _request, string wordbook string]
+  ≔ headers
 
-show let body: [_ request _ _ body: _request, string] ≔
-  body
+show let body: [_ request _ _ body: _request, string] ≔ body

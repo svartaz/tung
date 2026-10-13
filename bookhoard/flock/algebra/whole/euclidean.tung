@@ -14,21 +14,17 @@ bring is.tung
 ## euclidean dealing, whose leftover lieth between naught and the dealer's
 ## length. dealing by naught yieldeth none, which the laws skip.
 show flock euclidean: [α: *, @: α ring, @: α hath_%, @: α order_whole, *] {
-  let %_·_+: [dealt: α, dealer: α,
-    (match dealt % dealer {
-      none                          ^ dealt,
-      (quotient both leftover) some ^ (quotient · dealer) + leftover
-    }) = dealt]
-
-  let %_nonnegative: [dealt: α, dealer: α,
-    (match dealt % dealer {
-      none                   ^ yea,
-      (_ both leftover) some ^ naught ≤ leftover
-    }) = yea]
-
-  let %_hemmed: [dealt: α, dealer: α,
-    (match dealt % dealer {
-      none                   ^ yea,
-      (_ both leftover) some ^ (naught ≤ dealer) if (leftover < dealer) (leftover < (dealer -+ naught))
-    }) = yea]
+  let %_·_+: [dealt: α, dealer: α, (match dealt % dealer {
+    none                          ^ dealt,
+    (quotient both leftover) some ^ (quotient · dealer) + leftover
+  }) = dealt]
+  let %_nonnegative: [dealt: α, dealer: α, (match dealt % dealer {
+    none                   ^ yea,
+    (_ both leftover) some ^ naught ≤ leftover
+  }) = yea]
+  let %_hemmed: [dealt: α, dealer: α, (match dealt % dealer {
+    none                   ^ yea,
+    (_ both leftover) some ^
+      (naught ≤ dealer) if (leftover < dealer) (leftover < (dealer -+ naught))
+  }) = yea]
 }

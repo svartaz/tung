@@ -106,7 +106,7 @@ test("declaration annotations retain compiler roles for prefixed names and greek
     "let sameness:[@α:*, x:α, α] ≔ x\n" +
     "let answer:rime ≔ +42 sameness @rime";
   const labels = await sourceLabels(source);
-  assert.deepEqual(labels("count"), ["type:declaration", "type:", "type:"]);
+  assert.deepEqual(labels("rime"), ["type:declaration", "type:", "type:"]);
   assert.deepEqual(labels("α"), [
     "typeParameter:declaration",
     "type:",

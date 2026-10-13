@@ -2,18 +2,18 @@ bring combinator.tung
 bring flock/algebra/half/semigroupoid.tung
 bring flock/hath_inhold.tung
 bring flock/hath_same.tung
+bring flock/order/midfill.tung
 bring flock/order/semilattice_lower.tung
 bring flock/order/semilattice_upper.tung
-bring flock/order/withfill.tung
 bring ilk/two.tung
 bring is.tung
 
 ## a powerset represented by its limbship umbsay.
 show let powerset: [α: *, *] ≔ [α, 𝟚]
 
-show let empty: [@α: *, α powerset] ≔ nay withstand
+show let empty: [@α: *, α powerset] ≔ nay singal
 
-show let all: [@α: *, α powerset] ≔ yea withstand
+show let all: [@α: *, α powerset] ≔ yea singal
 
 show let onesome: [@α: *, @: α hath_≍, α, α powerset] ≔ ≍
 
@@ -21,18 +21,16 @@ bizen: [@α: *, (α powerset) hath_∋ α] {
   let ∋: [p:, α:] ≔ α p
 }
 
-show let put: [@α: *, @: α hath_≍, s: α powerset, a: α, α powerset] ≔
-  s ∨ (a onesome)
+show let put: [@α: *, @: α hath_≍, s: α powerset, a: α, α powerset]
+  ≔ s ∨ (a onesome)
 
-show let rid: [@α: *, @: α hath_≍, s: α powerset, a: α, α powerset] ≔
-  s ∧ (a onesome $ ¬)
+show let rid: [@α: *, @: α hath_≍, s: α powerset, a: α, α powerset]
+  ≔ s ∧ (a onesome $ ¬)
 
 show let ∖: [@α: *, p₀: α powerset, p₁: α powerset, α powerset] ≔ p₀ ∧ (p₁ ¬)
 
-bizen: [@α: *, (α powerset) withfill] {
+bizen: [@α: *, (α powerset) midfill] {
   let ¬: [p:] ≔ p ▷ ¬
-
   let ∧_¬: [a:] ≔ {x ^ (x a) ∧_¬} fall_umtake
-
   let ∨_¬: [a:] ≔ {x ^ (x a) ∨_¬} fall_umtake
 }

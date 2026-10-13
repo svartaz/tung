@@ -6,7 +6,7 @@ bring flock/functor/downshaper.tung
 bring flock/functor/hath_throughwend.tung
 bring flock/functor/monad.tung
 bring flock/hath_same.tung
-bring flock/order/withfill.tung
+bring flock/order/midfill.tung
 bring flock/same_to_is.tung
 bring ilk/two.tung
 bring is.tung
@@ -16,13 +16,7 @@ show ilk ∑: [α: *, β: *, *] {
   incast₁: [β, α ∑ β]
 }
 
-show let either: [
-  @α: *, @β: *, @γ: *,
-  α ∑ β,
-  [α, γ],
-  [β, γ],
-  γ
-] ≔ {
+show let either: [@α: *, @β: *, @γ: *, α ∑ β, [α, γ], [β, γ], γ] ≔ {
   a incast₀, f₀, _  ^ a f₀,
   b incast₁, _,  f₁ ^ b f₁
 }
@@ -32,7 +26,6 @@ bizen: ∑ bifunctor {
     a incast₀, f, _ ^ (a f) incast₀,
     b incast₁, _, g ^ (b g) incast₁
   }
-
   let biwarp_sameness_sameness ≔ {
     _ incast₀;
     _ incast₁ ^ eftbend
@@ -52,7 +45,6 @@ show let is_incast₁: [@α: *, @β: *, sum: α ∑ β, 𝟚] ≔ sum is_incast�
 
 bizen: [@α: *, (α ∑) functor] {
   let warp: [sum:, f:] ≔ sum biwarp sameness f
-
   let warp_sameness ≔ {
     _ incast₀;
     _ incast₁ ^ eftbend
@@ -66,7 +58,6 @@ bizen: [@α: *, (α ∑) atfoldsome] {
     _,         a incast₀ ^ a incast₀,
     b incast₁, f incast₁ ^ (b f) incast₁
   }
-
   let atfold_sameness_sheer ≔ {
     _ incast₀;
     _ incast₁ ^ eftbend
@@ -87,7 +78,6 @@ bizen: [@α: *, (α ∑) monad] {
     a incast₀ ^ a incast₀,
     b incast₁ ^ b
   }
-
   let sheer_bind: [_:, _:] ≔ eftbend
   let warp_sheer_flat ≔ {
     _ incast₀;
@@ -125,16 +115,14 @@ bizen: [@α: *, @: α hath_≍, @β: *, @: β hath_≍, (α ∑ β) hath_≍] {
 }
 
 bizen: [@α: *, @: α ≍_to_=, @β: *, @: β ≍_to_=, (α ∑ β) ≍_to_=] {
-  let ≍_=: [x:, y:, held:] ≔
-    match x, y {
-      a incast₀, b incast₀ ^ incast₀ leibnitz (a ≍_= b held),
-      a incast₁, b incast₁ ^ incast₁ leibnitz (a ≍_= b held),
-      _ incast₀, _ incast₁ ^ match held {},
-      _ incast₁, _ incast₀ ^ match held {}
-    }
-  let ≍_eftbend: [x:] ≔
-    match x {
-      a incast₀ ^ a ≍_eftbend,
-      a incast₁ ^ a ≍_eftbend
-    }
+  let ≍_=: [x:, y:, held:] ≔ match x, y {
+    a incast₀, b incast₀ ^ incast₀ leibnitz (a ≍_= b held),
+    a incast₁, b incast₁ ^ incast₁ leibnitz (a ≍_= b held),
+    _ incast₀, _ incast₁ ^ match held {},
+    _ incast₁, _ incast₀ ^ match held {}
+  }
+  let ≍_eftbend: [x:] ≔ match x {
+    a incast₀ ^ a ≍_eftbend,
+    a incast₁ ^ a ≍_eftbend
+  }
 }

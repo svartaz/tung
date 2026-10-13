@@ -1,6 +1,10 @@
 bring is.tung
+
 ## function fields retain descendant records at each argument.
-ilk tree: * {tip: tree, node: [tree, [ℕ, tree], tree]}
+ilk tree: * {
+  tip: tree,
+  node: [tree, [ℕ, tree], tree]
+}
 
 let depth: [x: tree, ℕ] ≔ match x {
   tip             ^ 0,
@@ -20,23 +24,26 @@ let deep_hoard: [x: tree, whole: ℕ, ℕ] ≔ match x {
   tip             ^ whole,
   _ node children ^ match 0 children {
     tip            ^ whole heir,
-    _ node smaller ^ (let leftover ≔ (0 smaller) deep_hoard
-      yield ((whole heir) heir) leftover)
+    _ node smaller ^ (
+      let leftover ≔ (0 smaller) deep_hoard
+      yield ((whole heir) heir) leftover
+    )
   }
 }
 
 let leaf: tree ≔ tip node {_ ^ tip}
+
 let sample: tree ≔ tip node {_ ^ leaf}
 
 ## dependent matches carry the record with the computed child and its aliases.
-let seething: [x: tree, x = x] ≔ match x {
+let soothing: [x: tree, x = x] ≔ match x {
   tip             ^ eftbend,
   _ node children ^ (
     let call ≔ children
     let child ≔ 0 call
     let known: child = child ≔ match child {
       tip            ^ eftbend,
-      _ node smaller ^ (let child_known ≔ (0 smaller) seething yield eftbend)
+      _ node smaller ^ (let child_known ≔ (0 smaller) soothing yield eftbend)
     }
     yield eftbend
   )
@@ -57,15 +64,21 @@ let fan_depth: [@n: ℕ, n fan, ℕ] ≔ {
 }
 
 let fan_leaf: 0 fan ≔ {_ ^ stop} more
+
 let branches: [@i: ℕ, known: i = i, i fan] ≔ match i {
   0      ^ fan_leaf,
   _ heir ^ stop
 }
+
 let fan_sample: 0 fan ≔ branches more
 
 ## function fields may occur inside an ordinary positive inholder.
-ilk thunk: [α: *, *] {hold: [[ℕ, α], α thunk]}
-ilk rose: * {bud: rose, bloom: [rose thunk, rose]}
+ilk thunk: [α: *, *] { hold: [[ℕ, α], α thunk] }
+
+ilk rose: * {
+  bud: rose,
+  bloom: [rose thunk, rose]
+}
 
 let height: [rose, ℕ] ≔ {
   bud                   ^ 0,
@@ -76,6 +89,7 @@ let height: [rose, ℕ] ≔ {
 }
 
 let rose_leaf: rose ≔ ({_ ^ bud} hold @rose) bloom
+
 let rose_sample: rose ≔ ({_ ^ rose_leaf} hold @rose) bloom
 
 ## an open quantified input keepeth the child's specialised dependent type.

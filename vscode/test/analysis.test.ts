@@ -12,7 +12,7 @@ test("declaration annotations expose definitions and scoped parameters in incomp
   ].join("\n");
   const model = await analyzed(source, "file:///annotations.tung");
   for (const [name, role] of [
-    ["count", "type"],
+    ["rime", "type"],
     ["sameness", "function"],
     ["hath_+", "function"],
     ["answer", "variable"],
@@ -144,7 +144,7 @@ test("analysis retaineth import paths, aliases, and default namespaces", async (
   ];
   const model = await analyzed(
     imports
-      .map(([path, alias]) => `use ${path}${alias ? ` ${alias}` : ""}`)
+      .map(([path, alias]) => `bring ${path}${alias ? ` ${alias}` : ""}`)
       .join("\n"),
     "file:///imports.tung",
   );

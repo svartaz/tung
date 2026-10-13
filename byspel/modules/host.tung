@@ -4,4 +4,5 @@ bring ilk/one.tung
 
 show 𝟙, only, write, deed_sheer, deed_bind
 
-show let then: [@α: *, @β: *, first: α deed, next: β deed, β deed] ≔ first deed_bind {_ ^ next}
+show let then: [@α: *, @β: *, first: α deed, next: β deed, β deed]
+  ≔ first deed_bind {_ ^ next}

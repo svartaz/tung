@@ -10,8 +10,8 @@ bring ilk/sum.tung
 bring ilk/wordbook.tung
 bring often.tung
 
-let rime_word: [rimes: string wordbook ℤ, word: string, string wordbook ℤ] ≔
-  match rimes lookup word {
+let rime_word: [rimes: string wordbook ℤ, word: string, string wordbook ℤ]
+  ≔ match rimes lookup word {
     none      ^ rimes put word +1,
     rime some ^ rimes put word (rime + +1)
   }

@@ -1,3 +1,1 @@
-show ilk _lower: [α: *, *] {
-  lower: [α, α _lower]
-}
+show ilk _lower: [α: *, *] { lower: [α, α _lower] }

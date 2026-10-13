@@ -7,23 +7,28 @@ ilk list: [α: *, *] {
 ilk rose: * { node: [rose list, rose] }
 
 ## the field retaineth its ordinary list type and list patterns.
-let children: [rose, rose list] ≔ { xs node ^ xs }
+let children: [rose, rose list] ≔ {xs node ^ xs}
+
 let first: [rose, rose] ≔ {
   empty node      ^ (empty @rose) node,
   (x cons _) node ^ x
 }
 
-let eke: [n: ℕ, m: ℕ, ℕ] ≔
-  {_: ℕ ^ ℕ} unbuild ℕ m {_: ℕ ^ {below: ℕ ^ below heir}} n
+let eke: [n: ℕ, m: ℕ, ℕ] ≔ {_: ℕ ^ ℕ} unbuild ℕ m {
+  _: ℕ ^ {below: ℕ ^ below heir}
+} n
 
 ## joint induction taketh the rose motive, the list motive, then the node,
 ## empty, and cons methods. each method receiveth its child hypotheses.
-let rime: [rose, ℕ] ≔
-  {_: rose ^ ℕ} unbuild rose
-    {_: rose list ^ ℕ}
-    {xs: rose list ^ {below: ℕ ^ below heir}}
-    0
-    {head: rose ^ {head_below: ℕ ^ {tail: rose list ^ {tail_below: ℕ ^ head_below eke tail_below}}}}
+let rime: [rose, ℕ] ≔ {_: rose ^ ℕ} unbuild rose {_: rose list ^ ℕ} {
+  xs: rose list ^ {below: ℕ ^ below heir}
+} 0 {
+  head: rose ^ {
+    head_below: ℕ ^ {
+      tail: rose list ^ {tail_below: ℕ ^ head_below eke tail_below}
+    }
+  }
+}
 
 ## selfcalling may follow a child through its ordinary inholder.
 let height: [rose, ℕ] ≔ {
@@ -32,4 +37,5 @@ let height: [rose, ℕ] ≔ {
 }
 
 let leaf: rose ≔ (empty @rose) node
+
 let fork: rose ≔ (leaf cons @rose (leaf cons @rose (empty @rose))) node

@@ -24,6 +24,7 @@ module Test.Harness
     evaluateSourceWithArgs,
     runMainSource,
     checkSource,
+    checkFileSource,
     integerSource,
   )
 where
@@ -46,7 +47,7 @@ import Test.QuickCheck qualified as QuickCheck
 import Test.QuickCheck.Random qualified as QuickCheck
 import Text.Read (readMaybe)
 import Tung
-import Tung.Dependent.Run (ioHost, renderRuntime, requireMain, runMain, runYield)
+import Tung.Dependent.Run (checkMain, ioHost, renderRuntime, requireMain, runMain, runYield)
 import Tung.Dependent.Source (CompileFailure (..), FailureKind (..), SourceProgram, parseProgram, snapshotImportPaths, sourceSnapshot)
 
 type Test = IO (Maybe String)
@@ -149,37 +150,44 @@ propertyTest name property = do
 parseOk, parseErr, typeOk, typeErr, runnableErr :: String -> String -> Test
 parseOk name = expectEither name True . parseProgram
 parseErr name = expectEither name False . parseProgram
-typeOk name source = expectEq name "type ok" (checkSource False source Map.empty)
-typeErr name source = expectPrefix name "type error:" (checkSource False source Map.empty)
+typeOk name source = expectEq name "ilk ok" (checkSource False source Map.empty)
+typeErr name source = expectPrefix name "ilk error:" (checkSource False source Map.empty)
 
 typeErrContaining :: String -> String -> String -> Test
 typeErrContaining name expected source =
   let actual = checkSource False source Map.empty
-   in expectMessage name ("type error:" `isPrefixOf` actual && expected `isInfixOf` actual) ("expected error containing " ++ show expected ++ ", got " ++ show actual)
+   in expectMessage name ("ilk error:" `isPrefixOf` actual && expected `isInfixOf` actual) ("expected error containing " ++ show expected ++ ", got " ++ show actual)
 
-runnableErr name source = expectPrefix name "type error:" (checkSource True source Map.empty)
+runnableErr name source = expectPrefix name "ilk error:" (checkSource True source Map.empty)
 
 typeOkWith, typeErrWith :: String -> String -> Map.Map String String -> Test
-typeOkWith name source imports = expectEq name "type ok" (checkSource False source imports)
-typeErrWith name source imports = expectPrefix name "type error:" (checkSource False source imports)
+typeOkWith name source imports = expectEq name "ilk ok" (checkSource False source imports)
+typeErrWith name source imports = expectPrefix name "ilk error:" (checkSource False source imports)
 
 evalOkWith :: String -> String -> Map.Map String String -> String -> Test
 evalOkWith name source imports expected = evaluateSource source imports >>= expectEq name expected
 
 evalTypeErrWith :: String -> String -> Map.Map String String -> Test
-evalTypeErrWith name source imports = evaluateSource source imports >>= expectPrefix name "eval error: type error:"
+evalTypeErrWith name source imports = evaluateSource source imports >>= expectPrefix name "eval error: ilk error:"
 
--- `type ok`, or the parse or type error. a runnable source must also define
+-- `ilk ok`, or the parse or type error. a runnable source must also define
 -- `main`. a test's own modules join the compiled library.
 checkSource :: Bool -> String -> Map.Map String String -> String
-checkSource runnable source imports = case compiled >>= \modules -> either (Left . failureText) Right (compileProjectDetailed modules (SourceModule "main.tung") source (Map.union imports librarySources)) of
+checkSource runnable = checkWith (if runnable then requireMain else const (Right ()))
+
+-- as `tung --check`: a module, or a program whose `main` is runnable.
+checkFileSource :: String -> Map.Map String String -> String
+checkFileSource = checkWith checkMain
+
+checkWith :: (SourceProgram -> Either String ()) -> String -> Map.Map String String -> String
+checkWith entry source imports = case compiled >>= \modules -> either (Left . failureText) Right (compileProjectDetailed modules (SourceModule "main.tung") source (Map.union imports librarySources)) of
   Left message -> message
   Right program
-    | runnable, Left message <- requireMain program -> "type error: " ++ message
-    | otherwise -> "type ok"
+    | Left message <- entry program -> "ilk error: " ++ message
+    | otherwise -> "ilk ok"
   where
     (librarySources, compiled) = libraryFor source imports
-    failureText CompileFailure {failureKind, failureText = text} = (if failureKind == ParseFailure then "parse error: " else "type error: ") ++ text
+    failureText CompileFailure {failureKind, failureText = text} = (if failureKind == ParseFailure then "parse error: " else "ilk error: ") ++ text
 
 -- the yielded value, printed, or `eval error:` and the failure.
 evaluateSource :: String -> Map.Map String String -> IO String
@@ -189,7 +197,7 @@ evaluateSourceWithArgs :: [String] -> String -> Map.Map String String -> IO Stri
 evaluateSourceWithArgs arguments source imports = do
   let (librarySources, compiled) = libraryFor source imports
   case compiled >>= \modules -> compileYieldWith modules (SourceModule "main.tung") source (Map.union imports librarySources) of
-    Left message -> pure ("eval error: type error: " ++ message)
+    Left message -> pure ("eval error: ilk error: " ++ message)
     Right (_, Nothing) -> pure "eval error: nothing is yielded"
     Right (program, Just inferred) -> do
       host <- ioHost arguments
@@ -200,11 +208,11 @@ runMainSource :: String -> Map.Map String String -> IO String
 runMainSource source imports = do
   let (librarySources, compiled) = libraryFor source imports
   case compiled >>= \modules -> compileYieldWith modules (SourceModule "main.tung") source (Map.union imports librarySources) of
-    Left message -> pure ("type error: " ++ message)
+    Left message -> pure ("ilk error: " ++ message)
     Right (program, _) -> do
       host <- ioHost []
       case runMain host program of
-        Left message -> pure ("type error: " ++ message)
+        Left message -> pure ("ilk error: " ++ message)
         Right action -> action <&> either ("runtime error: " ++) (\status -> "ok " ++ show status)
 
 -- fixture overrides invalidate all checked interfaces; unchanged tests load

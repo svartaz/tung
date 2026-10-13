@@ -4,8 +4,9 @@ bring ilk/maybe.tung
 bring ilk/product.tung
 bring often.tung
 
-let can_deal: [@α: *, @: α hath_%, @: α hath_naught, @: α hath_≍, dealer: α, dealt: α, 𝟚] ≔
-  match dealt % dealer {
+let can_deal
+  : [@α: *, @: α hath_%, @: α hath_naught, @: α hath_≍, dealer: α, dealt: α, 𝟚]
+  ≔ match dealt % dealer {
     (_ both leftover) some ^ leftover ≍ naught,
     none                   ^ nay
   }
@@ -26,13 +27,13 @@ bizen: _fizzbuzz hath_to_string {
   }
 }
 
-let to_fizzbuzz: [wholetale: ℤ, _fizzbuzz] ≔
-  match +3 can_deal wholetale, +5 can_deal wholetale {
+let to_fizzbuzz: [wholetale: ℤ, _fizzbuzz]
+  ≔ match +3 can_deal wholetale, +5 can_deal wholetale {
     yea, yea ^ fizzbuzz,
     yea, nay ^ fizz,
     nay, yea ^ buzz,
     nay, nay ^ wholetale raw
   }
 
-let main: 𝟙 deed ≔
-  +0 till +32 $ warp (to_fizzbuzz ▷ to_string) $ each write_line
+let main: 𝟙 deed
+  ≔ +0 till +32 $ warp (to_fizzbuzz ▷ to_string) $ each write_line

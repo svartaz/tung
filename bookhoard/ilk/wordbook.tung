@@ -12,78 +12,72 @@ bring ilk/two.tung
 bring is.tung
 
 ## a list-backed finite association wordbook.
-show ilk wordbook: [α: *, β: *, *] {
-  from_list: [(α ∏ β) list, α wordbook β]
-}
+show ilk wordbook: [α: *, β: *, *] { from_list: [(α ∏ β) list, α wordbook β] }
 
 show let empty: [@α: *, @β: *, α wordbook β] ≔ list~empty from_list
 
-show let onesome: [@α: *, @β: *, key: α, worth: β, α wordbook β] ≔
-  key both worth $ ‥ list~empty $ from_list
+show let onesome: [@α: *, @β: *, key: α, worth: β, α wordbook β]
+  ≔ key both worth $ ‥ list~empty $ from_list
 
-show let entries: [@α: *, @β: *, l from_list: α wordbook β, (α ∏ β) list] ≔
-  l
+show let entries: [@α: *, @β: *, l from_list: α wordbook β, (α ∏ β) list] ≔ l
 
-show let lookup: [@α: *, @: α hath_≍, @β: *, l from_list: α wordbook β, key: α, β maybe] ≔
-  l find { pair ^ key ≍ (pair forthcast₀) } $ warp forthcast₁
+show let lookup
+  : [@α: *, @: α hath_≍, @β: *, l from_list: α wordbook β, key: α, β maybe]
+  ≔ l find {pair ^ key ≍ (pair forthcast₀)} $ warp forthcast₁
 
-show let put: [@α: *, @: α hath_≍, @β: *,
-  l from_list: α wordbook β,
-  key: α,
-  worth: β,
-  α wordbook β
-] ≔ (key both worth) ‥ (l sift { pair ^ key ≭ (pair forthcast₀) }) $ from_list
+show let put
+  : [@α: *, @: α hath_≍, @β: *, l from_list: α wordbook β, key: α, worth: β,
+    α wordbook β]
+  ≔ (key both worth) ‥ (l sift {pair ^ key ≭ (pair forthcast₀)}) $ from_list
 
-show let rid: [@α: *, @: α hath_≍, @β: *, l from_list: α wordbook β, key: α, α wordbook β] ≔
-  l sift { pair ^ key ≭ (pair forthcast₀) } $ from_list
+show let rid
+  : [@α: *, @: α hath_≍, @β: *, l from_list: α wordbook β, key: α, α wordbook β]
+  ≔ l sift {pair ^ key ≭ (pair forthcast₀)} $ from_list
 
-show let keys: [@α: *, @β: *, l from_list: α wordbook β, α list] ≔
-  l warp forthcast₀
+show let keys: [@α: *, @β: *, l from_list: α wordbook β, α list]
+  ≔ l warp forthcast₀
 
-show let worths: [@α: *, @β: *, l from_list: α wordbook β, β list] ≔
-  l warp forthcast₁
+show let worths: [@α: *, @β: *, l from_list: α wordbook β, β list]
+  ≔ l warp forthcast₁
 
 bizen: [@α: *, @: α hath_≍, @β: *, (α wordbook β) hath_∋ α] {
   let ∋: [t:, key:] ≔ (t lookup key) is_some
 }
 
 bizen: [@α: *, (α wordbook) functor] {
-  let warp: [l from_list:, f:] ≔
-    l warp { pair ^ pair warp f } $ from_list
-
-  let warp_sameness: [@β:, entries from_list:] ≔
-    from_list leibnitz (
-      {l: (α ∏ β) list ^ (l functor~warp {pair ^ pair functor~warp sameness}) = l}
-      unbuild list eftbend {first, _, seething ^ match first {
-        a both b ^ ((a both b) ‥) leibnitz seething
-      }} entries
-    )
+  let warp: [l from_list:, f:] ≔ l warp {pair ^ pair warp f} $ from_list
+  let warp_sameness: [@β:, entries from_list:]
+    ≔ from_list leibnitz
+      ({
+        l: (α ∏ β) list ^
+          (l functor~warp {pair ^ pair functor~warp sameness}) = l
+      } unbuild list eftbend {
+        first, _, soothing ^ match first {
+          a both b ^ ((a both b) ‥) leibnitz soothing
+        }
+      } entries)
 }
 
 bizen: [@α: *, (α wordbook) hath_sift] {
-  let sift: [l from_list:, umbsay:] ≔
-    l sift {
-      pair ^ (pair forthcast₁) umbsay
-    } $ from_list
+  let sift: [l from_list:, umbsay:]
+    ≔ l sift {pair ^ (pair forthcast₁) umbsay} $ from_list
 }
 
 bizen: [@α: *, @β: *, (α wordbook β) hath_greatness] {
   let greatness: [t:] ≔ (t entries) greatness
 }
 
-show let merge: [
-  @α: *, @: α hath_≍, @β: *,
-  first: α wordbook β, other: α wordbook β, α wordbook β
-] ≔ (other entries) gather₁ first {
-  t, pair ^ t put (pair forthcast₀) (pair forthcast₁)
-}
+show let merge
+  : [@α: *, @: α hath_≍, @β: *, first: α wordbook β, other: α wordbook β,
+    α wordbook β]
+  ≔ (other entries) gather₁ first {
+    t, pair ^ t put (pair forthcast₀) (pair forthcast₁)
+  }
 
-show let adjust: [@α: *, @: α hath_≍, @β: *,
-  l from_list: α wordbook β,
-  key: α,
-  tweak: [β, β],
-  α wordbook β
-] ≔ l warp { pair ^ match key ≍ (pair forthcast₀) {
-  nay ^ pair,
-  yea ^ pair warp tweak
-} } $ from_list
+show let adjust
+  : [@α: *, @: α hath_≍, @β: *, l from_list: α wordbook β, key: α,
+    tweak: [β, β], α wordbook β]
+  ≔ l warp {pair ^ match key ≍ (pair forthcast₀) {
+    nay ^ pair,
+    yea ^ pair warp tweak
+  }} $ from_list

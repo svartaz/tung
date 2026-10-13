@@ -58,7 +58,7 @@ instance FromJSON LibrarySource where
 
 data Manifest = Manifest
   { manifestLibraries :: [Library],
-    manifestProofAxioms :: Maybe [String]
+    manifestProofOrsettings :: Maybe [String]
   }
 
 instance FromJSON Manifest where
@@ -66,19 +66,19 @@ instance FromJSON Manifest where
     rejectUnknown "manifest" ["dependencies", "proof"] fields
     dependencies <- fields .: "dependencies" :: Parser Aeson.Value
     libraries <- withObject "dependencies" (traverse parseEntry . KeyMap.toAscList) dependencies
-    axioms <- maybe (pure Nothing) parseProofPolicy (KeyMap.lookup "proof" fields)
-    pure (Manifest libraries axioms)
+    orsettings <- maybe (pure Nothing) parseProofPolicy (KeyMap.lookup "proof" fields)
+    pure (Manifest libraries orsettings)
     where
       parseEntry (name, source) = Library (Key.toString name) <$> parseJSON source
 
 parseProofPolicy :: Aeson.Value -> Parser (Maybe [String])
 parseProofPolicy = withObject "proof" \fields -> do
-  rejectUnknown "proof" ["axioms"] fields
-  traverse parseAxioms (KeyMap.lookup "axioms" fields)
+  rejectUnknown "proof" ["orsettings"] fields
+  traverse parseOrsettings (KeyMap.lookup "orsettings" fields)
   where
-    parseAxioms value = do
+    parseOrsettings value = do
       names <- parseJSON value
-      if names == nub names then pure names else fail "duplicate proof axiom names"
+      if names == nub names then pure names else fail "duplicate proof orsetting names"
 
 rejectUnknown :: String -> [String] -> Aeson.Object -> Parser ()
 rejectUnknown context allowed fields =
@@ -131,7 +131,7 @@ proofAxiomPolicy owner =
   findManifest owner >>= \case
     Left message -> pure (Left message)
     Right Nothing -> pure (Right Nothing)
-    Right (Just path) -> fmap manifestProofAxioms <$> readManifest path
+    Right (Just path) -> fmap manifestProofOrsettings <$> readManifest path
 
 -- checked interfaces live in `.tung/cache` beside the nearest `tung.yaml`,
 -- or beside the file when no manifest encloseth it; git ignoreth `.tung`.
@@ -263,9 +263,9 @@ readManifest path = do
   pure $ case decoded of
     Left failure -> Left ("cannot read '" ++ path ++ "': " ++ show failure)
     Right (Left failure) -> Left (path ++ ": " ++ Yaml.prettyPrintParseException failure)
-    Right (Right (warnings, Manifest libraries axioms))
+    Right (Right (warnings, Manifest libraries orsettings))
       | not (null warnings) -> Left (path ++ ": " ++ intercalate "; " (map show warnings))
-      | otherwise -> (`Manifest` axioms) <$> traverse validateEntry libraries
+      | otherwise -> (`Manifest` orsettings) <$> traverse validateEntry libraries
   where
     validateEntry (Library name source)
       | not (validName name) = Left (path ++ ": invalid library name '" ++ name ++ "'")

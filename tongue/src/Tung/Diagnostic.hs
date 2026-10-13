@@ -45,7 +45,7 @@ failureDiagnostic source imports CompileFailure {failureKind, failurePath, failu
   let owner = maybe source (\path -> Map.findWithDefault source path imports) failurePath
       (kind, prefix) = case failureKind of
         ParseFailure -> (ParseDiagnostic, "parse error: ")
-        CheckFailure -> (TypeDiagnostic, "type error: ")
+        CheckFailure -> (TypeDiagnostic, "ilk error: ")
    in Diagnostic kind failurePath (fromMaybe (SourceSpan 0 (min 1 (utf16Length owner))) failureSpan) (prefix ++ failureText)
 
 renderFileDiagnostic :: FilePath -> String -> Diagnostic -> String
@@ -67,7 +67,7 @@ sourcePosition source wanted = go 0 1 1 source
 
 renderKind :: DiagnosticKind -> String
 renderKind ParseDiagnostic = "parse"
-renderKind TypeDiagnostic = "type"
+renderKind TypeDiagnostic = "ilk"
 renderKind GoalDiagnostic = "goal"
 
 utf16Length :: String -> Int

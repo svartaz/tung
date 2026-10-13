@@ -8,6 +8,7 @@ import {
   analyzeDocument,
   findDefinition,
   nameRange,
+  roleLabel,
   tokenAtPosition,
 } from "./analysis.ts";
 import type { SourceRole } from "./checker.ts";
@@ -463,7 +464,7 @@ const primitive = (name, role) => {
     completionName: name,
     role,
     modifiers: ["defaultLibrary"],
-    detail: `built-in ${role} ${name}`,
+    detail: `built-in ${roleLabel(role)} ${name}`,
     primitive: true,
   };
 };

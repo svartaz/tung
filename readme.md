@@ -1,23 +1,13 @@
 # tung
 
-tung is a lazily evaluating functional programming language equipped with predicative intensional martin-löf type system.
+tung is a functional programming with
 
-## a first program
-
-```tung
-bring often.tung
-
-let double: [x:, ℤ] ≔ x + x
-
-let main: 𝟙 deed ≔ +21 double $ to_string $ write_line
-```
-
-save it as `double.tung` and run `tung double.tung`. it printeth `42`.
-
-- the second item of a call is the function: `+21 double` meaneth `double(+21)`.
-- `$` endeth a call and passeth its value on.
-- `let name: type ≔ worth` annotateth a declaration.
-- `𝟙 deed` is an action, like haskell `IO`. the runner performeth `main`.
+- infix notation,
+- anglish keywords,
+- lazy evaluation,
+- inductive type family
+- inductive types, and
+- predicative intensional dependent types.
 
 ## install
 
@@ -26,36 +16,27 @@ brew tap svartaz/tung https://github.com/svartaz/tung.git
 brew install svartaz/tung/tung
 ```
 
-homebrew installeth the pinned release. for the current syntax and proof
-checker, build from this checkout with ghc 9.12 or newer and cabal:
-
-```sh
-mise install
-make compiler-install
-```
-
-the command is installed at `~/.local/bin/tung`. set `PREFIX` or `BIN_DIR` to
-choose another place.
+it installeth the command at `~/.local/bin/tung`.
+set `PREFIX` or `BIN_DIR` to choose another place.
 
 ## run
 
-| command                                  | purpose                                      |
-| ---------------------------------------- | -------------------------------------------- |
-| `tung forewrit.tung [arguments...]`      | runneth `main` with the remaining arguments  |
-| `tung --check forewrit.tung`             | checketh a program with `main`               |
-| `tung --check-module module.tung`        | checketh a file without `main`               |
-| `tung --no-sorry --check-module m.tung`  | also faileth when a proof assumeth `sorry`   |
-| `tung --type-of name forewrit.tung`      | printeth the inferred type of a name         |
-| `tung --check-proof name module.tung`    | checketh one declaration and its assumptions |
-| `tung --format file.tung [more.tung...]` | formateth files in place                     |
+| command                                  | purpose                                        |
+| ---------------------------------------- | ---------------------------------------------- |
+| `tung file.tung [arguments...]`          | runneth `main` with the arguments              |
+| `tung --check file.tung`                 | checketh a module, or a program and its `main` |
+| `tung --check --no-sorry file.tung`      | also faileth when a proof assumeth `sorry`     |
+| `tung --name name file.tung`             | printeth a name's ilk and its assumptions      |
+| `tung --neaten file.tung [more.tung...]` | neateneth files in place                       |
 
-proof checking rejecteth reachable `sorry`. the
-[proof checking guide](tongue/language.md#proof-checking) describeth axiom
+`--no-sorry` before any command turneth reachable `sorry` into failure. to
+check a proof, add `--no-sorry` and, to refuse orsettings, `--no-orset`. the
+[proof checking guide](tongue/language.md#proof-checking) describeth orsetting
 allowlists and editor support. try it on a proof in the
 [walkthrough](byspel/walkthrough.tung):
 
 ```sh
-tung --no-axioms --check-proof naught_+ byspel/walkthrough.tung
+tung --no-sorry --no-orset --name naught_+ byspel/walkthrough.tung
 ```
 
 ## libraries
@@ -72,7 +53,6 @@ dependencies:
 ## next steps
 
 - read and run the [walkthrough](byspel/walkthrough.tung): `tung byspel/walkthrough.tung`.
-- try the other examples in [`byspel/`](byspel/).
 - set up the [editor extension](vscode/readme.md).
 - some keywords are anglish words:
 

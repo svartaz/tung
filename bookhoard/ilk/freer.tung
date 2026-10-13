@@ -1,0 +1,97 @@
+bring flock/algebra/half/category.tung
+bring flock/algebra/half/semigroupoid.tung
+bring flock/functor.tung
+bring flock/functor/atfoldsome.tung
+bring flock/functor/monad.tung
+bring is.tung
+
+## a computation: either an outcome, or one request and the continuation that
+## receiveth its answer. a request `ξ φ` asketh for a `ξ`; φ need not be a
+## functor, and the ilk stayeth tightly positive, so every fall below
+## selfcalleth structurally.
+show ilk freer: [φ: [*, *], α: *, *] {
+  done: [α, φ freer α],
+  more: [@ξ: *, ξ φ, [ξ, φ freer α], φ freer α]
+}
+
+## run the continuation on the outcome, after every request.
+show let bind: [@φ: [*, *], @α: *, @β: *, φ freer α, [α, φ freer β], φ freer β]
+  ≔ {
+    worth done,               next ^ worth next,
+    request more throughwone, next ^
+      request more {answer ^ (answer throughwone) bind next}
+  }
+
+## a forewrit of one request, whose answer is its outcome.
+show let lift: [@φ: [*, *], @α: *, request: α φ, φ freer α] ≔ request more done
+
+show let warp
+  : [@φ: [*, *], @α: *, @β: *, forewrit: φ freer α, tweak: [α, β], φ freer β]
+  ≔ forewrit bind {worth ^ (worth tweak) done}
+
+show let flat: [@φ: [*, *], @α: *, forewrit: φ freer (φ freer α), φ freer α]
+  ≔ forewrit bind sameness
+
+## warping by `sameness` keepeth a forewrit, by inleading on its requests.
+let helpsetting_warp_sameness
+  : [@φ: [*, *], @α: *, forewrit: φ freer α, (forewrit warp {x ^ x}) = forewrit]
+  ≔ match forewrit {
+    _ done                   ^ eftbend,
+    request more throughwone ^
+      (request more) leibnitz
+        ({answer ^ (answer throughwone) helpsetting_warp_sameness} fall_umtake)
+  }
+
+## mapping twice is mapping once with the composite.
+let warp_warp
+  : [@φ: [*, *], @α: *, @β: *, @γ: *, forewrit: φ freer α, f: [α, β], g: [β, γ],
+    ((forewrit warp f) warp g) = (forewrit warp {x ^ x f $ g})]
+  ≔ match forewrit {
+    _ done                   ^ eftbend,
+    request more throughwone ^
+      (request more) leibnitz
+        ({answer ^ (answer throughwone) warp_warp f g} fall_umtake)
+  }
+
+## flattening a forewrit whose outcomes are wrapped in `done` keepeth it.
+let warp_done_flat
+  : [@φ: [*, *], @α: *, forewrit: φ freer α,
+    ((forewrit warp done) flat) = forewrit]
+  ≔ match forewrit {
+    _ done                   ^ eftbend,
+    request more throughwone ^
+      (request more) leibnitz
+        ({answer ^ (answer throughwone) warp_done_flat} fall_umtake)
+  }
+
+## interpret a forewrit: `handle` answereth each request by calling its
+## continuation, and `leaf` turneth the outcome into the answer.
+show let gather
+  : [@φ: [*, *], @α: *, @β: *, [α, β], [@ξ: *, ξ φ, [ξ, β], β], φ freer α, β]
+  ≔ {
+    leaf, _,      worth done               ^ worth leaf,
+    leaf, handle, request more throughwone ^
+      request handle {answer ^ leaf gather handle (answer throughwone)}
+  }
+
+## general warping and right-sameness soothings need fall umtaking
+## to make pointwise continuation soothings into sameness of `more` forewrits.
+bizen: [@φ: [*, *], (φ freer) functor] {
+  let warp: [forewrit:, tweak:] ≔ forewrit warp tweak
+  let warp_sameness ≔ helpsetting_warp_sameness
+}
+
+bizen: [@φ: [*, *], (φ freer) atfoldsome] {
+  let sheer ≔ done
+  let atfold: [forewrit:, tweaks:] ≔ tweaks bind {tweak ^ forewrit warp tweak}
+  let atfold_sameness_sheer ≔ helpsetting_warp_sameness
+  let sheer_atfold_sheer: [_:, _:] ≔ eftbend
+  let atfold_atfold: [a:, f:, g:] ≔ a warp_warp f g
+  let sheer_atfold: [_:, _:] ≔ eftbend
+}
+
+bizen: [@φ: [*, *], (φ freer) monad] {
+  let flat: [forewrit:] ≔ forewrit flat
+  let sheer_bind: [_:, _:] ≔ eftbend
+  let warp_sheer_flat ≔ warp_done_flat
+}

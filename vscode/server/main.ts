@@ -20,13 +20,13 @@ import {
 import { TextDocument } from "vscode-languageserver-textdocument";
 import {
   keywordHelp,
+  roleLabel,
   nameRange,
   smallestRegion,
   tokenAtPosition,
   tokenRange,
 } from "./analysis.ts";
 import { CompilerBridge } from "./checker.ts";
-import { formatRangeEdit } from "./format.ts";
 import {
   readDeclaredLibraryPaths,
   resolveLibraryPaths,
@@ -119,7 +119,6 @@ connection.onInitialize((params) => {
       selectionRangeProvider: true,
       documentLinkProvider: { resolveProvider: false },
       documentFormattingProvider: true,
-      documentRangeFormattingProvider: true,
       signatureHelpProvider: { triggerCharacters: [" ", "$"] },
       workspace: {
         workspaceFolders: {
@@ -151,7 +150,10 @@ connection.onRequest("tung/libraryPath", () =>
 connection.onRequest(
   "tung/checkProof",
   navigation(
-    async ({ textDocument, position, name, allowedAxioms }, cancellation) => {
+    async (
+      { textDocument, position, name, allowedOrsettings },
+      cancellation,
+    ) => {
       if (libraryResolutionError)
         return {
           kind: "error",
@@ -197,7 +199,7 @@ connection.onRequest(
         imports,
         selected,
         version,
-        allowedAxioms,
+        allowedOrsettings,
       );
       const cancelled = cancellation?.onCancellationRequested(() =>
         running.cancel(),
@@ -323,13 +325,14 @@ connection.onHover(
     if (resolved.definition) {
       const definition = resolved.definition;
       const header =
-        definition.detail || `${definition.role} ${definition.bareName}`;
+        definition.detail ||
+        `${roleLabel(definition.role)} ${definition.bareName}`;
       const inferred = await inspectType(definition, cancellation);
       const docText = definition.documentation
         ? `${definition.documentation}\n\n`
         : "";
       const typeText = inferred
-        ? `\n\n**inferred type**\n\n\`\`\`tung\n${definition.bareName}: ${inferred}\n\`\`\``
+        ? `\n\n**inferred ilk**\n\n\`\`\`tung\n${definition.bareName}: ${inferred}\n\`\`\``
         : "";
       return {
         range: nameRange(resolved.token),
@@ -509,12 +512,6 @@ connection.onDocumentFormatting(async ({ textDocument }) => {
     ? []
     : [{ range: fullRange(result.document), newText: result.formatted }];
 });
-connection.onDocumentRangeFormatting(async ({ textDocument, range }) => {
-  const result = await formatDocument(textDocument.uri);
-  if (!result) return [];
-  const edit = formatRangeEdit(result.source, result.formatted, range);
-  return edit ? [edit] : [];
-});
 connection.onSignatureHelp(
   navigation(({ textDocument, position }) => {
     const model = workspace.model(textDocument.uri);
@@ -693,7 +690,7 @@ const inspectType = (definition, cancellation = undefined) => {
   const cached = typeCache.get(key);
   if (cached) return cached.promise;
   const version = documents.get(definition.uri)?.version || 0;
-  const running = compiler.typeOf(
+  const running = compiler.ilkOf(
     model,
     workspace.importSources(model),
     definition.bareName,
@@ -702,7 +699,7 @@ const inspectType = (definition, cancellation = undefined) => {
   const entry = {
     cancel: running.cancel,
     promise: running.result.then((output) =>
-      output.kind === "type" ? output.type : undefined,
+      output.kind === "ilk" ? output.ilk : undefined,
     ),
   };
   typeCache.set(key, entry);
@@ -855,7 +852,9 @@ const roleDescription = (definition) => {
     : definition.local
       ? "local"
       : "private";
-  return [visibility, definition.role, where].filter(Boolean).join(" · ");
+  return [visibility, roleLabel(definition.role), where]
+    .filter(Boolean)
+    .join(" · ");
 };
 const selectionRange = (model, position) => {
   const token = tokenAtPosition(model, position);

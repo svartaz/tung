@@ -29,10 +29,10 @@ wellFoundedTests library example =
         forM_ (sourceDefinitions program) (validate (sourceEnvironment program) . snd)
         traverse
           (uncurry (sameNormalIn program))
-          [ ("three count", "three"),
+          [ ("three rime", "three"),
             ("three eke (nought after)", "three after"),
             ("three shifted", "three"),
-            ("(three pack) unpack_count", "three"),
+            ("(three pack) unpack_rime", "three"),
             ("(three pack) selfsame", "(eftbend:(three pack) = (three pack))")
           ]
     )
@@ -102,7 +102,7 @@ functionRecursionTests library example =
             ("sample deep_hoard 4", "6"),
             ("3 hoard 4", "7"),
             ("leaf depth", "1"),
-            ("sample proof", "(eftbend:sample = sample)"),
+            ("sample soothing", "(eftbend:sample = sample)"),
             ("fan_sample fan_depth", "2"),
             ("rose_sample height", "2"),
             ("2 retain eftbend", "0")
@@ -193,9 +193,9 @@ indexMemoTests example =
             (chain3 ++ " named_depth", "3"),
             ("3 hoard " ++ chain3 ++ " 4", "7"),
             ("((((stop up) down) up) down) laps", "2"),
-            ("0 turns (((stop up) down) up)", "1"),
+            ("0 spins (((stop up) down) up)", "1"),
             ("((leaf cons nil) node) height", "1"),
-            ("(0 to_one 2 (2 to_two @0 initial)) count", "1")
+            ("(0 to_one 2 (2 to_two @0 initial)) rime", "1")
           ]
     )
     : ( do
@@ -261,11 +261,11 @@ positiveTests =
           "{x: nat ^ x sub naught}",
           "{x: nat ^ x}"
         ),
-        ("a lambda may shadow the recursive binding", count "(n count) keep ({z ^ z} {count:[nat,nat] ^ naught count})", two ++ " count", two),
-        ("a case variable may shadow the recursive binding", count "(n count) keep (naught {count ^ count})", two ++ " count", two),
-        ("a local binding may shadow the recursive binding", count "(let worth ≔ n rime let rime ≔ naught yield worth keep rime)", two ++ " count", two),
-        ("a local initialiser still seeth the outer recursive binding", count "(let rime ≔ n rime yield rime)", two ++ " count", two),
-        ("a direct child's alias denoteth the same recursive input", count "(let smaller ≔ n yield smaller rime)", two ++ " count", two),
+        ("a lambda may shadow the recursive binding", count "(n rime) keep ({z ^ z} {rime:[nat,nat] ^ naught rime})", two ++ " rime", two),
+        ("a case variable may shadow the recursive binding", count "(n rime) keep (naught {rime ^ rime})", two ++ " rime", two),
+        ("a local binding may shadow the recursive binding", count "(let worth ≔ n rime let rime ≔ naught yield worth keep rime)", two ++ " rime", two),
+        ("a local initialiser still seeth the outer recursive binding", count "(let rime ≔ n rime yield rime)", two ++ " rime", two),
+        ("a direct child's alias denoteth the same recursive input", count "(let smaller ≔ n yield smaller rime)", two ++ " rime", two),
         ( "a rebound first child leaveth the second input structural",
           """
           let right:[x:nat, y:nat, nat] ≔ match x,y {
@@ -285,7 +285,7 @@ positiveTests =
               m heir ^ m local
             } yield n local)
             """,
-          two ++ " count",
+          two ++ " rime",
           two
         ),
         ( "nested deep selfcalling retaineth an outer memoised hypothesis",
@@ -329,7 +329,7 @@ positiveTests =
         ),
         ( "a recursive lambda retaineth its binder annotation",
           "let rime:[nat,nat] ≔ {x:nat ^ match x {naught ^ naught, n heir ^ (n rime) heir}}",
-          two ++ " count",
+          two ++ " rime",
           two
         ),
         ( "mutual descendant records retain quantified accumulators",
@@ -371,7 +371,7 @@ rejectionTests =
         ("an explicit index argument must be the child's index", vector ++ "let greatness:[@α:*, n:nat, v:α vec n, nat] ≔ match v { nil ^ n, k cons _ t ^ (naught greatness t) heir }"),
         ("an index input cannot be matched by a constructor", vector ++ "let greatness:[@α:*, n:nat, v:α vec n, nat] ≔ { naught, nil ^ naught, _, k cons _ t ^ (k greatness t) heir }"),
         ("a recursive lambda cannot ignore a wrong binder annotation", "let rime:[nat,nat] ≔ {x:string ^ match x {naught ^ naught, n heir ^ (n rime) heir}}"),
-        ("a rebuilt matched input is not a descendant", count "(n heir) count"),
+        ("a rebuilt matched input is not a descendant", count "(n heir) rime"),
         ( "an inner child is not an outer induction hypothesis",
           count
             """

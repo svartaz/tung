@@ -4,21 +4,18 @@ bring is.tung
 
 show flock category: [⇨: [*, *, *], @: ⇨ semigroupoid, *] {
   let sameness: [@α: *, α ⇨ α]
-
   let sameness_▷: [@α: *, @β: *, f: α ⇨ β, (sameness ▷ f) = f]
-
   let ▷_sameness: [@α: *, @β: *, f: α ⇨ β, (f ▷ sameness) = f]
 }
 
 bizen fallback: → category {
   let sameness: [a:] ≔ a
-
   let sameness_▷: [_:] ≔ eftbend
-
   let ▷_sameness: [_:] ≔ eftbend
 }
 
 ## an arrow that leaveth every following arrow alone is `sameness`.
-show let sameness_alone: [@⇨: [*, *, *], @: ⇨ category, @α: *, e: α ⇨ α,
-  leaving: [@β: *, f: α ⇨ β, (e ▷ f) = f], e = sameness] ≔
-  ((e ▷_sameness) evenmete) throughgo (sameness leaving)
+show let sameness_alone
+  : [@⇨: [*, *, *], @: ⇨ category, @α: *, e: α ⇨ α,
+    leaving: [@β: *, f: α ⇨ β, (e ▷ f) = f], e = sameness]
+  ≔ ((e ▷_sameness) evenmete) throughgo (sameness leaving)

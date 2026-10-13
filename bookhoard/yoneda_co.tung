@@ -14,16 +14,15 @@ show ilk yoneda_co: [φ: [*, *], α: *, *] {
 }
 
 ## a worth with nothing yet to tweak.
-show let lift: [@φ: [*, *], @α: *, a: α φ, φ yoneda_co α] ≔
-  a inwrap sameness
+show let lift: [@φ: [*, *], @α: *, a: α φ, φ yoneda_co α] ≔ a inwrap sameness
 
 ## tweak the hidden worth by the waiting fall.
-show let unlift: [@φ: [*, *], @: φ functor, @α: *, b inwrap f: φ yoneda_co α, α φ] ≔
-  b warp f
+show let unlift
+  : [@φ: [*, *], @: φ functor, @α: *, b inwrap f: φ yoneda_co α, α φ]
+  ≔ b warp f
 
 bizen: [@φ: [*, *], (φ yoneda_co) functor] {
   let warp: [b inwrap f:, g:] ≔ b inwrap (f ▷ g)
-
   let warp_sameness ≔ {_ inwrap _ ^ eftbend}
 }
 
@@ -31,6 +30,6 @@ bizen: [@φ: [*, *], (φ yoneda_co) functor] {
 ## only after `unlift`: `(b warp f) inwrap sameness` and `b inwrap f` are
 ## different worths with one meaning, and tung hath no quotient ilks to
 ## identify them.
-show let unlift_lift: [@φ: [*, *], @: φ functor, @α: *, a: α φ,
-  ((a lift) unlift) = a] ≔
-  a warp_sameness
+show let unlift_lift
+  : [@φ: [*, *], @: φ functor, @α: *, a: α φ, ((a lift) unlift) = a]
+  ≔ a warp_sameness

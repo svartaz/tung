@@ -1,6 +1,6 @@
 use ilk/two.tung
 
-## a inholder whose membership can be decided.
+## an inholder whose limbship can be decided.
 show flock hath_∋: [α: *, β: *, *] {
   let ∋: [α, β, 𝟚]
 }

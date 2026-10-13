@@ -8,7 +8,7 @@ use flock/algebra/whole/monoid_fold.tung
 use flock/algebra/whole/semigroup_fold.tung
 use flock/functor.tung
 use flock/functor/atfoldsome.tung
-use flock/functor/catamorphism.tung
+use flock/functor/downshaper.tung
 use flock/functor/hath_sift.tung
 use flock/functor/hath_throughwend.tung
 use flock/functor/monad.tung
@@ -40,13 +40,13 @@ bizen: [@α: *, @: α hath_≍, (α list) hath_∋ α] {
   let ∋ ≔ holds
 }
 
-## `count` integers from start.
+## `count` wholetales from start.
 let count_up: [ℤ, ℕ, ℤ list] ≔ {
   _,     0      ^ empty,
   start, n heir ^ start ‥ (start + +1 $ count_up n)
 }
 
-## integer range from start up to stop, excluding stop.
+## wholetale range from start up to stop, excluding stop.
 show let till: [start: ℤ, stop: ℤ, ℤ list] ≔
   match (start -+ stop) to_ℕ {
     none       ^ empty,
@@ -143,9 +143,9 @@ bizen: list hath_sift {
   let sift ≔ sift
 }
 
-## perform an action for each element, in order.
-show let each: [@α: *, @φ: [*, *], @: φ atfoldsome, l: α list, action: [α, 𝟙 φ], 𝟙 φ] ≔
-  l gather₁ (only sheer) { done, α ^ done keep_other (α action) }
+## perform a deed for each element, in order.
+show let each: [@α: *, @φ: [*, *], @: φ atfoldsome, l: α list, doing: [α, 𝟙 φ], 𝟙 φ] ≔
+  l gather₁ (only sheer) { done, α ^ done keep_other (α doing) }
 
 ## first list element, if present.
 show let head: [@α: *, α list, α maybe] ≔ {
@@ -178,7 +178,7 @@ show let drop: [@α: *, α list, ℕ, α list] ≔ {
   _ ‥ rest, n ^ rest drop (n ∸ 1)
 }
 
-## first element accepted by a predicate.
+## first element accepted by an umbsay.
 show let find: [@α: *, α list, [α, 𝟚], α maybe] ≔ {
   empty,        _ ^ none,
   first ‥ rest, f ^ match first f {
@@ -197,7 +197,7 @@ let gather₁: [@α: *, @β: *, α list, β, [β, α, β], β] ≔ {
   first ‥ rest, b, f ^ rest gather₁ (b f first) f
 }
 
-bizen: list catamorphism {
+bizen: list downshaper {
   let gather₀ ≔ gather₀
   let gather₁ ≔ gather₁
 }
@@ -215,7 +215,7 @@ bizen: [@α: *, (α list) hath_greatness] {
   let greatness: [l:] ≔ l gather₁ 0 { n, _ ^ n + 1 }
 }
 
-show let reverse: [@α: *, l: α list, α list] ≔
+show let eftwend: [@α: *, l: α list, α list] ≔
   l gather₁ empty { outcome, α ^ α ‥ outcome }
 
 show let zip: [@α: *, @β: *, α list, β list, (α ∏ β) list] ≔ {
@@ -235,13 +235,13 @@ show let at: [@α: *, l: α list, index: ℕ, α maybe] ≔
 show let last: [@α: *, l: α list, α maybe] ≔
   l gather₁ none { _, α ^ α some }
 
-## repeat a value count times.
+## repeat a worth count times.
 show let replicate: [@α: *, α, ℕ, α list] ≔ {
   _, 0      ^ empty,
   a, n heir ^ a ‥ (a replicate n)
 }
 
-## split values accepted and rejected by a predicate.
+## split worths accepted and rejected by an umbsay.
 show let partition: [@α: *, l: α list, f: [α, 𝟚], (α list) ∏ (α list)] ≔
   l gather₀ (empty both empty) { α, accepted both rejected ^
     (α f) if ((α ‥ accepted) both rejected) (accepted both (α ‥ rejected))

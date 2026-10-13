@@ -6,7 +6,7 @@ use ilk/two.tung
 
 show task
 
-## `α deed` is an action that produceth an α when the runner performeth it.
+## `α deed` is a deed that produceth an α when the runner performeth it.
 ## building or combining deeds performeth nothing.
 show let deed_sheer: [@α: *, α, α deed] ≔ 'deed_sheer' fremmed
 show let deed_bind: [@α: *, @β: *, α deed, [α, β deed], β deed] ≔ 'deed_bind' fremmed
@@ -21,7 +21,7 @@ show let random: float deed ≔ 'random' fremmed
 ## milliseconds.
 show let sleep: [ℕ, 𝟙 deed] ≔ 'sleep' fremmed
 
-## a task runneth its deed concurrently. waiting yieldeth none for a cancelled
+## a task runneth its deed concurrently. waiting yieldeth none for an outstruck
 ## task, and `wait_for` yieldeth none after its timeout in milliseconds.
 show let fork: [@α: *, α deed, (α task) deed] ≔ 'fork' fremmed
 show let wait: [@α: *, α task, (α maybe) deed] ≔ 'wait' fremmed

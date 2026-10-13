@@ -8,7 +8,7 @@ use flock/order/semilattice_upper.tung
 use ilk/two.tung
 use is.tung
 
-## a powerset represented by its membership predicate.
+## a powerset represented by its limbship umbsay.
 show let powerset: [α: *, *] ≔ [α, 𝟚]
 
 show let empty: [@α: *, α powerset] ≔ nay withstand

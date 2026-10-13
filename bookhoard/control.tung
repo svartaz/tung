@@ -1,17 +1,17 @@
-use _foreign.tung
+use _fremmed.tung
 use flock/order/complement.tung
 use ilk/one.tung
 use ilk/two.tung
 
-## a deed that performeth the action only when the condition is true.
+## a deed that performeth the doing only when the kilter is true.
 show let when: [𝟚, 𝟙 deed, 𝟙 deed] ≔ {
-  yea, action ^ action,
-  nay, _      ^ only deed_sheer
+  yea, doing ^ doing,
+  nay, _     ^ only deed_sheer
 }
 
-## a deed that performeth the action only when the condition is false.
-show let when_not: [two: 𝟚, action: 𝟙 deed, 𝟙 deed] ≔
-  (two ¬) when action
+## a deed that performeth the doing only when the kilter is false.
+show let when_not: [two: 𝟚, doing: 𝟙 deed, 𝟙 deed] ≔
+  (two ¬) when doing
 
 ## pick and run one delayed branch.
 show let branch: [@α: *, [𝟚, [𝟙, α], [𝟙, α], α]] ≔ {

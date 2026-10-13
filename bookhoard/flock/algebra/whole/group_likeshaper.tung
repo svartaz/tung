@@ -5,11 +5,11 @@ use flock/algebra/whole/monoid_fold.tung
 use flock/algebra/whole/semigroup_fold.tung
 use is.tung
 
-## a function between groups that keepeth products.
-show let sameshaped: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], *] ≔
+## a fall between groups that keepeth products.
+show let likeshaped: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], *] ≔
   [a: α, b: α, ((a · b) f) = ((a f) · (b f))]
 
-## the values that `f` sendeth to `one`.
+## the worths that `f` sendeth to `one`.
 show let kernel: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], a: α, *] ≔
   (a f) = one
 
@@ -18,9 +18,9 @@ show ilk image: [@α: *, @β: *, f: [α, β], y: β, *] {
   reach: [a: α, reached: (a f) = y, f image y]
 }
 
-## a homomorphism sendeth `one` to `one`: `(one f) · (one f) = one f`, and
-## cancelling one `one f` leaveth `one`.
-show let one_f: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f sameshaped,
+## a likeshaper sendeth `one` to `one`: `(one f) · (one f) = one f`, and
+## outstriking one `one f` leaveth `one`.
+show let one_f: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f likeshaped,
   ((one: α) f) = one] ≔
   ((one: α) f) outstrike_· ((one: α) f) one >{throughgo,
     ((one: α) hom one) evenmete,
@@ -28,8 +28,8 @@ show let one_f: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], ho
     (((one: α) f) one_·) evenmete
   }
 
-## a homomorphism sendeth an inverse to the inverse.
-show let /_f: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f sameshaped, a: α,
+## a likeshaper sendeth a witherwend to the witherwend.
+show let /_f: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f likeshaped, a: α,
   ((a /) f) = ((a f) /)] ≔
   (a f) /_alone ((a /) f) >{throughgo,
     ((a /) hom a) evenmete,
@@ -38,12 +38,12 @@ show let /_f: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom:
   }
 
 ## the kernel holdeth `one`.
-show let kernel_one: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f sameshaped,
+show let kernel_one: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f likeshaped,
   f kernel (one: α)] ≔
   f one_f hom
 
 ## the kernel is closed under products.
-show let kernel_·: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f sameshaped, a: α, b: α,
+show let kernel_·: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f likeshaped, a: α, b: α,
   in_a: f kernel a, in_b: f kernel b, f kernel (a · b)] ≔ >{throughgo,
   a hom b,
   {z: β ^ z · (b f)} leibnitz in_a,
@@ -51,16 +51,16 @@ show let kernel_·: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β]
   one one_·
 }
 
-## the kernel is closed under inverses.
-show let kernel_/: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f sameshaped, a: α,
+## the kernel is closed under witherwends.
+show let kernel_/: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f likeshaped, a: α,
   in_a: f kernel a, f kernel (a /)] ≔ >{throughgo,
   f /_f hom a,
   {z: β ^ z /} leibnitz in_a,
   one_/
 }
 
-## the kernel is normal: it is closed under turning by any value.
-show let kernel_turn: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f sameshaped, a: α, b: α,
+## the kernel is normal: it is closed under turning by any worth.
+show let kernel_turn: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f likeshaped, a: α, b: α,
   in_a: f kernel a, f kernel ((b · a) · (b /))] ≔ >{throughgo,
   (b · a) hom (b /),
   {z: β ^ z · ((b /) f)} leibnitz (b hom a),
@@ -71,12 +71,12 @@ show let kernel_turn: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, �
 }
 
 ## the image holdeth `one`.
-show let image_one: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f sameshaped,
+show let image_one: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f likeshaped,
   f image (one: β)] ≔
   one reach (f one_f hom)
 
 ## the image is closed under products.
-show let image_·: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f sameshaped, y: β, z: β,
+show let image_·: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f likeshaped, y: β, z: β,
   in_y: f image y, in_z: f image z, f image (y · z)] ≔
   match in_y, in_z {
     a reach p, b reach q ^ (a · b) reach >{throughgo,
@@ -86,21 +86,21 @@ show let image_·: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β],
     }
   }
 
-## the image is closed under inverses.
-show let image_/: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f sameshaped, y: β,
+## the image is closed under witherwends.
+show let image_/: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f likeshaped, y: β,
   in_y: f image y, f image (y /)] ≔
   match in_y {
     a reach p ^ (a /) reach ((f /_f hom a) throughgo ({w: β ^ w /} leibnitz p))
   }
 
-## the first isomorphism theorem, without quotient types: two values have
-## one image exactly when they lie in one coset of the kernel. so the map from
+## the first evenshaper setting, without quotient ilks: two worths have
+## one image exactly when they lie in one coset of the kernel. so the warp from
 ## the kernel's cosets to the image, sending a coset to the image of any
-## member, is well defined (`fibre_kernel`) and injective (`kernel_fibre`);
-## it is a homomorphism onto the image, a subgroup, by `sameshaped` and
+## limb, is well defined (`fibre_kernel`) and injective (`kernel_fibre`);
+## it is a likeshaper onto the image, a subgroup, by `likeshaped` and
 ## `image_·`.
 show let fibre_kernel: [@α: *, @: α group_·, @β: *, @: β group_·,
-  f: [α, β], hom: f sameshaped, a: α, b: α,
+  f: [α, β], hom: f likeshaped, a: α, b: α,
   same: (a f) = (b f), f kernel (a /· b)
 ] ≔ >{throughgo,
   (a /) hom b,
@@ -110,7 +110,7 @@ show let fibre_kernel: [@α: *, @: α group_·, @β: *, @: β group_·,
 }
 
 show let kernel_fibre: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β],
-  hom: f sameshaped, a: α, b: α,
+  hom: f likeshaped, a: α, b: α,
   in_kernel: f kernel (a /· b), (a f) = (b f)
 ] ≔ (
   let undone: ((((a f) /) · (b f)) = one) ≔

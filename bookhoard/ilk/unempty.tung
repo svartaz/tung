@@ -5,7 +5,7 @@ use flock/algebra/whole/hath_fold.tung
 use flock/algebra/whole/semigroup_fold.tung
 use flock/functor.tung
 use flock/functor/atfoldsome.tung
-use flock/functor/catamorphism.tung
+use flock/functor/downshaper.tung
 use flock/functor/hath_throughwend.tung
 use flock/functor/monad.tung
 use flock/hath_inhold.tung
@@ -120,7 +120,7 @@ let helpsetting_·_·: [@α: *, a: α list, b: α list, c: α list,
   first ‥ rest ^ (first ‥) leibnitz (rest helpsetting_·_· b c)
 }
 
-## folding singleton lists athangeth every element to the initial value.
+## gathering onesome lists athangeth every element to the initial worth.
 let gather_onesomes: [@α: *, l: α list, start: α unempty,
   (l warp onesome $ gather₁ start ·) =
   (match start {first ‥′ rest ^ first ‥′ (rest · l)})
@@ -131,7 +131,7 @@ let gather_onesomes: [@α: *, l: α list, start: α unempty,
       ((first ‥′) leibnitz ((rest helpsetting_·_· (next ‥ empty) tail) evenmete))
 }
 
-bizen: unempty catamorphism {
+bizen: unempty downshaper {
   let gather₀: [first ‥′ rest:, b:, f:] ≔
     first f (rest gather₀ b f)
 

@@ -1,5 +1,5 @@
 # a tour of tung. each section addeth one idea. run it with
-# `tung byspel/tutorial.tung`; check it with `tung --check byspel/tutorial.tung`.
+# `tung byspel/walkthrough.tung`; check it with `tung --check byspel/walkthrough.tung`.
 # `#` beginneth a comment. `##` before a declaration documenteth it.
 
 # 0. modules
@@ -48,9 +48,9 @@ let triple: [ℤ, ℤ] ≔ {x ^ (x + x) + x}
 let quadruple: [x: ℤ] ≔ x double $ double
 # functions take their inputs one at a time, so giving fewer inputs maketh a
 # new function.
-let add_two: [ℤ, ℤ] ≔ +2 +
+let eke_two: [ℤ, ℤ] ≔ +2 +
 # `fall` writeth a whole function, with its type, as one expression.
-let add_three ≔ fall x: ℤ, ℤ ^ x + +3
+let eke_three ≔ fall x: ℤ, ℤ ^ x + +3
 
 # 4. type inputs
 # `@α: *` is a type input: `*` is the type of types. the function below
@@ -134,10 +134,10 @@ let older: person ≔ someone.name person_of (someone.age + 1)
 # 10. lists, maybe, and words
 # `‥` putteth a value before a list; `>{‥, …, list~empty}` writeth a whole
 # list. `list~empty` is qualified because wordbooks have an `empty` too.
-let numbers: ℤ list ≔ >{‥, +1, +2, +3, list~empty}
-let doubled: ℤ list ≔ numbers warp double
+let tales: ℤ list ≔ >{‥, +1, +2, +3, list~empty}
+let doubled: ℤ list ≔ tales warp double
 # `maybe` holdeth `some` value or `none`.
-let found: ℤ maybe ≔ numbers find {x ^ +2 ≤ x}
+let found: ℤ maybe ≔ tales find {x ^ +2 ≤ x}
 # a wordbook mappeth keys to values.
 let ages: string hashmap~wordbook ℕ ≔ hashmap~empty hashmap~put 'tung' 1
 
@@ -182,7 +182,8 @@ let naught_+: [n: ℕ, (0 + n) = n] ≔ match n {
 }
 # `sorry` standeth in for any value or proof not yet written, and
 # `orsetting name: type` assumeth one. `--check` listeth both, and
-# `--no-sorry` refuseth them.
+# `--no-sorry` refuseth them. `tung --check-proof naught_+ byspel/walkthrough.tung`
+# listeth what one proof reacheth; `--no-axioms` also refuseth any `orsetting`.
 
 # 13. deeds
 # a deed is an action that the runner performeth, such as writing. building a
@@ -192,7 +193,7 @@ let greet: [name: string, 𝟙 deed] ≔ ('hello, ' write) then (name write_line
 # `bind` passeth a deed's result to a function that chooseth the next deed.
 let roll: 𝟙 deed ≔ random bind {luck ^ luck to_string $ write_line}
 # `>{then, …}` doth many deeds in order.
-let report: 𝟙 deed ≔ >{then,
+let eftbare: 𝟙 deed ≔ >{then,
   'tung' greet,
   seven to_string $ write_line,
   (5 factorial) to_string $ write_line
@@ -225,7 +226,7 @@ let background: 𝟙 deed ≔
 
 # `main` is where a program beginneth.
 let main: 𝟙 deed ≔ >{then,
-  report,
+  eftbare,
   message write_line,
   ages_report,
   count_report,

@@ -4,7 +4,7 @@ use ilk/three.tung
 use ilk/two.tung
 use is.tung
 
-## a decidable partial order.
+## a decidable half order.
 show flock order_half: [α: *, @: α hath_≤, *] {
   let ≤_eftbend: [a: α, (a ≤ a) = yea]
   let ≤_witherevenmete: [a: α, b: α, >{≤, a ≤ b, b ≤ a, a ≍ b} = yea]

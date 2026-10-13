@@ -1,4 +1,4 @@
-use _foreign.tung
+use _fremmed.tung
 use combinator.tung
 use flock/algebra/half/category.tung
 use flock/algebra/half/semigroupoid.tung
@@ -10,7 +10,7 @@ use is.tung
 
 ## the host's deeds form a monad. deeds are opaque to conversion, so these
 ## three laws of `deed_sheer` and `deed_bind` are listed assumptions; every
-## deed law below is proved from them.
+## deed law below is soothed from them.
 show orsetting deed_sheer_bind: [@α: *, @β: *, a: α, f: [α, β deed], ((a deed_sheer) deed_bind f) = (a f)]
 
 show orsetting deed_bind_sheer: [@α: *, m: α deed, (m deed_bind deed_sheer) = m]
@@ -18,7 +18,7 @@ show orsetting deed_bind_sheer: [@α: *, m: α deed, (m deed_bind deed_sheer) = 
 show orsetting deed_bind_bind: [@α: *, @β: *, @γ: *, m: α deed, f: [α, β deed], g: [β, γ deed],
   ((m deed_bind f) deed_bind g) = (m deed_bind {x ^ (x f) deed_bind g})]
 
-## binding to functions that agree at every result is binding to one.
+## binding to a fall is binding to any fall that agreeth with it at every result.
 show let bind_same: [@α: *, @β: *, m: α deed, @f: [α, β deed], @g: [α, β deed], pointwise: [x: α, (x f) = (x g)], (m deed_bind f) = (m deed_bind g)] ≔
   {h ^ m deed_bind h} leibnitz (pointwise fall_umtake)
 
@@ -28,17 +28,17 @@ let warp_twice: [@α: *, @β: *, @γ: *, m: α deed, f: [α, β], g: [β, γ],
   (m deed_bind_bind {x ^ (x f) deed_sheer} {y ^ (y g) deed_sheer}) throughgo
     (m bind_same {x ^ (x f) deed_sheer_bind {y ^ (y g) deed_sheer}})
 
-## deeds compose as a monad: `warp` changeth a result, and `bind` or `then`
+## deeds compose as a monad: `warp` tweaketh a result, and `bind` or `then`
 ## sequenceth deeds.
 bizen: deed functor {
-  let warp: [action:, tweak:] ≔ action deed_bind (tweak ▷ deed_sheer)
+  let warp: [doing:, tweak:] ≔ doing deed_bind (tweak ▷ deed_sheer)
 
   let warp_sameness: [m:] ≔ m deed_bind_sheer
 }
 
 bizen: deed atfoldsome {
   let sheer ≔ deed_sheer
-  let atfold: [action:, tweaks:] ≔ tweaks deed_bind { tweak ^ action warp tweak }
+  let atfold: [doing:, tweaks:] ≔ tweaks deed_bind { tweak ^ doing warp tweak }
 
   let atfold_sameness_sheer: [m:] ≔ (sameness deed_sheer_bind {tweak ^ m warp tweak}) throughgo (m deed_bind_sheer)
 
@@ -56,7 +56,7 @@ bizen: deed atfoldsome {
 }
 
 bizen: deed monad {
-  let flat: [@α: *, actions: (α deed) deed, α deed] ≔ actions deed_bind sameness
+  let flat: [@α: *, doings: (α deed) deed, α deed] ≔ doings deed_bind sameness
 
   let sheer_bind: [a:, f:] ≔
     ({inner ^ inner flat} leibnitz

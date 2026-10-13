@@ -24,11 +24,11 @@ bizen: [@β: *, @: β semilattice_lower, @α: *, (α → β) semilattice_lower] 
     {a ^ (a f) ∧_∧ (a g) (a h)} fall_umtake
 }
 
-## for a total order, `a ∧ b` is `a` when `a ≤ b` holdeth.
+## for a whole order, `a ∧ b` is `a` when `a ≤ b` holdeth.
 show let ∧_yea: [@α: *, @: α order_whole, a: α, b: α, k: (a ≤ b) = yea, ((a ≤ b) if a b) = a] ≔
   {x: 𝟚 ^ x if a b} leibnitz k
 
-## for a total order, `a ∧ b` is `b` when `a ≤ b` faileth.
+## for a whole order, `a ∧ b` is `b` when `a ≤ b` faileth.
 show let ∧_nay: [@α: *, @: α order_whole, a: α, b: α, k: (a ≤ b) = nay, ((a ≤ b) if a b) = b] ≔
   {x: 𝟚 ^ x if a b} leibnitz k
 
@@ -64,7 +64,7 @@ let helpsetting_∧_∧: [@α: *, @: α order_whole, a: α, b: α, c: α,
 bizen: [@α: *, @: α order_whole, α semilattice_lower] {
   let ∧: [a:, b:] ≔ (a ≤ b) if a b
 
-  # each comparison result chooseth a, so matching on it proveth the law.
+  # each comparison result chooseth a, so matching on it sootheth the law.
   let ∧_swallow: [a:] ≔ match a ≤ a {yea ^ eftbend, nay ^ eftbend}
 
   let ∧_swap ≔ helpsetting_∧_swap

@@ -6,7 +6,6 @@ module Test.Compile
     compileProjectWith,
     compileProjectDetailed,
     compileYieldWith,
-    compileModules,
     bookhoardSources,
     loadBookhoard,
   )
@@ -35,9 +34,6 @@ compileProjectDetailed compiled owner source modules = fst <$> compileSnapshot c
 
 compileYieldWith :: Map.Map String SourceProgram -> ModuleId -> String -> Map.Map String String -> Either String (SourceProgram, Maybe Inferred)
 compileYieldWith compiled owner source modules = first failureText (compileSnapshot compiled owner (sourceSnapshot source) (Map.map sourceSnapshot modules))
-
-compileModules :: Map.Map String String -> [String] -> Either String (Map.Map String SourceProgram)
-compileModules modules = first failureText . compileImports Map.empty (Map.map sourceSnapshot modules)
 
 -- each test process readeth one immutable source snapshot. fixture overrides
 -- bypass this cache, including every transitive dependant of a changed source.

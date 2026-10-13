@@ -11,7 +11,7 @@ import Tung.Dependent.Source (SourceProgram, normaliseSourceExpression, sourceDe
 
 group :: IO Group
 group = do
-  source <- exampleSource "dependent_list.tung"
+  source <- exampleSource "list_family.tung"
   Harness.group "dependent_list" (tests source)
 
 tests :: String -> [Test]

@@ -12,16 +12,16 @@ let depth: [x: tree, ℕ] ≔ match x {
 
 ## after the decreasing input, a recursive call may leave an accumulator open.
 let hoard: [ℕ, ℕ, ℕ] ≔ {
-  0,      total ^ total,
-  n heir, total ^ (let rest ≔ n hoard yield (total heir) rest)
+  0,      whole ^ whole,
+  n heir, whole ^ (let rest ≔ n hoard yield (whole heir) rest)
 }
 
-let deep_hoard: [x: tree, total: ℕ, ℕ] ≔ match x {
-  tip             ^ total,
+let deep_hoard: [x: tree, whole: ℕ, ℕ] ≔ match x {
+  tip             ^ whole,
   _ node children ^ match 0 children {
-    tip            ^ total heir,
+    tip            ^ whole heir,
     _ node smaller ^ (let rest ≔ (0 smaller) deep_hoard
-      yield ((total heir) heir) rest)
+      yield ((whole heir) heir) rest)
   }
 }
 

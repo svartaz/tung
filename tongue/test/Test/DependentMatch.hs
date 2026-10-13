@@ -11,7 +11,7 @@ import Tung.Dependent.Source (SourceProgram)
 
 group :: IO Harness.Group
 group = do
-  example <- exampleSource "dependent_match.tung"
+  example <- exampleSource "match.tung"
   Harness.group "dependent_match" (tests example ++ fixedIndexTests example ++ recursiveArityTests ++ repeatedScrutineeTests)
 
 tests :: String -> [Test]
@@ -22,7 +22,7 @@ tests example =
     computes "the first matching row winneth" "yes both yes" "yes",
     computes "selfcalling on a direct child computeth" (two ++ " plus " ++ two) four,
     computes "a fixed implicit input stayeth outside the selfcalling" "(>{‥, naught, naught, ∅}) length" two,
-    computes "a changing input actth as an accumulator" "(>{‥, naught, naught heir, ∅}) reverse_onto ∅" ">{‥, naught heir, naught, ∅}",
+    computes "a changing input actth as an accumulator" "(>{‥, naught, naught heir, ∅}) eftwend_onto ∅" ">{‥, naught heir, naught, ∅}",
     computes "a function input is passed to each recursive call" "(>{‥, naught, naught heir, ∅}) warp heir" ">{‥, naught heir, (naught heir) heir, ∅}",
     computes "several columns recurse together" (two ++ " same " ++ two) "yes",
     computes "several columns and alternatives" (two ++ " same naught") "no",

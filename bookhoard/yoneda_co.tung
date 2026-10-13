@@ -4,20 +4,20 @@ use flock/algebra/half/semigroupoid.tung
 use flock/functor.tung
 use is.tung
 
-## the coyoneda lemma, dual to `yoneda.tung` and named `yoneda_co` here: a
-## value of `β φ` beside a function `[β, α]`, for some hidden `β`, standeth
-## for the `α φ` that changing it would give. it is a functor for any `φ`,
-## since changing it only composeth the function; only `unlift` needeth `φ`
+## the coyoneda helpsetting, dual to `yoneda.tung` and named `yoneda_co` here: a
+## worth of `β φ` beside a fall `[β, α]`, for some hidden `β`, standeth
+## for the `α φ` that tweaking it would give. it is a functor for any `φ`,
+## since tweaking it only composeth the fall; only `unlift` needeth `φ`
 ## to be a functor.
 show ilk yoneda_co: [φ: [*, *], α: *, *] {
   inwrap: [@β: *, β φ, [β, α], φ yoneda_co α]
 }
 
-## a value with nothing yet to change.
+## a worth with nothing yet to tweak.
 show let lift: [@φ: [*, *], @α: *, a: α φ, φ yoneda_co α] ≔
   a inwrap sameness
 
-## change the hidden value by the waiting function.
+## tweak the hidden worth by the waiting fall.
 show let unlift: [@φ: [*, *], @: φ functor, @α: *, c: φ yoneda_co α, α φ] ≔
   match c { b inwrap f ^ b warp f }
 
@@ -27,9 +27,9 @@ bizen: [@φ: [*, *], (φ yoneda_co) functor] {
   let warp_sameness ≔ {_ inwrap _ ^ eftbend}
 }
 
-## lifting a value and taking it back giveth the value. the other way holdeth
+## lifting a worth and taking it back giveth the worth. the other way holdeth
 ## only after `unlift`: `(b warp f) inwrap sameness` and `b inwrap f` are
-## different values with one meaning, and tung hath no quotient types to
+## different worths with one meaning, and tung hath no quotient ilks to
 ## identify them.
 show let unlift_lift: [@φ: [*, *], @: φ functor, @α: *, a: α φ,
   ((a lift) unlift) = a] ≔

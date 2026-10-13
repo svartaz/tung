@@ -16,10 +16,10 @@ let copy: [@n: ℕ, n chain, n chain] ≔ {
   _ link (m link child) ^ (m heir) link (m link (child copy))
 }
 
-let hoard: [n: ℕ, x: n chain, total: ℕ, ℕ] ≔ match x {
-  empty                 ^ total,
-  _ link empty          ^ total heir,
-  _ link (m link child) ^ m hoard child ((total heir) heir)
+let hoard: [n: ℕ, x: n chain, whole: ℕ, ℕ] ≔ match x {
+  empty                 ^ whole,
+  _ link empty          ^ whole heir,
+  _ link (m link child) ^ m hoard child ((whole heir) heir)
 }
 
 ## an intermediate descendant may lie outside the declaration's domain.

@@ -2,7 +2,7 @@ use flock/hath_same.tung
 use ilk/three.tung
 use ilk/two.tung
 
-## a decidable less-than-or-equal operation, without order laws.
+## a decidable at-most operation, without order laws.
 show flock hath_≤: [α: *, @: α hath_≍, *] {
   let ≤: [α, α, 𝟚]
 }

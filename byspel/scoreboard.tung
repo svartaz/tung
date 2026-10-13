@@ -1,4 +1,4 @@
-use flock/functor/catamorphism.tung
+use flock/functor/downshaper.tung
 use flock/functor/hath_throughwend.tung
 use ground.tung
 use ilk/list.tung
@@ -150,7 +150,7 @@ let finished_results: [waited: (match_result maybe) list, match_result list] ≔
     none         ^ empty
   }
 
-let report: [results: match_result list, 𝟙 deed] ≔ >{then,
+let eftbare: [results: match_result list, 𝟙 deed] ≔ >{then,
   '' write_line,
   'results' write_line,
   results each print_result,
@@ -161,5 +161,5 @@ let report: [results: match_result list, 𝟙 deed] ≔ >{then,
 
 let main: 𝟙 deed ≔ >{then,
   'launching match jobs' write_line,
-  fixtures throughwend start $ bind { tasks ^ tasks throughwend wait } $ warp finished_results $ bind report
+  fixtures throughwend start $ bind { tasks ^ tasks throughwend wait } $ warp finished_results $ bind eftbare
 }

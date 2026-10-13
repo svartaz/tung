@@ -2,7 +2,7 @@ use flock/algebra/half/category.tung
 use flock/functor.tung
 use flock/functor/atfoldsome.tung
 use flock/functor/bifunctor.tung
-use flock/functor/catamorphism.tung
+use flock/functor/downshaper.tung
 use flock/functor/hath_throughwend.tung
 use flock/functor/monad.tung
 use flock/hath_same.tung
@@ -95,7 +95,7 @@ bizen: [@α: *, (α ∑) monad] {
   }
 }
 
-bizen: [@α: *, (α ∑) catamorphism] {
+bizen: [@α: *, (α ∑) downshaper] {
   let gather₀ ≔ {
     _ incast₀, b, _ ^ b,
     a incast₁, b, f ^ a f b

@@ -4,7 +4,7 @@ use ilk/three.tung
 use ilk/two.tung
 use is.tung
 
-## a supremum semilattice with a least value.
+## a supremum semilattice with a least worth.
 show flock semilattice_upper_bounded: [α: *, @: α semilattice_upper, *] {
   let ⟂: α
 

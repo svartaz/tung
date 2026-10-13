@@ -1,4 +1,4 @@
-use _foreign.tung
+use _fremmed.tung
 use ilk/one.tung
 use web/request.tung
 use web/response.tung

@@ -25,7 +25,7 @@ the ascii spelling of its flock name.
 - `ilk/freer.tung` provideth `freer`, `bind`, `lift`, mapping, flattening, and
   folding. a request `ξ φ` nameth its answer type `ξ`, and the program keepeth
   the continuation, so any `φ` will do and every function stayeth total.
-- `deed/action.tung` maketh `deed` a functor, applicative, and monad, so
+- `deed.tung` maketh `deed` a functor, applicative, and monad, so
   ordinary combinators such as `bind`, `then`, `throughwend`, and `each`
   sequence actions. fallible operations return `maybe` or `string ∑ α`;
   nothing throweth.
@@ -57,7 +57,7 @@ the ascii spelling of its flock name.
 
 - a flock that only nameth one member and stateth no law is named `hath_x`,
   where `x` is that member: `hath_+`, `hath_≤`, `hath_≍`, `hath_naught`. a
-  lawless flock of several members is named for what they share, as `catamorphism`
+  lawless flock of several members is named for what they share, as `downshaper`
   for `gather₀` and `gather₁` and `elementary` for the elementary functions,
   never `hath_` of a name that is not a member. a flock with
   laws, or one that combineth lawful parents, is named for its structure,
@@ -91,7 +91,7 @@ the ascii spelling of its flock name.
   `witherwend_alone`, `witherwend_witherwend`, `sameness_witherwend`, and
   `witherwend_over_▷`. `ilk/natural.tung` showeth `heir_incast`, `heir_+`,
   `outstrike_+`, `+_∸`, and `·_swap`; `ilk/list_setting.tung` showeth
-  `warp_greatness`, `greatness_·`, and `reverse_greatness`. `group_sameshaping.tung` defineth `sameshaped`, `kernel`, and `image` for
+  `warp_greatness`, `greatness_·`, and `eftwend_greatness`. `group_likeshaper.tung` defineth `likeshaped`, `kernel`, and `image` for
   `group_·`, and proveth `one_f`, `/_f`, that the kernel is a normal
   subgroup (`kernel_one`, `kernel_·`, `kernel_/`, `kernel_turn`), that the
   image is a subgroup (`image_one`, `image_·`, `image_/`), and the first
@@ -110,7 +110,7 @@ the ascii spelling of its flock name.
   itself.
 
 - a shown name is read qualified by its module, so it doth not repeat the
-  module: `ilk/wholetale.tung` showeth `to_ℕ`, read `integer~to_ℕ`, not
+  module: `ilk/wholetale.tung` showeth `to_ℕ`, read `wholetale~to_ℕ`, not
   `wholetale_to_natural`. a host binding taketh that name directly; the
   library keepeth no second alias for it.
 - a let whose body is one anonymous function of a single row bindeth its
@@ -134,14 +134,14 @@ informeth the small surface. the mapping is approximate:
 | `semigroup`, `monoid`, `group`    | `semigroup_·`, `monoid_·`, `group_·` and `_+`    | `lower` and `upper` carriers remain distinct                           |
 | `semiring`, `ring`, `field`       | arithmetic and euclidean flocks                  | IEEE float division doth not claim exact algebra                       |
 | `functor`, `applicative`, `monad` | collection flocks                                | product applicative and monad require a monoid for the first component |
-| `foldable`, `traversable`         | `catamorphism`, `throughwend`                    | applicative evidence belongeth to each polymorphic traversal           |
+| `foldable`, `traversable`         | `downshaper`, `throughwend`                      | applicative evidence belongeth to each polymorphic traversal           |
 | `maybe`, `either`, `tuple`        | `maybe`, `∑`, `∏`                                | sums and products are library inductives                               |
-| `effect`                          | `deed`                                           | a primitive type; `deed/action.tung` supplieth its monad bizens        |
+| `effect`                          | `deed`                                           | a primitive type; `deed.tung` supplieth its monad bizens               |
 | `array`, `map`, `set`             | `list`, `wordbook`, `set`, `powerset`            | a packed random-access array is absent                                 |
 
 boolean conjunction useth `𝟚 lower`; disjunction useth `𝟚 upper`.
 [purescript traversable](https://pursuit.purescript.org/packages/purescript-foldable-traversable/docs/Data.Traversable)
-informeth the `functor` and `catamorphism` parent flocks. tung doth not copy its open
+informeth the `functor` and `downshaper` parent flocks. tung doth not copy its open
 record rows, lazy assumptions, or effect encoding.
 
 ## lean and mathlib comparison
@@ -177,9 +177,6 @@ duplicate keys. `set~from_list` and `wordbook~from_list` remain distinct by
 qualification; the former is a smart constructor function.
 
 the planned order-insensitive bag is tracked in [`todo.md`](../todo.md).
-flock laws are members whose types are identities (`=`) over the other
-members. a bizen proveth each law or assumeth it with `sorry`; a requirement
-provideth the laws as proofs. laws are never evaluator rewrite rules.
 
 ## law proofs
 
@@ -220,7 +217,7 @@ requirement's own laws, which a dictionary carrieth. no native equation is
 assumed.
 
 deed laws use three host monad assumptions in
-[`deed/action.tung`](deed/action.tung): `deed_sheer_bind`, `deed_bind_sheer`,
+[`deed.tung`](deed.tung): `deed_sheer_bind`, `deed_bind_sheer`,
 and `deed_bind_bind`, the monad laws of the host's `deed_sheer` and
 `deed_bind`. proofs comparing bound continuations also use `fall_umtake`.
 deeds are opaque to conversion, so these are axioms, as lean's
@@ -251,6 +248,6 @@ it.
 
 finite set law tests audit generic commutativity, associativity,
 distributivity, the least element, and sound boolean sameness without holes
-or axioms. runtime tests check canonical enumeration and the former order
-and repetition counterexamples. a set still requireth decidable total order;
+or axioms. runtime tests check canonical enumeration and that order and repetition
+of insertion do not matter. a set still requireth decidable total order;
 `powerset` keepeth its unrestricted predicate representation.

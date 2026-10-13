@@ -1,7 +1,7 @@
-use _foreign.tung
+use _fremmed.tung
 use combinator.tung
 use control.tung
-use deed/action.tung
+use deed.tung
 use flock/algebra/whole/euclidean.tung
 use flock/algebra/whole/field.tung
 use flock/algebra/whole/hath_deal.tung

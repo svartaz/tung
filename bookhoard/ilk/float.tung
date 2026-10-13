@@ -1,4 +1,4 @@
-use _foreign.tung
+use _fremmed.tung
 use flock/algebra/whole/hath_eke.tung
 use flock/algebra/whole/hath_fold.tung
 use flock/algebra/whole/hath_naught.tung

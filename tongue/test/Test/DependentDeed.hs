@@ -13,8 +13,8 @@ import Tung.Dependent.Source (inferSourceExpression, normaliseSourceExpression, 
 
 group :: IO Harness.Group
 group = do
-  example <- exampleSource "dependent_deed.tung"
-  library <- loadLibrary ["_foreign.tung", "ilk/one.tung", "ilk/maybe.tung"]
+  example <- exampleSource "deed_loop.tung"
+  library <- loadLibrary ["_fremmed.tung", "ilk/one.tung", "ilk/maybe.tung"]
   Harness.group "dependent_deed" (hostSchemaTests ++ yieldTests ++ tests library example)
 
 -- public erasure requireth a complete, validated typing judgement.
@@ -209,4 +209,4 @@ withoutMain = unlines . takeWhile (not . isPrefixOf "let main:") . lines
 
 -- bookhoard's host bindings, unit, and option.
 prelude :: String
-prelude = "use _foreign.tung\nuse ilk/one.tung\nuse ilk/maybe.tung\n"
+prelude = "use _fremmed.tung\nuse ilk/one.tung\nuse ilk/maybe.tung\n"

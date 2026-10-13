@@ -1,4 +1,4 @@
-use _foreign.tung
+use _fremmed.tung
 use flock/algebra/whole/hath_deal.tung
 use flock/algebra/whole/hath_eke.tung
 use flock/algebra/whole/hath_fold.tung
@@ -6,7 +6,7 @@ use flock/algebra/whole/hath_naught.tung
 use flock/algebra/whole/hath_offdraw.tung
 use flock/algebra/whole/hath_one.tung
 use flock/elementary.tung
-use flock/hath_norm.tung
+use flock/hath_length.tung
 
 show ilk evenbraid: [α: *, *] {
   +i: [α, α, α evenbraid]
@@ -50,7 +50,7 @@ bizen: [@α: *, @: α hath_+, @: α hath_·, (α evenbraid) hath_‖ α] {
   let ‖: [a +i b:] ≔ (a · a) + (b · b)
 }
 
-## the complex exponential is shared directly by the trigonometric functions.
+## the evenbraid exponential is shared directly by each trigonometric fall.
 bizen: (float evenbraid) elementary {
   let exponent: [a +i b: float evenbraid, float evenbraid] ≔ (
     let c ≔ a elementary~exponent

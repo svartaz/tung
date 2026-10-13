@@ -2,7 +2,7 @@ use flock/algebra/half/category.tung
 use flock/algebra/half/semigroupoid.tung
 use is.tung
 
-## a binary type constructor covariant in both arguments.
+## a twostead ilk maker covariant in both arguments.
 show flock bifunctor: [φ: [*, *, *], *] {
   let biwarp: [@α: *, @β: *, @γ: *, @δ: *, α φ β, [α, γ], [β, δ], γ φ δ]
 

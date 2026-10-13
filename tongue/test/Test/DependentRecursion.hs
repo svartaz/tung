@@ -11,10 +11,10 @@ import Tung.Dependent.Source (SourceProgram, sourceDefinitions, sourceEnvironmen
 
 group :: IO Group
 group = do
-  indexed <- exampleSource "dependent_index_recursion.tung"
-  memo <- exampleSource "dependent_index_memo.tung"
-  functions <- exampleSource "dependent_function_recursion.tung"
-  wellFounded <- exampleSource "dependent_wellgrounded.tung"
+  indexed <- exampleSource "index_recursion.tung"
+  memo <- exampleSource "index_memo.tung"
+  functions <- exampleSource "function_recursion.tung"
+  wellFounded <- exampleSource "wellgrounded.tung"
   accessible <- loadLibrary ["ilk/accessible.tung", "ilk/list_setting.tung", "ilk/natural.tung", "ground.tung"]
   Harness.group "dependent-recursion" (wellFoundedTests accessible wellFounded ++ boundedTests accessible ++ positiveTests ++ indexRecursionTests accessible indexed ++ indexMemoTests memo ++ functionRecursionTests accessible functions ++ rejectionTests)
 
@@ -30,10 +30,10 @@ wellFoundedTests library example =
         traverse
           (uncurry (sameNormalIn program))
           [ ("three count", "three"),
-            ("three add (nought after)", "three after"),
+            ("three eke (nought after)", "three after"),
             ("three shifted", "three"),
             ("(three pack) unpack_count", "three"),
-            ("(three pack) reflect", "(eftbend:(three pack) = (three pack))")
+            ("(three pack) selfsame", "(eftbend:(three pack) = (three pack))")
           ]
     )
     : [ rejectContaining label "cannot unify" (compile (example ++ source))

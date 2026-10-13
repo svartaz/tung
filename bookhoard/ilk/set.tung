@@ -46,7 +46,7 @@ ilk _set: [α: *, valid: [α list, 𝟚], *] {
   ordered: [l: α list, (l valid) holds, α _set valid]
 }
 
-## a finite set in the canonical order of one lawful total-order dictionary.
+## a finite set in the canonical order of one lawful whole-order dictionary.
 show let set: [α: *, @: α order_whole, *] ≔ α _set sorted
 
 ## the increasing list of distinct elements.
@@ -64,7 +64,7 @@ show let put: [@α: *, @: α order_whole, l ordered proof: α set, x: α, α set
 
 show let onesome: [@α: *, @: α order_whole, x: α, α set] ≔ empty put x
 
-## sort and remove duplicates; this is a function, not a raw constructor.
+## sort and remove duplicates; this is a fall, not a raw constructor.
 show let from_list: [@α: *, @: α order_whole, α list, α set] ≔ {
   list~empty   ^ empty,
   first ‥ rest ^ (rest from_list) put first
@@ -90,7 +90,7 @@ bizen: [@α: *, @: α order_whole, (α set) hath_greatness] {
   let greatness: [s:] ≔ (s to_list) greatness
 }
 
-let list_identity: [
+let list_sameness: [
   @α: *, @: α order_whole, a: α set, b: α set,
   same: (a to_list) = (b to_list), a = b
 ] ≔ match a, b {
@@ -100,11 +100,11 @@ let list_identity: [
   }
 }
 
-## finite sets with the same members are identical.
-show let extensional: [
+## finite sets with the same limbs are identical.
+show let umtake: [
   @α: *, @: α order_whole, a: α set, b: α set,
   same_limbs: [x: α, (a ∋ x) = (b ∋ x)], a = b
-] ≔ a list_identity b ((a to_list) set_list_setting~extensional (b to_list)
+] ≔ a list_sameness b ((a to_list) set_list_setting~umtake (b to_list)
   (a elements_sorted) (b elements_sorted) same_limbs)
 
 let yoke: [@α: *, @: α order_whole, l ordered left: α set, r ordered _: α set, α set] ≔
@@ -127,23 +127,23 @@ let ∋_meet: [@α: *, @: α order_whole, a: α set, b: α set, x: α,
   l ordered proof ^ l sift_inhold {y ^ b ∋ y} x ((l sorted) holds_to proof)
 }
 
-# set identity followeth from the corresponding boolean membership laws.
+# set sameness followeth from the corresponding boolean limbship laws.
 
 let yoke_swallow: [@α: *, @: α order_whole, a: α set, (a yoke a) = a] ≔
-  (a yoke a) extensional a {x ^ (
+  (a yoke a) umtake a {x ^ (
     let left₀ ≔ a ∋_yoke a x
     yield left₀ throughgo ((a ∋ x) ∨_swallow)
   )}
 
 let yoke_swap: [@α: *, @: α order_whole, a: α set, b: α set, (a yoke b) = (b yoke a)] ≔
-  (a yoke b) extensional (b yoke a) {x ^ (
+  (a yoke b) umtake (b yoke a) {x ^ (
     let left₀ ≔ a ∋_yoke b x
     let right₀ ≔ b ∋_yoke a x
     yield (left₀ throughgo ((a ∋ x) ∨_swap (b ∋ x))) throughgo (right₀ evenmete)
   )}
 
 let yoke_yoke: [@α: *, @: α order_whole, a: α set, b: α set, c: α set, ((a yoke b) yoke c) = (a yoke (b yoke c))] ≔
-  ((a yoke b) yoke c) extensional (a yoke (b yoke c)) {x ^ (
+  ((a yoke b) yoke c) umtake (a yoke (b yoke c)) {x ^ (
     let left₀ ≔ a ∋_yoke b x
     let left₁ ≔ (a yoke b) ∋_yoke c x
     let left₂ ≔ left₁ throughgo ({p: 𝟚 ^ p ∨ (c ∋ x)} leibnitz left₀)
@@ -154,20 +154,20 @@ let yoke_yoke: [@α: *, @: α order_whole, a: α set, b: α set, c: α set, ((a 
   )}
 
 let meet_swallow: [@α: *, @: α order_whole, a: α set, (a meet a) = a] ≔
-  (a meet a) extensional a {x ^ (
+  (a meet a) umtake a {x ^ (
     let left₀ ≔ a ∋_meet a x
     yield left₀ throughgo ((a ∋ x) ∧_swallow)
   )}
 
 let meet_swap: [@α: *, @: α order_whole, a: α set, b: α set, (a meet b) = (b meet a)] ≔
-  (a meet b) extensional (b meet a) {x ^ (
+  (a meet b) umtake (b meet a) {x ^ (
     let left₀ ≔ a ∋_meet b x
     let right₀ ≔ b ∋_meet a x
     yield (left₀ throughgo ((a ∋ x) ∧_swap (b ∋ x))) throughgo (right₀ evenmete)
   )}
 
 let meet_meet: [@α: *, @: α order_whole, a: α set, b: α set, c: α set, ((a meet b) meet c) = (a meet (b meet c))] ≔
-  ((a meet b) meet c) extensional (a meet (b meet c)) {x ^ (
+  ((a meet b) meet c) umtake (a meet (b meet c)) {x ^ (
     let left₀ ≔ a ∋_meet b x
     let left₁ ≔ (a meet b) ∋_meet c x
     let left₂ ≔ left₁ throughgo ({p: 𝟚 ^ p ∧ (c ∋ x)} leibnitz left₀)
@@ -178,7 +178,7 @@ let meet_meet: [@α: *, @: α order_whole, a: α set, b: α set, c: α set, ((a 
   )}
 
 let meet_yoke_swallow: [@α: *, @: α order_whole, a: α set, b: α set, (a meet (a yoke b)) = a] ≔
-  (a meet (a yoke b)) extensional a {x ^ (
+  (a meet (a yoke b)) umtake a {x ^ (
     let left₀ ≔ a ∋_yoke b x
     let left₁ ≔ a ∋_meet (a yoke b) x
     let left₂ ≔ left₁ throughgo ({p: 𝟚 ^ (a ∋ x) ∧ p} leibnitz left₀)
@@ -186,7 +186,7 @@ let meet_yoke_swallow: [@α: *, @: α order_whole, a: α set, b: α set, (a meet
   )}
 
 let yoke_meet_swallow: [@α: *, @: α order_whole, a: α set, b: α set, (a yoke (a meet b)) = a] ≔
-  (a yoke (a meet b)) extensional a {x ^ (
+  (a yoke (a meet b)) umtake a {x ^ (
     let left₀ ≔ a ∋_meet b x
     let left₁ ≔ a ∋_yoke (a meet b) x
     let left₂ ≔ left₁ throughgo ({p: 𝟚 ^ (a ∋ x) ∨ p} leibnitz left₀)
@@ -194,7 +194,7 @@ let yoke_meet_swallow: [@α: *, @: α order_whole, a: α set, b: α set, (a yoke
   )}
 
 let meet_yoke: [@α: *, @: α order_whole, a: α set, b: α set, c: α set, (a meet (b yoke c)) = ((a meet b) yoke (a meet c))] ≔
-  (a meet (b yoke c)) extensional ((a meet b) yoke (a meet c)) {x ^ (
+  (a meet (b yoke c)) umtake ((a meet b) yoke (a meet c)) {x ^ (
     let left₀ ≔ b ∋_yoke c x
     let left₁ ≔ a ∋_meet (b yoke c) x
     let left₂ ≔ left₁ throughgo ({p: 𝟚 ^ (a ∋ x) ∧ p} leibnitz left₀)
@@ -207,7 +207,7 @@ let meet_yoke: [@α: *, @: α order_whole, a: α set, b: α set, c: α set, (a m
   )}
 
 let yoke_meet: [@α: *, @: α order_whole, a: α set, b: α set, c: α set, (a yoke (b meet c)) = ((a yoke b) meet (a yoke c))] ≔
-  (a yoke (b meet c)) extensional ((a yoke b) meet (a yoke c)) {x ^ (
+  (a yoke (b meet c)) umtake ((a yoke b) meet (a yoke c)) {x ^ (
     let left₀ ≔ b ∋_meet c x
     let left₁ ≔ a ∋_yoke (b meet c) x
     let left₂ ≔ left₁ throughgo ({p: 𝟚 ^ (a ∋ x) ∨ p} leibnitz left₀)
@@ -220,13 +220,13 @@ let yoke_meet: [@α: *, @: α order_whole, a: α set, b: α set, c: α set, (a y
   )}
 
 let empty_yoke: [@α: *, @: α order_whole, a: α set, (empty yoke a) = a] ≔
-  (empty yoke a) extensional a {x ^ (
+  (empty yoke a) umtake a {x ^ (
     let left₀ ≔ empty ∋_yoke a x
     yield left₀ throughgo ((a ∋ x) ⟂_∨)
   )}
 
 let yoke_empty: [@α: *, @: α order_whole, a: α set, (a yoke empty) = a] ≔
-  (a yoke empty) extensional a {x ^ (
+  (a yoke empty) umtake a {x ^ (
     let left₀ ≔ a ∋_yoke empty x
     yield left₀ throughgo (((a ∋ x) ∨_swap nay) throughgo ((a ∋ x) ⟂_∨))
   )}
@@ -240,28 +240,28 @@ let implication_chain: [p: 𝟚, q: 𝟚, r: 𝟚,
 }
 
 bizen: [@α: *, @: α order_whole, (α set) hath_≍] {
-  let ≍: [a:, b:] ≔ ((a to_list) enclosed (b to_list)) if ((b to_list) enclosed (a to_list)) nay
+  let ≍: [a:, b:] ≔ ((a to_list) underset (b to_list)) if ((b to_list) underset (a to_list)) nay
 }
 
 bizen: [@α: *, @: α order_whole, (α set) hath_≤] {
-  let ≤: [a:, b:] ≔ (a to_list) enclosed (b to_list)
+  let ≤: [a:, b:] ≔ (a to_list) underset (b to_list)
 }
 
 bizen: [@α: *, @: α order_whole, (α set) order_half] {
-  let ≤_eftbend: [a:] ≔ (a to_list) enclosed_eftbend (a elements_sorted)
+  let ≤_eftbend: [a:] ≔ (a to_list) underset_eftbend (a elements_sorted)
 
-  let ≤_witherevenmete: [a:, b:] ≔ (a to_list) enclosed_witherevenmete (b to_list)
+  let ≤_witherevenmete: [a:, b:] ≔ (a to_list) underset_witherevenmete (b to_list)
 
   let ≤_throughgo: [a:, b:, c:] ≔
     (a ≤ b) implication_chain (b ≤ c) (a ≤ c) {first, latter ^
-      (a to_list) enclosed_throughgo (b to_list) (c to_list) first latter
+      (a to_list) underset_throughgo (b to_list) (c to_list) first latter
     }
 
 }
 
 bizen: [@α: *, @: α order_whole, (α set) ≍_to_=] {
-  let ≍_=: [a:, b:, same:] ≔ a list_identity b
-  ((a to_list) enclosed_= (b to_list) (a elements_sorted) (b elements_sorted)
+  let ≍_=: [a:, b:, same:] ≔ a list_sameness b
+  ((a to_list) underset_= (b to_list) (a elements_sorted) (b elements_sorted)
     ((a ≤ b) yea_if_former (b ≤ a) same)
     ((a ≤ b) yea_if_latter (b ≤ a) same))
   let ≍_eftbend: [a:] ≔ (a ≤ a) both_yea (a ≤ a) (a ≤_eftbend) (a ≤_eftbend)

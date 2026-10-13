@@ -13,8 +13,8 @@ import Tung.Dependent.Source (CompileFailure (..), DependencyKind (..), FailureK
 
 group :: IO Harness.Group
 group = do
-  files <- traverse (\name -> (name,) <$> exampleSource ("dependent_modules/" ++ name)) ["host.tung", "natural.tung", "main.tung"]
-  library <- loadLibrary ["_foreign.tung", "ilk/one.tung"]
+  files <- traverse (\name -> (name,) <$> exampleSource ("modules/" ++ name)) ["host.tung", "natural.tung", "main.tung"]
+  library <- loadLibrary ["_fremmed.tung", "ilk/one.tung"]
   Harness.group "dependent-module" (exampleRun library files : replacedFixture library : tests ++ mutualModuleTests ++ proofAuditTests ++ cachedTests ++ map generatedGraph graphs)
 
 -- the example's main useth bare and qualified imports, imported recursion, and

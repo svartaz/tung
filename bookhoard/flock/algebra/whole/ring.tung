@@ -10,7 +10,7 @@ use ilk/two.tung
 use is.tung
 
 ## a semiring with negation. `ring` reacheth `+` only through `semiring`;
-## the bizen below maketh every ring a `group_+` through that same addition,
+## the bizen below maketh every ring a `group_+` through that same eking,
 ## so laws about a ring and its additive group share one dictionary.
 show flock ring: [α: *, @: α semiring, @: α hath_-, *] {
   let +_-: [a: α, (a + (a -)) = naught]
@@ -55,7 +55,7 @@ show let ·_-: [@α: *, @: α ring, a: α, b: α, (a · (b -)) = ((a · b) -)] �
     a ·_naught
   }
 
-## two negations in a product cancel.
+## two negations in a product outstrike each other.
 show let -_·_-: [@α: *, @: α ring, a: α, b: α, ((a -) · (b -)) = (a · b)] ≔ >{throughgo,
   (a -) ·_- b,
   {x ^ x -} leibnitz (a -_· b),

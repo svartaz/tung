@@ -13,7 +13,7 @@ require node.js and npm. ci useth ghc 9.12.4. `tung.yaml` selecteth the local
 [`bookhoard/`](../bookhoard/) for tests. from the repository root:
 
 ```sh
-brew bundle
+mise install
 lefthook install
 make setup
 ```
@@ -46,15 +46,15 @@ checks as separate jobs. the homebrew workflow also testeth formula installation
 
 ## repository layout
 
-| path         | purpose                                                         |
-| ------------ | --------------------------------------------------------------- |
-| `tongue/`    | haskell compiler, evaluator, formatter, repl, runner, and tests |
-| `bookhoard/` | standard library source and design guide                        |
-| `vscode/`    | npm workspace for the VS Code extension                         |
-| `Formula/`   | homebrew formula                                                |
-| `tung.yaml`  | local and git-pinned library dependencies                       |
-| `byspel/`    | runnable examples                                               |
-| `benchmark/` | compiler and evaluator workloads                                |
+| path         | purpose                                                          |
+| ------------ | ---------------------------------------------------------------- |
+| `tongue/`    | haskell compiler, evaluator, formatter, repl, runner, and tests  |
+| `bookhoard/` | standard library source and design guide                         |
+| `vscode/`    | npm workspace for the VS Code extension                          |
+| `Formula/`   | homebrew formula                                                 |
+| `tung.yaml`  | local and git-pinned library dependencies                        |
+| `byspel/`    | checked examples, including the walkthrough and checker fixtures |
+| `benchmark/` | compiler and evaluator workloads                                 |
 
 [`todo.md`](../todo.md) tracketh the backlog.
 

@@ -11,7 +11,7 @@ import Tung.Dependent.Source (SourceProgram, sorryAssumptions, typeOfName)
 
 group :: IO Harness.Group
 group = do
-  example <- exampleSource "dependent_flocks.tung"
+  example <- exampleSource "flocks.tung"
   Harness.group "dependent-flock" (tests example ++ selectionTests ++ constructionTests)
 
 tests :: String -> [Test]

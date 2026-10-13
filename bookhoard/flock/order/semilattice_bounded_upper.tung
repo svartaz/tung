@@ -4,7 +4,7 @@ use ilk/three.tung
 use ilk/two.tung
 use is.tung
 
-## an infimum semilattice with a greatest value.
+## an infimum semilattice with a greatest worth.
 show flock semilattice_bounded_upper: [α: *, @: α semilattice_lower, *] {
   let ⊤: α
 

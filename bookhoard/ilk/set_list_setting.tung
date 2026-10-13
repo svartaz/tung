@@ -13,7 +13,7 @@ show let sorted_tail: [
   a: α, l: α list, held: ((a ‥ l) sorted) = yea, (l sorted) = yea
 ] ≔ (a above l) yea_if_latter (l sorted) held
 
-## every member of a list above `a` is strictly above `a`.
+## every limb of a list above `a` is strictly above `a`.
 let above_inhold: [
   @α: *, @: α order_whole,
   a: α, l: α list, x: α,
@@ -33,7 +33,7 @@ let above_inhold: [
   }
 }
 
-## every tail member is strictly above its first element.
+## every tail limb is strictly above its first element.
 show let sorted_strict_limb: [
   @α: *, @: α order_whole,
   a: α, l: α list, x: α,
@@ -42,7 +42,7 @@ show let sorted_strict_limb: [
 ] ≔ a above_inhold l x
   ((a above l) yea_if_former (l sorted) held) limb
 
-## a member is never below the first element of ordered search.
+## a limb is never below the first element of ordered search.
 show let inhold_first_below: [
   @α: *, @: α order_whole,
   a: α, l: α list, x: α,
@@ -60,7 +60,7 @@ show let inhold_first: [
   ({b: 𝟚 ^ b if (a ≤ a) (l inhold a)} leibnitz (a ≤_eftbend))
     throughgo (a ≤_eftbend)
 
-## no tail member lieth at or below the first element.
+## no tail limb lieth at or below the first element.
 let tail_absent_below: [
   @α: *, @: α order_whole,
   a: α, l: α list, x: α,
@@ -68,7 +68,7 @@ let tail_absent_below: [
   (l inhold x) = nay
 ] ≔ a above_absent l x ((a above l) yea_if_former (l sorted) held) below
 
-## removing an equal first element preserveth membership equality.
+## removing the same first element preserveth limbship sameness.
 let tails_same_first: [
   @α: *, @: α order_whole,
   a: α, l: α list, m: α list,
@@ -85,8 +85,8 @@ let tails_same_first: [
   )
 }
 
-## sorted unique lists with the same members are identical.
-show let extensional: [
+## sorted unique lists with the same limbs are identical.
+show let umtake: [
   @α: *, @: α order_whole,
   left_list: α list, right_list: α list,
   left: (left_list sorted) = yea, right: (right_list sorted) = yea,
@@ -105,7 +105,7 @@ show let extensional: [
     let limbs_aligned: [x: α, ((a ‥ l) inhold x) = ((a ‥ m) inhold x)] ≔
       (heads evenmete) throughbear @α @b @a
         @({head: α ^ ((a ‥ l) inhold x) = ((head ‥ m) inhold x)}) (x same_limbs)
-    let tails ≔ l extensional m (a sorted_tail l left) (a sorted_tail m right_aligned)
+    let tails ≔ l umtake m (a sorted_tail l left) (a sorted_tail m right_aligned)
     (a tails_same_first l m left right_aligned limbs_aligned)
     yield ((a ‥) leibnitz tails) throughgo ({x: α ^ x ‥ m} leibnitz heads)
   )

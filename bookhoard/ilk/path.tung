@@ -1,4 +1,4 @@
-use _foreign.tung
+use _fremmed.tung
 use deed/file.tung
 use flock/algebra/whole/hath_fold.tung
 use flock/hath_to_string.tung

@@ -3,27 +3,27 @@ use ilk/three.tung
 use ilk/two.tung
 use is.tung
 
-## a boolean property that holdeth of one side of an identity holdeth of the
+## a boolean property that holdeth of one side of a sameness holdeth of the
 ## other.
 show let yea_throughbear: [@α: *, @a: α, @b: α, f: [α, 𝟚], same: a = b, held: (a f) = yea, (b f) = yea] ≔
   ((f leibnitz same) evenmete) throughgo held
 
-## both conditions hold when `c if t nay` holdeth: the first,
+## both kilters hold when `c if t nay` holdeth: the first,
 show let yea_if_former: [c: 𝟚, t: 𝟚, held: (c if t nay) = yea, c = yea] ≔
   match c {
     yea ^ eftbend,
     nay ^ match held {}
   }
 
-## and the second.
+## and the other.
 show let yea_if_latter: [c: 𝟚, t: 𝟚, held: (c if t nay) = yea, t = yea] ≔
   match c {
     yea ^ held,
     nay ^ match held {}
   }
 
-## boolean sameness that agreeth with identity, as lean's `LawfulBEq`: `≍`
-## yieldeth `yea` exactly for identical values.
+## boolean sameness that agreeth with `=`, as lean's `LawfulBEq`: `≍`
+## yieldeth `yea` exactly for identical worths.
 show flock ≍_to_=: [α: *, @: α hath_≍, *] {
   let ≍_=: [a: α, b: α, same: (a ≍ b) = yea, a = b]
   let ≍_eftbend: [a: α, (a ≍ a) = yea]

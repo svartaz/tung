@@ -1,6 +1,6 @@
 use flock/algebra/half/category.tung
 use flock/functor.tung
-use flock/functor/catamorphism.tung
+use flock/functor/downshaper.tung
 use flock/functor/hath_sift.tung
 use flock/hath_greatness.tung
 use flock/hath_inhold.tung
@@ -40,7 +40,7 @@ show let rid: [@α: *, @: α hath_≍, @β: *, l from_list: α wordbook β, key:
 show let keys: [@α: *, @β: *, l from_list: α wordbook β, α list] ≔
   l warp forthcast₀
 
-show let values: [@α: *, @β: *, l from_list: α wordbook β, β list] ≔
+show let worths: [@α: *, @β: *, l from_list: α wordbook β, β list] ≔
   l warp forthcast₁
 
 bizen: [@α: *, @: α hath_≍, @β: *, (α wordbook β) hath_∋ α] {

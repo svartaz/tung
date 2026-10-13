@@ -6,7 +6,7 @@ use flock/algebra/whole/semigroup_fold.tung
 use flock/functor.tung
 use flock/functor/atfoldsome.tung
 use flock/functor/bifunctor.tung
-use flock/functor/catamorphism.tung
+use flock/functor/downshaper.tung
 use flock/functor/hath_throughwend.tung
 use flock/functor/monad.tung
 use flock/hath_same.tung
@@ -22,7 +22,7 @@ show ilk ∏: [α: *, β: *, *] {
   both: [α, β, α ∏ β]
 }
 
-## equal components make equal pairs.
+## the same components make the same pairs.
 let helpsetting_both_=: [
   @α: *, @β: *,
   @a: α, @a′: α, @b: β, @b′: β,
@@ -81,7 +81,7 @@ bizen: [@α: *, @: α monoid_·, (α ∏) monad] {
     {x: α ^ x both b} leibnitz (w ·_one)
 }
 
-bizen: [@α: *, (α ∏) catamorphism] {
+bizen: [@α: *, (α ∏) downshaper] {
   let gather₀: [_ both a:, b:, f:] ≔ a f b
   let gather₁: [_ both a:, b:, f:] ≔ b f a
 }

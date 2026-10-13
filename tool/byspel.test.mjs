@@ -6,14 +6,16 @@ import * as path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 
-// every byspel checketh as a runnable file. predictable output is compared
-// exactly, including examples whose task delays are random.
+// every byspel checketh without `sorry`: a file with `main` as a runnable
+// file, any other as a module. predictable output is compared exactly,
+// including examples whose task delays are random.
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const executable = process.env.TUNG_EXECUTABLE;
 const byspels = fs
-  .readdirSync(path.join(root, "byspel"))
+  .readdirSync(path.join(root, "byspel"), { recursive: true })
   .filter((name) => name.endsWith(".tung"))
-  .map((name) => name.slice(0, -".tung".length));
+  .map((name) => name.slice(0, -".tung".length))
+  .sort();
 const outputs = {
   asynchronous: "async\n42\n",
   fizzbuzz:
@@ -59,11 +61,14 @@ function run(args, input = "") {
 for (const byspel of byspels) {
   const file = path.join("byspel", `${byspel}.tung`);
   const output = Object.hasOwn(outputs, byspel) ? outputs[byspel] : undefined;
+  const check = /^let main\b/m.test(fs.readFileSync(path.join(root, file), "utf8"))
+    ? "--check"
+    : "--check-module";
   test(`${byspel} ${output === undefined ? "checketh" : "printeth its checked result"}`, () => {
     assert.deepEqual(
       run(
         output === undefined
-          ? ["--no-sorry", "--check", file]
+          ? ["--no-sorry", check, file]
           : ["--no-sorry", file],
       ),
       {

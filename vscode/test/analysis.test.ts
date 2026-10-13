@@ -136,7 +136,7 @@ test("requirement parameters respect nested types and owner scope", async () => 
 });
 test("analysis retaineth import paths, aliases, and default namespaces", async () => {
   const imports = [
-    ["_foreign.tung", undefined, "_foreign"],
+    ["_fremmed.tung", undefined, "_fremmed"],
     ["flock/algebra/arithmetic/field.tung", undefined, "field"],
     ["ilk/list.tung", "items", "items"],
     ["ilk/list.tung", undefined, "list"],

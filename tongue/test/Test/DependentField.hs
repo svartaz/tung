@@ -7,7 +7,7 @@ import Test.Harness qualified as Harness
 
 group :: IO Harness.Group
 group = do
-  example <- exampleSource "dependent_fields.tung"
+  example <- exampleSource "fields.tung"
   library <- loadLibrary ["ilk/one.tung", "is.tung"]
   Harness.group "dependent-field" (tests library example)
 

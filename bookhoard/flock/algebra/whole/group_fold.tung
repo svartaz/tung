@@ -4,7 +4,7 @@ use flock/algebra/whole/monoid_fold.tung
 use flock/algebra/whole/semigroup_fold.tung
 use is.tung
 
-## a group: a monoid whose every value hath an inverse on both sides.
+## a group: a monoid whose every worth hath a witherwend on both sides.
 show flock group_·: [α: *, @: α monoid_·, *] {
   let /: [α, α]
 
@@ -12,17 +12,17 @@ show flock group_·: [α: *, @: α monoid_·, *] {
   let /_·: [a: α, ((a /) · a) = one]
 }
 
-## `b /· a` inverteth `b`, then multiplieth by `a`.
-show let /·: [@α: *, @: α group_·, b: α, a: α, α] ≔ (b /) · a
+## `a /· b` witherwendeth `a`, then foldeth by `b`.
+show let /·: [@α: *, @: α group_·, a: α, b: α, α] ≔ (a /) · b
 
 show let /·_outstrike: [@α: *, @: α group_·, a: α, (a /· a) = one] ≔
   a /_·
 
-## a value that leaveth every value alone is `one`.
+## a worth that leaveth every worth alone is `one`.
 show let one_alone: [@α: *, @: α group_·, e: α, leaving: [a: α, (e · a) = a], e = one] ≔
   ((e ·_one) evenmete) throughgo (one leaving)
 
-## a value that undoeth `a` from the left is its inverse.
+## a worth that undoeth `a` from the left is its witherwend.
 show let /_alone: [@α: *, @: α group_·, a: α, b: α, undoing: (b · a) = one, b = (a /)] ≔ >{throughgo,
   (b ·_one) evenmete,
   {x ^ b · x} leibnitz ((a ·_/) evenmete),
@@ -31,7 +31,7 @@ show let /_alone: [@α: *, @: α group_·, a: α, b: α, undoing: (b · a) = one
   (a /) one_·
 }
 
-## equal products with one left factor have equal right factors.
+## the same products with one left factor have the same right factors.
 show let ·_outstrike: [@α: *, @: α group_·, a: α, b: α, c: α, same: (a · b) = (a · c), b = c] ≔ >{throughgo,
   (b one_·) evenmete,
   {x ^ x · b} leibnitz ((a /_·) evenmete),
@@ -42,7 +42,7 @@ show let ·_outstrike: [@α: *, @: α group_·, a: α, b: α, c: α, same: (a ·
   c one_·
 }
 
-## equal products with one right factor have equal left factors.
+## the same products with one right factor have the same left factors.
 show let outstrike_·: [@α: *, @: α group_·, a: α, b: α, c: α, same: (b · a) = (c · a), b = c] ≔ >{throughgo,
   (b ·_one) evenmete,
   {x ^ b · x} leibnitz ((a ·_/) evenmete),
@@ -53,15 +53,15 @@ show let outstrike_·: [@α: *, @: α group_·, a: α, b: α, c: α, same: (b ·
   c ·_one
 }
 
-## the inverse of an inverse is the value.
+## the witherwend of a witherwend is the worth.
 show let /_/: [@α: *, @: α group_·, a: α, ((a /) /) = a] ≔
   ((a /) /_alone a (a ·_/)) evenmete
 
-## `one` is its own inverse.
+## `one` is its own witherwend.
 show let one_/: [@α: *, @: α group_·, (one /) = one] ≔
   (one /_alone one (one one_·)) evenmete
 
-## the inverse of a product is the product of the inverses, turned around.
+## the witherwend of a product is the product of the witherwends, turned around.
 show let /_over_·: [@α: *, @: α group_·, a: α, b: α,
   ((a · b) /) = ((b /) · (a /))] ≔
   ((a · b) /_alone ((b /) · (a /)) >{throughgo,

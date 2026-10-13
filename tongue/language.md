@@ -3,7 +3,7 @@
 audience: agents. purpose: current source syntax and observable behaviour.
 [`dependent.md`](dependent.md) owneth checking rules and logical boundaries;
 [`development.md`](development.md) owneth implementation and commands.
-[`byspel/tutorial.tung`](../byspel/tutorial.tung) is the checked introduction.
+[`byspel/walkthrough.tung`](../byspel/walkthrough.tung) is the checked introduction.
 
 ## files and modules
 
@@ -267,7 +267,7 @@ well-founded recursion is library code in `ilk/accessible.tung`.
 proof, step, and input. the step's recursive call requireth a smaller-measure
 proof. `ilk/natural.tung` provideth `under_wellgrounded`;
 `ilk/list_setting.tung` provideth `‥_greatness_under` for list tails.
-see [the checked example](examples/dependent_wellgrounded.tung).
+see [the checked example](../byspel/wellgrounded.tung).
 
 ## ilks
 
@@ -514,7 +514,7 @@ proof:
 - `--no-sorry --check-proof` still auditeth only the selected closure.
 
 ```sh
-tung --no-axioms --check-proof proved tongue/examples/dependent_proof.tung
+tung --no-axioms --check-proof naught_+ byspel/walkthrough.tung
 ```
 
 VS Code's `Tung: Check Proof` auditeth the selected name or let at the cursor
@@ -528,7 +528,7 @@ report in `Tung Proof`. source changes during checking discard the result.
 performed host inputs and results are computed fully, including constructor
 fields; contained functions and deeds remain unperformed.
 
-`deed/action.tung` provideth ordinary monad operations:
+`deed.tung` provideth ordinary monad operations:
 
 - `sheer` wrappeth a value without an action.
 - `warp` changeth the result; `bind` chooseth the next deed from it.

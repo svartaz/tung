@@ -16,7 +16,7 @@ use ilk/three.tung
 use ilk/two.tung
 
 ## a finite wordbook kept as a weight-balanced search tree, ordered by its keys.
-## each node holdeth its weight, the number of its entries.
+## each node holdeth its weight, the tale of its entries.
 show ilk tree: [α: *, β: *, *] {
   leaf: α tree β,
   node: [ℕ, α, β, α tree β, α tree β, α tree β]

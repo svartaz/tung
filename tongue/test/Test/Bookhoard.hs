@@ -210,9 +210,9 @@ groupCases library =
     expectEq "group theorems apply to a concrete group" (Right ()) $
       () <$ compile "let twice: ((minus /) /) = minus ≔ minus /_/\nlet turned: ((plus · minus) /) = ((minus /) · (plus /)) ≔ plus /_over_· minus",
     expectEq "the homomorphism theorems apply to a concrete homomorphism" (Right ()) $
-      () <$ compile "use flock/algebra/whole/group_sameshaping.tung\nlet trivial: [sign, sign] ≔ {_ ^ plus}\nlet hom: trivial sameshaped ≔ {_, _ ^ eftbend}\nlet sent: ((one: sign) trivial) = one ≔ trivial one_f hom\nlet same: (plus trivial) = (minus trivial) ≔ trivial kernel_fibre hom plus minus (trivial fibre_kernel hom plus minus eftbend)",
+      () <$ compile "use flock/algebra/whole/group_likeshaper.tung\nlet trivial: [sign, sign] ≔ {_ ^ plus}\nlet hom: trivial likeshaped ≔ {_, _ ^ eftbend}\nlet sent: ((one: sign) trivial) = one ≔ trivial one_f hom\nlet same: (plus trivial) = (minus trivial) ≔ trivial kernel_fibre hom plus minus (trivial fibre_kernel hom plus minus eftbend)",
     rejectContaining "a map that turneth signs is no homomorphism" "cannot unify" $
-      compile "use flock/algebra/whole/group_sameshaping.tung\nlet turn: [sign, sign] ≔ {plus ^ minus, minus ^ plus}\nlet bad: turn sameshaped ≔ {_, _ ^ eftbend}",
+      compile "use flock/algebra/whole/group_likeshaper.tung\nlet turn: [sign, sign] ≔ {plus ^ minus, minus ^ plus}\nlet bad: turn likeshaped ≔ {_, _ ^ eftbend}",
     rejectContaining "a value without an inverse maketh no group" "cannot unify" $
       compileWith library "group_test.tung" "use ground.tung\nuse is.tung\nuse flock/algebra/whole/group_fold.tung\nbizen: 𝟚 group_· { let /: [a:] ≔ a let ·_/ ≔ {yea ^ eftbend, nay ^ eftbend} let /_· ≔ {yea ^ eftbend, nay ^ eftbend} }"
   ]
@@ -274,8 +274,8 @@ soundnessCases library =
       program <-
         compile
           """
-          let closed: ((1 ‥ (2 ‥ empty)) reverse $ reverse) = (1 ‥ (2 ‥ empty)) ≔ (1 ‥ (2 ‥ empty)) reverse_reverse
-          let direct: ((1 ‥ (2 ‥ empty)) reverse $ reverse) = (1 ‥ (2 ‥ empty)) ≔ eftbend
+          let closed: ((1 ‥ (2 ‥ empty)) eftwend $ eftwend) = (1 ‥ (2 ‥ empty)) ≔ (1 ‥ (2 ‥ empty)) eftwend_eftwend
+          let direct: ((1 ‥ (2 ‥ empty)) eftwend $ eftwend) = (1 ‥ (2 ‥ empty)) ≔ eftbend
           """
       sameNormalIn program "closed" "direct",
     rejectContaining "a list is not its own double" "cannot unify" $
@@ -285,7 +285,7 @@ soundnessCases library =
     rejectContaining "distinct lists are not same" "cannot unify 1 with 2" $
       compile "let bad: (1 ‥ empty) = (2 ‥ empty) ≔ eftbend",
     rejectContaining "reversing is not the sameness" "cannot unify" $
-      compile "let bad: [l: ℕ list, (l reverse) = l] ≔ match l { empty ^ eftbend, first ‥ rest ^ (first ‥) leibnitz (rest bad) }",
+      compile "let bad: [l: ℕ list, (l eftwend) = l] ≔ match l { empty ^ eftbend, first ‥ rest ^ (first ‥) leibnitz (rest bad) }",
     rejectContaining "selfcalling on the same list cannot prove the empty type" "a recursive call must pass a direct child" $
       compile "let bad: [l: ℕ list, 𝟘] ≔ l bad",
     rejectContaining "selfcalling on a larger list cannot prove the empty type" "a recursive call must pass a direct child" $
@@ -456,7 +456,7 @@ classLayoutCase files = listToMaybe . catMaybes <$> traverse checkModule files
     classPrefix = "flock/"
     -- module paths keep the documented ascii spellings of symbolic terms.
     asciiName = concatMap (\character -> maybe [character] id (lookup character spellings))
-    spellings = [('+', "eke"), ('-', "offdraw"), ('÷', "deal"), ('%', "deal_leftover"), ('·', "fold"), ('≤', "at_most"), ('≍', "same"), ('=', "is"), ('∋', "inhold"), ('‖', "norm")]
+    spellings = [('+', "eke"), ('-', "offdraw"), ('÷', "deal"), ('%', "deal_leftover"), ('·', "fold"), ('≤', "at_most"), ('≍', "same"), ('=', "is"), ('∋', "inhold"), ('‖', "length")]
 
 classNames :: Source.Declaration -> [String]
 classNames (Source.FlockDeclaration name _ _) = [name]

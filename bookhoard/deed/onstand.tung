@@ -1,6 +1,6 @@
-use _foreign.tung
+use _fremmed.tung
 use combinator.tung
-use deed/action.tung
+use deed.tung
 use flock/algebra/half/category.tung
 use flock/algebra/half/semigroupoid.tung
 use flock/functor.tung
@@ -11,35 +11,35 @@ use ilk/one.tung
 use ilk/product.tung
 use is.tung
 
-## a deed that readeth and replaceth a state `σ` as it runneth. it wrappeth
+## a deed that readeth and replaceth an onstand `σ` as it runneth. it wrappeth
 ## `[σ, (α ∏ σ) deed]`, so that it hath its own monad: `bind` handeth the
-## state left by one step to the next.
+## onstand left by one step to the next.
 show ilk onstand: [σ: *, α: *, *] {
   inwrap: [[σ, (α ∏ σ) deed], σ onstand α]
 }
 
-## run from a starting state; the deed yieldeth the result and the last state.
+## run from a starting onstand; the deed yieldeth the result and the last onstand.
 show let run: [@σ: *, @α: *, step inwrap: σ onstand α, s: σ, (α ∏ σ) deed] ≔ s step
 
-## the current state.
+## the current onstand.
 show let get: [@σ: *, σ onstand σ] ≔ {s ^ (s both s) deed_sheer} inwrap
 
-## replace the state.
+## replace the onstand.
 show let put: [@σ: *, t: σ, σ onstand 𝟙] ≔ {_ ^ (only both t) deed_sheer} inwrap
 
-## change the state.
+## tweak the onstand.
 show let tweak: [@σ: *, f: [σ, σ], σ onstand 𝟙] ≔ {s ^ (only both (s f)) deed_sheer} inwrap
 
-## run a deed that leaveth the state alone.
-show let lift: [@σ: *, @α: *, action: α deed, σ onstand α] ≔
-  {s ^ action deed_bind {a ^ (a both s) deed_sheer}} inwrap
+## run a deed that leaveth the onstand alone.
+show let lift: [@σ: *, @α: *, doing: α deed, σ onstand α] ≔
+  {s ^ doing deed_bind {a ^ (a both s) deed_sheer}} inwrap
 
 let give: [@σ: *, @α: *, a: α, σ onstand α] ≔ {s ^ (a both s) deed_sheer} inwrap
 
 let tweak_result: [@σ: *, @α: *, @β: *, m: σ onstand α, f: [α, β], σ onstand β] ≔
   {s ^ (m run s) deed_bind {p ^ (p biwarp f sameness) deed_sheer}} inwrap
 
-## the continuation of `flatten`: run the inner step from the state left.
+## the continuation of `flatten`: run the inner step from the onstand left.
 let unfold: [@σ: *, @α: *, p: (σ onstand α) ∏ σ, (α ∏ σ) deed] ≔
   match p { inner both t ^ inner run t }
 

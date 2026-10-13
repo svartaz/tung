@@ -203,9 +203,9 @@ layeredPrograms :: [(String, String, String)]
 layeredPrograms =
   [ ("onstand handeth each step the state left by the last", "(>{then, tick, tick, get} onstand~run 10) bind {p ^ p forthcast₀ $ to_string $ write}", "12"),
     ("put replaceth and lift keepeth the state", "(>{then, 4 put, ('x' write) onstand~lift, get} onstand~run 0) bind {p ^ p forthcast₀ $ to_string $ write}", "x4"),
-    ("a misfare skippeth every later deed", "(>{then, ('a' write) misfaresome~lift, ('stop' misfare: string misfaresome 𝟙), ('b' write) misfaresome~lift} misfaresome~run) bind report", "astop"),
-    ("handle runneth its handler only on a misfare", "(>{then, ('a' write) misfaresome~lift, 'stop' misfare} handle {e ^ (e write) misfaresome~lift} $ misfaresome~run) bind report", "astop!"),
-    ("handle leaveth a result alone", "((('a' write) misfaresome~lift: 𝟙 misfaresome 𝟙) handle {_ ^ ('never' write) misfaresome~lift} $ misfaresome~run) bind report", "a!")
+    ("a misfare skippeth every later deed", "(>{then, ('a' write) misfaresome~lift, ('stop' misfare: string misfaresome 𝟙), ('b' write) misfaresome~lift} misfaresome~run) bind eftbare", "astop"),
+    ("handle runneth its handler only on a misfare", "(>{then, ('a' write) misfaresome~lift, 'stop' misfare} handle {e ^ (e write) misfaresome~lift} $ misfaresome~run) bind eftbare", "astop!"),
+    ("handle leaveth a result alone", "((('a' write) misfaresome~lift: 𝟙 misfaresome 𝟙) handle {_ ^ ('never' write) misfaresome~lift} $ misfaresome~run) bind eftbare", "a!")
   ]
 
 layeredCase :: Library -> (String, String, String) -> Test
@@ -223,7 +223,7 @@ layeredCase library (name, performed, expected) =
       use ilk/product.tung
       use ilk/sum.tung
       let tick: ℕ onstand 𝟙 ≔ {n ^ n + 1} tweak
-      let report: [string ∑ 𝟙, 𝟙 deed] ≔ {e incast₀ ^ e write, _ incast₁ ^ '!' write}
+      let eftbare: [string ∑ 𝟙, 𝟙 deed] ≔ {e incast₀ ^ e write, _ incast₁ ^ '!' write}
 
       """
 

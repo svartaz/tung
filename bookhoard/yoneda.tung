@@ -4,31 +4,31 @@ use flock/algebra/half/semigroupoid.tung
 use flock/functor.tung
 use is.tung
 
-## the yoneda lemma for a functor `φ` on types: a natural transformation from
-## the functions out of `α` to `φ` is determined by one value of `α φ`, its
-## image of `sameness`, and every such value giveth one.
+## the yoneda helpsetting for a functor `φ` on ilks: a natural transformation from
+## each fall out of `α` to `φ` is determined by one worth of `α φ`, its
+## image of `sameness`, and every such worth giveth one.
 
-## a transformation from the functions out of `α` to `φ`.
+## a transformation from each fall out of `α` to `φ`.
 show let yoneda: [φ: [*, *], α: *, *] ≔ [@β: *, [α, β], β φ]
 
 ## `n` is natural when changing its result agreeth with changing its input.
 show let natural: [@φ: [*, *], @: φ functor, @α: *, n: φ yoneda α, *] ≔
   [@β: *, @γ: *, f: [α, β], g: [β, γ], ((f n) warp g) = ((f ▷ g) n)]
 
-## the transformation that a value giveth: change it by each function.
+## the transformation that a worth giveth: tweak it by each fall.
 show let lift: [@φ: [*, *], @: φ functor, @α: *, a: α φ, φ yoneda α] ≔
   {f ^ a warp f}
 
-## the value that a transformation determineth: its image of `sameness`.
+## the worth that a transformation determineth: its image of `sameness`.
 show let unlift: [@φ: [*, *], @α: *, n: φ yoneda α, α φ] ≔
   sameness n
 
-## lifting a value and taking it back giveth the value.
+## lifting a worth and taking it back giveth the worth.
 show let unlift_lift: [@φ: [*, *], @: φ functor, @α: *, a: α φ,
   ((a lift) unlift) = a] ≔
   a warp_sameness
 
-## a natural transformation is the lift of its own value, at every input.
+## a natural transformation is the lift of its own worth, at every input.
 show let lift_unlift: [@φ: [*, *], @: φ functor, @α: *, n: φ yoneda α,
   natural_n: n natural, @β: *, f: [α, β],
   (f ((n unlift) lift)) = (f n)] ≔

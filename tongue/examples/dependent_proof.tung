@@ -1,8 +1,0 @@
-use is.tung
-## check `proved` without axioms, or inlook the assumption of `assumed`.
-## the unrelated unfinished definition doth not affect either audit.
-show ilk truth: * { yes: truth }
-show orsetting chosen: truth
-show let assumed: truth ≔ chosen
-show let soothed: [@α: *, x: α, x = x] ≔ eftbend
-let unfinished: truth ≔ sorry

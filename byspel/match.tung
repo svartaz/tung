@@ -32,9 +32,9 @@ let length: [@α: *, α list, nat] ≔ {
 }
 
 ## other inputs may change, as an accumulator doth.
-let reverse_onto: [@α: *, α list, α list, α list] ≔ {
+let eftwend_onto: [@α: *, α list, α list, α list] ≔ {
   ∅,           done ^ done,
-  head ‥ tail, done ^ tail reverse_onto (head ‥ done)
+  head ‥ tail, done ^ tail eftwend_onto (head ‥ done)
 }
 
 let warp: [@α: *, @β: *, α list, [α, β], β list] ≔ {

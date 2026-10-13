@@ -1,7 +1,7 @@
 use deed/file.tung
 use deed/system.tung
 use flock/algebra/whole/hath_fold.tung
-use flock/functor/catamorphism.tung
+use flock/functor/downshaper.tung
 use ground.tung
 use ilk/list.tung
 use ilk/maybe.tung

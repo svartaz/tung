@@ -3,7 +3,7 @@ use flock/algebra/whole/monoid_fold.tung
 use flock/algebra/whole/semigroup_fold.tung
 use flock/functor.tung
 use flock/functor/atfoldsome.tung
-use flock/functor/catamorphism.tung
+use flock/functor/downshaper.tung
 use flock/functor/hath_sift.tung
 use flock/functor/hath_throughwend.tung
 use flock/functor/monad.tung
@@ -14,7 +14,7 @@ use ilk/one.tung
 use ilk/two.tung
 use is.tung
 
-## optional value.
+## a maybe worth.
 show ilk maybe: [α: *, *] {
   none: α maybe,
   some: [α, α maybe]
@@ -100,7 +100,7 @@ bizen: maybe hath_sift {
   }
 }
 
-bizen: maybe catamorphism {
+bizen: maybe downshaper {
   let gather₀ ≔ {
     none,   b, _ ^ b,
     a some, b, f ^ a f b
@@ -118,19 +118,19 @@ bizen: maybe hath_throughwend {
   }
 }
 
-## extract an option with a fallback value.
+## extract an option with a fallback worth.
 show let fallback: [@α: *, α maybe, α, α] ≔ {
   none,   b ^ b,
   a some, _ ^ a
 }
 
-## consume an option with a fallback and a present-value branch.
+## consume an option with a fallback and a present-worth branch.
 show let handle: [@α: *, @β: *, α maybe, β, [α, β], β] ≔ {
   none,   b, _ ^ b,
   a some, _, f ^ a f
 }
 
-## true when an option inholdeth a value.
+## true when an option inholdeth a worth.
 show let is_some: [@α: *, α maybe, 𝟚] ≔ {
   none   ^ nay,
   _ some ^ yea

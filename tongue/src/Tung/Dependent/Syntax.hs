@@ -14,7 +14,6 @@ module Tung.Dependent.Syntax
     Globals,
     children,
     mapChildren,
-    mapSymbols,
     mapDefinitionSymbols,
     traverseScoped,
     mapLevels,

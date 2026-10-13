@@ -45,7 +45,7 @@ accepted =
     ("deed is an ordinary type constructor", "let echo:[string, 𝟙 deed] ≔ write let main:𝟙 deed ≔ 'x' echo"),
     ("flock members and laws need no separators", "flock sameness:[a:*, *] { let sameness:[a, a] let hath_≍:[a, a] let rule:[x: a, (x sameness) = x] }"),
     ("flock member with local type parameters", "flock owner:[a:*, *] { let member:[@b:*, b, a] }"),
-    ("higher-order flock members", "flock catamorphism:[f:[*, *], *] { let gather₀:[@a:*, @b:*, a f, b, [a, b, b], b] }"),
+    ("higher-order flock members", "flock downshaper:[f:[*, *], *] { let gather₀:[@a:*, @b:*, a f, b, [a, b, b], b] }"),
     ("flock constraints precede parameters", "flock convert:[a:*, @:a hath_≍, b:*, *] { let convert:[a, b] }"),
     ("flock member requirement", "flock hath_throughwend:[f:[*, *], *] { let throughwend:[@m:[*, *], @:m atfoldsome, @a:*, @b:*, a f, [a, b m], (b f) m] }"),
     ("flock without parameters", "flock marker:* { let mark:ℤ }"),

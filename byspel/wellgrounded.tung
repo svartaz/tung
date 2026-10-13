@@ -22,7 +22,7 @@ let count: [n: onestead, onestead] ≔
     }} n
 
 ## further inputs are quantified in the result motive.
-let add: [n: onestead, k: onestead, onestead] ≔
+let eke: [n: onestead, k: onestead, onestead] ≔
   {_ ^ [onestead, onestead]} wellgrounded_selfcall_by {x ^ x} reach
     {n, selfcall ^ {k ^ match n {
       nought  ^ k,
@@ -49,7 +49,7 @@ let unpack_count: [p: parcel, onestead] ≔
     }}} p
 
 ## the result motive may depend on the whole input.
-let reflect: [p: parcel, p = p] ≔
+let selfsame: [p: parcel, p = p] ≔
   {x ^ x = x} wellgrounded_selfcall_by weight reach
     {p, selfcall ^ match p {n pack ^ match n {
       nought  ^ eftbend,

@@ -6,7 +6,7 @@ use flock/algebra/whole/semigroup_eke.tung
 use ilk/two.tung
 use is.tung
 
-## an additive group: a monoid whose every value hath a negation on both sides.
+## an additive group: a monoid whose every worth hath a negation on both sides.
 show flock group_+: [α: *, @: α monoid_+, @: α hath_-, *] {
   let +_-: [a: α, (a + (a -)) = naught]
   let -_+: [a: α, ((a -) + a) = naught]
@@ -19,11 +19,11 @@ bizen: 𝟚 group_+ {
   let -+_+: [_:, _:] ≔ eftbend
 }
 
-## a value that leaveth every value alone is `naught`.
+## a worth that leaveth every worth alone is `naught`.
 show let naught_alone: [@α: *, @: α group_+, e: α, leaving: [a: α, (e + a) = a], e = naught] ≔
   ((e +_naught) evenmete) throughgo (naught leaving)
 
-## a value that undoeth `a` from the left is its negation.
+## a worth that undoeth `a` from the left is its negation.
 show let -_alone: [@α: *, @: α group_+, a: α, b: α, undoing: (b + a) = naught, b = (a -)] ≔ >{throughgo,
   (b +_naught) evenmete,
   {x ^ b + x} leibnitz ((a +_-) evenmete),
@@ -32,7 +32,7 @@ show let -_alone: [@α: *, @: α group_+, a: α, b: α, undoing: (b + a) = naugh
   (a -) naught_+
 }
 
-## equal sums with one left term have equal right terms.
+## the same sums with one left term have the same right terms.
 show let outstrike_+: [@α: *, @: α group_+, a: α, b: α, c: α, same: (a + b) = (a + c), b = c] ≔ >{throughgo,
   (b naught_+) evenmete,
   {x ^ x + b} leibnitz ((a -_+) evenmete),
@@ -43,7 +43,7 @@ show let outstrike_+: [@α: *, @: α group_+, a: α, b: α, c: α, same: (a + b)
   c naught_+
 }
 
-## equal sums with one right term have equal left terms.
+## the same sums with one right term have the same left terms.
 show let +_outstrike: [@α: *, @: α group_+, a: α, b: α, c: α, same: (b + a) = (c + a), b = c] ≔ >{throughgo,
   (b +_naught) evenmete,
   {x ^ b + x} leibnitz ((a +_-) evenmete),
@@ -54,7 +54,7 @@ show let +_outstrike: [@α: *, @: α group_+, a: α, b: α, c: α, same: (b + a)
   c +_naught
 }
 
-## the negation of a negation is the value.
+## the negation of a negation is the worth.
 show let -_-: [@α: *, @: α group_+, a: α, ((a -) -) = a] ≔
   ((a -) -_alone a (a +_-)) evenmete
 
@@ -73,6 +73,6 @@ show let -_over_+: [@α: *, @: α group_+, a: α, b: α,
     b -_+
   }) evenmete
 
-## a value less itself is `naught`.
+## a worth less itself is `naught`.
 show let -+_outstrike: [@α: *, @: α group_+, a: α, (a -+ a) = naught] ≔
   (a -+_+ a) throughgo (a -_+)

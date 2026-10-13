@@ -1,5 +1,5 @@
 ## bookhoard's host bindings, shown again to every importing module.
-use _foreign.tung
+use _fremmed.tung
 use ilk/one.tung
 
 show 𝟙, only, write, deed_sheer, deed_bind

@@ -10,7 +10,7 @@ show flock groupoid: [⇨: [*, *, *], @: ⇨ category, *] {
   let witherwend_▷: [@α: *, @β: *, f: α ⇨ β, ((f witherwend) ▷ f) = sameness]
 }
 
-## an arrow that undoeth `f` from the left is its inverse.
+## an arrow that undoeth `f` from the left is its witherwend.
 show let witherwend_alone: [@⇨: [*, *, *], @: ⇨ groupoid, @α: *, @β: *,
   f: α ⇨ β, g: β ⇨ α, undoing: (g ▷ f) = sameness, g = (f witherwend)] ≔ >{throughgo,
   (g ▷_sameness) evenmete,
@@ -20,17 +20,17 @@ show let witherwend_alone: [@⇨: [*, *, *], @: ⇨ groupoid, @α: *, @β: *,
   (f witherwend) sameness_▷
 }
 
-## the inverse of an inverse is the arrow.
+## the witherwend of a witherwend is the arrow.
 show let witherwend_witherwend: [@⇨: [*, *, *], @: ⇨ groupoid, @α: *, @β: *,
   f: α ⇨ β, ((f witherwend) witherwend) = f] ≔
   ((f witherwend) witherwend_alone f (f ▷_witherwend)) evenmete
 
-## `sameness` is its own inverse.
+## `sameness` is its own witherwend.
 show let sameness_witherwend: [@⇨: [*, *, *], @: ⇨ groupoid, @α: *,
   ((sameness: α ⇨ α) witherwend) = sameness] ≔
   (sameness witherwend_alone sameness (sameness sameness_▷)) evenmete
 
-## the inverse of a composite is the composite of the inverses, turned around.
+## the witherwend of a composite is the composite of the witherwends, turned around.
 show let witherwend_over_▷: [@⇨: [*, *, *], @: ⇨ groupoid, @α: *, @β: *, @γ: *,
   f: α ⇨ β, g: β ⇨ γ, ((f ▷ g) witherwend) = ((g witherwend) ▷ (f witherwend))] ≔
   ((f ▷ g) witherwend_alone ((g witherwend) ▷ (f witherwend)) >{throughgo,

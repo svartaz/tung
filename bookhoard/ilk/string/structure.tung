@@ -1,4 +1,4 @@
-use _foreign.tung
+use _fremmed.tung
 use flock/algebra/whole/monoid_fold.tung
 use flock/algebra/whole/semigroup_fold.tung
 use flock/hath_same.tung

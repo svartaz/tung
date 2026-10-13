@@ -30,7 +30,7 @@ homebrew installeth the pinned release. for the current syntax and proof
 checker, build from this checkout with ghc 9.12 or newer and cabal:
 
 ```sh
-brew bundle
+mise install
 make compiler-install
 ```
 
@@ -51,11 +51,11 @@ choose another place.
 
 proof checking rejecteth reachable `sorry`. the
 [proof checking guide](tongue/language.md#proof-checking) describeth axiom
-allowlists and editor support. try the
-[proof example](tongue/examples/dependent_proof.tung):
+allowlists and editor support. try it on a proof in the
+[walkthrough](byspel/walkthrough.tung):
 
 ```sh
-tung --no-axioms --check-proof proved tongue/examples/dependent_proof.tung
+tung --no-axioms --check-proof naught_+ byspel/walkthrough.tung
 ```
 
 ## libraries
@@ -71,7 +71,7 @@ dependencies:
 
 ## next steps
 
-- read and run the [tutorial](byspel/tutorial.tung): `tung byspel/tutorial.tung`.
+- read and run the [walkthrough](byspel/walkthrough.tung): `tung byspel/walkthrough.tung`.
 - try the other examples in [`byspel/`](byspel/).
 - set up the [editor extension](vscode/readme.md).
 - some keywords are anglish words:

@@ -12,8 +12,8 @@ import Tung.Dependent.Source (SourceProgram, inferSourceExpression, sourceDefini
 
 group :: IO Harness.Group
 group = do
-  mutual <- exampleSource "dependent_mutual.tung"
-  nested <- exampleSource "dependent_nested.tung"
+  mutual <- exampleSource "mutual.tung"
+  nested <- exampleSource "nested.tung"
   Harness.group "dependent-inductive-source" (tests ++ mutualTests mutual ++ nestedTests nested)
 
 tests :: [Test]

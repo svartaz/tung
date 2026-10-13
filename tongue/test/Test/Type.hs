@@ -360,7 +360,7 @@ orderCases imports =
     typeOkWith "whole order inherits half operations" (totalPrefix ++ "let before ≔ lesser < greater let compared ≔ lesser compare greater let bounded ≔ lesser clamp greater greater") imports,
     typeErrWith "whole order bizen requireth its half parent" (rankPrefix ++ "bizen:rank order_whole {}") imports,
     typeOkWith "a bizen member seeth its parent compute in an impossible case" (partialPrefix ++ "bizen:rank order_whole { let ≤_whole ≔ sorry let ≤_=: [a:, b:, below:, above:] ≔ match a, b, below, above { lesser, lesser, _, _ ^ eftbend, greater, greater, _, _ ^ eftbend, greater, lesser, k, _ ^ match k {}, lesser, greater, _, k ^ match k {} } }") imports,
-    typeOkWith "finite set supplieth half order" (setPrefix ++ "let enclosed ≔ smaller ≤ larger") imports,
+    typeOkWith "finite set supplieth half order" (setPrefix ++ "let beneath ≔ smaller ≤ larger") imports,
     typeErrWith "finite set doth not claim whole order" (setPrefix ++ "let bad ≔ smaller compare larger") imports
   ]
   where
@@ -391,8 +391,8 @@ boundCases imports =
     typeErrWith "supremum semilattice doth not supply infimum" (supremumPrefix ++ "let bad ≔ item ∧ item") imports
   ]
   where
-    prefix = "use ground.tung use ilk/list.tung use ilk/natural.tung use flock/functor/catamorphism.tung "
-    powersetPrefix = "use ground.tung use ilk/list.tung use ilk/powerset.tung use flock/functor/catamorphism.tung let empty_set:ℤ powerset ≔ powerset~empty let full_set:ℤ powerset ≔ all "
+    prefix = "use ground.tung use ilk/list.tung use ilk/natural.tung use flock/functor/downshaper.tung "
+    powersetPrefix = "use ground.tung use ilk/list.tung use ilk/powerset.tung use flock/functor/downshaper.tung let empty_set:ℤ powerset ≔ powerset~empty let full_set:ℤ powerset ≔ all "
     semilatticePrefix = "use flock/order/semilattice_lower.tung ilk one_sided: * { item: one_sided } bizen:one_sided semilattice_lower { let ∧: [_:, _:] ≔ item let ∧_swallow ≔ sorry let ∧_swap ≔ sorry let ∧_∧ ≔ sorry } "
     supremumPrefix = "use flock/order/semilattice_upper.tung ilk one_sided: * { item: one_sided } bizen:one_sided semilattice_upper { let ∨: [_:, _:] ≔ item let ∨_swallow ≔ sorry let ∨_swap ≔ sorry let ∨_∨ ≔ sorry } "
 

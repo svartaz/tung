@@ -6,7 +6,6 @@ module Tung.Dependent.Elaboration
   ( Elaboration,
     runElaboration,
     recover,
-    currentGlobals,
     kernel,
     failure,
     raise,
@@ -29,7 +28,6 @@ module Tung.Dependent.Elaboration
     approximateFlexible,
     zonk,
     unsolved,
-    assignConstant,
     infer,
     attempt,
     located,
@@ -968,13 +966,6 @@ unsolved = do
   retry
   Inference {metaEntries} <- get
   pure [(identity, metaTarget) | (identity, MetaEntry {..}) <- Map.toAscList metaEntries, isNothing metaSolution]
-
--- assign a hole a value that ignoreth its telescope, as let generalisation doth
--- with a constant standing for a new input.
-assignConstant :: Int -> Term -> Elaboration ()
-assignConstant identity value = do
-  MetaEntry {metaDomains} <- entry identity
-  commit identity (foldr (Lambda Explicit) value metaDomains)
 
 -- the boundary rejecteth unresolved holes even when a discarded result no
 -- longer mentioneth them. no arbitrary inhabitants or defaults are inserted.

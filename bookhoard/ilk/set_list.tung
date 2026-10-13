@@ -9,7 +9,7 @@ use ilk/list.tung
 use ilk/two.tung
 use is.tung
 
-# the order dictionary alone decideth identity and the canonical list order.
+# the order dictionary alone decideth sameness and the canonical list order.
 show let same: [@α: *, @: α order_whole, a: α, b: α, 𝟚] ≔
   (a ≤ b) if (b ≤ a) nay
 
@@ -60,22 +60,22 @@ show let strict_right: [@α: *, @: α order_whole, a: α, b: α,
 )
 
 show let strict_make: [@α: *, @: α order_whole, a: α, b: α,
-  below: (a ≤ b) = yea, reverse: (b ≤ a) = nay, (a strict b) = yea
+  below: (a ≤ b) = yea, eftwend: (b ≤ a) = nay, (a strict b) = yea
 ] ≔
   ({c: 𝟚 ^ c if ((b ≤ a) if nay yea) nay} leibnitz below)
-    throughgo ({c: 𝟚 ^ c if nay yea} leibnitz reverse)
+    throughgo ({c: 𝟚 ^ c if nay yea} leibnitz eftwend)
 
 show let strict_throughgo: [@α: *, @: α order_whole, a: α, b: α, c: α,
   first: (a strict b) = yea, other: (b strict c) = yea, (a strict c) = yea
 ] ≔ (
   let below ≔ a ≤_yea_throughgo b c (a strict_left b first) (b strict_left c other)
-  let reverse: (c ≤ a) = nay ≔ (c ≤ a) inlook {
+  let eftwend: (c ≤ a) = nay ≔ (c ≤ a) inlook {
     yea, held ^ match
     ((b ≤_yea_throughgo c a (b strict_left c other) held) evenmete)
     throughgo (a strict_right b first) {},
     nay, _ ^ eftbend
   }
-  yield a strict_make c below reverse
+  yield a strict_make c below eftwend
 )
 
 show let above_throughgo: [@α: *, @: α order_whole, a: α, b: α, l: α list,
@@ -120,8 +120,8 @@ show let put_sorted: [@α: *, @: α order_whole, l: α list, x: α,
         ((c if (a ‥ rest) (x ‥ (a ‥ rest))) sorted) = yea
       }) {
         yea, _       ^ held,
-        nay, reverse ^ (
-          let less ≔ x strict_make a before reverse
+        nay, eftwend ^ (
+          let less ≔ x strict_make a before eftwend
           let above_x ≔ (x strict a) both_yea (x above rest) less (x above_throughgo a rest less above_a)
           yield (x above (a ‥ rest)) both_yea ((a ‥ rest) sorted) above_x held
         )
@@ -248,15 +248,15 @@ show let put_inhold_if: [@α: *, @: α order_whole, l: α list, x: α, y: α,
         ((c if (a ‥ rest) (x ‥ (a ‥ rest))) inhold y)
         = (((a ‥ rest) inhold y) if yea (y same x))
       }) {
-        yea, reverse ^ (
-          let equal ≔ x ≤_= a before reverse
+        yea, eftwend ^ (
+          let alike ≔ x ≤_= a before eftwend
           yield original throughgo
           (((y same a) either_swallow (rest inhold y)) throughgo
             (({c: 𝟚 ^ c if yea (y same a)} leibnitz (original evenmete)) throughgo
-              ({z: α ^ ((a ‥ rest) inhold y) if yea (y same z)} leibnitz (equal evenmete))))
+              ({z: α ^ ((a ‥ rest) inhold y) if yea (y same z)} leibnitz (alike evenmete))))
         ),
-        nay, reverse ^ (
-          let less ≔ x strict_make a before reverse
+        nay, eftwend ^ (
+          let less ≔ x strict_make a before eftwend
           let above_x ≔ (x strict a) both_yea (x above rest) less (x above_throughgo a rest less above_a)
           yield (x inhold_cons (a ‥ rest) y above_x) throughgo
           (((y same x) either_swap ((a ‥ rest) inhold y)))
@@ -293,13 +293,13 @@ show let sift_inhold_if: [@α: *, @: α order_whole, l: α list,
   a ‥ rest ^ (
     let above_a ≔ (a above rest) yea_if_former (rest sorted) held
     let sorted_rest ≔ (a above rest) yea_if_latter (rest sorted) held
-    let filtered: (((a ‥ rest) sift f) inhold x)
+    let sifted: (((a ‥ rest) sift f) inhold x)
     = (((a f) if (x same a) nay) if yea ((rest sift f) inhold x)) ≔
       match a f {
         yea ^ a inhold_cons (rest sift f) x (a above_sift rest f above_a),
         nay ^ eftbend
       }
-    let transformed ≔ filtered throughgo
+    let transformed ≔ sifted throughgo
     ({c: 𝟚 ^ ((a f) if (x same a) nay) if yea c}
       leibnitz (rest sift_inhold_if f x sorted_rest))
     let original ≔ a inhold_cons rest x above_a
@@ -310,11 +310,11 @@ show let sift_inhold_if: [@α: *, @: α order_whole, l: α list,
         (((a f) if c nay) if yea ((rest inhold x) if (x f) nay))
         = ((c if yea (rest inhold x)) if (x f) nay)
       }) {
-        yea, equal ^ (
-          let umbsay_equal ≔ f leibnitz (x same_is a equal)
-          yield ({c: 𝟚 ^ ((a f) if yea nay) if yea ((rest inhold x) if c nay)} leibnitz umbsay_equal)
+        yea, alike ^ (
+          let umbsay_alike ≔ f leibnitz (x same_is a alike)
+          yield ({c: 𝟚 ^ ((a f) if yea nay) if yea ((rest inhold x) if c nay)} leibnitz umbsay_alike)
           throughgo (((a f) sift_same (rest inhold x)) throughgo
-            ({c: 𝟚 ^ (yea if yea (rest inhold x)) if c nay} leibnitz (umbsay_equal evenmete)))
+            ({c: 𝟚 ^ (yea if yea (rest inhold x)) if c nay} leibnitz (umbsay_alike evenmete)))
         ),
         nay, _ ^ (a f) sift_other (x f) (rest inhold x)
       }

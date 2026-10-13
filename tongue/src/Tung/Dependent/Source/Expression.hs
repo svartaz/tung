@@ -4,8 +4,6 @@ module Tung.Dependent.Source.Expression
   ( inferExpression,
     checkExpression,
     inferDefinition,
-    checkRecursiveExpression,
-    referencedNames,
   )
 where
 

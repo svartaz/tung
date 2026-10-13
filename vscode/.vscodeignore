@@ -12,4 +12,3 @@ out/**
 bundle/**/*.map
 node_modules/**/*.d.ts
 node_modules/**/*.map
-setup.sh

@@ -1,6 +1,6 @@
-use _foreign.tung
+use _fremmed.tung
 use combinator.tung
-use deed/action.tung
+use deed.tung
 use flock/algebra/half/category.tung
 use flock/algebra/half/semigroupoid.tung
 use flock/functor.tung
@@ -24,8 +24,8 @@ show let misfare: [@ε: *, @α: *, e: ε, ε misfaresome α] ≔
   ((e incast₀) deed_sheer) inwrap
 
 ## run a deed that cannot fail.
-show let lift: [@ε: *, @α: *, action: α deed, ε misfaresome α] ≔
-  (action deed_bind (incast₁ ▷ deed_sheer)) inwrap
+show let lift: [@ε: *, @α: *, doing: α deed, ε misfaresome α] ≔
+  (doing deed_bind (incast₁ ▷ deed_sheer)) inwrap
 
 ## run `m`; on a fault, run `recover` on it instead.
 show let handle: [@ε: *, @ε′: *, @α: *, m: ε misfaresome α, recover: [ε, ε′ misfaresome α], ε′ misfaresome α] ≔
@@ -35,7 +35,7 @@ show let handle: [@ε: *, @ε′: *, @α: *, m: ε misfaresome α, recover: [ε,
   }) inwrap
 
 ## a deed that yieldeth a sum misseth on its left side.
-show let from_sum: [@ε: *, @α: *, action: (ε ∑ α) deed, ε misfaresome α] ≔ action inwrap
+show let from_sum: [@ε: *, @α: *, doing: (ε ∑ α) deed, ε misfaresome α] ≔ doing inwrap
 
 let give: [@ε: *, @α: *, a: α, ε misfaresome α] ≔ ((a incast₁) deed_sheer) inwrap
 

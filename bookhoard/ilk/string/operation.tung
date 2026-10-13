@@ -1,9 +1,9 @@
-use _foreign.tung
+use _fremmed.tung
 use flock/algebra/half/semigroupoid.tung
 use flock/algebra/whole/hath_fold.tung
 use flock/algebra/whole/semigroup_fold.tung
 use flock/functor.tung
-use flock/functor/catamorphism.tung
+use flock/functor/downshaper.tung
 use flock/functor/hath_sift.tung
 use flock/hath_greatness.tung
 use flock/hath_same.tung
@@ -33,10 +33,10 @@ show let take_string: [t: string, count: ℕ, string] ≔
 show let drop_string: [t: string, count: ℕ, string] ≔
   t string_to_list $ drop count $ list_to_string
 
-show let reverse_string: [t: string, string] ≔
-  t string_to_list $ reverse $ list_to_string
+show let eftwend_string: [t: string, string] ≔
+  t string_to_list $ eftwend $ list_to_string
 
-show let prepend_string: [staff: unicode, t: string, string] ≔
+show let forehang_string: [staff: unicode, t: string, string] ≔
   staff ‥ (t string_to_list) $ list_to_string
 
 show let athang_string: [t: string, staff: unicode, string] ≔
@@ -77,7 +77,7 @@ show let split_string: [t: string, shedder: unicode, string list] ≔
 show let words_string: [t: string, string list] ≔
   t string_to_list $ split_unicode_by is_whitespace $ warp list_to_string $ sift (is_empty_string ▷ ¬)
 
-## yoke string values with a separator between neighbours.
+## yoke string worths with a separator between neighbours.
 show let yoke_with_string: [string list, string, string] ≔ {
   empty,            _       ^ '',
   string ‥ strings, shedder ^ strings gather₁ string {

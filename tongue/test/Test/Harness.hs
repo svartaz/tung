@@ -17,7 +17,6 @@ module Test.Harness
     typeErrContaining,
     typeOkWith,
     typeErrWith,
-    runnableOk,
     runnableErr,
     evalOkWith,
     evalTypeErrWith,
@@ -147,7 +146,7 @@ propertyTest name property = do
     QuickCheck.Success {} -> Nothing
     _ -> Just (name ++ ": " ++ QuickCheck.output result)
 
-parseOk, parseErr, typeOk, typeErr, runnableOk, runnableErr :: String -> String -> Test
+parseOk, parseErr, typeOk, typeErr, runnableErr :: String -> String -> Test
 parseOk name = expectEither name True . parseProgram
 parseErr name = expectEither name False . parseProgram
 typeOk name source = expectEq name "type ok" (checkSource False source Map.empty)
@@ -157,8 +156,6 @@ typeErrContaining :: String -> String -> String -> Test
 typeErrContaining name expected source =
   let actual = checkSource False source Map.empty
    in expectMessage name ("type error:" `isPrefixOf` actual && expected `isInfixOf` actual) ("expected error containing " ++ show expected ++ ", got " ++ show actual)
-
-runnableOk name source = expectEq name "type ok" (checkSource True source Map.empty)
 
 runnableErr name source = expectPrefix name "type error:" (checkSource True source Map.empty)
 

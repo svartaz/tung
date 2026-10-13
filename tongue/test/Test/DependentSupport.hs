@@ -21,7 +21,6 @@ module Test.DependentSupport
   )
 where
 
-import Control.Monad (filterM)
 import Control.Monad.Trans.State.Strict (State, gets, modify', runState, state)
 import Data.Either (isLeft)
 import Data.Functor.Identity (Identity (..))
@@ -96,18 +95,19 @@ sameNormalIn program actual expected = do
   second <- normaliseSourceExpression program expected
   pure (eraseLevels first == eraseLevels second)
 
--- examples live in tongue/examples; tests may run from the package or repository root.
+-- examples are byspels; tests may run from the package or repository root.
 exampleSource :: FilePath -> IO String
 exampleSource name = getCurrentDirectory >>= search
   where
     search directory = do
-      let candidates = [directory </> "examples" </> name, directory </> "tongue" </> "examples" </> name]
-      found <- filterM doesFileExist candidates
-      case found of
-        path : _ -> readFile path
-        []
-          | takeDirectory directory == directory -> fail ("cannot find examples/" ++ name)
-          | otherwise -> search (takeDirectory directory)
+      let path = directory </> "byspel" </> name
+      found <- doesFileExist path
+      if found
+        then readFile path
+        else
+          if takeDirectory directory == directory
+            then fail ("cannot find byspel/" ++ name)
+            else search (takeDirectory directory)
 
 -- a deterministic world for the dependent runner.
 data World = World

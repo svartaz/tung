@@ -1,9 +1,9 @@
 use flock/algebra/half/category.tung
 use flock/functor.tung
 use flock/functor/atfoldsome.tung
-use flock/functor/catamorphism.tung
+use flock/functor/downshaper.tung
 
-show flock hath_throughwend: [φ: [*, *], @: φ functor, @: φ catamorphism, *] {
+show flock hath_throughwend: [φ: [*, *], @: φ functor, @: φ downshaper, *] {
   let throughwend: [@μ: [*, *], @: μ atfoldsome, @α: *, @β: *, α φ, [α, β μ], (β φ) μ]
 }
 

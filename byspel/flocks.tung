@@ -16,8 +16,8 @@ flock hath_≍: [α: *, *] {
 ## an anonymous requirement `@:` is found by instance search.
 let ≭: [@α: *, @: α hath_≍, a: α, b: α, 𝟚] ≔ match a ≍ b { yea ^ nay, nay ^ yea }
 
-## a bizen defineth each law of its flock. this example assumeth the laws with
-## `sorry`; a checked proof may use `eftbend` when the law holdeth by computation.
+## a bizen seetheth each law of its flock. `eftbend` seetheth a law that holdeth
+## by computation.
 bizen: 𝟚 hath_≍ {
   let ≍ ≔ {
     yea, yea;
@@ -25,7 +25,10 @@ bizen: 𝟚 hath_≍ {
     _,   _   ^ nay
   }
 
-  let ≍_eftbend ≔ sorry
+  let ≍_eftbend ≔ {
+    yea ^ eftbend,
+    nay ^ eftbend
+  }
 }
 
 ## a bizen may require other bizens.
@@ -36,7 +39,10 @@ bizen: [@α: *, @: α hath_≍, (α maybe) hath_≍] {
     _,      _      ^ nay
   }
 
-  let ≍_eftbend ≔ sorry
+  let ≍_eftbend ≔ {
+    none   ^ eftbend,
+    a some ^ a ≍_eftbend
+  }
 }
 
 flock functor: [φ: [*, *], *] {

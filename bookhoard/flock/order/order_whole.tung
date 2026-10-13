@@ -6,18 +6,18 @@ use ilk/three.tung
 use ilk/two.tung
 use is.tung
 
-## a partial order in which every pair is comparable, and whose
-## antisymmetry holdeth in identity, not only in boolean sameness.
+## a half order in which every pair is comparable, and whose
+## witherevenmete holdeth in `=`, not only in boolean sameness.
 show flock order_whole: [α: *, @: α order_half, *] {
   let ≤_whole: [a: α, b: α, (((a ≤ b) ≍ nay) ≤ (b ≤ a)) = yea]
   let ≤_=: [a: α, b: α, below: (a ≤ b) = yea, above: (b ≤ a) = yea, a = b]
 }
 
-## two values that are not ordered one way are ordered the other way.
+## two worths that are not ordered one way are ordered the other way.
 show let ≤_flip: [@α: *, @: α order_whole, a: α, b: α, k: (a ≤ b) = nay, (b ≤ a) = yea] ≔
   {x: 𝟚 ^ (x ≍ nay) ≤ (b ≤ a)} yea_throughbear k (a ≤_whole b)
 
-## transitivity for comparisons known to hold.
+## throughgoing for comparisons known to hold.
 show let ≤_yea_throughgo: [@α: *, @: α order_whole, a: α, b: α, c: α, k₀: (a ≤ b) = yea, k₁: (b ≤ c) = yea, (a ≤ c) = yea] ≔
   {x: 𝟚 ^ x ≤ (a ≤ c)} yea_throughbear k₁
     ({x: 𝟚 ^ x ≤ ((b ≤ c) ≤ (a ≤ c))} yea_throughbear k₀ (a ≤_throughgo b c))
@@ -25,7 +25,7 @@ show let ≤_yea_throughgo: [@α: *, @: α order_whole, a: α, b: α, c: α, k�
 show let compare: [@α: *, @: α order_whole, @: α hath_≤, a: α, b: α, 𝟛] ≔
   (a ≤ b) if ((b ≤ a) if mid fore) aft
 
-## keep a value within inclusive bounds of a total order.
+## keep a worth within inclusive bounds of a whole order.
 show let clamp: [@α: *, @: α order_whole, lower: α, upper: α, a: α, α] ≔ (
   let raised ≔ (lower ≤ a) if a lower
   yield (raised ≤ upper) if raised upper

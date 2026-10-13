@@ -174,7 +174,7 @@ test("library module paths keep their exact file names", async (context) => {
   context.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const library = path.join(root, "library");
   fs.mkdirSync(library, { recursive: true });
-  fs.writeFileSync(path.join(library, "_foreign.tung"), "show let worth ≔ +1");
+  fs.writeFileSync(path.join(library, "_fremmed.tung"), "show let worth ≔ +1");
   const main = path.join(root, "main.tung");
   fs.writeFileSync(main, "use foreign.tung");
   const workspace = new WorkspaceIndex(
@@ -184,7 +184,7 @@ test("library module paths keep their exact file names", async (context) => {
   workspace.configure([root], [library]);
   await workspace.ready();
   const model = workspace.model(pathToFileURL(main).href);
-  assert(workspace.modulePaths(model.uri).includes("_foreign.tung"));
+  assert(workspace.modulePaths(model.uri).includes("_fremmed.tung"));
   assert(!workspace.modulePaths(model.uri).includes("foreign.tung"));
   assert.equal(workspace.resolveImport(model, model.imports[0]), undefined);
 });

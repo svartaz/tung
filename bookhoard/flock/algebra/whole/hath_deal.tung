@@ -1,10 +1,10 @@
-use _foreign.tung
+use _fremmed.tung
 
 show flock hath_÷: [α: *, *] {
   let ÷: [α, α, α]
 }
 
-## ieee floats provide division, but rounding, infinities, and nan prevent a
+## ieee floats provide dealing, but rounding, infinities, and nan prevent a
 ## lawful field bizen.
 bizen: float hath_÷ {
   let ÷ ≔ deal_float

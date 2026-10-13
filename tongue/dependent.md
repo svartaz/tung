@@ -5,10 +5,8 @@ core, elaboration, pattern compilation, instance search, and logical boundary.
 each section stateth its algorithm, rejection cases, and limits.
 [`language.md`](language.md) owneth what a program author writeth and observeth:
 syntax, names, libraries, the runner, and command-line output. this document
-linketh to it rather than restating those rules.
-[`tutorial.tung`](tutorial.tung) is the maintainer's draft of the
-target syntax, not a checked example. [`todo.md`](../todo.md) tracketh
-remaining work.
+linketh to it rather than restating those rules. [`todo.md`](../todo.md)
+tracketh remaining work.
 
 ## implemented core
 
@@ -324,7 +322,7 @@ let throughbear: [@α: *, @x: α, @y: α, proof: α sameness x y,
 
 ### pattern matching and recursion
 
-[`examples/dependent_match.tung`](examples/dependent_match.tung) showeth case
+[`match.tung`](../byspel/match.tung) showeth case
 functions, `match`, nested patterns, and structural recursion.
 
 - `{p, q ^ body, ...}` is a case function with one column per pattern. one
@@ -454,7 +452,7 @@ functions, `match`, nested patterns, and structural recursion.
   cannot call itself on its `α vec 1` tail. a function on `α vec (n heir)`
   may call itself on a tail of index `k` only after a split establisheth
   `k = m heir`; a stuck variable doth not promise that later split.
-  [`examples/dependent_index_recursion.tung`](examples/dependent_index_recursion.tung)
+  [`index_recursion.tung`](../byspel/index_recursion.tung)
   showeth fixed indices, dependent results, and explicit leaf inputs.
 - reverting a dependent input also moveth its direct-child evidence and
   induction-hypothesis level to the new binders. accumulated row bindings'
@@ -523,7 +521,7 @@ are accepted, and a shadowing variable is checked by its own value.
   remaining arguments are applied to the record. aliases retain evidence
   by their normalised values; an unrelated or shadowing function doth not
   acquire it. this worketh through nested containers and mutual peers too.
-  [`examples/dependent_function_recursion.tung`](examples/dependent_function_recursion.tung)
+  [`function_recursion.tung`](../byspel/function_recursion.tung)
   showeth dependent function fields and partially applied recursive calls.
 - a nested split of a descendant generaliseth over its record, so each deeper
   constructor's record nameth its fields' records. ordinary container matches
@@ -544,7 +542,7 @@ are accepted, and a shadowing variable is checked by its own value.
   outside that shape, a root record's `now` is the inhabited `[goal, goal]`.
   its `below` still retaineth descendants, which may re-enter the shape;
   the trivial `now` never justifieth an off-domain call.
-  [`examples/dependent_index_memo.tung`](examples/dependent_index_memo.tung)
+  [`index_memo.tung`](../byspel/index_memo.tung)
   showeth indexed descendants, dependent results, and domain re-entry.
 - the passed value must be a proper descendant: the matched value itself, or
   a rebuilt copy of it, is rejected.
@@ -561,7 +559,7 @@ are accepted, and a shadowing variable is checked by its own value.
 ### fields and kernel records
 
 [fields](language.md#fields) owneth the syntax;
-[`examples/dependent_fields.tung`](examples/dependent_fields.tung) useth plain,
+[`fields.tung`](../byspel/fields.tung) useth plain,
 parameterised, chained, and dependent fields.
 
 - after an ilk with one constructor and no indices is checked, each named
@@ -593,7 +591,7 @@ checked interfaces, and cache invalidation. the
 
 ### flocks and bizens
 
-[`examples/dependent_flocks.tung`](examples/dependent_flocks.tung) showeth these
+[`flocks.tung`](../byspel/flocks.tung) showeth these
 rules in checked source.
 
 [flocks, bizens, and laws](language.md#flocks-bizens-and-laws) owneth the
@@ -768,7 +766,7 @@ holes may still generalise under valid constraints.
 
 ### ordinary lists
 
-[`examples/dependent_list.tung`](examples/dependent_list.tung) useth one
+[`list_family.tung`](../byspel/list_family.tung) useth one
 universe-polymorphic list at value and type levels. lists may index inductive
 families; their operations compare by ordinary conversion. no native type-level
 list, element-kind rule, or implicit library import is needed.
@@ -779,13 +777,13 @@ addeth a rewrite for it nor inferreth arbitrary concatenation splits.
 
 ### deeds and host bindings
 
-[`examples/dependent_deed.tung`](examples/dependent_deed.tung) showeth host
+[`deed_loop.tung`](../byspel/deed_loop.tung) showeth host
 bindings, bounded repetition, and a deed loop.
 
 normalisation and execution share one host catalogue, `hostBindings` in `Tung.Primitive`, and
 one failure convention: a fallible operation returneth a `maybe` or a
 `string ∑ α`, as in the ordinary language. bookhoard declareth every key in
-`_foreign.tung` and the `deed/` modules, with its signature, as described in
+`_fremmed.tung` and the `deed/` modules, with its signature, as described in
 [language.md](language.md#runtime-boundary).
 
 a top-level `let name:type ≔ 'key' fremmed` bindeth one trusted host constant.
@@ -850,9 +848,9 @@ name.
 - evaluation eraseth types and universe levels; the runner's rules are in
   [deeds](language.md#deeds) and the
   [runtime boundary](language.md#runtime-boundary).
-- [`examples/dependent_tales.tung`](examples/dependent_tales.tung)
+- [`host_tales.tung`](../byspel/host_tales.tung)
   bindeth pure operations, and
-  [`examples/dependent_host.tung`](examples/dependent_host.tung) useth files,
+  [`host_deeds.tung`](../byspel/host_deeds.tung) useth files,
   tasks, and strings.
 
 ### proof construction
@@ -871,7 +869,7 @@ measure `[α, μ]`; its recursive callback requireth a proof that the new measur
 is smaller. identity elimination keepeth computed measures usable after a
 match, without axiom K. dependent inputs may be packed in a single-constructor
 type, or remain curried in the motive when the measure doth not depend on them.
-[`dependent_wellgrounded.tung`](examples/dependent_wellgrounded.tung) showeth
+[`wellgrounded.tung`](../byspel/wellgrounded.tung) showeth
 this construction. the parser and kernel add no measured-recursion rule.
 
 the [bookhoard reference](../bookhoard/reference.md#law-proofs) owneth library

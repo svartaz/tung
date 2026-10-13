@@ -21,114 +21,135 @@ mathematical structure names stay as they are: `order`, `functor`, `monad`,
 family, and their compounds. a literal calque such as `one_shaped` doth not
 explain a monoid's laws.
 
-| english      | anglish       |
-| ------------ | ------------- |
-| anti-        | wither-       |
-| con-, syn-   | with-         |
-| de-          | off-          |
-| ex-          | out-          |
-| homo-        | same-         |
-| iso-         | even          |
-| pro-         | fore-, forth- |
-| proto-       | or-           |
-| re-          | eft-          |
-| sub-         | under-        |
-| super-       | over-         |
-| trans-, tra- | through-      |
-| -duce        | -lead         |
-| -it          | -go           |
-| -ject        | -cast         |
-| -lect        | -bend         |
-| -pend        | -hang         |
-| -ply         | -fold         |
-| -spect       | -look         |
-| -tain        | -hold         |
-| -verse       | -wend         |
-| -tend        | -stretch      |
+| latin        | greek  | anglish  |
+| ------------ | ------ | -------- |
+|              | auto-  | self-    |
+|              | homo-  | same-    |
+|              | iso-   | even-    |
+| ab-          |        | off-     |
+| ad-          |        | at-      |
+| anti-        |        | wither-  |
+| circum-      |        | umb-     |
+| con-         | syn-   | with-    |
+| de-          |        | off-     |
+| ex-          | exo-   | out-     |
+| inter-       |        | tween-   |
+| ob-          |        | with-    |
+| pro- (time)  |        | fore-    |
+| pro- (space) |        | forth-   |
+| proto-       |        | or-      |
+| re-          |        | eft-     |
+| sub-         | hypo-  | under-   |
+| super-       | hyper- | over-    |
+| trans-, tra- |        | through- |
+| -duce        |        | -lead    |
+| -it          |        | -go      |
+| -ject        |        | -cast    |
+| -lect        |        | -bend    |
+| -pend        |        | -hang    |
+| -ply         |        | -fold    |
+| -spect       |        | -look    |
+| -tain        |        | -hold    |
+| -verse       |        | -wend    |
+| -tend        |        | -stretch |
 
-| english        | anglish        | byspel                     |
-| -------------- | -------------- | -------------------------- |
-| absolute       | norm           |                            |
-| absorb         | swallow        |                            |
-| accumulate     | hoard          |                            |
-| action         | deed           |                            |
-| add            | eke            |                            |
-| antisymmetry   | witherevenmete |                            |
-| applicative    | atfoldsome     |                            |
-| apply          | atfold         | in atfoldsome              |
-| axiom          | orsetting      |                            |
-| bimap          | biwarp         | in bifunctor               |
-| binary         | twostead       |                            |
-| cancel         | outstrike      |                            |
-| change         | tweak          |                            |
-| character      | staff          |                            |
-| class          | flock          |                            |
-| commute        | swap           |                            |
-| complex number | evenbraid      |                            |
-| condition      | kilter         |                            |
-| constant       | withstand      |                            |
-| contain        | inhold         |                            |
-| continue       | throughwone    |                            |
-| corollary      | followsetting  |                            |
-| default        | fallback       |                            |
-| dependent      | offhanging     |                            |
-| divide         | deal           |                            |
-| dividend       | dealt          |                            |
-| divisor        | dealer         |                            |
-| eliminate      | unbuild        |                            |
-| equal          | same           |                            |
-| example        | byspel         |                            |
-| extensional    | umtaking       | in function extensionality |
-| failure        | misfare        |                            |
-| fallible       | misfaresome    |                            |
-| filter         | sift           |                            |
-| fixed point    | steadfast      |                            |
-| fold           | gather         | in catamorphism            |
-| foreign        | fremmed        |                            |
-| function       | fall           |                            |
-| homomorphic    | sameshaped     |                            |
-| homomorphism   | sameshaping    |                            |
-| identity       | sameness       |                            |
-| induction      | inleading      |                            |
-| inject         | incast         |                            |
-| instance       | bizen          |                            |
-| integer        | wholetale      |                            |
-| invert         | witherwend     |                            |
-| is equal to    | is             |                            |
-| isomorphism    | evenshaping    |                            |
-| language       | tongue         |                            |
-| lemma          | helpsetting    |                            |
-| library        | bookhoard      |                            |
-| map            | warp           | in functor                 |
-| member         | limb           |                            |
-| morphism       | shaping        |                            |
-| multiply       | fold           |                            |
-| negative       | undernaught    |
-| nullary        | naughtstead    |                            |
-| number         | tale           |                            |
-| optional       | maybe          |                            |
-| partial        | half           |                            |
-| positive       | overnaught     |                            |
-| predicate      | umbsay         |                            |
-| program        | forewrit       |                            |
-| project        | forthcast      |                            |
-| prove          | soothe         |                            |
-| pure           | sheer          | in atfoldsome              |
-| recur          | selfcall       |                            |
-| reflect        | eftbend        |                            |
-| remainder      | leftover       |                            |
-| second         | other          |                            |
-| separate       | shed           |                            |
-| singleton      | onesome        |                            |
-| state          | onstand        |                            |
-| subtract       | offdraw        |                            |
-| successor      | heir           |                            |
-| symmetry       | evenmete       |                            |
-| theorem        | setting        |                            |
-| total          | whole          |                            |
-| transit        | throughgo      |                            |
-| traverse       | throughwend    |                            |
-| type           | ilk            |                            |
-| unary          | onestead       |                            |
-| value          | worth          |                            |
-| well-founded   | wellgrounded   |                            |
+| english           | anglish                   | byspel                     |
+| ----------------- | ------------------------- | -------------------------- |
+| absolute          | length                    |                            |
+| absorb            | swallow                   |                            |
+| accumulate        | hoard                     |                            |
+| action            | deed                      | `doing` for an input       |
+| add               | eke                       |                            |
+| anamorphism       | upshaper                  |                            |
+| antisymmetry      | witherevenmete            |                            |
+| applicative       | atfoldsome                |                            |
+| apply             | atfold                    | in atfoldsome              |
+| automorphism      | selfshaper                |                            |
+| axiom             | orsetting                 |                            |
+| bimap             | biwarp                    | in bifunctor               |
+| binary            | twostead                  |                            |
+| cancel            | outstrike                 |                            |
+| catamorphism      | downshaper                |                            |
+| change            | tweak                     |                            |
+| character         | staff                     |                            |
+| class             | flock                     |                            |
+| commute           | swap                      |                            |
+| complex           | evenbraid                 |                            |
+| condition         | kilter                    |                            |
+| constant          | withstand                 |                            |
+| contain           | inhold                    |                            |
+| continue          | throughwone < thurghwonen |                            |
+| corollary         | followsetting             |                            |
+| default           | fallback                  |                            |
+| depend            | offhang                   |                            |
+| divide            | deal                      |                            |
+| dividend          | dealt                     |                            |
+| divisor           | dealer                    |                            |
+| eliminate         | unbuild                   |                            |
+| endomorphism      | inshaper                  |                            |
+| epimorphism       | onshaper                  |                            |
+| equal             | same                      |                            |
+| example           | byspel                    |                            |
+| extend            | umtake                    | in function extensionality |
+| failure           | misfare                   |                            |
+| fallible          | misfaresome               |                            |
+| filter            | sift                      |                            |
+| fixed point       | steadfast                 |                            |
+| fold              | gather                    | in catamorphism            |
+| foreign           | fremmed                   |                            |
+| function          | fall                      |                            |
+| homomorphic       | likeshaped                |                            |
+| homomorphism      | likeshaper                |                            |
+| identity          | sameness                  |                            |
+| identity morphism | sameshaper                |                            |
+| induce            | inlead                    | in induction               |
+| inject            | incast                    |                            |
+| instance          | bizen                     |                            |
+| integer           | wholetale                 |                            |
+| invert            | witherwend                |                            |
+| is equal to       | is                        |                            |
+| isomorphic        | evenshaped                |                            |
+| isomorphism       | evenshaper                |                            |
+| language          | tongue                    |                            |
+| lemma             | helpsetting               |                            |
+| library           | bookhoard                 |                            |
+| map               | warp                      | in functor                 |
+| member            | limb                      |                            |
+| monomorphism      | oneshaper                 |                            |
+| morphism          | shaper                    |                            |
+| multiply          | fold                      |                            |
+| negative          | undernaught               |                            |
+| nullary           | naughtstead               |                            |
+| number            | tale                      |                            |
+| optional          | maybe                     |                            |
+| partial           | half                      |                            |
+| positive          | overnaught                |                            |
+| predicate         | umbsay                    |                            |
+| program           | forewrit                  |                            |
+| project           | forthcast                 |                            |
+| prove             | soothe                    |                            |
+| pure              | sheer                     | in atfoldsome              |
+| recur             | selfcall                  |                            |
+| reflect           | eftbend                   |                            |
+| remainder         | leftover                  |                            |
+| second            | other                     |                            |
+| separate          | shed                      |                            |
+| singleton         | onesome                   |                            |
+| state             | onstand                   |                            |
+| subset            | underset                  |                            |
+| subtract          | offdraw                   |                            |
+| successor         | heir                      |                            |
+| symmetry          | evenmete                  |                            |
+| theorem           | setting                   |                            |
+| total             | whole                     |                            |
+| transit           | throughgo                 |                            |
+| traverse          | throughwend               |                            |
+| type              | ilk                       |                            |
+| unary             | onestead                  |                            |
+| universe          | world                     |                            |
+| value             | worth                     |                            |
+| well-founded      | wellgrounded              |                            |
+
+- if a and b are _evenshaped_,
+- a and b are in _evenshapeship_
+- and there is an _evenshaper_ f.

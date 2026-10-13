@@ -13,7 +13,7 @@ let first: [rose, rose] ≔ {
   (x cons _) node ^ x
 }
 
-let add: [n: ℕ, m: ℕ, ℕ] ≔
+let eke: [n: ℕ, m: ℕ, ℕ] ≔
   {_: ℕ ^ ℕ} unbuild ℕ m {_: ℕ ^ {below: ℕ ^ below heir}} n
 
 ## joint induction taketh the rose motive, the list motive, then the node,
@@ -23,7 +23,7 @@ let count: [rose, ℕ] ≔
     {_: rose list ^ ℕ}
     {xs: rose list ^ {below: ℕ ^ below heir}}
     0
-    {head: rose ^ {head_below: ℕ ^ {tail: rose list ^ {tail_below: ℕ ^ head_below add tail_below}}}}
+    {head: rose ^ {head_below: ℕ ^ {tail: rose list ^ {tail_below: ℕ ^ head_below eke tail_below}}}}
 
 ## selfcalling may follow a child through its ordinary inholder.
 let height: [rose, ℕ] ≔ {

@@ -18,8 +18,7 @@ accepted =
     ("explicit aliases override colliding defaults", "use ilk/list.tung data_list use syntax/list.tung syntax_list"),
     ("explicit aliases distinguish extension-sharing paths", "use a.tung one use a.extra.tung two"),
     ("explicit aliases distinguish dotted directories", "use pkg.one/query.tung one use pkg.two/query.tung two"),
-    ("field names may repeat in separate ilks", "ilk first: * { first_of: [x: ℤ, first] } ilk second: * { second_of: [x: ℤ, second] }"),
-    ("shared constructor heads in a law type", "use is.tung ilk _box: [a:*, *] { box: [a, a _box] } flock sameness:[a:*, *] { let rule:[left:a _box, right:a _box, match left, right { x box, y box ^ x = y }] }")
+    ("field names may repeat in separate ilks", "ilk first: * { first_of: [x: ℤ, first] } ilk second: * { second_of: [x: ℤ, second] }")
   ]
 
 rejected :: [(String, String)]

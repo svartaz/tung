@@ -1,4 +1,4 @@
-## the binary function type constructor: `α → β` is `[α, β]`. it may be
+## the twostead fall ilk maker: `α → β` is `[α, β]`. it may be
 ## passed unapplied, as in `bizen: → semigroupoid`.
 show let →: [α: *, β: *, *] ≔ [α, β]
 

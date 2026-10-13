@@ -8,18 +8,18 @@ writing rules, workflow, and test gates. every rule here is binding.
 each document hath one audience and one purpose. a rule liveth in one document
 per audience; other documents link to it.
 
-| document                                           | audience | purpose                                                 |
-| -------------------------------------------------- | -------- | ------------------------------------------------------- |
-| [`readme.md`](readme.md)                           | people   | install, run, and find the next step                    |
-| [`byspel/tutorial.tung`](byspel/tutorial.tung)     | people   | a checked tour of the ordinary language                 |
-| [`vscode/readme.md`](vscode/readme.md)             | people   | editor setup and features                               |
-| [`AGENTS.md`](AGENTS.md)                           | agents   | workflow, writing rules, and test gates                 |
-| [`anglish.md`](anglish.md)                         | agents   | anglish words and the english words they replace        |
-| [`tongue/language.md`](tongue/language.md)         | agents   | what a program author writeth and observeth             |
-| [`tongue/dependent.md`](tongue/dependent.md)       | agents   | checker algorithms, logic, and design decisions         |
-| [`tongue/development.md`](tongue/development.md)   | agents   | commands, modules, structural decisions, test machinery |
-| [`bookhoard/reference.md`](bookhoard/reference.md) | agents   | standard library design boundaries                      |
-| [`todo.md`](todo.md)                               | agents   | planned work only, in priority order                    |
+| document                                             | audience | purpose                                                 |
+| ---------------------------------------------------- | -------- | ------------------------------------------------------- |
+| [`readme.md`](readme.md)                             | people   | install, run, and find the next step                    |
+| [`byspel/walkthrough.tung`](byspel/walkthrough.tung) | people   | a checked tour of the ordinary language                 |
+| [`vscode/readme.md`](vscode/readme.md)               | people   | editor setup and features                               |
+| [`AGENTS.md`](AGENTS.md)                             | agents   | workflow, writing rules, and test gates                 |
+| [`anglish.md`](anglish.md)                           | agents   | anglish words and the english words they replace        |
+| [`tongue/language.md`](tongue/language.md)           | agents   | what a program author writeth and observeth             |
+| [`tongue/dependent.md`](tongue/dependent.md)         | agents   | checker algorithms, logic, and design decisions         |
+| [`tongue/development.md`](tongue/development.md)     | agents   | commands, modules, structural decisions, test machinery |
+| [`bookhoard/reference.md`](bookhoard/reference.md)   | agents   | standard library design boundaries                      |
+| [`todo.md`](todo.md)                                 | agents   | planned work only, in priority order                    |
 
 `CLAUDE.md` importeth this file. module-local invariants live in comments
 beside the code, not in these documents.
@@ -96,8 +96,8 @@ three syntax facts cause frequent mistakes:
 | ------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | syntax or tokens                      | parser, formatter, diagnostics, language document, byspels, tests, and `vscode/` grammar and lexer |
 | type, deed, flock, or bizen semantics | type and evaluator regressions, bookhoard checking, and language document                          |
-| dependent core or source              | dependent test groups, `tongue/examples/`, and `tongue/dependent.md`                               |
-| runtime or host surface               | primitive or host catalogue, `bookhoard/_foreign.tung`, exact evaluator tests, and runner boundary |
+| dependent core or source              | dependent test groups, their byspels, and `tongue/dependent.md`                                    |
+| runtime or host surface               | primitive or host catalogue, `bookhoard/_fremmed.tung`, exact evaluator tests, and runner boundary |
 | public bookhoard api                  | doc comments, library tests, and a realistic byspel when useful                                    |
 | editor behaviour                      | `vscode/` compiler roles and navigation model, typescript checks, and editor tests                 |
 

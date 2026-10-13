@@ -4,7 +4,7 @@ use flock/order/semilattice_upper_bounded.tung
 use ilk/three.tung
 use ilk/two.tung
 
-## a lattice with greatest and least values.
+## a lattice with greatest and least worths.
 show flock lattice_bounded: [α: *, @: α lattice, @: α semilattice_bounded_upper, @: α semilattice_upper_bounded, *] {}
 
 bizen: [@β: *, @: β lattice_bounded, @α: *, [α, β] lattice_bounded] {}

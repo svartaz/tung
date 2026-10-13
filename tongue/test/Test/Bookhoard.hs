@@ -37,6 +37,9 @@ group = do
       : equalityCases library
       ++ soundnessCases library
       ++ accessibilityCases library
+      ++ yonedaCases library
+      ++ moduleCases library
+      ++ groupCases library
       ++ setCases library
       ++ numberCases library
       ++ [oneDataTypeCase (nub (map fst files))]
@@ -167,6 +170,83 @@ numberCases library =
           k heir ^ {x: ℕ ^ x heir} leibnitz (k left_naught)
         }
       """
+
+-- the yoneda and yoneda_co round trips compute for `maybe`; yoneda's
+-- transformation direction needeth naturality, yoneda_co's other direction
+-- needeth quotients, and false round trips are rejected.
+yonedaCases :: Library -> [Test]
+yonedaCases library =
+  [ expectEq "lifting a value and taking it back computeth to the value" (Right True) $
+      compile "" >>= \program -> sameNormalIn program "((+3 some) lift) unlift" "+3 some",
+    expectEq "a proved round trip computeth to eftbend" (Right ()) $
+      () <$ compile "let back: (((+3 some) lift) unlift) = (+3 some) ≔ (+3 some) unlift_lift",
+    rejectContaining "the transformation direction needeth a naturality proof" "cannot unify" $
+      compile "let bad: [n: maybe yoneda ℤ, f: [ℤ, ℤ], (f ((n unlift) lift)) = (f n)] ≔ n lift_unlift eftbend f",
+    rejectContaining "lifting doth not give the value under another function" "cannot unify" $
+      compile "let bad: [a: ℤ maybe, ({x ^ x + +1} (a lift)) = a] ≔ a unlift_lift",
+    expectEq "yoneda_co mappeth a type that hath no functor" (Right ()) $
+      () <$ compileCo "ilk twice: [α: *, *] { twice_of: [α, α, α twice] }\nlet changed: twice yoneda_co string ≔ ((+1 twice_of +2) yoneda_co~lift) warp to_string",
+    expectEq "yoneda_co unlifteth after composed changes" (Right True) $
+      compileCo "let changed ≔ (((+1 some) yoneda_co~lift) warp {x ^ x + +1}) warp {x ^ x + +1}"
+        >>= \program -> sameNormalIn program "changed yoneda_co~unlift" "+3 some",
+    expectEq "a yoneda_co round trip computeth to the value" (Right True) $
+      compileCo "" >>= \program -> sameNormalIn program "((+3 some) yoneda_co~lift) yoneda_co~unlift" "+3 some",
+    rejectContaining "a yoneda_co is not the lift of its unlift without quotients" "cannot unify" $
+      compileCo "let bad: [c: maybe yoneda_co ℤ, ((c yoneda_co~unlift) yoneda_co~lift) = c] ≔ eftbend"
+  ]
+  where
+    compile source = compileWith library "yoneda_test.tung" ("use ilk/maybe.tung\nuse ground.tung\nuse yoneda.tung\n" ++ source)
+    compileCo source = compileWith library "coyoneda_test.tung" ("use ilk/maybe.tung\nuse ground.tung\nuse yoneda_co.tung\n" ++ source)
+
+-- the group theorems hold for signs under multiplication; a monoid whose
+-- values lack inverses cannot be a group.
+groupCases :: Library -> [Test]
+groupCases library =
+  [ expectEq "the inverse of a product computeth for a small group" (Right [True, True]) do
+      program <- compile ""
+      traverse
+        (uncurry (sameNormalIn program))
+        [("(minus · minus) /", "plus"), ("minus /· plus", "minus")],
+    expectEq "group theorems apply to a concrete group" (Right ()) $
+      () <$ compile "let twice: ((minus /) /) = minus ≔ minus /_/\nlet turned: ((plus · minus) /) = ((minus /) · (plus /)) ≔ plus /_over_· minus",
+    expectEq "the homomorphism theorems apply to a concrete homomorphism" (Right ()) $
+      () <$ compile "use flock/algebra/whole/group_sameshaping.tung\nlet trivial: [sign, sign] ≔ {_ ^ plus}\nlet hom: trivial sameshaped ≔ {_, _ ^ eftbend}\nlet sent: ((one: sign) trivial) = one ≔ trivial one_f hom\nlet same: (plus trivial) = (minus trivial) ≔ trivial kernel_fibre hom plus minus (trivial fibre_kernel hom plus minus eftbend)",
+    rejectContaining "a map that turneth signs is no homomorphism" "cannot unify" $
+      compile "use flock/algebra/whole/group_sameshaping.tung\nlet turn: [sign, sign] ≔ {plus ^ minus, minus ^ plus}\nlet bad: turn sameshaped ≔ {_, _ ^ eftbend}",
+    rejectContaining "a value without an inverse maketh no group" "cannot unify" $
+      compileWith library "group_test.tung" "use ground.tung\nuse is.tung\nuse flock/algebra/whole/group_fold.tung\nbizen: 𝟚 group_· { let /: [a:] ≔ a let ·_/ ≔ {yea ^ eftbend, nay ^ eftbend} let /_· ≔ {yea ^ eftbend, nay ^ eftbend} }"
+  ]
+  where
+    compile source = compileWith library "group_test.tung" (sign ++ source)
+    sign =
+      """
+      use flock/algebra/whole/group_fold.tung
+      use flock/algebra/whole/hath_fold.tung
+      use flock/algebra/whole/hath_one.tung
+      use flock/algebra/whole/monoid_fold.tung
+      use flock/algebra/whole/semigroup_fold.tung
+      use is.tung
+      ilk sign: * { plus: sign, minus: sign }
+      bizen: sign hath_· { let · ≔ {plus, b ^ b, minus, plus ^ minus, minus, minus ^ plus} }
+      bizen: sign hath_one { let one ≔ plus }
+      bizen: sign semigroup_· { let ·_· ≔ {plus, _, _; minus, plus, _; minus, minus, plus; minus, minus, minus ^ eftbend} }
+      bizen: sign monoid_· { let one_· ≔ {plus; minus ^ eftbend} let ·_one ≔ {plus; minus ^ eftbend} }
+      bizen: sign group_· { let /: [a:] ≔ a let ·_/ ≔ {plus; minus ^ eftbend} let /_· ≔ {plus; minus ^ eftbend} }
+
+      """
+
+-- every ring is a module over itself; a module needeth a ring of scalars.
+moduleCases :: Library -> [Test]
+moduleCases library =
+  [ expectEq "a ring acteth on itself by multiplication" (Right True) $
+      compile "" >>= \program -> sameNormalIn program "+3 ∘ +4" "+12",
+    expectEq "the module laws of a ring over itself are proved" (Right ()) $
+      () <$ compile "let law: [r: ℤ, s: ℤ, a: ℤ, ((r · s) ∘ a) = (r ∘ (s ∘ a))] ≔ r ·_∘ s a",
+    rejectContaining "floats are no ring of scalars" "no bizen" $
+      compile "let bad: float ≔ 2.0 ∘ 3.0"
+  ]
+  where
+    compile source = compileWith library "module_test.tung" ("use ground.tung\nuse flock/algebra/whole/module.tung\n" ++ source)
 
 -- a relation with nothing smaller is well-founded, and recursion on it runneth
 -- the step once.
@@ -376,7 +456,7 @@ classLayoutCase files = listToMaybe . catMaybes <$> traverse checkModule files
     classPrefix = "flock/"
     -- module paths keep the documented ascii spellings of symbolic terms.
     asciiName = concatMap (\character -> maybe [character] id (lookup character spellings))
-    spellings = [('+', "eke"), ('-', "offdraw"), ('÷', "deal"), ('%', "deal_leftover"), ('·', "fold"), ('≤', "at_most"), ('≍', "same"), ('=', "is"), ('∋', "inhold")]
+    spellings = [('+', "eke"), ('-', "offdraw"), ('÷', "deal"), ('%', "deal_leftover"), ('·', "fold"), ('≤', "at_most"), ('≍', "same"), ('=', "is"), ('∋', "inhold"), ('‖', "norm")]
 
 classNames :: Source.Declaration -> [String]
 classNames (Source.FlockDeclaration name _ _) = [name]

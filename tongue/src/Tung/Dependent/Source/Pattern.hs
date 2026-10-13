@@ -173,7 +173,14 @@ elaborateRecursive checker@ExpressionChecker {checkerEnvironment = environment} 
         appliedType <- inferCore scope applied
         E.unify (scopeContext scope) appliedType clauseResult
         wrapInputs clauseInputs applied
-  select Nothing [(position, deep) | deep <- [False, True], position <- positions]
+  -- inputs the first row matcheth come first: the case tree then splitteth
+  -- where the definition's first row sayeth, as `m, 0 ^ m` maketh `x ∸ 0`
+  -- reduce to `x` for any `x`, and a failure nameth the matched input.
+  let demanded = case rows of
+        row : _ -> [position | (position, pattern) <- zip [0 ..] (matchPatterns row), refutable (snd (unnamed pattern))]
+        [] -> []
+      ordered = filter (`elem` demanded) positions ++ filter (`notElem` demanded) positions
+  select Nothing [(position, deep) | deep <- [False, True], position <- ordered]
 
 -- `[indices, x: T indices, r{below: Below indices x, now: P indices x}]`.
 -- `Below` eliminateth into types: each

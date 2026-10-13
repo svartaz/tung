@@ -48,7 +48,7 @@ let count_up: [ℤ, ℕ, ℤ list] ≔ {
 
 ## integer range from start up to stop, excluding stop.
 show let till: [start: ℤ, stop: ℤ, ℤ list] ≔
-  match (stop - start) to_ℕ {
+  match (start -+ stop) to_ℕ {
     none       ^ empty,
     count some ^ start count_up count
   }
@@ -168,14 +168,14 @@ show let behead: [@α: *, α list, (α ∏ (α list)) maybe] ≔ {
 show let take: [@α: *, α list, ℕ, α list] ≔ {
   _,            0;
   empty,        _ ^ empty,
-  first ‥ rest, n ^ first ‥ (rest take (n - 1))
+  first ‥ rest, n ^ first ‥ (rest take (n ∸ 1))
 }
 
 ## list after removing count elements.
 show let drop: [@α: *, α list, ℕ, α list] ≔ {
   l,        0 ^ l,
   empty,    _ ^ empty,
-  _ ‥ rest, n ^ rest drop (n - 1)
+  _ ‥ rest, n ^ rest drop (n ∸ 1)
 }
 
 ## first element accepted by a predicate.

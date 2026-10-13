@@ -165,8 +165,8 @@ let helpsetting_+_swap: [a: ℤ, b: ℤ, (a + b) = (b + a)] ≔
 
 let helpsetting_naught_·: [a: ℤ, (+0 · a) = +0] ≔
   match a {
-    n overnaught       ^ overnaught leibnitz (n naught_· n: (0 · n) = 0),
-    n heir_undernaught ^ negate_ℕ leibnitz ((n heir) naught_· n: (0 · (n heir)) = 0)
+    n overnaught       ^ overnaught leibnitz (n naught_·: (0 · n) = 0),
+    n heir_undernaught ^ negate_ℕ leibnitz ((n heir) naught_·: (0 · (n heir)) = 0)
   }
 
 let helpsetting_·_naught: [a: ℤ, (a · +0) = +0] ≔
@@ -193,7 +193,14 @@ let difference_self: [m: ℕ, (m difference m) = +0] ≔
     k heir ^ k difference_self
   }
 
-let outstrike: [a: ℤ, (a - a) = +0] ≔
+## negation turneth the sign. it computeth natively on literals; the model
+## below is what proofs unfold.
+let negating: [ℤ, ℤ] ≔ 'negate_wholetale' fremmed {
+  n overnaught       ^ n negate_ℕ,
+  n heir_undernaught ^ (n heir) overnaught
+}
+
+let helpsetting_+_negating: [a: ℤ, (a eking (a negating)) = +0] ≔
   match a {
     0 overnaught        ^ eftbend,
     (k heir) overnaught ^ (k heir) difference_self,
@@ -245,7 +252,7 @@ let helpsetting_+_+_differences: [
 let helpsetting_ℕ_+_+: [a: ℕ, b: ℕ, c: ℕ, (a + (b + c)) = ((a + b) + c)] ≔ a +_+ b c
 let helpsetting_ℕ_+_swap: [a: ℕ, b: ℕ, (a + b) = (b + a)] ≔ a +_swap b
 let helpsetting_ℕ_naught_+: [a: ℕ, (0 + a) = a] ≔ a naught_+
-let helpsetting_ℕ_naught_·: [a: ℕ, (0 · a) = 0] ≔ a naught_· a
+let helpsetting_ℕ_naught_·: [a: ℕ, (0 · a) = 0] ≔ a naught_·
 let helpsetting_ℕ_·_·: [a: ℕ, b: ℕ, c: ℕ, (a · (b · c)) = ((a · b) · c)] ≔ a ·_· b c
 let helpsetting_ℕ_·_+: [a: ℕ, b: ℕ, c: ℕ, (a · (b + c)) = ((a · b) + (a · c))] ≔ a ·_+ b c
 let helpsetting_ℕ_+_·: [a: ℕ, b: ℕ, c: ℕ, ((a + b) · c) = ((a · c) + (b · c))] ≔ a +_· b c
@@ -454,10 +461,6 @@ bizen: ℤ hath_+ {
   let + ≔ eking
 }
 
-bizen: ℤ hath_- {
-  let - ≔ offdrawing
-}
-
 bizen: ℤ hath_naught {
   let naught ≔ +0
 }
@@ -486,12 +489,22 @@ bizen: ℤ semiring {
   let +_swap ≔ helpsetting_+_swap
   let ·_+ ≔ helpsetting_·_+
   let +_· ≔ helpsetting_+_·
-  let naught_·: [a:, _:] ≔ a helpsetting_naught_·
-  let ·_naught: [a:, _:] ≔ a helpsetting_·_naught
+  let naught_·: [a:] ≔ a helpsetting_naught_·
+  let ·_naught: [a:] ≔ a helpsetting_·_naught
+}
+
+bizen: ℤ hath_- {
+  let - ≔ negating
+  let -+: [b:, a:] ≔ a offdrawing b
 }
 
 bizen: ℤ ring {
-  let -_outstrike ≔ outstrike
+  let +_- ≔ helpsetting_+_negating
+  let -_+: [a:] ≔ ((a negating) +_swap a) throughgo (a helpsetting_+_negating)
+  let -+_+: [b:, a:] ≔ match b {
+    n overnaught       ^ a helpsetting_+_swap (n negate_ℕ),
+    n heir_undernaught ^ a helpsetting_+_swap ((n heir) overnaught)
+  }
 }
 
 ## boolean sameness of integers agreeth with identity, by sign cases.

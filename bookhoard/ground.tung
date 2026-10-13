@@ -36,6 +36,7 @@ use flock/order/semilattice_lower.tung
 use flock/order/semilattice_upper.tung
 use flock/order/semilattice_upper_bounded.tung
 use ilk/float.tung
+use ilk/natural.tung
 use ilk/naught.tung
 use ilk/one.tung
 use ilk/string/structure.tung
@@ -65,7 +66,7 @@ show semilattice_lower, semilattice_upper, lattice, lattice_distributive
 show semilattice_bounded_upper, semilattice_upper_bounded, lattice_bounded, complement
 show hath_to_string, hath_from_string
 show hath_+, hath_naught, monoid_+, hath_·, hath_one, monoid_·, semiring
-show hath_-, ring, hath_÷, field, hath_%, euclidean
+show hath_-, -+, ∸, ring, hath_÷, field, hath_%, euclidean
 show functor, bifunctor, atfoldsome, monad, hath_∋
 show elementary
 

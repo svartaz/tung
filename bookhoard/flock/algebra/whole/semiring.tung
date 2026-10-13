@@ -12,8 +12,8 @@ show flock semiring: [α: *, @: α monoid_+, @: α monoid_·, *] {
   let +_swap: [a: α, b: α, (a + b) = (b + a)]
   let ·_+: [a: α, b: α, c: α, (a · (b + c)) = ((a · b) + (a · c))]
   let +_·: [a: α, b: α, c: α, ((a + b) · c) = ((a · c) + (b · c))]
-  let naught_·: [a: α, b: α, (naught · a) = naught]
-  let ·_naught: [a: α, b: α, (a · naught) = naught]
+  let naught_·: [a: α, (naught · a) = naught]
+  let ·_naught: [a: α, (a · naught) = naught]
 }
 
 bizen: [@β: *, @: β semiring, @α: *, [α, β] semiring] {
@@ -26,8 +26,8 @@ bizen: [@β: *, @: β semiring, @α: *, [α, β] semiring] {
   let +_swap: [f:, g:] ≔ {x ^ (x f) +_swap (x g)} fall_umtake
   let ·_+: [f:, g:, h:] ≔ {x ^ (x f) ·_+ (x g) (x h)} fall_umtake
   let +_·: [f:, g:, h:] ≔ {x ^ (x f) +_· (x g) (x h)} fall_umtake
-  let naught_·: [f:, g:] ≔ {x ^ (x f) naught_· (x g)} fall_umtake
-  let ·_naught: [f:, g:] ≔ {x ^ (x f) ·_naught (x g)} fall_umtake
+  let naught_·: [f:] ≔ {x ^ (x f) naught_·} fall_umtake
+  let ·_naught: [f:] ≔ {x ^ (x f) ·_naught} fall_umtake
 }
 
 bizen: 𝟚 semiring {
@@ -54,6 +54,6 @@ bizen: 𝟚 semiring {
     yea, yea, nay;
     yea, yea, yea ^ eftbend
   }
-  let naught_·: [_:, _:] ≔ eftbend
-  let ·_naught ≔ {nay, _; yea, _ ^ eftbend}
+  let naught_·: [_:] ≔ eftbend
+  let ·_naught ≔ {nay; yea ^ eftbend}
 }

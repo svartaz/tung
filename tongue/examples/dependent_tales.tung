@@ -7,7 +7,7 @@ use ilk/product.tung
 use ilk/two.tung
 
 let +: [ℤ, ℤ, ℤ] ≔ 'eke_wholetale' fremmed
-let -: [ℤ, ℤ, ℤ] ≔ 'offdraw_wholetale' fremmed
+let offdraw: [ℤ, ℤ, ℤ] ≔ 'offdraw_wholetale' fremmed
 let ·: [ℤ, ℤ, ℤ] ≔ 'fold_wholetale' fremmed
 let deal_leftover: [ℤ, ℤ, (ℤ ∏ ℤ) maybe] ≔ 'deal_leftover_wholetale' fremmed
 let ≤: [ℤ, ℤ, 𝟚] ≔ 'at_most_wholetale' fremmed

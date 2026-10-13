@@ -1,12 +1,67 @@
 use flock/algebra/whole/group_eke.tung
+use flock/algebra/whole/hath_eke.tung
+use flock/algebra/whole/hath_fold.tung
+use flock/algebra/whole/hath_naught.tung
 use flock/algebra/whole/hath_offdraw.tung
+use flock/algebra/whole/hath_one.tung
+use flock/algebra/whole/monoid_fold.tung
 use flock/algebra/whole/semiring.tung
 use ilk/two.tung
 use is.tung
 
-## a semiring whose addition is a group. functions have no pointwise ring:
-## its two paths to the codomain's addition, through `semiring` and through
-## `group_+`, are separate dictionaries that the checker cannot equate.
-show flock ring: [α: *, @: α semiring, @: α group_+, *] {}
+## a semiring with negation. `ring` reacheth `+` only through `semiring`;
+## the bizen below maketh every ring a `group_+` through that same addition,
+## so laws about a ring and its additive group share one dictionary.
+show flock ring: [α: *, @: α semiring, @: α hath_-, *] {
+  let +_-: [a: α, (a + (a -)) = naught]
+  let -_+: [a: α, ((a -) + a) = naught]
+  let -+_+: [a: α, b: α, (a -+ b) = ((a -) + b)]
+}
 
-bizen: 𝟚 ring {}
+bizen: [@α: *, @: α ring, α group_+] {
+  let +_-: [a:] ≔ a +_-
+  let -_+: [a:] ≔ a -_+
+  let -+_+: [a:, b:] ≔ a -+_+ b
+}
+
+bizen: [@β: *, @: β ring, @α: *, [α, β] ring] {
+  let -: [f:, a:] ≔ (a f) -
+  let -+: [f:, g:, a:] ≔ (a f) -+ (a g)
+
+  let +_-: [f:] ≔ {a ^ (a f) +_-} fall_umtake
+  let -_+: [f:] ≔ {a ^ (a f) -_+} fall_umtake
+  let -+_+: [f:, g:] ≔ {a ^ (a f) -+_+ (a g)} fall_umtake
+}
+
+bizen: 𝟚 ring {
+  let +_- ≔ {nay; yea ^ eftbend}
+  let -_+ ≔ {nay; yea ^ eftbend}
+  let -+_+: [_:, _:] ≔ eftbend
+}
+
+## a negated left factor negateth the product.
+show let -_·: [@α: *, @: α ring, a: α, b: α, ((a -) · b) = ((a · b) -)] ≔
+  (a · b) group_eke~-_alone ((a -) · b) >{throughgo,
+    ((a -) +_· a b) evenmete,
+    {x ^ x · b} leibnitz (a -_+),
+    b naught_·
+  }
+
+## a negated right factor negateth the product.
+show let ·_-: [@α: *, @: α ring, a: α, b: α, (a · (b -)) = ((a · b) -)] ≔
+  (a · b) group_eke~-_alone (a · (b -)) >{throughgo,
+    (a ·_+ (b -) b) evenmete,
+    {x ^ a · x} leibnitz (b -_+),
+    a ·_naught
+  }
+
+## two negations in a product cancel.
+show let -_·_-: [@α: *, @: α ring, a: α, b: α, ((a -) · (b -)) = (a · b)] ≔ >{throughgo,
+  (a -) ·_- b,
+  {x ^ x -} leibnitz (a -_· b),
+  (a · b) group_eke~-_-
+}
+
+## the negated unit negateth.
+show let one_-_·: [@α: *, @: α ring, a: α, ((one -) · a) = (a -)] ≔
+  (one -_· a) throughgo ({x ^ x -} leibnitz (a one_·))

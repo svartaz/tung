@@ -479,9 +479,11 @@ to the value matched at each step. repeated named scrutinees use the same
 pattern intersection as ordinary matches.
 
 the compiler first trieth direct induction on each explicit input of an
-inductive family, in input order, subject to the indexed-input rules above.
-if none succeedeth, it trieth course-of-values recursion on those inputs
-in the same order, including indexed families and groups. the first candidate
+inductive family, subject to the indexed-input rules above. the inputs that
+the first row matcheth against a constructor or literal come first, then the
+rest in input order, so the case tree splitteth where the first row sayeth:
+`{m, 0 ^ m, …}` maketh `x ∸ 0` reduce to `x` for any `x`. if none succeedeth,
+it trieth course-of-values recursion on those inputs in the same order, including indexed families and groups. the first candidate
 whose branches and recursive calls check is selected. failed candidates restore
 inference state. recursive calls use ordinary lexical resolution and compare
 normalised argument values with induction evidence; aliases of descendants
@@ -697,8 +699,13 @@ instance search:
   instance patterns. inherited search selecteth the first successful path; it
   neither compareth parent dictionaries nor proveth them equal.
 - a candidate's own requirements are solved recursively, to a depth of 16.
-  a goal that repeateth one of its ancestors faileth, and a requirement whose
-  type is still unknown waiteth as a goal of the declaration.
+  a goal that repeateth one of its ancestors faileth. a requirement whose
+  inputs are still unknown is first fixed by the one local requirement of its
+  flock that unifieth with it, as a parent projection from `ρ module μ` to
+  `μ group_+` findeth its ring. otherwise it waiteth as a goal of the
+  declaration only when it belongeth to the outermost goal's candidate; in a
+  nested search the candidate faileth, since a waiting requirement there
+  would commit the search to a path it can never check.
   instance patterns and cycle keys compare global identities without their
   universe instantiations. sort arguments remain significant, and the kernel
   still validateth universe constraints.

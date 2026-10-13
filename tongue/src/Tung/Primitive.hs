@@ -343,6 +343,7 @@ pureBindings =
       UnaryBinding "wholetale_to_natural" integer (optionCodec natural) \a -> if a >= 0 then Just (fromInteger a) else Nothing,
       BinaryBinding "eke_wholetale" integer integer integer (+),
       BinaryBinding "offdraw_wholetale" integer integer integer (-),
+      UnaryBinding "negate_wholetale" integer integer negate,
       BinaryBinding "offdraw_natural" natural natural natural \a b -> if b > a then 0 else a - b,
       BinaryBinding "fold_wholetale" integer integer integer (*),
       BinaryBinding "deal_leftover_wholetale" integer integer (optionCodec (pairCodec integer integer)) \a b -> if b == 0 then Nothing else Just (euclidean a b),

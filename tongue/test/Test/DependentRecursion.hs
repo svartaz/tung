@@ -256,7 +256,12 @@ positiveTests =
       program <- compile source
       sameNormalIn program actual expected
   | (label, source, actual, expected) <-
-      [ ("a lambda may shadow the recursive binding", count "(n count) keep ({z ^ z} {count:[nat,nat] ^ naught count})", two ++ " count", two),
+      [ ( "the input the first row matcheth is split first",
+          "let sub:[nat, nat, nat] ≔ {m, naught ^ m, naught, _ heir ^ naught, j heir, k heir ^ j sub k}\n",
+          "{x: nat ^ x sub naught}",
+          "{x: nat ^ x}"
+        ),
+        ("a lambda may shadow the recursive binding", count "(n count) keep ({z ^ z} {count:[nat,nat] ^ naught count})", two ++ " count", two),
         ("a case variable may shadow the recursive binding", count "(n count) keep (naught {count ^ count})", two ++ " count", two),
         ("a local binding may shadow the recursive binding", count "(let worth ≔ n count let count ≔ naught yield worth keep count)", two ++ " count", two),
         ("a local initialiser still seeth the outer recursive binding", count "(let count ≔ n count yield count)", two ++ " count", two),

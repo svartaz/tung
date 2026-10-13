@@ -9,9 +9,9 @@ show flock hath_‖: [α: *, β: *, *] {
 }
 
 bizen: ℤ hath_‖ ℤ {
-  let ‖: [wholetale:] ≔ (+0 ≤ wholetale) if wholetale (+0 - wholetale)
+  let ‖: [wholetale:] ≔ (+0 ≤ wholetale) if wholetale (wholetale -)
 }
 
 bizen: float hath_‖ float {
-  let ‖: [x:] ≔ (0.0 ≤ x) if x (0.0 - x)
+  let ‖: [x:] ≔ (0.0 ≤ x) if x (x -)
 }

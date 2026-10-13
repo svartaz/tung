@@ -1,7 +1,6 @@
 # tung
 
-tung is a lazy functional language. this page helpeth thee install it, run a
-program, and find the next step.
+tung is a lazily evaluating functional programming language equipped with predicative intensional martin-löf type system.
 
 ## a first program
 
@@ -15,7 +14,7 @@ let main: 𝟙 deed ≔ +21 double $ to_string $ write_line
 
 save it as `double.tung` and run `tung double.tung`. it printeth `42`.
 
-- the second item of a call is the function: `+21 double` meaneth `double +21`.
+- the second item of a call is the function: `+21 double` meaneth `double(+21)`.
 - `$` endeth a call and passeth its value on.
 - `let name: type ≔ worth` annotateth a declaration.
 - `𝟙 deed` is an action, like haskell `IO`. the runner performeth `main`.

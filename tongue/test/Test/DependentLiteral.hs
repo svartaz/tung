@@ -55,7 +55,7 @@ numericIndexTests =
 tests :: (String -> Either String SourceProgram) -> String -> [Test]
 tests compiled example =
   [ computes "integer addition computeth during checking" "+2 + +2" "+4",
-    computes "integer arithmetic composeth" "(+7 · +6) - +2" "+40",
+    computes "integer arithmetic composeth" "(+7 · +6) offdraw +2" "+40",
     computes "division is euclidean for a undernaught divisor" "+7 deal_leftover -2" "(-3 both +1) some",
     computes "division is euclidean for a undernaught dividend" "-7 deal_leftover +2" "(-4 both +1) some",
     computes "division by naught hath no result" "+5 deal_leftover +0" "(none : (ℤ ∏ ℤ) maybe)",

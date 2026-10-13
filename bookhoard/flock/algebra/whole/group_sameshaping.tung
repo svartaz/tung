@@ -1,0 +1,124 @@
+use flock/algebra/whole/group_fold.tung
+use flock/algebra/whole/hath_fold.tung
+use flock/algebra/whole/hath_one.tung
+use flock/algebra/whole/monoid_fold.tung
+use flock/algebra/whole/semigroup_fold.tung
+use is.tung
+
+## a function between groups that keepeth products.
+show let sameshaped: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], *] ≔
+  [a: α, b: α, ((a · b) f) = ((a f) · (b f))]
+
+## the values that `f` sendeth to `one`.
+show let kernel: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], a: α, *] ≔
+  (a f) = one
+
+## `y` is reached by `f`: some `a` hath `a f = y`.
+show ilk image: [@α: *, @β: *, f: [α, β], y: β, *] {
+  reach: [a: α, reached: (a f) = y, f image y]
+}
+
+## a homomorphism sendeth `one` to `one`: `(one f) · (one f) = one f`, and
+## cancelling one `one f` leaveth `one`.
+show let one_f: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f sameshaped,
+  ((one: α) f) = one] ≔
+  ((one: α) f) outstrike_· ((one: α) f) one >{throughgo,
+    ((one: α) hom one) evenmete,
+    {z: α ^ z f} leibnitz ((one: α) ·_one),
+    (((one: α) f) one_·) evenmete
+  }
+
+## a homomorphism sendeth an inverse to the inverse.
+show let /_f: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f sameshaped, a: α,
+  ((a /) f) = ((a f) /)] ≔
+  (a f) /_alone ((a /) f) >{throughgo,
+    ((a /) hom a) evenmete,
+    {z: α ^ z f} leibnitz (a /_·),
+    f one_f hom
+  }
+
+## the kernel holdeth `one`.
+show let kernel_one: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f sameshaped,
+  f kernel (one: α)] ≔
+  f one_f hom
+
+## the kernel is closed under products.
+show let kernel_·: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f sameshaped, a: α, b: α,
+  in_a: f kernel a, in_b: f kernel b, f kernel (a · b)] ≔ >{throughgo,
+  a hom b,
+  {z: β ^ z · (b f)} leibnitz in_a,
+  {z: β ^ one · z} leibnitz in_b,
+  one one_·
+}
+
+## the kernel is closed under inverses.
+show let kernel_/: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f sameshaped, a: α,
+  in_a: f kernel a, f kernel (a /)] ≔ >{throughgo,
+  f /_f hom a,
+  {z: β ^ z /} leibnitz in_a,
+  one_/
+}
+
+## the kernel is normal: it is closed under turning by any value.
+show let kernel_turn: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f sameshaped, a: α, b: α,
+  in_a: f kernel a, f kernel ((b · a) · (b /))] ≔ >{throughgo,
+  (b · a) hom (b /),
+  {z: β ^ z · ((b /) f)} leibnitz (b hom a),
+  {z: β ^ ((b f) · z) · ((b /) f)} leibnitz in_a,
+  {z: β ^ z · ((b /) f)} leibnitz ((b f) ·_one),
+  {z: β ^ (b f) · z} leibnitz (f /_f hom b),
+  (b f) ·_/
+}
+
+## the image holdeth `one`.
+show let image_one: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f sameshaped,
+  f image (one: β)] ≔
+  one reach (f one_f hom)
+
+## the image is closed under products.
+show let image_·: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f sameshaped, y: β, z: β,
+  in_y: f image y, in_z: f image z, f image (y · z)] ≔
+  match in_y, in_z {
+    a reach p, b reach q ^ (a · b) reach >{throughgo,
+      a hom b,
+      {w: β ^ w · (b f)} leibnitz p,
+      {w: β ^ y · w} leibnitz q
+    }
+  }
+
+## the image is closed under inverses.
+show let image_/: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f sameshaped, y: β,
+  in_y: f image y, f image (y /)] ≔
+  match in_y {
+    a reach p ^ (a /) reach ((f /_f hom a) throughgo ({w: β ^ w /} leibnitz p))
+  }
+
+## the first isomorphism theorem, without quotient types: two values have
+## one image exactly when they lie in one coset of the kernel. so the map from
+## the kernel's cosets to the image, sending a coset to the image of any
+## member, is well defined (`fibre_kernel`) and injective (`kernel_fibre`);
+## it is a homomorphism onto the image, a subgroup, by `sameshaped` and
+## `image_·`.
+show let fibre_kernel: [@α: *, @: α group_·, @β: *, @: β group_·,
+  f: [α, β], hom: f sameshaped, a: α, b: α,
+  same: (a f) = (b f), f kernel (a /· b)
+] ≔ >{throughgo,
+  (a /) hom b,
+  {z: β ^ z · (b f)} leibnitz (f /_f hom a),
+  {z: β ^ (z /) · (b f)} leibnitz same,
+  (b f) /_·
+}
+
+show let kernel_fibre: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β],
+  hom: f sameshaped, a: α, b: α,
+  in_kernel: f kernel (a /· b), (a f) = (b f)
+] ≔ (
+  let undone: ((((a f) /) · (b f)) = one) ≔
+    ((({z: β ^ z · (b f)} leibnitz (f /_f hom a)) evenmete) throughgo (((a /) hom b) evenmete)) throughgo in_kernel
+  let inverses: (((a f) /) = ((b f) /)) ≔ (b f) /_alone ((a f) /) undone
+  yield >{throughgo,
+    ((a f) /_/) evenmete,
+    {z: β ^ z /} leibnitz inverses,
+    (b f) /_/
+  }
+)

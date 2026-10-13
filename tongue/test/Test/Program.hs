@@ -43,7 +43,7 @@ integerTerms = binary ++ nested
   where
     atom value = (integerSource value, value)
     boundaries = [(-3, 4), (0, -3), (4, 0), (2 ^ (80 :: Int), 2 ^ (80 :: Int))]
-    operators = [("+", (+)), ("-", (-)), ("·", (*))]
+    operators = [("+", (+)), ("-+", flip (-)), ("·", (*))]
     binary = [combine op (atom left) (atom right) | op <- operators, (left, right) <- boundaries]
     nested =
       [ term

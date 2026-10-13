@@ -27,21 +27,22 @@ bizen: [@α: *, @: α hath_naught, (α evenbraid) hath_naught] {
 }
 
 bizen: [@α: *, @: α hath_-, (α evenbraid) hath_-] {
-  let -: [a +i b:, c +i d:] ≔ (a - c) +i (b - d)
+  let -: [a +i b:] ≔ (a -) +i (b -)
+  let -+: [a +i b:, c +i d:] ≔ (a -+ c) +i (b -+ d)
 }
 
-bizen: [@α: *, @: α hath_-, @: α hath_·, (α evenbraid) hath_·] {
-  let ·: [a +i b:, c +i d:] ≔ ((a · c) - (b · d)) +i ((a · d) + (b · c))
+bizen: [@α: *, @: α hath_+, @: α hath_-, @: α hath_·, (α evenbraid) hath_·] {
+  let ·: [a +i b:, c +i d:] ≔ ((b · d) -+ (a · c)) +i ((a · d) + (b · c))
 }
 
 bizen: [@α: *, @: α hath_one, @: α hath_naught, (α evenbraid) hath_one] {
   let one ≔ one +i naught
 }
 
-bizen: [@α: *, @: α hath_-, @: α hath_·, @: α hath_÷, (α evenbraid) hath_÷] {
+bizen: [@α: *, @: α hath_+, @: α hath_-, @: α hath_·, @: α hath_÷, (α evenbraid) hath_÷] {
   let ÷: [a +i b:, c +i d:] ≔  (
     let e ≔ c · c $ + (d · d)
-    yield ((a · c) + (b · d) $ ÷ e) +i ((b · c) - (a · d) $ ÷ e)
+    yield ((a · c) + (b · d) $ ÷ e) +i ((a · d) -+ (b · c) $ ÷ e)
   )
 }
 
@@ -57,14 +58,14 @@ bizen: (float evenbraid) elementary {
   )
   let logarithm: [a +i b:] ≔ ((a · a) + (b · b) $ logarithm) +i (a arctan_float b)
   let sine: [a +i b:] ≔ (
-    let overnaught ≔ ((naught - b) +i a) exponent
-    let undernaught ≔ (b +i (naught - a)) exponent
-    yield (((overnaught imaginary) - (undernaught imaginary)) · 0.5)
-    +i (((undernaught real) - (overnaught real)) · 0.5)
+    let overnaught ≔ ((b -+ naught) +i a) exponent
+    let undernaught ≔ (b +i (a -+ naught)) exponent
+    yield (((undernaught imaginary) -+ (overnaught imaginary)) · 0.5)
+    +i (((overnaught real) -+ (undernaught real)) · 0.5)
   )
   let cosine: [a +i b:] ≔ (
-    let overnaught ≔ ((naught - b) +i a) exponent
-    let undernaught ≔ (b +i (naught - a)) exponent
+    let overnaught ≔ ((b -+ naught) +i a) exponent
+    let undernaught ≔ (b +i (a -+ naught)) exponent
     yield (((overnaught real) + (undernaught real)) · 0.5)
     +i (((overnaught imaginary) + (undernaught imaginary)) · 0.5)
   )

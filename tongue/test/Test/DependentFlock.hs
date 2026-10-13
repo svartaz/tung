@@ -169,6 +169,16 @@ selectionTests =
     expectEq "incomparable matching bizens follow declaration order" (Right True) do
       program <- compiled (choice ++ "bizen:[@α:*, ℤ choice α] { let selected ≔ +1 } bizen:[@α:*, α choice ℤ] { let selected ≔ +2 } let answer:ℤ ≔ selected @ℤ @ℤ")
       sameNormalIn program "answer" "+2",
+    expectEq "a nested requirement left open faileth its candidate rather than waiting" (Right ()) $
+      ()
+        <$ compiled
+          """
+          flock named:[α:*, *] { let name:α }
+          flock base:[α:*, *] {}
+          bizen:[@α:*, @:α base, α named] { let name ≔ sorry }
+          flock carrying:[ρ:*, μ:*, @:ρ base, @:μ named, *] {}
+          let pick:[@ρ:*, @μ:*, @:ρ carrying μ, μ] ≔ name
+          """,
     rejectContaining "a candidate cannot require its own goal" "cyclic instance search" $
       compiled
         """

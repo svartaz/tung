@@ -16,7 +16,7 @@ import Control.Monad (filterM, foldM, forM_, when)
 import Data.Functor ((<&>))
 import Data.List (sortOn)
 import Data.Map.Strict qualified as Map
-import Data.Maybe (catMaybes)
+import Data.Maybe (catMaybes, isJust)
 import Data.Ord (Down (..))
 import Tung.Dependent.Check qualified as K
 import Tung.Dependent.Elaboration qualified as E
@@ -188,6 +188,19 @@ localInstance names context family goal = do
   locals <- filterM (\(_, ty) -> (== Just family) <$> classFamily names ty) localTypes
   firstJust [E.attempt (E.unify context ty goal >> pure (Local index)) | (index, ty) <- locals]
 
+-- the one local requirement of the goal's flock that unifieth with it; none,
+-- or several, leaveth the goal waiting.
+uniqueLocalInstance :: Names -> K.Context -> N.Value -> Elaboration (Maybe Term)
+uniqueLocalInstance names context goal =
+  classFamily names goal >>= \case
+    Nothing -> pure Nothing
+    Just family -> do
+      locals <- filterM (\(_, ty) -> (== Just family) <$> classFamily names ty) (zip [0 ..] (K.contextTypes context))
+      fitting <- filterM (\(_, ty) -> isJust <$> E.speculate (E.unify context ty goal)) locals
+      case fitting of
+        [(index, ty)] -> Just (Local index) <$ E.unify context ty goal
+        _ -> pure Nothing
+
 -- local requirements are tried first, then registered instances, then inherited
 -- instances. one registered match that refineth every other winneth; the first matching
 -- inherited instance is used. a candidate's own requirements are solved
@@ -315,7 +328,17 @@ searchInstanceAmong restriction environment names mode ancestors context goal = 
             sub <- searchInstance environment names mode path context domain
             value <- E.evaluate context sub
             E.unify context holeValue value
-          False -> E.addInstanceGoal (E.InstanceGoal holeValue context domain)
+          -- a requirement whose inputs are still unknown is fixed by the one
+          -- local requirement that fitteth, as `module`'s parent `μ group_+`
+          -- findeth its ring. otherwise only the outermost goal's requirements
+          -- may wait for later unification: a nested search would commit to
+          -- a path it can never check, so that candidate faileth.
+          False ->
+            uniqueLocalInstance names context domain >>= \case
+              Just sub -> E.evaluate context sub >>= E.unify context holeValue
+              Nothing
+                | null ancestors -> E.addInstanceGoal (E.InstanceGoal holeValue context domain)
+                | otherwise -> E.failure "a nested requirement's inputs are unknown"
       pure term
     instantiate term ty pending =
       E.force ty >>= \case

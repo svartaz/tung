@@ -29,6 +29,16 @@ the ascii spelling of its flock name.
   ordinary combinators such as `bind`, `then`, `throughwend`, and `each`
   sequence actions. fallible operations return `maybe` or `string ∑ α`;
   nothing throweth.
+- `yoneda.tung` stateth the yoneda lemma for a functor on types: `lift` and
+  `unlift` convert between `α φ` and `φ yoneda α`, the transformations from
+  the functions out of `α`. `unlift_lift` followeth from `warp_sameness`;
+  `lift_unlift` needeth the transformation's `natural` proof and holdeth at
+  each input, since function extensionality doth not reach implicit inputs.
+  `functor` hath no composition law, so a lift's naturality is not proved.
+- `yoneda_co.tung` is the dual: `φ yoneda_co α` keepeth a hidden `β φ` beside a
+  function `[β, α]`, so it is a functor for any `φ`; mapping composeth the
+  function. `unlift` needeth `φ functor`. `unlift_lift` holdeth; the other
+  round trip holdeth only after `unlift`, since tung hath no quotient types.
 - `ilk/accessible.tung` provideth well-founded recursion.
   `wellgrounded_selfcall_by` lifteth it through a computed measure, with an
   explicit dependent result motive and a decrease proof at each call.
@@ -60,15 +70,44 @@ the ascii spelling of its flock name.
   `∋` are respectively `eke`, `offdraw`, `fold`, `deal`, `deal_leftover`,
   `at_most`, `same`, `is`, and `inhold`.
 - `flock/algebra/whole/` holdeth two families. the eke family is
-  `semigroup_+`, `monoid_+` with `naught`, and `group_+` with `-`; the fold
-  family is `semigroup_·`, `monoid_·` with `one`, and `group_·` with `/`.
-  each parent is required, so `monoid_·` requireth `semigroup_·` and
-  `hath_one`. numbers multiply with `·`, and lists, strings, sets, `maybe`,
-  `unempty`, functions, and the `lower` and `upper` wrappers combine with
-  `·` too; `…·` foldeth a collection in the fold family and `…+` in the eke
-  family. `semiring` requireth `monoid_+` and `monoid_·`, and `ring`
-  requireth `semiring` and `group_+`. functions have no pointwise `ring`:
-  its two paths to the codomain's addition are separate dictionaries.
+  `semigroup_+`, `monoid_+` with `naught`, and `group_+` with negation `-`
+  (laws `+_-` and `-_+`); the fold family is `semigroup_·`, `monoid_·` with
+  `one`, and `group_·` with the inverse `/` (laws `·_/` and `/_·`). unary
+  `-` and `/` are the inverses. the binary forms are named for what they do,
+  left to right: `b -+ a` negateth `b` then addeth `a`, so it is `a` less `b`.
+  `-+` is a member of `hath_-` beside `-`, so integers and floats subtract in
+  one native step, and `group_+` and `ring` prove `-+_+`, that it equalleth
+  `(b -) + a`. `b /· a` inverteth `b` then multiplieth by
+  `a` in a group. `ℕ` hath
+  no negation, so its subtraction that stoppeth at naught is `∸`.
+  `group_fold.tung` proveth the basic theorems: identities and inverses are
+  unique (`one_alone`, `/_alone`), products cancel on either side
+  (`·_outstrike`, `outstrike_·`), `/_/`, `one_/`, `/_over_·`, and
+  `/·_outstrike`. `group_eke.tung` proveth the same for `group_+`: `naught_alone`,
+  `-_alone`, `+_outstrike`, `outstrike_+`, `-_-`, `naught_-`, `-_over_+`, and
+  `-+_outstrike`. `ring.tung` proveth `-_·`, `·_-`, `-_·_-`, and `one_-_·`;
+  `module.tung` proveth `naught_∘`, `∘_naught`, `-_∘`, `∘_-`, and `one_-_∘`.
+  `category.tung` proveth `sameness_alone`, and `groupoid.tung`
+  `witherwend_alone`, `witherwend_witherwend`, `sameness_witherwend`, and
+  `witherwend_over_▷`. `ilk/natural.tung` showeth `heir_incast`, `heir_+`,
+  `outstrike_+`, `+_∸`, and `·_swap`; `ilk/list_setting.tung` showeth
+  `warp_greatness`, `greatness_·`, and `reverse_greatness`. `group_sameshaping.tung` defineth `sameshaped`, `kernel`, and `image` for
+  `group_·`, and proveth `one_f`, `/_f`, that the kernel is a normal
+  subgroup (`kernel_one`, `kernel_·`, `kernel_/`, `kernel_turn`), that the
+  image is a subgroup (`image_one`, `image_·`, `image_/`), and the first
+  isomorphism theorem in coset form: `(a f) = (b f)` exactly when
+  `a /· b` lieth in the kernel (`fibre_kernel`, `kernel_fibre`). tung hath no
+  quotient types, so the quotient group is the kernel-coset relation. each parent is required, so `monoid_·` requireth
+  `semigroup_·` and `hath_one`. numbers multiply with `·`, and lists,
+  strings, sets, `maybe`, `unempty`, functions, and the `lower` and `upper`
+  wrappers combine with `·` too; `…·` foldeth a collection in the fold family
+  and `…+` in the eke family. `semiring` requireth `monoid_+` and `monoid_·`.
+  `ring` requireth `semiring` and `hath_-` and stateth `+_-` and `-_+` itself;
+  a derived bizen maketh every ring a `group_+`, so a ring reacheth `+`
+  through one dictionary path, which pointwise function rings and modules
+  need. `module` in `module.tung` is a module over a ring: an additive
+  `group_+` that a ring acteth on by `∘`, and every ring is a module over
+  itself.
 
 - a shown name is read qualified by its module, so it doth not repeat the
   module: `ilk/wholetale.tung` showeth `to_ℕ`, read `integer~to_ℕ`, not
@@ -114,8 +153,8 @@ retaineth repetition without order. a
 pairth a multiset with a proof of no duplicates.
 
 tung hath no quotient types. `powerset` is
-`[a, 𝟚]`. wrap it in `lower` for intersection or `upper` for
-union; no bare powerset monoid chooseth between them.
+`[a, 𝟚]`. its pointwise `·` is intersection, since `·` on `𝟚` is conjunction; wrap
+it in `upper` for union.
 
 `set` requireth one lawful `order_whole` dictionary for its element type.
 its hidden carrier storeth an increasing list of distinct elements with a

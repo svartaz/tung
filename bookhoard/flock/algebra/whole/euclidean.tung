@@ -30,7 +30,7 @@ show flock euclidean: [α: *, @: α ring, @: α hath_%, @: α order_whole, *] {
   let %_bounded: [dealt: α, dealer: α,
     (match dealt % dealer {
       none               ^ yea,
-      (_ both rest) some ^ (naught ≤ dealer) if (rest < dealer) (rest < (naught - dealer))
+      (_ both rest) some ^ (naught ≤ dealer) if (rest < dealer) (rest < (dealer -+ naught))
     }) = yea]
 }
 

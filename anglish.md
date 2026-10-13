@@ -86,6 +86,7 @@ explain a monoid's laws.
 | fold           | gather         | in catamorphism            |
 | foreign        | fremmed        |                            |
 | function       | fall           |                            |
+| homomorphic    | sameshaped     |                            |
 | homomorphism   | sameshaping    |                            |
 | identity       | sameness       |                            |
 | induction      | inleading      |                            |

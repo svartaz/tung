@@ -16,6 +16,7 @@ module Tung.Dependent.Source.Pattern.Match
     requireUsed,
     splitColumn,
     unnamed,
+    refutable,
   )
 where
 
@@ -50,6 +51,13 @@ unnamed :: PatternTree -> ([String], PatternTree)
 unnamed = \case
   PNamed name pattern -> let (names, inner) = unnamed pattern in (name : names, inner)
   pattern -> ([], pattern)
+
+-- a pattern that only some values match, which a split must inspect.
+refutable :: PatternTree -> Bool
+refutable = \case
+  PConstructor {} -> True
+  PLiteral _ -> True
+  _ -> False
 
 constructorBinder :: K.Environment -> Names -> Binder -> Bool
 constructorBinder environment names Binder {binderPlicity = Explicit, binderName = Just name, binderAnnotation = Nothing} =
@@ -371,10 +379,6 @@ compileMatch checker@ExpressionChecker {checkerEnvironment = environment} scope 
               bindKnown scope values [] \current fieldColumns ->
                 compileMatch checker current (take index columns ++ fieldColumns ++ drop (index + 1) columns) rows' expected
   where
-    refutable = \case
-      PConstructor {} -> True
-      PLiteral _ -> True
-      _ -> False
     bindAll current [] = checkTerm checker current (matchBody row) expected
     bindAll current ((name, value, ty) : rest) = do
       annotation <- quote current ty

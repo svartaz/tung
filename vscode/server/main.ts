@@ -42,14 +42,16 @@ const connection = createConnection(ProposedFeatures.all);
 const documents = new TextDocuments(TextDocument);
 const compiler = new CompilerBridge();
 const workspace = new WorkspaceIndex(documents, compiler);
-// navigation readeth models built from compiler roles; missing roles are
-// fetched before the request is answered.
+// navigation readeth models built from the compiler's syntax and names;
+// missing ones are fetched before the request is answered. a request that
+// searcheth every document fetcheth the names of every document.
 const navigation =
   <Arguments extends unknown[], Result>(
     handler: (...parameters: Arguments) => Result,
+    everywhere = false,
   ) =>
   async (...parameters: Arguments): Promise<Awaited<Result>> => {
-    await workspace.ready();
+    await workspace.ready(everywhere);
     return await handler(...parameters);
   };
 const timers = new Map();
@@ -139,7 +141,7 @@ connection.onInitialized(() => {
     .catch(() => {});
 });
 connection.onShutdown(() => {
-  workspace.clearRoles();
+  workspace.clearSyntax();
   compiler.dispose();
   return null;
 });
@@ -171,7 +173,8 @@ connection.onRequest(
           : smallestRegion(
               model.regions.filter(
                 (candidate) =>
-                  candidate.depth === 0 && candidate.kind === "let",
+                  candidate.depth === 0 &&
+                  (candidate.kind === "let" || candidate.kind === "fast"),
               ),
               offset,
             );
@@ -191,12 +194,12 @@ connection.onRequest(
         return {
           kind: "error",
           message:
-            "select a proof name or place the cursor in its top-level let declaration",
+            "select a proof name or place the cursor in its top-level let or fast declaration",
         };
-      const imports = workspace.importSources(model);
+      const reached = JSON.stringify(workspace.reachedTexts(model.uri));
       const running = compiler.proof(
         model,
-        imports,
+        workspace.openTexts(),
         selected,
         version,
         allowedOrsettings,
@@ -207,15 +210,10 @@ connection.onRequest(
       try {
         const result = await running.result;
         const current = workspace.model(textDocument.uri);
-        const currentImports = workspace.importSources(current);
         if (
           (documents.get(textDocument.uri)?.version ?? 0) !== version ||
           current?.text !== model.text ||
-          currentImports.length !== imports.length ||
-          currentImports.some(
-            ([path, text], index) =>
-              path !== imports[index][0] || text !== imports[index][1],
-          )
+          JSON.stringify(workspace.reachedTexts(model.uri)) !== reached
         )
           return {
             kind: "error",
@@ -383,13 +381,13 @@ connection.onReferences(
   navigation(({ textDocument, position, context }) => {
     const { definition } = workspace.resolveAt(textDocument.uri, position);
     return workspace.references(definition, context.includeDeclaration);
-  }),
+  }, true),
 );
 connection.onDocumentHighlight(
   navigation(({ textDocument, position }) => {
     const { definition } = workspace.resolveAt(textDocument.uri, position);
     return workspace
-      .references(definition, true)
+      .references(definition, true, textDocument.uri)
       .filter(({ uri }) => uri === textDocument.uri)
       .map(({ range }) => ({ range, kind: DocumentHighlightKind.Read }));
   }),
@@ -437,34 +435,25 @@ connection.onWorkspaceSymbol(
 );
 connection.onPrepareRename(
   navigation(({ textDocument, position }) => {
-    const { token, definition, candidates } = workspace.resolveAt(
+    const { token, definition } = workspace.resolveAt(
       textDocument.uri,
       position,
     );
     if (!token || !definition || definition.primitive) return null;
-    if (candidates?.length > 1) {
-      throw new Error(`cannot rename ambiguous name '${token.text}'`);
-    }
     return { range: nameRange(token), placeholder: definition.bareName };
   }),
 );
 connection.onRenameRequest(
   navigation(({ textDocument, position, newName }) => {
     if (!validName(newName)) throw new Error(`invalid tung name '${newName}'`);
-    const { definition, candidates } = workspace.resolveAt(
-      textDocument.uri,
-      position,
-    );
+    const { definition } = workspace.resolveAt(textDocument.uri, position);
     if (!definition || definition.primitive) return null;
-    if (candidates?.length > 1) {
-      throw new Error("cannot rename an ambiguous name");
-    }
     const changes = {};
     for (const { uri, range } of workspace.references(definition, true)) {
       (changes[uri] ||= []).push({ range, newText: newName });
     }
     return { changes };
-  }),
+  }, true),
 );
 connection.onFoldingRanges(
   navigation(
@@ -483,7 +472,7 @@ connection.onDocumentLinks(
     const model = workspace.model(textDocument.uri);
     if (!model) return [];
     return model.imports.flatMap((imported) => {
-      const target = workspace.resolveImport(model, imported);
+      const target = workspace.importModel(model, imported.path);
       return target
         ? [
             {
@@ -585,7 +574,7 @@ const semanticTokens = async (uri, requestedRange = undefined) => {
   if (!document) return builder.build();
   const source = document.getText();
   const version = document.version;
-  const roles = await workspace.roles(uri, source, version);
+  const { roles } = await workspace.syntax(uri, source, version);
   await workspace.ready();
   if (documents.get(uri)?.version !== version) return builder.build();
   const resolve = (token) =>
@@ -639,7 +628,7 @@ const checkAllOpenDocuments = () => {
 };
 // diagnostics are debounced and versioned; cancellation stopeth obsolete work
 // in the persistent compiler session before a newer request is sent.
-const runCheck = (document) => {
+const runCheck = async (document) => {
   timers.delete(document.uri);
   if (libraryResolutionError) {
     publish(document, `project error: ${libraryResolutionError}`);
@@ -654,10 +643,19 @@ const runCheck = (document) => {
     );
     return;
   }
+  // imports come from the compiler's syntax of each document; a newer edit
+  // or check supersedeth this one meanwhile.
+  await workspace.ready();
+  if (
+    timers.has(document.uri) ||
+    checks.has(document.uri) ||
+    documents.get(document.uri)?.version !== document.version
+  )
+    return;
   const model = workspace.model(document.uri);
   const running = compiler.check(
     model,
-    workspace.importSources(model),
+    workspace.openTexts(),
     document.version,
   );
   checks.set(document.uri, running);
@@ -692,7 +690,7 @@ const inspectType = (definition, cancellation = undefined) => {
   const version = documents.get(definition.uri)?.version || 0;
   const running = compiler.ilkOf(
     model,
-    workspace.importSources(model),
+    workspace.openTexts(),
     definition.bareName,
     version,
   );
@@ -935,7 +933,7 @@ const configureWorkspace = () => {
       (root, index) => root !== localLibraryRoots[index],
     )
   ) {
-    workspace.clearRoles();
+    workspace.clearSyntax();
   }
   compiler.configure(tongueDir, localLibraryRoots, executable);
   let declared: string[] = [];

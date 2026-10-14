@@ -14,6 +14,8 @@ RUBY ?= ruby
 CODE ?= code
 BENCH_RUNS ?= 3
 BENCH_SIZE ?= 1000
+# the built compiler's path, looked up by the shell when a recipe runneth.
+TUNG = "$$(cd "$(TONGUE_DIR)" && $(CABAL) list-bin exe:tung)"
 
 .PHONY: all setup build test check benchmark install \
 	compiler-build compiler-test compiler-install runner-check prose-test byspel-test neaten-check \
@@ -39,7 +41,7 @@ neaten-check: compiler-build
 	@cd "$(ROOT)" && git ls-files -z '*.hs' | \
 		xargs -0 sh -c 'for file; do [ ! -f "$$file" ] || printf "%s\0" "$$file"; done' sh | \
 		xargs -0 ormolu --mode check
-	@cd "$(ROOT)" && tung="$$(cd "$(TONGUE_DIR)" && $(CABAL) list-bin exe:tung)" && status=0 && \
+	@cd "$(ROOT)" && tung=$(TUNG) && status=0 && \
 		for file in $$(git ls-files '*.tung'); do \
 			[ -f "$$file" ] || continue; \
 			"$$tung" --neaten-stdin < "$$file" | cmp -s - "$$file" || { printf 'not canonical: %s\n' "$$file"; status=1; }; \
@@ -65,7 +67,7 @@ prose-test:
 
 byspel-test: compiler-build
 	@printf 'checking and running byspels\n'
-	@TUNG_EXECUTABLE="$$(cd "$(TONGUE_DIR)" && $(CABAL) list-bin exe:tung)" $(NODE) --test tool/byspel.test.mjs
+	@TUNG_EXECUTABLE=$(TUNG) $(NODE) --test tool/byspel.test.mjs
 
 $(NPM_STAMP): package.json package-lock.json vscode/package.json
 	@$(NPM) ci
@@ -74,13 +76,13 @@ $(NPM_STAMP): package.json package-lock.json vscode/package.json
 editor-deps: $(NPM_STAMP)
 
 language-metadata: compiler-build editor-deps
-	@TUNG_EXECUTABLE="$$(cd "$(TONGUE_DIR)" && $(CABAL) list-bin exe:tung)" $(NPM) run update:metadata --workspace=tung-vscode
+	@TUNG_EXECUTABLE=$(TUNG) $(NPM) run update:metadata --workspace=tung-vscode
 
 editor-build: language-metadata
 	@$(NPM) run build --workspace=tung-vscode
 
 editor-test: compiler-build editor-deps
-	@TUNG_EXECUTABLE="$$(cd "$(TONGUE_DIR)" && $(CABAL) list-bin exe:tung)" $(NPM) run test --workspace=tung-vscode
+	@TUNG_EXECUTABLE=$(TUNG) $(NPM) run test --workspace=tung-vscode
 
 formula-check:
 	@$(RUBY) -c Formula/tung.rb
@@ -94,12 +96,12 @@ extension-install: extension-package
 compiler-install: compiler-build
 	@printf 'installing tung runner at %s\n' "$(BIN_DIR)/tung"
 	@mkdir -p "$(BIN_DIR)"
-	@install -m 755 "$$(cd "$(TONGUE_DIR)" && $(CABAL) list-bin exe:tung)" "$(BIN_DIR)/tung"
+	@install -m 755 $(TUNG) "$(BIN_DIR)/tung"
 	@$(MAKE) --no-print-directory runner-check
 
 runner-check:
 	@printf 'checking installed tung runner\n'
-	@printf '%s\n' 'let identity: [@α: *, value: α, α] ≔ value' | (cd /tmp && "$(BIN_DIR)/tung" --check-stdin) | grep -qx 'type ok'
+	@printf '%s\n' 'let identity: [@α: *, value: α, α] ≔ value' | (cd /tmp && "$(BIN_DIR)/tung" --check-stdin) | grep -qx 'ilk ok'
 	@printf '%s\n' ' let value ≔ 1 ' | (cd /tmp && "$(BIN_DIR)/tung" --neaten-stdin) | grep -qx 'let value ≔ 1'
 	@if ! printf '%s' ":$$PATH:" | grep -Fq ':$(BIN_DIR):'; then \
 		printf 'add %s to path to run: tung filename.tung\n' "$(BIN_DIR)"; \

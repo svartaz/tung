@@ -1,10 +1,13 @@
 -- | filesystem project loading is kept outside parsing and import semantics.
 -- the loader resolveth relative imports into the flat source bundle consumed by the
 -- checker, and rejecteth path collisions instead of silently choosing one file.
+-- the editor's load readeth unsaved texts first and leaveth out a bring it
+-- cannot resolve, so checking reporteth it at its span.
 module Tung.Project
   ( Project (..),
     loadProjectFile,
     loadProjectSource,
+    loadEditorProject,
   )
 where
 
@@ -38,50 +41,68 @@ type Loaded = Map.Map String (FilePath, SourceSnapshot)
 
 type Loader = StateT Loaded (ExceptT String IO)
 
+-- module roots, unsaved texts by canonical path, and whether an unresolved
+-- bring is left out rather than refused.
+data Loading = Loading
+  { loadingRoots :: [FilePath],
+    loadingTexts :: Map.Map FilePath String,
+    loadingLenient :: Bool
+  }
+
 loadProjectFile :: [FilePath] -> FilePath -> IO (Either String Project)
 loadProjectFile roots path = runExceptT do
   absolute <- liftIOError "resolve" path (canonicalizePath =<< makeAbsolute path)
-  source <- readSource absolute
-  loadProjectSourceM roots absolute source
+  source <- readSource Map.empty absolute
+  loadProjectSourceM (Loading roots Map.empty False) absolute source
 
 -- source text placed at an owner path, as standard input is.
 loadProjectSource :: [FilePath] -> FilePath -> String -> IO (Either String Project)
 loadProjectSource roots owner source = runExceptT do
   absolute <- liftIOError "resolve" owner (makeAbsolute owner)
-  loadProjectSourceM roots absolute source
+  loadProjectSourceM (Loading roots Map.empty False) absolute source
 
-loadProjectSourceM :: [FilePath] -> FilePath -> String -> ExceptT String IO Project
-loadProjectSourceM roots owner source = do
-  absoluteRoots <- traverse absoluteRoot roots
+-- an editor document with the unsaved texts of open files. it faileth only
+-- when a module root cannot be resolved.
+loadEditorProject :: [FilePath] -> Map.Map FilePath String -> FilePath -> String -> IO (Either String Project)
+loadEditorProject roots texts owner source = runExceptT do
+  absolute <- liftIOError "resolve" owner (makeAbsolute owner)
+  canonical <- Map.fromList <$> traverse (\(path, text) -> (,text) <$> liftIOError "resolve" path (canonicalizePath path)) (Map.toList texts)
+  loadProjectSourceM (Loading roots canonical True) absolute source
+
+loadProjectSourceM :: Loading -> FilePath -> String -> ExceptT String IO Project
+loadProjectSourceM loading owner source = do
+  absoluteRoots <- traverse absoluteRoot (loadingRoots loading)
   let snapshot = sourceSnapshot source
-  loaded <- execStateT (discover absoluteRoots owner (takeDirectory owner) snapshot) Map.empty
+  loaded <- execStateT (discover loading {loadingRoots = absoluteRoots} owner (takeDirectory owner) snapshot) Map.empty
   let snapshots = snd <$> loaded
   pure (Project owner source (Map.map snapshotText snapshots) (fst <$> loaded) snapshot snapshots)
 
-discover :: [FilePath] -> FilePath -> FilePath -> SourceSnapshot -> Loader ()
-discover roots owner base source = mapM_ (loadImport roots owner base) (snapshotImportPaths source)
+discover :: Loading -> FilePath -> FilePath -> SourceSnapshot -> Loader ()
+discover loading owner base source = mapM_ (loadImport loading owner base) (snapshotImportPaths source)
 
-loadImport :: [FilePath] -> FilePath -> FilePath -> FilePath -> Loader ()
-loadImport roots owner base importPath = do
-  candidates <- importCandidates roots base importPath
+loadImport :: Loading -> FilePath -> FilePath -> FilePath -> Loader ()
+loadImport loading owner base importPath = do
+  candidates <- importCandidates (loadingRoots loading) base importPath
   case candidates of
-    [] -> failLoader ("missing bring '" ++ importPath ++ "' from '" ++ owner ++ "'")
+    [] -> refuse ("missing bring '" ++ importPath ++ "' from '" ++ owner ++ "'")
     [candidate] -> loadCandidate candidate
     paths ->
-      failLoader
+      refuse
         ( "ambiguous bring '"
             ++ importPath
             ++ "' found at "
             ++ intercalate ", " (map (\path -> "'" ++ path ++ "'") paths)
         )
   where
+    refuse message = if loadingLenient loading then pure () else failLoader message
     loadCandidate candidate = do
       absolute <- lift (liftIOError "resolve" candidate (canonicalizePath candidate))
       known <- gets (Map.lookup importPath)
-      case known of
-        Just (other, _)
+      ownerPath <- gets (fmap fst . find ((== absolute) . fst . snd) . Map.toList)
+      case (known, ownerPath) of
+        (Just (other, _), _)
           | other /= absolute ->
-              failLoader
+              refuse
                 ( "ambiguous bring '"
                     ++ importPath
                     ++ "' resolveth to both '"
@@ -90,12 +111,9 @@ loadImport roots owner base importPath = do
                     ++ absolute
                     ++ "'"
                 )
-        _ -> pure ()
-      ownerPath <- gets (fmap fst . find ((== absolute) . fst . snd) . Map.toList)
-      case ownerPath of
-        Just other
+        (_, Just other)
           | other /= importPath ->
-              failLoader
+              refuse
                 ( "bring paths '"
                     ++ other
                     ++ "' and '"
@@ -104,11 +122,11 @@ loadImport roots owner base importPath = do
                     ++ absolute
                     ++ "'"
                 )
-        Just _ -> pure ()
-        Nothing -> do
-          imported <- sourceSnapshot <$> lift (readSource absolute)
+        (_, Just _) -> pure ()
+        (_, Nothing) -> do
+          imported <- sourceSnapshot <$> lift (readSource (loadingTexts loading) absolute)
           modify' (Map.insert importPath (absolute, imported))
-          discover roots absolute (takeDirectory absolute) imported
+          discover loading absolute (takeDirectory absolute) imported
 
 importCandidates :: [FilePath] -> FilePath -> FilePath -> Loader [FilePath]
 importCandidates roots base importPath = do
@@ -121,8 +139,8 @@ importCandidates roots base importPath = do
 absoluteRoot :: FilePath -> ExceptT String IO FilePath
 absoluteRoot root = liftIOError "resolve module root" root (normalise <$> makeAbsolute root)
 
-readSource :: FilePath -> ExceptT String IO String
-readSource path = liftIOError "read" path (Text.unpack <$> Text.readFile path)
+readSource :: Map.Map FilePath String -> FilePath -> ExceptT String IO String
+readSource texts path = maybe (liftIOError "read" path (Text.unpack <$> Text.readFile path)) pure (Map.lookup path texts)
 
 liftIOError :: String -> FilePath -> IO a -> ExceptT String IO a
 liftIOError action path operation = do

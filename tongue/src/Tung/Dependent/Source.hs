@@ -8,6 +8,10 @@ module Tung.Dependent.Source
     compileSnapshot,
     compileImports,
     recoverSnapshotHoles,
+    recoverSnapshotReport,
+    snapshotVisible,
+    sourceNames,
+    Report (..),
     cacheKeys,
     compilerBuild,
     loadInterfaces,
@@ -66,7 +70,7 @@ import Tung.Dependent.Source.Proof
 import Tung.Dependent.Source.Scope
 import Tung.Dependent.Source.Syntax
 import Tung.Dependent.Syntax hiding (Lambda, Literal)
-import Tung.Identity (ModuleId (..))
+import Tung.Identity (ModuleId (..), SymbolId (..))
 import Tung.Token (SourceFailure (..), SourceSpan (..))
 
 -- a root module and the modules it useth, keyed by `use` path. each is checked
@@ -88,15 +92,48 @@ compileImports = Modules.compileImports insertDeclarations
 -- groups are never inserted, and no partial program escapeth this function.
 -- syntax recovery only retains complete declarations at safe boundaries.
 recoverSnapshotHoles :: Map.Map String SourceProgram -> ModuleId -> SourceSnapshot -> Map.Map String SourceSnapshot -> [Hole]
-recoverSnapshotHoles compiled owner source modules =
+recoverSnapshotHoles compiled owner source modules = sortOn (fmap spanStart . holeSpan) (reportHoles (recoverSnapshotReport compiled owner source modules))
+
+-- the goals and resolved names of every declaration recovery can check.
+recoverSnapshotReport :: Map.Map String SourceProgram -> ModuleId -> SourceSnapshot -> Map.Map String SourceSnapshot -> Report
+recoverSnapshotReport compiled owner source modules =
   case Modules.recoverModule recoverDeclarations owner declarations reached of
-    Nothing -> []
-    Just (program, holes) -> sortOn (fmap spanStart . holeSpan) (holes ++ yieldedHoles program)
+    Nothing -> mempty
+    Just (program, report) -> report <> yieldedReport program
   where
     (declarations, yielded, _) = recoverSnapshot source
     reached = foldl load compiled [path | (_, ImportDeclaration path _) <- declarations]
     load done path = either (const done) id (compileImports done modules [path])
-    yieldedHoles program@SourceProgram {..} = maybe [] (\expression -> snd (elaborateHolesReport program ((\(term, ty) -> (term, ty, ())) <$> inferExpression programEnvironment globalNames emptyScope expression))) yielded
+    yieldedReport program@SourceProgram {..} = maybe mempty (\expression -> snd (elaborateHolesReport program ((\(term, ty) -> (term, ty, ())) <$> inferExpression programEnvironment globalNames emptyScope expression))) yielded
+
+-- the names a source may write at its top level, without checking it: its own
+-- declarations, then its imports' names, each marked when it nameth a
+-- constructor. a failed import contributeth nothing.
+snapshotVisible :: Map.Map String SourceProgram -> SourceSnapshot -> Map.Map String SourceSnapshot -> [(String, SymbolId, Bool)]
+snapshotVisible compiled source modules = own ++ imported
+  where
+    (declarations, _, _) = recoverSnapshot source
+    reached = foldl load compiled [path | (_, ImportDeclaration path _) <- declarations]
+    load done path = either (const done) id (compileImports done modules [path])
+    available = [entry | entry@(_, ImportDeclaration path _) <- declarations, Map.member path reached]
+    own = [(name, SymbolId RootModule name, constructor) | (_, declaration) <- declarations, (name, constructor) <- defined (unshown declaration)]
+    defined = \case
+      Declaration {declarationName} -> [(declarationName, False)]
+      HostDeclaration {hostName} -> [(hostName, False)]
+      AssumptionDeclaration {assumptionName} -> [(assumptionName, False)]
+      InductiveDeclaration {inductiveName, inductiveConstructors} -> (inductiveName, False) : [(constructorName constructor, True) | constructor <- inductiveConstructors]
+      FlockDeclaration {flockName, flockMembers} -> (flockName, False) : [(member, False) | FlockMember member _ <- flockMembers]
+      _ -> []
+    imported = case Modules.moduleEnvironment available reached of
+      Left _ -> []
+      Right SourceProgram {globalNames, programEnvironment} ->
+        [ (name, symbol, isConstructor (Map.lookup symbol (globals programEnvironment)))
+        | (name, binding) <- Map.toList (nameTable globalNames),
+          Just symbol <- [bindingSymbol binding]
+        ]
+    isConstructor = \case
+      Just Definition {definitionBody = DataConstructor _ _} -> True
+      _ -> False
 
 inferSourceExpression :: SourceProgram -> String -> Either String K.Inferred
 inferSourceExpression program source = parseExpression source >>= Error.toString . inferIn program

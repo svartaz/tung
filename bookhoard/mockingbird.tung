@@ -215,8 +215,8 @@ show let psi: [@α: *, @β: *, @γ: *, f: [β, β, γ], g: [α, β], a: α, b: �
   ≔ (a g) f (b g)
 
 # Y f = f (Y f)
-# unbounded pure recursion is not total. `deed_steadfast` is the fixed point for
-# deeds.
+# unbounded pure recursion is not total. a `fast` declaration, whose ilk endeth
+# in a deed, is the fixed point for deeds.
 # show let sage: [@α: *, f: [α, α], α] ≔ (f sage) f
 # L f x = f (x x)
 # show let f lark x [] (x x) f

@@ -70,6 +70,7 @@ explain a monoid's laws.
 | failure           | misfare       |                      |
 | fallible          | misfaresome   |                      |
 | filter            | sift          |                      |
+| fixed             | fast          |                      |
 | fixed point       | steadfast     |                      |
 | fold              | gather        |                      |
 | foreign           | fremmed       |                      |

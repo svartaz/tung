@@ -5,6 +5,7 @@ module Tung.Dependent.Source.Module
   ( compileProject,
     compileImports,
     recoverModule,
+    moduleEnvironment,
   )
 where
 
@@ -13,7 +14,7 @@ import Data.Bifunctor (first)
 import Data.Graph (SCC (..), flattenSCC, stronglyConnComp)
 import Data.List (intercalate, nub, sortOn)
 import Data.Map.Strict qualified as Map
-import Data.Maybe (isNothing)
+import Data.Maybe (isNothing, listToMaybe)
 import Data.Set qualified as Set
 import Tung.Dependent.Check qualified as K
 import Tung.Dependent.Host qualified as H
@@ -80,7 +81,7 @@ compileModule check owner declarations compiled = do
 -- a diagnostic pass useth only fully checked imports and declaration groups.
 -- rejected groups and every group depending on them are skipped atomically.
 -- this partial environment is private to recovery and cannot be audited or run.
-recoverModule :: (ModuleId -> SourceProgram -> [(Maybe SourceSpan, Declaration)] -> (Either SourceFailure SourceProgram, [Hole])) -> ModuleId -> [(Maybe SourceSpan, Declaration)] -> Map.Map String SourceProgram -> Maybe (SourceProgram, [Hole])
+recoverModule :: (ModuleId -> SourceProgram -> [(Maybe SourceSpan, Declaration)] -> (Either SourceFailure SourceProgram, Report)) -> ModuleId -> [(Maybe SourceSpan, Declaration)] -> Map.Map String SourceProgram -> Maybe (SourceProgram, Report)
 recoverModule check owner declarations compiled = do
   let available =
         filter
@@ -102,7 +103,7 @@ recoverModule check owner declarations compiled = do
           _ -> (hide groupEntries program, chunks, Set.union rejected groupIndices)
       hide entries program = program {globalNames = (globalNames program) {nameTable = foldr Map.delete (nameTable (globalNames program)) (concatMap (defines . snd) entries)}}
       (program, chunks, _) = foldl step (initial, [], Set.empty) groups
-  pure (program, concat (reverse chunks))
+  pure (program, mconcat (reverse chunks))
 
 moduleEnvironment :: [(Maybe SourceSpan, Declaration)] -> Map.Map String SourceProgram -> Either CompileFailure SourceProgram
 moduleEnvironment declarations compiled = do
@@ -111,12 +112,10 @@ moduleEnvironment declarations compiled = do
   -- every namespace nameth one module, including when an import is repeated.
   foldM claimNamespace Map.empty imports
   definitions <- foldM mergeGlobals H.primitiveDefinitions imports
-  let environment = K.Environment definitions
-      qualified = Map.fromList [(space ++ "~" ++ name, binding) | (_, space, _, program) <- imports, (name, binding) <- Map.toList (nameTable (sourceExports program))]
+  let qualified = Map.fromList [(space ++ "~" ++ name, binding) | (_, space, _, program) <- imports, (name, binding) <- Map.toList (nameTable (sourceExports program))]
       -- provenance is the visible import namespace, not the defining module.
       -- re-exports preserve identities but may arrive under different aliases.
       alternatives = Map.fromListWith (++) [(name, [(binding, space)]) | (_, space, _, program) <- imports, (name, binding) <- Map.toList (nameTable (sourceExports program))]
-      bare = Map.map resolve alternatives
       resolve bindings = case nub (map fst bindings) of
         [binding] -> binding
         _ -> AmbiguousName (nub (map snd bindings))
@@ -125,8 +124,7 @@ moduleEnvironment declarations compiled = do
       -- imported and local names shadow primitive types.
       primitives = Map.fromList [(symbolName symbol, FreshName symbol (definitionUniverses definition)) | (symbol, definition) <- Map.toList H.primitiveDefinitions, symbol /= H.sorrySymbol, isNothing (inducedFamily symbol)]
       references = Map.unionsWith Set.union [programReferences program | (_, _, _, program) <- imports]
-      initial = SourceProgram environment [] (Names (Map.unions [qualified, bare, primitives]) instances) Set.empty (Names Map.empty instances) [] references
-  pure initial
+  pure (SourceProgram (K.Environment definitions) [] (Names (Map.unions [qualified, Map.map resolve alternatives, primitives]) instances) Set.empty (Names Map.empty instances) [] references [])
   where
     -- cached modules may have been checked independently. shared identities
     -- must retain the same definitions, including transitive dependencies.
@@ -185,9 +183,7 @@ declarationGroups program located = go (sortOn (Set.findMin . groupIndices) (map
             (before, found : after) -> (found :) <$> go (before ++ after)
             (_, []) -> Left (cycleError (concatMap groupEntries remaining))
     cycleError entries =
-      CompileFailure CheckFailure Nothing (fst =<< firstEntry entries) ("declaration cycle: " ++ intercalate " -> " (map (label . snd) entries))
-    firstEntry [] = Nothing
-    firstEntry (entry : _) = Just entry
+      CompileFailure CheckFailure Nothing (fst =<< listToMaybe entries) ("declaration cycle: " ++ intercalate " -> " (map (label . snd) entries))
     label declaration = case defines declaration of
       name : _ -> name
       [] -> maybe "declaration" ("bizen " ++) (instanceClass declaration)
@@ -204,13 +200,12 @@ declarationGroups program located = go (sortOn (Set.findMin . groupIndices) (map
     -- this declaration by name, as a helper proof used by its own flock's
     -- bizen; that bizen cannot be the one it useth.
     dependencies index declaration =
-      let used = mentioned declaration
-          usesInstances = case unshown declaration of
+      let usesInstances = case unshown declaration of
             Declaration {} -> True
             BizenDeclaration {} -> True
             _ -> False
        in nameDependencies Map.! index
-            ++ [instanceIndex | usesInstances, name <- used, className <- flocksUsedBy name, instanceIndex <- Map.findWithDefault [] className instancesOf, not (reaches instanceIndex index)]
+            ++ [instanceIndex | usesInstances, name <- mentioned declaration, className <- flocksUsedBy name, instanceIndex <- Map.findWithDefault [] className instancesOf, not (reaches instanceIndex index)]
             ++ [instanceIndex | Just className <- [instanceClass declaration], ancestor <- ancestors className, instanceIndex <- Map.findWithDefault [] ancestor instancesOf]
     flocksUsedBy name =
       [className | Set.notMember name shadowed, Just className <- [Map.lookup name members]] ++ requiredFlocks name
@@ -264,16 +259,9 @@ declarationGroups program located = go (sortOn (Set.findMin . groupIndices) (map
       where
         written = \case
           Product _ result -> written result
-          Application (Name name) _ -> Just name
-          Name name -> Just name
-          _ -> Nothing
+          other -> headName other
     instanceClass _ = Nothing
     lastSegment = Name.lastQualifiedSegment
-
-unshown :: Declaration -> Declaration
-unshown = \case
-  ShownDeclaration declaration -> unshown declaration
-  declaration -> declaration
 
 defines :: Declaration -> [String]
 defines declaration = case unshown declaration of

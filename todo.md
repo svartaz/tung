@@ -7,7 +7,6 @@ planned work in priority order. current behaviour belongeth to the
 
 ## dependent language
 
-- decide the syntax for guarded recursion of actions.
 - universe levels stay fully implicit; there is no level syntax. report an
   inconsistent universe as the source `*` occurrences and definitions that
   would make a universe contain itself, and show inferred universe signatures
@@ -32,9 +31,9 @@ tracked `.tung` file and stage test input against an exact oracle.
 
 ## tooling and maintainability
 
-- reduce repeated normalisation, universe-clause search, and allocation in
-  large proof checks. share checked interfaces between test helpers and
-  isolated groups. preserve inferred universe constraints and kernel rechecking.
+- reduce repeated normalisation and allocation in large proof checks; instance
+  search is the next measured cost after universe solving. preserve inferred
+  universe constraints and kernel rechecking.
 - pin a hackage index state for cabal in ci. keep local dependency refresh
   separate from ci checks.
 
@@ -74,8 +73,8 @@ these tasks belong to [`bookhoard/`](bookhoard/).
 ## deferred gates
 
 - a free inductive `deed`, whose laws would follow by induction, needeth
-  coinduction while `deed_steadfast` existeth: its step would put `deed` left
-  of an arrow. until then the three deed axioms stay.
+  coinduction while `fast` existeth, since an unbounded self-call could build
+  an ill-founded inductive deed. until then the three deed axioms stay.
 - add a packed immutable array only if benchmarks show a material bottleneck in
   list-backed algorithms or host boundaries. design the representation and host
   abi first.

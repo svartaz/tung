@@ -1,9 +1,19 @@
 import assert from "node:assert/strict";
 import * as path from "node:path";
 import test from "node:test";
-import { CompilerBridge, SourceRole } from "../server/checker.ts";
+import {
+  CompilerBridge,
+  emptySyntax,
+  SourceRole,
+  SourceSyntax,
+} from "../server/checker.ts";
 import { buildHighlightRanges } from "../server/highlight.ts";
 import { WorkspaceIndex } from "../server/workspace.ts";
+
+const withRoles = (roles: SourceRole[]): SourceSyntax => ({
+  ...emptySyntax,
+  roles,
+});
 
 const compiler = new CompilerBridge();
 compiler.configure(
@@ -24,7 +34,7 @@ const sourceLabels = async (source: string) => {
   );
   await workspace.ready();
   const model = workspace.model(uri);
-  const roles = await workspace.roles(uri, source);
+  const { roles } = await workspace.syntax(uri, source);
   const ranges = buildHighlightRanges(
     source,
     roles,
@@ -259,7 +269,7 @@ test("navigation and colouring share requests and discard obsolete results", asy
     {
       highlight: (text, version) => {
         let resolve;
-        const result = new Promise<SourceRole[]>(
+        const result = new Promise<SourceSyntax>(
           (resolveResult) => (resolve = resolveResult),
         );
         const request = {
@@ -277,38 +287,38 @@ test("navigation and colouring share requests and discard obsolete results", asy
       },
     },
   );
-  const first = cache.roles("uri", source, document.version);
-  const same = cache.roles("uri", source, document.version);
+  const first = cache.syntax("uri", source, document.version);
+  const same = cache.syntax("uri", source, document.version);
   const navigation = cache.ready();
   assert.equal(requests.length, 1);
   source = "new";
   document.version = 2;
   cache.invalidate("uri");
-  const latest = cache.roles("uri", source, document.version);
+  const latest = cache.syntax("uri", source, document.version);
   assert.equal(requests[0].cancelled, true);
-  requests[0].resolve([[0, 3, "type", []]]);
-  assert.deepEqual(await first, []);
-  assert.deepEqual(await same, []);
+  requests[0].resolve(withRoles([[0, 3, "type", []]]));
+  assert.deepEqual(await first, emptySyntax);
+  assert.deepEqual(await same, emptySyntax);
   await navigation;
-  requests[1].resolve([[0, 3, "call", ["applied"]]]);
-  assert.deepEqual(await latest, [[0, 3, "call", ["applied"]]]);
+  requests[1].resolve(withRoles([[0, 3, "call", ["applied"]]]));
+  assert.deepEqual((await latest).roles, [[0, 3, "call", ["applied"]]]);
   assert.deepEqual(
-    await cache.roles("uri", source, document.version),
+    await cache.syntax("uri", source, document.version),
     await latest,
   );
   await cache.ready();
   assert.equal(requests.length, 2);
   document.version++;
-  const pending = cache.roles("uri", source, document.version);
+  const pending = cache.syntax("uri", source, document.version);
   assert.equal(requests[1].cancelled, true);
   document.version++;
   cache.invalidate("uri");
-  const current = cache.roles("uri", source, document.version);
+  const current = cache.syntax("uri", source, document.version);
   assert.equal(requests[2].cancelled, true);
-  requests[2].resolve([[0, 3, "type", ["declaration"]]]);
-  assert.deepEqual(await pending, []);
-  cache.clearRoles();
-  requests[3].resolve([[0, 3, "type", ["declaration"]]]);
-  assert.deepEqual(await current, []);
+  requests[2].resolve(withRoles([[0, 3, "type", ["declaration"]]]));
+  assert.deepEqual(await pending, emptySyntax);
+  cache.clearSyntax();
+  requests[3].resolve(withRoles([[0, 3, "type", ["declaration"]]]));
+  assert.deepEqual(await current, emptySyntax);
   assert.equal(cache.model("uri").definitions.length, 0);
 });

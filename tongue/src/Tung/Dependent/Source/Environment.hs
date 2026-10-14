@@ -5,7 +5,9 @@ module Tung.Dependent.Source.Environment
     sourceEnvironment,
     sourceExports,
     sourceHoles,
+    sourceNames,
     Hole (..),
+    Report (..),
     Names (..),
     NameBinding (..),
     ClassInfo (..),
@@ -26,6 +28,7 @@ module Tung.Dependent.Source.Environment
     exportNames,
     reexportNames,
     typeOfName,
+    renderClosed,
     sorryAssumptions,
     orsendAssumptions,
     sourceDefinitions,
@@ -59,7 +62,9 @@ data SourceProgram = SourceProgram
     -- the goal and named context of each `sorry` in this module, newest first.
     programHoles :: [Hole],
     -- resolved source references survive computation during elaboration.
-    programReferences :: Map.Map SymbolId (Set.Set SymbolId)
+    programReferences :: Map.Map SymbolId (Set.Set SymbolId),
+    -- each written name that checking resolved to a global, by its span.
+    programNames :: [(SourceSpan, SymbolId)]
   }
   deriving stock (Eq, Show)
 
@@ -80,12 +85,13 @@ internProgram imported program@SourceProgram {..} =
     own = Map.map (mapDefinitionSymbols intern) (Map.difference definitions imported)
     ownReferences = Map.restrictKeys programReferences (Map.keysSet own)
     inheritedReferences = Map.withoutKeys programReferences (Map.keysSet own)
-    -- recorded source definitions are this module's transparent constants.
-    -- reuse their rewritten trees rather than retaining and walking them twice.
+    -- recorded source definitions are this module's transparent constants
+    -- and fixpoints. reuse their rewritten trees rather than retaining and
+    -- walking them twice.
     checked symbol = case own Map.! symbol of
-      Definition {definitionUniverses, definitionConstraints, definitionType, definitionBody = Transparent term} ->
-        K.Inferred definitionUniverses definitionConstraints term definitionType
-      _ -> error "recorded source definition is not transparent"
+      Definition {definitionUniverses, definitionConstraints, definitionType, definitionBody}
+        | Just term <- sourceBody definitionBody -> K.Inferred definitionUniverses definitionConstraints term definitionType
+      _ -> error "recorded source definition hath no body"
 
 -- the supplied interner preserveth identity and therefore map ordering.
 -- visible names retain their spelling; only resolved identities are shared.
@@ -116,6 +122,23 @@ sourceExports = programExports
 
 sourceHoles :: SourceProgram -> [Hole]
 sourceHoles = programHoles
+
+sourceNames :: SourceProgram -> [(SourceSpan, SymbolId)]
+sourceNames = programNames
+
+-- what checking a declaration reporteth beside its result, whether it
+-- succeeded or not: the goal of each `sorry` and each resolved written name.
+data Report = Report
+  { reportHoles :: [Hole],
+    reportNames :: [(SourceSpan, SymbolId)]
+  }
+  deriving stock (Eq, Show)
+
+instance Semigroup Report where
+  Report holes names <> Report moreHoles moreNames = Report (holes ++ moreHoles) (names ++ moreNames)
+
+instance Monoid Report where
+  mempty = Report [] []
 
 data Hole = Hole
   { holeSpan :: Maybe SourceSpan,
@@ -281,13 +304,13 @@ reexportNames = foldM reexport
 -- law proved by `sorry` is one. a host binding is a program, not an
 -- assumption.
 sorryAssumptions :: SourceProgram -> [String]
-sorryAssumptions SourceProgram {..} =
+sorryAssumptions program@SourceProgram {..} =
   [describe symbol | (symbol, _) <- reverse checkedDefinitions, reported symbol, assumes symbol]
   where
     definitions = globals programEnvironment
     -- definitions may refer to themselves, so the search walketh backwards
     -- from `sorry` through the users of each definition.
-    users = Map.fromListWith (++) [(used, [user]) | (user, Definition {definitionBody = Transparent term}) <- Map.toList definitions, used <- nub (termGlobals term)]
+    users = Map.fromListWith (++) [(used, [user]) | (user, Definition {definitionBody}) <- Map.toList definitions, Just term <- [sourceBody definitionBody], used <- nub (termGlobals term)]
     reach seen [] = seen
     reach seen (symbol : rest)
       | symbol `Set.member` seen = reach seen rest
@@ -298,19 +321,28 @@ sorryAssumptions SourceProgram {..} =
     reported symbol = symbol `Set.member` shown || isInstance symbol || symbolName symbol == "main"
     isInstance symbol = take 10 (symbolName symbol) == "#instance_"
     describe symbol
-      | isInstance symbol = "bizen " ++ maybe "?" (renderTermIn definitions (displayName globalNames) K.emptyContext [] . definitionType) (Map.lookup symbol definitions)
+      | isInstance symbol = "bizen " ++ maybe "?" (renderClosed program . definitionType) (Map.lookup symbol definitions)
       | otherwise = displayName globalNames symbol
 
 -- the module's own `orsetting` assumptions, each with its type.
 orsendAssumptions :: SourceProgram -> [String]
-orsendAssumptions SourceProgram {..} =
-  [ name ++ ": " ++ render definitionType
+orsendAssumptions program@SourceProgram {..} =
+  [ name ++ ": " ++ renderClosed program definitionType
   | name <- Set.toList localNames,
     Just symbol <- [lookupName name globalNames >>= bindingSymbol],
     Just Definition {definitionType, definitionBody = Assumption} <- [Map.lookup symbol (globals programEnvironment)]
   ]
-  where
-    render = renderTermIn (globals programEnvironment) (displayName globalNames) K.emptyContext []
+
+-- a closed term in the program's display names.
+renderClosed :: SourceProgram -> Term -> String
+renderClosed SourceProgram {..} = renderTermIn (globals programEnvironment) (displayName globalNames) K.emptyContext []
+
+-- the checked body of a source `let` or `fast` declaration.
+sourceBody :: DefinitionBody -> Maybe Term
+sourceBody = \case
+  Transparent term -> Just term
+  Fixpoint _ term -> Just term
+  _ -> Nothing
 
 termGlobals :: Term -> [SymbolId]
 termGlobals = \case
@@ -318,12 +350,9 @@ termGlobals = \case
   term -> concatMap (termGlobals . snd) (children term)
 
 typeOfName :: SourceProgram -> String -> Either String String
-typeOfName SourceProgram {..} name = case lookupName name globalNames of
+typeOfName program@SourceProgram {..} name = case lookupName name globalNames of
   Just (AmbiguousName modules) -> Left (ambiguousName name modules)
-  binding -> maybe (Left ("unknown name '" ++ name ++ "'")) found (binding >>= bindingSymbol)
-  where
-    render = renderTermIn (globals programEnvironment) (displayName globalNames) K.emptyContext []
-    found identity = maybe (Left ("unknown name '" ++ name ++ "'")) (Right . render . definitionType) (Map.lookup identity (globals programEnvironment))
+  binding -> maybe (Left ("unknown name '" ++ name ++ "'")) (Right . renderClosed program . definitionType) (binding >>= bindingSymbol >>= (`Map.lookup` globals programEnvironment))
 
 sourceDefinitions :: SourceProgram -> [(SymbolId, K.Inferred)]
 sourceDefinitions = reverse . checkedDefinitions

@@ -11,9 +11,11 @@ import Control.Monad (unless)
 import Data.Aeson (FromJSON (..), Value, eitherDecodeStrict', encode, object, withObject, (.!=), (.:), (.:?), (.=))
 import Data.ByteString.Char8 qualified as ByteString
 import Data.ByteString.Lazy qualified as LazyByteString
+import Data.Either (isRight)
 import Data.Functor ((<&>))
 import Data.List (intercalate, isPrefixOf)
 import Data.Map.Strict qualified as Map
+import Data.Maybe (fromMaybe)
 import System.Directory (getCurrentDirectory)
 import System.Environment (getArgs)
 import System.Exit (ExitCode (..), exitFailure, exitWith)
@@ -50,7 +52,7 @@ commandOptions = go False Nothing False
   where
     go _ allowed empty ("--no-sorry" : rest) = go True allowed empty rest
     go strict allowed empty ("--allow-orset" : name : rest)
-      | not ("--" `isPrefixOf` name), not empty = go strict (Just (maybe [] id allowed ++ [name])) False rest
+      | not ("--" `isPrefixOf` name), not empty = go strict (Just (fromMaybe [] allowed ++ [name])) False rest
     go _ _ _ ["--allow-orset"] = Left "--allow-orset requireth a name"
     go strict allowed _ ("--no-orset" : rest)
       | maybe True null allowed = go strict (Just []) True rest
@@ -73,32 +75,27 @@ withProject base load failed action =
           build <- Dependent.compilerBuild
           let keys = Dependent.cacheKeys build projectImportSnapshots
           cached <- Dependent.loadInterfaces directory projectImportSnapshots keys
+          let failure available problem = failed project (failureDiagnostic projectSource projectImports problem) (Dependent.recoverSnapshotHoles available (SourceModule projectPath) projectSnapshot projectImportSnapshots)
           case Dependent.compileImports cached projectImportSnapshots (Dependent.snapshotImportPaths projectSnapshot) of
-            Left failure -> failed project (failureDiagnostic projectSource projectImports failure) (Dependent.recoverSnapshotHoles cached (SourceModule projectPath) projectSnapshot projectImportSnapshots)
+            Left problem -> failure cached problem
             Right reached -> do
               Dependent.saveInterfaces directory keys (Map.difference reached cached)
-              case fst <$> Dependent.compileSnapshot reached (SourceModule projectPath) projectSnapshot projectImportSnapshots of
-                Left failure -> failed project (failureDiagnostic projectSource projectImports failure) (Dependent.recoverSnapshotHoles reached (SourceModule projectPath) projectSnapshot projectImportSnapshots)
-                Right program -> action program
+              either (failure reached) action (fst <$> Dependent.compileSnapshot reached (SourceModule projectPath) projectSnapshot projectImportSnapshots)
 
 -- a file's failure is reported in the file that raised it.
 withProgram :: FilePath -> (Dependent.SourceProgram -> IO ()) -> IO ()
-withProgram path = withProject path (`loadProjectFile` path) (\project diagnostic _ -> report project diagnostic)
+withProgram path = withProject path (`loadProjectFile` path) (\project diagnostic _ -> report project diagnostic [])
 
 -- a failure in an imported module is reported at that module's file.
-report :: Project -> Diagnostic -> IO a
-report Project {projectPath, projectSource, projectImports, projectImportPaths} diagnostic@Diagnostic {diagnosticPath} = do
-  let ownerPath = maybe projectPath (\owner -> Map.findWithDefault owner owner projectImportPaths) diagnosticPath
-      ownerSource = maybe projectSource (\owner -> Map.findWithDefault projectSource owner projectImports) diagnosticPath
-  putStrLn (renderFileDiagnostic ownerPath ownerSource diagnostic)
-  exitFailure
-
 -- checking still faileth, but unrelated unfinished proofs retain their goals.
-reportGoals :: Project -> Diagnostic -> [Dependent.Hole] -> IO ()
-reportGoals Project {projectPath, projectSource, projectImports, projectImportPaths} diagnostic holes = do
-  let path = maybe projectPath (\owner -> Map.findWithDefault owner owner projectImportPaths) (diagnosticPath diagnostic)
-      source = maybe projectSource (\owner -> Map.findWithDefault projectSource owner projectImports) (diagnosticPath diagnostic)
-  putStrLn (renderFileDiagnostic path source diagnostic)
+report :: Project -> Diagnostic -> [Dependent.Hole] -> IO a
+report Project {projectPath, projectSource, projectImports, projectImportPaths} diagnostic@Diagnostic {diagnosticPath} holes = do
+  putStrLn
+    ( renderFileDiagnostic
+        (maybe projectPath (\owner -> Map.findWithDefault owner owner projectImportPaths) diagnosticPath)
+        (maybe projectSource (\owner -> Map.findWithDefault projectSource owner projectImports) diagnosticPath)
+        diagnostic
+    )
   printGoals projectPath projectSource holes
   exitFailure
 
@@ -138,7 +135,7 @@ runFile strict path programArgs = withProgram path \program -> do
 -- a checked file is a module or a program: a `main` it defineth must be
 -- `𝟙 deed`.
 checkFile :: Bool -> FilePath -> IO ()
-checkFile strict path = withProject path (`loadProjectFile` path) reportGoals \program -> do
+checkFile strict path = withProject path (`loadProjectFile` path) report \program -> do
   source <- readFile path
   either typeFailure (const (checkedOk strict path source program)) (DependentRun.checkMain program)
 
@@ -192,13 +189,11 @@ proofResult program strict policy name = do
 proofReport :: Dependent.ProofAudit -> Either String () -> String
 proofReport audit verified =
   unlines $
-    ["name: " ++ auditName, "ilk: " ++ auditType]
-      ++ (if null auditDependencies then ["dependencies: none"] else map dependencyReport auditDependencies)
+    ["name: " ++ Dependent.auditName audit, "ilk: " ++ Dependent.auditType audit]
+      ++ (if null dependencies then ["dependencies: none"] else map dependencyReport dependencies)
       ++ [either ("name error: " ++) (const "name ok") verified]
   where
-    auditName = Dependent.auditName audit
-    auditType = Dependent.auditType audit
-    auditDependencies = Dependent.auditDependencies audit
+    dependencies = Dependent.auditDependencies audit
     dependencyReport Dependent.ProofDependency {dependencyName, dependencyType, dependencyKind} =
       case dependencyKind of
         Dependent.SorryDependency -> "sorry: " ++ dependencyName ++ ": " ++ dependencyType
@@ -234,7 +229,8 @@ data EditorRequest = EditorRequest
     requestCommand :: String,
     requestName :: String,
     requestSource :: String,
-    requestImports :: Map.Map String String,
+    -- unsaved texts of open files, by path; other modules are read from disk.
+    requestTexts :: Map.Map FilePath String,
     requestPath :: Maybe FilePath,
     requestAllowedOrsettings :: Maybe [String]
   }
@@ -249,7 +245,7 @@ instance FromJSON EditorRequest where
       <*> request .: "command"
       <*> request .:? "name" .!= ""
       <*> request .: "source"
-      <*> request .: "imports"
+      <*> request .:? "texts" .!= Map.empty
       <*> request .:? "path"
       <*> request .:? "allowedOrsettings"
 
@@ -257,11 +253,16 @@ instance FromJSON EditorRequest where
 -- rechecketh only the modules that depend on it. a request that nameth its
 -- file also loadeth and saveth interfaces in that project's disk cache. the
 -- last root result is kept for a repeated request.
-type CompilationReport = (Either Dependent.CompileFailure Dependent.SourceProgram, [Dependent.Hole])
+-- the root's result, its goals and resolved names, and, computed only when
+-- asked, the names it may write.
+type CompilationReport = (Either Dependent.CompileFailure Dependent.SourceProgram, Dependent.Report, [(String, SymbolId, Bool)])
 
 data ImportCache = ImportCache
   { cacheBuild :: String,
-    cacheState :: MVar (Map.Map String Dependent.SourceProgram, Maybe ((String, Map.Map String String), CompilationReport))
+    cacheState :: MVar (Map.Map String Dependent.SourceProgram, Maybe ((String, Map.Map String String), CompilationReport)),
+    -- module roots by manifest and its text, so a pinned checkout is
+    -- verified again only after its manifest changeth.
+    cacheRoots :: MVar (Map.Map (Maybe FilePath, Maybe ByteString.ByteString) [FilePath])
   }
 
 editorSession :: IO ()
@@ -270,7 +271,8 @@ editorSession = do
   outputLock <- newMVar ()
   build <- Dependent.compilerBuild
   state <- newMVar (Map.empty, Nothing)
-  sessionLoop (ImportCache build state) workers outputLock
+  roots <- newMVar Map.empty
+  sessionLoop (ImportCache build state roots) workers outputLock
 
 sessionLoop :: ImportCache -> MVar (Map.Map Int ThreadId) -> MVar () -> IO ()
 sessionLoop cache workers outputLock = go 0
@@ -309,12 +311,56 @@ cancelEditorRequest workers outputLock requestId =
     thread <- modifyMVar workers \running -> pure (Map.delete requestId running, Map.lookup requestId running)
     mapM_ killThread thread
 
+-- neatening and highlighting read only the source. every other command
+-- checketh it with the modules its brings reach, resolved as the command
+-- line resolveth them.
 editorResponse :: ImportCache -> EditorRequest -> IO Value
-editorResponse cache EditorRequest {requestCommand, requestName, requestSource = source, requestImports = imports, requestPath, requestAllowedOrsettings} =
+editorResponse cache request@EditorRequest {requestCommand, requestSource = source} =
+  case requestCommand of
+    "format" -> pure (either (editorError . ("neaten error: " ++)) (\formatted -> object ["kind" .= ("format" :: String), "source" .= formatted]) (formatSource source))
+    "highlight" -> pure (syntaxResponse (sourceSyntaxSummary source))
+    _ ->
+      editorProject cache request >>= \case
+        Left message -> pure (editorError ("project error: " ++ message))
+        Right Project {projectImports, projectImportPaths} -> projectResponse cache request projectImports projectImportPaths
+
+-- a document's project: its brings, read through the unsaved texts. an
+-- unresolved bring is left for checking to report at its span.
+editorProject :: ImportCache -> EditorRequest -> IO (Either String Project)
+editorProject cache EditorRequest {requestPath, requestTexts, requestSource} = do
+  owner <- maybe ((</> "<untitled>.tung") <$> getCurrentDirectory) pure requestPath
+  sessionRoots cache owner >>= \case
+    Left message -> pure (Left message)
+    Right roots -> loadEditorProject roots requestTexts owner requestSource
+
+-- module roots are resolved again only when the manifest's text changeth.
+sessionRoots :: ImportCache -> FilePath -> IO (Either String [FilePath])
+sessionRoots ImportCache {cacheRoots} owner =
+  findManifest owner >>= \case
+    Left message -> pure (Left message)
+    Right manifest -> do
+      text <- traverse ByteString.readFile manifest
+      modifyMVar cacheRoots \known -> case Map.lookup (manifest, text) known of
+        Just roots -> pure (known, Right roots)
+        Nothing -> resolveLibraryRoots owner <&> \resolved -> (either (const known) (\roots -> Map.insert (manifest, text) roots known) resolved, resolved)
+
+projectResponse :: ImportCache -> EditorRequest -> Map.Map String String -> Map.Map String FilePath -> IO Value
+projectResponse cache EditorRequest {requestCommand, requestName, requestSource = source, requestPath, requestAllowedOrsettings} imports files =
   case requestCommand of
     "check" ->
-      compilationReport cache requestPath source imports <&> \(result, holes) ->
-        object ["kind" .= ("check" :: String), "diagnostics" .= (either (pure . failureDiagnostic source imports) (const []) result ++ holeGoals holes)]
+      compilationReport cache requestPath source imports <&> \(result, report, _) ->
+        object ["kind" .= ("check" :: String), "diagnostics" .= (either (pure . failureDiagnostic source imports) (const []) result ++ holeGoals (Dependent.reportHoles report))]
+    -- each written name checking resolved to a global, by its span: the
+    -- names of every declaration that checketh, even beside an error, and
+    -- the file of each bring path.
+    "names" ->
+      compilationReport cache requestPath source imports <&> \(_, report, visible) ->
+        object
+          [ "kind" .= ("names" :: String),
+            "files" .= files,
+            "resolved" .= [(spanStart span, spanEnd span, moduleLabel owner, name) | (span, SymbolId owner name) <- Dependent.reportNames report],
+            "visible" .= [(written, moduleLabel owner, name, constructor) | (written, SymbolId owner name, constructor) <- visible]
+          ]
     "ilk" ->
       compiled cache requestPath source imports <&> \case
         Left failure -> editorError (diagnosticMessage (failureDiagnostic source imports failure))
@@ -326,9 +372,19 @@ editorResponse cache EditorRequest {requestCommand, requestName, requestSource =
           path <- maybe getCurrentDirectory pure requestPath
           policy <- proofPolicy requestAllowedOrsettings path
           pure $ either (editorError . ("name error: " ++)) (uncurry proofResponse) (proofResult program True policy requestName)
-    "format" -> pure (either (editorError . ("neaten error: " ++)) (\formatted -> object ["kind" .= ("format" :: String), "source" .= formatted]) (formatSource source))
-    "highlight" -> pure (object ["kind" .= ("highlight" :: String), "roles" .= highlightSource source])
     _ -> pure (editorError ("checker session failed: unknown command '" ++ requestCommand ++ "'"))
+
+-- the parser's roles and the concrete tree's structure, from one parse.
+syntaxResponse :: SourceSyntax -> Value
+syntaxResponse SourceSyntax {..} =
+  object
+    [ "kind" .= ("highlight" :: String),
+      "roles" .= syntaxRoles,
+      "tokens" .= syntaxTokens,
+      "declarations" .= [object ["kind" .= declarationKind, "start" .= declarationStart, "end" .= declarationEnd, "headerEnd" .= declarationHeaderEnd, "shown" .= declarationShown, "doc" .= declarationDoc] | DeclarationSummary {..} <- syntaxDeclarations],
+      "imports" .= [object ["path" .= importPath, "alias" .= importAlias, "start" .= importStart, "end" .= importEnd] | ImportSummary {..} <- syntaxImports],
+      "scopes" .= syntaxScopes
+    ]
 
 editorError :: String -> Value
 editorError message = object ["kind" .= ("error" :: String), "message" .= message]
@@ -337,15 +393,12 @@ proofResponse :: Dependent.ProofAudit -> Either String () -> Value
 proofResponse audit verified =
   object
     [ "kind" .= ("proof" :: String),
-      "audit" .= object ["name" .= auditName, "ilk" .= auditType, "dependencies" .= map dependencyJSON auditDependencies],
-      "verified" .= either (const False) (const True) verified,
+      "audit" .= object ["name" .= Dependent.auditName audit, "ilk" .= Dependent.auditType audit, "dependencies" .= map dependencyJSON (Dependent.auditDependencies audit)],
+      "verified" .= isRight verified,
       "message" .= either id (const "name ok") verified,
       "report" .= proofReport audit verified
     ]
   where
-    auditName = Dependent.auditName audit
-    auditType = Dependent.auditType audit
-    auditDependencies = Dependent.auditDependencies audit
     dependencyJSON Dependent.ProofDependency {dependencySymbol = SymbolId owner name, dependencyName, dependencyType, dependencyKind} =
       object $
         [ "symbol" .= object ["module" .= moduleName owner, "name" .= name],
@@ -356,12 +409,16 @@ proofResponse audit verified =
             Dependent.SorryDependency -> ["kind" .= ("sorry" :: String)]
             Dependent.AxiomDependency -> ["kind" .= ("orsetting" :: String)]
             Dependent.HostDependency key -> ["kind" .= ("host" :: String), "host" .= key]
-    moduleName RootModule = "<root>"
-    moduleName (SourceModule path) = path
-    moduleName PrimitiveModule = "<primitive>"
+    moduleName = moduleLabel
+
+moduleLabel :: ModuleId -> String
+moduleLabel = \case
+  RootModule -> "<root>"
+  SourceModule path -> path
+  PrimitiveModule -> "<primitive>"
 
 compiled :: ImportCache -> Maybe FilePath -> String -> Map.Map String String -> IO (Either Dependent.CompileFailure Dependent.SourceProgram)
-compiled cache path source imports = fst <$> compilationReport cache path source imports
+compiled cache path source imports = (\(result, _, _) -> result) <$> compilationReport cache path source imports
 
 compilationReport :: ImportCache -> Maybe FilePath -> String -> Map.Map String String -> IO CompilationReport
 compilationReport ImportCache {cacheBuild, cacheState} path source imports = modifyMVar cacheState \previous@(memory, root) ->
@@ -378,12 +435,12 @@ compilationReport ImportCache {cacheBuild, cacheState} path source imports = mod
           kept reached = Map.fromList [(key, program) | (name, program) <- Map.toList reached, Just key <- [Map.lookup name keys]]
       case Dependent.compileImports start modules (Dependent.snapshotImportPaths snapshot) of
         Left failure ->
-          let result = (Left failure, Dependent.recoverSnapshotHoles start RootModule snapshot modules)
+          let result = (Left failure, Dependent.recoverSnapshotReport start RootModule snapshot modules, Dependent.snapshotVisible start snapshot modules)
            in pure ((kept start, Just ((source, imports), result)), result)
         Right reached -> do
           mapM_ (\dir -> Dependent.saveInterfaces dir keys (Map.difference reached start)) directory
           let result = fst <$> Dependent.compileSnapshot reached RootModule snapshot modules
-              report = (result, either (const (Dependent.recoverSnapshotHoles reached RootModule snapshot modules)) (reverse . Dependent.sourceHoles) result)
+              report = (result, either (const (Dependent.recoverSnapshotReport reached RootModule snapshot modules)) (\program -> Dependent.Report (reverse (Dependent.sourceHoles program)) (Dependent.sourceNames program)) result, Dependent.snapshotVisible reached snapshot modules)
           _ <- Exception.evaluate result
           pure ((kept reached, Just ((source, imports), report)), report)
 

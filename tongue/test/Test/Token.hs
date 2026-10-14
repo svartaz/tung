@@ -7,7 +7,7 @@ import Test.Harness qualified as Harness
 import Tung
 
 group :: IO Group
-group = Harness.group "token" (map lexCase lexCases ++ map lexError lexErrors ++ scalarCases)
+group = Harness.group "token" (map lexCase lexCases ++ map lexError lexErrors ++ scalarCases ++ pieceCases)
 
 lexCases :: [(String, String, [Token])]
 lexCases =
@@ -84,6 +84,7 @@ lexError (name, source) = case lexTokens source of
 keywordToken :: String -> Token
 keywordToken = \case
   "let" -> TLet
+  "fast" -> TFix
   "show" -> TExport
   "bring" -> TImport
   "ilk" -> TType
@@ -98,3 +99,21 @@ keywordToken = \case
   "unbuild" -> TInduce
   "fall" -> TFall
   name -> error ("missing keyword token in test: " ++ name)
+
+-- pieces cover the source exactly; a comment traileth the token on its line.
+pieceCases :: [Test]
+pieceCases =
+  [ expectEq ("pieces rejoin " ++ show source) (source, True) (concatMap pieceText pieces, contiguous pieces)
+  | source <- ["", "let x ≔ 1 # one\n", "𝟚 /* a */ y", "x 'open", "x /* open", "  \n\t"],
+    let pieces = lexPieces source
+  ]
+    ++ [ expectEq
+           "comments trail the token on their line and lead otherwise"
+           [Lexeme (TIdent "x"), Space, Comment Trailing, Space, Comment Leading, Space, Lexeme (TIdent "z"), Space, Comment Trailing, Space, Comment Leading, Space, Lexeme (TIdent "y")]
+           (map pieceKind (lexPieces "x # t\n# l\nz /* t */ /* l */ y")),
+         expectEq "a comment before any token leadeth" [Comment Leading, Space, Lexeme (TIdent "x")] (map pieceKind (lexPieces "# l\nx")),
+         expectEq "an unlexable run endeth its line and lexing resumeth" [Lexeme (TIdent "x"), Space, Unlexed, Space, Lexeme (TIdent "y")] (map pieceKind (lexPieces "x 'open\ny")),
+         expectEq "an unfinished block comment runneth to the end" [Lexeme (TIdent "x"), Space, Unlexed] (map pieceKind (lexPieces "x /* open\ny"))
+       ]
+  where
+    contiguous pieces = and (zipWith (\left right -> spanEnd (pieceSpan left) == spanStart (pieceSpan right)) pieces (drop 1 pieces))

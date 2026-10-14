@@ -3,9 +3,13 @@
 -- | source lexer. a name containeth any non-space character not reserved by
 -- 'specialNameChars'; literals and comments are consumed before name parsing.
 module Tung.Token
-  ( Token (TIdent, TNatural, TInteger, TFloat, TUnicode, TText, TBraceKeyword, TLet, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TOrsend, TInduce, TFall, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TEquals, TKindStar, TDollar, TAt),
+  ( Token (TIdent, TNatural, TInteger, TFloat, TUnicode, TText, TBraceKeyword, TLet, TFix, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TOrsend, TInduce, TFall, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TEquals, TKindStar, TDollar, TAt),
     SourceSpan (..),
     LocatedToken (..),
+    Piece (..),
+    PieceKind (..),
+    Placement (..),
+    lexPieces,
     tokenSpan,
     consumedSpan,
     SourceFailure (..),
@@ -35,7 +39,7 @@ data SourceSpan = SourceSpan
   { spanStart :: !Int,
     spanEnd :: !Int
   }
-  deriving (Eq, Show)
+  deriving (Eq, Ord, Show)
 
 data SourceFailure = SourceFailure
   { failureSpan :: Maybe SourceSpan,
@@ -57,6 +61,7 @@ data TokenKind
   | KTUnicode Char
   | KTText String
   | KTLet
+  | KTFix
   | KTExport
   | KTImport
   | KTType
@@ -128,8 +133,9 @@ pattern TBraceKeyword name <- Token _ (KTBraceKeyword name)
   where
     TBraceKeyword name = Token Nothing (KTBraceKeyword name)
 
-pattern TLet, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TOrsend, TInduce, TFall, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TEquals, TKindStar, TDollar, TAt :: Token
+pattern TLet, TFix, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TOrsend, TInduce, TFall, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TEquals, TKindStar, TDollar, TAt :: Token
 pattern TLet <- Token _ KTLet where TLet = Token Nothing KTLet
+pattern TFix <- Token _ KTFix where TFix = Token Nothing KTFix
 pattern TExport <- Token _ KTExport where TExport = Token Nothing KTExport
 pattern TImport <- Token _ KTImport where TImport = Token Nothing KTImport
 pattern TType <- Token _ KTType where TType = Token Nothing KTType
@@ -158,7 +164,7 @@ pattern TKindStar <- Token _ KTKindStar where TKindStar = Token Nothing KTKindSt
 pattern TDollar <- Token _ KTDollar where TDollar = Token Nothing KTDollar
 pattern TAt <- Token _ KTAt where TAt = Token Nothing KTAt
 
-{-# COMPLETE TIdent, TNatural, TInteger, TFloat, TUnicode, TText, TBraceKeyword, TLet, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TOrsend, TInduce, TFall, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TEquals, TKindStar, TDollar, TAt #-}
+{-# COMPLETE TIdent, TNatural, TInteger, TFloat, TUnicode, TText, TBraceKeyword, TLet, TFix, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TOrsend, TInduce, TFall, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TEquals, TKindStar, TDollar, TAt #-}
 
 tokenSpan :: Token -> Maybe SourceSpan
 tokenSpan (Token cursor _) = (\(TokenCursor span _ _) -> span) <$> cursor
@@ -188,48 +194,83 @@ lexTokens = fmap (map (withoutTokenSpan . locatedToken)) . lexLocatedTokens
 lexLocatedTokens :: String -> Either String [LocatedToken]
 lexLocatedTokens = either (Left . failureMessage) Right . lexLocatedTokensDetailed
 
+-- the strict lexer accepteth only a source that lexeth whole; its failure
+-- message cometh from the same rules run strictly.
 lexLocatedTokensDetailed :: String -> Either SourceFailure [LocatedToken]
-lexLocatedTokensDetailed source =
-  case M.parse (spaceConsumer *> many locatedTokenParser <* M.eof) "source" source of
-    Left err ->
-      let offset = offsets IntMap.! M.errorOffset (NE.head (M.bundleErrors err))
-       in Left (SourceFailure (Just (SourceSpan offset offset)) (M.errorBundlePretty err))
-    Right toks -> Right (locateTokens source toks)
+lexLocatedTokensDetailed source
+  | all ((/= Unlexed) . pieceKind) pieces = Right (piecesTokens pieces)
+  | otherwise = case M.parse (spaceConsumer *> many (lexeme rawTokenParser) <* M.eof) "source" source of
+      Left err ->
+        let offset = utf16Offsets source IntMap.! M.errorOffset (NE.head (M.bundleErrors err))
+         in Left (SourceFailure (Just (SourceSpan offset offset)) (M.errorBundlePretty err))
+      Right _ -> Left (SourceFailure Nothing "the lexers disagree; this is a compiler fault")
   where
-    offsets = utf16Offsets source
+    pieces = lexPieces source
 
--- editor clients retain complete tokens before an unfinished literal or comment.
--- the token rules are identical to the strict lexer above.
+-- recovery readeth the complete tokens before an unfinished literal or comment.
 lexLocatedPrefix :: String -> [LocatedToken]
-lexLocatedPrefix source =
-  either (const []) (locateTokens source) (M.parse (spaceConsumer *> many (M.try locatedTokenParser)) "source" source)
+lexLocatedPrefix = piecesTokens . takeWhile ((/= Unlexed) . pieceKind) . lexPieces
+
+-- every character of a source belongeth to one piece, in order, so the pieces'
+-- texts join to the source. where no rule accepteth a character, the rest of
+-- its line is one unlexed piece, or the rest of the source for an unfinished
+-- block comment, and lexing resumeth after it.
+data Piece = Piece
+  { pieceSpan :: !SourceSpan,
+    pieceText :: String,
+    pieceKind :: PieceKind
+  }
+  deriving (Eq, Show)
+
+data PieceKind = Lexeme Token | Space | Comment Placement | Unlexed
+  deriving (Eq, Show)
+
+-- a comment on the line of the token before it traileth that token; any
+-- other leadeth the next token.
+data Placement = Leading | Trailing
+  deriving (Eq, Show)
+
+lexPieces :: String -> [Piece]
+lexPieces source = place False False (map locate raw)
+  where
+    raw = either (const []) id (M.parse (concat <$> many (M.try ((: []) <$> piece) M.<|> unlexed)) "source" source)
+    offsets = utf16Offsets source
+    offset = (offsets IntMap.!)
+    locate (start, finish, kind) = Piece (SourceSpan (offset start) (offset finish)) (take (finish - start) (drop start source)) kind
+    unlexed = do
+      start <- M.getOffset
+      _ <- M.choice [() <$ (C.string "/*" *> M.takeRest), () <$ M.anySingle <* M.takeWhileP Nothing (/= '\n')]
+      finish <- M.getOffset
+      pure [(start, finish, Unlexed)]
+    piece = do
+      start <- M.getOffset
+      kind <- M.choice [Space <$ C.space1, Comment Leading <$ lineComment, Comment Leading <$ blockComment, Lexeme <$> rawTokenParser]
+      finish <- M.getOffset
+      pure (start, finish, kind)
+    place afterToken sameLine = \case
+      [] -> []
+      current@Piece {pieceKind, pieceText} : others -> case pieceKind of
+        Lexeme _ -> current : place True True others
+        Space -> current : place afterToken (sameLine && '\n' `notElem` pieceText) others
+        Comment _ | afterToken && sameLine -> current {pieceKind = Comment Trailing} : place afterToken False others
+        _ -> current : place afterToken False others
+
+-- the tokens of the pieces, each knowing the end of the token before it.
+piecesTokens :: [Piece] -> [LocatedToken]
+piecesTokens pieces = attach 0 [(span, token) | Piece span _ (Lexeme token) <- pieces]
+  where
+    finalEnd = case [span | Piece span _ (Lexeme _) <- pieces] of
+      [] -> 0
+      spans -> spanEnd (last spans)
+    attach _ [] = []
+    attach previous ((span, Token _ kind) : rest) =
+      LocatedToken span (Token (Just (TokenCursor span previous finalEnd)) kind) : attach (spanEnd span) rest
 
 utf16Offsets :: String -> IntMap.IntMap Int
 utf16Offsets source = IntMap.fromList (zip [0 ..] (scanl (+) 0 (map utf16Width source)))
 
-locateTokens :: String -> [LocatedToken] -> [LocatedToken]
-locateTokens source toks = withCursors 0 (map convertSpan toks)
-  where
-    offsets = utf16Offsets source
-    convertSpan LocatedToken {locatedSpan = SourceSpan start end, locatedToken} =
-      let span = SourceSpan (offsets IntMap.! start) (offsets IntMap.! end)
-       in LocatedToken span locatedToken
-    withCursors previous tokens = case tokens of
-      [] -> []
-      _ -> attach previous (spanEnd (locatedSpan (last tokens))) tokens
-    attach _ _ [] = []
-    attach previous finalEnd (LocatedToken span (Token _ kind) : rest) =
-      LocatedToken span (Token (Just (TokenCursor span previous finalEnd)) kind) : attach (spanEnd span) finalEnd rest
-
 utf16Width :: Char -> Int
 utf16Width character = if ord character > 0xffff then 2 else 1
-
-locatedTokenParser :: Lexer LocatedToken
-locatedTokenParser = lexeme do
-  start <- M.getOffset
-  token <- rawTokenParser
-  end <- M.getOffset
-  pure (LocatedToken (SourceSpan start end) token)
 
 rawTokenParser :: Lexer Token
 rawTokenParser =
@@ -359,7 +400,13 @@ validNameQualification name = case break (== '~') name of
   _ -> False
 
 spaceConsumer :: Lexer ()
-spaceConsumer = L.space C.space1 (L.skipLineComment "#") (L.skipBlockComment "/*" "*/")
+spaceConsumer = L.space C.space1 (() <$ lineComment) (() <$ blockComment)
+
+lineComment :: Lexer String
+lineComment = C.char '#' *> M.takeWhileP Nothing (/= '\n')
+
+blockComment :: Lexer String
+blockComment = C.string "/*" *> M.manyTill M.anySingle (C.string "*/")
 
 lexeme :: Lexer a -> Lexer a
 lexeme = L.lexeme spaceConsumer
@@ -376,6 +423,7 @@ keywordOrIdent name = fromMaybe (TIdent name) (lookup name keywordTokens)
 keywordTokens :: [(String, Token)]
 keywordTokens =
   [ ("let", TLet),
+    ("fast", TFix),
     ("show", TExport),
     ("bring", TImport),
     ("ilk", TType),

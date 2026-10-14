@@ -42,10 +42,13 @@ insertDeclarations owner program declarations = fst (recoverDeclarations owner p
 
 -- goals are diagnostics, not partial definitions. a failed declaration group
 -- leaveth its caller's environment untouched while retaining its checked goals.
-recoverDeclarations :: ModuleId -> SourceProgram -> [(Maybe SourceSpan, Declaration)] -> (Either SourceFailure SourceProgram, [Hole])
-recoverDeclarations owner program declarations = runWriter (runExceptT (checkDeclarations owner program declarations))
+-- a checked group keepeth the names its declarations resolved.
+recoverDeclarations :: ModuleId -> SourceProgram -> [(Maybe SourceSpan, Declaration)] -> (Either SourceFailure SourceProgram, Report)
+recoverDeclarations owner program declarations =
+  let (result, report) = runWriter (runExceptT (checkDeclarations owner program declarations))
+   in ((\checked -> checked {programNames = reportNames report ++ programNames checked}) <$> result, report)
 
-type Checking = ExceptT SourceFailure (Writer [Hole])
+type Checking = ExceptT SourceFailure (Writer Report)
 
 fromSource :: Either SourceFailure a -> Checking a
 fromSource = except
@@ -75,10 +78,7 @@ checkDeclarations :: ModuleId -> SourceProgram -> [(Maybe SourceSpan, Declaratio
 checkDeclarations _ program [] = pure program
 checkDeclarations owner program [(span, declaration)] = maybe id atSpan span (checkDeclaration owner program declaration)
 checkDeclarations owner program declarations@((span, _) : _) = maybe id atSpan span do
-  let unshown = \case
-        ShownDeclaration declaration -> unshown declaration
-        declaration -> declaration
-      shownNames = Set.fromList [name | (_, ShownDeclaration declaration) <- declarations, InductiveDeclaration {..} <- [unshown declaration], name <- inductiveName : map constructorName inductiveConstructors]
+  let shownNames = Set.fromList [name | (_, ShownDeclaration declaration) <- declarations, InductiveDeclaration {..} <- [unshown declaration], name <- inductiveName : map constructorName inductiveConstructors]
       plain = [(span, unshown declaration) | (span, declaration) <- declarations]
   defined <- insertInductives owner program plain
   withFields <- foldM (insertFields owner) defined (map snd plain)
@@ -94,23 +94,15 @@ checkDeclaration owner program = \case
   ReExportDeclaration names -> fromSource (reexportNames program names)
   declaration@InductiveDeclaration {} -> insertInductive owner program declaration >>= \defined -> insertFields owner defined declaration
   declaration@AssumptionDeclaration {} -> insertAssumption owner program declaration
-  Declaration {..} -> inContext ("in let '" ++ declarationName ++ "': ") do
+  declaration@Declaration {declarationFixpoint = True} -> insertFixpoint owner program declaration
+  Declaration {..} -> constant "let" owner program declarationName \identity -> do
     let SourceProgram {..} = program
-        identity = SymbolId owner declarationName
-    unless (declarationName /= "_") (failure "top-level definitions require a name")
-    fromSource (repeated localNames [declarationName])
     (result, (), holes, references) <- elaborateHoles program ((\(term, ty) -> (term, ty, ())) <$> inferDefinition programEnvironment globalNames emptyScope declarationName declarationAnnotation declarationBody)
     environment <- fromString (K.defineInferred programEnvironment identity result)
-    pure (bindLocal declarationName (FreshName identity (K.inferredUniverses result)) program {programEnvironment = environment, checkedDefinitions = (identity, result) : checkedDefinitions, programHoles = reverse holes ++ programHoles, programReferences = Map.insert identity references programReferences})
-  HostDeclaration {..} -> inContext ("in let '" ++ hostName ++ "': ") do
+    pure (introduce declarationName identity environment references (recorded identity result holes program))
+  HostDeclaration {..} -> constant "let" owner program hostName \identity -> do
     let SourceProgram {..} = program
-        identity = SymbolId owner hostName
-    unless (hostName /= "_") (failure "top-level definitions require a name")
-    fromSource (repeated localNames [hostName])
-    (signature, references) <- elaborateDependencies program do
-      result@(_, kind) <- inferExpression programEnvironment globalNames emptyScope hostAnnotation
-      requireUniverse emptyScope kind
-      pure result
+    (signature, references) <- elaborateSignature program hostAnnotation
     -- the model is a hidden definition; a call of the binding's own name in
     -- it is structural recursion. it is checked against the binding's checked
     -- type, whose universe parameters stay rigid, so both share them even
@@ -124,9 +116,28 @@ checkDeclaration owner program = \case
       modelEnvironment <- fromString (lowerSurplus (K.inferredUniverses signature) result >>= K.defineInferred programEnvironment modelIdentity)
       pure (modelEnvironment, modelReferences)
     environment <- fromString (H.defineHost (maybe programEnvironment fst modelled) identity hostKey (modelIdentity <$ hostModel) signature)
-    let universes = maybe 0 definitionUniverses (Map.lookup identity (globals environment))
-    let provenance = maybe id (Map.insert modelIdentity . snd) modelled (Map.insert identity references programReferences)
-    pure (bindLocal hostName (FreshName identity universes) program {programEnvironment = environment, programReferences = provenance})
+    pure (introduce hostName identity environment references program {programReferences = maybe id (Map.insert modelIdentity . snd) modelled programReferences})
+
+-- a top-level constant is checked in its own context. its name is written
+-- and not yet declared.
+constant :: String -> ModuleId -> SourceProgram -> String -> (SymbolId -> Checking a) -> Checking a
+constant keyword owner SourceProgram {localNames} name check = inContext ("in " ++ keyword ++ " '" ++ name ++ "': ") do
+  unless (name /= "_") (failure ("a top-level " ++ keyword ++ " requireth a name"))
+  fromSource (repeated localNames [name])
+  check (SymbolId owner name)
+
+-- a checked constant joineth the environment and the name table, with the
+-- references its source useth.
+introduce :: String -> SymbolId -> K.Environment -> Set.Set SymbolId -> SourceProgram -> SourceProgram
+introduce name identity environment references program@SourceProgram {programReferences} =
+  bindLocal name (FreshName identity universes) program {programEnvironment = environment, programReferences = Map.insert identity references programReferences}
+  where
+    universes = maybe 0 definitionUniverses (Map.lookup identity (globals environment))
+
+-- a checked source body keepeth its judgement and goals for later audits.
+recorded :: SymbolId -> K.Inferred -> [Hole] -> SourceProgram -> SourceProgram
+recorded identity result holes program@SourceProgram {checkedDefinitions, programHoles} =
+  program {checkedDefinitions = (identity, result) : checkedDefinitions, programHoles = reverse holes ++ programHoles}
 
 -- instance search in a model may leave universe parameters that its type
 -- doth not mention; they are set to zero so the model shareth the binding's
@@ -141,18 +152,44 @@ lowerSurplus kept inferred@K.Inferred {..}
             LevelBelow left right -> LevelBelow <$> instantiateLevel levels left <*> instantiateLevel levels right
       K.Inferred kept <$> traverse constraint inferredConstraints <*> instantiateLevels levels inferredTerm <*> instantiateLevels levels inferredType
 
+-- a top-level annotation is an ilk, checked with the references it useth.
+elaborateSignature :: SourceProgram -> Expression -> Checking (K.Inferred, Set.Set SymbolId)
+elaborateSignature program@SourceProgram {programEnvironment, globalNames} annotation = elaborateDependencies program do
+  result@(_, kind) <- inferExpression programEnvironment globalNames emptyScope annotation
+  requireUniverse emptyScope kind
+  pure result
+
+-- a fast body nameth its declaration as a global with the signature's rigid
+-- universe parameters, as a host model nameth its binding, so it may call
+-- itself anywhere. the kernel storeth it as an opaque fixpoint.
+insertFixpoint :: ModuleId -> SourceProgram -> Declaration -> Checking SourceProgram
+insertFixpoint owner program@SourceProgram {..} Declaration {..} = constant "fast" owner program declarationName \identity -> do
+  annotation <- maybe (failure "a fast declaration requireth an ilk annotation") pure declarationAnnotation
+  (K.Inferred {inferredUniverses, inferredConstraints, inferredTerm}, signatureReferences) <- elaborateSignature program annotation
+  let own = Definition inferredUniverses inferredConstraints inferredTerm Assumption
+      environment = K.Environment (Map.insert identity own (globals programEnvironment))
+      names = insertName declarationName (FixedName identity (map LParam [0 .. inferredUniverses - 1])) globalNames
+  (result, (), holes, references) <- elaborateHoles program {programEnvironment = environment, globalNames = names} do
+    expected <- E.evaluate K.emptyContext inferredTerm
+    term <- checkExpression environment names emptyScope declarationBody expected
+    pure (term, expected, ())
+  unless (Set.member identity references) (failure "a fast declaration nameth itself; one that doth not is a let")
+  -- instance search may add universe parameters after the signature's; each
+  -- self-call passeth them on unchanged, so the recursion stayeth uniform.
+  let surplus = map LParam [inferredUniverses .. K.inferredUniverses result - 1]
+      extend _ (Global symbol levels) _ | symbol == identity = pure (Global symbol (levels ++ surplus))
+      extend _ _ descend = descend
+      checked = result {K.inferredTerm = runIdentity (traverseScoped extend (K.inferredTerm result))}
+  defined <- fromString (H.defineFixpoint programEnvironment identity checked)
+  pure (introduce declarationName identity defined (Set.delete identity (references <> signatureReferences)) (recorded identity checked holes program))
+insertFixpoint _ _ _ = failure "expected fast declaration"
+
 -- an assumption checketh only its type; the kernel stores it without a body.
 insertAssumption :: ModuleId -> SourceProgram -> Declaration -> Checking SourceProgram
-insertAssumption owner program@SourceProgram {..} AssumptionDeclaration {..} = inContext ("in orsetting '" ++ assumptionName ++ "': ") do
-  let identity = SymbolId owner assumptionName
-  unless (assumptionName /= "_") (failure "an orsetting requireth a name")
-  fromSource (repeated localNames [assumptionName])
-  (signature, references) <- elaborateDependencies program do
-    result@(_, kind) <- inferExpression programEnvironment globalNames emptyScope assumptionAnnotation
-    requireUniverse emptyScope kind
-    pure result
+insertAssumption owner program@SourceProgram {programEnvironment} AssumptionDeclaration {..} = constant "orsetting" owner program assumptionName \identity -> do
+  (signature, references) <- elaborateSignature program assumptionAnnotation
   environment <- fromString (K.assume programEnvironment identity signature)
-  pure (bindLocal assumptionName (FreshName identity (K.inferredUniverses signature)) program {programEnvironment = environment, programReferences = Map.insert identity references programReferences})
+  pure (introduce assumptionName identity environment references program)
 insertAssumption _ _ _ = failure "expected orsetting declaration"
 
 insertInductive :: ModuleId -> SourceProgram -> Declaration -> Checking SourceProgram
@@ -170,10 +207,7 @@ insertInductives owner program@SourceProgram {..} declarations = inContext conte
   signaturesWithReferences <- for group \(span, name, annotation, constructors) -> maybe id atSpan span do
     let family = SymbolId owner name
         uniform = uniformParameters name constructors annotation
-    (signature, references) <- elaborateDependencies program do
-      result@(_, kind) <- inferExpression programEnvironment globalNames emptyScope annotation
-      requireUniverse emptyScope kind
-      pure result
+    (signature, references) <- elaborateSignature program annotation
     fromString (K.validate programEnvironment signature)
     normal <- fromString (N.normalise (globals programEnvironment) 0 (K.inferredTerm signature))
     let info = InductiveInfo families (length uniform) (length uniform) (drop (length uniform) (productPlicities normal)) [] []
@@ -398,6 +432,7 @@ insertInstance owner program@SourceProgram {..} BizenDeclaration {..} = inContex
   pure registered {programHoles = reverse memberHoles ++ programHoles, programReferences = Map.insert identity references programReferences}
   where
     member definitions Declaration {..} = do
+      when declarationFixpoint (failure "a bizen member is a let, not fast")
       when (Map.member declarationName definitions) (failure ("bizen member repeateth '" ++ declarationName ++ "'"))
       pure (Map.insert declarationName (maybe declarationBody (Ascription declarationBody) declarationAnnotation) definitions)
     member _ _ = failure "a bizen inholdeth only let definitions"
@@ -446,7 +481,7 @@ lowerDictionary SourceProgram {..} = bindHeader
           (_, term, used, bindings) <- build scope target definitions
           case Set.toList (Map.keysSet definitions `Set.difference` used) of
             name : _ -> E.failure ("'" ++ name ++ "' is not a member of this flock or a parent it witnesseth")
-            [] -> pure (foldr (\(annotation, value) body -> Let annotation value body) term bindings)
+            [] -> pure (foldr (uncurry Let) term bindings)
     build scope target definitions = do
       (family, arguments, info) <- classApplication target >>= maybe (E.failure "a bizen ilk must end in a flock application") pure
       constructor <- case Map.lookup family (globals programEnvironment) of

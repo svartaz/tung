@@ -5,12 +5,15 @@
 -- one neat form, and neatening is idempotent.
 module Tung.Format (formatSource) where
 
-import Data.Char (isDigit, isSpace)
-import Data.IntMap.Strict qualified as IntMap
-import Data.List (dropWhileEnd, intercalate, isPrefixOf, sort, sortOn, stripPrefix)
-import Data.Maybe (isJust)
-import Tung.Dependent.Source.Parse (parseProgram)
-import Tung.Token
+import Control.Applicative ((<|>))
+import Control.Monad (guard)
+import Data.Char (isSpace)
+import Data.List (dropWhileEnd, intercalate, isPrefixOf, sort, sortOn)
+import Data.Maybe (fromMaybe, isNothing, listToMaybe)
+import Tung.Concrete (Leaf (..), NodeKind (..), Tree (..))
+import Tung.Dependent.Source.Parse (parseProgram, sourceTree)
+import Tung.Token hiding (Piece (..), PieceKind (..), Placement (..))
+import Tung.Token qualified as T
 
 -- the widest line the neatener leaveth when the line can be broken.
 lineLimit :: Int
@@ -19,12 +22,10 @@ lineLimit = 80
 formatSource :: String -> Either String String
 formatSource source = do
   _ <- parseProgram source
-  located <- lexLocatedTokens source
-  let pieces = attachComments source located
-      (declarations, closing) = topLevel (forest pieces)
+  let (declarations, closing) = topLevel (sourceTree source)
       rendered = renderDeclarations (sortBrings declarations) closing
-      result = intercalate "\n" (alignRows (map (dropWhileEnd isSpace) (lines rendered)))
-      output = if null (trim result) then "" else dropWhileEnd (== '\n') result ++ "\n"
+      result = intercalate "\n" (alignRows (map (dropWhileEnd blank) (outLines rendered)))
+      output = if all isSpace result then "" else dropWhileEnd (== '\n') result ++ "\n"
   -- the neatener only moveth whitespace and comments, so the tokens agree.
   after <- lexTokens output
   before <- lexTokens source
@@ -33,123 +34,103 @@ formatSource source = do
     else Left "the neatener changed the tokens; this is a compiler fault"
 
 -- a token's own text with the comments before it and the one that endeth its
--- line. a comment on the line of the previous token trails that token; any
--- other leadeth the next. the last piece's leading comments close the file.
+-- line, as the concrete tree attacheth them.
 data Piece = Piece
   { pieceText :: String,
     pieceToken :: Maybe Token,
     pieceLeading :: [String],
-    pieceTrailing :: Maybe String
+    pieceTrailing :: Maybe String,
+    -- zero-width tags around the text, which mark case rows for alignment.
+    pieceBefore :: [Tag],
+    pieceAfter :: [Tag]
   }
 
-attachComments :: String -> [LocatedToken] -> [Piece]
-attachComments source located = go 0 Nothing located
+piece :: Leaf -> Piece
+piece Leaf {..} = Piece (maybe "" T.pieceText leafPiece) (leafPiece >>= token) (comments leafLeading) (listToMaybe (comments leafTrailing)) [] []
   where
-    characters = utf16Characters source
-    character offset = IntMap.findWithDefault (length source) offset characters
-    slice from to = take (to - from) (drop from source)
-    go from previous = \case
-      [] ->
-        let (trailing, leading) = gapComments (isJust previous) (drop from source)
-         in finish previous trailing ++ [Piece "" Nothing leading Nothing]
-      LocatedToken (SourceSpan start end) token : rest ->
-        let (trailing, leading) = gapComments (isJust previous) (slice from (character start))
-            piece = Piece (slice (character start) (character end)) (Just token) leading Nothing
-         in finish previous trailing ++ go (character end) (Just piece) rest
-    finish previous trailing = case previous of
-      Just piece -> [piece {pieceTrailing = trailing}]
-      Nothing -> []
+    token T.Piece {pieceKind = T.Lexeme lexeme} = Just lexeme
+    token _ = Nothing
+    comments pieces = [dropWhileEnd isSpace (T.pieceText comment) | comment@T.Piece {pieceKind = T.Comment _} <- pieces]
 
--- utf-16 offsets of token spans as character indices.
-utf16Characters :: String -> IntMap.IntMap Int
-utf16Characters source = IntMap.fromList (zip (scanl (+) 0 (map width source)) [0 ..])
+-- a bracket's inside is its items, each with the separator that endeth it:
+-- the slots, rows, members, or declarations the parser marked, or else the
+-- whole inside as one item.
+data Node = Atom Piece | Bracket Piece Inside Piece
+
+data Inside = Inside
+  { insideItems :: [[Node]],
+    -- the inside holdeth declarations, as a block or a flock's members.
+    insideDeclares :: Bool,
+    -- the inside holdeth case rows.
+    insideRows :: Bool
+  }
+
+-- top-level declarations, and the comments that close the file.
+topLevel :: Tree -> ([[Node]], [String])
+topLevel = \case
+  TreeNode FileNode children -> ([nodes declaration | TreeNode DeclarationNode declaration <- children], [comment | TreeLeaf leaf@Leaf {leafPiece = Nothing} <- children, comment <- pieceLeading (piece leaf)])
+  tree -> ([nodes [tree]], [])
+
+nodes :: [Tree] -> [Node]
+nodes = concatMap \case
+  TreeLeaf leaf -> [Atom (piece leaf)]
+  TreeNode BracketNode (TreeLeaf open : rest)
+    | not (null rest), TreeLeaf close <- last rest -> [Bracket (piece open) (inside (init rest)) (piece close)]
+  TreeNode _ children -> nodes children
+
+inside :: [Tree] -> Inside
+inside children
+  | any marked children = Inside (concatMap expand (go children)) (any (kind DeclarationNode) children) (any (kind RowNode) children)
+  | otherwise = Inside [nodes children | not (null children)] False False
   where
-    width character = if fromEnum character > 0xffff then 2 else 1
-
--- the comments of the whitespace between two tokens: the one on the earlier
--- token's line, if any, and the others in order.
-gapComments :: Bool -> String -> (Maybe String, [String])
-gapComments afterToken = go True
-  where
-    go sameLine text = case dropWhile (\character -> isSpace character && character /= '\n') text of
-      [] -> (Nothing, [])
-      '\n' : rest -> go False rest
-      '#' : rest ->
-        let (body, remaining) = break (== '\n') rest
-            comment = dropWhileEnd isSpace ('#' : body)
-            (trailing, leading) = go False remaining
-         in if sameLine && afterToken then (Just comment, trailing `before` leading) else (Nothing, comment : maybe leading (: leading) trailing)
-      '/' : '*' : rest ->
-        let (body, remaining) = blockComment rest
-            comment = "/*" ++ body
-            (trailing, leading) = go False remaining
-         in if sameLine && afterToken then (Just comment, trailing `before` leading) else (Nothing, comment : maybe leading (: leading) trailing)
-      _ : rest -> go sameLine rest
-    before trailing leading = maybe leading (: leading) trailing
-    blockComment = \case
-      '*' : '/' : rest -> ("*/", rest)
-      character : rest -> let (body, remaining) = blockComment rest in (character : body, remaining)
-      [] -> ([], [])
-
--- tokens nest by their brackets; `>{` and `<{` open a brace.
-data Node = Atom Piece | Bracket Piece [Node] Piece
-
-forest :: [Piece] -> [Node]
-forest = fst . go
-  where
+    -- each marked child, with the separators after it.
     go = \case
-      [] -> ([], [])
-      piece : rest
-        | opens piece ->
-            let (inside, afterInside) = go rest
-             in case afterInside of
-                  close : remaining ->
-                    let (siblings, final) = go remaining
-                     in (Bracket piece inside close : siblings, final)
-                  [] -> ([Bracket piece inside (Piece "" Nothing [] Nothing)], [])
-        | closes piece -> ([], piece : rest)
-        | otherwise -> let (siblings, final) = go rest in (Atom piece : siblings, final)
+      [] -> []
+      child : rest -> let (after, others) = break marked rest in (kind RowNode child, nodes (child : after)) : go others
+    expand (row, item) = if row then map tagRow (filter (not . null) (split item)) else [item]
+    marked child = any (`kind` child) [DeclarationNode, ItemNode, RowNode]
+    kind wanted = \case
+      TreeNode found _ -> found == wanted
+      _ -> False
+    -- a row's `;` endeth one alternative and beginneth the next.
+    split = \case
+      [] -> []
+      item ->
+        let (alternative, rest) = break (atomIn [TSemicolon]) item
+         in case rest of
+              semicolon : after -> (alternative ++ [semicolon]) : split after
+              [] -> [alternative]
 
-opens, closes :: Piece -> Bool
-opens piece = case pieceToken piece of
-  Just token -> token `elem` [TLParen, TLBracket, TLBrace] || isBraceKeyword token
-  Nothing -> False
-closes piece = maybe False (`elem` [TRParen, TRBracket, TRBrace]) (pieceToken piece)
+-- a row's columns end at its pattern commas, and its patterns end before
+-- `^` or `;`; the tags let alignment find them in the laid-out lines.
+tagRow :: [Node] -> [Node]
+tagRow item = case break (atomIn [TMapsTo]) item of
+  (left@(_ : _), caret : right) -> start (columns (tagLast ResultStart left)) ++ caret : right
+  _ -> case reverse item of
+    semicolon : before@(_ : _) | atomIn [TSemicolon] semicolon -> start (columns (tagLast AlternativeEnd (reverse before))) ++ [semicolon]
+    _ -> item
+  where
+    columns = map \node -> if atomIn [TComma] node then after ColumnEnd node else node
+    start = \case
+      Atom piece : rest -> Atom piece {pieceBefore = RowStart : pieceBefore piece} : rest
+      Bracket open contents close : rest -> Bracket open {pieceBefore = RowStart : pieceBefore open} contents close : rest
+      [] -> []
+    tagLast tag nodes' = case reverse nodes' of
+      final : before -> reverse before ++ [after tag final]
+      [] -> []
+    after tag = \case
+      Atom piece -> Atom piece {pieceAfter = pieceAfter piece ++ [tag]}
+      Bracket open contents close -> Bracket open contents close {pieceAfter = pieceAfter close ++ [tag]}
+
+-- an atom that is one of these tokens.
+atomIn :: [Token] -> Node -> Bool
+atomIn tokens = \case
+  Atom piece -> maybe False (`elem` tokens) (pieceToken piece)
+  _ -> False
 
 isBraceKeyword :: Token -> Bool
 isBraceKeyword = \case
   TBraceKeyword _ -> True
-  _ -> False
-
--- top-level declarations, and the comments that close the file.
-topLevel :: [Node] -> ([[Node]], [String])
-topLevel nodes =
-  let closing = case reverse nodes of
-        Atom piece@Piece {pieceToken = Nothing} : _ -> pieceLeading piece
-        _ -> []
-      body = [node | node <- nodes, not (endOfFile node)]
-   in (splitDeclarations body, closing)
-  where
-    endOfFile = \case
-      Atom Piece {pieceToken = Nothing} -> True
-      _ -> False
-
--- a declaration beginneth at a keyword, except `let` after `show`.
-splitDeclarations :: [Node] -> [[Node]]
-splitDeclarations = go []
-  where
-    go current = \case
-      [] -> [reverse current | not (null current)]
-      node : rest
-        | startsDeclaration node, not (null current), not (afterShow current) -> reverse current : go [node] rest
-        | otherwise -> go (node : current) rest
-    afterShow = \case
-      [Atom piece] -> pieceToken piece == Just TExport
-      _ -> False
-
-startsDeclaration :: Node -> Bool
-startsDeclaration = \case
-  Atom piece -> maybe False (`elem` [TLet, TExport, TImport, TType, TClass, TInstance, TOrsend, TYield]) (pieceToken piece)
   _ -> False
 
 -- consecutive `bring` declarations are sorted by path.
@@ -166,23 +147,23 @@ sortBrings = \case
 
 bringing :: [Node] -> Bool
 bringing = \case
-  Atom piece : _ -> pieceToken piece == Just TImport
+  node : _ -> atomIn [TImport] node
   _ -> False
 
 nodePieces :: Node -> [Piece]
 nodePieces = \case
   Atom piece -> [piece]
-  Bracket open inside close -> open : concatMap nodePieces inside ++ [close]
+  Bracket open Inside {insideItems} close -> open : concatMap (concatMap nodePieces) insideItems ++ [close]
 
 -- one blank line between declarations, none between `bring`s.
-renderDeclarations :: [[Node]] -> [String] -> String
+renderDeclarations :: [[Node]] -> [String] -> [Out]
 renderDeclarations declarations closing =
   let rendered = [(bringing declaration, layout (declarationDoc declaration)) | declaration <- declarations]
       joined = concat (zipWith separator (Nothing : map (Just . fst) rendered) rendered)
       separator previous (isBring, text) = case previous of
         Nothing -> text
-        Just wasBring -> (if wasBring && isBring then "\n" else "\n\n") ++ text
-      ending = if null closing then "" else (if null rendered then "" else "\n\n") ++ layout (commentsDoc closing)
+        Just wasBring -> map Out (if wasBring && isBring then "\n" else "\n\n") ++ text
+      ending = if null closing then [] else map Out (if null rendered then "" else "\n\n") ++ layout (commentsDoc closing)
    in joined ++ ending
 
 declarationDoc :: [Node] -> Doc
@@ -195,9 +176,7 @@ declarationDoc written =
         _ -> itemDoc nodes
   where
     declaresBody = \case
-      Atom piece : rest
-        | pieceToken piece == Just TExport -> declaresBody rest
-        | otherwise -> maybe False (`elem` [TType, TClass, TInstance]) (pieceToken piece)
+      node : rest -> if atomIn [TExport] node then declaresBody rest else atomIn [TType, TClass, TInstance] node
       _ -> False
 
 -- a brace that holdeth an ilk's constructors, a flock's members, or a
@@ -227,26 +206,22 @@ itemBody nodes
   | Just binding <- bindingDoc nodes = binding
   | otherwise = arrowBody nodes
 
--- a `let` or `orsetting` that doth not fit on one line putteth its `≔ body`
+-- a `let`, `fast`, or `orsetting` that doth not fit on one line putteth its `≔ body`
 -- on a line of its own, two columns in, and its `: annotation` too when the
 -- name and annotation do not fit together; a block after `≔` openeth on that
 -- line.
 bindingDoc :: [Node] -> Maybe Doc
 bindingDoc nodes = do
-  let (keywords, afterKeywords) = span keyword nodes
+  let (keywords, afterKeywords) = span (atomIn [TExport, TLet, TFix, TOrsend]) nodes
   name : rest <- Just afterKeywords
-  guard (any binds keywords)
+  guard (any (atomIn [TLet, TFix, TOrsend]) keywords)
   let (annotation, body) = case rest of
         Atom colon : afterColon
           | pieceToken colon == Just TColon -> case splitAtToken TEquals afterColon of
               Just (written, sign, right) -> (Just (colon, written), Just (sign, right))
               Nothing -> (Just (colon, afterColon), Nothing)
         _ -> (Nothing, fmap (\(_, sign, right) -> (sign, right)) (splitAtToken TEquals rest))
-      head' = sequenceDoc (keywords ++ [name])
-      annotationDoc = case annotation of
-        Just (colon, written) -> Nest 2 (SoftLine <> pieceDoc colon <> Text " " <> sequenceDoc written)
-        Nothing -> Nil
-      named = Group (head' <> annotationDoc)
+      named = Group (sequenceDoc (keywords ++ [name]) <> foldMap (\(colon, written) -> Nest 2 (SoftLine <> pieceDoc colon <> Text " " <> sequenceDoc written)) annotation)
   -- a body that openeth a block standeth outside the group, so the binding
   -- need fit only up to the block's opening; the block decideth its own form.
   pure case body of
@@ -254,23 +229,13 @@ bindingDoc nodes = do
       | opensBlock right -> Group (named <> Nest 2 (Line <> pieceDoc sign)) <> Text " " <> sequenceDoc right
       | otherwise -> Group (named <> Nest 2 (Line <> pieceDoc sign <> (if null right then Nil else Text " " <> sequenceDoc right)))
     Nothing -> named
-  where
-    keyword = \case
-      Atom piece -> maybe False (`elem` [TExport, TLet, TOrsend]) (pieceToken piece)
-      _ -> False
-    binds = \case
-      Atom piece -> maybe False (`elem` [TLet, TOrsend]) (pieceToken piece)
-      _ -> False
-    guard condition = if condition then Just () else Nothing
 
 -- a row's `^`, or a binding outside a declaration, keepeth its left side on
 -- the line and breaketh before the right one unless that openeth a block.
 arrowBody :: [Node] -> Doc
-arrowBody nodes = case splitAtToken TEquals nodes of
+arrowBody nodes = case splitAtToken TEquals nodes <|> splitAtToken TMapsTo nodes of
   Just (left, sign, right) -> sequenceDoc left <> Text " " <> pieceDoc sign <> rightDoc right
-  Nothing -> case splitAtToken TMapsTo nodes of
-    Just (left, sign, right) -> sequenceDoc left <> Text " " <> pieceDoc sign <> rightDoc right
-    Nothing -> sequenceDoc nodes
+  Nothing -> sequenceDoc nodes
   where
     rightDoc right
       | null right = Nil
@@ -290,15 +255,12 @@ splitAtToken wanted = go []
 -- `match` keepeth to the line of its sign.
 opensBlock :: [Node] -> Bool
 opensBlock = \case
-  Bracket open inside _ : _ -> braceLike open || declarationBlock inside
-  Atom piece : _ -> pieceToken piece == Just TMatch
+  Bracket open inside _ : _ -> braceLike open || insideDeclares inside
+  node : _ -> atomIn [TMatch] node
   _ -> False
 
 braceLike :: Piece -> Bool
 braceLike piece = maybe False (\token -> token == TLBrace || isBraceKeyword token) (pieceToken piece)
-
-declarationBlock :: [Node] -> Bool
-declarationBlock = any startsDeclaration
 
 -- terms of one item: each space may break, filling lines, except after `:`
 -- and `$`, and there is no space inside a name such as `x.field` or `@α`.
@@ -315,7 +277,7 @@ sequenceDoc = go Nothing False
             Nothing -> term
             Just earlier
               | glued (lastPiece earlier) (firstPiece node) -> term
-              | matching || lastToken earlier `elem` [Just TColon, Just TDollar] || braceLike (firstPiece node) -> Text " " <> term
+              | matching || pieceToken (lastPiece earlier) `elem` [Just TColon, Just TDollar] || braceLike (firstPiece node) -> Text " " <> term
               | otherwise -> Group (Nest 2 (Line <> term))
           stillMatching = case node of
             Atom piece -> matching || pieceToken piece == Just TMatch
@@ -342,34 +304,21 @@ lastPiece = \case
   Atom piece -> piece
   Bracket _ _ close -> close
 
-lastToken :: Node -> Maybe Token
-lastToken = pieceToken . lastPiece
-
-bracketDoc :: Context -> Piece -> [Node] -> Piece -> Doc
-bracketDoc context open inside close
-  | null inside = pieceDoc open <> pieceDoc close
-  | open `has` TLBracket = pieceDoc open <> Nest 2 (fillItems (items inside)) <> pieceDoc close
-  | open `has` TLParen, declarationBlock inside = blockDoc False False (items inside)
-  | open `has` TLParen = pieceDoc open <> itemDoc inside <> pieceDoc close
-  | maybe False isBraceKeyword (pieceToken open) = case items inside of
-      first : rest -> FromLine (Group (pieceDoc open <> itemDoc first <> Nest 2 (mconcat [Line <> itemDoc item | item <- rest]) <> SoftLine <> pieceDoc close))
-      [] -> pieceDoc open <> pieceDoc close
-  | otherwise =
-      let rows = items inside
-          padded = context /= Ordinary
-          forced = (context == DeclarationBody && (length rows > 1 || declarationBlock inside)) || (isCases rows && length rows > 1)
-       in blockDoc padded forced rows
+bracketDoc :: Context -> Piece -> Inside -> Piece -> Doc
+bracketDoc context open Inside {..} close
+  | null insideItems = pieceDoc open <> pieceDoc close
+  | open `has` TLBracket = pieceDoc open <> Nest 2 (fillItems insideItems) <> pieceDoc close
+  | open `has` TLParen, insideDeclares = blockDoc False False
+  | open `has` TLParen = pieceDoc open <> itemDoc (concat insideItems) <> pieceDoc close
+  | maybe False isBraceKeyword (pieceToken open),
+    first : rest <- insideItems =
+      FromLine (Group (pieceDoc open <> itemDoc first <> Nest 2 (mconcat [Line <> itemDoc item | item <- rest]) <> SoftLine <> pieceDoc close))
+  | otherwise = blockDoc (context /= Ordinary) ((context == DeclarationBody && (several || insideDeclares)) || (insideRows && several))
   where
     has piece token = pieceToken piece == Just token
-    isCases rows = any (any isCaret) rows || any endsWithSemicolon rows
-    isCaret = \case
-      Atom piece -> piece `has` TMapsTo
-      _ -> False
-    endsWithSemicolon row = case reverse row of
-      Atom piece : _ -> piece `has` TSemicolon
-      _ -> False
-    blockDoc padded forced rows =
-      let inner = mconcat (zipWith (\index item -> (if index == (0 :: Int) then Nil else Line) <> itemDoc item) [0 ..] rows)
+    several = length insideItems > 1
+    blockDoc padded forced =
+      let inner = mconcat (zipWith (\index item -> (if index == (0 :: Int) then Nil else Line) <> itemDoc item) [0 ..] insideItems)
           edge = if padded then Line else SoftLine
           body = pieceDoc open <> Nest 2 (edge <> inner) <> edge <> pieceDoc close
        in FromLine (if forced then Break body else Group body)
@@ -380,42 +329,9 @@ fillItems = \case
   [] -> Nil
   first : rest -> itemDoc first <> mconcat [Group (Line <> itemDoc item) | item <- rest]
 
--- the items of a bracket's inside: a `,` or `;` endeth an item, except a `,`
--- between a row's patterns before its `^` and between `match` scrutinees;
--- a declaration keyword beginneth one.
-items :: [Node] -> [[Node]]
-items = go [] False False
-  where
-    go current _ _ [] = [reverse current | not (null current)]
-    go current caret inMatch (node : rest)
-      | startsDeclaration node, not (null current), not (afterShow current) = reverse current : go [node] False False rest
-      | isToken TSemicolon node = reverse (node : current) : go [] False False rest
-      | isToken TComma node, not inMatch, caret || not (rowAhead rest) = reverse (node : current) : go [] False False rest
-      | isToken TMapsTo node = go (node : current) True inMatch rest
-      | isToken TMatch node = go (node : current) caret True rest
-      | inMatch, isBrace node = go (node : current) caret False rest
-      | otherwise = go (node : current) caret inMatch rest
-    afterShow = \case
-      [Atom piece] -> pieceToken piece == Just TExport
-      _ -> False
-    isToken token = \case
-      Atom piece -> pieceToken piece == Just token
-      _ -> False
-    isBrace = \case
-      Bracket open _ _ -> pieceToken open == Just TLBrace
-      _ -> False
-    -- a `,` before a `^` of the same row separateth its patterns.
-    rowAhead = \case
-      [] -> False
-      node : rest
-        | isToken TMapsTo node -> True
-        | isToken TComma node || isToken TSemicolon node -> rowAhead rest
-        | startsDeclaration node -> False
-        | otherwise -> rowAhead rest
-
 pieceDoc :: Piece -> Doc
 pieceDoc Piece {..} =
-  commentsDoc pieceLeading <> Text pieceText <> maybe Nil (\comment -> Text " " <> Comment comment <> HardLine) pieceTrailing
+  commentsDoc pieceLeading <> foldMap Marker pieceBefore <> Text pieceText <> foldMap Marker pieceAfter <> maybe Nil (\comment -> Text " " <> Comment comment <> HardLine) pieceTrailing
 
 commentsDoc :: [String] -> Doc
 commentsDoc comments = mconcat [HardLine <> Comment comment <> HardLine | comment <- comments]
@@ -436,6 +352,7 @@ data Doc
   | -- a block: its inside is indented from the line it beginneth on, so it
     -- closeth at that line's indentation.
     FromLine Doc
+  | Marker Tag
   | Doc :<> Doc
 
 instance Semigroup Doc where
@@ -447,25 +364,42 @@ instance Monoid Doc where
 data Mode = Flat | Broken
   deriving (Eq)
 
-layout :: Doc -> String
-layout doc = dropWhileEnd isSpace (go 0 (Just 0) 0 [(0, Broken, doc)])
+-- laid-out text with the zero-width tags that mark case rows.
+data Out = Out Char | Tag Tag
+
+data Tag = RowStart | ColumnEnd | ResultStart | AlternativeEnd
+  deriving (Eq)
+
+blank :: Out -> Bool
+blank = \case
+  Out character -> isSpace character
+  Tag _ -> True
+
+outLines :: [Out] -> [[Out]]
+outLines outs = case break (\case Out '\n' -> True; _ -> False) outs of
+  (line, _ : rest) -> line : outLines rest
+  (line, []) -> [line]
+
+layout :: Doc -> [Out]
+layout doc = dropWhileEnd blank (go 0 (Just 0) 0 [(0, Broken, doc)])
   where
     -- `pending` is the indentation awaited by a fresh line; consecutive
     -- breaks merge into one, so no break leaveth an empty line. `lineAt` is
     -- the indentation of the line being written.
-    go :: Int -> Maybe Int -> Int -> [(Int, Mode, Doc)] -> String
-    go _ _ _ [] = ""
+    go :: Int -> Maybe Int -> Int -> [(Int, Mode, Doc)] -> [Out]
+    go _ _ _ [] = []
     go column pending lineAt ((indent, mode, current) : rest) = case current of
       Nil -> go column pending lineAt rest
       Text "" -> go column pending lineAt rest
-      Text text -> start ++ text ++ go (here + length text) Nothing current' rest
+      Text text -> map Out (start ++ text) ++ go (here + length text) Nothing current' rest
       Comment comment ->
         let wrapped = wrapComment (lineLimit - here) comment
-         in start ++ intercalate ("\n" ++ replicate here ' ') wrapped ++ go (here + length (last wrapped)) Nothing current' rest
+         in map Out (start ++ intercalate ("\n" ++ replicate here ' ') wrapped) ++ go (here + length (last wrapped)) Nothing current' rest
+      Marker tag -> Tag tag : go column pending lineAt rest
       left :<> right -> go column pending lineAt ((indent, mode, left) : (indent, mode, right) : rest)
       Nest more inner -> go column pending lineAt ((indent + more, mode, inner) : rest)
       FromLine inner -> go column pending lineAt ((current', mode, inner) : rest)
-      Line | mode == Flat -> if pending == Nothing then ' ' : go (column + 1) Nothing lineAt rest else go column pending lineAt rest
+      Line | mode == Flat -> if isNothing pending then Out ' ' : go (column + 1) Nothing lineAt rest else go column pending lineAt rest
       SoftLine | mode == Flat -> go column pending lineAt rest
       Group inner
         | mode == Flat -> go column pending lineAt ((indent, Flat, inner) : rest)
@@ -474,11 +408,11 @@ layout doc = dropWhileEnd isSpace (go 0 (Just 0) 0 [(0, Broken, doc)])
       Break inner -> go column pending lineAt ((indent, Broken, inner) : rest)
       _ -> case pending of
         Just _ -> go column (Just indent) lineAt rest
-        Nothing -> '\n' : go column (Just indent) lineAt rest
+        Nothing -> Out '\n' : go column (Just indent) lineAt rest
       where
-        here = maybe column id pending
+        here = fromMaybe column pending
         start = maybe "" (`replicate` ' ') pending
-        current' = maybe lineAt id pending
+        current' = fromMaybe lineAt pending
     fits width items rest
       | width < 0 = False
       | otherwise = case items of
@@ -489,6 +423,7 @@ layout doc = dropWhileEnd isSpace (go 0 (Just 0) 0 [(0, Broken, doc)])
             Nil -> fits width others rest
             Text text -> fits (width - length text) others rest
             Comment comment -> fits (width - length comment) others rest
+            Marker _ -> fits width others rest
             left :<> right -> fits width ((indent, mode, left) : (indent, mode, right) : others) rest
             Nest more inner -> fits width ((indent + more, mode, inner) : others) rest
             FromLine inner -> fits width ((indent, mode, inner) : others) rest
@@ -526,17 +461,18 @@ data CaseRow = CaseRow
     rowResult :: Maybe String
   }
 
-alignRows :: [String] -> [String]
-alignRows = go Code
+alignRows :: [[Out]] -> [String]
+alignRows = \case
+  [] -> []
+  lines'@(line : rest)
+    | Just row <- caseRow line ->
+        let (group, remaining) = spanRows row lines'
+            aligned = map (renderRow (widths group)) group
+            original = map plain (take (length group) lines')
+         in (if all ((<= lineLimit) . length) aligned then aligned else original) ++ alignRows remaining
+    | otherwise -> plain line : alignRows rest
   where
-    go _ [] = []
-    go Code lines'@(line : _)
-      | Just row <- caseRow line =
-          let (group, remaining) = spanRows row lines'
-              aligned = map (renderRow (widths group)) group
-              original = take (length group) lines'
-           in (if all ((<= lineLimit) . length) aligned then aligned else original) ++ go Code remaining
-    go lexicalState (line : rest) = line : go (lineLexicalState lexicalState line) rest
+    plain line = [character | Out character <- line]
     spanRows first = \case
       line : rest
         | Just row <- caseRow line,
@@ -552,94 +488,21 @@ alignRows = go Code
             Just result -> final ++ replicate (last columnWidths - length final) ' ' ++ " ^" ++ (if null result then "" else ' ' : result)
             Nothing -> final ++ ";"
 
--- a line whose own top level holdeth `^`, or that endeth in `;`, outside
--- brackets, literals, and comments.
-caseRow :: String -> Maybe CaseRow
+-- a line that holdeth one whole row from its start.
+caseRow :: [Out] -> Maybe CaseRow
 caseRow line = do
-  let (indent, content) = span (== ' ') line
-  guard' (not (null content) && not (commentHead content) && not (declarationHead content))
-  (patterns, result) <- split 0 [] content
-  let columns = map trim (topLevelCommas patterns)
-  guard' (not (null patterns) && all (not . null) columns && all (not . any (`elem` ("≔{" :: String))) columns)
-  pure (CaseRow indent columns (fmap trim result))
+  let (lead, content) = span blank line
+  (columns, ending) <- case [() | Tag RowStart <- lead] of
+    [_] -> columnsOf [] content
+    _ -> Nothing
+  pure (CaseRow [character | Out character@' ' <- lead] columns ending)
   where
-    guard' condition = if condition then Just () else Nothing
-    split :: Int -> String -> String -> Maybe (String, Maybe String)
-    split depth seen = \case
-      [] | depth == 0, ';' : before <- seen -> Just (reverse before, Nothing)
-      [] -> Nothing
-      '\'' : rest -> literal ('\'' : seen) rest >>= \(seen', rest') -> split depth seen' rest'
-      '`' : rest ->
-        let remaining = characterLiteralTail rest
-         in split depth (reverse (take (length rest - length remaining) rest) ++ '`' : seen) remaining
-      '#' : _ -> Nothing
-      '^' : rest | depth == 0 -> Just (reverse seen, Just rest)
-      character : rest
-        | character `elem` ("([{" :: String) -> split (depth + 1) (character : seen) rest
-        | character `elem` (")]}" :: String) -> if depth == 0 then Nothing else split (depth - 1) (character : seen) rest
-        | otherwise -> split depth (character : seen) rest
-    literal seen = \case
-      '\\' : character : rest -> literal (character : '\\' : seen) rest
-      '\'' : rest -> Just ('\'' : seen, rest)
-      character : rest -> literal (character : seen) rest
-      [] -> Nothing
-    topLevelCommas = go' 0 []
-      where
-        go' :: Int -> String -> String -> [String]
-        go' _ current [] = [reverse current]
-        go' depth current (character : rest)
-          | character == ',' && depth == 0 = reverse current : go' depth [] rest
-          | character `elem` ("([{" :: String) = go' (depth + 1) (character : current) rest
-          | character `elem` (")]}" :: String) = go' (depth - 1) (character : current) rest
-          | otherwise = go' depth (character : current) rest
-
-data LexicalState = Code | Text' | BlockComment
-
-lineLexicalState :: LexicalState -> String -> LexicalState
-lineLexicalState = go
-  where
-    go state [] = case state of
-      Text' -> Code
-      _ -> state
-    go BlockComment ('*' : '/' : rest) = go Code rest
-    go BlockComment (_ : rest) = go BlockComment rest
-    go Text' ('\\' : _ : rest) = go Text' rest
-    go Text' ('\'' : rest) = go Code rest
-    go Text' (_ : rest) = go Text' rest
-    go Code ('#' : _) = Code
-    go Code ('/' : '*' : rest) = go BlockComment rest
-    go Code ('\'' : rest) = go Text' rest
-    go Code ('`' : rest) = go Code (characterLiteralTail rest)
-    go Code (_ : rest) = go Code rest
+    text outs = trim [character | Out character <- outs]
+    columnsOf done outs = case break (\case Tag tag -> tag `elem` [ColumnEnd, ResultStart, AlternativeEnd]; _ -> False) outs of
+      (column, Tag ColumnEnd : rest) -> columnsOf (done ++ [dropWhileEnd (== ',') (text column)]) rest
+      (column, Tag ResultStart : rest) -> Just (done ++ [text column], Just (trim (drop 1 (text rest))))
+      (column, Tag AlternativeEnd : _) -> Just (done ++ [text column], Nothing)
+      _ -> Nothing
 
 trim :: String -> String
 trim = dropWhile isSpace . dropWhileEnd isSpace
-
-declarationHead :: String -> Bool
-declarationHead line = any (`startsHead` line) ["bring", "yield", "show", "let", "ilk", "flock", "bizen", "orsetting"]
-
-commentHead :: String -> Bool
-commentHead line = "#" `isPrefixOf` line || "/*" `isPrefixOf` line
-
--- a declaration keyword is followed by a space or, for `bizen`, ':'.
-startsHead :: String -> String -> Bool
-startsHead word line = startsWord word line || (word ++ ":") `isPrefixOf` line
-
-startsWord :: String -> String -> Bool
-startsWord word line = case stripPrefix word line of
-  Just [] -> True
-  Just (next : _) -> isSpace next
-  Nothing -> False
-
-characterLiteralTail :: String -> String
-characterLiteralTail [] = []
-characterLiteralTail ('\\' : rest) = case rest of
-  [] -> []
-  first : remaining
-    | isDigit first ->
-        let (_, afterDigits) = span isDigit rest
-         in case afterDigits of
-              ';' : after -> after
-              _ -> afterDigits
-    | otherwise -> remaining
-characterLiteralTail (_ : rest) = rest

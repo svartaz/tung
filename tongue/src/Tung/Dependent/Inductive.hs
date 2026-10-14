@@ -244,8 +244,7 @@ potentialNested families term =
 specialiseNested :: Globals -> Map.Map SymbolId Family -> [Family] -> K.Typing ([InductiveDeclaration], [NestedTarget])
 specialiseNested _ _ [] = pure ([], [])
 specialiseNested globals peers families@(first : _) = do
-  (declarations, targets) <- runStateT (traverse rewriteDeclaration families >>= \declarations -> close 0 >> pure declarations) []
-  pure (declarations, targets)
+  runStateT (traverse rewriteDeclaration families <* close 0) []
   where
     declaration = familyDeclaration first
     parameters = familyParameters first
@@ -253,7 +252,6 @@ specialiseNested globals peers families@(first : _) = do
     levels = map LParam [0 .. inductiveUniverses declaration - 1]
     rootNames = Map.keys peers
     wrap constructor body = foldr (\(_, domain) result -> constructor Implicit domain result) body parameters
-    familyWrap telescope body = foldr (uncurry Pi) body telescope
     parameterContext = foldM (\context (_, domain) -> K.bind context <$> K.evaluate globals context domain) K.emptyContext parameters
     rewriteDeclaration family = do
       constructors <- forM (inductiveConstructors (familyDeclaration family)) \(name, annotation) -> do
@@ -282,7 +280,7 @@ specialiseNested globals peers families@(first : _) = do
               [] -> do
                 -- specialise every peer with the same fixed parameter vector.
                 forM_ [peer | peer <- inductiveFamilies info, Just Definition {definitionBody = TypeConstructor _} <- [Map.lookup peer globals]] \peer -> do
-                  let candidate = applyArguments (Global peer universeArguments) [(plicity, argument) | (plicity, argument) <- snd (termSpine carrier)]
+                  let candidate = applyArguments (Global peer universeArguments) (snd (termSpine carrier))
                   existing <- get
                   unless (any ((== candidate) . nestedCarrier) existing) (addTarget peer universeArguments candidate)
                 created <- get
@@ -298,7 +296,7 @@ specialiseNested globals peers families@(first : _) = do
       let args = snd (termSpine term)
           expected = map fst (familyParameters family ++ familyIndices family)
       unless (map fst args == expected) (K.failure "inductive result requireth every parameter and index")
-      unless (all (not . containsFamilies rootNames . snd) args) (K.failure "inductive family cannot occur inside its arguments")
+      when (any (containsFamilies rootNames . snd) args) (K.failure "inductive family cannot occur inside its arguments")
       unless (map snd (take parameterCount args) == [Local (depth - position - 1) | position <- [0 .. parameterCount - 1]]) (K.failure "nested recursive parameters must remain uniform")
       case fst (termSpine term) of
         Global _ actual -> do
@@ -319,7 +317,7 @@ specialiseNested globals peers families@(first : _) = do
       existing <- get
       let SymbolId owner root = inductiveName declaration
           label = SymbolId owner ("#nested_" ++ root ++ "_" ++ show (length existing))
-          kind = familyWrap parameters (Sort (familySort first))
+          kind = foldr (uncurry Pi) (Sort (familySort first)) parameters
           args = snd (termSpine carrier)
       when (Map.member label globals) (lift (K.failure "duplicate nested target identity"))
       context <- lift parameterContext
@@ -350,7 +348,7 @@ restoreNested original families@(first : _) targets (K.Environment certified) = 
   let targetTable = Map.fromList [(inductiveName (nestedDeclaration target), target) | target <- targets]
       wrappers =
         Map.fromList
-          ( [(inductiveName (nestedDeclaration target), foldr (\(plicity, domain) body -> Lambda plicity domain body) (nestedCarrier target) (familyParameters first)) | target <- targets]
+          ( [(inductiveName (nestedDeclaration target), foldr (uncurry Lambda) (nestedCarrier target) (familyParameters first)) | target <- targets]
               ++ [(temporary, body) | target <- targets, (temporary, _, body) <- nestedConstructors target]
           )
       constructorNames = Map.fromList [(temporary, actual) | target <- targets, (temporary, actual, _) <- nestedConstructors target]
@@ -381,7 +379,7 @@ restoreNested original families@(first : _) targets (K.Environment certified) = 
       -- certificate justifieth recursion; typing alone doth not prove it.
       members = [(inductiveName declaration, inductiveEliminator declaration) | declaration <- map familyDeclaration families ++ map nestedDeclaration targets]
       opaque = opaqueRecursors final (map snd members)
-  forM_ (Map.toList public) \(_, definition@Definition {definitionType, definitionBody}) -> do
+  forM_ (Map.elems public) \definition@Definition {definitionType, definitionBody} -> do
     K.checkType opaque K.emptyContext definitionType
     case definitionBody of
       EliminationTarget _ body -> K.checkTerm opaque K.emptyContext body definitionType
@@ -416,13 +414,13 @@ checkRules globals members@((first, firstRecursor) : _) = do
       fieldContext <-
         foldM
           ( \current (_, annotation, _) -> do
-              let preceding = length (K.contextTypes current) - count
+              let preceding = K.contextDepth current - count
               moved <- lift (renameTerm ([0 .. parameters - 1] ++ [count .. count + preceding - 1]) (count + preceding) annotation)
               K.bind current <$> K.evaluate opaque current moved
           )
           context
           fields
-      let depth = length (K.contextTypes fieldContext)
+      let depth = K.contextDepth fieldContext
           shared = [(Implicit, localAt depth index) | index <- [0 .. parameters - 1]]
           values = [(plicity, localAt depth (count + position)) | (position, (plicity, _, _)) <- zip [0 ..] fields]
       value <- case definitionBody definition of
@@ -503,19 +501,18 @@ familyApplication :: Globals -> Map.Map SymbolId Family -> Family -> K.Context -
 familyApplication globals peers Family {familyDeclaration = InductiveDeclaration {..}, familyParameters = parameters, familyIndices = indices} context term = do
   let (headTerm, arguments) = termSpine term
       expectedPlicities = map fst (parameters ++ indices)
-      contextDepth = length (K.contextTypes context)
   levels <- case headTerm of
     Global name universeArguments | name == inductiveName -> pure universeArguments
     _ -> K.failure "inductive occurrence must be a direct saturated family application"
   unless (length levels == inductiveUniverses) (K.failure "wrong number of inductive universe arguments")
   traverse_ (K.oblige . uncurry LevelEqual) (zip levels (map LParam [0 .. inductiveUniverses - 1]))
   unless (length arguments == length expectedPlicities && map fst arguments == expectedPlicities) (K.failure "inductive result requireth every parameter and index")
-  unless (all (not . containsFamilies (Map.keys peers) . snd) arguments) (K.failure "inductive family cannot occur inside its arguments")
+  when (any (containsFamilies (Map.keys peers) . snd) arguments) (K.failure "inductive family cannot occur inside its arguments")
   let (actualParameters, resultIndices) = splitAt inductiveParameters arguments
   traverse_
     ( \(position, (_, argument)) -> do
         actual <- K.evaluate globals context argument
-        expected <- K.evaluate globals context (Local (contextDepth - position - 1))
+        expected <- K.evaluate globals context (Local (K.contextDepth context - position - 1))
         K.convert globals context actual expected
     )
     (zip [0 ..] actualParameters)
@@ -571,7 +568,7 @@ generateRecursor families constructors target@Family {familyDeclaration = Induct
                   applied = applyArguments (Local inputCount) [(plicity, Local (inputCount - position - 1)) | (position, (plicity, _)) <- zip [0 ..] inputs]
               (motiveLevel, _) <- motiveOf family
               let conclusion = applyArguments (localAt (current + 1 + inputCount) motiveLevel) (drop parameterCount familyArguments ++ [(Explicit, applied)])
-                  hypothesis = foldr (\(plicity, input) body -> Pi plicity input body) conclusion inputs
+                  hypothesis = foldr (uncurry Pi) conclusion inputs
               Pi Explicit hypothesis <$> fields (current + 2) extended remaining
             Nothing -> fields (current + 1) extended remaining
           pure (Pi plicity moved remainder)
@@ -610,7 +607,7 @@ generateRule families@(firstFamily : _) constructors Constructor {..} = do
             indices = drop parameterCount (snd (termSpine result))
             common = [(if level < parameterCount then Implicit else Explicit, localAt current level) | level <- [0 .. prefixCount - 1]]
             call = applyArguments (Global (inductiveEliminator (familyDeclaration family)) recursorLevels) (common ++ indices ++ [(Explicit, child)])
-            hypothesis = foldr (\(visibility, annotation) body -> Lambda visibility annotation body) call inputs
+            hypothesis = foldr (uncurry Lambda) call inputs
         pure [(plicity, field), (Explicit, hypothesis)]
   pure (applyArguments (localAt depth (parameterCount + length families + methodIndex)) arguments)
   where

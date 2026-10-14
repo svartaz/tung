@@ -205,9 +205,8 @@ let naught_+: [n: ℕ, (0 + n) = n] ≔ match n {
 
 # `sorry` standeth in for any value or proof not yet written, and
 # `orsetting name: type` assumeth one. `--check` listeth both, and
-# `--no-sorry` refuseth them. `tung --check-soothing naught_+
-# byspel/walkthrough.tung`
-# listeth what one proof reacheth; `--no-axioms` also refuseth any `orsetting`.
+# `--no-sorry` refuseth them. `tung --name naught_+ byspel/walkthrough.tung`
+# listeth what one proof reacheth; `--no-orset` also refuseth any `orsetting`.
 # 13. deeds
 # a deed is an action that the runner performeth, such as writing. building a
 # deed doth nothing; only `main` is performed.
@@ -216,6 +215,13 @@ let greet: [name: string, 𝟙 deed] ≔ ('hello, ' write) then (name write_line
 
 # `bind` passeth a deed's result to a function that chooseth the next deed.
 let roll: 𝟙 deed ≔ random bind {luck ^ luck to_string $ write_line}
+
+# `fast` declareth a deed that may call itself without bound. this one writeth
+# back each line it readeth until input endeth.
+fast echo: 𝟙 deed ≔ read bind {
+  none      ^ only sheer,
+  line some ^ (line write_line) then echo
+}
 
 # `>{then, …}` doth many deeds in order.
 let eftbare: 𝟙 deed ≔ >{then,

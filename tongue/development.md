@@ -58,15 +58,15 @@ requests; the homebrew workflow also testeth formula installation.
 
 ```text
 source text
-  -> tokenisation and utf-16 spans
-  -> one expression parser for types and values
+  -> lossless pieces with utf-16 spans
+  -> one expression parser for types and values, and the concrete tree
   -> project loading and import resolution
   -> bidirectional elaboration, pattern compilation, and instance search
   -> independent dependent-kernel checking
   -> normalisation for conversion, or erasure for runtime execution
 ```
 
-- tokenisation needeth no parser state, and parsing no type information.
+- lexing needeth no parser state, and parsing no type information.
 - elaboration may insert implicit arguments and solve typed contextual holes;
   the kernel rejecteth every term hole and validateth completed definitions.
 - normalisation computeth type equality and never performeth a deed. runtime
@@ -76,8 +76,10 @@ source text
 
 | module                                 | responsibility                                                                                      |
 | -------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| `Tung.Token`                           | lexical syntax and utf-16 source locations                                                          |
-| `Tung.Dependent.Source.Parse`          | declarations, expressions, and compiler source roles                                                |
+| `Tung.Token`                           | lexical syntax, lossless pieces, and utf-16 source locations                                        |
+| `Tung.Concrete`                        | the lossless concrete syntax tree from pieces and parser marks                                      |
+| `Tung.Highlight`                       | roles, tokens, declarations, imports, and rows of one parse for editors                             |
+| `Tung.Dependent.Source.Parse`          | declarations, expressions, source roles, node marks, and recovery                                   |
 | `Tung.Dependent.Source.Syntax`         | one source expression syntax and lexical free-name analysis for types and values                    |
 | `Tung.Dependent.Source.Environment`    | checked module state, checking references, name visibility, exports, and class registries           |
 | `Tung.Dependent.Source.Proof`          | dependency closure, assumption auditing, and orsetting policy checking                              |
@@ -120,7 +122,9 @@ invariants live beside the code.
 `Project` holdeth the root text, reachable imported text, and file paths for
 diagnostics. each snapshot shareth its located parse between import discovery
 and compilation, and filesystem projects keep snapshots beside their text and
-owning paths.
+owning paths. `loadEditorProject` readeth unsaved texts, keyed by canonical
+path, before files, and leaveth out a missing or ambiguous bring, so checking
+reporteth it at its span; the command line refuseth both.
 
 `compileImports` compileth reached modules once into a map of `SourceProgram`
 values; `compileSnapshot` reuseth it for a root module and returneth any
@@ -170,7 +174,8 @@ beside the nearest `tung.yaml`, or beside the file without one.
 an editor session reuseth compiled imports by transitive interface key: an
 edited import invalidateth its dependants only. the session cacheth the last
 root result, an import failure included, until the root text or imports
-change. highlighting needeth no compilation.
+change, and each manifest's module roots until its text changeth, so a pinned
+checkout is not verified per request. highlighting needeth no compilation.
 
 ## elaboration and checking
 
@@ -221,11 +226,24 @@ orsetting policy and, when strict, refuseth `sorry`. `Main` rendereth one
 report for `--name` and the editor, whose `proof` command is always strict.
 auditing addeth no kernel typing or conversion rule.
 
-### recovery
+### concrete tree and recovery
 
-`Parse.recoverSnapshot` keepeth complete declarations at unindented heads
-outside balanced delimiters; unfinished delimiters, strings, and comments may
-limit it. `Elaboration.recover` keepeth inference state so encountered holes
+`Token.lexPieces` covereth the source with pieces: tokens, spaces, comments,
+and unlexed runs, whose texts join to the source. a comment on the line of the
+token before it traileth that token; any other leadeth the next. where no rule
+accepteth a character, the rest of its line is one unlexed piece, or the rest
+of the source for an unfinished block comment, and lexing resumeth; the strict
+lexer and recovery read only the tokens before the first unlexed piece. the
+parser's side channel carrieth roles and node marks: declarations, bracket
+items, case rows, and members. `Concrete.concreteTree` pairth brackets
+lexically and nesteth each mark that covereth whole siblings, so the tree's
+text is the source's.
+
+`Parse.recover` is the one walk for diagnostics, highlighting, and the tree:
+it keepeth complete declarations at unindented heads outside balanced
+delimiters, and a region between them is a broken node whose lines are parsed
+one by one for roles and marks only. unfinished delimiters, strings, and
+comments may limit it. `Elaboration.recover` keepeth inference state so encountered holes
 show goals and contexts after failure, while speculative attempts still
 restore theirs. `Source.Declaration.recoverDeclarations` returneth goals apart
 from its checked result: failed groups and their dependants never enter the
@@ -243,8 +261,10 @@ eraseth types and implementeth the [evaluation rules](language.md#application)
 with haskell thunks shared by delayed arguments, lets, globals, fields,
 eliminator methods, and recursive hypotheses; a failure is an `RFailure` value
 that faileth when inspected. `settled` computeth a value fully where the
-language requireth it, and `execute` keepeth bind and fixed-point steps in
-tail position. deeds reach the host only through `HostIO`: `ioHost` is the
+language requireth it, and `execute` keepeth bind and `fast` unfoldings in
+tail position. a fixpoint's global entry nameth itself through the lazy
+table; a full application of it is a `DFast` deed, so its body unfoldeth only
+when performed. deeds reach the host only through `HostIO`: `ioHost` is the
 process host and useth `Tung.Web` for servers, and tests use the simulated
 host in `Test.DependentSupport`. `runYield` validateth its `Inferred`
 judgement with the kernel before erasure; `runMain` and validation share one
@@ -261,7 +281,11 @@ and name, with no shape matching or built-in bizen.
 
 ## test machinery
 
-- `Test.Harness` compileth reusable bookhoard imports once per process; a test
+- a full run checketh all of bookhoard once in the parent process and saveth
+  its interfaces in `dist-newstyle/test-interfaces`; each group process
+  beginneth from them, and a single selected group checketh what it needeth.
+  a module whose private names a test readeth is checked again from source.
+- `Test.Harness` compileth further bookhoard imports once per process; a test
   replacing a library source invalidateth that cache and its compiled
   dependants in both shared helpers.
 - the runner forceth each outcome before the next test, so checks keep no
@@ -283,9 +307,11 @@ the comments between them, so sources with one concrete syntax tree share one
 neat form: whitespace never changeth it and neatening is idempotent. a final
 check refuseth output whose tokens differ from the source's.
 
-- a comment on the line of the token before it trails that token; any other
-  leadeth the next token at its item's indentation. these attachments are the
-  only layout read from the source.
+- it walketh the concrete tree: declarations and a bracket's items are the
+  nodes the parser marked, each with its separator; an unmarked inside is one
+  item, and a row's `;` endeth each alternative.
+- a comment keepeth the lexer's attachment, a leading one at its item's
+  indentation; this is the only layout read from the source.
 - one blank line parteth top-level declarations; consecutive `bring`s stay
   together, sorted by path; no other blank line surviveth.
 - a bracket fitteth its line or breaketh. a broken brace or parenthesis putteth
@@ -296,8 +322,6 @@ check refuseth output whose tokens differ from the source's.
 - a declaration body of several items or holding declarations, and a case
   block of several rows, always break. declaration and `match` bodies are
   padded, `{ … }`; other braces are not.
-- an item beginneth after `,` or `;`, or at a declaration keyword; a `,`
-  between a row's patterns or `match` scrutinees endeth none.
 - a `let` or `orsetting` that fitteth stayeth on one line. otherwise `≔ body`
   taketh its own line two columns in, and `: annotation` stayeth beside the
   name unless they do not fit together. a body opening a brace, a declaration
@@ -308,7 +332,9 @@ check refuseth output whose tokens differ from the source's.
   their line and continue two columns in; a `match` head and a block-opening
   brace stay on the line before.
 - consecutive case rows of one indentation and column count align their
-  columns and `^` when the result still fitteth.
+  columns and `^` when the result still fitteth. zero-width tags in the laid
+  out lines mark a row's start, its column ends, and its `^` or `;`; a row
+  whose patterns wrap is not aligned.
 - no line passeth 80 characters while a break remaineth; quoted text never
   breaketh, and a wide `#` or `##` comment wrappeth at its last fitting space.
 
@@ -325,16 +351,36 @@ newlines and control characters escaped. compiler and extension must share the
 protocol version.
 
 - requests carry `protocol: 1`, `id`, document `version`, `command`, `name`,
-  `source`, and `imports`, which map bring paths to source text, unsaved
-  buffers included; a file document also carrieth `path`. the client
-  allocateth unique increasing ids.
+  `source`, and `texts`, which map open files' paths to their unsaved text; a
+  file document also carrieth `path`. the session resolveth the document's
+  brings by the command line's rules from `path`, or from its working
+  directory, reading `texts` before files. the client allocateth unique
+  increasing ids.
 - the session keepeth checked imports by interface key, rechecking only an
   edited import's dependants; a request with `path` also loadeth and saveth
   interfaces in that project's `.tung/cache`.
 - responses carry `protocol: 1`, the request's `id` and `version`, and a
   `result` whose `kind` is `check`, `ilk`, `proof`, `format`, `highlight`, or
   `error`: `check` returneth `diagnostics`, `ilk` `ilk`, `format` `source`,
-  `highlight` `roles`, and infrastructure errors `message`.
+  and infrastructure errors `message`.
+- `highlight` returneth one parse's `roles`, `[start, end, role, modifiers]`;
+  `tokens`, `[start, end, kind]`; `declarations`, each `let`, `fast`, `ilk`, `flock`,
+  `bizen`, or `orsetting` with its keyword's `start`, `end`, `headerEnd` where
+  the body beginneth, `shown`, and its last doc comment as `doc`; `imports`
+  with `path`, `alias`, and the path's `start` and `end`; and `scopes`,
+  `[start, end, scopeStart, scopeEnd]` for each local binder: a slot is seen
+  by the later slots and the body, a declaration's header by the whole
+  declaration, a block's let by the rest of its block, and a row's pattern by
+  its row. offsets are utf-16 and cover broken regions too.
+- `names` returneth `files`, the canonical file of each bring path the
+  document reacheth; `resolved`, `[start, end, module, name]` for each
+  written name checking resolved to a
+  global, from every declaration that checketh, even beside an error; and
+  `visible`, `[written, module, name, constructor]` for each name the module
+  may write at top level, from its own declarations and its imports'
+  interfaces, without checking. `module` is `<root>`, `<primitive>`, or a
+  bring path. elaboration recordeth a name where it resolveth one, and
+  speculative trials roll the record back.
 - `proof` taketh `name` and optional `allowedOrsettings`; without it the
   nearest manifest decideth. it returneth `audit` (`name`, `ilk`,
   `dependencies`), `verified`, `message`, and the cli `report`. a dependency
@@ -343,7 +389,8 @@ protocol version.
   checking errors return `error`; an audit failing its policy still returneth
   its dependencies with `verified: false`. clients never rebuild dependency
   graphs from source, and the language server discardeth a result if the root
-  version or text, or any captured import, changeth meanwhile.
+  version or text, or the text of any module its names reached, changeth
+  meanwhile.
 - diagnostics carry `kind` (`parse`, `ilk`, or `goal`), optional import
   `path`, utf-16 `start` and `end`, and `message`; an empty array is success.
   goals are informational, with their context in the message, and a failed
@@ -360,17 +407,26 @@ protocol version.
 
 [`vscode/`](../vscode/) owneth the language server, generated metadata, and
 editor tests; `tung --language-metadata` emitteth the compiler-owned lexical
-names. the parser emitteth source roles with its result. highlighting keepeth
-partial roles on failure, retryeth bounded declarations, and neither checketh
-types nor loadeth imports. `WorkspaceIndex` owneth one pending or resolved
-role request per document text and version, shared by navigation and
-highlighting; edits cancel it and obsolete replies cannot refill the cache.
-textmate supplieth immediate lexical colours. `vscode/server/analysis.ts`
-joineth compiler roles with token structure, scopes, docs, and imports, and
-the workspace fetcheth missing roles before navigation; the editor never
-classifieth tokens itself. one builder createth definitions from roles, and
-pattern arms give narrower scopes, not a second set. lsp role names stay in
-the protocol; `roleLabel` showeth them to people as tung terms.
+names. the editor neither lexeth nor parseth tung: highlighting returneth the
+compiler's syntax, which neither checketh types nor loadeth imports.
+`WorkspaceIndex` owneth one pending or resolved syntax request per document
+text and version, shared by navigation, checks, and highlighting; edits cancel
+it and obsolete replies cannot refill the cache, and every request awaiteth
+the syntax it needeth. textmate supplieth immediate lexical colours.
+`vscode/server/syntax.ts` placeth the compiler's tokens by line and pairth
+brackets; `vscode/server/analysis.ts` joineth roles with those tokens,
+declarations, docs, imports, and local scopes into definitions and
+ownership; a local the parser could not scope, in broken source, keepeth to
+its declaration. the editor resolveth no global itself: a written name is what
+checking resolved it to, else a local binder in scope, else the module's
+visible name; a pattern binder that nameth a visible constructor is that
+constructor, and a field `ilk.field` is the named slot of its ilk's
+constructor. navigation fetcheth names for open documents, and references
+and rename for every document. a bring path's module is the file its
+document's names report, matched to a document by real path; the editor
+resolveth no bring itself. an edit forgetteth the names of documents that
+reached the edited file, and a created or deleted file forgetteth all. lsp role names stay in the protocol;
+`roleLabel` showeth them to people as tung terms.
 `npm run benchmark:highlight --workspace=tung-vscode`, after both components
 are built, measureth fresh and cached highlighting.
 
@@ -407,5 +463,6 @@ each choice was weighed against an alternative.
   one solver state.
 - the parser's `Result` monad backtracketh by inspecting roles, so a
   transformer stack would not shrink it.
-- the editor's tolerant typescript lexer serveth incomplete buffers the
-  compiler's lexer rejecteth.
+- the concrete tree is built from the parser's marks rather than by a second
+  grammar: the neatener, highlighting, and the editor read the one parse, and
+  the abstract syntax stayeth the parser's own result.

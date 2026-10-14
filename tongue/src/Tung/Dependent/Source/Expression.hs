@@ -27,6 +27,7 @@ import Tung.Dependent.Source.Syntax
 import Tung.Dependent.Syntax hiding (Lambda, Literal)
 import Tung.Dependent.Syntax qualified as Core
 import Tung.Identity (inductionSymbol)
+import Tung.Token (SourceSpan)
 
 -- universe holes are fresh across the complete declaration, including its
 -- annotation and every occurrence of a universe-polymorphic global.
@@ -51,17 +52,18 @@ inferAnnotation environment names scope expression = do
 inferExpression :: K.Environment -> Names -> Scope -> Expression -> Elaboration (Term, N.Value)
 inferExpression environment names scope@Scope {scopeContext = context, scopeNames = locals} = \case
   Located span inner -> E.located span do
-    result@(_, ty) <- inferExpression environment names scope inner
+    result@(term, ty) <- inferExpression environment names scope inner
     case inner of
       Sorry -> E.recordHole (E.HoleSite (Just span) context locals ty)
       _ -> pure ()
+    recordWritten span inner term
     pure result
   Name name -> do
     term <- case elemIndex (Just name) locals of
       Just index -> pure (Local index)
       Nothing
-        | Just _ <- recursiveBinding name scope ->
-            E.failure ("a recursive reference to '" ++ name ++ "' must only be called")
+        | Just Recursion {recursionLoops} <- recursiveBinding name scope ->
+            recursionFailure recursionLoops ("a recursive reference to '" ++ name ++ "' must only be called")
         | otherwise -> case lookupName name names of
             Just (FreshName identity universes) -> Global identity <$> E.freshLevels universes
             Just (FixedName identity levels) -> pure (Global identity levels)
@@ -100,10 +102,7 @@ inferExpression environment names scope@Scope {scopeContext = context, scopeName
       Nothing -> do
         level <- E.freshLevel
         E.newMeta context (N.VSort level)
-      Just domainExpression -> do
-        (domain, kind) <- inferExpression environment names scope domainExpression
-        requireUniverse scope kind
-        (domain,) <$> eval scope domain
+      Just domainExpression -> inferAnnotation environment names scope domainExpression
     let current = extend scope binderName domainValue
     (bodyTerm, bodyType) <- inferExpression environment names current (Lambda remaining body)
     codomain <- quote current bodyType
@@ -219,7 +218,7 @@ applyTo environment names scope@Scope {scopeContext = context} goal function fun
         N.VPi plicity domain codomain -> do
           -- a written `@x` filleth the next implicit input that instance search
           -- doth not fill.
-          requirement <- if plicity == Implicit then maybe False (const True) <$> classFamily names domain else pure False
+          requirement <- if plicity == Implicit then isJust <$> classFamily names domain else pure False
           let afterGoal = plicity == Explicit && open && maybe False ((position `elem`) . snd) motive
           (argumentTerm, argumentValue, nextExplicit, nextImplicit, nextDeferred, omitted) <- case (plicity, explicit, implicit) of
             (Explicit, arg : rest, _) -> supplied domain arg afterGoal rest implicit deferred
@@ -234,7 +233,7 @@ applyTo environment names scope@Scope {scopeContext = context} goal function fun
           go motive opened (position + 1) (Apply plicity term argumentTerm) resultType nextExplicit nextImplicit nextDeferred
         neutral@(N.VNeutral (N.NMeta _ _))
           | null implicit -> do
-              (domain, codomain) <- E.ensurePi context Explicit neutral
+              (domain, codomain) <- E.ensurePi Explicit neutral
               go Nothing False position term (N.VPi Explicit domain codomain) explicit implicit deferred
           | otherwise -> E.failure "implicit parameter order requireth a function annotation"
         _ -> E.failure "application requireth a function"
@@ -315,7 +314,9 @@ checkExpression environment names scope (Located span inner) expected = E.locate
   case inner of
     Sorry -> E.recordHole (E.HoleSite (Just span) (scopeContext scope) (scopeNames scope) expected)
     _ -> pure ()
-  checkExpression environment names scope inner expected
+  term <- checkExpression environment names scope inner expected
+  recordWritten span inner term
+  pure term
 checkExpression environment names scope expression expected = E.force expected >>= check
   where
     check expected = case expression of
@@ -380,6 +381,21 @@ checkExpression environment names scope expression expected = E.force expected >
           | not (recursiveApplication scope function) -> inferApplication environment names scope (Just expected) function arguments
         _ -> inferExpression environment names scope expression
       specialise names scope term actual expected
+
+-- a written name, a field, or the family after `unbuild` that checking
+-- resolved to a global. an omitted implicit binder may wrap the term.
+recordWritten :: SourceSpan -> Expression -> Term -> Elaboration ()
+recordWritten span expression term = case expression of
+  Name _ -> forM_ (global term) (E.recordName span)
+  Induce name -> forM_ (global term) (E.recordName (trailingSpan span name))
+  Projection _ field -> forM_ (global term) (E.recordName (trailingSpan span field))
+  _ -> pure ()
+  where
+    global = \case
+      Core.Lambda _ _ body -> global body
+      other -> case fst (termSpine other) of
+        Global symbol _ -> Just symbol
+        _ -> Nothing
 
 -- ordinary and recursive bodies share ascription checking. omitted implicit
 -- binders enter the scope before an annotation is read; written holes learn

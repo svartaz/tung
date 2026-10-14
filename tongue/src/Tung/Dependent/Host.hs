@@ -6,10 +6,12 @@
 -- set, each pure host function as its total definition, and each deed type as
 -- a one-element set. host constants therefore cannot inhabit an empty type;
 -- `sorry` is the one reported exception. no constant extracteth the result of a
--- deed, and the deed fixed point stayeth opaque. pure host functions compute
+-- deed, and a `fast` fixpoint stayeth opaque. pure host functions compute
 -- only on literal arguments.
 module Tung.Dependent.Host
   ( defineHost,
+    defineFixpoint,
+    deedInputs,
     primitiveDefinitions,
     sorrySymbol,
     literalCaseSymbol,
@@ -142,6 +144,26 @@ validateHostData globals HostSignature {..} = void (types Set.empty (hostArgumen
     parameterKinds 0 (Sort _) = True
     parameterKinds count (Pi Explicit (Sort _) result) | count > 0 = parameterKinds (count - 1) result
     parameterKinds _ _ = False
+
+-- a fixpoint may name itself without bound, so its ilk must end in a deed
+-- after its inputs. the standard model readeth every deed type, and so every
+-- function into one, as a one-element set, so a fixpoint inhabiteth no empty
+-- ilk. conversion never unfoldeth it, so normalisation terminateth.
+defineFixpoint :: K.Environment -> SymbolId -> K.Inferred -> Either String K.Environment
+defineFixpoint (K.Environment globals) name result@K.Inferred {..} = do
+  when (Map.member name globals) (Left "duplicate definition")
+  -- validation readeth no arity; the inputs are counted once the ilk is checked.
+  let environment arity = K.Environment (Map.insert name (Definition inferredUniverses inferredConstraints inferredType (Fixpoint arity inferredTerm)) globals)
+  K.validate (environment 0) result
+  arity <- N.normalise globals 0 inferredType >>= maybe (Left "a fast declaration's ilk must end in a deed") Right . deedInputs
+  pure (environment arity)
+
+-- the inputs of a normal ilk before the deed it endeth in.
+deedInputs :: Term -> Maybe Int
+deedInputs = \case
+  Pi _ _ codomain -> (+ 1) <$> deedInputs codomain
+  Apply Explicit (Global symbol _) _ | symbol == SymbolId PrimitiveModule "deed" -> Just 0
+  _ -> Nothing
 
 -- main must be a deed of the bookhoard unit type.
 matchMain :: Globals -> Term -> Either String ()

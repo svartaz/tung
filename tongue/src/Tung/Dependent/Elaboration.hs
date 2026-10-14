@@ -43,18 +43,21 @@ module Tung.Dependent.Elaboration
     recordHole,
     takeHoles,
     takeReferences,
+    recordName,
+    takeNames,
   )
 where
 
 import Control.Applicative ((<|>))
-import Control.Monad (filterM, foldM, forM, unless, when)
+import Control.Monad (filterM, foldM, forM, unless, when, zipWithM_)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (ExceptT, catchE, runExceptT, throwE, withExceptT)
 import Control.Monad.Trans.State.Strict (State, StateT, runState, runStateT)
 import Control.Monad.Trans.State.Strict qualified as State
+import Data.Either (isRight)
 import Data.Functor.Const (Const (..))
 import Data.Map.Strict qualified as Map
-import Data.Maybe (isNothing)
+import Data.Maybe (isJust, isNothing)
 import Data.Set qualified as Set
 import Tung.Dependent.Check qualified as K
 import Tung.Dependent.Normalise qualified as N
@@ -105,7 +108,10 @@ data Inference = Inference
     holeSites :: [HoleSite],
     -- checked input references survive normalisation of annotations and
     -- local bindings. speculative trials roll them back with their solutions.
-    checkedReferences :: Set.Set SymbolId
+    checkedReferences :: Set.Set SymbolId,
+    -- each written name resolved to a global, by its span, newest first.
+    -- speculative trials roll them back with their solutions.
+    resolvedNames :: [(SourceSpan, SymbolId)]
   }
 
 -- a `sorry` with its source span, context, local names (innermost first),
@@ -134,7 +140,7 @@ runElaboration display globals action =
   let ((result, _), constraints) = runState (runStateT (runExceptT action) initial) (U.universes [])
    in (,U.universeConstraints constraints) <$> result
   where
-    initial = Inference display globals 0 0 0 Map.empty [] Set.empty 0 0 Map.empty False [] Set.empty [] Set.empty
+    initial = Inference display globals 0 0 0 Map.empty [] Set.empty 0 0 Map.empty False [] Set.empty [] Set.empty []
 
 -- recover a diagnostic within the same inference state, without producing a
 -- checked term. callers may render the goals already encountered.
@@ -149,6 +155,13 @@ put = lift . State.put
 
 modify' :: (Inference -> Inference) -> Elaboration ()
 modify' = lift . State.modify'
+
+recordName :: SourceSpan -> SymbolId -> Elaboration ()
+recordName span symbol = modify' (\state -> state {resolvedNames = (span, symbol) : resolvedNames state})
+
+-- the names resolved so far, oldest first.
+takeNames :: Elaboration [(SourceSpan, SymbolId)]
+takeNames = reverse . resolvedNames <$> get
 
 takeReferences :: Elaboration (Set.Set SymbolId)
 takeReferences = checkedReferences <$> get
@@ -174,7 +187,7 @@ addInstanceGoal goal = modify' (\state -> state {instanceGoals = goal : instance
 -- the unsolved holes in a new instance goal's type are carriers.
 markCarriers :: K.Context -> N.Value -> Elaboration ()
 markCarriers context ty = do
-  term <- quote (length (K.contextTypes context)) ty
+  term <- quote (K.contextDepth context) ty
   modify' (\state -> state {carriers = Set.union (Set.fromList (termHoles term)) (carriers state)})
 
 recordHole :: HoleSite -> Elaboration ()
@@ -227,7 +240,7 @@ repeatProgress step = step >>= \progressed -> when progressed (repeatProgress st
 
 -- report whether an action would succeed, without keeping its effects.
 probe :: Elaboration a -> Elaboration Bool
-probe action = either (const False) (const True) <$> trial action
+probe action = isRight <$> trial action
 
 failure :: String -> Elaboration a
 failure = either raise pure . Error.failure
@@ -343,23 +356,20 @@ newMetaWithout K.Context {..} excluded expected = do
       _ -> Nothing
   let telescope = Map.toAscList (Map.fromList [capture | Just capture <- captures])
       originalDepth = length contextTypes
-      levels = map fst telescope
       values = map (fst . snd) telescope
-      mapping = Map.fromList (zip levels [0 ..])
+      mapping = Map.fromList (zip (map fst telescope) [0 ..])
   domains <- forM (zip [0 ..] telescope) \(position, (_, (_, ty))) -> do
     domain <- quote originalDepth ty
     fromEither (rename originalDepth position (Map.filter (< position) mapping) domain)
   annotation <- quote originalDepth expected >>= fromEither . rename originalDepth (length telescope) mapping
-  let fullType = foldr (Pi Explicit) annotation domains
-  kind <- infer K.emptyContext fullType >>= force
+  kind <- infer K.emptyContext (foldr (Pi Explicit) annotation domains) >>= force
   case kind of
     N.VSort _ -> pure ()
     _ -> failure "term inference hole requireth an ilk"
   identity <- nextMeta <$> get
   modify' (\state -> state {nextMeta = identity + 1, metaEntries = Map.insert identity (MetaEntry domains annotation Nothing) (metaEntries state)})
   arguments <- traverse (quote originalDepth) values
-  let term = Meta identity arguments
-  pure (term, N.VNeutral (N.NMeta identity values))
+  pure (Meta identity arguments, N.VNeutral (N.NMeta identity values))
 
 inferMeta :: K.Context -> Int -> [Term] -> Elaboration N.Value
 inferMeta context identity arguments = do
@@ -379,8 +389,8 @@ inferMeta context identity arguments = do
 
 -- unknown function types are expanded in their own creation telescope. newer
 -- caller binders must not enter the domains of these fresh component holes.
-ensurePi :: K.Context -> Plicity -> N.Value -> Elaboration (N.Value, N.Closure)
-ensurePi _ plicity value =
+ensurePi :: Plicity -> N.Value -> Elaboration (N.Value, N.Closure)
+ensurePi plicity value =
   force value >>= \case
     N.VPi expected domain codomain
       | plicity == expected -> pure (domain, codomain)
@@ -399,8 +409,7 @@ ensurePi _ plicity value =
       (domain, domainValue) <- newMeta context (N.VSort domainLevel)
       codomainLevel <- freshLevel
       (codomain, _) <- newMeta (K.bind context domainValue) (N.VSort codomainLevel)
-      let candidate = foldr (Lambda Explicit) (Pi plicity domain codomain) domains
-      commit identity candidate
+      commit identity (foldr (Lambda Explicit) (Pi plicity domain codomain) domains)
       retry
       force value >>= \case
         N.VPi _ actualDomain actualCodomain -> pure (actualDomain, actualCodomain)
@@ -410,7 +419,7 @@ ensurePi _ plicity value =
     telescope [] context = pure (context, [])
     telescope (annotation : rest) context = do
       domain <- evaluate context annotation
-      domainTerm <- quote (length (K.contextTypes context)) domain
+      domainTerm <- quote (K.contextDepth context) domain
       (current, domains) <- telescope rest (K.bind context domain)
       pure (current, domainTerm : domains)
 
@@ -430,7 +439,7 @@ unifyNow context left right = do
   -- whose model unfoldeth deeply.
   same <- case (constantHead left, constantHead right) of
     (Just one, Just other) | one == other -> do
-      let depth = length (K.contextTypes context)
+      let depth = K.contextDepth context
       (==) <$> quoteFolded depth left <*> quoteFolded depth right
     _ -> pure False
   if same then pure True else unifyForced context left right
@@ -462,33 +471,32 @@ unifyForced context left right = do
       | Just (left, _) <- metaSpine actual,
         Just (right, _) <- metaSpine expected,
         left == right -> do
-          let depth = length (K.contextTypes context)
-          a <- quote depth actual
-          b <- quote depth expected
-          if a == b then pure True else flexible actual expected
+          same <- quotedEqual actual expected
+          if same then pure True else flexible actual expected
       | otherwise -> flexible actual expected
     _ -> flexible actual expected
   where
+    depth = K.contextDepth context
+    variable = N.VNeutral (N.NLocal depth)
+    quotedEqual one other = (==) <$> quote depth one <*> quote depth other
     rigid value = case value of
-      N.VNeutral _ -> maybe True (const False) (metaSpine value)
+      N.VNeutral _ -> isNothing (metaSpine value)
       _ -> False
     eta plicity domain body other flipped = do
       blocked <- blockedComputation context other
       if blocked
         then pure False
         else do
-          let current = K.bind context domain
-              variable = N.VNeutral (N.NLocal (length (K.contextTypes context)))
           lambdaSide <- instantiate body variable
           normal <- normaliser
           otherSide <- fromEither (N.applyValueWith normal plicity other variable)
+          let current = K.bind context domain
           if flipped then unify current otherSide lambdaSide else unify current lambdaSide otherSide
           pure True
     binders domain body otherDomain otherBody = do
       first <- unifyNow context domain otherDomain
       unless first (postpone context domain otherDomain)
       let current = K.bind context domain
-          variable = N.VNeutral (N.NLocal (length (K.contextTypes context)))
       a <- instantiate body variable
       b <- instantiate otherBody variable
       second <- unifyNow current a b
@@ -510,11 +518,7 @@ unifyForced context left right = do
         if solved then pure True else abstracted identity arguments actual actual expected
       _ -> do
         blocked <- (||) <$> blockedComputation context actual <*> blockedComputation context expected
-        if blocked
-          then do
-            let depth = length (K.contextTypes context)
-            (==) <$> quote depth actual <*> quote depth expected
-          else congruent actual expected
+        if blocked then quotedEqual actual expected else congruent actual expected
     -- occurrences are abstracted up to universe levels, so the solved sides
     -- are equated again.
     abstracted identity arguments rigidSide actual expected = do
@@ -531,12 +535,8 @@ unifyForced context left right = do
         length levels == length otherLevels = do
           mapM_ (kernel . K.oblige) (zipWith LevelEqual levels otherLevels)
           pure True
-    congruent (N.VRecordType fields) (N.VRecordType otherFields) | map fst fields == map fst otherFields = do
-      mapM_ (uncurry (unify context)) (zip (map snd fields) (map snd otherFields))
-      pure True
-    congruent (N.VRecord fields) (N.VRecord otherFields) | map fst fields == map fst otherFields = do
-      mapM_ (uncurry (unify context)) (zip (map snd fields) (map snd otherFields))
-      pure True
+    congruent (N.VRecordType fields) (N.VRecordType others) | map fst fields == map fst others = sameFields fields others
+    congruent (N.VRecord fields) (N.VRecord others) | map fst fields == map fst others = sameFields fields others
     congruent (N.VNeutral (N.NField index value)) (N.VNeutral (N.NField otherIndex otherValue)) | index == otherIndex = do
       unify context (N.VNeutral value) (N.VNeutral otherValue)
       pure True
@@ -556,11 +556,11 @@ unifyForced context left right = do
       | N.VNeutral constructor <- N.constructorForm literal =
           congruent neutral (N.VNeutral constructor)
     congruent left right = do
-      let depth = length (K.contextTypes context)
       a <- quote depth left
       b <- quote depth right
       display <- displaySymbol <$> get
       failure (renderMismatchWith display depth a b)
+    sameFields fields others = True <$ zipWithM_ (unify context) (map snd fields) (map snd others)
 
 metaSpine :: N.Value -> Maybe (Int, [(Plicity, N.Value)])
 metaSpine (N.VNeutral neutral)
@@ -601,7 +601,7 @@ blockedComputation context value = do
       case metaSpine actual of
         Just _ -> pure True
         _ -> blockedComputation context actual
-    containsMeta input = holes <$> quote (length (K.contextTypes context)) input
+    containsMeta input = holes <$> quote (K.contextDepth context) input
     holes Meta {} = True
     holes term = any (holes . snd) (children term)
 
@@ -612,11 +612,11 @@ solvePattern context identity arguments right = do
   meta@MetaEntry {..} <- entry identity
   active <- checkingSolutions <$> get
   when (Set.member identity active) (failure "cyclic term inference solution")
-  when (maybe False (const True) metaSolution) (failure "term inference solution was already assigned")
+  when (isJust metaSolution) (failure "term inference solution was already assigned")
   variables <- rigidLevels (map snd arguments)
   case variables of
     Just levels -> do
-      let depth = length (K.contextTypes context)
+      let depth = K.contextDepth context
           mapping = Map.fromList (zip levels [0 ..])
       -- a folded solution nameth its definitions, so it stayeth small.
       body <- quoteFolded depth right >>= prune depth mapping
@@ -629,9 +629,7 @@ solvePattern context identity arguments right = do
           domains <- patternDomains depth mapping ty arguments
           case domains of
             Nothing -> pure False
-            Just binders -> do
-              let candidate = foldr (\(plicity, domain) -> Lambda plicity domain) renamed binders
-              settle identity candidate
+            Just binders -> settle identity (foldr (uncurry Lambda) renamed binders)
     _ -> pure False
 
 -- a hole of function type applied to inputs that are not all distinct
@@ -659,9 +657,8 @@ solveAbstraction context identity arguments right = do
                 N.VNeutral (N.NLocal level) | Map.notMember level seen -> (Map.insert level position seen, targets)
                 _ -> (seen, targets ++ [(position, value)])
               (mapping, targets) = foldl classify (Map.fromList (zip levels [0 ..]), []) (zip [metaArity meta ..] forced)
-              arity = metaArity meta + length extra
           ty <- evaluate K.emptyContext (metaType meta)
-          domains <- telescopeDomains arity ty
+          domains <- telescopeDomains (metaArity meta + length extra) ty
           case domains of
             Just binders
               | not (null targets),
@@ -672,14 +669,13 @@ solveAbstraction context identity arguments right = do
             _ -> pure False
     _ -> pure False
   where
-    depth = length (K.contextTypes context)
+    depth = K.contextDepth context
     candidate mapping targets binders quoting = do
       body <- quoting depth right
       abstracted <- traverse (quoting depth . snd) targets
-      let count = length targets
-          (abstraction, found) = abstractTerms abstracted body
+      let (abstraction, found) = abstractTerms abstracted body
           extended = Map.union mapping (Map.fromList [(depth + offset, position) | (offset, (position, _)) <- zip [0 ..] targets])
-      case rename (depth + count) (length binders) extended abstraction of
+      case rename (depth + length targets) (length binders) extended abstraction of
         Right renamed
           | and found,
             null (concatMap termHoles (body : abstracted)) ->
@@ -708,7 +704,7 @@ telescopeDomains count = go 0
 -- solution is quoted again. the body is quoted at `depth`; `mapping` holdeth
 -- the levels the solution may mention.
 prune :: Int -> Map.Map Int Int -> Term -> Elaboration Term
-prune depth mapping body = case [(target, keeps) | (target, keeps) <- candidates body, not (and keeps)] of
+prune depth mapping body = case filter (not . and . snd) (candidates body) of
   [] -> pure body
   (target, keeps) : _ ->
     narrow target keeps >>= \case
@@ -727,19 +723,16 @@ prune depth mapping body = case [(target, keeps) | (target, keeps) <- candidates
       _ -> Nothing
     requote = do
       normal <- normaliser
-      let environment = map (N.VNeutral . N.NLocal) (reverse [0 .. depth - 1])
-      value <- fromEither (N.evaluateWith normal environment body)
+      value <- fromEither (N.evaluateWith normal (N.openEnvironment depth) body)
       quote depth value >>= prune depth mapping
     narrow target keeps = do
       MetaEntry {metaDomains = domains, metaTarget = result, metaSolution} <- entry target
       case metaSolution of
         Nothing
-          | Just kept <- strengthened keeps domains result -> do
-              let (keptDomains, keptResult) = kept
+          | Just (keptDomains, keptResult) <- strengthened keeps domains result -> do
               fresh <- nextMeta <$> get
               modify' (\state -> state {nextMeta = fresh + 1, metaEntries = Map.insert fresh (MetaEntry keptDomains keptResult Nothing) (metaEntries state)})
-              let arity = length domains
-                  arguments = [Local (arity - 1 - position) | (position, True) <- zip [0 ..] keeps]
+              let arguments = [Local (length domains - 1 - position) | (position, True) <- zip [0 ..] keeps]
               commit target (foldr (Lambda Explicit) (Meta fresh arguments) domains)
               pure True
         _ -> pure False
@@ -785,7 +778,7 @@ settle :: Int -> Term -> Elaboration Bool
 settle identity candidate = do
   waiting <- Map.lookup identity . unsettled <$> get
   stuck <- case waiting of
-    Just (previous, blockers) | previous == candidate -> allM (fmap (isNothing . metaSolution) . entry) (Set.toList blockers)
+    Just (previous, blockers) | previous == candidate -> all (isNothing . metaSolution) <$> traverse entry (Set.toList blockers)
     _ -> pure False
   if stuck
     then pure False
@@ -796,8 +789,6 @@ settle identity candidate = do
         Right (Left (blockers, _), _) -> do
           modify' (\state -> state {unsettled = Map.insert identity (candidate, blockers) (unsettled state)})
           pure False
-  where
-    allM predicate = fmap and . traverse predicate
 
 -- assigneth the candidate if checking it leaveth no new postponed equation.
 -- otherwise it returneth the unsolved holes in those equations. a kernel failure
@@ -829,7 +820,7 @@ assign identity candidate = do
           pure (Right ())
   where
     equationHoles (Equation _ context left right) = do
-      let depth = length (K.contextTypes context)
+      let depth = K.contextDepth context
       (<>) <$> (quote depth left >>= openHoles) <*> (quote depth right >>= openHoles)
 
 -- the holes in a term that are still unsolved.
@@ -957,7 +948,7 @@ approximateWith both = do
     applied = \case
       N.VNeutral (N.NApply plicity function argument) -> Just (plicity, N.VNeutral function, argument)
       _ -> Nothing
-    flexible value = maybe False (const True) (metaSpine value)
+    flexible = isJust . metaSpine
 
 -- holes still open after every postponed equation is retried, oldest first,
 -- with the type each hole hath beneath its telescope.
@@ -979,8 +970,7 @@ zonk term = do
   where
     expand depth meta@Meta {} _ = do
       normal <- normaliser
-      let environment = map (N.VNeutral . N.NLocal) (reverse [0 .. depth - 1])
-      value <- fromEither (N.evaluateWith normal environment meta)
+      value <- fromEither (N.evaluateWith normal (N.openEnvironment depth) meta)
       -- a folded solution keepeth definitions by name; normalising it would
       -- inline every dictionary and proof it reacheth.
       quoteFolded depth value

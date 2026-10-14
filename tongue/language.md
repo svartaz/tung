@@ -9,15 +9,16 @@ checked introduction.
 
 ## keywords
 
-| keyword | meaning                      | keyword     | meaning                       |
-| ------- | ---------------------------- | ----------- | ----------------------------- |
-| `let`   | declaration                  | `match`     | pattern match                 |
-| `show`  | export                       | `unbuild`   | eliminator of an ilk or flock |
-| `bring` | import                       | `fall`      | annotated function expression |
-| `yield` | result of a local block      | `sorry`     | unfinished assumption         |
-| `ilk`   | inductive family (data type) | `orsetting` | named axiom                   |
-| `flock` | type class                   | `fremmed`   | foreign host binding          |
-| `bizen` | instance                     | `deed`      | primitive action type (io)    |
+| keyword | meaning                       | keyword     | meaning                       |
+| ------- | ----------------------------- | ----------- | ----------------------------- |
+| `let`   | declaration                   | `match`     | pattern match                 |
+| `fast`  | self-calling deed declaration | `unbuild`   | eliminator of an ilk or flock |
+| `show`  | export                        | `fall`      | annotated function expression |
+| `bring` | import                        | `sorry`     | unfinished assumption         |
+| `yield` | result of a local block       | `orsetting` | named axiom                   |
+| `ilk`   | inductive family (data type)  | `fremmed`   | foreign host binding          |
+| `flock` | type class                    | `deed`      | primitive action type (io)    |
+| `bizen` | instance                      |             |                               |
 
 `fallback`, in `bizen fallback:`, marketh a default instance, and `out`, in
 `β: * out`, an output parameter; both are ordinary names elsewhere.
@@ -261,7 +262,8 @@ let seven ≔ (
 )
 ```
 
-imports, exports, ilks, orsettings, and foreign bindings are top-level only.
+imports, exports, ilks, orsettings, foreign bindings, and fast declarations
+are top-level only.
 
 a let whose body nameth itself is recursive and needeth an annotation,
 possibly on its body. its name shadoweth imports in that body, where
@@ -272,6 +274,29 @@ indices, and may leave trailing other inputs unapplied. the bare recursive
 name cannot be passed on, and mutually recursive lets are rejected.
 [pattern matching and recursion](dependent.md#pattern-matching-and-recursion)
 stateth the indexed, mutual, nested-container, and function-field rules.
+
+`fast name: annotation ≔ body` declareth a fixed point. its header is a let
+header, and `show fast` exporteth it. its body may name it anywhere, called,
+partly applied, or passed on, with no structural check:
+
+```tung
+fast gather: [seen: string list, (string list) deed] ≔ read bind {
+  none      ^ seen sheer,
+  line some ^ (line ‥ seen) gather
+}
+```
+
+a fast declaration is rejected when:
+
+- it hath no annotation;
+- its ilk, after normalisation and its inputs, endeth in anything but a deed,
+  as `nat`, `[nat, nat]`, or an ilk wrapping a deed. only deeds may run
+  without bound;
+- its body never nameth it; that is a let;
+- it bindeth `fremmed`, is a bizen member, or standeth in a local block.
+
+there are no mutual fast declarations. checking never unfoldeth one, so
+nothing is proved by its body; [deeds](#deeds) stateth how one runneth.
 
 well-founded recursion is library code in `ilk/grounded.tung`:
 `wellgrounded_selfcall_by` taketh a result motive, a measure, a
@@ -480,8 +505,12 @@ constructor fields; contained functions and deeds stay unperformed.
   next deed from it; `then` performeth two and keepeth the latter result, and
   `>{then, a, b, c}` performeth several in order.
 - `lift₂`, `atfold`, and `each` perform deeds left to right.
-- `deed_steadfast` repeateth a deed, passing the repeated deed to its step.
-  only deeds may loop without bound.
+- a [fast declaration](#local-blocks-and-recursion) loopeth without bound;
+  bounded repetition useth induction. calling a fast function buildeth a deed
+  and performeth nothing. performing it evaluateth its inputs to their outer
+  form and then unfoldeth its body, so a loop's accumulator holdeth no chain of
+  pending computations, and a self-call outside any bind loopeth only when
+  performed.
 
 ```tung
 let main: 𝟙 deed ≔ read bind {

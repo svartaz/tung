@@ -62,6 +62,7 @@ dependencies:
   | `flock` | type class | `orsetting` | axiom            |
   | `bizen` | instance   | `fallback`  | default instance |
   | `deed`  | io action  | `fall`      | function         |
+  | `fast`  | io loop    |             |                  |
 
   the [keyword table](tongue/language.md#keywords) listeth all
   of them.

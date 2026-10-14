@@ -24,6 +24,7 @@ module Tung.Dependent.Check
     Typing,
     Context (..),
     emptyContext,
+    contextDepth,
     failure,
     evaluate,
     bind,
@@ -85,6 +86,9 @@ data Context = Context
 
 emptyContext :: Context
 emptyContext = Context [] []
+
+contextDepth :: Context -> Int
+contextDepth = length . contextTypes
 
 infer :: Environment -> Term -> Either String Inferred
 infer environment@(Environment globals) term = do

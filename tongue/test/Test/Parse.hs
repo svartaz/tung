@@ -1,10 +1,14 @@
 -- declaration and expression syntax, application order, and malformed separators.
 module Test.Parse (group) where
 
+import Control.Monad (filterM)
+import Data.List (sortOn)
+import System.Directory (doesDirectoryExist, listDirectory)
+import System.FilePath (takeExtension, (</>))
 import Test.Harness (Group, Test, expectEq, integerSource, parseErr, parseOk)
 import Test.Harness qualified as Harness
 import Test.QuickCheck qualified as QuickCheck
-import Tung (SourceFailure (..), SourceSpan (..))
+import Tung (Leaf (..), NodeKind (..), Piece (..), PieceKind (..), SourceFailure (..), SourceSpan (..), SourceSyntax (..), Token (..), Tree (..), sourceSyntaxSummary, sourceTree, treeText)
 import Tung.Dependent.Source (Declaration (..), parseExpression, parseProgram, parseSource, recoverSnapshot, sketch, sourceSnapshot)
 
 group :: IO Group
@@ -17,6 +21,7 @@ group =
       ++ generatedDefinitionForms
       ++ parserProperties
       ++ recoveryCases
+      ++ [treeCorpus, brokenTree, localScopes]
 
 accepted :: [(String, String)]
 accepted =
@@ -43,6 +48,7 @@ accepted =
     ("nullary signatures and empty data", "ilk ℕ: * { naught: ℕ, suc: [ℕ, ℕ] } ilk 𝟘: * {}"),
     ("a function type may start a constructor header", "ilk _request: [a:*, *] { ask: [[ℤ, a], a _request], stop: a _request }"),
     ("deed is an ordinary type constructor", "let echo:[string, 𝟙 deed] ≔ write let main:𝟙 deed ≔ 'x' echo"),
+    ("fast declarations take a let header and may be shown", "fast echo:𝟙 deed ≔ echo show fast count:[n:ℕ, 𝟙 deed] ≔ (n heir) count"),
     ("flock members and laws need no separators", "flock sameness:[a:*, *] { let sameness:[a, a] let hath_≍:[a, a] let rule:[x: a, (x sameness) = x] }"),
     ("flock member with local type parameters", "flock owner:[a:*, *] { let member:[@b:*, b, a] }"),
     ("higher-order flock members", "flock downshaper:[f:[*, *], *] { let gather₀:[@a:*, @b:*, a f, b, [a, b, b], b] }"),
@@ -70,6 +76,7 @@ rejected =
     ("orsetting requireth a type annotation", "orsetting bad"),
     ("type composition requireth a closing brace", "let bad:* ≔ >{pair, ℤ, string"),
     ("declaration requireth a body", "let answer ≔"),
+    ("fast requireth a name", "fast : 𝟙 deed ≔ x"),
     ("worth annotation requireth equals", "let answer:ℤ +42"),
     ("function annotation requireth equals", "let sameness:[x:ℤ, ℤ] x"),
     ("worth annotation requireth a type", "let answer: ≔ +42"),
@@ -206,3 +213,84 @@ recoveryCases =
     summary source =
       let (declarations, yielded, failures) = recoverSnapshot (sourceSnapshot source)
        in (names declarations, sketch <$> yielded, length failures)
+
+-- every source's tree joineth to its text; each top-level child is one parsed
+-- declaration, and a bracket with marked children holdeth nothing else but
+-- separators.
+treeCorpus :: Test
+treeCorpus = do
+  files <- concat <$> traverse tungFiles ["../bookhoard", "../byspel"]
+  problems <- concat <$> traverse check files
+  pure (if null problems then Nothing else Just (unlines (take 8 problems)))
+  where
+    check file = do
+      source <- readFile file
+      let tree = sourceTree source
+          children = case tree of
+            TreeNode FileNode nodes -> nodes
+            _ -> []
+          declarations = length [() | TreeNode DeclarationNode _ <- children]
+          expected = either (const (-1)) (\(found, yielded) -> length found + maybe 0 (const 1) yielded) (parseProgram source)
+      pure $
+        [file ++ ": the tree's text differeth from the source" | treeText tree /= source]
+          ++ [file ++ ": " ++ show declarations ++ " declaration nodes for " ++ show expected ++ " declarations" | declarations /= expected]
+          ++ [file ++ ": a top-level child is no declaration" | not (all topLevel children)]
+          ++ [file ++ ": a bracket mixeth marked items with " ++ show (map treeText stray) | stray@(_ : _) <- map strayItems (brackets tree)]
+    topLevel = \case
+      TreeNode DeclarationNode _ -> True
+      TreeLeaf Leaf {leafPiece = Nothing} -> True
+      _ -> False
+    brackets = \case
+      node@(TreeNode BracketNode children) -> node : concatMap brackets children
+      TreeNode _ children -> concatMap brackets children
+      TreeLeaf _ -> []
+    strayItems = \case
+      TreeNode BracketNode children
+        | inside@(_ : _) <- drop 1 (take (length children - 1) children),
+          any marked inside ->
+            [child | child <- inside, not (marked child), not (separator child)]
+      _ -> []
+    marked = \case
+      TreeNode kind _ -> kind `elem` [DeclarationNode, ItemNode, RowNode]
+      _ -> False
+    separator = \case
+      TreeLeaf Leaf {leafPiece = Just Piece {pieceKind = Lexeme token}} -> token `elem` [TComma, TSemicolon]
+      _ -> False
+
+tungFiles :: FilePath -> IO [FilePath]
+tungFiles directory = do
+  entries <- map (directory </>) <$> listDirectory directory
+  nested <- filterM doesDirectoryExist entries
+  deeper <- concat <$> traverse tungFiles nested
+  pure ([entry | entry <- entries, takeExtension entry == ".tung"] ++ deeper)
+
+brokenTree :: Test
+brokenTree =
+  expectEq
+    "an unreadable region is one broken node between declarations"
+    ([DeclarationNode, BrokenNode, DeclarationNode], source)
+    ( case sourceTree source of
+        tree@(TreeNode FileNode children) -> ([kind | TreeNode kind _ <- children], treeText tree)
+        tree -> ([], treeText tree)
+    )
+  where
+    source = "let a ≔ 1\nlet b ≔\nlet c ≔ 2\n"
+
+-- each local binder is seen from itself to the end of what bindeth it: a
+-- slot by the later slots and the body, a block's let by the rest of the
+-- block, a row's pattern by its row, and a flock's parameter by its members.
+localScopes :: Test
+localScopes =
+  expectEq
+    "the parser scopeth each local binder"
+    [ ("n", "n: ℕ, x: n fan, ℕ] ≔ (let k ≔ n yield {0 ^ k, m heir ^ m} x)"),
+      ("x", "x: n fan, ℕ] ≔ (let k ≔ n yield {0 ^ k, m heir ^ m} x)"),
+      ("k", "k ≔ n yield {0 ^ k, m heir ^ m} x)"),
+      ("m", "m heir ^ m"),
+      ("heir", "heir ^ m"),
+      ("α", "α: *, *] { let get: α }")
+    ]
+    [(slice binder, slice scope) | (binderStart, binderEnd, scopeStart, scopeEnd) <- sortOn (\(start, _, _, _) -> start) (syntaxScopes (sourceSyntaxSummary source)), let binder = (binderStart, binderEnd), let scope = (scopeStart, scopeEnd)]
+  where
+    source = "let f: [n: ℕ, x: n fan, ℕ] ≔ (let k ≔ n yield {0 ^ k, m heir ^ m} x)\nflock got: [α: *, *] { let get: α }\n"
+    slice (start, end) = take (end - start) (drop start source)

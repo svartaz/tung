@@ -57,7 +57,7 @@ try {
       document.version = version;
       workspace.invalidate(uri);
       const start = performance.now();
-      const roles = await workspace.roles(uri, source, version);
+      const { roles } = await workspace.syntax(uri, source, version);
       const resolve = (token) =>
         workspace.resolveAt(uri, { line: token.line, character: token.char })
           .definition;
@@ -66,7 +66,7 @@ try {
       const cacheStart = performance.now();
       buildHighlightRanges(
         source,
-        await workspace.roles(uri, source, version),
+        (await workspace.syntax(uri, source, version)).roles,
         resolve,
       );
       cached.push(performance.now() - cacheStart);

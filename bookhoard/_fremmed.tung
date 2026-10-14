@@ -13,10 +13,6 @@ show let deed_sheer: [@α: *, α, α deed] ≔ 'deed_sheer' fremmed
 show let deed_bind: [@α: *, @β: *, α deed, [α, β deed], β deed]
   ≔ 'deed_bind' fremmed
 
-## repeat a deed: the step receiveth the repeated deed. only a deed may loop.
-show let deed_steadfast: [@α: *, [α deed, α deed], α deed]
-  ≔ 'deed_steadfast' fremmed
-
 show let write: [string, 𝟙 deed] ≔ 'write' fremmed
 
 ## none once input endeth.

@@ -11,8 +11,8 @@ module Tung.Dependent.Source.Pattern.Index
     matchedIndexBindings,
     constructorView,
     unifiedMotive,
-    allM,
     columnValue,
+    fieldValues,
     constructorValue,
     abstractLevels,
   )
@@ -23,6 +23,7 @@ import Data.Functor ((<&>))
 import Data.Functor.Identity (Identity (..))
 import Data.List (elemIndex)
 import Data.Map.Strict qualified as Map
+import Data.Maybe (fromMaybe)
 import Data.Set qualified as Set
 import Tung.Dependent.Check qualified as K
 import Tung.Dependent.Elaboration qualified as E
@@ -264,7 +265,7 @@ unifiedMotive environment scope level Split {..} levels parameterTerms indexPatt
                             let replace old = maybe (columnValue current old) (N.VNeutral . N.NLocal) (lookup old rebound)
                                 context = K.Context (map replace (reverse [0 .. depth current - 1])) (K.contextTypes (scopeContext current))
                             substitution' <- traverse (\(leaf, value) -> (leaf,) <$> (E.evaluate context =<< quote current value)) substitution
-                            unify reverted entered (zip fieldLevels subpatterns ++ [(maybe old id (lookup old rebound), pattern) | (old, pattern) <- rest]) substitution' result'
+                            unify reverted entered (zip fieldLevels subpatterns ++ [(fromMaybe old (lookup old rebound), pattern) | (old, pattern) <- rest]) substitution' result'
                           else trivial reverted entered result'
                     else trivialMethod current methodType fields
           )
@@ -295,12 +296,13 @@ bindMethod current ty (field : rest) levels continue = do
 contextType :: Scope -> Int -> N.Value
 contextType scope level = K.contextTypes (scopeContext scope) !! (depth scope - level - 1)
 
-allM :: (Monad m) => (a -> m Bool) -> [a] -> m Bool
-allM predicate = fmap and . traverse predicate
-
 -- a let-bound column carrieth its value; a bound input is its own neutral.
 columnValue :: Scope -> Int -> N.Value
 columnValue scope level = K.contextValues (scopeContext scope) !! (depth scope - level - 1)
+
+-- the locals that a constructor's fields will occupy beyond the scope.
+fieldValues :: Scope -> [a] -> [N.Value]
+fieldValues scope fields = [N.VNeutral (N.NLocal (depth scope + position)) | position <- [0 .. length fields - 1]]
 
 constructorValue :: SymbolId -> [Level] -> [N.Value] -> [(Plicity, N.Value)] -> N.Value
 constructorValue constructor levels parameters fields =

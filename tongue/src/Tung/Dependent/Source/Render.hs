@@ -50,7 +50,7 @@ renderTermIn globals display = \context names term -> renderTermWith display nam
               let (head, arguments) = N.neutralSpine neutral
               N.NGlobal family levels <- pure head
               accessor <- Map.lookup (family, index) accessors
-              arguments' <- traverse (either (const Nothing) Just . N.quoteFoldedWith (N.closed globals) (length (K.contextTypes current)) . snd) arguments
+              arguments' <- traverse (either (const Nothing) Just . N.quoteFoldedWith (N.closed globals) (K.contextDepth current) . snd) arguments
               pure (Apply Explicit (foldl (Apply Implicit) (Global accessor levels) arguments') receiver)
       term -> runIdentity (mapChildren (\_ -> Identity . walk context) term)
     -- the context is forced only at a projection, so ordinary display doth

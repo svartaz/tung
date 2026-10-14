@@ -287,7 +287,7 @@ importedCases imports =
     evalOkWith "task wait may time out" "bring often.tung let work:ℤ deed ≔ (200 sleep) then (+42 sheer) yield work fork $ bind { task ^ task wait_for 0 }" imports "eval ok: none",
     evalOkWith "task wait_for returneth a finished worth" "bring often.tung let work:ℤ deed ≔ +42 sheer yield work fork $ bind { task ^ task wait_for 1000 }" imports "eval ok: (+42 some)",
     evalOkWith "a cancelled task yieldeth none" "bring often.tung let work:ℤ deed ≔ (1000 sleep) then (+42 sheer) yield work fork $ bind { task ^ (task outstrike) then (task wait) }" imports "eval ok: none",
-    evalOkWith "cpu-bound task remaineth cancellable" "bring often.tung let spin:ℤ deed ≔ { again ^ (only sheer) bind { _ ^ again } } deed_steadfast yield spin fork $ bind { task ^ (task outstrike) then (task wait) }" imports "eval ok: none",
+    evalOkWith "cpu-bound task remaineth cancellable" "bring often.tung fast spin:ℤ deed ≔ (only sheer) bind { _ ^ spin } yield spin fork $ bind { task ^ (task outstrike) then (task wait) }" imports "eval ok: none",
     evalTypeErrWith "an opaque task cannot be eliminated as an empty family" "bring often.tung let unwrap:[worth:ℤ task, ℤ] ≔ match worth {} yield +0" imports,
     concurrentForks imports,
     randomRange imports,

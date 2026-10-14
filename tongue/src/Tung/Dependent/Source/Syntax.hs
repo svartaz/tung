@@ -22,6 +22,8 @@ module Tung.Dependent.Source.Syntax
     pattern Induce,
     pattern Inferred,
     unlocated,
+    expressionSpan,
+    trailingSpan,
     Parameter (..),
     Binder (..),
     Argument (..),
@@ -29,6 +31,8 @@ module Tung.Dependent.Source.Syntax
     ConstructorDeclaration (..),
     Row (..),
     FlockMember (..),
+    unshown,
+    repeatedNames,
     freeNames,
     sketch,
   )
@@ -38,7 +42,7 @@ import Data.List (intercalate)
 import Data.Set qualified as Set
 import Tung.Dependent.Literal (renderLiteral)
 import Tung.Dependent.Syntax (HostLiteral (..), Plicity (..))
-import Tung.Token (SourceSpan)
+import Tung.Token (SourceSpan (..))
 
 -- an expression's constructors are written without their `Raw` prefix: each
 -- name below is a pattern that looketh through `Located`, so a span never
@@ -69,6 +73,17 @@ data Expression
   | -- the source span of the expression inside.
     Located SourceSpan Expression
   deriving stock (Eq, Show)
+
+-- the span the parser gave an expression, if any.
+expressionSpan :: Expression -> Maybe SourceSpan
+expressionSpan = \case
+  Located span _ -> Just span
+  _ -> Nothing
+
+-- the span of a name that endeth an expression's span, as a field or the
+-- family after `unbuild`, in utf-16 units.
+trailingSpan :: SourceSpan -> String -> SourceSpan
+trailingSpan (SourceSpan _ end) name = SourceSpan (end - sum [if fromEnum character > 0xffff then 2 else 1 | character <- name]) end
 
 unlocated :: Expression -> Expression
 unlocated = \case
@@ -188,7 +203,10 @@ data Declaration
   = Declaration
       { declarationName :: String,
         declarationAnnotation :: Maybe Expression,
-        declarationBody :: Expression
+        declarationBody :: Expression,
+        -- `fast name: type ≔ body` may name itself without bound; its type
+        -- endeth in a deed.
+        declarationFixpoint :: Bool
       }
   | InductiveDeclaration
       { inductiveName :: String,
@@ -234,6 +252,16 @@ data Declaration
         hostModel :: Maybe Expression
       }
   deriving stock (Eq, Show)
+
+-- each name that occurreth again after its first occurrence, in order.
+repeatedNames :: [String] -> [String]
+repeatedNames names = [name | (index, name) <- zip [0 :: Int ..] names, name `elem` take index names]
+
+-- a declaration without its `show` markers.
+unshown :: Declaration -> Declaration
+unshown = \case
+  ShownDeclaration declaration -> unshown declaration
+  declaration -> declaration
 
 -- every constructor stateth its type, as in a GADT.
 data ConstructorDeclaration = ConstructorDeclaration
@@ -325,5 +353,5 @@ sketch = \case
     argument Argument {..} = (if argumentPlicity == Implicit then "@" else "") ++ sketch argumentExpression
     row Row {..} = intercalate ", " (map sketch rowPatterns) ++ " ^ " ++ sketch rowBody
     declaration = \case
-      Declaration {..} -> "let " ++ declarationName ++ maybe "" ((": " ++) . sketch) declarationAnnotation ++ " ≔ " ++ sketch declarationBody ++ " "
+      Declaration {..} -> (if declarationFixpoint then "fast " else "let ") ++ declarationName ++ maybe "" ((": " ++) . sketch) declarationAnnotation ++ " ≔ " ++ sketch declarationBody ++ " "
       _ -> "declaration "

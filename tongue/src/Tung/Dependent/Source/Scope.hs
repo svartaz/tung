@@ -9,6 +9,7 @@ module Tung.Dependent.Source.Scope
     Memo (..),
     emptyScope,
     recursiveBinding,
+    recursionFailure,
     extend,
     bindDomain,
     define,
@@ -65,8 +66,15 @@ data Recursion = Recursion
     -- direct children of the matched value and their induction hypotheses.
     recursionHypotheses :: [(Int, Int)],
     -- present when a call reacheth past a direct child.
-    recursionMemo :: Maybe Memo
+    recursionMemo :: Maybe Memo,
+    -- the result is a deed, so a refused call nameth `fast`.
+    recursionLoops :: Bool
   }
+
+-- a structural refusal. a let whose result is a deed may mean to loop without
+-- bound, which a fast declaration doth.
+recursionFailure :: Bool -> String -> Elaboration a
+recursionFailure loops message = E.failure (message ++ if loops then "; a deed that loopeth without bound is a fast declaration" else "")
 
 -- course-of-values recursion, as lean's `brecOn`: the motive is
 -- `r{below: Below x, now: P x}`, where `Below x` holdeth the records of every

@@ -10,16 +10,21 @@ module Tung.Dependent.Source.Parse
     parseExpression,
     SourceRole (..),
     parseSourceRoles,
+    sourceTree,
+    sourceSyntax,
   )
 where
 
-import Control.Monad (when)
+import Control.Monad (forM_, when)
+import Data.Bifunctor (first)
 import Data.Foldable (toList, traverse_)
 import Data.List (isSuffixOf, nub)
+import Data.Maybe (isJust)
 import Data.Sequence (Seq)
 import Data.Sequence qualified as Seq
 import Data.Set qualified as Set
 import GHC.Float (castDoubleToWord64)
+import Tung.Concrete (NodeKind (..), Tree, concreteTree)
 import Tung.Dependent.Source.Syntax
 import Tung.Dependent.Syntax (HostLiteral (..), Plicity (..))
 import Tung.Token
@@ -43,9 +48,13 @@ snapshotImportPaths snapshot =
 -- token ranges and syntax roles from the shared expression parser.
 data SourceRole = SourceRole SourceSpan String [String] deriving (Eq, Show)
 
--- roles survive a failure, so an unfinished buffer still colours its parsed
--- prefix. strict clients inspect only the result.
-data Result a = Result (Either SourceFailure a) (Seq SourceRole)
+-- roles and node marks survive a failure, so an unfinished buffer still
+-- colours its parsed prefix. strict clients inspect only the result.
+data Result a = Result (Either SourceFailure a) (Seq Mark)
+
+-- a role for one token, the span of a concrete syntax node, or a local
+-- binder's span with the span where it is seen.
+data Mark = MarkRole SourceRole | MarkNode NodeKind SourceSpan | MarkScope SourceSpan SourceSpan
 
 instance Functor Result where
   fmap f (Result value roles) = Result (fmap f value) roles
@@ -61,7 +70,7 @@ instance Monad Result where
   Result (Left failure) roles >>= _ = Result (Left failure) roles
   Result (Right value) roles >>= next = retain roles (next value)
 
-retain :: Seq SourceRole -> Result a -> Result a
+retain :: Seq Mark -> Result a -> Result a
 retain roles (Result value more) = Result value (roles <> more)
 
 resultEither :: Result a -> Either SourceFailure a
@@ -84,7 +93,7 @@ parseProgram :: String -> Either String ([Declaration], Maybe Expression)
 parseProgram = either (Left . failureMessage) Right . parseProgramDetailed
 
 parseProgramDetailed :: String -> Either SourceFailure ([Declaration], Maybe Expression)
-parseProgramDetailed source = (\(found, yielded) -> (map snd found, yielded)) <$> parseProgramLocated source
+parseProgramDetailed source = first (map snd) <$> parseProgramLocated source
 
 -- each top-level declaration with the span of the name it declareth, or of its
 -- keyword when it nameth nothing.
@@ -101,34 +110,54 @@ atEnd tokens = \case
   result -> result
 
 -- diagnostics may use complete declarations beside a parse error. only the
--- strict result may be compiled for execution or proof verification. recovery
--- resumeth at an unindented declaration outside every opened delimiter; an
--- unfinished literal, comment, or delimiter therefore limiteth the recovery.
+-- strict result may be compiled for execution or proof verification.
 recoverSnapshot :: SourceSnapshot -> ([(Maybe SourceSpan, Declaration)], Maybe Expression, [SourceFailure])
 recoverSnapshot SourceSnapshot {snapshotProgram = Right (declarations, yielded)} = (declarations, yielded, [])
 recoverSnapshot SourceSnapshot {snapshotText, snapshotProgram = Left original} =
-  let (declarations, yielded, failures) = recover tokens
-   in (declarations, yielded, nub (original : failures))
+  let Recovery {..} = recover snapshotText
+   in (recoveredDeclarations, recoveredYield, nub (original : recoveredFailures))
+
+-- what one walk over a source recovereth: its complete declarations, a final
+-- yield, the failures between them, and the marks for highlighting and the
+-- concrete tree. a region the parser could not read is a broken node, and
+-- its lines are parsed one by one for highlighting only.
+data Recovery = Recovery
+  { recoveredDeclarations :: [(Maybe SourceSpan, Declaration)],
+    recoveredYield :: Maybe Expression,
+    recoveredFailures :: [SourceFailure],
+    recoveredMarks :: Seq Mark
+  }
+
+-- recovery resumeth at an unindented declaration outside every opened
+-- delimiter; an unfinished literal, comment, or delimiter therefore limiteth it.
+recover :: String -> Recovery
+recover source = walk tokens
   where
-    lexed = located snapshotText
-    tokens = either (const (map locatedToken (lexLocatedPrefix snapshotText))) id lexed
-    boundary = recoveryHead snapshotText
-    recover [] = ([], Nothing, [])
-    recover input@(TYield : rest) = case resultEither (whole expression rest) of
-      Right yielded -> ([], Just yielded, [])
-      Left failure -> failed input failure
-    recover input = case resultEither (oneDeclaration input) of
-      Right (declaration, following) ->
-        let (declarations, yielded, failures) = recover following
-         in ((declarationNameSpan input, declaration) : declarations, yielded, failures)
-      Left failure -> failed input failure
-    failed input failure =
-      let (declarations, yielded, failures) = recover (resume input)
+    lexed = located source
+    tokens = either (const (map locatedToken (lexLocatedPrefix source))) id lexed
+    boundary = recoveryHead source
+    walk [] = Recovery [] Nothing [] Seq.empty
+    walk input@(TYield : _) = case marked DeclarationNode yielded input of
+      Result (Right (yielded', [])) marks -> Recovery [] (Just yielded') [] marks
+      Result (Right (_, rest)) _ -> failed input (Left (failureAt rest))
+      Result (Left failure) _ -> failed input (Left failure)
+    walk input = case marked DeclarationNode oneDeclaration input of
+      Result (Right (declaration, following)) marks ->
+        let rest = walk following
+         in rest {recoveredDeclarations = (declarationNameSpan input, declaration) : recoveredDeclarations rest, recoveredMarks = marks <> recoveredMarks rest}
+      Result (Left failure) _ -> failed input (Left failure)
+    failureAt rest = SourceFailure (case rest of token : _ -> tokenSpan token; [] -> Nothing) "unexpected token; expected a declaration or the end of the input"
+    failed input outcome =
+      let following = resume input
+          rest = walk following
           -- a lexical error already explaineth an incomplete token prefix.
-          current = case (lexed, failureSpan failure) of
-            (Left _, Nothing) -> []
-            _ -> either pure (const []) (atEnd input (Left failure))
-       in (declarations, yielded, current ++ failures)
+          current = case (lexed, outcome) of
+            (Left _, Left SourceFailure {failureSpan = Nothing}) -> []
+            _ -> either pure (const []) (atEnd input outcome)
+          broken = take (length input - length following) input
+          lines' = concatMap (toList . rolesOf . program) (chunks broken)
+          brokenNode = Seq.fromList [MarkNode BrokenNode span | Just span <- [consumedSpan input following]]
+       in rest {recoveredFailures = current ++ recoveredFailures rest, recoveredMarks = brokenNode <> Seq.fromList lines' <> recoveredMarks rest}
     resume [] = []
     resume (token : rest) = seek (delimiters [] token) rest
     seek _ [] = []
@@ -142,12 +171,27 @@ recoverSnapshot SourceSnapshot {snapshotText, snapshotProgram = Left original} =
       TBraceKeyword _ -> TRBrace : stack
       token | closing : rest <- stack, token == closing -> rest
       _ -> stack
+    chunks [] = []
+    chunks (token : rest) = let (body, remaining) = break boundary rest in (token : body) : chunks remaining
+
+-- the concrete syntax tree of a source, complete or not.
+sourceTree :: String -> Tree
+sourceTree = (\(tree, _, _) -> tree) . sourceSyntax
+
+-- the tree, the token roles, and the local scopes of one parse.
+sourceSyntax :: String -> (Tree, [SourceRole], [(SourceSpan, SourceSpan)])
+sourceSyntax source = (concreteTree (lexPieces source) [(kind, span) | MarkNode kind span <- marks], lexical ++ [role | MarkRole role <- marks], [(binder, scope) | MarkScope binder scope <- marks])
+  where
+    marks = toList case program (map locatedToken (lexLocatedPrefix source)) of
+      Result (Right _) found -> found
+      Result (Left _) _ -> recoveredMarks (recover source)
+    lexical = [SourceRole span "keyword" [] | LocatedToken span token <- lexLocatedPrefix source, token `elem` [TAt, TKindStar]]
 
 program :: [Token] -> Result ([(Maybe SourceSpan, Declaration)], Maybe Expression)
 program tokens = do
   (found, rest) <- locatedDeclarations tokens
   case rest of
-    TYield : afterYield -> (found,) . Just <$> whole expression afterYield
+    TYield : _ -> (found,) . Just <$> whole (marked DeclarationNode yielded) rest
     _ -> (found, Nothing) <$ whole (\remaining -> pure ((), remaining)) rest
 
 parseExpression :: String -> Either String Expression
@@ -162,6 +206,12 @@ whole parser tokens = do
   case rest of
     [] -> pure result
     _ -> failAt rest "unexpected token; expected a declaration or the end of the input"
+
+-- `yield` and the expression it yieldeth.
+yielded :: Parser Expression
+yielded = \case
+  TYield : rest -> expression rest
+  tokens -> failAt tokens "expected 'yield'"
 
 -- each list requireth an item, including after a separator. a closed list also
 -- consumeth its delimiter; other lists leave the following token to their owner.
@@ -181,9 +231,6 @@ closedItems closing message item tokens = do
     next : remaining | next == closing -> pure (items, remaining)
     _ -> failAt rest message
 
-declarations :: Parser [Declaration]
-declarations tokens = (\(found, rest) -> (map snd found, rest)) <$> locatedDeclarations tokens
-
 locatedDeclarations :: Parser [(Maybe SourceSpan, Declaration)]
 locatedDeclarations = declarationsUsing oneDeclaration
 
@@ -193,9 +240,8 @@ declarationsUsing parser tokens = case tokens of
   TYield : _ -> pure ([], tokens)
   TRBrace : _ -> pure ([], tokens)
   _ -> do
-    (declaration, following) <- parser tokens
-    (remaining, ending) <- declarationsUsing parser following
-    pure ((declarationNameSpan tokens, declaration) : remaining, ending)
+    (declaration, following) <- marked DeclarationNode parser tokens
+    first ((declarationNameSpan tokens, declaration) :) <$> declarationsUsing parser following
 
 declarationNameSpan :: [Token] -> Maybe SourceSpan
 declarationNameSpan = \case
@@ -207,16 +253,17 @@ declarationNameSpan = \case
 -- one declaration; `show` before a declaration wrapeth it.
 oneDeclaration :: Parser Declaration
 oneDeclaration tokens = case tokens of
-  TLet : rest -> letDeclaration rest
+  TLet : rest -> letDeclaration False rest
+  TFix : rest -> letDeclaration True rest
   TType : rest -> inductiveDeclaration rest
   TClass : rest -> flockDeclaration rest
   TInstance : rest -> bizenDeclaration rest
   TOrsend : rest -> orsendDeclaration rest
   TImport : rest -> importDeclaration rest
-  TExport : rest@(keyword : _) | keyword `elem` [TLet, TType, TClass, TOrsend] -> shown rest
-  TExport : rest@(TIdent _ : _) -> (\(names, following) -> (ReExportDeclaration names, following)) <$> reexported [] rest
-  TExport : _ -> failAt tokens "show must precede a let, ilk, flock, or orsetting declaration or a name"
-  _ -> failAt tokens "expected a declaration: let, ilk, flock, bizen, orsetting, bring, or show"
+  TExport : rest@(keyword : _) | keyword `elem` [TLet, TFix, TType, TClass, TOrsend] -> shown rest
+  TExport : rest@(TIdent _ : _) -> first ReExportDeclaration <$> reexported [] rest
+  TExport : _ -> failAt tokens "show must precede a let, fast, ilk, flock, or orsetting declaration or a name"
+  _ -> failAt tokens "expected a declaration: let, fast, ilk, flock, bizen, orsetting, bring, or show"
 
 -- `show a, b` re-exporteth visible names.
 reexported :: [String] -> Parser [String]
@@ -227,29 +274,34 @@ reexported names tokens = case tokens of
 
 -- `show` wrapeth exactly one following declaration.
 shown :: Parser Declaration
-shown tokens = (\(declaration, following) -> (ShownDeclaration declaration, following)) <$> oneDeclaration tokens
+shown tokens = first ShownDeclaration <$> oneDeclaration tokens
 
 -- `flock name:[parameters, @:parent, *] { members }`. the signature endeth in `*`.
 flockDeclaration :: Parser Declaration
-flockDeclaration tokens@(TIdent name : TColon : rest) = localTerms memberNames tokens do
+flockDeclaration = scoped flockDeclarationBody
+
+flockDeclarationBody :: Parser Declaration
+flockDeclarationBody tokens@(TIdent name : TColon : rest) = localTerms memberNames tokens do
   plainName tokens name
-  markFirst "class" (["declaration"] ++ ["typeFunction" | case rest of TLBracket : _ -> True; _ -> False]) tokens
-  (signature, afterSignature) <- typeRoles (atom rest)
+  markFirst "class" (familyModifiers rest) tokens
+  (signature, afterSignature) <- unscoped $ typeRoles (atom rest)
   parameters <- case signature of
     Product parameters Universe -> pure parameters
     Universe -> pure []
     _ -> failAt rest "a flock signature endeth in '*'"
   case afterSignature of
-    TLBrace : afterOpen -> do
-      (members, remaining) <- flockMemberList afterOpen
-      pure (FlockDeclaration name parameters members, remaining)
+    TLBrace : afterOpen -> first (FlockDeclaration name parameters) <$> flockMemberList afterOpen
     _ -> failAt afterSignature "expected '{' after flock signature"
   where
     -- value parameters and fields stay terms in the member types that use them.
     memberNames FlockDeclaration {flockParameters, flockMembers} =
       valueNames flockParameters ++ [name | FlockMember name ty <- flockMembers, not (sorted ty)]
     memberNames _ = []
-flockDeclaration tokens = failAt tokens "expected flock name and ':signature'"
+flockDeclarationBody tokens = failAt tokens "expected flock name and ':signature'"
+
+-- a family or flock with bracketed parameters is a type function.
+familyModifiers :: [Token] -> [String]
+familyModifiers signature = "declaration" : ["typeFunction" | TLBracket : _ <- [signature]]
 
 -- all members use ordinary type expressions, including equality-valued laws.
 flockMemberList :: Parser [FlockMember]
@@ -258,15 +310,15 @@ flockMemberList tokens = case tokens of
   TLet : named@(TIdent name : TColon : rest) -> do
     plainName named name
     (ty, afterType) <- typeRoles (expression rest)
+    markNode DeclarationNode tokens afterType
     markFirst "call" ["declaration", "applied"] named
-    (members, remaining) <- flockMemberList afterType
-    pure (FlockMember name ty : members, remaining)
+    first (FlockMember name ty :) <$> flockMemberList afterType
   _ -> failAt tokens "expected a flock member or '}'"
 
 -- `bizen:type { lets }`. the type endeth before the opening brace, as match
 -- scrutinees do. member bodies are ordinary declarations.
 bizenDeclaration :: Parser Declaration
-bizenDeclaration = bizenHeader False Nothing
+bizenDeclaration = scoped (bizenHeader False Nothing)
 
 -- `fallback` and a priority may precede the colon, in that order.
 bizenHeader :: Bool -> Maybe Integer -> Parser Declaration
@@ -274,7 +326,7 @@ bizenHeader fallback priority tokens = case tokens of
   marker@(TIdent "fallback") : rest | not fallback, Nothing <- priority -> markRole "keyword" [] marker >> bizenHeader True priority rest
   TNatural value : rest | Nothing <- priority -> bizenHeader fallback (Just (toInteger value)) rest
   TColon : rest -> do
-    (parts, afterType) <- typeRoles (applicationPartsUntil (== TLBrace) rest)
+    (parts, afterType) <- unscoped $ typeRoles (applicationPartsUntil (== TLBrace) rest)
     ty <- liftAt rest (application parts)
     markClass ty
     case afterType of
@@ -314,59 +366,66 @@ importDeclaration tokens = case tokens of
     go path remaining = pure (ImportDeclaration path Nothing, remaining)
 
 inductiveDeclaration :: Parser Declaration
-inductiveDeclaration tokens@(TIdent name : TColon : rest) = localTerms headerNames tokens do
+inductiveDeclaration = scoped inductiveDeclarationBody
+
+inductiveDeclarationBody :: Parser Declaration
+inductiveDeclarationBody tokens@(TIdent name : TColon : rest) = localTerms headerNames tokens do
   plainName tokens name
-  markFirst "type" (["declaration"] ++ ["typeFunction" | case rest of TLBracket : _ -> True; _ -> False]) tokens
+  markFirst "type" (familyModifiers rest) tokens
   -- the braces belong to the declaration. compound signatures can use a
   -- bracketed product or parentheses, leaving the opening brace unambiguous.
-  (signature, afterSignature) <- typeRoles (atom rest)
+  (signature, afterSignature) <- unscoped $ typeRoles (atom rest)
   case afterSignature of
-    TLBrace : afterOpen -> do
-      (constructors, remaining) <- constructorDeclarations afterOpen
-      pure (InductiveDeclaration name signature constructors, remaining)
+    TLBrace : afterOpen -> first (InductiveDeclaration name signature) <$> constructorDeclarations afterOpen
     _ -> failAt afterSignature "expected '{' after ilk signature"
   where
     -- header parameters scope over the constructor annotations.
     headerNames = \case
       InductiveDeclaration {inductiveSignature = Product parameters _} -> valueNames parameters
       _ -> []
-inductiveDeclaration tokens = failAt tokens "expected ilk name and ':signature'"
+inductiveDeclarationBody tokens = failAt tokens "expected ilk name and ':signature'"
 
 constructorDeclarations :: Parser [ConstructorDeclaration]
 constructorDeclarations (TRBrace : rest) = pure ([], rest)
 constructorDeclarations named@(TIdent name : TColon : tokens) = do
   plainName named name
   (annotation, afterAnnotation) <- typeRoles (expression tokens)
+  markNode ItemNode named afterAnnotation
   markFirst (if callable annotation then "function" else "enumMember") ["declaration", "constructor"] named
   let constructor = ConstructorDeclaration name annotation
   case afterAnnotation of
-    TComma : rest -> do
-      (remaining, following) <- constructorDeclarations rest
-      pure (constructor : remaining, following)
+    TComma : rest -> first (constructor :) <$> constructorDeclarations rest
     TRBrace : rest -> pure ([constructor], rest)
     _ -> failAt afterAnnotation "expected ',' or '}' after constructor"
 constructorDeclarations tokens@(TIdent name : _) = failAt tokens ("constructor '" ++ name ++ "' requireth an ilk, as in '" ++ name ++ ":ilk'")
 constructorDeclarations tokens = failAt tokens "expected constructor name"
 
--- a let header is one name; arguments are annotation slots.
-letDeclaration :: Parser Declaration
-letDeclaration tokens = do
+-- a let header is one name; arguments are annotation slots. a `fast`
+-- header is a let header with a required annotation.
+letDeclaration :: Bool -> Parser Declaration
+letDeclaration fixpoint = scoped (letDeclarationBody fixpoint)
+
+letDeclarationBody :: Bool -> Parser Declaration
+letDeclarationBody fixpoint tokens = do
+  let keyword = if fixpoint then "fast" else "let"
   (name, afterHeader) <- case tokens of
     TIdent name : rest -> (name, rest) <$ plainName tokens name
-    _ -> failAt tokens "expected let name"
+    _ -> failAt tokens ("expected " ++ keyword ++ " name")
   (annotation, bodyTokens) <- case afterHeader of
     TColon : rest -> do
-      (ty, afterType) <- typeRoles (letAnnotation rest)
+      (ty, afterType) <- unscoped $ typeRoles (letAnnotation rest)
       case afterType of
         TEquals : body -> pure (Just ty, body)
-        _ -> failAt afterType "expected '≔' after let annotation"
+        _ -> failAt afterType ("expected '≔' after " ++ keyword ++ " annotation")
+    TEquals : _ | fixpoint -> failAt afterHeader "a fast declaration requireth an ilk annotation"
     TEquals : body -> pure (Nothing, body)
-    _ -> failAt afterHeader "expected ':' or '≔' after let name"
+    _ -> failAt afterHeader ("expected ':' or '≔' after " ++ keyword ++ " name")
   let ty = fst <$> annotation
       typeDefinition = maybe False sorted ty
       modifiers = ["declaration"] ++ [if typeDefinition then "typeFunction" else "applied" | maybe False callable ty]
   markFirst (if typeDefinition then "type" else if maybe False callable ty then "function" else "variable") modifiers tokens
   case (bodyTokens, annotation) of
+    (TText _ : TForeign : _, _) | fixpoint -> failAt bodyTokens "a fremmed binding is a let, not fast"
     (TText key : TForeign : remaining, Just (ty, written))
       | next : _ <- remaining,
         not (stopsExpression next) -> do
@@ -380,7 +439,7 @@ letDeclaration tokens = do
       (body, remaining) <- (if typeDefinition then typeRoles else id) (expression bodyTokens)
       when (not typeDefinition && not (maybe False callable ty) && callable body) (markFirst "function" ["declaration", "applied"] tokens)
       lowered <- liftAt bodyTokens (lowerHeader annotation body)
-      pure (Declaration name (fst <$> annotation) lowered, remaining)
+      pure (Declaration name (fst <$> annotation) lowered fixpoint, remaining)
 
 -- a let annotation is a type. a bracket may also bind patterns, `pattern: type`,
 -- and omit its result when its last slot bindeth, as in `[x:] = x`; the result
@@ -409,7 +468,7 @@ letAnnotation tokens@(TLBracket : rest) = localTerms (valueNames . map slotParam
       )
   _ -> unslotted tokens
   where
-    slots = closedItems TRBracket "expected ',' or ']' after bracket item" annotationSlot
+    slots = closedItems TRBracket "expected ',' or ']' after bracket item" (marked ItemNode annotationSlot)
 letAnnotation tokens = unslotted tokens
 
 -- let annotations allow pattern slots. the colon selecteth a pattern
@@ -428,10 +487,10 @@ annotationSlot items = case items of
         pure (Slot (Parameter Explicit Nothing ty) (Just value), remaining)
       _ -> emitRoles (rolesOf parsed) >> pure (Slot (Parameter Explicit Nothing value) Nothing, afterValue)
   where
-    named = (\(parameter, remaining) -> (Slot parameter Nothing, remaining)) <$> parameter items
+    named = first (`Slot` Nothing) <$> parameter items
 
 unslotted :: Parser (Expression, [Slot])
-unslotted tokens = (\(ty, rest) -> ((ty, []), rest)) <$> expression tokens
+unslotted tokens = first (,[]) <$> expression tokens
 
 -- a let annotation slot, with the pattern that bindeth it when written.
 data Slot = Slot
@@ -446,7 +505,7 @@ bindsInput slot@Slot {slotParameter = Parameter {parameterPlicity}} = parameterP
 -- named slots, pattern slots, and `@` slots bind an input.
 binds :: Slot -> Bool
 binds Slot {slotParameter = Parameter {parameterPlicity, parameterName}, slotPattern} =
-  parameterPlicity == Implicit || maybe False (const True) parameterName || maybe False (const True) slotPattern
+  parameterPlicity == Implicit || isJust parameterName || isJust slotPattern
 
 -- written named slots, pattern slots, and `@:` requirements supply lambda
 -- binders; bare slots describe a function supplied by the body. a written
@@ -503,15 +562,11 @@ applicationPartsUntil stop = go []
     finish accumulated rest = pure (reverse accumulated, rest)
 
 stopsExpression :: Token -> Bool
-stopsExpression token = token `elem` [TLet, TType, TImport, TExport, TClass, TInstance, TOrsend, TYield, TComma, TColon, TSemicolon, TEquals, TMapsTo, TRParen, TRBracket, TRBrace, TDollar]
+stopsExpression token = token `elem` [TLet, TFix, TType, TImport, TExport, TClass, TInstance, TOrsend, TYield, TComma, TColon, TSemicolon, TEquals, TMapsTo, TRParen, TRBracket, TRBrace, TDollar]
 
 parseArgument :: Parser Argument
-parseArgument (TAt : rest) = do
-  (value, remaining) <- typeRoles (atom rest)
-  pure (Argument Implicit value, remaining)
-parseArgument tokens = do
-  (value, rest) <- atom tokens
-  pure (Argument Explicit value, rest)
+parseArgument (TAt : rest) = first (Argument Implicit) <$> typeRoles (atom rest)
+parseArgument tokens = first (Argument Explicit) <$> atom tokens
 
 -- a single atom standeth alone. otherwise the second value is the function,
 -- except that an implicit argument after the first value already identifyeth it.
@@ -563,7 +618,7 @@ atomBase tokens = case tokens of
   TBraceKeyword marker : rest | marker `elem` ["<", ">"] -> composition marker rest
   TLBrace : rest -> lambda rest
   TFall : rest -> fall rest
-  TLParen : rest@(keyword : _) | keyword `elem` [TLet, TImport, TExport] -> block rest
+  TLParen : rest@(keyword : _) | keyword `elem` [TLet, TFix, TImport, TExport] -> block rest
   TLParen : rest -> do
     (value, afterValue) <- expression rest
     case afterValue of
@@ -600,16 +655,17 @@ composition marker tokens = do
 compositionItems :: Parser [Expression]
 compositionItems (TRBrace : rest) = pure ([], rest)
 compositionItems tokens = do
-  (item, afterItem) <- expression tokens
+  (item, afterItem) <- marked ItemNode expression tokens
   case afterItem of
-    TComma : rest -> do
-      (items, remaining) <- compositionItems rest
-      pure (item : items, remaining)
+    TComma : rest -> first (item :) <$> compositionItems rest
     TRBrace : rest -> pure ([item], rest)
     _ -> failAt afterItem "expected ',' or '}' after composition item"
 
 bracket :: Parser Expression
-bracket tokens = localTerms productNames tokens do
+bracket = scoped bracketBody
+
+bracketBody :: Parser Expression
+bracketBody tokens = localTerms productNames tokens do
   (items, rest) <- bracketItems tokens
   distinctNames tokens [name | Parameter {parameterName = Just name} <- items, name /= "_"]
   case reverse items of
@@ -621,7 +677,7 @@ bracket tokens = localTerms productNames tokens do
       _ -> []
 
 bracketItems :: Parser [Parameter]
-bracketItems = closedItems TRBracket "expected ',' or ']' after bracket item" parameter
+bracketItems = closedItems TRBracket "expected ',' or ']' after bracket item" (marked ItemNode parameter)
 
 parameter :: Parser Parameter
 parameter (TAt : token@(TIdent name) : TColon : rest) = namedParameter Implicit token name rest
@@ -632,9 +688,7 @@ parameter (TAt : TColon : rest) = do
   pure (Parameter Implicit Nothing ty, remaining)
 parameter tokens@(TAt : _) = failAt tokens "implicit parameters require '@name:ilk' or '@:requirement'"
 parameter (token@(TIdent name) : TColon : rest) = namedParameter Explicit token name rest
-parameter tokens = do
-  (ty, rest) <- typeRoles (expression tokens)
-  pure (Parameter Explicit Nothing ty, rest)
+parameter tokens = first (Parameter Explicit Nothing) <$> typeRoles (expression tokens)
 
 -- a declared name is unqualified; `~` only reacheth an import.
 plainName :: [Token] -> String -> Result ()
@@ -644,7 +698,7 @@ plainName tokens name
 
 -- a bracket nameth each slot once.
 distinctNames :: [Token] -> [String] -> Result ()
-distinctNames tokens names = case [name | (index, name) <- zip [0 :: Int ..] names, name `elem` take index names] of
+distinctNames tokens names = case repeatedNames names of
   name : _ -> failAt tokens ("'" ++ name ++ "' nameth two slots of one bracket")
   [] -> pure ()
 
@@ -673,30 +727,24 @@ lambda tokens = do
   pure case groups of
     [([items], body)]
       | Just binders <- traverse plainBinder items,
-        null (repeated [name | Binder {binderName = Just name} <- binders]) ->
+        null (repeatedNames [name | Binder {binderName = Just name} <- binders]) ->
           (Lambda binders body, remaining)
-    _ -> (Cases [Row (map itemPattern items) body | (alternatives, body) <- groups, items <- alternatives], remaining)
+    _ -> (Cases [Row (map rowPattern items) body | (alternatives, body) <- groups, items <- alternatives], remaining)
   where
     plainBinder = \case
       Left binder -> Just binder
       Right (Name name) -> Just (Binder Explicit (bindingName name) Nothing)
       Right Wildcard -> Just (Binder Explicit Nothing Nothing)
       Right _ -> Nothing
-    itemPattern = \case
-      Left (Binder _ name _) -> maybe Wildcard Name name
-      Right pattern -> pattern
-    repeated names = [name | (index, name) <- zip [0 :: Int ..] names, name `elem` take index names]
 
 -- rows end at '}'. each row hath `;`-separated alternatives before '^'.
 caseGroups :: Parser [([[Either Binder Expression]], Expression)]
-caseGroups = closedItems TRBrace "expected ',' or '}' after a case" group
+caseGroups = closedItems TRBrace "expected ',' or '}' after a case" (marked RowNode (scoped group))
   where
     group tokens = do
       (alternatives, afterPatterns) <- rowAlternatives tokens
       case afterPatterns of
-        TMapsTo : rest -> do
-          (body, remaining) <- expression rest
-          pure ((alternatives, body), remaining)
+        TMapsTo : rest -> first (alternatives,) <$> expression rest
         _ -> failAt afterPatterns "expected '^' after patterns"
 
 rowAlternatives :: Parser [[Either Binder Expression]]
@@ -708,26 +756,26 @@ rowItems = separatedItems TComma rowItem
 -- `@x`, `x:type`, and `x` are binders; any other expression is a pattern.
 rowItem :: Parser (Either Binder Expression)
 rowItem tokens = case tokens of
-  TAt : rest -> lambdaBinder (TAt : rest) >>= \(item, remaining) -> pure (Left item, remaining)
-  TIdent _ : TColon : _ -> lambdaBinder tokens >>= \(item, remaining) -> pure (Left item, remaining)
-  _ -> do
-    (pattern, remaining) <- patternRoles (expression tokens)
-    pure (Right pattern, remaining)
+  TAt : _ -> first Left <$> lambdaBinder tokens
+  TIdent _ : TColon : _ -> first Left <$> lambdaBinder tokens
+  _ -> first Right <$> patternRoles (expression tokens)
+
+-- a binder in a pattern row is a variable pattern.
+rowPattern :: Either Binder Expression -> Expression
+rowPattern = either (\(Binder _ name _) -> maybe Wildcard Name name) id
 
 -- `match a, b { rows }`. scrutinees end at the opening brace.
 matchExpression :: Parser Expression
 matchExpression tokens = do
   (scrutinees, afterScrutinees) <- scrutineeList tokens
-  (rows, remaining) <- rowsAfter afterScrutinees
-  pure (Match scrutinees rows, remaining)
+  first (Match scrutinees) <$> rowsAfter afterScrutinees
   where
     rowsAfter = \case
       TLBrace : TRBrace : remaining -> pure ([], remaining)
       TLBrace : rest -> do
         (groups, remaining) <- caseGroups rest
-        pure ([Row items body | (alternatives, body) <- groups, items <- map (map pattern) alternatives], remaining)
+        pure ([Row (map rowPattern items) body | (alternatives, body) <- groups, items <- alternatives], remaining)
       afterHeader -> failAt afterHeader "expected '{' after match scrutinees"
-    pattern = either (\(Binder _ name _) -> maybe Wildcard Name name) id
     scrutineeList = separatedItems TComma scrutinee
     scrutinee ts = do
       (parts, afterParts) <- applicationPartsUntil (== TLBrace) ts
@@ -737,7 +785,10 @@ matchExpression tokens = do
 -- `fall params, result ^ body` is a lambda checked against its written
 -- product. a bare slot bindeth an input that the body cannot name.
 fall :: Parser Expression
-fall tokens = do
+fall = scoped fallBody
+
+fallBody :: Parser Expression
+fallBody tokens = do
   (items, afterItems) <- fallItems tokens
   case reverse items of
     Parameter Explicit Nothing result : reversed@(_ : _) -> do
@@ -763,15 +814,21 @@ binder _ tokens = failAt tokens "a typed or implicit binder requireth a name"
 
 block :: Parser Expression
 block tokens = do
-  (bindings, rest) <- declarations tokens
+  (located, rest) <- locatedDeclarations tokens
+  let bindings = map snd located
   when (any isInductive bindings) (failAt tokens "ilk declarations must be top-level")
   when (any isHost bindings) (failAt tokens "fremmed bindings must be top-level")
+  when (any isFixpoint bindings) (failAt tokens "fast declarations must be top-level")
   when (any isModuleLevel bindings) (failAt tokens "bring and show must be top-level")
   case rest of
-    TYield : afterYield -> do
-      (body, afterBody) <- expression afterYield
+    TYield : _ -> do
+      (body, afterBody) <- marked ItemNode yielded rest
       case afterBody of
-        TRParen : remaining -> pure (Block bindings body, remaining)
+        TRParen : remaining -> do
+          -- a local let is seen by the rest of its block, its own body included.
+          forM_ (consumedSpan tokens remaining) \(SourceSpan _ end) ->
+            emitRoles (Seq.fromList [MarkScope span (SourceSpan (spanStart span) end) | (Just span, Declaration {}) <- located])
+          pure (Block bindings body, remaining)
         _ -> failAt afterBody "expected ')' after block result"
     _ -> failAt rest "expected 'yield' after local bindings"
   where
@@ -779,6 +836,8 @@ block tokens = do
     isInductive _ = False
     isHost HostDeclaration {} = True
     isHost _ = False
+    isFixpoint Declaration {declarationFixpoint} = declarationFixpoint
+    isFixpoint _ = False
     isModuleLevel ImportDeclaration {} = True
     isModuleLevel ShownDeclaration {} = True
     isModuleLevel ReExportDeclaration {} = True
@@ -790,15 +849,41 @@ deferred :: Result a -> Result a
 deferred result@(Result (Left _) _) = result
 deferred (Result value _) = Result value Seq.empty
 
-rolesOf :: Result a -> Seq SourceRole
+rolesOf :: Result a -> Seq Mark
 rolesOf (Result _ roles) = roles
 
-emitRoles :: Seq SourceRole -> Result ()
+emitRoles :: Seq Mark -> Result ()
 emitRoles = Result (Right ())
+
+-- the node covering the tokens consumed between two token lists.
+markNode :: NodeKind -> [Token] -> [Token] -> Result ()
+markNode kind tokens rest = traverse_ (emitRoles . Seq.singleton . MarkNode kind) (consumedSpan tokens rest)
+
+-- the binders a construct declareth are seen from themselves to the
+-- construct's end, unless an inner construct already gave them a scope.
+scoped :: Parser a -> Parser a
+scoped parser tokens = case parser tokens of
+  Result outcome@(Right (_, rest)) marks
+    | Just (SourceSpan _ end) <- consumedSpan tokens rest ->
+        let done = Set.fromList [binder | MarkScope binder _ <- toList marks]
+            binders = [span | MarkRole (SourceRole span role _) <- toList marks, role `elem` ["typeParameter", "headerPattern", "parameter"], Set.notMember span done]
+         in Result outcome (marks <> Seq.fromList [MarkScope span (SourceSpan (spanStart span) end) | span <- nub binders])
+  result -> result
+
+-- a declaration's header is seen by the whole declaration, so the header's
+-- own brackets give its binders no narrower scope.
+unscoped :: Result a -> Result a
+unscoped (Result value marks) = Result value (Seq.filter (\case MarkScope {} -> False; _ -> True) marks)
+
+marked :: NodeKind -> Parser a -> Parser a
+marked kind parser tokens = do
+  (value, rest) <- parser tokens
+  markNode kind tokens rest
+  pure (value, rest)
 
 markRole :: String -> [String] -> Token -> Result ()
 markRole _ _ (TIdent "_") = pure ()
-markRole role modifiers token = maybe (pure ()) (\span -> emitRoles (Seq.singleton (SourceRole span role modifiers))) (tokenSpan token)
+markRole role modifiers token = maybe (pure ()) (\span -> emitRoles (Seq.singleton (MarkRole (SourceRole span role modifiers)))) (tokenSpan token)
 
 markFirst :: String -> [String] -> [Token] -> Result ()
 markFirst role modifiers = traverse_ (markRole role modifiers) . take 1
@@ -809,12 +894,18 @@ memberRoles (Result value roles) = Result value $ case Seq.findIndexL binding ro
   Just index -> Seq.adjust' member index roles
   Nothing -> roles
   where
-    binding (SourceRole _ role modifiers) = role `elem` ["function", "variable"] && "declaration" `elem` modifiers
-    member (SourceRole span "function" modifiers) = SourceRole span "call" modifiers
-    member role = role
+    binding = \case
+      MarkRole (SourceRole _ role modifiers) -> role `elem` ["function", "variable"] && "declaration" `elem` modifiers
+      _ -> False
+    member (MarkRole (SourceRole span "function" modifiers)) = MarkRole (SourceRole span "call" modifiers)
+    member mark = mark
 
 mapRoles :: (SourceRole -> SourceRole) -> Result a -> Result a
-mapRoles f (Result value roles) = Result value (fmap f roles)
+mapRoles f (Result value marks) = Result value (fmap mark marks)
+  where
+    mark = \case
+      MarkRole role -> MarkRole (f role)
+      node -> node
 
 typeRoles :: Result a -> Result a
 typeRoles = mapRoles \case
@@ -876,25 +967,15 @@ markClass (Application function _) = markFunction "class" function
 markClass expression = markFunction "class" expression
 
 markFunction :: String -> Expression -> Result ()
-markFunction role (Located span (Name name)) | name /= "_" = emitRoles (Seq.singleton (SourceRole span role ["applied"]))
+markFunction role (Located span (Name name)) | name /= "_" = emitRoles (Seq.singleton (MarkRole (SourceRole span role ["applied"])))
 markFunction role (Located _ value) = markFunction role value
 markFunction role (Application function _) = markFunction role function
 markFunction _ _ = pure ()
 
--- use the strict parser on each recovery chunk. unindented declaration heads
--- bound recovery work, so unfinished brackets cannot rescan the whole buffer.
+-- unindented declaration heads bound recovery work, so unfinished brackets
+-- cannot rescan the whole buffer.
 parseSourceRoles :: String -> [SourceRole]
-parseSourceRoles source =
-  lexical ++ case parseChunk tokens of
-    Result (Right _) events -> toList events
-    Result (Left _) events -> toList events ++ concatMap (toList . rolesOf . parseChunk) (chunks tokens)
-  where
-    tokens = map locatedToken (lexLocatedPrefix source)
-    lexical = [SourceRole span "keyword" [] | token <- tokens, token `elem` [TAt, TKindStar], Just span <- [tokenSpan token]]
-    parseChunk input = () <$ program input
-    chunks [] = []
-    chunks (token : rest) = let (body, remaining) = break boundary rest in (token : body) : chunks remaining
-    boundary = recoveryHead source
+parseSourceRoles = (\(_, roles, _) -> roles) . sourceSyntax
 
 -- both diagnostic recovery and highlighting resume only at source line starts.
 -- lexer offsets use UTF-16 code units, including supplementary characters.
@@ -902,7 +983,7 @@ recoveryHead :: String -> Token -> Bool
 recoveryHead source = boundary
   where
     boundary token =
-      token `elem` [TLet, TType, TClass, TInstance, TOrsend, TImport, TExport, TYield]
+      token `elem` [TLet, TFix, TType, TClass, TInstance, TOrsend, TImport, TExport, TYield]
         && maybe False ((`Set.member` starts) . spanStart) (tokenSpan token)
     starts = Set.fromList (0 : lineStarts 0 source)
     lineStarts _ [] = []

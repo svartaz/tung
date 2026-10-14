@@ -188,10 +188,11 @@ every assumption is a listed `orsetting`:
   and `deed_bind`: `deed_sheer_bind`, `deed_bind_sheer`, and `deed_bind_bind`,
   from which the functor, applicative, and monad laws of `deed` follow. deeds
   are opaque to conversion, so these are axioms, as lean's `IO` satisfieth
-  them by its model. a free inductive `deed` cannot replace them while
-  `deed_steadfast` existeth: its step `[α deed, α deed]` would put `deed` left
-  of an arrow, which strict positivity rejecteth; a lawful looping deed would
-  need coinduction.
+  them by its model. a free inductive `deed` cannot replace them while `fast`
+  existeth: a fast declaration is sound only because every deed type is a
+  one-element set in the model, and a free inductive deed hath many elements,
+  so an unbounded self-call could build an ill-founded one. a lawful looping
+  deed would need coinduction.
 - the host's `unicode` and `string` are opaque.
   [`ilk/unicode.tung`](ilk/unicode.tung) modelleth scalar sameness and order
   by code points and [`ilk/string/building.tung`](ilk/string/building.tung)

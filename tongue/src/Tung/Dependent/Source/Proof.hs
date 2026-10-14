@@ -17,9 +17,7 @@ import Control.Monad (unless)
 import Data.List (intercalate, sortOn)
 import Data.Map.Strict qualified as Map
 import Data.Set qualified as Set
-import Tung.Dependent.Check qualified as K
 import Tung.Dependent.Source.Environment
-import Tung.Dependent.Source.Render (renderTermIn)
 import Tung.Dependent.Syntax
 import Tung.Identity (ModuleId (..), SymbolId (..))
 
@@ -68,7 +66,7 @@ auditProof program@SourceProgram {globalNames} name = do
   where
     definitions = globals (sourceEnvironment program)
     visible = Set.fromList [symbol | binding <- Map.elems (nameTable globalNames), Just symbol <- [bindingSymbol binding]]
-    render = renderTermIn definitions (displayName globalNames) K.emptyContext []
+    render = renderClosed program
     findDefinition symbol = maybe (Left ("missing checked definition '" ++ label symbol ++ "'")) Right (Map.lookup symbol definitions)
     walk seen [] = Right seen
     walk seen (symbol : rest)
@@ -125,6 +123,7 @@ definitionReferences Definition {definitionType, definitionBody} = termReference
   where
     body = \case
       Transparent term -> termReferences term
+      Fixpoint _ term -> termReferences term
       Host _ model -> maybe [] (: []) model
       TypeConstructor info -> metadata info
       EliminationTarget info term -> termReferences term ++ metadata info

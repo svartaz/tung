@@ -42,6 +42,7 @@ test("textmate immediately scopeth lexical syntax", async () => {
     ["# a comment", "#", "comment.line.number-sign.tung"],
     ["/* a comment */", "a comment", "comment.block.tung"],
     ["show let sameness:[x:ℤ, ℤ] ≔ x", "let", "keyword.declaration.tung"],
+    ["show fast echo: 𝟙 deed ≔ echo", "fast", "keyword.declaration.tung"],
     ["match worth {x ^ x}", "match", "keyword.control.tung"],
     ["let main: 𝟙 deed ≔ only sheer", "deed", "keyword.control.tung"],
     ["let soothing ≔ sorry", "sorry", "keyword.control.tung"],

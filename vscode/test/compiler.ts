@@ -1,4 +1,4 @@
-// one compiler session per test file; models take its source roles.
+// one compiler session per test file; models take its source syntax.
 import * as path from "node:path";
 import test from "node:test";
 import { analyzeDocument } from "../server/analysis.ts";
@@ -13,6 +13,6 @@ compiler.configure(
 test.after(() => compiler.dispose());
 
 const analyzed = async (source: string, uri = "") =>
-  analyzeDocument(source, uri, (await compiler.highlight(source).result) || []);
+  analyzeDocument(source, uri, await compiler.highlight(source).result);
 
 export { analyzed, compiler };

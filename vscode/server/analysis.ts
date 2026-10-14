@@ -1,19 +1,14 @@
-// structural model for incomplete buffers. it joineth the compiler's source
-// roles with declaration regions, docs, imports, and scopes; it never checketh
-// types.
-import type { SourceRole } from "./checker.ts";
+// document model over the compiler's one parse of a buffer, complete or not:
+// its roles, tokens, declarations, docs, imports, and local scopes. it addeth
+// ownership; it never checketh types.
+import { emptySyntax, type SourceRole, type SourceSyntax } from "./checker.ts";
 import {
   bracketPairs,
-  declarationKeywords,
-  findFileDeclarationBoundary,
-  findInstanceHeader,
-  findMatching,
   lastQualifiedSegment,
-  patternArmRegions,
+  sourceTokens,
   tokenDepths,
-  tokenize,
   useNamespace,
-  useParts,
+  type SourceToken,
 } from "./syntax.ts";
 const ownedKinds = new Set(["ilk", "flock"]);
 const localRoles = new Set(["parameter", "typeParameter"]);
@@ -50,24 +45,35 @@ const keywordHelp = {
 const analyzeDocument = (
   text: string,
   uri = "",
-  sourceRoles: SourceRole[] = [],
+  syntax: SourceSyntax = emptySyntax,
 ) => {
-  const tokens = tokenize(text);
+  const tokens = sourceTokens(text, syntax);
   const depths = tokenDepths(tokens);
   const pairs = bracketPairs(tokens);
-  const regions = declarationRegions(tokens, depths, pairs);
-  const semantic = compilerSemantic(tokens, sourceRoles, regions, depths);
+  const regions = declarationRegions(tokens, depths, syntax);
+  const semantic = compilerSemantic(tokens, syntax.roles, regions, depths);
   const roles = semantic.semantic;
-  const docs = collectDocComments(text);
-  attachDocs(regions, docs, tokens);
-  const imports = collectImports(tokens, depths);
-  const reexports = collectReexports(tokens, depths);
+  const imports = syntax.imports.flatMap(({ path, alias, start, end }) => {
+    const first = tokenAt(tokens, start);
+    const last = tokenEndingAt(tokens, end);
+    if (!first || !last) return [];
+    return [
+      {
+        path,
+        namespace: useNamespace(path, alias ?? undefined),
+        alias: alias ?? undefined,
+        exported: false,
+        range: tokenRange(first, last),
+      },
+    ];
+  });
   const definitions = semanticDefinitions(
     text,
     tokens,
     semantic,
     depths,
     regions,
+    syntax,
   );
   definitions.forEach((definition, id) => {
     definition.id = `${uri}:${definition.token.offset}:${id}`;
@@ -83,7 +89,6 @@ const analyzeDocument = (
     pairs,
     regions,
     imports,
-    reexports,
     instances: collectInstances(tokens, semantic, regions),
     definitions,
     occurrences: tokens.filter((token) => token.kind === "name"),
@@ -106,7 +111,7 @@ const compilerSemantic = (
   regions,
   depths,
 ) => {
-  const byOffset = new Map<number, ReturnType<typeof tokenize>[number]>(
+  const byOffset = new Map<number, SourceToken>(
     tokens.map((token) => [token.offset, token]),
   );
   const semantic = new Map<number, { type: string; modifiers: string[] }>();
@@ -172,199 +177,52 @@ const collectInstances = (tokens, semantic, regions) => {
       return [];
     });
 };
-const collectDocComments = (text) => {
-  const docs = [];
-  const linePattern = /^[ \t]*##[ \t]?(.*)$/;
-  let offset = 0;
-  const lines = text.split(/(\r\n|\r|\n)/);
-  for (let index = 0; index < lines.length; index += 2) {
-    const line = lines[index];
-    const newline = lines[index + 1] || "";
-    const match = line.match(linePattern);
-    if (match) {
-      const startOffset = offset;
-      const parts = [match[1]];
-      let endOffset = offset + line.length + newline.length;
-      offset = endOffset;
-      while (index + 2 < lines.length) {
-        const nextLine = lines[index + 2];
-        const nextNewline = lines[index + 3] || "";
-        const nextMatch = nextLine.match(linePattern);
-        if (!nextMatch) break;
-        parts.push(nextMatch[1]);
-        index += 2;
-        endOffset += nextLine.length + nextNewline.length;
-        offset = endOffset;
-      }
-      docs.push({
-        startOffset,
-        endOffset,
-        text: cleanDoc(parts.join("\n")),
-      });
-      continue;
-    }
-    offset += line.length + newline.length;
-  }
-  for (const match of text.matchAll(/\/\*\*([\s\S]*?)\*\//g)) {
-    docs.push({
-      startOffset: match.index,
-      endOffset: match.index + match[0].length,
-      text: cleanBlockDoc(match[1]),
-    });
-  }
-  return docs
-    .filter(({ text }) => text)
-    .sort((a, b) => a.startOffset - b.startOffset);
-};
-const cleanBlockDoc = (text) => {
-  return cleanDoc(
-    text
-      .split(/\r?\n/)
-      .map((line) => line.replace(/^\s*\* ?/, ""))
-      .join("\n"),
-  );
-};
-const cleanDoc = (text) => {
-  return text
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .join("\n")
-    .replace(/^\n+|\n+$/g, "");
-};
-const attachDocs = (regions, docs, tokens) => {
-  for (const region of regions) {
-    const doc = [...docs]
-      .reverse()
-      .find(
-        (candidate) =>
-          candidate.endOffset <= region.startOffset &&
-          !hasDeclarationBetween(
-            tokens,
-            candidate.endOffset,
-            region.startOffset,
-          ),
-      );
-    if (doc) region.doc = doc.text;
-  }
-};
-const hasDeclarationBetween = (tokens, startOffset, endOffset) => {
-  return tokens.some(
-    (token) =>
-      token.offset >= startOffset &&
-      token.offset < endOffset &&
-      token.kind === "keyword" &&
-      declarationKeywords.has(token.text),
-  );
-};
 // regions supply ownership and source extents for symbols, folding, docs, and
-// local scope. unmatched delimiters fall back to the document end.
-const declarationRegions = (tokens, depths, pairs) => {
-  const regions = [];
-  for (const token of tokens) {
-    if (token.kind !== "keyword" || !declarationKeywords.has(token.text)) {
-      continue;
-    }
-    const baseDepth = depths[token.index];
-    const open =
-      token.text === "bizen"
-        ? (findInstanceHeader(tokens, token.index + 1, depths)?.body ?? -1)
-        : ownedKinds.has(token.text)
-          ? findAtDepth(tokens, depths, token.index + 1, "{", baseDepth)
-          : -1;
-    const boundary = findFileDeclarationBoundary(
-      tokens,
-      token.index + 1,
-      depths,
-      baseDepth,
-    );
-    const endIndex =
-      open >= 0 && pairs.has(open)
-        ? pairs.get(open)
-        : Math.max(token.index, boundary - 1);
-    const endToken = tokens[endIndex] || tokens.at(-1) || token;
-    const headerEnd =
-      token.text === "bizen" && open >= 0
-        ? open
-        : findHeaderEnd(
-            tokens,
-            depths,
-            token.index + 1,
-            endIndex + 1,
-            baseDepth,
-          );
-    const shown = tokens[token.index - 1]?.text === "show";
-    regions.push({
-      kind: token.text,
-      startOffset: token.offset,
-      endOffset: endToken.endOffset,
-      startIndex: token.index,
-      endIndex,
-      headerEnd,
-      depth: baseDepth,
-      shown,
-      range: tokenRange(token, endToken),
-    });
-  }
-  return regions;
-};
-const findHeaderEnd = (tokens, depths, start, end, baseDepth) => {
-  for (let index = start; index < end; index += 1) {
-    if (depths[index] === baseDepth && tokens[index].text === "[") {
-      const close = findMatching(tokens, index);
-      if (close >= 0) return close + (tokens[close + 1]?.text === "≔" ? 2 : 1);
-    }
-    if (depths[index] === baseDepth && tokens[index].text === "≔")
-      return index + 1;
-    if (depths[index] === baseDepth && tokens[index].text === "{") return index;
-  }
-  return Math.max(start, end - 1);
-};
-const collectImports = (tokens, depths) => {
-  const imports = [];
-  for (const token of tokens) {
-    if (token.text !== "bring") continue;
-    const { pathTokens, aliasToken } = useParts(tokens, token.index, depths);
-    const importPath = pathTokens.map(({ text }) => text).join("");
-    if (!importPath) continue;
-    const namespace = useNamespace(importPath, aliasToken?.text);
-    imports.push({
-      path: importPath,
-      namespace,
-      alias: aliasToken?.text,
-      exported: tokens[token.index - 1]?.text === "show",
-      range: tokenRange(pathTokens[0], pathTokens.at(-1)),
-    });
-  }
-  return imports;
-};
-const collectReexports = (tokens, depths) => {
-  const reexports = [];
-  for (const token of tokens) {
-    if (token.text !== "show" || depths[token.index] !== 0) continue;
-    const next = tokens[token.index + 1];
-    if (!next || next.kind !== "name") continue;
-    const end = findFileDeclarationBoundary(
-      tokens,
-      next.index,
-      depths,
-      depths[token.index],
-    );
-    for (let index = next.index; index < end; index += 1) {
-      if (tokens[index].kind === "name") {
-        reexports.push({ name: tokens[index].text });
-      }
-    }
-  }
-  return reexports;
-};
-const semanticDefinitions = (text, tokens, semantic, depths, regions) => {
-  const scopes = patternScopes(tokens, semantic);
-  // row binders come first, as their precise scopes override declaration-wide
-  // scopes. every token still hath only one definition and one stable id.
-  const indices = new Set([...scopes.keys(), ...semantic.semantic.keys()]);
+// local scope. each is a declaration the compiler's tree holdeth.
+const declarationRegions = (tokens, depths, syntax: SourceSyntax) =>
+  syntax.declarations.flatMap(({ kind, start, end, headerEnd, shown, doc }) => {
+    const startToken = tokenAt(tokens, start);
+    const endToken = tokenEndingAt(tokens, end);
+    if (!startToken || !endToken) return [];
+    const header = tokens.findIndex((token) => token.offset >= headerEnd);
+    return [
+      {
+        kind,
+        startOffset: start,
+        endOffset: end,
+        startIndex: startToken.index,
+        endIndex: endToken.index,
+        headerEnd: header < 0 ? tokens.length : header,
+        depth: depths[startToken.index],
+        shown,
+        doc: doc ?? undefined,
+        range: tokenRange(startToken, endToken),
+      },
+    ];
+  });
+const tokenAt = (tokens, offset) =>
+  tokens.find((token) => token.offset === offset);
+const tokenEndingAt = (tokens, offset) =>
+  tokens.findLast((token) => token.endOffset === offset);
+const semanticDefinitions = (
+  text,
+  tokens,
+  semantic,
+  depths,
+  regions,
+  syntax: SourceSyntax,
+) => {
+  // the parser giveth each local binder the span where it is seen; every
+  // other declaration is seen by the whole document.
+  const scopes = new Map(
+    syntax.scopes.map(([start, , scopeStart, scopeEnd]) => [
+      start,
+      { start: scopeStart, end: scopeEnd },
+    ]),
+  );
+  const documentEnd = tokens.at(-1)?.endOffset || 0;
   const definitions = [];
-  for (const index of indices) {
-    const role = semantic.semantic.get(index);
+  for (const [index, role] of semantic.semantic) {
     if (!role.modifiers.includes("declaration")) continue;
     const token = tokens[index];
     if (
@@ -380,7 +238,8 @@ const semanticDefinitions = (text, tokens, semantic, depths, regions) => {
       region && ownedKinds.has(region.kind) && token.index > region.headerEnd
         ? region
         : enclosingOwner(regions, region, token.offset);
-    const local = localRoles.has(role.type);
+    const binder = scopes.get(token.offset);
+    const local = Boolean(binder) || localRoles.has(role.type);
     const primary =
       region &&
       token.index > region.startIndex &&
@@ -392,65 +251,39 @@ const semanticDefinitions = (text, tokens, semantic, depths, regions) => {
         (owner?.shown &&
           ["enumMember", "method", "function"].includes(role.type)),
       );
-    const pattern = scopes.get(index);
-    const scope = pattern || definitionScope(tokens, region, role.type);
+    // a local the parser could not scope, in broken source, keepeth to its
+    // declaration.
+    const scope =
+      binder ??
+      (local && region
+        ? { start: region.startOffset, end: region.endOffset }
+        : { start: 0, end: documentEnd });
+    const parameter = Boolean(binder) && localRoles.has(role.type);
     definitions.push({
       name: token.text,
       bareName: lastQualifiedSegment(token.text),
       role: role.type,
-      modifiers: pattern ? ["declaration"] : role.modifiers,
+      modifiers: binder ? ["declaration"] : role.modifiers,
       token,
       range: tokenRange(token),
       selectionRange: tokenRange(token),
       scopeStart: scope.start,
       scopeEnd: scope.end,
-      exported: !pattern && exported,
-      local: Boolean(pattern) || local,
-      topLevel: !pattern && depths[token.index] === 0,
-      detail: pattern
+      exported: !binder && exported,
+      local,
+      topLevel: !binder && depths[token.index] === 0,
+      detail: parameter
         ? `parameter ${lastQualifiedSegment(token.text)}`
         : declarationDetail(text, tokens, token, region, role.type),
-      callableConstructor: pattern
+      callableConstructor: binder
         ? undefined
         : role.type === "enumMember" &&
           semantic.callableConstructors.has(lastQualifiedSegment(token.text)),
-      documentation: pattern ? undefined : region?.doc,
-      containerName: pattern ? undefined : ownerName(tokens, semantic, owner),
+      documentation: binder ? undefined : region?.doc,
+      containerName: binder ? undefined : ownerName(tokens, semantic, owner),
     });
   }
   return definitions;
-};
-const patternScopes = (tokens, semantic) => {
-  const scopes = new Map<number, { start: number; end: number }>();
-  for (const { patternStart, pipe, bodyEnd } of patternArmRegions(tokens)) {
-    const endOffset =
-      tokens[bodyEnd]?.offset ?? tokens.at(-1)?.endOffset ?? pipe.endOffset;
-    for (const token of tokens.slice(patternStart, pipe.index)) {
-      const role = semantic.semantic.get(token.index);
-      if (
-        token.kind !== "name" ||
-        role?.type !== "parameter" ||
-        !role.modifiers.includes("declaration")
-      ) {
-        continue;
-      }
-      if (!scopes.has(token.index))
-        scopes.set(token.index, { start: pipe.endOffset, end: endOffset });
-    }
-  }
-  return scopes;
-};
-const definitionScope = (tokens, region, role) => {
-  const documentEnd = tokens.at(-1)?.endOffset || 0;
-  if (!localRoles.has(role)) return { start: 0, end: documentEnd };
-  if (!region) return { start: 0, end: documentEnd };
-  return {
-    start:
-      role === "typeParameter"
-        ? region.startOffset
-        : (tokens[region.headerEnd]?.offset ?? region.startOffset),
-    end: region.endOffset,
-  };
 };
 const declarationDetail = (text, tokens, token, region, role) => {
   if (!region) return `${roleLabel(role)} ${lastQualifiedSegment(token.text)}`;
@@ -531,14 +364,6 @@ const nameRange = (token) => {
     start: { line: token.line, character: token.char + delta },
     end: { line: token.endLine, character: token.endChar },
   };
-};
-const findAtDepth = (tokens, depths, start, text, depth) => {
-  for (let index = start; index < tokens.length; index += 1) {
-    if (depths[index] === depth && tokens[index].text === text) {
-      return index;
-    }
-  }
-  return -1;
 };
 export {
   analyzeDocument,

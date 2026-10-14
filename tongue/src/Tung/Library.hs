@@ -3,6 +3,7 @@
 -- manifest libraries supply ordinary module roots without compiler-owned names.
 module Tung.Library
   ( resolveLibraryRoots,
+    findManifest,
     proofAxiomPolicy,
     cacheDirectory,
     readLibraryImportFiles,
@@ -11,9 +12,9 @@ module Tung.Library
 where
 
 import Control.Exception (finally)
-import Control.Monad (foldM, forM)
+import Control.Monad (foldM, forM, unless, when)
 import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.Except (ExceptT (..), runExceptT, throwE)
+import Control.Monad.Trans.Except (ExceptT (..), except, runExceptT, throwE)
 import Control.Monad.Trans.State.Strict (StateT, evalStateT, get, put)
 import Data.Aeson (FromJSON (parseJSON), withObject, (.:), (.:?))
 import Data.Aeson qualified as Aeson
@@ -23,6 +24,7 @@ import Data.Aeson.Types (Parser)
 import Data.Char (isHexDigit, toLower)
 import Data.List (intercalate, isInfixOf, isPrefixOf, nub, sort)
 import Data.Map.Strict qualified as Map
+import Data.Maybe (isNothing)
 import Data.Text qualified as Text
 import Data.Text.IO qualified as Text
 import Data.Yaml qualified as Yaml
@@ -53,7 +55,7 @@ instance FromJSON LibrarySource where
     path <- fields .:? "path"
     case (repository, commit, path) of
       (Just source, Just revision, Nothing) -> pure (GitSource source revision (maybe "." id subdirectory))
-      (Nothing, Nothing, Just directory) | subdirectory == Nothing -> pure (PathSource directory)
+      (Nothing, Nothing, Just directory) | isNothing subdirectory -> pure (PathSource directory)
       _ -> fail "library needs either 'path' or 'repo' with 'hash' and optional 'subdir'"
 
 data Manifest = Manifest
@@ -103,102 +105,93 @@ data Resolved = Resolved
 emptyResolved :: Resolved
 emptyResolved = Resolved Map.empty Map.empty
 
-type Resolver = StateT Resolved (ExceptT String IO)
+-- a filesystem or git step that may fail with a message.
+type Step = ExceptT String IO
 
-resolveIO :: IO (Either String a) -> Resolver a
-resolveIO = lift . ExceptT
+type Resolver = StateT Resolved Step
+
+-- an io action whose exception becometh a message after `context`.
+attempt :: String -> IO a -> Step a
+attempt context action = ExceptT (either (\failure -> Left (context ++ ": " ++ show failure)) Right <$> tryIOError action)
 
 manifestName :: FilePath
 manifestName = "tung.yaml"
 
 resolveLibraryRoots :: FilePath -> IO (Either String [FilePath])
-resolveLibraryRoots owner = do
-  manifest <- findManifest owner
-  pinned <- case manifest of
-    Left message -> pure (Left message)
-    Right Nothing -> pure (Right [])
-    Right (Just path) -> runExceptT (evalStateT (resolveManifest (takeDirectory path </> ".tung" </> "libraries") path) emptyResolved)
-  case pinned of
-    Left message -> pure (Left message)
-    Right roots -> do
-      configured <- maybe [] (filter (not . null) . splitSearchPath) <$> lookupEnv "TUNG_PATH"
-      absolute <- traverse makeAbsolute configured
-      pure (Right (nub (roots ++ absolute)))
+resolveLibraryRoots owner = runExceptT do
+  pinned <- findManifestStep owner >>= maybe (pure []) \path -> evalStateT (resolveManifest (takeDirectory path </> ".tung" </> "libraries") path) emptyResolved
+  configured <- lift (maybe [] (filter (not . null) . splitSearchPath) <$> lookupEnv "TUNG_PATH")
+  absolute <- lift (traverse makeAbsolute configured)
+  pure (nub (pinned ++ absolute))
 
 -- the nearest project's policy governeth its audit; dependency policies do not.
 proofAxiomPolicy :: FilePath -> IO (Either String (Maybe [String]))
-proofAxiomPolicy owner =
-  findManifest owner >>= \case
-    Left message -> pure (Left message)
-    Right Nothing -> pure (Right Nothing)
-    Right (Just path) -> fmap manifestProofOrsettings <$> readManifest path
+proofAxiomPolicy owner = runExceptT (findManifestStep owner >>= maybe (pure Nothing) (fmap manifestProofOrsettings . readManifest))
 
 -- checked interfaces live in `.tung/cache` beside the nearest `tung.yaml`,
 -- or beside the file when no manifest encloseth it; git ignoreth `.tung`.
 cacheDirectory :: FilePath -> IO FilePath
 cacheDirectory owner = do
-  absolute <- makeAbsolute owner
-  file <- doesFileExist absolute
-  let start = if file then takeDirectory absolute else absolute
+  start <- ownerDirectory owner
   root <- either (const start) (maybe start takeDirectory) <$> findManifest owner
   pure (root </> ".tung" </> "cache")
 
 readLibraryImportFiles :: FilePath -> IO (Either String [(FilePath, String)])
-readLibraryImportFiles owner =
-  resolveLibraryRoots owner >>= \case
-    Left message -> pure (Left message)
-    Right roots -> do
-      discovered <- traverse (\root -> fmap (map (\name -> (root </> name, name))) <$> discover root "") roots
-      pure (concat <$> sequence discovered)
+readLibraryImportFiles owner = runExceptT (libraryImportFiles owner)
+
+libraryImportFiles :: FilePath -> Step [(FilePath, String)]
+libraryImportFiles owner = do
+  roots <- ExceptT (resolveLibraryRoots owner)
+  concat <$> traverse (\root -> map (\name -> (root </> name, name)) <$> discover root "") roots
 
 readLibraryImports :: FilePath -> IO (Either String (Map.Map String String))
-readLibraryImports owner =
-  readLibraryImportFiles owner >>= \case
-    Left message -> pure (Left message)
-    Right files -> case foldM add Map.empty files of
-      Left message -> pure (Left message)
-      Right paths -> fmap sequence (traverse readSource paths)
+readLibraryImports owner = runExceptT do
+  paths <- libraryImportFiles owner >>= except . foldM add Map.empty
+  traverse (\path -> Text.unpack <$> attempt ("cannot read library module '" ++ path ++ "'") (Text.readFile path)) paths
   where
     add paths (path, name) = case Map.lookup name paths of
       Nothing -> Right (Map.insert name path paths)
       Just other -> Left ("library module '" ++ name ++ "' occurs at both '" ++ other ++ "' and '" ++ path ++ "'")
-    readSource path = do
-      result <- tryIOError (Text.readFile path)
-      pure (either (\failure -> Left ("cannot read library module '" ++ path ++ "': " ++ show failure)) (Right . Text.unpack) result)
 
 findManifest :: FilePath -> IO (Either String (Maybe FilePath))
-findManifest owner = do
-  absolute <- makeAbsolute owner
-  file <- doesFileExist absolute
-  search (if file then takeDirectory absolute else absolute)
+findManifest = runExceptT . findManifestStep
+
+-- the nearest `tung.yaml` at or above the owner.
+findManifestStep :: FilePath -> Step (Maybe FilePath)
+findManifestStep owner = lift (ownerDirectory owner) >>= search
   where
     search directory = do
-      manifest <- manifestAt directory
-      case manifest of
-        Right Nothing ->
-          let parent = takeDirectory directory
-           in if parent == directory then pure (Right Nothing) else search parent
-        result -> pure result
+      let parent = takeDirectory directory
+      manifestAt directory >>= \case
+        Nothing | parent /= directory -> search parent
+        found -> pure found
 
-manifestAt :: FilePath -> IO (Either String (Maybe FilePath))
-manifestAt directory = do
+-- a file's directory, or the owner itself when it is a directory.
+ownerDirectory :: FilePath -> IO FilePath
+ownerDirectory owner = do
+  absolute <- makeAbsolute owner
+  file <- doesFileExist absolute
+  pure (if file then takeDirectory absolute else absolute)
+
+manifestAt :: FilePath -> Step (Maybe FilePath)
+manifestAt directory = lift do
   let path = directory </> manifestName
   present <- doesFileExist path
-  if present then Right . Just <$> canonicalizePath path else pure (Right Nothing)
+  if present then Just <$> canonicalizePath path else pure Nothing
 
 resolveManifest :: FilePath -> FilePath -> Resolver [FilePath]
 resolveManifest cache manifest = do
-  libraries <- manifestLibraries <$> resolveIO (readManifest manifest)
+  libraries <- manifestLibraries <$> lift (readManifest manifest)
   fmap concat $ forM libraries \Library {libraryName, librarySource} -> do
-    source <- resolveIO (resolveSource manifest librarySource)
+    source <- lift (resolveSource manifest librarySource)
     known <- get
-    (alreadyResolved, next) <- either (lift . throwE) pure (registerUse known (LibraryUse libraryName source manifest))
+    (alreadyResolved, next) <- lift (except (registerUse known (LibraryUse libraryName source manifest)))
     put next
     if alreadyResolved
       then pure []
       else do
-        root <- resolveIO (libraryRoot cache libraryName source)
-        nested <- resolveIO (manifestAt root)
+        root <- lift (libraryRoot cache libraryName source)
+        nested <- lift (manifestAt root)
         children <- maybe (pure []) (resolveManifest cache) nested
         pure (root : children)
 
@@ -257,15 +250,14 @@ describeSource = \case
   GitSource repository commit subdirectory -> "from '" ++ repository ++ "' at " ++ commit ++ " in '" ++ subdirectory ++ "'"
   PathSource path -> "from local path '" ++ path ++ "'"
 
-readManifest :: FilePath -> IO (Either String Manifest)
-readManifest path = do
-  decoded <- tryIOError (Yaml.decodeFileWithWarnings path)
-  pure $ case decoded of
-    Left failure -> Left ("cannot read '" ++ path ++ "': " ++ show failure)
-    Right (Left failure) -> Left (path ++ ": " ++ Yaml.prettyPrintParseException failure)
-    Right (Right (warnings, Manifest libraries orsettings))
-      | not (null warnings) -> Left (path ++ ": " ++ intercalate "; " (map show warnings))
-      | otherwise -> (`Manifest` orsettings) <$> traverse validateEntry libraries
+readManifest :: FilePath -> Step Manifest
+readManifest path =
+  attempt ("cannot read '" ++ path ++ "'") (Yaml.decodeFileWithWarnings path)
+    >>= except . \case
+      Left failure -> Left (path ++ ": " ++ Yaml.prettyPrintParseException failure)
+      Right (warnings, Manifest libraries orsettings)
+        | not (null warnings) -> Left (path ++ ": " ++ intercalate "; " (map show warnings))
+        | otherwise -> (`Manifest` orsettings) <$> traverse validateEntry libraries
   where
     validateEntry (Library name source)
       | not (validName name) = Left (path ++ ": invalid library name '" ++ name ++ "'")
@@ -292,120 +284,87 @@ repositoryAt manifest repository
       (host, ':' : _) -> not (null host) && all (/= '/') host
       _ -> False
 
-resolveSource :: FilePath -> LibrarySource -> IO (Either String LibrarySource)
+resolveSource :: FilePath -> LibrarySource -> Step LibrarySource
 resolveSource manifest = \case
-  GitSource repository commit subdirectory -> pure (Right (GitSource (repositoryAt manifest repository) commit subdirectory))
+  GitSource repository commit subdirectory -> pure (GitSource (repositoryAt manifest repository) commit subdirectory)
   PathSource directory -> do
     let local = if isAbsolute directory then directory else takeDirectory manifest </> directory
-    present <- doesDirectoryExist local
-    if not present
-      then pure (Left (manifest ++ ": library path '" ++ local ++ "' does not exist"))
-      else do
-        resolved <- tryIOError (canonicalizePath local)
-        pure $ case resolved of
-          Left failure -> Left (manifest ++ ": cannot resolve library path '" ++ local ++ "': " ++ show failure)
-          Right root -> Right (PathSource root)
+    present <- lift (doesDirectoryExist local)
+    unless present (throwE (manifest ++ ": library path '" ++ local ++ "' does not exist"))
+    PathSource <$> attempt (manifest ++ ": cannot resolve library path '" ++ local ++ "'") (canonicalizePath local)
 
-libraryRoot :: FilePath -> String -> LibrarySource -> IO (Either String FilePath)
+libraryRoot :: FilePath -> String -> LibrarySource -> Step FilePath
 libraryRoot cache name = \case
-  GitSource repository commit subdirectory ->
-    checkout cache name repository commit >>= \case
-      Left message -> pure (Left message)
-      Right root -> selectedSubdirectory root subdirectory
-  PathSource path -> pure (Right path)
+  GitSource repository commit subdirectory -> checkout cache name repository commit >>= (`selectedSubdirectory` subdirectory)
+  PathSource path -> pure path
 
-selectedSubdirectory :: FilePath -> FilePath -> IO (Either String FilePath)
-selectedSubdirectory root "." = pure (Right root)
+selectedSubdirectory :: FilePath -> FilePath -> Step FilePath
+selectedSubdirectory root "." = pure root
 selectedSubdirectory root subdirectory = do
   let selected = root </> subdirectory
-  present <- doesDirectoryExist selected
-  if not present
-    then pure (Left ("library subdirectory '" ++ subdirectory ++ "' does not exist in '" ++ root ++ "'"))
-    else do
-      resolved <- tryIOError ((,) <$> canonicalizePath root <*> canonicalizePath selected)
-      pure $ case resolved of
-        Left failure -> Left ("cannot resolve library subdirectory '" ++ selected ++ "': " ++ show failure)
-        Right (checkoutRoot, libraryPath)
-          | addTrailingPathSeparator checkoutRoot `isPrefixOf` addTrailingPathSeparator libraryPath -> Right libraryPath
-          | otherwise -> Left ("library subdirectory '" ++ selected ++ "' escapeth checkout '" ++ checkoutRoot ++ "'")
+  present <- lift (doesDirectoryExist selected)
+  unless present (throwE ("library subdirectory '" ++ subdirectory ++ "' does not exist in '" ++ root ++ "'"))
+  (checkoutRoot, libraryPath) <- attempt ("cannot resolve library subdirectory '" ++ selected ++ "'") ((,) <$> canonicalizePath root <*> canonicalizePath selected)
+  unless (addTrailingPathSeparator checkoutRoot `isPrefixOf` addTrailingPathSeparator libraryPath) (throwE ("library subdirectory '" ++ selected ++ "' escapeth checkout '" ++ checkoutRoot ++ "'"))
+  pure libraryPath
 
-checkout :: FilePath -> String -> String -> String -> IO (Either String FilePath)
+-- a pinned commit is cloned once into a temporary directory and moved into
+-- place; a concurrent checkout of the same commit is verified instead.
+checkout :: FilePath -> String -> String -> String -> Step FilePath
 checkout cache name repository commit = do
   let parent = cache </> name
       target = parent </> commit
-  present <- doesDirectoryExist target
+  present <- lift (doesDirectoryExist target)
   if present
     then verify target commit
     else do
-      createDirectoryIfMissing True parent
-      (temporary, handle) <- openTempFile parent "checkout-"
-      hClose handle
-      removeFile temporary
-      let cleanup = do
-            remaining <- doesDirectoryExist temporary
-            if remaining then removePathForcibly temporary else pure ()
-      ( do
-          cloned <- git Nothing ["clone", "--quiet", "--no-checkout", "--", repository, temporary]
-          case cloned of
-            Left message -> pure (Left message)
-            Right _ -> do
-              checked <- git (Just temporary) ["checkout", "--quiet", "--detach", commit]
-              case checked of
-                Left message -> pure (Left message)
-                Right _ -> do
-                  verified <- verify temporary commit
-                  case verified of
-                    Left message -> pure (Left message)
-                    Right _ -> do
-                      moved <- tryIOError (renameDirectory temporary target)
-                      case moved of
-                        Right () -> pure (Right target)
-                        Left failure -> do
-                          concurrent <- doesDirectoryExist target
-                          if concurrent
-                            then verify target commit
-                            else pure (Left ("cannot cache library checkout '" ++ target ++ "': " ++ show failure))
-        )
-        `finally` cleanup
+      temporary <- lift do
+        createDirectoryIfMissing True parent
+        (temporary, handle) <- openTempFile parent "checkout-"
+        hClose handle
+        removeFile temporary
+        pure temporary
+      let cleanup = doesDirectoryExist temporary >>= (`when` removePathForcibly temporary)
+      ExceptT . (`finally` cleanup) . runExceptT $ do
+        git Nothing ["clone", "--quiet", "--no-checkout", "--", repository, temporary]
+        git (Just temporary) ["checkout", "--quiet", "--detach", commit]
+        verify temporary commit
+        lift (tryIOError (renameDirectory temporary target)) >>= \case
+          Right () -> pure target
+          Left failure -> do
+            concurrent <- lift (doesDirectoryExist target)
+            if concurrent
+              then verify target commit
+              else throwE ("cannot cache library checkout '" ++ target ++ "': " ++ show failure)
 
-verify :: FilePath -> String -> IO (Either String FilePath)
-verify root commit =
-  git (Just root) ["rev-parse", "HEAD"] >>= \case
-    Left message -> pure (Left message)
-    Right actual
-      | actual /= commit -> pure (Left ("library checkout '" ++ root ++ "' is at " ++ actual ++ ", expected " ++ commit))
-      | otherwise ->
-          git (Just root) ["status", "--porcelain"] >>= \case
-            Left message -> pure (Left message)
-            Right "" -> pure (Right root)
-            Right _ -> pure (Left ("library checkout '" ++ root ++ "' has local changes"))
+verify :: FilePath -> String -> Step FilePath
+verify root commit = do
+  actual <- git (Just root) ["rev-parse", "HEAD"]
+  when (actual /= commit) (throwE ("library checkout '" ++ root ++ "' is at " ++ actual ++ ", expected " ++ commit))
+  changes <- git (Just root) ["status", "--porcelain"]
+  unless (null changes) (throwE ("library checkout '" ++ root ++ "' has local changes"))
+  pure root
 
-git :: Maybe FilePath -> [String] -> IO (Either String String)
+git :: Maybe FilePath -> [String] -> Step String
 git directory arguments = do
   let command = maybe arguments (\root -> ["-C", root] ++ arguments) directory
-  result <- tryIOError (readProcessWithExitCode "git" command "")
-  pure $ case result of
-    Left failure -> Left ("cannot run git " ++ intercalate " " command ++ ": " ++ show failure)
-    Right (ExitSuccess, output, _) -> Right (trim output)
-    Right (ExitFailure _, _, errorMessage) -> Left ("git " ++ intercalate " " command ++ ": " ++ trim errorMessage)
+  attempt ("cannot run git " ++ intercalate " " command) (readProcessWithExitCode "git" command "") >>= \case
+    (ExitSuccess, output, _) -> pure (trim output)
+    (ExitFailure _, _, errorMessage) -> throwE ("git " ++ intercalate " " command ++ ": " ++ trim errorMessage)
   where
     trim = Text.unpack . Text.strip . Text.pack
 
-discover :: FilePath -> FilePath -> IO (Either String [FilePath])
+discover :: FilePath -> FilePath -> Step [FilePath]
 discover root relative = do
   let directory = root </> relative
-  contents <- tryIOError (listDirectory directory)
-  case contents of
-    Left failure -> pure (Left ("cannot list library root '" ++ directory ++ "': " ++ show failure))
-    Right entries -> do
-      children <- traverse visit (sort entries)
-      pure (concat <$> sequence children)
+  entries <- attempt ("cannot list library root '" ++ directory ++ "'") (listDirectory directory)
+  concat <$> traverse visit (sort entries)
   where
     visit entry
-      | entry == ".git" || entry == ".tung" = pure (Right [])
+      | entry == ".git" || entry == ".tung" = pure []
       | otherwise = do
           let name = relative </> entry
-          directory <- doesDirectoryExist (root </> name)
+          directory <- lift (doesDirectoryExist (root </> name))
           if directory
             then discover root name
-            else pure (Right [name | takeExtension name == ".tung"])
+            else pure [name | takeExtension name == ".tung"]

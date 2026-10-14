@@ -123,6 +123,4 @@ show sheer, atfold, lift₂, lift₃, keep_first, keep_other
 
 show flat, bind, then, void
 
-show deed_steadfast
-
 show =, eftbend

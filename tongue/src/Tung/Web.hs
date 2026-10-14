@@ -11,6 +11,7 @@ module Tung.Web
 where
 
 import Control.Exception (IOException, bracket, finally, onException, try)
+import Control.Monad.Trans.Except (ExceptT (..), except, runExceptT)
 import Data.ByteString qualified as ByteString
 import Data.ByteString.Char8 qualified as Char8
 import Data.Text qualified as Text
@@ -66,17 +67,11 @@ handleConnection respond connection = do
         Right response -> sendResponse connection response >> pure Nothing
 
 readRequest :: Socket.Socket -> IO (Either String Request)
-readRequest connection =
-  receiveHead connection ByteString.empty >>= \case
-    Left message -> pure (Left message)
-    Right (headBytes, initialBody) -> case parseHead headBytes of
-      Left message -> pure (Left message)
-      Right (method, target, headers, contentLength) -> do
-        body <- receiveBody connection contentLength initialBody
-        pure do
-          bodyBytes <- body
-          bodyText <- decodeUtf8 "body" bodyBytes
-          pure Request {requestMethod = method, requestTarget = target, requestHeaders = headers, requestBody = bodyText}
+readRequest connection = runExceptT do
+  (headBytes, initialBody) <- ExceptT (receiveHead connection ByteString.empty)
+  (method, target, headers, contentLength) <- except (parseHead headBytes)
+  bodyText <- ExceptT (receiveBody connection contentLength initialBody) >>= except . decodeUtf8 "body"
+  pure Request {requestMethod = method, requestTarget = target, requestHeaders = headers, requestBody = bodyText}
 
 receiveHead :: Socket.Socket -> ByteString.ByteString -> IO (Either String (ByteString.ByteString, ByteString.ByteString))
 receiveHead connection buffered

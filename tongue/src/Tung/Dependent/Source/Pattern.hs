@@ -17,9 +17,10 @@ import Control.Applicative ((<|>))
 import Control.Monad (foldM, forM, forM_, unless, when)
 import Data.Functor ((<&>))
 import Data.List (nub)
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, isJust)
 import Tung.Dependent.Check qualified as K
 import Tung.Dependent.Elaboration qualified as E
+import Tung.Dependent.Host (deedInputs)
 import Tung.Dependent.Normalise qualified as N
 import Tung.Dependent.Source.Environment (globals)
 import Tung.Dependent.Source.Pattern.Common
@@ -102,6 +103,7 @@ elaborateRecursive checker@ExpressionChecker {checkerEnvironment = environment} 
   let rows = [row {matchPatterns = [maybe pattern (`PNamed` pattern) (lookup position clauseAliases) | (position, pattern) <- zip [0 ..] (matchPatterns row)]} | row <- clauseRows]
   let explicitInputs = [(level, ty) | (level, Explicit, ty) <- clauseInputs]
       scope = clauseScope
+  loops <- isJust . deedInputs <$> quote scope clauseResult
   families <- traverse (familyOf environment . snd) explicitInputs
   -- index patterns have distinct leaf inputs, bound before the structural
   -- input and unused by parameters. their shape stayeth part of the function's
@@ -123,7 +125,7 @@ elaborateRecursive checker@ExpressionChecker {checkerEnvironment = environment} 
       patternsAt position = fromMaybe [] (lookup position [entry | Just entry <- indexed])
       -- candidate checking useth the same local bindings and induction evidence
       -- as expression checking. failed trials cannot influence later choices.
-      select previous [] = maybe (E.failure ("'" ++ name ++ "' needs a structurally decreasing input")) E.raise previous
+      select previous [] = maybe (recursionFailure loops ("'" ++ name ++ "' needs a structurally decreasing input")) E.raise previous
       select previous ((position, deep) : rest) =
         E.trial (compile position deep) >>= \case
           Right (term, commit) -> commit >> pure term
@@ -164,7 +166,7 @@ elaborateRecursive checker@ExpressionChecker {checkerEnvironment = environment} 
         let columns = [Column level ty Nothing | (level, ty) <- explicitInputs, level `notElem` indexLevels]
             keptRows = [row {matchPatterns = [pattern | (inputPosition, pattern) <- zip [0 ..] (matchPatterns row), inputPosition `notElem` dropped]} | row <- rows]
             structuralColumn = columnOf structuralLevel
-            recursion = Recursion name roles indexPatterns [(columnOf level, plicity) | (level, plicity) <- quantified] [] memo
+            recursion = Recursion name roles indexPatterns [(columnOf level, plicity) | (level, plicity) <- quantified] [] memo loops
             enter current hypotheses = current {scopeRecursions = recursion {recursionHypotheses = hypotheses} : scopeRecursions current}
         (split, used) <- splitColumn checker scope columns keptRows clauseResult structuralColumn (Just (motive, memo, enter))
         requireUsed clauseWrittenRows used
@@ -273,9 +275,9 @@ memoisedMotive environment scope structuralType resultMotive = do
 -- `children f arguments` becometh the hypothesis applied to quantified inputs.
 recursiveCall :: ExpressionChecker -> Scope -> Recursion -> [Argument] -> Elaboration (Term, N.Value)
 recursiveCall checker scope Recursion {..} arguments = do
-  unless (all ((== Explicit) . argumentPlicity) arguments) (E.failure "a recursive call cannot supply implicit arguments")
+  unless (all ((== Explicit) . argumentPlicity) arguments) (refuse "a recursive call cannot supply implicit arguments")
   let explicit = map argumentExpression arguments
-  unless (all (== Quantified) (drop (length explicit) recursionRoles)) (E.failure "a recursive call must supply its structural, fixed, and index inputs")
+  unless (all (== Quantified) (drop (length explicit) recursionRoles)) (refuse "a recursive call must supply its structural, fixed, and index inputs")
   passed <- fmap concat . forM (zip recursionRoles explicit) $ \(role, argument) ->
     case role of
       Structural -> pure []
@@ -283,7 +285,7 @@ recursiveCall checker scope Recursion {..} arguments = do
       Quantified -> pure [Argument Explicit argument]
       Fixed level -> do
         value <- localLevel argument
-        unless (value == Just level) (E.failure "a recursive call must pass fixed inputs unchanged")
+        unless (value == Just level) (refuse "a recursive call must pass fixed inputs unchanged")
         pure []
   let rest = passed ++ map (Argument Explicit) (drop (length recursionRoles) explicit)
       structural = [argument | (Structural, argument) <- zip recursionRoles explicit]
@@ -297,9 +299,10 @@ recursiveCall checker scope Recursion {..} arguments = do
           E.force recordType >>= \case
             N.VRecordType [("below", _), ("now", now)] -> applyTerm checker scope (Project record "now") now rest []
             _ -> E.failure "invalid memoised motive"
-        _ -> E.failure "a recursive call must pass a descendant of the matched input"
+        _ -> refuse "a recursive call must pass a descendant of the matched input"
     _ -> directCall rest structural
   where
+    refuse = recursionFailure recursionLoops
     inferStructural argument = do
       (term, _) <- inferTerm checker scope argument
       eval scope term >>= E.force
@@ -312,7 +315,7 @@ recursiveCall checker scope Recursion {..} arguments = do
           | (N.NLocal level, arguments) <- N.neutralSpine neutral,
             Just hypothesis <- lookup level recursionHypotheses ->
               pure (hypothesis, arguments)
-        _ -> E.failure "a recursive call must pass a direct child of the matched input"
+        _ -> refuse "a recursive call must pass a direct child of the matched input"
       checkIndices value
       -- a function child's hypothesis first taketh the child's inputs.
       arguments <- traverse (\(plicity, value) -> (plicity,) <$> quote scope value) childArguments
@@ -328,7 +331,7 @@ recursiveCall checker scope Recursion {..} arguments = do
         indices <-
           familyOf (checkerEnvironment checker) childType >>= \case
             Just Split {splitIndices} -> pure splitIndices
-            Nothing -> E.failure "a recursive call must pass a child of the indexed family"
+            Nothing -> refuse "a recursive call must pass a child of the indexed family"
         bindings <- indexBindings (checkerEnvironment checker) recursionIndices indices
         forM_ [(leaf, argument) | (Index leaf, argument) <- zip recursionRoles (map argumentExpression arguments)] \(leaf, argument) -> do
           (term, _) <- inferTerm checker scope argument

@@ -61,7 +61,7 @@ refutable = \case
 
 constructorBinder :: K.Environment -> Names -> Binder -> Bool
 constructorBinder environment names Binder {binderPlicity = Explicit, binderName = Just name, binderAnnotation = Nothing} =
-  maybe False (const True) (constructorNamed environment names name)
+  isJust (constructorNamed environment names name)
 constructorBinder _ _ _ = False
 
 constructorNamed :: K.Environment -> Names -> String -> Maybe SymbolId
@@ -84,9 +84,13 @@ resolvePattern environment names = \case
   -- a natural literal is `0` or the successor of its predecessor.
   LiteralExpression (NaturalValue value) -> pure (naturalPattern value)
   LiteralExpression literal -> pure (PLiteral literal)
-  Name name -> pure (maybe (PVariable (bindingName (Just name))) (`PConstructor` []) (constructorNamed environment names name))
-  Application (Name name) arguments
-    | Just constructor <- constructorNamed environment names name ->
+  pattern@(Name name) -> do
+    let constructor = constructorNamed environment names name
+    forM_ ((,) <$> expressionSpan pattern <*> constructor) (uncurry E.recordName)
+    pure (maybe (PVariable (bindingName (Just name))) (`PConstructor` []) constructor)
+  Application function@(Name name) arguments
+    | Just constructor <- constructorNamed environment names name -> do
+        forM_ (expressionSpan function) (`E.recordName` constructor)
         PConstructor constructor <$> traverse (\Argument {..} -> (argumentPlicity,) <$> resolvePattern environment names argumentExpression) arguments
   Application _ _ -> E.failure "a pattern application must name a constructor"
   _ -> E.failure "unsupported pattern"
@@ -107,10 +111,9 @@ matchRows environment names rows = do
   resolved <- sequence [MatchRow index <$> traverse (resolvePattern environment names) rowPatterns <*> pure [] <*> pure rowBody | (index, Row {..}) <- zip [0 ..] rows]
   -- a row bindeth each name once.
   forM_ resolved \MatchRow {matchPatterns} ->
-    let bound = concatMap variables matchPatterns
-     in case [name | (index, name) <- zip [0 :: Int ..] bound, name `elem` take index bound] of
-          name : _ -> E.failure ("'" ++ name ++ "' is bound twice in one row")
-          [] -> pure ()
+    case repeatedNames (concatMap variables matchPatterns) of
+      name : _ -> E.failure ("'" ++ name ++ "' is bound twice in one row")
+      [] -> pure ()
   pure resolved
   where
     variables = \case
@@ -338,12 +341,12 @@ compileMatch checker@ExpressionChecker {checkerEnvironment = environment} scope 
           case patterns of
             Just indexPatterns
               | any (not . isVariable) indexPatterns ->
-                  allM
-                    ( \(constructor, fields) -> do
-                        let fieldValues = [N.VNeutral (N.NLocal (depth scope + position)) | position <- [0 .. length fields - 1]]
-                        (== Just False) <$> constructorFits environment split indexPatterns constructor fieldValues
-                    )
-                    (inductiveConstructorInfo splitInfo)
+                  and
+                    <$> traverse
+                      ( \(constructor, fields) ->
+                          (== Just False) <$> constructorFits environment split indexPatterns constructor (fieldValues scope fields)
+                      )
+                      (inductiveConstructorInfo splitInfo)
             _ -> pure (null (inductiveConstructorInfo splitInfo))
     isVariable = \case
       IndexVariable _ -> True
@@ -468,7 +471,7 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
         Just indexPatterns -> do
           let leaves = concatMap patternLeaves indexPatterns
           unless (length (nub leaves) == length leaves && level `notElem` leaves) (E.failure "matching needs the variables in the indices of an indexed family to be distinct")
-          bound <- allM (\leaf -> E.force (columnValue scope leaf) <&> \case N.VNeutral (N.NLocal same) -> same == leaf; _ -> False) leaves
+          bound <- and <$> traverse (\leaf -> E.force (columnValue scope leaf) <&> \case N.VNeutral (N.NLocal same) -> same == leaf; _ -> False) leaves
           unless bound (E.failure "matching needs the variables in the indices of an indexed family to be inputs")
           pure (Just indexPatterns)
   let indexLevels = maybe simple (concatMap patternLeaves) unified
@@ -481,7 +484,7 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
   -- indexed matches revert inputs that depend on their indices or value.
   -- carried records form the inner telescope, after those reverted inputs.
   dependents <-
-    if maybe False (const True) recursive || (null indexLevels && not (null generalised))
+    if isJust recursive || (null indexLevels && not (null generalised))
       then pure []
       else dependentInputs scope (level : indexLevels)
   motive <- case recursive of
@@ -571,19 +574,18 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
       forced <- case unified of
         Nothing -> pure Map.empty
         Just indexPatterns -> do
-          let fieldValues = [N.VNeutral (N.NLocal (depth scope + position)) | position <- [0 .. length fields - 1]]
-          constructorFit environment Split {..} indexPatterns constructor fieldValues >>= \case
+          constructorFit environment Split {..} indexPatterns constructor (fieldValues scope fields) >>= \case
             IndexFits forced -> pure forced
             IndexImpossible forced -> pure forced
             IndexUndecidable -> E.failure ("matching cannot decide whether " ++ symbolName constructor ++ " fiteth the indices")
       let fieldPatterns = [Map.lookup (depth scope + position) forced | position <- [0 .. length fields - 1]]
       bindFields scope methodType fields fieldPatterns [] [] \current fieldLevels hypotheses branchType -> do
-        let fieldValues = map (columnValue current) fieldLevels
+        let boundFields = map (columnValue current) fieldLevels
             recursiveFields = [field | field@(_, _, Just _) <- fields]
             childHypotheses = [(target, field, hypothesis) | ((_, _, Just target), (field, hypothesis)) <- zip recursiveFields hypotheses]
             memoBody = memoResult current [hypothesis | (_, _, hypothesis) <- childHypotheses]
         possible <- case unified of
-          Just indexPatterns -> constructorPossible environment Split {..} indexPatterns constructor fieldValues
+          Just indexPatterns -> constructorPossible environment Split {..} indexPatterns constructor boundFields
           Nothing -> pure True
         if not possible
           then do
@@ -601,7 +603,7 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
             pure (case recursive of Just (_, Just _, _) -> memoBody trivial; _ -> trivial, Set.empty)
           else do
             when (null selected) (E.failure ("the match is not exhaustive: missing " ++ symbolName constructor))
-            let constructed = constructorValue constructor splitLevels splitParameters (zip (map fieldPlicity fields) fieldValues)
+            let constructed = constructorValue constructor splitLevels splitParameters (zip (map fieldPlicity fields) boundFields)
             -- the constructed value's own type carrieth its refined indices.
             constructedType <-
               if null indexLevels
@@ -614,7 +616,7 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
                     familyOf environment constructedType <&> \case
                       Just Split {splitIndices = refined} -> zip indexLevels refined
                       Nothing -> []
-              Just indexPatterns -> matchedIndexBindings environment Split {..} indexPatterns constructor fieldValues
+              Just indexPatterns -> matchedIndexBindings environment Split {..} indexPatterns constructor boundFields
               _ -> pure []
             -- a later index's type may itself depend on an earlier index.
             -- infer the refined value's type rather than retain its old domain.
@@ -713,8 +715,10 @@ splitColumn checker@ExpressionChecker {checkerEnvironment = environment} scope c
               _ -> True
           ]
         bindAliases entered [] = continue entered
+        -- folding keepeth every local the normal form mentioneth, and it
+        -- doth not normalise a large dictionary only to read its locals.
         bindAliases entered ((name, value) : rest) = do
-          original <- quote entered value
+          original <- quoteFolded entered value
           let mentioned = map (\index -> depth entered - index - 1) (freeIndices original)
           if not (any (`elem` map fst replacements) mentioned)
             then bindAliases entered rest

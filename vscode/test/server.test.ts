@@ -512,7 +512,15 @@ const fs = require("node:fs");
 require("node:readline").createInterface({input:process.stdin}).on("line", line => {
   const request = JSON.parse(line);
   const reply = result => process.stdout.write(JSON.stringify({protocol:1,id:request.id,version:request.version,result}) + "\\n");
-  if (request.command === "highlight") reply({kind:"highlight",roles:[]});
+  if (request.command === "highlight") {
+    const tokens = [...request.source.matchAll(/\\S+/g)].map(match => [match.index, match.index + match[0].length, "name"]);
+    const imports = [...request.source.matchAll(/bring (\\S+)/g)].map(match => ({path:match[1], alias:null, start:match.index + 6, end:match.index + 6 + match[1].length}));
+    reply({kind:"highlight",roles:[],tokens,declarations:[],imports,scopes:[]});
+  }
+  if (request.command === "names") {
+    const files = Object.fromEntries([...request.source.matchAll(/bring (\\S+)/g)].map(match => [match[1], fs.realpathSync(require("node:path").join(require("node:path").dirname(request.path), match[1]))]));
+    reply({kind:"names",files,resolved:[],visible:[]});
+  }
   if (request.command === "check") reply({kind:"check",diagnostics:[]});
   if (request.command === "proof") {
     fs.writeFileSync(${JSON.stringify(marker)}, "");

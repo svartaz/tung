@@ -67,9 +67,13 @@ and runtime erasure is separate.
   rejecteth a maximum clause whose every alternative contradicteth the fixed
   graph, and skippeth clauses the assignment satisfieth. maximum constraints
   may still need exponential search.
-- inconsistent constraints are rejected before normalisation proceedeth. a new
-  constraint the kept assignment satisfieth is accepted at once; only a
-  violated one re-solveth the set.
+- inconsistent constraints are rejected before normalisation proceedeth. the
+  checker keepeth the constraint set's atoms and simplified clauses, a
+  satisfying assignment, and the edges it was built on. a new constraint the
+  assignment satisfieth is accepted at once. a violated one first extendeth
+  that solution with its own edges and searcheth the disjunctive clauses from
+  there; only when that faileth is the whole set solved again, from the last
+  assignment, so no satisfiable set is rejected.
 - the kernel rechecketh generalised terms with rigid parameters and proveth
   every generated obligation from the declared assumptions.
 
@@ -740,9 +744,18 @@ every name.
   its native operation on generated literals; the kernel trusteth that
   agreement as it trusteth the native operation.
 - deed constants never reduce in checking: `x deed_sheer deed_bind f` doth not
-  convert with `x f`, and `deed_steadfast` never unfoldeth, so normalisation
-  terminateth. `deed_steadfast`, restricted to deed results, is the only
-  unbounded execution; bounded repetition useth induction.
+  convert with `x f`.
+- a `fast` declaration is a kernel `Fixpoint`, which conversion never
+  unfoldeth, so normalisation terminateth. its signature is elaborated and
+  generalised first; the body is checked against it with the declaration's
+  name bound to the signature's rigid universe parameters, as a host model
+  nameth its binding. universe parameters that instance search addeth after
+  those are passed on unchanged by every self-call. the kernel rechecketh the
+  body with the fixpoint in scope, then counteth the inputs before the deed in
+  the normalised ilk and rejecteth an ilk that endeth otherwise. it is sound
+  because the standard model readeth every deed type, and so every function
+  into one, as a one-element set. fast declarations are the only unbounded
+  execution; bounded repetition useth induction.
 - the standard model readeth primitive types as their runtime sets, pure
   operations as their total definitions, and deed types as one-element sets,
   given the checked schemas and catalogued operations. it addeth no inhabitant

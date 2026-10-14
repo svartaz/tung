@@ -31,7 +31,8 @@ library
   import: warnings
   exposed-modules: Tung, Tung.Dependent, Tung.Dependent.Run, Tung.Dependent.Source
   other-modules:
-      Tung.Dependent.Check
+      Tung.Concrete
+    , Tung.Dependent.Check
     , Tung.Dependent.Elaboration
     , Tung.Dependent.Host
     , Tung.Dependent.Inductive

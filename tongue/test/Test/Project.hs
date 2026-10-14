@@ -19,7 +19,7 @@ import Test.Compile (compileProject, compileProjectWith)
 import Test.DependentSupport (equalitySource)
 import Test.Harness (Group, Test, expect, expectEq)
 import Test.Harness qualified as Harness
-import Tung (ModuleId (..), Project (..), loadProjectFile)
+import Tung (ModuleId (..), Project (..), loadEditorProject, loadProjectFile)
 import Tung.Dependent (HostLiteral (..), Level (LParam), SymbolId (..), Term (Global, Literal))
 import Tung.Dependent.Source (DependencyKind (..), ProofDependency (..), auditDependencies, auditProof, cacheKeys, compileImports, loadInterfaces, normaliseSourceExpression, saveInterfaces, sourceEnvironment, sourceExports, sourceGlobal, sourceSnapshot, typeOfName, verifyProof)
 
@@ -36,6 +36,7 @@ group =
       missingImport,
       ambiguousRelativeImport,
       canonicalAlias,
+      editorProject,
       interfaceRoundTrip,
       interfaceProofAudit,
       interfaceKeys
@@ -151,6 +152,24 @@ canonicalAlias = withDirectory \root -> do
   expect
     "rejecteth two import paths for one canonical file"
     (either (isInfixOf "resolveth to the same file") (const False) result)
+
+-- the editor's load readeth an unsaved text before the file, and leaveth out
+-- a missing or ambiguous bring for checking to report at its span.
+editorProject :: Test
+editorProject = withDirectory \root -> do
+  writeProject
+    root
+    [ ("main.tung", "bring dep.tung bring missing.tung bring shared.tung"),
+      ("dep.tung", "show let saved ≔ +1"),
+      ("left/shared.tung", "show let left ≔ +1"),
+      ("right/shared.tung", "show let right ≔ +2")
+    ]
+  dep <- canonicalizePath (root </> "dep.tung")
+  result <- loadEditorProject [root </> "left", root </> "right"] (Map.singleton (root </> "dep.tung") "show let unsaved ≔ +2") (root </> "main.tung") "bring dep.tung bring missing.tung bring shared.tung"
+  expectEq
+    "an editor project readeth unsaved texts and leaveth out unresolved brings"
+    (Right (Map.singleton "dep.tung" "show let unsaved ≔ +2", Map.singleton "dep.tung" dep))
+    ((\Project {projectImports, projectImportPaths} -> (projectImports, projectImportPaths)) <$> result)
 
 withProject :: [(FilePath, String)] -> FilePath -> (Either String Project -> Test) -> Test
 withProject files entry assertion =

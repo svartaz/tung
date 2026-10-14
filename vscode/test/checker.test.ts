@@ -2,13 +2,14 @@ import assert from "node:assert/strict";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { pathToFileURL } from "node:url";
 import test, { type TestContext } from "node:test";
 import { compiler } from "./compiler.ts";
 import { CompilerBridge, sessionRequest } from "../server/checker.ts";
 test("checker requests preserve unicode, quotes, slashes, and control characters", () => {
   const source = '𝟙\n"\\\t\r\u0000';
   const request = sessionRequest(7, 4, "check", "", source, [
-    ["dep.tung", source],
+    ["/project/dep.tung", source],
   ]);
   assert.equal(request.split("\n").length, 2);
   assert.deepEqual(JSON.parse(request), {
@@ -18,7 +19,7 @@ test("checker requests preserve unicode, quotes, slashes, and control characters
     command: "check",
     name: "",
     source,
-    imports: { "dep.tung": source },
+    texts: { "/project/dep.tung": source },
   });
 });
 test("a file request nameth its path", () => {
@@ -155,18 +156,30 @@ test("checker reuseth one versioned session and cancellable requests", async (co
   });
 });
 
-test("source and unsaved import changes invalidate the compiled cache", async () => {
+// a document beside a saved dep.tung, whose unsaved text a request supplieth.
+const besideDep = (context: TestContext) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-unsaved-"));
+  context.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.writeFileSync(path.join(root, "dep.tung"), "show let saved ≔ +0");
+  const uri = pathToFileURL(path.join(root, "main.tung")).href;
+  return {
+    model: (text: string) => ({ uri, text }),
+    dep: (text: string): [string, string][] => [
+      [path.join(root, "dep.tung"), text],
+    ],
+  };
+};
+test("source and unsaved import changes invalidate the compiled cache", async (context) => {
+  const { model, dep } = besideDep(context);
   const imported = "bring dep.tung\nlet worth ≔ exported";
   for (const [source, annotation, value, expected] of [
     [imported, "ℤ", "+1", "ℤ"],
     [imported, "string", "'new'", "string"],
     ["bring dep.tung\nlet worth ≔ +2", "string", "'new'", "ℤ"],
   ]) {
-    const imports = [
-      ["dep.tung", `show let exported:${annotation} ≔ ${value}`],
-    ];
+    const texts = dep(`show let exported:${annotation} ≔ ${value}`);
     assert.deepEqual(
-      await compiler.ilkOf({ text: source }, imports, "worth").result,
+      await compiler.ilkOf(model(source), texts, "worth").result,
       {
         kind: "ilk",
         ilk: expected,
@@ -175,25 +188,23 @@ test("source and unsaved import changes invalidate the compiled cache", async ()
   }
 });
 
-test("a corrected import cleareth a cached failure", async () => {
+test("a corrected import cleareth a cached failure", async (context) => {
+  const { model, dep } = besideDep(context);
   const source = "bring dep.tung\nlet worth ≔ exported";
-  const broken = [["dep.tung", "show let exported ≔ missing"]];
-  const first = await compiler.check({ text: source }, broken).result;
+  const broken = dep("show let exported ≔ missing");
+  const first = await compiler.check(model(source), broken).result;
   assert(first.kind === "check");
   assert.equal(first.diagnostics.length, 1);
   assert.equal(first.diagnostics[0].path, "dep.tung");
   assert.match(first.diagnostics[0].message, /unknown name 'missing'/);
+  assert.deepEqual(await compiler.check(model(source), broken).result, first);
+  const corrected = dep("show let exported:ℤ ≔ +3");
   assert.deepEqual(
-    await compiler.check({ text: source }, broken).result,
-    first,
-  );
-  const corrected = [["dep.tung", "show let exported:ℤ ≔ +3"]];
-  assert.deepEqual(
-    await compiler.ilkOf({ text: source }, corrected, "worth").result,
+    await compiler.ilkOf(model(source), corrected, "worth").result,
     { kind: "ilk", ilk: "ℤ" },
   );
   const edited = await compiler.check(
-    { text: "bring dep.tung\nlet worth ≔ missing" },
+    model("bring dep.tung\nlet worth ≔ missing"),
     corrected,
   ).result;
   assert(edited.kind === "check");

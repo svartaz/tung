@@ -1,22 +1,8 @@
-// shared tolerant source structure for colouring and document analysis.
+// tokens and bracket structure over the compiler's concrete syntax. the
+// compiler lexeth and parseth; this module only placeth its tokens by line.
 import generatedLanguageNames from "../generated/language-names.json";
+import type { SourceSyntax } from "./checker.ts";
 
-const keywords = new Set(generatedLanguageNames.keywords);
-const primitiveTypes = new Set(generatedLanguageNames.primitiveTypes);
-const specialNameChars = new Set([...generatedLanguageNames.specialNameChars]);
-const declarationKeywords = new Set([
-  "let",
-  "ilk",
-  "flock",
-  "bizen",
-  "orsetting",
-]);
-const fileDeclarationKeywords = new Set([
-  "bring",
-  "yield",
-  "show",
-  ...declarationKeywords,
-]);
 const closeForOpen = new Map([
   ["(", ")"],
   ["[", "]"],
@@ -26,174 +12,60 @@ const closeForOpen = new Map([
 ]);
 const closingDelimiters = new Set(closeForOpen.values());
 
-const tokenize = (text) => {
-  const tokens = [];
-  let offset = 0;
-  let line = 0;
-  let char = 0;
-  const current = () => text[offset];
-  const next = () => text[offset + 1];
-  const atEnd = () => offset >= text.length;
-  const position = () => [offset, line, char];
-  const advance = () => {
-    const ch = text[offset];
-    if (ch === "\r" && next() === "\n") {
-      offset += 2;
-      line += 1;
-      char = 0;
-    } else if (ch === "\n" || ch === "\r") {
-      offset += 1;
-      line += 1;
-      char = 0;
-    } else {
-      offset += 1;
-      char += 1;
-    }
-  };
-  const advanceCodePoint = () => {
-    const width = (text.codePointAt(offset) || 0) > 0xffff ? 2 : 1;
-    for (let index = 0; index < width && !atEnd(); index += 1) advance();
-  };
-  const push = (kind, startOffset, startLine, startChar) => {
-    tokens.push({
-      index: tokens.length,
-      kind,
-      text: text.slice(startOffset, offset),
-      offset: startOffset,
-      line: startLine,
-      char: startChar,
-      endOffset: offset,
-      endLine: line,
-      endChar: char,
-    });
-  };
-  const consumeName = () => {
-    const [startOffset, startLine, startChar] = position();
-    while (!atEnd() && isNameChar(current())) advance();
-    const value = text.slice(startOffset, offset);
-    push(
-      value === "*" ? "punctuation" : keywords.has(value) ? "keyword" : "name",
-      startOffset,
-      startLine,
-      startChar,
-    );
-  };
-  const consumeString = () => {
-    const [startOffset, startLine, startChar] = position();
-    advance();
-    while (!atEnd()) {
-      if (current() === "\\") {
-        advance();
-        if (!atEnd()) advance();
-      } else if (current() === "'") {
-        advance();
-        break;
-      } else {
-        advance();
-      }
-    }
-    push("string", startOffset, startLine, startChar);
-  };
-  const consumeCharacter = () => {
-    const [startOffset, startLine, startChar] = position();
-    advance();
-    if (!atEnd() && current() === "\\") {
-      advance();
-      if (!atEnd() && /[0-9]/.test(current())) {
-        while (!atEnd() && /[0-9]/.test(current())) advance();
-        if (!atEnd() && current() === ";") advance();
-      } else if (!atEnd()) {
-        advance();
-      }
-    } else if (!atEnd()) {
-      advanceCodePoint();
-    }
-    push("character", startOffset, startLine, startChar);
-  };
-  const consumeNumber = () => {
-    const [startOffset, startLine, startChar] = position();
-    // `+3` and `-3` are integers; unsigned digits are a natural.
-    if (current() === "-" || current() === "+") advance();
-    while (!atEnd() && /[0-9]/.test(current())) advance();
-    if (!atEnd() && current() === "." && /[0-9]/.test(next() || "")) {
-      advance();
-      while (!atEnd() && /[0-9]/.test(current())) advance();
-    }
-    push("number", startOffset, startLine, startChar);
-  };
-  const consumeSpecialOpen = () => {
-    const [startOffset, startLine, startChar] = position();
-    advance();
-    advance();
-    push("punctuation", startOffset, startLine, startChar);
-  };
-  while (!atEnd()) {
-    const ch = current();
-    if (/\s/.test(ch)) {
-      advance();
-    } else if (ch === "#") {
-      while (!atEnd() && current() !== "\n" && current() !== "\r") advance();
-    } else if (ch === "/" && next() === "*") {
-      advance();
-      advance();
-      while (!atEnd() && !(current() === "*" && next() === "/")) advance();
-      if (!atEnd()) {
-        advance();
-        advance();
-      }
-    } else if (ch === "'") {
-      consumeString();
-    } else if (ch === "`") {
-      consumeCharacter();
-    } else if (closeForOpen.has(ch + next())) {
-      consumeSpecialOpen();
-    } else if (isNumberStart(text, offset)) {
-      consumeNumber();
-    } else if (specialNameChars.has(ch)) {
-      const [startOffset, startLine, startChar] = position();
-      advance();
-      push("punctuation", startOffset, startLine, startChar);
-    } else {
-      consumeName();
-    }
+// the compiler's UTF-16 token spans, with lsp line and character positions.
+const sourceTokens = (text: string, syntax: SourceSyntax) => {
+  const lineStarts = [0];
+  for (const newline of text.matchAll(/\r\n|\r|\n/g)) {
+    lineStarts.push(newline.index + newline[0].length);
   }
-  return tokens;
+  let line = 0;
+  const lineOf = (offset: number) => {
+    while (line > 0 && lineStarts[line] > offset) line -= 1;
+    while (line + 1 < lineStarts.length && lineStarts[line + 1] <= offset)
+      line += 1;
+    return line;
+  };
+  return syntax.tokens.map(([offset, endOffset, kind], index) => {
+    const startLine = lineOf(offset);
+    const char = offset - lineStarts[startLine];
+    const endLine = lineOf(endOffset);
+    return {
+      index,
+      kind,
+      text: text.slice(offset, endOffset),
+      offset,
+      line: startLine,
+      char,
+      endOffset,
+      endLine,
+      endChar: endOffset - lineStarts[endLine],
+    };
+  });
 };
+type SourceToken = ReturnType<typeof sourceTokens>[number];
 
-const isNumberStart = (text, offset) => {
-  const ch = text[offset];
-  const nextCh = text[offset + 1];
-  return /[0-9]/.test(ch) || (/[-+]/.test(ch) && /[0-9]/.test(nextCh || ""));
-};
-const isNameChar = (ch) => {
-  return ch !== undefined && !/\s/.test(ch) && !specialNameChars.has(ch);
-};
-const isOpen = (text) => closeForOpen.has(text);
-const isClose = (text) => closingDelimiters.has(text);
-const matchingClose = (text) => closeForOpen.get(text);
-
-// token arrays are complete after tokenisation; semantic and structural
-// lookups share one scan for depths and matching delimiters.
+// one scan findeth depths and matching delimiters; an unmatched close
+// neither pairth nor goeth below depth naught.
 const structureCache = new WeakMap();
-const tokenStructure = (tokens) => {
+const tokenStructure = (tokens: SourceToken[]) => {
   const cached = structureCache.get(tokens);
   if (cached) return cached;
-  const depths = [];
-  const forward = new Map();
-  const backward = new Map();
-  const stack = [];
+  const depths: number[] = [];
+  const forward = new Map<number, number>();
+  const backward = new Map<number, number>();
+  const stack: number[] = [];
   let depth = 0;
   for (const token of tokens) {
     depths.push(depth);
-    if (isOpen(token.text)) {
+    if (closeForOpen.has(token.text)) {
       depth += 1;
       stack.push(token.index);
-    } else if (isClose(token.text)) {
+    } else if (closingDelimiters.has(token.text)) {
       depth = Math.max(0, depth - 1);
       const open = stack.at(-1);
       if (
         open !== undefined &&
-        matchingClose(tokens[open].text) === token.text
+        closeForOpen.get(tokens[open].text) === token.text
       ) {
         stack.pop();
         forward.set(open, token.index);
@@ -205,107 +77,12 @@ const tokenStructure = (tokens) => {
   structureCache.set(tokens, structure);
   return structure;
 };
-const tokenDepths = (tokens) => tokenStructure(tokens).depths;
-const bracketPairs = (tokens) => tokenStructure(tokens).forward;
-
-const findMatching = (tokens, openIndex) => {
-  return tokenStructure(tokens).forward.get(openIndex) ?? -1;
-};
-
-const findOpening = (tokens, closeIndex) => {
-  return tokenStructure(tokens).backward.get(closeIndex) ?? -1;
-};
-
-// pattern arms recover independently in incomplete buffers: an unmatched
-// opener begins a local pattern, and a missing body terminator extends to EOF.
-const patternArmRegions = (tokens) => {
-  const regions = [];
-  const scopes = [{ patternStart: 0, openArms: [] }];
-  const closeArms = (scope, bodyEnd) => {
-    for (const arm of scope.openArms) arm.bodyEnd = bodyEnd;
-    scope.openArms = [];
-  };
-  for (const token of tokens) {
-    if (isOpen(token.text)) {
-      scopes.push({ patternStart: token.index + 1, openArms: [] });
-      continue;
-    }
-    const scope = scopes.at(-1);
-    if (token.text === "^") {
-      const arm = {
-        patternStart: scope.patternStart,
-        pipe: token,
-        bodyEnd: tokens.length,
-      };
-      regions.push(arm);
-      scope.openArms.push(arm);
-      scope.patternStart = token.index + 1;
-    } else if (token.text === "," && scope.openArms.length) {
-      closeArms(scope, token.index);
-      scope.patternStart = token.index + 1;
-    } else if (isClose(token.text)) {
-      closeArms(scope, token.index);
-      if (scopes.length > 1) scopes.pop();
-    }
-  }
-  return regions;
-};
-
-const findFileDeclarationBoundary = (
-  tokens,
-  start,
-  depths = tokenDepths(tokens),
-  baseDepth = depths[start] ?? 0,
-) => {
-  for (let index = start; index < tokens.length; index += 1) {
-    if (depths[index] !== baseDepth) continue;
-    if (isClose(tokens[index].text)) return index;
-    if (
-      tokens[index].kind === "keyword" &&
-      fileDeclarationKeywords.has(tokens[index].text)
-    )
-      return index;
-  }
-  return tokens.length;
-};
-
-// instance headers end at their own braced body. delimiter depths keep nested
-// types separate, and the next declaration boundeth an incomplete header.
-const findInstanceHeader = (tokens, start, depths = tokenDepths(tokens)) => {
-  const baseDepth = depths[start] ?? 0;
-  const end = findFileDeclarationBoundary(tokens, start, depths, baseDepth);
-  for (let index = start; index < end; index += 1) {
-    if (depths[index] === baseDepth && tokens[index].text === "{")
-      return { body: index };
-  }
-  return undefined;
-};
-
-const useParts = (tokens, useIndex, depths = tokenDepths(tokens)) => {
-  const end = findFileDeclarationBoundary(
-    tokens,
-    useIndex + 1,
-    depths,
-    depths[useIndex] ?? 0,
-  );
-  const pathTokens = [];
-  let index = useIndex + 1;
-  if (index < end && ["name", "keyword"].includes(tokens[index]?.kind)) {
-    pathTokens.push(tokens[index]);
-    index += 1;
-    while (
-      index + 1 < end &&
-      tokens[index]?.text === "." &&
-      ["name", "keyword"].includes(tokens[index + 1]?.kind)
-    ) {
-      pathTokens.push(tokens[index], tokens[index + 1]);
-      index += 2;
-    }
-  }
-  const aliasToken =
-    index < end && tokens[index]?.kind === "name" ? tokens[index] : undefined;
-  return { pathTokens, aliasToken };
-};
+const tokenDepths = (tokens: SourceToken[]) => tokenStructure(tokens).depths;
+const bracketPairs = (tokens: SourceToken[]) => tokenStructure(tokens).forward;
+const findMatching = (tokens: SourceToken[], openIndex: number) =>
+  tokenStructure(tokens).forward.get(openIndex) ?? -1;
+const findOpening = (tokens: SourceToken[], closeIndex: number) =>
+  tokenStructure(tokens).backward.get(closeIndex) ?? -1;
 
 const lastQualifiedSegment = (name) => {
   const separator = name.lastIndexOf("~");
@@ -323,17 +100,12 @@ const languageNames = generatedLanguageNames;
 
 export {
   bracketPairs,
-  declarationKeywords,
-  findFileDeclarationBoundary,
-  findInstanceHeader,
   findMatching,
   findOpening,
   languageNames,
   lastQualifiedSegment,
-  patternArmRegions,
-  primitiveTypes,
+  sourceTokens,
   tokenDepths,
-  tokenize,
   useNamespace,
-  useParts,
 };
+export type { SourceToken };

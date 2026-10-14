@@ -167,7 +167,8 @@ data Runtime
 data Deed
   = DPure Runtime
   | DBind Runtime Runtime
-  | DFix Runtime
+  | -- a `fast` call, unfolded only when performed.
+    DFast (Either String Runtime)
   | -- a catalogue deed with its explicit inputs.
     DHost String [Runtime]
 
@@ -193,7 +194,8 @@ checkedMain caller program = do
   Definition {definitionType, definitionBody} <- maybe (Left "main is not a checked definition") pure (Map.lookup name globals)
   case definitionBody of
     Transparent _ -> pure ()
-    _ -> Left "main must be a let definition"
+    Fixpoint _ _ -> pure ()
+    _ -> Left "main must be a let or fast definition"
   matchMain globals definitionType
   pure (globals, name)
 
@@ -201,8 +203,7 @@ checkedMain caller program = do
 runMain :: (Monad m) => HostIO m -> SourceProgram -> Either String (m (Either String Integer))
 runMain host program = do
   (globals, name) <- checkedMain "program" program
-  let table = runtimeGlobals globals
-  value <- Lazy.findWithDefault (Left "main is missing") name table
+  value <- Lazy.findWithDefault (Left "main is missing") name (runtimeGlobals globals)
   pure do
     outcome <- runExceptT (execute host value)
     pure case outcome of
@@ -214,9 +215,8 @@ runMain host program = do
 -- performed, as at a repl prompt.
 runYield :: (Monad m) => HostIO m -> SourceProgram -> K.Inferred -> m (Either String Runtime)
 runYield host program inferred = do
-  let K.Environment globals = sourceEnvironment program
-      table = runtimeGlobals globals
-  case K.validate (sourceEnvironment program) inferred >> evaluate table [] (K.inferredTerm inferred) of
+  let environment@(K.Environment globals) = sourceEnvironment program
+  case K.validate environment inferred >> evaluate (runtimeGlobals globals) [] (K.inferredTerm inferred) of
     Left message -> pure (Left message)
     Right value@(RDeed _) ->
       runExceptT (execute host value) <&> \case
@@ -268,13 +268,13 @@ execute :: (Monad m) => HostIO m -> Runtime -> Execution m Runtime
 execute host = \case
   RDeed deed -> case deed of
     -- producers compute data fully, including literal payloads, before a
-    -- continuation receiveth it. bind and fix stay in tail position, so a
+    -- continuation receiveth it. bind stayeth in tail position, so a
     -- loop retaineth neither pending arithmetic nor return frames.
     DPure value -> runtime (settled value)
     DBind action continuation -> do
       value <- execute host action
       continue continuation [value]
-    DFix step -> continue step [RDeed (DFix step)]
+    DFast unfolded -> runtime unfolded >>= execute host
     DHost key arguments -> do
       inputs <- runtime (traverse settled arguments)
       perform host key inputs >>= runtime . settled
@@ -401,13 +401,20 @@ fromHostValue = \case
   HostList values -> list (map fromHostValue values)
   value -> maybe RErased RLiteral (valueLiteral value)
 
--- globals are acyclic, so this lazy table evaluateth each one at most once.
+-- this lazy table evaluateth each global at most once. a fixpoint's body
+-- may name its own entry, so a call of it is a deed that unfoldeth the body
+-- when performed. its inputs are then evaluated to their outer form, so a
+-- loop's accumulator holdeth no chain of pending computations, and a
+-- self-call outside any bind loopeth only when performed.
 runtimeGlobals :: Globals -> Lazy.Map SymbolId (Either String Runtime)
 runtimeGlobals globals = table
   where
     table = Lazy.mapWithKey global globals
     global name Definition {definitionBody} = case definitionBody of
       Transparent term -> evaluate table [] term
+      Fixpoint arity term ->
+        let body = evaluate table [] term
+         in curried arity \inputs -> pure (RDeed (DFast (body >>= \function -> traverse inspected inputs >>= foldM apply function)))
       EliminationTarget _ term -> evaluate table [] term
       TypeConstructor _ -> pure RErased
       -- number constructors work on literals.
@@ -472,7 +479,6 @@ runtimeGlobals globals = table
             maybe (Left ("invalid runtime host call '" ++ key ++ "'")) (pure . fromHostValue) (traverse toHostValue values >>= operation)
           (_, "deed_sheer", [value]) -> pure (RDeed (DPure value))
           (_, "deed_bind", [action, continuation]) -> pure (RDeed (DBind action continuation))
-          (_, "deed_steadfast", [step]) -> pure (RDeed (DFix step))
           _ -> pure (RDeed (DHost key arguments))
 
 -- inputs arrive in order; the body receiveth them once all are present.

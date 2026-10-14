@@ -61,33 +61,57 @@ satisfiable = isJust . satisfy
 -- constraints with an assignment that satisfieth them, when one is known. a
 -- new constraint that the assignment already satisfieth keepeth it, so only a
 -- constraint that contradicteth the current assignment re-solveth the set.
--- the set answereth membership; the list keepeth insertion order.
-data Universes = Universes [Constraint] (Set.Set Constraint) (Maybe (Map.Map Atom Integer))
+-- the set answereth membership; the list keepeth insertion order. atoms and
+-- simplified clauses grow with each constraint, since simplification is per
+-- clause. a violated constraint first extendeth the last solution and its
+-- edges; only when that faileth is the whole set searched again.
+data Universes = Universes
+  { universeConstraints :: [Constraint],
+    universeKnown :: Set.Set Constraint,
+    universeAtoms :: Set.Set Atom,
+    universeClauses :: Set.Set [Edge],
+    universeWitness :: Maybe Solution
+  }
 
-universeConstraints :: Universes -> [Constraint]
-universeConstraints (Universes constraints _ _) = constraints
+-- an assignment and the difference edges it was built on.
+type Solution = (Map.Map Atom Integer, [Edge])
 
 hasConstraint :: Constraint -> Universes -> Bool
-hasConstraint constraint (Universes _ known _) = Set.member constraint known
+hasConstraint constraint = Set.member constraint . universeKnown
 
 universes :: [Constraint] -> Universes
-universes constraints = Universes constraints (Set.fromList constraints) Nothing
+universes constraints = Universes constraints (Set.fromList constraints) (constraintAtoms constraints) (Set.fromList (constraintClauses constraints)) Nothing
 
 -- checking an initial set retaineth its witness for the following judgement.
 satisfy :: [Constraint] -> Maybe Universes
-satisfy constraints = Universes constraints (Set.fromList constraints) . Just <$> solveConstraints constraints
+satisfy constraints = resolve (universes constraints)
 
-solveConstraints :: [Constraint] -> Maybe (Map.Map Atom Integer)
-solveConstraints constraints = solve (constraintAtoms constraints) (constraintClauses constraints) []
+resolve :: Universes -> Maybe Universes
+resolve current@Universes {..} = (\solution -> current {universeWitness = Just solution}) <$> solveFrom (maybe Map.empty fst universeWitness) universeAtoms (List.sortOn length (Set.toList universeClauses)) []
 
 -- 'Nothing' when the extended set is unsatisfiable.
 constrain :: Constraint -> Universes -> Maybe Universes
-constrain constraint (Universes constraints known witness)
-  | Just assignment <- witness, holds assignment constraint = Just (Universes next known' witness)
-  | otherwise = Universes next known' . Just <$> solveConstraints next
+constrain constraint current@Universes {..}
+  | Just (assignment, _) <- universeWitness, holds assignment constraint = Just added
+  | Just solution <- universeWitness >>= extend = Just added {universeWitness = Just solution}
+  | otherwise = resolve added
   where
-    next = constraint : constraints
-    known' = Set.insert constraint known
+    atoms = constraintAtoms [constraint]
+    clauses = constraintClauses [constraint]
+    added =
+      current
+        { universeConstraints = constraint : universeConstraints,
+          universeKnown = Set.insert constraint universeKnown,
+          universeAtoms = Set.union universeAtoms atoms,
+          universeClauses = allClauses
+        }
+    allClauses = Set.union universeClauses (Set.fromList clauses)
+    -- the new single edges join the last solution's edges, and every clause
+    -- of several alternatives is searched from that solution.
+    extend (assignment, edges) = do
+      let fixed = [Edge atom Zero 0 | atom <- Set.toList atoms, atom /= Zero] ++ concat [clause | clause@[_] <- clauses] ++ edges
+      solution <- potentials (Map.union assignment (Map.fromSet (const 0) atoms)) fixed
+      search solution fixed (List.sortOn length [clause | clause <- Set.toList allClauses, length clause /= 1])
 
 -- an atom the assignment doth not mention taketh the value of zero, which keepeth
 -- every other constraint satisfied.
@@ -127,7 +151,7 @@ entailsAll assumptions conclusions = all entailed conclusions
         allAtoms = Set.union atoms (constraintAtoms [conclusion])
         proved target =
           any (`impliesClause` target) clauses
-            || not (isJust (solve allAtoms clauses (map negateEdge target)))
+            || not (isJust (solveFrom Map.empty allAtoms clauses (map negateEdge target)))
     -- a premise disjunction implieth a target when every premise alternative
     -- hath a weaker target edge. uncovered clauses still use the exact solver.
     impliesClause premise target = all (\edge -> any (weaker edge) target) premise
@@ -166,31 +190,34 @@ simplifyClauses = List.sortOn length . Set.toList . Set.fromList . mapMaybe simp
 
 -- single-edge clauses are fixed first. branch on a shortest violated clause;
 -- unchosen clauses stay available, since a later solution may invalidate one
--- that holdeth now. every alternative is still tried on failure.
-solve :: Set.Set Atom -> [[Edge]] -> [Edge] -> Maybe (Map.Map Atom Integer)
-solve atoms clauses initial = do
-  solution <- potentials (Map.fromSet (const 0) atoms) fixed
+-- that holdeth now. every alternative is still tried on failure. a seed only
+-- starteth the search nearer a solution; feasibility doth not depend on it.
+solveFrom :: Map.Map Atom Integer -> Set.Set Atom -> [[Edge]] -> [Edge] -> Maybe Solution
+solveFrom seed atoms clauses initial = do
+  solution <- potentials (Map.union (Map.restrictKeys seed atoms) (Map.fromSet (const 0) atoms)) fixed
   search solution fixed choices
   where
     (units, choices) = List.partition ((== 1) . length) clauses
     -- shifting a solution so Zero = 0 then maketh every other atom a natural.
     nonnegative = [Edge atom Zero 0 | atom <- Set.toList atoms, atom /= Zero]
     fixed = initial ++ nonnegative ++ concat units
-    search solution edges remaining =
-      case List.break (not . any (satisfied solution)) remaining of
-        (_, []) -> Just solution
-        (before, alternatives : after)
-          | any impossible remaining -> Nothing
-          | otherwise -> asum (map (extend solution edges (before ++ after)) alternatives)
-      where
-        impossible alternatives =
-          not (any (satisfied solution) alternatives)
-            && all (not . isJust . potentials solution . (: edges)) alternatives
-    extend solution edges rest edge = case potentials solution (edge : edges) of
-      Just solution -> search solution (edge : edges) rest
-      Nothing -> Nothing
-    satisfied solution (Edge source target weight) =
-      Map.findWithDefault 0 target solution <= Map.findWithDefault 0 source solution + weight
+
+-- branch on the first violated clause; a clause no alternative can satisfy
+-- endeth the branch.
+search :: Map.Map Atom Integer -> [Edge] -> [[Edge]] -> Maybe Solution
+search solution edges remaining =
+  case List.break (not . any (satisfied solution)) remaining of
+    (_, []) -> Just (solution, edges)
+    (before, alternatives : after)
+      | any impossible remaining -> Nothing
+      | otherwise -> asum (map (extend (before ++ after)) alternatives)
+  where
+    impossible alternatives =
+      not (any (satisfied solution) alternatives)
+        && all (not . isJust . potentials solution . (: edges)) alternatives
+    extend rest edge = potentials solution (edge : edges) >>= \next -> search next (edge : edges) rest
+    satisfied assignment (Edge source target weight) =
+      Map.findWithDefault 0 target assignment <= Map.findWithDefault 0 source assignment + weight
 
 -- bellman-ford starteth with finite distances for every vertex: zero for the
 -- initial graph, or its existing solution when adding an edge. each seed is

@@ -103,6 +103,9 @@ data DefinitionBody
     Host String (Maybe SymbolId)
   | -- an `orsetting` assumption: a constant with a checked type and no body.
     Assumption
+  | -- a `fast` declaration with its inputs before the deed, whose body may
+    -- name it. conversion never unfoldeth it; the runner doth.
+    Fixpoint Int Term
   deriving stock (Eq, Show)
 
 -- group order fixeth the shared recursor prefix; constructors remain per-family.
@@ -155,6 +158,7 @@ mapDefinitionSymbols f definition@Definition {definitionType, definitionBody} =
       Eliminator family -> Eliminator (f family)
       Host key model -> Host key (f <$> model)
       Assumption -> Assumption
+      Fixpoint arity term -> Fixpoint arity (mapSymbols f term)
     metadata info@InductiveInfo {inductiveFamilies, inductiveConstructorInfo, inductiveRules} =
       info
         { inductiveFamilies = map f inductiveFamilies,

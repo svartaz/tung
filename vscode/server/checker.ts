@@ -9,12 +9,7 @@ interface PendingRequest {
   version: number;
 }
 type CompilerCommand =
-  | "check"
-  | "ilk"
-  | "proof"
-  | "format"
-  | "highlight"
-  | "cancel";
+  "check" | "ilk" | "proof" | "format" | "highlight" | "names" | "cancel";
 interface CompilerDiagnostic {
   kind: "parse" | "ilk" | "goal";
   path?: string;
@@ -41,7 +36,8 @@ type CompilerResult =
   | { kind: "ilk"; ilk: string }
   | ProofResult
   | { kind: "format"; source: string }
-  | { kind: "highlight"; roles: SourceRole[] }
+  | ({ kind: "highlight" } & SourceSyntax)
+  | ({ kind: "names" } & SourceNames)
   | { kind: "error"; message: string };
 interface CompilerResponse {
   protocol: 1;
@@ -55,6 +51,45 @@ type SourceRole = [
   role: string,
   modifiers: string[],
 ];
+// the compiler's one parse of a source: roles, tokens, and the concrete
+// tree's declarations and imports, and each local binder with the span where
+// it is seen, by UTF-16 offset.
+interface SourceSyntax {
+  roles: SourceRole[];
+  tokens: [start: number, end: number, kind: string][];
+  declarations: {
+    kind: string;
+    start: number;
+    end: number;
+    headerEnd: number;
+    shown: boolean;
+    doc: string | null;
+  }[];
+  imports: { path: string; alias: string | null; start: number; end: number }[];
+  scopes: [start: number, end: number, scopeStart: number, scopeEnd: number][];
+}
+// the compiler's names for a document: each written name checking resolved
+// to a global, the names it may write at top level, and the file each bring
+// path it reacheth resolved to. a module is `<root>` for the document itself,
+// `<primitive>`, or a bring path.
+interface SourceNames {
+  files: Record<string, string>;
+  resolved: [start: number, end: number, module: string, name: string][];
+  visible: [
+    written: string,
+    module: string,
+    name: string,
+    constructor: boolean,
+  ][];
+}
+const emptyNames: SourceNames = { files: {}, resolved: [], visible: [] };
+const emptySyntax: SourceSyntax = {
+  roles: [],
+  tokens: [],
+  declarations: [],
+  imports: [],
+  scopes: [],
+};
 class CompilerBridge {
   tongue: string | undefined;
   executablePath: string | undefined;
@@ -67,7 +102,8 @@ class CompilerBridge {
   configure(tongue, libraryRoots: string[] = [], executablePath?: string) {
     const tongueChanged = tongue !== this.tongue;
     const executableChanged = executablePath !== this.executablePath;
-    const rootsChanged = libraryRoots.length !== this.libraryRoots.length ||
+    const rootsChanged =
+      libraryRoots.length !== this.libraryRoots.length ||
       libraryRoots.some((root, index) => root !== this.libraryRoots[index]);
     if (tongueChanged || rootsChanged || executableChanged) {
       this.dispose();
@@ -80,31 +116,47 @@ class CompilerBridge {
   available() {
     return Boolean(this.findExecutable());
   }
-  check(model, imports, version = 0) {
+  check(model, texts, version = 0) {
     return this.request(
       "check",
       model.text,
-      imports,
+      texts,
       "",
       version,
       documentPath(model.uri),
     );
   }
-  ilkOf(model, imports, name, version = 0) {
+  names(model, texts, version = 0) {
+    const request = this.request(
+      "names",
+      model.text,
+      texts,
+      "",
+      version,
+      documentPath(model.uri),
+    );
+    return {
+      ...request,
+      result: request.result.then((result): SourceNames | undefined =>
+        result.kind === "names" ? result : undefined,
+      ),
+    };
+  }
+  ilkOf(model, texts, name, version = 0) {
     return this.request(
       "ilk",
       model.text,
-      imports,
+      texts,
       name,
       version,
       documentPath(model.uri),
     );
   }
-  proof(model, imports, name, version = 0, allowedOrsettings?: string[]) {
+  proof(model, texts, name, version = 0, allowedOrsettings?: string[]) {
     return this.request(
       "proof",
       model.text,
-      imports,
+      texts,
       name,
       version,
       documentPath(model.uri),
@@ -116,7 +168,7 @@ class CompilerBridge {
     return {
       ...request,
       result: request.result.then((result) =>
-        result.kind === "format" ? result.source : undefined
+        result.kind === "format" ? result.source : undefined,
       ),
     };
   }
@@ -124,15 +176,15 @@ class CompilerBridge {
     const request = this.request("highlight", source, [], "", version);
     return {
       ...request,
-      result: request.result.then((result): SourceRole[] | undefined =>
-        result.kind === "highlight" ? result.roles : undefined
+      result: request.result.then((result): SourceSyntax | undefined =>
+        result.kind === "highlight" ? result : undefined,
       ),
     };
   }
   request(
     command: CompilerCommand,
     source,
-    imports,
+    texts: [string, string][],
     name,
     version,
     path?: string,
@@ -165,7 +217,7 @@ class CompilerBridge {
         command,
         name,
         source,
-        imports,
+        texts,
         path,
         allowedOrsettings,
       ),
@@ -190,9 +242,9 @@ class CompilerBridge {
       cwd: this.tongue,
       env: this.libraryRoots.length
         ? {
-          ...globalThis.process.env,
-          TUNG_PATH: this.libraryRoots.join(path.delimiter),
-        }
+            ...globalThis.process.env,
+            TUNG_PATH: this.libraryRoots.join(path.delimiter),
+          }
         : globalThis.process.env,
       stdio: ["pipe", "pipe", "pipe"],
     });
@@ -318,9 +370,8 @@ class CompilerBridge {
   }
   findDistExecutable() {
     const root = path.join(this.tongue, "dist-newstyle", "build");
-    return findFile(
-      root,
-      (file) => file.endsWith(path.join("x", "tung", "build", "tung", "tung")),
+    return findFile(root, (file) =>
+      file.endsWith(path.join("x", "tung", "build", "tung", "tung")),
     );
   }
 }
@@ -413,7 +464,62 @@ const isResult = (value: unknown): value is CompilerResult => {
     case "format":
       return typeof value.source === "string";
     case "highlight":
-      return Array.isArray(value.roles) && value.roles.every(isRole);
+      return (
+        Array.isArray(value.roles) &&
+        value.roles.every(isRole) &&
+        Array.isArray(value.tokens) &&
+        value.tokens.every(
+          (token) =>
+            Array.isArray(token) &&
+            isRange(token[0], token[1]) &&
+            typeof token[2] === "string",
+        ) &&
+        Array.isArray(value.declarations) &&
+        value.declarations.every(
+          (declaration) =>
+            isObject(declaration) &&
+            typeof declaration.kind === "string" &&
+            isRange(declaration.start, declaration.end) &&
+            Number.isSafeInteger(declaration.headerEnd) &&
+            typeof declaration.shown === "boolean",
+        ) &&
+        Array.isArray(value.imports) &&
+        value.imports.every(
+          (entry) =>
+            isObject(entry) &&
+            typeof entry.path === "string" &&
+            isRange(entry.start, entry.end),
+        ) &&
+        Array.isArray(value.scopes) &&
+        value.scopes.every(
+          (row) =>
+            Array.isArray(row) &&
+            row.length === 4 &&
+            row.every(Number.isSafeInteger),
+        )
+      );
+    case "names":
+      return (
+        isObject(value.files) &&
+        Object.values(value.files).every((file) => typeof file === "string") &&
+        Array.isArray(value.resolved) &&
+        value.resolved.every(
+          (entry) =>
+            Array.isArray(entry) &&
+            isRange(entry[0], entry[1]) &&
+            typeof entry[2] === "string" &&
+            typeof entry[3] === "string",
+        ) &&
+        Array.isArray(value.visible) &&
+        value.visible.every(
+          (entry) =>
+            Array.isArray(entry) &&
+            typeof entry[0] === "string" &&
+            typeof entry[1] === "string" &&
+            typeof entry[2] === "string" &&
+            typeof entry[3] === "boolean",
+        )
+      );
     case "error":
       return typeof value.message === "string";
     default:
@@ -437,13 +543,15 @@ const documentPath = (uri: string | undefined) => {
     return undefined;
   }
 };
+// open documents send their unsaved texts by path; the compiler resolveth
+// brings and readeth every other module from disk.
 const sessionRequest = (
   id,
   version,
   command,
   name,
   source,
-  imports,
+  texts: [string, string][],
   path?: string,
   allowedOrsettings?: string[],
 ) =>
@@ -454,7 +562,7 @@ const sessionRequest = (
     command,
     name,
     source,
-    imports: Object.fromEntries(imports),
+    texts: Object.fromEntries(texts),
     ...(path === undefined ? {} : { path }),
     ...(allowedOrsettings === undefined ? {} : { allowedOrsettings }),
   }) + "\n";
@@ -463,6 +571,10 @@ export {
   CompilerDiagnostic,
   CompilerResult,
   ProofResult,
+  emptyNames,
+  emptySyntax,
   sessionRequest,
   SourceRole,
+  SourceNames,
+  SourceSyntax,
 };

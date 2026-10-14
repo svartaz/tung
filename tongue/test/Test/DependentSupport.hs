@@ -28,7 +28,7 @@ import Data.List (isInfixOf)
 import Data.Map.Strict qualified as Map
 import System.Directory (doesFileExist, getCurrentDirectory)
 import System.FilePath (takeDirectory, (</>))
-import Test.Compile (bookhoardSources, compileProjectWith, compileSource, loadBookhoard)
+import Test.Compile (bookhoardSources, checkBookhoardModule, compileProjectWith, compileSource, loadBookhoard)
 import Test.Harness (Test, expect)
 import Tung.Dependent
 import Tung.Dependent.Run (HostIO (..), Request, Response, Runtime, runMain)
@@ -72,9 +72,12 @@ loadLibrary paths = do
   pure (Library bookhoardSources compiled)
 
 -- a checked owning module retaineth private helpers for model and proof tests.
+-- a loaded interface keepeth only shown names, so the module is checked again
+-- from its source against its loaded imports.
 libraryModule :: Library -> String -> Either String SourceProgram
-libraryModule (Library _ compiled) path =
-  maybe (Left ("library module was not loaded: " ++ path)) Right (Map.lookup path compiled)
+libraryModule (Library _ compiled) path
+  | Map.member path compiled = checkBookhoardModule (Map.delete path compiled) path
+  | otherwise = Left ("library module was not loaded: " ++ path)
 
 -- further sources beside bookhoard, keyed by use path. a changed source
 -- invalidateth every cached module, including its transitive dependants.

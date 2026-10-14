@@ -139,7 +139,7 @@ data Interface = Interface (Map.Map SymbolId Definition) Names (Map.Map SymbolId
 -- source references must survive type computation. keys and decoding both
 -- reject an interface without that provenance.
 interfaceVersion :: Word8
-interfaceVersion = 4
+interfaceVersion = 5
 
 instance Binary Interface where
   put (Interface own exports references) = put interfaceVersion >> put own >> put exports >> put references
@@ -177,7 +177,7 @@ loadInterfaces directory modules keys = do
           allReferences = Map.unionsWith Set.union (references : map programReferences imported)
       guard (Map.keysSet references `Set.isSubsetOf` Map.keysSet own)
       guard (Set.unions (Map.elems references) `Set.isSubsetOf` Map.keysSet definitions)
-      pure (SourceProgram (Environment definitions) [] exports Set.empty exports [] allReferences)
+      pure (SourceProgram (Environment definitions) [] exports Set.empty exports [] allReferences [])
 
 -- each newly checked interface is written beside the others; a failure to
 -- write leaveth the cache as it was.

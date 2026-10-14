@@ -13,6 +13,7 @@ module Tung.Dependent.Normalise
     MetaResolver,
     Normaliser (..),
     evaluateWith,
+    openEnvironment,
     closed,
     evaluateGlued,
     instantiateWith,
@@ -515,7 +516,9 @@ normalise :: Globals -> Int -> Term -> Either String Term
 normalise globals depth term
   | depth < 0 = Left "negative normalisation depth"
   | otherwise = do
-      -- the innermost index denoteth the newest level in the open context.
-      let environment = map (VNeutral . NLocal) (reverse [0 .. depth - 1])
-      value <- evaluate globals environment term
+      value <- evaluate globals (openEnvironment depth) term
       quote globals depth value
+
+-- each open local as itself; the innermost index denoteth the newest level.
+openEnvironment :: Int -> [Value]
+openEnvironment depth = map (VNeutral . NLocal) (reverse [0 .. depth - 1])

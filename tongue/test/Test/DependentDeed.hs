@@ -44,7 +44,7 @@ tests library example =
       run example ["sumi"],
     expectEq "a host deed reporteth an absent line as none" (Right (Right 0, "tung tung \nwhat is thy name? nobody\n")) $
       run example [],
-    expectEq "the deed fixed point loopeth until input endeth" (Right (Right 0, "a\nb\n")) $
+    expectEq "a fast deed loopeth until input endeth" (Right (Right 0, "a\nb\n")) $
       run (withoutMain example ++ "let main:𝟙 deed ≔ echo\n") ["a", "b"],
     expectEq "building a deed performeth nothing; only main is executed" (Right (Right 0, "")) $
       run (prelude ++ "let unused:𝟙 deed ≔ 'never' write\nlet main:𝟙 deed ≔ only deed_sheer\n") [],
@@ -61,24 +61,58 @@ tests library example =
                """
         )
         [],
-    expectEq "a deed fixed point accumulateth without printing intermediate results" (Right (Right 0, "2000")) $
+    -- each call's inputs are evaluated when it is performed, so the count
+    -- holdeth no chain of pending additions.
+    expectEq "a fast function carrieth a worth between rounds" (Right (Right 0, "20000")) $
       run
         ( prelude
             ++ """
                let plus:[ℤ, ℤ, ℤ] ≔ 'eke_wholetale' fremmed
-               let collect:[ℤ, 𝟙 deed] deed ≔ {again ^
-                 {whole ^ read deed_bind {
-                   none ^ (whole wholetale_to_string) write,
-                   _ some ^ (whole plus +1) deed_sheer $ deed_bind {next ^
-                     again deed_bind {loop ^ next loop}
-                   }
-                 }} deed_sheer
-               } deed_steadfast
-               let main:𝟙 deed ≔ collect deed_bind {loop ^ +0 loop}
+               fast count:[whole: ℤ, 𝟙 deed] ≔ read deed_bind {
+                 none ^ (whole wholetale_to_string) write,
+                 _ some ^ (whole plus +1) count
+               }
+               let main:𝟙 deed ≔ +0 count
 
                """
         )
-        (replicate 2000 ""),
+        (replicate 20000 ""),
+    expectEq "a fast main may name itself" (Right (Right 0, "a\n")) $
+      run (prelude ++ "fast main:𝟙 deed ≔ read deed_bind {none ^ only deed_sheer, line some ^ (line write) deed_bind {_ ^ ('\\n' write) deed_bind {_ ^ main}}}\n") ["a"],
+    expectEq "a fast declaration may be universe-polymorphic" (Right (Right 0, "xx")) $
+      run
+        ( prelude
+            ++ """
+               fast twice:[@α: *, n: 𝟙 maybe, step: α deed, α deed] ≔ match n {
+                 none ^ step,
+                 _ some ^ step deed_bind {_ ^ none twice step}
+               }
+               let main:𝟙 deed ≔ (only some) twice ('x' write)
+
+               """
+        )
+        [],
+    expectEq "a fast call doth not unfold during checking" (Right False) $ do
+      program <- compile (prelude ++ "fast spin:𝟙 deed ≔ (only deed_sheer) deed_bind {_ ^ spin}\n")
+      left <- normaliseSourceExpression program "spin"
+      right <- normaliseSourceExpression program "(only deed_sheer) deed_bind {_ ^ spin}"
+      pure (eraseLevels left == eraseLevels right),
+    rejectContaining "a fast ilk endeth in a deed, so it cannot inhabit an empty ilk" "must end in a deed" $
+      compile (prelude ++ "ilk none_at_all:* {}\nfast absurd:none_at_all ≔ absurd\n"),
+    rejectContaining "a fast function's result is a deed" "must end in a deed" $
+      compile (prelude ++ "fast forever:[𝟙, 𝟙] ≔ {x ^ x forever}\n"),
+    rejectContaining "a looping deed let is pointed to fast" "'echo' needs a structurally decreasing input; a deed that loopeth without bound is a fast declaration" $
+      compile (prelude ++ "let echo:𝟙 deed ≔ read deed_bind {none ^ only deed_sheer, _ some ^ echo}\n"),
+    rejectContaining "a fast declaration nameth itself" "one that doth not is a let" $
+      compile (prelude ++ "fast still:𝟙 deed ≔ only deed_sheer\n"),
+    rejectContaining "a fast declaration requireth an annotation" "requireth an ilk annotation" $
+      parseSource "fast echo ≔ echo\n",
+    rejectContaining "a fast declaration cannot bind a host key" "a fremmed binding is a let, not fast" $
+      parseSource "fast write:[string, 𝟙 deed] ≔ 'write' fremmed\n",
+    rejectContaining "fast declarations cannot enter a let block" "must be top-level" $
+      parseSource "let worth ≔ (fast again:𝟙 deed ≔ again yield *)\n",
+    rejectContaining "a bizen member is not fast" "a bizen member is a let, not fast" $
+      compile (prelude ++ "flock looping:[α:*, *] { let go:α }\nbizen:𝟙 deed looping { fast go:𝟙 deed ≔ go }\n"),
     expectEq "binding a sheer deed doth not reduce during checking" (Right False) $ do
       program <- compile prelude
       left <- normaliseSourceExpression program "(only deed_sheer) deed_bind {x ^ x deed_sheer}"

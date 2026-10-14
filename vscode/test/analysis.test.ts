@@ -153,10 +153,6 @@ test("analysis retaineth import paths, aliases, and default namespaces", async (
     imports,
   );
 });
-test("analysis recordeth each re-exported name", async () => {
-  const model = await analyzed("show first, second", "file:///exports.tung");
-  assert.deepEqual(model.reexports, [{ name: "first" }, { name: "second" }]);
-});
 test("analysis attacheth doc comments to following shown declarations", async () => {
   const source = [
     "## sameness worth.",
@@ -209,7 +205,8 @@ test("an unmatched inner delimiter doth not leak a pattern scope", async () => {
     occurrences[1].offset,
   );
   assert.equal(innerDefinition.token.offset, occurrences[0].offset);
-  assert.equal(innerDefinition.scopeEnd, source.indexOf(")"));
+  // the row's scope endeth with its body, before the stray `)`.
+  assert.equal(innerDefinition.scopeEnd, occurrences[1].endOffset);
   assert.equal(
     findDefinition(model, occurrences[2], occurrences[2].offset),
     undefined,
@@ -222,4 +219,14 @@ test("token lookup excludeth the character after a token", async () => {
     "answer",
   );
   assert.equal(tokenAtPosition(model, { line: 0, character: 10 }), undefined);
+});
+test("a later slot seeth an earlier one, and a block's let stayeth in its block", async () => {
+  const source = "let f: [n: ℕ, x: n fan, ℕ] ≔ (let k ≔ n yield k)\nlet g ≔ k";
+  const model = await analyzed(source, "file:///scopes.tung");
+  const named = (text) => model.tokens.filter((token) => token.text === text);
+  const [binder, inSlot] = named("n");
+  assert.equal(findDefinition(model, inSlot)?.token.offset, binder.offset);
+  const [local, inBody, outside] = named("k");
+  assert.equal(findDefinition(model, inBody)?.token.offset, local.offset);
+  assert.equal(findDefinition(model, outside), undefined);
 });

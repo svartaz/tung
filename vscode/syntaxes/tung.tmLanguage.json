@@ -106,7 +106,7 @@
     "declaration-keyword": {
       "patterns": [
         {
-          "match": "(?<![^\\s#()\\[\\]{}:,;≔$`'@^.])(?:let|bring|ilk|flock|bizen|orsetting|show)(?![^\\s#()\\[\\]{}:,;≔$`'@^.])",
+          "match": "(?<![^\\s#()\\[\\]{}:,;≔$`'@^.])(?:let|fast|bring|ilk|flock|bizen|orsetting|show)(?![^\\s#()\\[\\]{}:,;≔$`'@^.])",
           "name": "keyword.declaration.tung"
         }
       ]

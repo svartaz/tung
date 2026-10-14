@@ -16,7 +16,7 @@ import Control.Monad (filterM, foldM, forM_, when)
 import Data.Functor ((<&>))
 import Data.List (sortOn)
 import Data.Map.Strict qualified as Map
-import Data.Maybe (catMaybes, isJust)
+import Data.Maybe (catMaybes, isJust, isNothing)
 import Data.Ord (Down (..))
 import Tung.Dependent.Check qualified as K
 import Tung.Dependent.Elaboration qualified as E
@@ -49,7 +49,7 @@ instancePattern environment symbol = do
 
 -- `broad` matcheth `narrow` when its own binders can stand for subterms.
 instanceOf :: (Int, [Term]) -> (Int, [Term]) -> Bool
-instanceOf (broadBound, broad) (narrowBound, narrow) = maybe False (const True) (foldM go Map.empty (zip broad narrow))
+instanceOf (broadBound, broad) (narrowBound, narrow) = isJust (foldM go Map.empty (zip broad narrow))
   where
     go solution (Local index, term)
       | index < broadBound = case Map.lookup index solution of
@@ -218,7 +218,7 @@ searchInstance = searchInstanceAmong Nothing
 searchInstanceAmong :: Maybe [SymbolId] -> K.Environment -> Names -> SearchMode -> [Term] -> K.Context -> N.Value -> Elaboration Term
 searchInstanceAmong restriction environment names mode ancestors context goal = do
   when (length ancestors > 16) (E.failure "instance search is too deep")
-  current <- E.quote (length (K.contextTypes context)) goal
+  current <- E.quote (K.contextDepth context) goal
   -- global universe instantiations do not distinguish repeated goals;
   -- sort arguments remain significant to the kernel's constraints.
   let key = eraseGlobalLevels current
@@ -240,7 +240,7 @@ searchInstanceAmong restriction environment names mode ancestors context goal = 
       -- instances are unique per type, so every parent projection reacheth the
       -- same dictionary; a diamond of parents is not ambiguous.
       inherited <-
-        if null direct && restriction == Nothing
+        if null direct && isNothing restriction
           then do
             localFamilies <- catMaybes <$> traverse (classFamily names) (K.contextTypes context)
             firstMatching path (filter (viable localFamilies [family] wanted . Just) (maybe [] classInherited classInfo))
@@ -248,8 +248,8 @@ searchInstanceAmong restriction environment names mode ancestors context goal = 
       case direct ++ inherited of
         (term, commit) : _ -> commit >> pure term
         [] -> do
-          localRequirements <- filterM (fmap (/= Nothing) . classFamily names) (K.contextTypes context)
-          available <- traverse (E.quote (length (K.contextTypes context))) localRequirements
+          localRequirements <- filterM (fmap isJust . classFamily names) (K.contextTypes context)
+          available <- traverse (E.quote (K.contextDepth context)) localRequirements
           let rendered = renderTermWith (displayName names) []
               detail = ["available requirement '" ++ rendered requirement ++ "'" | requirement <- available] ++ take 1 failures
           E.failure ("no bizen of flock '" ++ displayName names family ++ "' matcheth goal '" ++ rendered current ++ "'" ++ concatMap ("; " ++) detail)

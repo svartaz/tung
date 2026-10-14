@@ -9,13 +9,13 @@ import Test.Harness (Test, expectEq)
 import Test.Harness qualified as Harness
 import Tung (SourceSpan (..))
 import Tung.Dependent
-import Tung.Dependent.Source (CompileFailure (..), DependencyKind (..), FailureKind (..), ProofDependency (..), SourceProgram, auditDependencies, auditProof, parseSource, typeOfName, verifyProof)
+import Tung.Dependent.Source (CompileFailure (..), DependencyKind (..), FailureKind (..), ProofDependency (..), SourceProgram, auditDependencies, auditProof, parseSource, sourceNames, typeOfName, verifyProof)
 
 group :: IO Harness.Group
 group = do
   files <- traverse (\name -> (name,) <$> exampleSource ("modules/" ++ name)) ["host.tung", "kindful.tung", "main.tung"]
   library <- loadLibrary ["_fremmed.tung", "ilk/one.tung"]
-  Harness.group "dependent-module" (exampleRun library files : replacedFixture library : tests ++ mutualModuleTests ++ proofAuditTests ++ cachedTests ++ map generatedGraph graphs)
+  Harness.group "dependent-module" (exampleRun library files : replacedFixture library : resolvedNames : tests ++ mutualModuleTests ++ proofAuditTests ++ cachedTests ++ map generatedGraph graphs)
 
 -- the example's main useth bare and qualified imports, imported recursion, and
 -- bookhoard modules.
@@ -24,6 +24,34 @@ exampleRun library files = expectEq "a multi-module forewrit runneth" (Right (Ri
   main <- maybe (Left "missing main.tung") Right (lookup "main.tung" files)
   program <- compileWith (withModules files library) "main.tung" main
   runSimulated program []
+
+-- each written global, with its span: bare and qualified names, constructors
+-- in patterns, a call, and a field read by its receiver's ilk. locals and
+-- binders are not globals.
+resolvedNames :: Test
+resolvedNames =
+  expectEq
+    "checking recordeth the global each written name resolveth to"
+    ( Right
+        [ ("two", "dep.tung", "two"),
+          ("two", "dep.tung", "two"),
+          ("yea", "dep.tung", "yea"),
+          ("nay", "dep.tung", "nay"),
+          ("nay", "dep.tung", "nay"),
+          ("d~yea", "dep.tung", "yea"),
+          ("pair", "dep.tung", "pair"),
+          ("two", "dep.tung", "two"),
+          ("left", "dep.tung", "pair.left"),
+          ("flip", "main.tung", "flip")
+        ]
+    )
+    do
+      program <- compileProject (SourceModule "main.tung") source (Map.fromList [("dep.tung", dependency)])
+      pure [(slice span, path, name) | (span, SymbolId (SourceModule path) name) <- sortOn (spanStart . fst) (sourceNames program)]
+  where
+    dependency = "show ilk two: * { yea: two, nay: two }\nshow ilk pair: * { pair_of: [left: two, right: two, pair] }\n"
+    source = "bring dep.tung d\nlet flip: [two, two] ≔ {yea ^ nay, nay ^ d~yea}\nlet first: [p: pair, two] ≔ p.left flip\n"
+    slice (SourceSpan start end) = take (end - start) (drop start source)
 
 replacedFixture :: Library -> Test
 replacedFixture library =

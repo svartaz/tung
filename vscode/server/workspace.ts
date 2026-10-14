@@ -1,6 +1,8 @@
-// workspace-wide import and visibility index over document models. models
-// take their roles from the compiler: `ready` fetcheth missing roles before a
-// request, and text and file changes invalidate models and derived caches.
+// workspace-wide index over document models. models take their syntax, and
+// navigation its names, from the compiler: `ready` fetcheth what is missing
+// before a request, and text and file changes invalidate models and caches.
+// a written name resolveth as checking resolved it, else to a local binder
+// in scope, else through the module's visible names; nothing is guessed.
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -9,33 +11,45 @@ import {
   findDefinition,
   nameRange,
   roleLabel,
+  smallestRegion,
   tokenAtPosition,
 } from "./analysis.ts";
-import type { SourceRole } from "./checker.ts";
+import {
+  emptyNames,
+  emptySyntax,
+  type SourceNames,
+  type SourceSyntax,
+} from "./checker.ts";
 import { languageNames } from "./syntax.ts";
 type DocumentModel = ReturnType<typeof analyzeDocument>;
 type DocumentSnapshot = {
   text: string;
   version: number;
-  request?: ReturnType<RoleSource["highlight"]>;
-  roles?: SourceRole[];
+  request?: ReturnType<SyntaxSource["highlight"]>;
+  syntax?: SourceSyntax;
+  namesRequest?: { result: Promise<SourceNames | undefined>; cancel(): void };
+  names?: SourceNames;
   model?: DocumentModel;
 };
-type RoleSource = {
+type SyntaxSource = {
   highlight(
     source: string,
     version: number,
   ): {
-    result: Promise<SourceRole[] | undefined>;
+    result: Promise<SourceSyntax | undefined>;
     cancel(): void;
   };
+  names?(
+    model: { uri: string; text: string },
+    texts: [string, string][],
+    version: number,
+  ): { result: Promise<SourceNames | undefined>; cancel(): void };
 };
 type DocumentLike = { uri: string; version?: number; getText(): string };
 type DocumentStore = {
   get(uri: string): DocumentLike | undefined;
   all(): DocumentLike[];
 };
-type Definition = DocumentModel["definitions"][number];
 const skippedDirectories = new Set([
   ".git",
   ".tung",
@@ -50,11 +64,11 @@ class WorkspaceIndex {
   fileUris: string[] = [];
   filesDirty = true;
   modelsCache: DocumentModel[] | undefined = undefined;
-  resolveImportCache = new Map<string, DocumentModel | undefined>();
-  publicDefinitionsCache = new Map<string, Definition[]>();
+  // each known file's real path, as the compiler nameth it, to its uri.
+  realUris: Map<string, string> | undefined = undefined;
   constructor(
     public documents: DocumentStore,
-    public compiler?: RoleSource,
+    public compiler?: SyntaxSource,
   ) {}
   configure(roots: string[], libraryRoots: string[] = []) {
     this.roots = [
@@ -67,39 +81,96 @@ class WorkspaceIndex {
     ];
     this.invalidateFiles();
   }
+  // a changed document maketh stale the names of every document that
+  // bringeth it.
   invalidate(uri) {
     this.snapshot(uri, this.documents.get(uri)?.getText());
+    const file = realPath(toFilePath(uri));
+    for (const entry of this.cache.values()) {
+      if (file && Object.values(entry.names?.files ?? {}).includes(file))
+        forgetNames(entry);
+    }
     this.invalidateDerived();
   }
+  // a file appearing or vanishing may change where any bring resolveth.
   invalidateFiles() {
     this.filesDirty = true;
+    this.realUris = undefined;
+    for (const entry of this.cache.values()) forgetNames(entry);
     this.invalidateDerived();
   }
   invalidateDerived() {
     this.modelsCache = undefined;
-    this.resolveImportCache.clear();
-    this.publicDefinitionsCache.clear();
   }
-  async roles(
+  async syntax(
     uri: string,
     text: string | undefined,
     version = this.versionOf(uri),
-  ): Promise<SourceRole[]> {
+  ): Promise<SourceSyntax> {
     const entry = this.snapshot(uri, text, version);
-    if (!this.compiler || !entry) return [];
+    if (!this.compiler || !entry) return emptySyntax;
     entry.request ||= this.compiler.highlight(entry.text, entry.version);
-    if (entry.roles) return entry.roles;
-    const roles = await entry.request.result;
-    if (this.cache.get(uri) !== entry) return [];
-    if (!entry.roles) {
-      entry.roles = roles || [];
+    if (entry.syntax) return entry.syntax;
+    const syntax = await entry.request.result;
+    if (this.cache.get(uri) !== entry) return emptySyntax;
+    if (!entry.syntax) {
+      entry.syntax = syntax || emptySyntax;
       entry.model = undefined;
       this.invalidateDerived();
     }
-    return entry.roles;
+    return entry.syntax;
   }
-  clearRoles() {
-    for (const entry of this.cache.values()) entry.request?.cancel();
+  // the compiler resolveth the document's brings, reading open documents'
+  // unsaved texts.
+  async names(uri: string): Promise<SourceNames> {
+    const model = this.model(uri);
+    const entry = this.cache.get(uri);
+    if (!this.compiler?.names || !model || !entry) return emptyNames;
+    entry.namesRequest ||= this.compiler.names(
+      model,
+      this.openTexts(),
+      entry.version,
+    );
+    if (entry.names) return entry.names;
+    const names = await entry.namesRequest.result;
+    if (this.cache.get(uri) !== entry) return emptyNames;
+    entry.names ||= names || emptyNames;
+    return entry.names;
+  }
+  namesOf(uri: string) {
+    return this.cache.get(uri)?.names ?? emptyNames;
+  }
+  // the unsaved text of each open file document, by path.
+  openTexts(): [string, string][] {
+    return this.documents.all().flatMap((document) => {
+      const file = toFilePath(document.uri);
+      return file ? [[file, document.getText()] as [string, string]] : [];
+    });
+  }
+  // the texts of every module a document reacheth, as its names resolved
+  // them; a change to one supersedeth a result that read it.
+  reachedTexts(uri: string) {
+    return Object.entries(this.namesOf(uri).files).map(([importPath, file]) => [
+      importPath,
+      this.textOf(this.fileUri(file)),
+    ]);
+  }
+  // a file the compiler named, as the uri the workspace knoweth it by.
+  fileUri(file: string) {
+    if (!this.realUris) {
+      this.realUris = new Map();
+      for (const uri of this.knownUris()) {
+        const real = realPath(toFilePath(uri));
+        if (real) this.realUris.set(real, uri);
+      }
+    }
+    return this.realUris.get(file) ?? pathToFileURL(file).href;
+  }
+  clearSyntax() {
+    for (const entry of this.cache.values()) {
+      entry.request?.cancel();
+      entry.namesRequest?.cancel();
+    }
     this.cache.clear();
     this.invalidateDerived();
   }
@@ -115,6 +186,7 @@ class WorkspaceIndex {
     if (previous?.text === text && previous?.version === version)
       return previous;
     previous?.request?.cancel();
+    previous?.namesRequest?.cancel();
     if (text === undefined) {
       this.cache.delete(uri);
       return undefined;
@@ -123,11 +195,17 @@ class WorkspaceIndex {
     this.cache.set(uri, entry);
     return entry;
   }
-  async ready() {
+  // syntax for every known document, and names for the open ones, or for
+  // every document when a request searcheth them all.
+  async ready(everywhere = false) {
     if (!this.compiler) return;
     await Promise.all(
-      this.knownUris().map((uri) => this.roles(uri, this.textOf(uri))),
+      this.knownUris().map((uri) => this.syntax(uri, this.textOf(uri))),
     );
+    const uris = everywhere
+      ? this.knownUris()
+      : this.documents.all().map(({ uri }) => uri);
+    await Promise.all(uris.map((uri) => this.names(uri)));
   }
   knownUris() {
     const uris = new Set(this.workspaceFileUris());
@@ -148,7 +226,7 @@ class WorkspaceIndex {
   modelForText(uri, text) {
     const entry = this.snapshot(uri, text)!;
     if (entry.model) return entry.model;
-    entry.model = analyzeDocument(text, uri, entry.roles || []);
+    entry.model = analyzeDocument(text, uri, entry.syntax);
     entry.model.instances.forEach((instance) => (instance.uri = uri));
     this.invalidateDerived();
     return entry.model;
@@ -169,102 +247,38 @@ class WorkspaceIndex {
     this.filesDirty = false;
     return this.fileUris;
   }
-  resolveImport(model, imported) {
-    const cacheKey = `${model?.uri || ""}\0${imported.path}`;
-    if (this.resolveImportCache.has(cacheKey)) {
-      return this.resolveImportCache.get(cacheKey);
+  // a global as the compiler nameth it: its module is `<root>` for the
+  // document itself, `<primitive>`, or a bring path the document reacheth.
+  definitionOf(model, module: string, name: string) {
+    const bare = name.startsWith("unbuild ") ? name.slice(8) : name;
+    if (module === "<primitive>") {
+      return languageNames.primitiveTypes.includes(bare)
+        ? primitive(bare, "type")
+        : undefined;
     }
-    const models = this.models();
-    const byPath = new Map(
-      models.map((candidate) => [
-        normalPath(toFilePath(candidate.uri)),
-        candidate,
-      ]),
-    );
-    const from = toFilePath(model.uri);
-    if (from) {
-      const candidate = path.resolve(path.dirname(from), imported.path);
-      const found = byPath.get(normalPath(candidate));
-      if (found) return this.cacheResolvedImport(cacheKey, found);
-    }
-    const libraryMatches = this.libraryRoots
-      .map((root) => byPath.get(normalPath(path.resolve(root, imported.path))))
-      .filter(Boolean);
-    return this.cacheResolvedImport(
-      cacheKey,
-      libraryMatches.length === 1 ? libraryMatches[0] : undefined,
-    );
-  }
-  cacheResolvedImport(key, model) {
-    this.resolveImportCache.set(key, model);
-    return model;
-  }
-  importDefinitions(model, imported, seen = new Set()) {
-    return this.publicDefinitions(this.resolveImport(model, imported), seen);
-  }
-  // public definitions follow shown declarations, shown imports, and explicit
-  // re-exports while the seen set preventeth import cycles.
-  publicDefinitions(model, seen = new Set()) {
-    if (!model || seen.has(model.uri)) return [];
-    if (seen.size === 0 && this.publicDefinitionsCache.has(model.uri)) {
-      return this.publicDefinitionsCache.get(model.uri);
-    }
-    const nextSeen = new Set(seen).add(model.uri);
-    const own = model.definitions.filter(({ exported }) => exported);
-    const shownImports = model.imports
-      .filter(({ exported }) => exported)
-      .flatMap((imported) => this.importDefinitions(model, imported, nextSeen));
-    // `show name` re-exporteth every visible role with that name.
-    const reexported = model.reexports.flatMap(({ name }) =>
-      this.resolveVisible(model, name, nextSeen),
-    );
-    const definitions = uniqueByKey(
-      [...own, ...shownImports, ...reexported],
-      definitionKey,
-    );
-    if (seen.size === 0) {
-      this.publicDefinitionsCache.set(model.uri, definitions);
-    }
-    return definitions;
-  }
-  resolveVisible(model, name, seen = new Set(), role = undefined) {
-    const visibleRole = (definition) => !role || definition.role === role;
-    const split = name.indexOf("~");
-    if (split >= 0) {
-      const qualifier = name.slice(0, split);
-      const bare = name.slice(split + 1);
-      const imported = model.imports.find(
-        ({ namespace }) => namespace === qualifier,
+    const target =
+      module === "<root>" ? model : this.importModel(model, module);
+    const global = (written) =>
+      target?.definitions.find(
+        (definition) => !definition.local && definition.bareName === written,
       );
-      if (imported) {
-        return this.importDefinitions(model, imported, seen).filter(
+    // a field `ilk.field` is the named slot of its ilk's constructor.
+    const dot = bare.lastIndexOf(".");
+    if (dot > 0) {
+      const family = global(bare.slice(0, dot));
+      const region =
+        family && smallestRegion(target.regions, family.token.offset, "ilk");
+      return (
+        region &&
+        target.definitions.find(
           (definition) =>
-            definition.bareName === bare && visibleRole(definition),
-        );
-      }
-      return model.definitions
-        .filter(
-          ({ bareName, containerName }) =>
-            bareName === bare && containerName === qualifier,
+            definition.bareName === bare.slice(dot + 1) &&
+            region.startOffset <= definition.token.offset &&
+            definition.token.offset <= region.endOffset,
         )
-        .filter(visibleRole);
+      );
     }
-    const own = model.definitions.filter(
-      (definition) =>
-        !definition.local &&
-        definition.bareName === name &&
-        visibleRole(definition),
-    );
-    if (own.length) return own;
-    return uniqueByKey(
-      model.imports.flatMap((imported) =>
-        this.importDefinitions(model, imported, seen).filter(
-          (definition) =>
-            definition.bareName === name && visibleRole(definition),
-        ),
-      ),
-      definitionKey,
-    );
+    return global(bare);
   }
   resolveAt(uri, position) {
     const model = this.model(uri);
@@ -272,66 +286,30 @@ class WorkspaceIndex {
     if (!model || !token || token.kind !== "name") {
       return { model, token, definition: undefined };
     }
-    if (
-      model.instances.some((instance) => instance.token.offset === token.offset)
-    ) {
-      const visibleClasses = this.resolveVisibleRole(
-        model,
-        token.text,
-        "class",
-      );
-      return {
-        model,
-        token,
-        definition: visibleClasses.length === 1 ? visibleClasses[0] : undefined,
-        candidates: visibleClasses,
-      };
+    const found = (definition) => ({ model, token, definition });
+    const names = this.namesOf(uri);
+    const resolved = names.resolved.find(([start]) => start === token.offset);
+    if (resolved)
+      return found(this.definitionOf(model, resolved[2], resolved[3]));
+    if (model.roles.get(token.index)?.type === "property")
+      return found(undefined);
+    const visible = names.visible.find(([written]) => written === token.text);
+    const local = token.text.includes("~")
+      ? undefined
+      : findDefinition(model, token, token.offset);
+    // a pattern binder that nameth a visible constructor is that constructor.
+    if (local && !(local.role === "parameter" && visible?.[3])) {
+      return found(local);
     }
-    if (model.roles.get(token.index)?.type === "property") {
-      return { model, token, definition: undefined };
-    }
-    const local = findDefinition(model, token, token.offset);
-    if (local?.role === "parameter" && !token.text.includes("~")) {
-      const constructors = this.resolveVisibleRole(
-        model,
-        token.text,
-        "enumMember",
-      );
-      if (constructors.length === 1) {
-        return {
-          model,
-          token,
-          definition: constructors[0],
-          candidates: constructors,
-        };
-      }
-    }
-    if (local && !token.text.includes("~")) {
-      return { model, token, definition: local };
-    }
-    const visible = this.resolveVisible(model, token.text);
-    // a name in type position without a local binder nameth a visible type.
-    const tokenRole = model.roles.get(token.index)?.type;
-    const role = tokenRole === "typeParameter" ? "type" : tokenRole;
-    const matching = role
-      ? visible.filter((definition) => definition.role === role)
-      : visible;
-    const candidates = matching.length ? matching : visible;
-    return {
-      model,
-      token,
-      definition: candidates.length === 1 ? candidates[0] : local,
-      candidates,
-    };
+    return found(visible && this.definitionOf(model, visible[1], visible[2]));
   }
-  resolveVisibleRole(model, name, role) {
-    return this.resolveVisible(model, name, new Set(), role);
-  }
-  references(definition, includeDeclaration = true) {
+  // every occurrence that resolveth to the definition, in one document or all.
+  references(definition, includeDeclaration = true, only?: string) {
     if (!definition) return [];
     const key = definitionKey(definition);
     const locations = [];
     for (const model of this.models()) {
+      if (only && model.uri !== only) continue;
       for (const token of model.occurrences) {
         const resolved = this.resolveAt(model.uri, {
           line: token.line,
@@ -342,13 +320,12 @@ class WorkspaceIndex {
         }
       }
     }
-    if (
-      includeDeclaration &&
-      !locations.some(
-        ({ uri, range }) =>
-          uri === definition.uri && sameRange(range, definition.selectionRange),
-      )
-    ) {
+    // the declaration's own name resolveth to it too; the caller decideth.
+    const declared = ({ uri, range }) =>
+      uri === definition.uri && sameRange(range, definition.selectionRange);
+    if (!includeDeclaration)
+      return locations.filter((location) => !declared(location));
+    if (!locations.some(declared)) {
       locations.unshift({
         uri: definition.uri,
         range: definition.selectionRange,
@@ -364,29 +341,10 @@ class WorkspaceIndex {
         .map(({ uri, range }) => ({ uri, range })),
     );
   }
-  importSources(model, seen = new Set()) {
-    if (!model || seen.has(model.uri)) return [];
-    const nextSeen = new Set(seen).add(model.uri);
-    const imports = [];
-    for (const imported of model.imports) {
-      const target = this.resolveImport(model, imported);
-      if (!target) continue;
-      imports.push([imported.path, target.text]);
-      imports.push(...this.importSources(target, nextSeen));
-    }
-    return uniqueByKey(imports, ([importPath]) => importPath);
-  }
-  importModel(model, importPath, seen = new Set()) {
-    if (!model || seen.has(model.uri)) return undefined;
-    const nextSeen = new Set(seen).add(model.uri);
-    for (const imported of model.imports) {
-      const target = this.resolveImport(model, imported);
-      if (!target) continue;
-      if (imported.path === importPath) return target;
-      const nested = this.importModel(target, importPath, nextSeen);
-      if (nested) return nested;
-    }
-    return undefined;
+  // the module a bring path of a document reacheth, as its names resolved it.
+  importModel(model, importPath) {
+    const file = model && this.namesOf(model.uri).files[importPath];
+    return file ? this.model(this.fileUri(file)) : undefined;
   }
   completions(uri, position) {
     const model = this.model(uri);
@@ -396,18 +354,14 @@ class WorkspaceIndex {
     const local = model.definitions.filter(
       ({ scopeStart, scopeEnd }) => scopeStart <= offset && offset <= scopeEnd,
     );
-    const imported = model.imports.flatMap((entry) => {
-      const definitions = this.importDefinitions(model, entry);
-      return definitions.flatMap((definition) => [
-        definition,
-        {
-          ...definition,
-          completionName: `${entry.namespace}~${definition.bareName}`,
-        },
-      ]);
-    });
+    const visible = this.namesOf(uri).visible.flatMap(
+      ([written, module, name]) => {
+        const definition = this.definitionOf(model, module, name);
+        return definition ? [{ ...definition, completionName: written }] : [];
+      },
+    );
     return uniqueByKey(
-      [...local, ...imported],
+      [...local, ...visible],
       (definition) => definition.completionName || definition.bareName,
     );
   }
@@ -493,6 +447,18 @@ const sameRange = (left, right) => {
 };
 const normalPath = (file) => {
   return file ? path.normalize(file).split(path.sep).join("/") : undefined;
+};
+const forgetNames = (entry: DocumentSnapshot) => {
+  entry.namesRequest?.cancel();
+  entry.namesRequest = undefined;
+  entry.names = undefined;
+};
+const realPath = (file) => {
+  try {
+    return file ? fs.realpathSync(file) : undefined;
+  } catch {
+    return undefined;
+  }
 };
 const toFilePath = (uri) => {
   try {

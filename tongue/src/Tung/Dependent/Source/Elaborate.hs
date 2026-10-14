@@ -39,10 +39,10 @@ elaborateHoles program action = fst (elaborateHolesReport program action)
 
 -- keep diagnostic goals even when checking faileth. only the Right result may
 -- cross the kernel boundary or enter the module environment.
-elaborateHolesReport :: SourceProgram -> Elaboration (Term, N.Value, a) -> (Either SourceFailure (K.Inferred, a, [Hole], Set.Set SymbolId), [Hole])
-elaborateHolesReport program@SourceProgram {..} action = (finish =<< checked, holes)
+elaborateHolesReport :: SourceProgram -> Elaboration (Term, N.Value, a) -> (Either SourceFailure (K.Inferred, a, [Hole], Set.Set SymbolId), Report)
+elaborateHolesReport program@SourceProgram {..} action = (finish =<< checked, report)
   where
-    (checked, holes) = runWithHoles program (globals programEnvironment) do
+    (checked, report) = runWithHoles program (globals programEnvironment) do
       (term, ty, metadata) <- action
       solveInstances programEnvironment globalNames
       remaining <- E.takeInstanceGoals
@@ -58,21 +58,22 @@ elaborateHolesReport program@SourceProgram {..} action = (finish =<< checked, ho
       -- folded solutions bring each global instantiation's constraints once.
       folded <- Error.fromString (traverse (uncurry instantiated) (nubOrd (concatMap constants [term, annotation])))
       result <- Error.fromString (K.generalise term annotation (constraints ++ concat folded))
-      pure (result, metadata, holes, references)
+      pure (result, metadata, reportHoles report, references)
     instantiated name levels = case Map.lookup name (globals programEnvironment) of
       Just definition -> traverse (U.instantiateConstraint levels) (definitionConstraints definition)
       Nothing -> Right []
 
 -- the exception is caught inside inference so goal rendering can read its last
 -- metavariable solutions. rejected speculative trials have already rolled back.
-runWithHoles :: SourceProgram -> Globals -> Elaboration a -> (Either SourceFailure (a, [Constraint]), [Hole])
+runWithHoles :: SourceProgram -> Globals -> Elaboration a -> (Either SourceFailure (a, [Constraint]), Report)
 runWithHoles SourceProgram {globalNames} base action =
   case E.runElaboration (displayName globalNames) base do
     result <- E.recover action
     holes <- nubBy (\left right -> holeSpan left == holeSpan right) <$> (E.takeHoles >>= traverse (renderHole base render))
-    pure (result, holes) of
-    Left failure -> (Left failure, [])
-    Right ((result, holes), constraints) -> ((,constraints) <$> result, holes)
+    names <- nubOrd <$> E.takeNames
+    pure (result, Report holes names) of
+    Left failure -> (Left failure, mempty)
+    Right ((result, report), constraints) -> ((,constraints) <$> result, report)
   where
     render = renderTermIn base (briefName globalNames)
 

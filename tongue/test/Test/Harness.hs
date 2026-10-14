@@ -42,7 +42,7 @@ import System.Exit (ExitCode (..), exitFailure, exitWith)
 import System.IO (hFlush, stdout)
 import System.IO.Unsafe (unsafePerformIO)
 import System.Process (env, proc, readCreateProcessWithExitCode)
-import Test.Compile (bookhoardSources, compileProjectDetailed, compileYieldWith, loadBookhoard)
+import Test.Compile (bookhoardSources, compileProjectDetailed, compileYieldWith, loadBookhoard, shareBookhoard)
 import Test.QuickCheck qualified as QuickCheck
 import Test.QuickCheck.Random qualified as QuickCheck
 import Text.Read (readMaybe)
@@ -63,8 +63,10 @@ runGroups groups = do
   selected <- Environment.lookupEnv "TUNG_TEST_GROUP"
   case selected of
     -- each group runneth in its own process, so caches stay per group. groups
-    -- run in parallel, slowest first, and print whole when they finish.
+    -- run in parallel, slowest first, and print whole when they finish. they
+    -- begin with bookhoard's interfaces, checked once here.
     Nothing -> do
+      shared <- shareBookhoard
       executable <- Environment.getExecutablePath
       environment <- Environment.getEnvironment
       processors <- getNumProcessors
@@ -73,7 +75,7 @@ runGroups groups = do
       printing <- newMVar ()
       let names = sortOn (\name -> maybe (length slowGroups) id (elemIndex name slowGroups)) (map fst groups)
           run name = bracket_ (waitQSem slots) (signalQSem slots) do
-            let childEnvironment = ("TUNG_TEST_GROUP", name) : filter ((/= "TUNG_TEST_GROUP") . fst) environment
+            let childEnvironment = ("TUNG_TEST_GROUP", name) : shared : filter ((`notElem` ["TUNG_TEST_GROUP", fst shared]) . fst) environment
             (status, output, errors) <- readCreateProcessWithExitCode (proc executable []) {env = Just childEnvironment} ""
             withMVar printing \_ -> putStr (output ++ errors) >> hFlush stdout
             pure status

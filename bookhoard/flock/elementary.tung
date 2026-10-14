@@ -3,7 +3,7 @@ bring flock/algebra/whole/hath_deal.tung
 bring flock/algebra/whole/hath_fold.tung
 bring flock/algebra/whole/hath_offdraw.tung
 bring ilk/float.tung
-bring numeric/singal.tung
+bring singal.tung
 
 show flock elementary: [α: *, @: α hath_÷, *] {
   let exponent: [α, α]

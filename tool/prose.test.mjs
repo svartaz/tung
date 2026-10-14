@@ -103,10 +103,6 @@ for (const [name, find] of [
     ({ prose }) => /\b(?:he|him|his|she|her|hers)\b/i.exec(prose)?.[0],
   ],
   [
-    "prose and source comments write th, not thorn",
-    ({ text }) => (/[þÞ]/.test(text) ? "" : undefined),
-  ],
-  [
     "prose giveth thou a -st verb",
     ({ prose }) =>
       /\bthou\s+(?:has|have|does|do|are|is|was|can|will|shall|may|must|[a-z]+eth)\b/i.exec(

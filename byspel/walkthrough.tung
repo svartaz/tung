@@ -14,8 +14,8 @@ bring ilk/product.tung
 bring ilk/sum.tung
 bring ilk/wordbook.tung hashmap
 bring is.tung
-bring numeric/singal.tung
 bring often.tung
+bring singal.tung
 
 # 1. values
 # `let name ≔ value` defineth a name. `:` writeth its type.

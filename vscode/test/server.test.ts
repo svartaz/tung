@@ -416,7 +416,7 @@ test("server implementeth the editor workflow over stdio", async (context) => {
   assert.match(unfinishedProof.report, /unfinished proof: sorry/);
   let version = 4;
   for (const [kind, text] of [
-    ["type", `let broken:ℤ ≔ 'wrong'\n${holeText}`],
+    ["ilk", `let broken:ℤ ≔ 'wrong'\n${holeText}`],
     ["parse", `${holeText}\nlet broken:ℤ ≔`],
   ]) {
     const recoveredDiagnostics = nextDiagnostics(

@@ -63,7 +63,7 @@ dependencies:
   | `bizen` | instance   | `fallback`  | default instance |
   | `deed`  | io action  | `fall`      | function         |
 
-  the [keyword table](tongue/language.md#nonstandard-keywords) listeth all
+  the [keyword table](tongue/language.md#keywords) listeth all
   of them.
 
 - tung useth dependent types. the [design](tongue/dependent.md)

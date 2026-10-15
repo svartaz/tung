@@ -1,3 +1,4 @@
+bring combinator.tung
 bring flock/algebra/half/category.tung
 bring flock/algebra/half/semigroupoid.tung
 bring is.tung
@@ -7,7 +8,7 @@ show flock bifunctor: [φ: [*, *, *], *] {
   let biwarp: [@α: *, @β: *, @γ: *, @δ: *, α φ β, [α, γ], [β, δ], γ φ δ]
   let biwarp_sameness_sameness
     : [@α: *, @β: *, thing: α φ β,
-      (thing biwarp (sameness: [α, α]) (sameness: [β, β])) = thing]
+      (thing biwarp (sameness @→ @α) (sameness @→ @β)) = thing]
   let biwarp_biwarp
     : [@α₀: *, @α₁: *, @β₀: *, @β₁: *, @γ₀: *, @γ₁: *, thing: α₀ φ α₁,
       f₀: [α₀, β₀], f₁: [α₁, β₁], g₀: [β₀, γ₀], g₁: [β₁, γ₁],

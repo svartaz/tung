@@ -149,9 +149,9 @@ lawPrograms = twoLaws ++ concatMap carrierLaws carriers
     carrierLaws (carrier, written, sheerType, k, fs) =
       [ law (carrier ++ " warp keepeth sameness") worths (\l -> l ++ " warp sameness") id,
         law (carrier ++ " warp composeth") worths (\l -> "(" ++ l ++ " warp f) warp g") (\l -> l ++ " warp (f ▷ g)"),
-        law (carrier ++ " atfold keepeth sheer sameness") worths (\l -> l ++ " atfold ((sameness: [ℤ, ℤ]) sheer)") id,
-        law (carrier ++ " sheer atfold sheer") values (\a -> "((" ++ a ++ " sheer): " ++ sheerType ++ ") atfold (f sheer)") (\a -> "((" ++ a ++ " f) sheer: " ++ sheerType ++ ")"),
-        law (carrier ++ " sheer atfold") values (\a -> "((" ++ a ++ " sheer): " ++ sheerType ++ ") atfold (" ++ fs ++ ")") (\a -> "(" ++ fs ++ ") warp (" ++ a ++ " call)"),
+        law (carrier ++ " onwend keepeth sheer sameness") worths (\l -> l ++ " onwend ((sameness: [ℤ, ℤ]) sheer)") id,
+        law (carrier ++ " sheer onwend sheer") values (\a -> "((" ++ a ++ " sheer): " ++ sheerType ++ ") onwend (f sheer)") (\a -> "((" ++ a ++ " f) sheer: " ++ sheerType ++ ")"),
+        law (carrier ++ " sheer onwend") values (\a -> "((" ++ a ++ " sheer): " ++ sheerType ++ ") onwend (" ++ fs ++ ")") (\a -> "(" ++ fs ++ ") warp (" ++ a ++ " call)"),
         law (carrier ++ " sheer bind") values (\a -> "((" ++ a ++ " sheer): " ++ sheerType ++ ") bind " ++ k) (\a -> a ++ " " ++ k),
         law (carrier ++ " bind sheer") worths (\l -> l ++ " bind sheer") id,
         law (carrier ++ " bind associateth") worths (\l -> "(" ++ l ++ " bind " ++ k ++ ") bind " ++ k) (\l -> l ++ " bind {y: ℤ ^ (y " ++ k ++ ") bind " ++ k ++ "}"),
@@ -201,11 +201,11 @@ importCase (name, expected, modules) = do
 -- exact output.
 layeredPrograms :: [(String, String, String)]
 layeredPrograms =
-  [ ("hade handeth each step the state left by the last", "(>{then, tick, tick, get} hade~run 10) bind {p ^ p forthcast₀ $ to_string $ write}", "12"),
-    ("put replaceth and lift keepeth the state", "(>{then, 4 put, ('x' write) hade~lift, get} hade~run 0) bind {p ^ p forthcast₀ $ to_string $ write}", "x4"),
-    ("a misfare skippeth every later deed", "(>{then, ('a' write) misfaresome~lift, ('stop' misfare: string misfaresome 𝟙), ('b' write) misfaresome~lift} misfaresome~run) bind eftbare", "astop"),
-    ("handle runneth its handler only on a misfare", "(>{then, ('a' write) misfaresome~lift, 'stop' misfare} handle {e ^ (e write) misfaresome~lift} $ misfaresome~run) bind eftbare", "astop!"),
-    ("handle leaveth a result alone", "((('a' write) misfaresome~lift: 𝟙 misfaresome 𝟙) handle {_ ^ ('never' write) misfaresome~lift} $ misfaresome~run) bind eftbare", "a!")
+  [ ("hade handeth each step the state left by the last", "(>{then, tick, tick, get} hade~unwrap 10) bind {p ^ p forthcast₀ $ to_string $ write}", "12"),
+    ("put replaceth and lift keepeth the state", "(>{then, 4 put, ('x' write) hade~lift, get} hade~unwrap 0) bind {p ^ p forthcast₀ $ to_string $ write}", "x4"),
+    ("a misfare skippeth every later deed", "(>{then, ('a' write) misfaresome~lift, ('stop' misfare: string misfaresome 𝟙), ('b' write) misfaresome~lift} misfaresome~unwrap) bind eftbare", "astop"),
+    ("handle runneth its handler only on a misfare", "(>{then, ('a' write) misfaresome~lift, 'stop' misfare} handle {e ^ (e write) misfaresome~lift} $ misfaresome~unwrap) bind eftbare", "astop!"),
+    ("handle leaveth a result alone", "((('a' write) misfaresome~lift: 𝟙 misfaresome 𝟙) handle {_ ^ ('never' write) misfaresome~lift} $ misfaresome~unwrap) bind eftbare", "a!")
   ]
 
 layeredCase :: Library -> (String, String, String) -> Test

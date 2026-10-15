@@ -72,11 +72,11 @@ fileRoundTrip imports = do
   directory <- getTemporaryDirectory
   let path = directory ++ "/tung-file-deed-test~txt"
       file = "'" ++ path ++ "'"
-      -- `each` athangeth in list order.
+      -- `each` onhangeth in list order.
       source =
         "bring often.tung bring deed/file.tung bring ilk/list.tung yield >{then, "
           ++ (file ++ " file~write 'hello', ")
-          ++ ("(' ' ‥ ('world' ‥ empty)) each { part ^ " ++ file ++ " file~athang part $ void }, ")
+          ++ ("(' ' ‥ ('world' ‥ empty)) each { part ^ " ++ file ++ " file~onhang part $ void }, ")
           ++ (file ++ " file~read}")
   removeIfPresent path
   actual <- evaluateSource source imports

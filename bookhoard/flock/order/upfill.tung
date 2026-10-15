@@ -6,14 +6,14 @@ bring flock/order/semilattice_upper_hemmed.tung
 bring ilk/two.tung
 bring is.tung
 
-## a hemmed lattice with a chosen midfill for every worth.
-show flock midfill: [α: *, @: α lattice_hemmed, *] {
+## a hemmed lattice with a chosen upfill for every worth.
+show flock upfill: [α: *, @: α lattice_hemmed, *] {
   let ¬: [α, α]
   let ∧_¬: [a: α, (a ∧ (a ¬)) = ⟂]
   let ∨_¬: [a: α, (a ∨ (a ¬)) = ⊤]
 }
 
-bizen: 𝟚 midfill {
+bizen: 𝟚 upfill {
   let ¬ ≔ {
     yea ^ nay,
     nay ^ yea

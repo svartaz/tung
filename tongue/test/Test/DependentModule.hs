@@ -31,23 +31,23 @@ exampleRun library files = expectEq "a multi-module forewrit runneth" (Right (Ri
 resolvedNames :: Test
 resolvedNames =
   expectEq
-    "checking recordeth the global each written name resolveth to"
+    "checking recordeth the global each written name resolveth to, and whether it nameth an ilk"
     ( Right
-        [ ("two", "dep.tung", "two"),
-          ("two", "dep.tung", "two"),
-          ("yea", "dep.tung", "yea"),
-          ("nay", "dep.tung", "nay"),
-          ("nay", "dep.tung", "nay"),
-          ("d~yea", "dep.tung", "yea"),
-          ("pair", "dep.tung", "pair"),
-          ("two", "dep.tung", "two"),
-          ("left", "dep.tung", "pair.left"),
-          ("flip", "main.tung", "flip")
+        [ ("two", "dep.tung", "two", True),
+          ("two", "dep.tung", "two", True),
+          ("yea", "dep.tung", "yea", False),
+          ("nay", "dep.tung", "nay", False),
+          ("nay", "dep.tung", "nay", False),
+          ("d~yea", "dep.tung", "yea", False),
+          ("pair", "dep.tung", "pair", True),
+          ("two", "dep.tung", "two", True),
+          ("left", "dep.tung", "pair.left", False),
+          ("flip", "main.tung", "flip", False)
         ]
     )
     do
       program <- compileProject (SourceModule "main.tung") source (Map.fromList [("dep.tung", dependency)])
-      pure [(slice span, path, name) | (span, SymbolId (SourceModule path) name) <- sortOn (spanStart . fst) (sourceNames program)]
+      pure [(slice span, path, name, ilk) | (span, SymbolId (SourceModule path) name, ilk) <- sortOn (\(span, _, _) -> spanStart span) (sourceNames program)]
   where
     dependency = "show ilk two: * { yea: two, nay: two }\nshow ilk pair: * { pair_of: [left: two, right: two, pair] }\n"
     source = "bring dep.tung d\nlet flip: [two, two] ≔ {yea ^ nay, nay ^ d~yea}\nlet first: [p: pair, two] ≔ p.left flip\n"

@@ -20,5 +20,5 @@ show let read: [t path: _path, (string ∑ string) deed] ≔ t file~read
 show let write: [t path: _path, contents: string, (string ∑ 𝟙) deed]
   ≔ t file~write contents
 
-show let athang: [t path: _path, contents: string, (string ∑ 𝟙) deed]
-  ≔ t file~athang contents
+show let onhang: [t path: _path, contents: string, (string ∑ 𝟙) deed]
+  ≔ t file~onhang contents

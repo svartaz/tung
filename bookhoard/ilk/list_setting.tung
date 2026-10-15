@@ -12,88 +12,89 @@ bring ilk/two.tung
 bring is.tung
 
 ## a unempty list is never empty.
-show let ‥_not_empty: [@α: *, @a: α, @l: α list, (a ‥ l) = empty, 𝟘] ≔ {}
+show let ‥_not_empty: [@α: *, @a: α, @a…: α list, (a ‥ a…) = empty, 𝟘] ≔ {}
 
 ## the same unempty lists have the same first elements.
 show let ‥_injective_first
-  : [@α: *, @a: α, @b: α, @l: α list, @m: α list, eftbend: (a ‥ l) = (b ‥ m),
-    a = b]
+  : [@α: *, @a: α, @b: α, @a…: α list, @b…: α list,
+    eftbend: (a ‥ a…) = (b ‥ b…), a = b]
   ≔ eftbend
 
 ## the same unempty lists have the same rests.
 show let ‥_injective_leftover
-  : [@α: *, @a: α, @b: α, @l: α list, @m: α list, eftbend: (a ‥ l) = (b ‥ m),
-    l = m]
+  : [@α: *, @a: α, @b: α, @a…: α list, @b…: α list,
+    eftbend: (a ‥ a…) = (b ‥ b…), a… = b…]
   ≔ eftbend
 
-## athanging empty tweaketh nothing.
-show let ·_empty: [@α: *, l: α list, (l · empty) = l] ≔ match l {
+## onhanging empty tweaketh nothing.
+show let ·_empty: [@α: *, a…: α list, (a… · empty) = a…] ≔ match a… {
   empty            ^ eftbend,
   first ‥ leftover ^ (first ‥) leibnitz (leftover ·_empty)
 }
 
-## athanging is associative.
+## onhanging is associative.
 show let ·_·
-  : [@α: *, a: α list, b: α list, c: α list, (a · (b · c)) = ((a · b) · c)]
-  ≔ match a {
+  : [@α: *, a…: α list, b…: α list, c…: α list,
+    (a… · (b… · c…)) = ((a… · b…) · c…)]
+  ≔ match a… {
     empty            ^ eftbend,
-    first ‥ leftover ^ (first ‥) leibnitz (leftover ·_· b c)
+    first ‥ leftover ^ (first ‥) leibnitz (leftover ·_· b… c…)
   }
 
 ## warping by `sameness` tweaketh nothing.
-show let warp_sameness: [@α: *, l: α list, (l warp {x ^ x}) = l] ≔ match l {
+show let warp_sameness: [@α: *, a…: α list, (a… warp {a ^ a}) = a…] ≔ match a… {
   empty            ^ eftbend,
   first ‥ leftover ^ (first ‥) leibnitz (leftover warp_sameness)
 }
 
 ## two warps are one warp by the composite fall.
 show let warp_warp
-  : [@α: *, @β: *, @γ: *, l: α list, f: [α, β], g: [β, γ],
-    ((l warp f) warp g) = (l warp {x ^ x f $ g})]
-  ≔ match l {
+  : [@α: *, @β: *, @γ: *, a…: α list, f: [α, β], g: [β, γ],
+    ((a… warp f) warp g) = (a… warp {a ^ a f $ g})]
+  ≔ match a… {
     empty            ^ eftbend,
     first ‥ leftover ^ ((first f $ g) ‥) leibnitz (leftover warp_warp f g)
   }
 
-## mapping distributeth over athanging.
+## mapping distributeth over onhanging.
 show let warp_·
-  : [@α: *, @β: *, a: α list, b: α list, f: [α, β],
-    ((a · b) warp f) = ((a warp f) · (b warp f))]
-  ≔ match a {
+  : [@α: *, @β: *, a…: α list, b…: α list, f: [α, β],
+    ((a… · b…) warp f) = ((a… warp f) · (b… warp f))]
+  ≔ match a… {
     empty            ^ eftbend,
-    first ‥ leftover ^ ((first f) ‥) leibnitz (leftover warp_· b f)
+    first ‥ leftover ^ ((first f) ‥) leibnitz (leftover warp_· b… f)
   }
 
-## folding from the right over an athanged list foldeth the first deal onto
+## folding from the right over an onhanged list foldeth the first deal onto
 ## the gathering of the other.
 show let gather₀_·
-  : [@α: *, @β: *, a: α list, b: α list, start: β, f: [α, β, β],
-    ((a · b) gather₀ start f) = (a gather₀ (b gather₀ start f) f)]
-  ≔ match a {
+  : [@α: *, @β: *, a…: α list, b…: α list, start: β, f: [α, β, β],
+    ((a… · b…) gather₀ start f) = (a… gather₀ (b… gather₀ start f) f)]
+  ≔ match a… {
     empty            ^ eftbend,
-    first ‥ leftover ^ (first f) leibnitz (leftover gather₀_· b start f)
+    first ‥ leftover ^ (first f) leibnitz (leftover gather₀_· b… start f)
   }
 
-## gathering from the left over an athanged list throughwoneth from the
+## gathering from the left over an onhanged list throughwoneth from the
 ## gathering of the
 ## first deal.
 show let gather₁_·
-  : [@α: *, @β: *, a: α list, b: α list, start: β, f: [β, α, β],
-    ((a · b) gather₁ start f) = (b gather₁ (a gather₁ start f) f)]
-  ≔ match a {
+  : [@α: *, @β: *, a…: α list, b…: α list, start: β, f: [β, α, β],
+    ((a… · b…) gather₁ start f) = (b… gather₁ (a… gather₁ start f) f)]
+  ≔ match a… {
     empty            ^ eftbend,
-    first ‥ leftover ^ leftover gather₁_· b (start f first) f
+    first ‥ leftover ^ leftover gather₁_· b… (start f first) f
   }
 
-## sifting distributeth over athanging.
+## sifting distributeth over onhanging.
 show let sift_·
-  : [@α: *, a: α list, b: α list, p: [α, 𝟚],
-    ((a · b) sift p) = ((a sift p) · (b sift p))]
-  ≔ match a {
+  : [@α: *, a…: α list, b…: α list, p: [α, 𝟚],
+    ((a… · b…) sift p) = ((a… sift p) · (b… sift p))]
+  ≔ match a… {
     empty            ^ eftbend,
     first ‥ leftover ^ match first p {
-      yea ^ (first ‥) leibnitz (leftover sift_· b p),
-      nay ^ leftover sift_· b p
+      yea ^ (first ‥) leibnitz (leftover sift_· b… p),
+      nay ^ leftover sift_· b… p
     }
   }
 
@@ -111,8 +112,8 @@ show let sift_dropped
 
 ## sifting twice by one umbsay is sifting once.
 show let sift_sift
-  : [@α: *, l: α list, p: [α, 𝟚], ((l sift p) sift p) = (l sift p)]
-  ≔ match l {
+  : [@α: *, a…: α list, p: [α, 𝟚], ((a… sift p) sift p) = (a… sift p)]
+  ≔ match a… {
     empty            ^ eftbend,
     first ‥ leftover ^ (first p) inlook {
       yea, kept ^
@@ -122,42 +123,39 @@ show let sift_sift
   }
 
 ## folding with the constructors rebuildeth the list.
-show let gather₀_‥
-  : [@α: *, l: α list, (l gather₀ empty {x, leftover ^ x ‥ leftover}) = l]
-  ≔ match l {
-    empty            ^ eftbend,
-    first ‥ leftover ^ (first ‥) leibnitz (leftover gather₀_‥)
-  }
+show let gather₀_‥: [@α: *, l: α list, (l gather₀ empty ‥) = l] ≔ match l {
+  empty            ^ eftbend,
+  first ‥ leftover ^ (first ‥) leibnitz (leftover gather₀_‥)
+}
 
-## eftwending onto a start athangeth the start to the eftwended list.
+## eftwending onto a start onhangeth the start to the eftwended list.
 show let eftwend_onto
-  : [@α: *, l: α list, start: α list,
-    (l gather₁ start {outcome, x ^ x ‥ outcome}) = ((l eftwend) · start)]
-  ≔ match l {
+  : [@α: *, a…: α list, start: α list,
+    (a… gather₁ start {outcome, a ^ a ‥ outcome}) = ((a… eftwend) · start)]
+  ≔ match a… {
     empty            ^ eftbend,
     first ‥ leftover ^ (
       let shifted ≔ leftover eftwend_onto (first ‥ start)
       let eftgrouped ≔ (leftover eftwend) ·_· (first ‥ empty) start
-      let unshifted ≔ {x ^ x · start} leibnitz
+      let unshifted ≔ {a ^ a · start} leibnitz
         ((leftover eftwend_onto (first ‥ empty)) evenmete)
       yield (shifted throughgo eftgrouped) throughgo unshifted
     )
   }
 
-## eftwending an athanged list athangeth the eftwended deals in order.
+## eftwending an onhanged list onhangeth the eftwended deals in order.
 show let eftwend_·
-  : [@α: *, a: α list, b: α list,
-    ((a · b) eftwend) = ((b eftwend) · (a eftwend))]
-  ≔ (a gather₁_· b empty {outcome, x ^ x ‥ outcome}) throughgo
-    (b eftwend_onto (a eftwend))
+  : [@α: *, a…: α list, b…: α list,
+    ((a… · b…) eftwend) = ((b… eftwend) · (a… eftwend))]
+  ≔ (a… gather₁_· b… empty {outcome, a ^ a ‥ outcome}) throughgo
+    (b… eftwend_onto (a… eftwend))
 
 ## eftwending twice giveth the list back.
-show let eftwend_eftwend: [@α: *, l: α list, ((l eftwend) eftwend) = l]
-  ≔ match l {
+show let eftwend_eftwend: [@α: *, a…: α list, ((a… eftwend) eftwend) = a…]
+  ≔ match a… {
     empty            ^ eftbend,
     first ‥ leftover ^ (
-      let unfolded ≔ {x ^ x eftwend} leibnitz
-        (leftover eftwend_onto (first ‥ empty))
+      let unfolded ≔ eftwend leibnitz (leftover eftwend_onto (first ‥ empty))
       let split ≔ (leftover eftwend) eftwend_· (first ‥ empty)
       let eftmade ≔ (first ‥) leibnitz (leftover eftwend_eftwend)
       yield (unfolded throughgo split) throughgo eftmade
@@ -166,15 +164,15 @@ show let eftwend_eftwend: [@α: *, l: α list, ((l eftwend) eftwend) = l]
 
 ## warping swappeth with eftwending.
 show let warp_eftwend
-  : [@α: *, @β: *, l: α list, f: [α, β],
-    ((l eftwend) warp f) = ((l warp f) eftwend)]
-  ≔ match l {
+  : [@α: *, @β: *, a…: α list, f: [α, β],
+    ((a… eftwend) warp f) = ((a… warp f) eftwend)]
+  ≔ match a… {
     empty            ^ eftbend,
     first ‥ leftover ^ (
-      let unfolded ≔ {x ^ x warp f} leibnitz
+      let unfolded ≔ {a ^ a warp f} leibnitz
         (leftover eftwend_onto (first ‥ empty))
       let split ≔ (leftover eftwend) warp_· (first ‥ empty) f
-      let inner ≔ {x ^ x · ((first f) ‥ empty)} leibnitz
+      let inner ≔ {a ^ a · ((first f) ‥ empty)} leibnitz
         (leftover warp_eftwend f)
       let folded ≔ ((leftover warp f) eftwend_onto ((first f) ‥ empty)) evenmete
       yield ((unfolded throughgo split) throughgo inner) throughgo folded
@@ -192,59 +190,60 @@ show let warp_eftfold
 
 ## riming from an heir endeth one higher.
 let helpsetting_greatness_heir
-  : [@α: *, l: α list, n: ℕ,
-    (l gather₁ (n heir) {k, _ ^ k + 1}) = ((l gather₁ n {k, _ ^ k + 1}) heir)]
-  ≔ match l {
+  : [@α: *, a…: α list, n: ℕ,
+    (a… gather₁ (n heir) {k, _ ^ k + 1}) = ((a… gather₁ n {k, _ ^ k + 1}) heir)]
+  ≔ match a… {
     empty        ^ eftbend,
     _ ‥ leftover ^ leftover helpsetting_greatness_heir (n + 1)
   }
 
 ## a list with one more element hath one more in greatness.
 show let ‥_greatness
-  : [@α: *, x: α, l: α list, ((x ‥ l) greatness) = ((l greatness) heir)]
-  ≔ l helpsetting_greatness_heir 0
+  : [@α: *, a: α, a…: α list, ((a ‥ a…) greatness) = ((a… greatness) heir)]
+  ≔ a… helpsetting_greatness_heir 0
 
 ## a tail is under its list in greatness, for wellgrounded selfcalling by
 ## `greatness`.
 show let ‥_greatness_under
-  : [@α: *, x: α, l: α list, (l greatness) under ((x ‥ l) greatness)]
-  ≔ ((x ‥_greatness l) evenmete) throughbear ((l greatness) under_heir)
+  : [@α: *, a: α, a…: α list, (a… greatness) under ((a ‥ a…) greatness)]
+  ≔ ((a ‥_greatness a…) evenmete) throughbear ((a… greatness) under_heir)
 
 ## mapping keepeth a list's greatness.
 show let warp_greatness
-  : [@α: *, @β: *, l: α list, f: [α, β], ((l warp f) greatness) = (l greatness)]
-  ≔ match l {
+  : [@α: *, @β: *, a…: α list, f: [α, β],
+    ((a… warp f) greatness) = (a… greatness)]
+  ≔ match a… {
     empty        ^ eftbend,
-    x ‥ leftover ^ >{throughgo,
-      (x f) ‥_greatness (leftover warp f),
+    a ‥ leftover ^ >{throughgo,
+      (a f) ‥_greatness (leftover warp f),
       {n: ℕ ^ n heir} leibnitz (leftover warp_greatness f),
-      (x ‥_greatness leftover) evenmete
+      (a ‥_greatness leftover) evenmete
     }
   }
 
 ## the greatness of an appended list is the sum of the greatnesses.
 show let greatness_·
-  : [@α: *, a: α list, b: α list,
-    ((a · b) greatness) = ((a greatness) + (b greatness))]
-  ≔ match a {
-    empty        ^ ((b greatness) naught_+) evenmete,
-    x ‥ leftover ^ >{throughgo,
-      x ‥_greatness (leftover · b),
-      {n: ℕ ^ n heir} leibnitz (leftover greatness_· b),
-      ((leftover greatness) heir_+ (b greatness)) evenmete,
-      {n: ℕ ^ n + (b greatness)} leibnitz ((x ‥_greatness leftover) evenmete)
+  : [@α: *, a…: α list, b…: α list,
+    ((a… · b…) greatness) = ((a… greatness) + (b… greatness))]
+  ≔ match a… {
+    empty        ^ ((b… greatness) naught_+) evenmete,
+    a ‥ leftover ^ >{throughgo,
+      a ‥_greatness (leftover · b…),
+      {n: ℕ ^ n heir} leibnitz (leftover greatness_· b…),
+      ((leftover greatness) heir_+ (b… greatness)) evenmete,
+      {n: ℕ ^ n + (b… greatness)} leibnitz ((a ‥_greatness leftover) evenmete)
     }
   }
 
 ## eftwending keepeth a list's greatness.
 show let eftwend_greatness
-  : [@α: *, l: α list, ((l eftwend) greatness) = (l greatness)]
-  ≔ match l {
+  : [@α: *, a…: α list, ((a… eftwend) greatness) = (a… greatness)]
+  ≔ match a… {
     empty        ^ eftbend,
-    x ‥ leftover ^ >{throughgo,
-      {m: α list ^ m greatness} leibnitz ((x ‥ empty) eftwend_· leftover),
-      (leftover eftwend) greatness_· (x ‥ empty),
+    a ‥ leftover ^ >{throughgo,
+      {b…: α list ^ b… greatness} leibnitz ((a ‥ empty) eftwend_· leftover),
+      (leftover eftwend) greatness_· (a ‥ empty),
       {n: ℕ ^ n + 1} leibnitz (leftover eftwend_greatness),
-      (x ‥_greatness leftover) evenmete
+      (a ‥_greatness leftover) evenmete
     }
   }

@@ -51,7 +51,44 @@ respace split = go False
 
 cases :: [(String, String, String)]
 cases =
-  [ ( "spacing is fixed and brings are sorted together",
+  [ ( "redundant parentheses are dropped where the parse cannot change",
+      "let a ≔ (m warp)\nlet b ≔ g ((x)) (h) f(x)y [(q r), (c)]\nlet c ≔ g (m tweak) @([α, β]) (p).left (x: ℕ) ((a b) c)\nlet d ≔ ({a ^ (a f)})\nlet e ≔ (a /* kept */ b)\nyield (a b)\n",
+      """
+      let a ≔ m warp
+
+      let b ≔ g x h f x y [q r, c]
+
+      let c ≔ g (m tweak) @([α, β]) (p).left (x: ℕ) ((a b) c)
+
+      let d ≔ f
+
+      let e ≔ (a /* kept */
+        b)
+
+      yield a b
+
+      """
+    ),
+    ( "a redundant η-expansion is shortened, to a parenthesised partial application when arguments remain; rows, annotations, and comments keep theirs",
+      "let a ≔ g {x, y ^ x f y} {x ^ x {y ^ y h}}\nlet t ≔ g {b ^ m tweak b} ({b ^ m tweak b}) {b ^ b tweak m}\nlet b ≔ match q { x ^ x f, y ^ {x ^ x f} }\nlet c ≔ {x: ℕ ^ x f} {@x ^ x f} {x ^ x x} {x, x ^ x f x}\nlet d ≔ {x ^ /* kept */ x f}\n",
+      """
+      let a ≔ g f h
+
+      let t ≔ g (m tweak) (m tweak) {b ^ b tweak m}
+
+      let b ≔ match q {
+        x ^ x f,
+        y ^ f
+      }
+
+      let c ≔ {x: ℕ ^ x f} {@x ^ x f} {x ^ x x} {x, x ^ x f x}
+
+      let d ≔ {x ^ /* kept */
+        x f}
+
+      """
+    ),
+    ( "spacing is fixed and brings are sorted together",
       "bring ilk/two.tung\n\n\nbring ilk/list.tung\nlet   a:ℕ≔1\nlet b\n  :ℕ ≔\n   2\n",
       """
       bring ilk/list.tung
@@ -120,7 +157,7 @@ cases =
         let flip_flip: [x: α, (x flip $ flip) = x]
       }
 
-      let twice: [ℕ, ℕ] ≔ {x ^ (x + x)}
+      let twice: [ℕ, ℕ] ≔ {x ^ x + x}
 
       """
     ),

@@ -13,5 +13,5 @@ bizen: ℤ hath_‖ ℤ {
 }
 
 bizen: float hath_‖ float {
-  let ‖: [x:] ≔ (0.0 ≤ x) if x (x -)
+  let ‖: [a:] ≔ (0.0 ≤ a) if a (a -)
 }

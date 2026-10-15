@@ -27,9 +27,9 @@ bizen: [@α: *, @: α ring, α group_+] {
 bizen: [@β: *, @: β ring, @α: *, [α, β] ring] {
   let -: [f:, a:] ≔ (a f) -
   let -+: [f:, g:, a:] ≔ (a f) -+ (a g)
-  let +_-: [f:] ≔ {a ^ (a f) +_-} fall_umtake
-  let -_+: [f:] ≔ {a ^ (a f) -_+} fall_umtake
-  let -+_+: [f:, g:] ≔ {a ^ (a f) -+_+ (a g)} fall_umtake
+  let +_-: [f:] ≔ {a ^ (a f) +_-} fall_umfang
+  let -_+: [f:] ≔ {a ^ (a f) -_+} fall_umfang
+  let -+_+: [f:, g:] ≔ {a ^ (a f) -+_+ (a g)} fall_umfang
 }
 
 bizen: 𝟚 ring {
@@ -48,7 +48,7 @@ bizen: 𝟚 ring {
 show let -_·: [@α: *, @: α ring, a: α, b: α, ((a -) · b) = ((a · b) -)]
   ≔ (a · b) group_eke~-_alone ((a -) · b) >{throughgo,
     ((a -) +_· a b) evenmete,
-    {x ^ x · b} leibnitz (a -_+),
+    {c ^ c · b} leibnitz (a -_+),
     b naught_·
   }
 
@@ -56,18 +56,14 @@ show let -_·: [@α: *, @: α ring, a: α, b: α, ((a -) · b) = ((a · b) -)]
 show let ·_-: [@α: *, @: α ring, a: α, b: α, (a · (b -)) = ((a · b) -)]
   ≔ (a · b) group_eke~-_alone (a · (b -)) >{throughgo,
     (a ·_+ (b -) b) evenmete,
-    {x ^ a · x} leibnitz (b -_+),
+    (a ·) leibnitz (b -_+),
     a ·_naught
   }
 
-## two flippings in a product outstrike each other.
+## two flippings in a product strike each other.
 show let -_·_-: [@α: *, @: α ring, a: α, b: α, ((a -) · (b -)) = (a · b)]
-  ≔ >{throughgo,
-    (a -) ·_- b,
-    {x ^ x -} leibnitz (a -_· b),
-    (a · b) group_eke~-_-
-  }
+  ≔ >{throughgo, (a -) ·_- b, - leibnitz (a -_· b), (a · b) group_eke~-_-}
 
 ## the flipped unit flippeth.
 show let one_-_·: [@α: *, @: α ring, a: α, ((one -) · a) = (a -)]
-  ≔ (one -_· a) throughgo ({x ^ x -} leibnitz (a one_·))
+  ≔ (one -_· a) throughgo (- leibnitz (a one_·))

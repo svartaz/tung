@@ -23,12 +23,15 @@ const tokenModifiers = [
   "applied",
   "typeFunction",
 ];
-// parser roles identify syntax. workspace resolution only refineth names whose
-// constructor identity cannot be decided from syntax alone.
+// parser roles identify syntax. checking telleth whether a resolved global
+// nameth an ilk, which syntax cannot: a value written in an annotation, as
+// `naught` in `(naught · a) = naught`, is no ilk. workspace resolution only
+// refineth names whose constructor identity syntax cannot decide.
 const buildHighlightRanges = (
   source: string,
   roles: SourceRole[],
   resolveDefinition,
+  checkedIlk: (start: number) => boolean | undefined = () => undefined,
 ) => {
   // plain terms need no lookup when the file cannot contain visible
   // constructors. these compiler hints avoid eager navigation analysis.
@@ -53,19 +56,25 @@ const buildHighlightRanges = (
       char: start - lineStarts[line],
     };
     if (token.text === "_" || role === "plain") continue;
-    let type = role;
+    const ilk = checkedIlk(start);
+    let type =
+      role === "type" && ilk === false
+        ? "term"
+        : ["term", "call"].includes(role) && ilk === true
+          ? "type"
+          : role;
     const modifiers = originalModifiers.filter((modifier) =>
       tokenModifiers.includes(modifier),
     );
-    if (["term", "headerPattern", "parameter", "call"].includes(role)) {
+    if (["term", "headerPattern", "parameter", "call"].includes(type)) {
       const definition = needsResolution ? resolveDefinition(token) : undefined;
-      if (role === "term" || role === "headerPattern") {
+      if (type === "term" || type === "headerPattern") {
         if (definition?.role !== "enumMember") continue;
         type =
-          role === "term" && definition.callableConstructor
+          type === "term" && definition.callableConstructor
             ? "function"
             : "enumMember";
-      } else if (role === "parameter" && definition?.role === "enumMember") {
+      } else if (type === "parameter" && definition?.role === "enumMember") {
         type = "enumMember";
         modifiers.length = 0;
       }

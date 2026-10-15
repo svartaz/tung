@@ -2,13 +2,13 @@ bring flock/algebra/whole/hath_fold.tung
 bring flock/algebra/whole/monoid_fold.tung
 bring flock/algebra/whole/semigroup_fold.tung
 bring flock/functor.tung
-bring flock/functor/atfoldsome.tung
 bring flock/functor/downshaper.tung
 bring flock/functor/hath_sift.tung
 bring flock/functor/hath_throughwend.tung
 bring flock/functor/monad.tung
+bring flock/functor/onwendsome.tung
 bring flock/hath_same.tung
-bring flock/order/midfill.tung
+bring flock/order/upfill.tung
 bring flock/same_to_is.tung
 bring ilk/one.tung
 bring ilk/two.tung
@@ -54,22 +54,22 @@ bizen: maybe functor {
   }
 }
 
-bizen: maybe atfoldsome {
+bizen: maybe onwendsome {
   let sheer ≔ some
-  let atfold ≔ {
+  let onwend ≔ {
     a some, f some ^ a f $ some,
     _,      _      ^ none
   }
-  let atfold_sameness_sheer ≔ {
+  let onwend_sameness_sheer ≔ {
     none   ^ eftbend,
     _ some ^ eftbend
   }
-  let sheer_atfold_sheer: [a:, f:] ≔ eftbend
-  let atfold_atfold ≔ {
+  let sheer_onwend_sheer: [a:, f:] ≔ eftbend
+  let onwend_onwend ≔ {
     none,   _, _ ^ eftbend,
     _ some, _, _ ^ eftbend
   }
-  let sheer_atfold ≔ {
+  let sheer_onwend ≔ {
     _, none   ^ eftbend,
     _, _ some ^ eftbend
   }
@@ -151,13 +151,13 @@ bizen: [@α: *, @: α hath_≍, (α maybe) hath_≍] {
 }
 
 bizen: [@α: *, @: α ≍_to_=, (α maybe) ≍_to_=] {
-  let ≍_=: [x:, y:, same:] ≔ match x, y {
-    none,   none   ^ eftbend,
-    a some, b some ^ some leibnitz (a ≍_= b same),
-    none,   _ some ^ match same {},
-    _ some, none   ^ match same {}
+  let ≍_= ≔ {
+    none,   none,   _    ^ eftbend,
+    a some, b some, same ^ some leibnitz (a ≍_= b same),
+    none,   _ some, same ^ match same {},
+    _ some, none,   same ^ match same {}
   }
-  let ≍_eftbend: [x:] ≔ match x {
+  let ≍_eftbend ≔ {
     none   ^ eftbend,
     a some ^ a ≍_eftbend
   }

@@ -19,14 +19,14 @@ show flock semiring: [α: *, @: α monoid_+, @: α monoid_·, *] {
 bizen: [@β: *, @: β semiring, @α: *, [α, β] semiring] {
   let +: [f:, g:, a:] ≔ (a f) + (a g)
   let naught: [_:] ≔ naught
-  let +_+: [f:, g:, h:] ≔ {x ^ (x f) +_+ (x g) (x h)} fall_umtake
-  let naught_+: [f:] ≔ {x ^ (x f) naught_+} fall_umtake
-  let +_naught: [f:] ≔ {x ^ (x f) +_naught} fall_umtake
-  let +_swap: [f:, g:] ≔ {x ^ (x f) +_swap (x g)} fall_umtake
-  let ·_+: [f:, g:, h:] ≔ {x ^ (x f) ·_+ (x g) (x h)} fall_umtake
-  let +_·: [f:, g:, h:] ≔ {x ^ (x f) +_· (x g) (x h)} fall_umtake
-  let naught_·: [f:] ≔ {x ^ (x f) naught_·} fall_umtake
-  let ·_naught: [f:] ≔ {x ^ (x f) ·_naught} fall_umtake
+  let +_+: [f:, g:, h:] ≔ {a ^ (a f) +_+ (a g) (a h)} fall_umfang
+  let naught_+: [f:] ≔ {a ^ (a f) naught_+} fall_umfang
+  let +_naught: [f:] ≔ {a ^ (a f) +_naught} fall_umfang
+  let +_swap: [f:, g:] ≔ {a ^ (a f) +_swap (a g)} fall_umfang
+  let ·_+: [f:, g:, h:] ≔ {a ^ (a f) ·_+ (a g) (a h)} fall_umfang
+  let +_·: [f:, g:, h:] ≔ {a ^ (a f) +_· (a g) (a h)} fall_umfang
+  let naught_·: [f:] ≔ {a ^ (a f) naught_·} fall_umfang
+  let ·_naught: [f:] ≔ {a ^ (a f) ·_naught} fall_umfang
 }
 
 bizen: 𝟚 semiring {

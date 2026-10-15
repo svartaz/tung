@@ -72,12 +72,12 @@ bizen: string order_whole {
 bizen: string semigroup_· {
   let · ≔ yoke_string
   let ·_·: [a:, b:, c:] ≔ >{throughgo,
-    {x: unicode list ^ ((a string_to_list) hath_fold~· x) list_to_string}
+    {l: unicode list ^ ((a string_to_list) hath_fold~· l) list_to_string}
       leibnitz
       (((b string_to_list) hath_fold~· (c string_to_list)) string_list),
     list_to_string leibnitz
       ((a string_to_list) ·_· (b string_to_list) (c string_to_list)),
-    {x: unicode list ^ (x hath_fold~· (c string_to_list)) list_to_string}
+    {l: unicode list ^ (l hath_fold~· (c string_to_list)) list_to_string}
       leibnitz
       ((((a string_to_list) hath_fold~· (b string_to_list)) string_list)
         evenmete)

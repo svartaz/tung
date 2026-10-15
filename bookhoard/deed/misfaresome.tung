@@ -4,60 +4,57 @@ bring deed.tung
 bring flock/algebra/half/category.tung
 bring flock/algebra/half/semigroupoid.tung
 bring flock/functor.tung
-bring flock/functor/atfoldsome.tung
 bring flock/functor/monad.tung
+bring flock/functor/onwendsome.tung
 bring ilk/sum.tung
 bring is.tung
 
 ## a deed that may fail with a fault `ε` instead of yielding an `α`. it
 ## wrappeth `(ε ∑ α) deed`, so that it hath its own monad: `bind` stoppeth at
 ## the first fault.
-show ilk misfaresome: [ε: *, α: *, *] {
-  inwrap: [(ε ∑ α) deed, ε misfaresome α]
-}
+show ilk misfaresome: [ε: *, α: *, *] { wrap: [(ε ∑ α) deed, ε misfaresome α] }
 
 ## the deed beneath, which yieldeth the fault or the outcome.
-show let run: [@ε: *, @α: *, m inwrap: ε misfaresome α, (ε ∑ α) deed] ≔ m
+show let unwrap: [@ε: *, @α: *, m wrap: ε misfaresome α, (ε ∑ α) deed] ≔ m
 
 ## fail with a fault.
 show let misfare: [@ε: *, @α: *, e: ε, ε misfaresome α]
-  ≔ ((e incast₀) deed_sheer) inwrap
+  ≔ ((e incast₀) deed_sheer) wrap
 
 ## run a deed that cannot fail.
 show let lift: [@ε: *, @α: *, doing: α deed, ε misfaresome α]
-  ≔ (doing deed_bind (incast₁ ▷ deed_sheer)) inwrap
+  ≔ (doing deed_bind (incast₁ ▷ deed_sheer)) wrap
 
 ## run `m`; on a fault, run `handler` on it instead.
 show let handle
   : [@ε: *, @ε′: *, @α: *, m: ε misfaresome α, handler: [ε, ε′ misfaresome α],
     ε′ misfaresome α]
-  ≔ ((m run) deed_bind {
-    e incast₀ ^ (e handler) run,
+  ≔ ((m unwrap) deed_bind {
+    e incast₀ ^ (e handler) unwrap,
     a incast₁ ^ (a incast₁) deed_sheer
-  }) inwrap
+  }) wrap
 
 ## a deed that yieldeth a sum misseth on its left side.
 show let from_sum: [@ε: *, @α: *, doing: (ε ∑ α) deed, ε misfaresome α]
-  ≔ doing inwrap
+  ≔ doing wrap
 
-let give: [@ε: *, @α: *, a: α, ε misfaresome α]
-  ≔ ((a incast₁) deed_sheer) inwrap
+let give: [@ε: *, @α: *, a: α, ε misfaresome α] ≔ ((a incast₁) deed_sheer) wrap
 
 let tweak: [@ε: *, @α: *, @β: *, m: ε misfaresome α, f: [α, β], ε misfaresome β]
-  ≔ ((m run) deed_bind {s ^ (s warp f) deed_sheer}) inwrap
+  ≔ ((m unwrap) deed_bind {s ^ (s warp f) deed_sheer}) wrap
 
 ## the continuation of `flatten`: a fault stayeth, an inner deed runneth.
 let unfold: [@ε: *, @α: *, ε ∑ (ε misfaresome α), (ε ∑ α) deed] ≔ {
   e incast₀     ^ (e incast₀) deed_sheer,
-  inner incast₁ ^ inner run
+  inner incast₁ ^ inner unwrap
 }
 
 let flatten: [@ε: *, @α: *, m: ε misfaresome (ε misfaresome α), ε misfaresome α]
-  ≔ ((m run) deed_bind unfold) inwrap
+  ≔ ((m unwrap) deed_bind unfold) wrap
 
 ## a misfaresome is the wrap of its deed.
-let inwrap_run: [@ε: *, @α: *, m: ε misfaresome α, ((m run) inwrap) = m]
-  ≔ match m { _ inwrap ^ eftbend }
+let wrap_unwrap: [@ε: *, @α: *, m: ε misfaresome α, ((m unwrap) wrap) = m]
+  ≔ match m { _ wrap ^ eftbend }
 
 ## changing a sum twice is changing it once with the composite.
 let helpsetting_warp_warp
@@ -70,37 +67,36 @@ let helpsetting_warp_warp
 
 let tweak_sameness: [@ε: *, @α: *, m: ε misfaresome α, (m tweak sameness) = m]
   ≔ match m {
-    d inwrap ^
-      ({x ^ x inwrap} leibnitz
-        ((d bind_same {s ^ {r ^ r deed_sheer} leibnitz (s warp_sameness)})
-          throughgo (d deed_bind_sheer)))
+    d wrap ^
+      wrap leibnitz
+        ((d bind_same {s ^ deed_sheer leibnitz (s warp_sameness)}) throughgo
+          (d deed_bind_sheer))
   }
 
 let tweak_tweak
   : [@ε: *, @α: *, @β: *, @γ: *, m: ε misfaresome α, f: [α, β], g: [β, γ],
     ((m tweak f) tweak g) = (m tweak (f ▷ g))]
   ≔ match m {
-    d inwrap ^ {x ^ x inwrap} leibnitz >{throughgo,
-      d deed_bind_bind {s ^ (s warp f) deed_sheer} {s ^ (s warp g) deed_sheer},
-      d bind_same {
-        s ^
-          ((s warp f) deed_sheer_bind {t ^ (t warp g) deed_sheer}) throughgo
-            ({r ^ r deed_sheer} leibnitz (s helpsetting_warp_warp f g))
+    d wrap ^
+      wrap leibnitz >{throughgo,
+        d deed_bind_bind {s ^ (s warp f) deed_sheer} {
+          s ^ (s warp g) deed_sheer
+        },
+        d bind_same {
+          s ^
+            ((s warp f) deed_sheer_bind {t ^ (t warp g) deed_sheer}) throughgo
+              (deed_sheer leibnitz (s helpsetting_warp_warp f g))
+        }
       }
-    }
   }
 
 let give_tweak
-  : [@ε: *, @α: *, @β: *, a: α, f: [α, β],
-    ((a give: ε misfaresome α) tweak f) = ((a f) give)]
-  ≔ {x ^ x inwrap} leibnitz
-  ((a incast₁) deed_sheer_bind {s ^ (s warp f) deed_sheer})
+  : [@ε: *, @α: *, @β: *, a: α, f: [α, β], ((a give @ε) tweak f) = ((a f) give)]
+  ≔ wrap leibnitz ((a incast₁) deed_sheer_bind {s ^ (s warp f) deed_sheer})
 
-let give_flatten
-  : [@ε: *, @α: *, m: ε misfaresome α,
-    ((m give: ε misfaresome (ε misfaresome α)) flatten) = m]
-  ≔ ({x ^ x inwrap} leibnitz ((m incast₁) deed_sheer_bind unfold)) throughgo
-    (m inwrap_run)
+let give_flatten: [@ε: *, @α: *, m: ε misfaresome α, ((m give @ε) flatten) = m]
+  ≔ (wrap leibnitz ((m incast₁) deed_sheer_bind unfold)) throughgo
+    (m wrap_unwrap)
 
 ## giving an outcome and unfolding it yieldeth it again.
 let helpsetting_give_unfold
@@ -114,11 +110,12 @@ let helpsetting_give_unfold
 let tweak_give_flatten
   : [@ε: *, @α: *, m: ε misfaresome α, ((m tweak give) flatten) = m]
   ≔ match m {
-    d inwrap ^ {x ^ x inwrap} leibnitz >{throughgo,
-      d deed_bind_bind {s ^ (s warp give) deed_sheer} unfold,
-      d bind_same helpsetting_give_unfold,
-      d deed_bind_sheer
-    }
+    d wrap ^
+      wrap leibnitz >{throughgo,
+        d deed_bind_bind {s ^ (s warp give) deed_sheer} unfold,
+        d bind_same helpsetting_give_unfold,
+        d deed_bind_sheer
+      }
   }
 
 bizen: [@ε: *, (ε misfaresome) functor] {
@@ -126,40 +123,40 @@ bizen: [@ε: *, (ε misfaresome) functor] {
   let warp_sameness ≔ tweak_sameness
 }
 
-bizen: [@ε: *, (ε misfaresome) atfoldsome] {
+bizen: [@ε: *, (ε misfaresome) onwendsome] {
   let sheer ≔ give
-  let atfold: [m:, fs:] ≔ (fs tweak {f ^ m tweak f}) flatten
-  let atfold_sameness_sheer: [m:] ≔ >{throughgo,
-    {x ^ x flatten} leibnitz (sameness give_tweak {f ^ m tweak f}),
+  let onwend: [m:, f…:] ≔ (f… tweak (m tweak)) flatten
+  let onwend_sameness_sheer: [m:] ≔ >{throughgo,
+    flatten leibnitz (sameness give_tweak (m tweak)),
     (m tweak sameness) give_flatten,
     m tweak_sameness
   }
-  let sheer_atfold_sheer: [a:, f:] ≔ >{throughgo,
-    {x ^ x flatten} leibnitz (f give_tweak {g ^ (a give) tweak g}),
+  let sheer_onwend_sheer: [a:, f:] ≔ >{throughgo,
+    flatten leibnitz (f give_tweak {g ^ (a give) tweak g}),
     ((a give) tweak f) give_flatten,
     a give_tweak f
   }
-  let atfold_atfold: [m:, f:, g:] ≔ >{throughgo,
-    {x ^ x flatten} leibnitz
-      (g give_tweak {h ^ (((f give) tweak {k ^ m tweak k}) flatten) tweak h}),
-    ((((f give) tweak {k ^ m tweak k}) flatten) tweak g) give_flatten,
-    {x ^ x tweak g} leibnitz
-      (({x ^ x flatten} leibnitz (f give_tweak {k ^ m tweak k})) throughgo
+  let onwend_onwend: [m:, f:, g:] ≔ >{throughgo,
+    flatten leibnitz
+      (g give_tweak {h ^ (((f give) tweak (m tweak)) flatten) tweak h}),
+    ((((f give) tweak (m tweak)) flatten) tweak g) give_flatten,
+    {a ^ a tweak g} leibnitz
+      ((flatten leibnitz (f give_tweak (m tweak))) throughgo
         ((m tweak f) give_flatten)),
     m tweak_tweak f g,
-    (({x ^ x flatten} leibnitz ((f ▷ g) give_tweak {k ^ m tweak k})) throughgo
+    ((flatten leibnitz ((f ▷ g) give_tweak (m tweak))) throughgo
       ((m tweak (f ▷ g)) give_flatten)) evenmete
   }
-  let sheer_atfold: [a:, fs:] ≔ >{throughgo,
-    {k ^ (fs tweak k) flatten} leibnitz ({f ^ a give_tweak f} fall_umtake),
-    {x ^ x flatten} leibnitz ((fs tweak_tweak (a call) give) evenmete),
-    (fs tweak (a call)) tweak_give_flatten
+  let sheer_onwend: [a:, f…:] ≔ >{throughgo,
+    {k ^ (f… tweak k) flatten} leibnitz ((a give_tweak) fall_umfang),
+    flatten leibnitz ((f… tweak_tweak (a call) give) evenmete),
+    (f… tweak (a call)) tweak_give_flatten
   }
 }
 
 bizen: [@ε: *, (ε misfaresome) monad] {
   let flat ≔ flatten
   let sheer_bind: [a:, f:]
-    ≔ ({x ^ x flatten} leibnitz (a give_tweak f)) throughgo ((a f) give_flatten)
+    ≔ (flatten leibnitz (a give_tweak f)) throughgo ((a f) give_flatten)
   let warp_sheer_flat ≔ tweak_give_flatten
 }

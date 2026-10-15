@@ -6,17 +6,18 @@ bring ilk/list.tung
 bring ilk/two.tung
 bring is.tung
 
-## the lexicographic step: the heads `a` and `b` decide by `x` (`a ≤ b`) and
-## `y` (`b ≤ a`) unless both hold, and then the tails decide by `t`.
-let step: [x: 𝟚, y: 𝟚, t: 𝟚, 𝟚] ≔ x if (y if t yea) nay
+## the lexicographic step: `a` and `b` compare the heads both ways, as `≤`
+## and its reverse; unless both hold they decide, and then the tails decide
+## by `t`.
+let step: [a: 𝟚, b: 𝟚, t: 𝟚, 𝟚] ≔ a if (b if t yea) nay
 
 ## lists compared lexicographically: the first worths that differ decide, and
 ## a list goeth before its longer continuations. it useth `≤` alone, so the
 ## worths' sameness never reacheth `=` by a second path.
 show let at_most: [@α: *, @: α hath_≤, α list, α list, 𝟚] ≔ {
-  empty, _     ^ yea,
-  _ ‥ _, empty ^ nay,
-  a ‥ l, b ‥ m ^ (a ≤ b) step (b ≤ a) (l at_most m)
+  empty,  _      ^ yea,
+  _ ‥ _,  empty  ^ nay,
+  a ‥ a…, b ‥ b… ^ (a ≤ b) step (b ≤ a) (a… at_most b…)
 }
 
 bizen: [@α: *, @: α order_whole, (α list) hath_≤] {
@@ -24,22 +25,22 @@ bizen: [@α: *, @: α order_whole, (α list) hath_≤] {
 }
 
 # the laws below reduce each list case to `step` on boolean inputs.
-let helpsetting_≤_yea: [x: 𝟚, (x ≤ yea) = yea] ≔ match x {
+let helpsetting_≤_yea: [a: 𝟚, (a ≤ yea) = yea] ≔ match a {
   yea;
   nay ^ eftbend
 }
 
 let helpsetting_step_eftbend
-  : [x: 𝟚, t: 𝟚, held: x = yea, tails: t = yea, (x step x t) = yea]
-  ≔ match x {
+  : [a: 𝟚, t: 𝟚, held: a = yea, tails: t = yea, (a step a t) = yea]
+  ≔ match a {
     yea ^ tails,
     nay ^ match held {}
   }
 
 let helpsetting_step_withevenmete
-  : [x: 𝟚, y: 𝟚, s: 𝟚, l: 𝟚, m: 𝟚, t: 𝟚, held: >{≤, x, y, s} = yea,
-    tails: >{≤, l, m, t} = yea, >{≤, x step y l, y step x m, s if t nay} = yea]
-  ≔ match x, y, s {
+  : [a: 𝟚, b: 𝟚, s: 𝟚, l: 𝟚, m: 𝟚, t: 𝟚, held: >{≤, a, b, s} = yea,
+    tails: >{≤, l, m, t} = yea, >{≤, a step b l, b step a m, s if t nay} = yea]
+  ≔ match a, b, s {
     nay, _,   _   ^ eftbend,
     yea, nay, _   ^ eftbend,
     yea, yea, nay ^ match held {},
@@ -67,9 +68,9 @@ let helpsetting_step_throughgo
   }
 
 let helpsetting_step_whole
-  : [x: 𝟚, y: 𝟚, l: 𝟚, m: 𝟚, held: ((x ≍ nay) ≤ y) = yea,
-    tails: ((l ≍ nay) ≤ m) = yea, (((x step y l) ≍ nay) ≤ (y step x m)) = yea]
-  ≔ match x, y {
+  : [a: 𝟚, b: 𝟚, l: 𝟚, m: 𝟚, held: ((a ≍ nay) ≤ b) = yea,
+    tails: ((l ≍ nay) ≤ m) = yea, (((a step b l) ≍ nay) ≤ (b step a m)) = yea]
+  ≔ match a, b {
     nay, nay ^ match held {},
     nay, yea ^ eftbend,
     yea, nay ^ eftbend,
@@ -77,33 +78,33 @@ let helpsetting_step_whole
   }
 
 let helpsetting_step_former
-  : [x: 𝟚, y: 𝟚, t: 𝟚, held: (x step y t) = yea, x = yea]
-  ≔ match x {
+  : [a: 𝟚, b: 𝟚, t: 𝟚, held: (a step b t) = yea, a = yea]
+  ≔ match a {
     yea ^ eftbend,
     nay ^ match held {}
   }
 
 let helpsetting_step_latter
-  : [x: 𝟚, y: 𝟚, t: 𝟚, u: 𝟚, held: (x step y t) = yea,
-    other: (y step x u) = yea, y = yea]
-  ≔ match x, y {
+  : [a: 𝟚, b: 𝟚, t: 𝟚, c: 𝟚, held: (a step b t) = yea,
+    other: (b step a c) = yea, b = yea]
+  ≔ match a, b {
     nay, _   ^ match held {},
     yea, nay ^ match other {},
     yea, yea ^ eftbend
   }
 
 let helpsetting_step_tail
-  : [x: 𝟚, y: 𝟚, t: 𝟚, u: 𝟚, held: (x step y t) = yea,
-    other: (y step x u) = yea, t = yea]
-  ≔ match x, y {
+  : [a: 𝟚, b: 𝟚, t: 𝟚, c: 𝟚, held: (a step b t) = yea,
+    other: (b step a c) = yea, t = yea]
+  ≔ match a, b {
     nay, _   ^ match held {},
     yea, nay ^ match other {},
     yea, yea ^ held
   }
 
 let helpsetting_≤_eftbend
-  : [@α: *, @: α order_whole, l: α list, (l at_most l) = yea]
-  ≔ match l {
+  : [@α: *, @: α order_whole, a…: α list, (a… at_most a…) = yea]
+  ≔ match a… {
     empty ^ eftbend,
     a ‥ k ^
       (a ≤ a) helpsetting_step_eftbend (k at_most k) (a ≤_eftbend)
@@ -111,9 +112,9 @@ let helpsetting_≤_eftbend
   }
 
 let helpsetting_≤_withevenmete
-  : [@α: *, @: α order_whole, l: α list, m: α list,
-    >{≤, l at_most m, m at_most l, l ≍ m} = yea]
-  ≔ match l, m {
+  : [@α: *, @: α order_whole, a…: α list, b…: α list,
+    >{≤, a… at_most b…, b… at_most a…, a… ≍ b…} = yea]
+  ≔ match a…, b… {
     empty, empty ^ eftbend,
     empty, _ ‥ _ ^ eftbend,
     _ ‥ _, empty ^ eftbend,
@@ -124,10 +125,10 @@ let helpsetting_≤_withevenmete
   }
 
 let helpsetting_≤_throughgo
-  : [@α: *, @: α order_whole, l: α list, m: α list, n: α list,
-    >{≤, l at_most m, m at_most n, l at_most n} = yea]
-  ≔ match l, m, n {
-    empty, _,     _     ^ (m at_most n) helpsetting_≤_yea,
+  : [@α: *, @: α order_whole, a…: α list, b…: α list, n: α list,
+    >{≤, a… at_most b…, b… at_most n, a… at_most n} = yea]
+  ≔ match a…, b…, n {
+    empty, _,     _     ^ (b… at_most n) helpsetting_≤_yea,
     _ ‥ _, empty, _     ^ eftbend,
     a ‥ k, b ‥ o, empty ^ ((a ‥ k) at_most (b ‥ o)) helpsetting_≤_yea,
     a ‥ k, b ‥ o, c ‥ p ^
@@ -138,9 +139,9 @@ let helpsetting_≤_throughgo
   }
 
 let helpsetting_≤_whole
-  : [@α: *, @: α order_whole, l: α list, m: α list,
-    (((l at_most m) ≍ nay) ≤ (m at_most l)) = yea]
-  ≔ match l, m {
+  : [@α: *, @: α order_whole, a…: α list, b…: α list,
+    (((a… at_most b…) ≍ nay) ≤ (b… at_most a…)) = yea]
+  ≔ match a…, b… {
     empty, _     ^ eftbend,
     _ ‥ _, empty ^ eftbend,
     a ‥ k, b ‥ o ^
@@ -149,9 +150,9 @@ let helpsetting_≤_whole
   }
 
 let helpsetting_≤_=
-  : [@α: *, @: α order_whole, l: α list, m: α list, below: (l at_most m) = yea,
-    above: (m at_most l) = yea, l = m]
-  ≔ match l, m {
+  : [@α: *, @: α order_whole, a…: α list, b…: α list,
+    below: (a… at_most b…) = yea, above: (b… at_most a…) = yea, a… = b…]
+  ≔ match a…, b… {
     empty, empty ^ eftbend,
     empty, _ ‥ _ ^ match above {},
     _ ‥ _, empty ^ match below {},
@@ -166,7 +167,7 @@ let helpsetting_≤_=
             below above)
           ((b ≤ a) helpsetting_step_tail (a ≤ b) (o at_most k) (k at_most o)
             above below)
-      yield ({z: α ^ z ‥ k} leibnitz head) throughgo ((b ‥) leibnitz leftover)
+      yield ({c: α ^ c ‥ k} leibnitz head) throughgo ((b ‥) leibnitz leftover)
     )
   }
 

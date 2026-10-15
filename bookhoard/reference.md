@@ -82,16 +82,16 @@ spelling of its flock name.
 
 proved theorems:
 
-| file                    | theorems                                                                                               |
-| ----------------------- | ------------------------------------------------------------------------------------------------------ |
-| `group_fold.tung`       | `one_alone`, `/_alone`, `·_outstrike`, `outstrike_·`, `/_/`, `one_/`, `/_over_·`, `/·_outstrike`       |
-| `group_eke.tung`        | `naught_alone`, `-_alone`, `+_outstrike`, `outstrike_+`, `-_-`, `naught_-`, `-_over_+`, `-+_outstrike` |
-| `ring.tung`             | `-_·`, `·_-`, `-_·_-`, `one_-_·`                                                                       |
-| `module.tung`           | `naught_∘`, `∘_naught`, `-_∘`, `∘_-`, `one_-_∘`                                                        |
-| `category.tung`         | `sameness_alone`                                                                                       |
-| `groupoid.tung`         | `witherwend_alone`, `witherwend_witherwend`, `sameness_witherwend`, `witherwend_over_▷`                |
-| `ilk/kindful.tung`      | `heir_incast`, `heir_+`, `outstrike_+`, `+_∸`, `·_swap`                                                |
-| `ilk/list_setting.tung` | `warp_greatness`, `greatness_·`, `eftwend_greatness`                                                   |
+| file                    | theorems                                                                                      |
+| ----------------------- | --------------------------------------------------------------------------------------------- |
+| `group_fold.tung`       | `one_alone`, `/_alone`, `·_strike`, `strike_·`, `/_/`, `one_/`, `/_over_·`, `/·_strike`       |
+| `group_eke.tung`        | `naught_alone`, `-_alone`, `+_strike`, `strike_+`, `-_-`, `naught_-`, `-_over_+`, `-+_strike` |
+| `ring.tung`             | `-_·`, `·_-`, `-_·_-`, `one_-_·`                                                              |
+| `module.tung`           | `naught_∘`, `∘_naught`, `-_∘`, `∘_-`, `one_-_∘`                                               |
+| `category.tung`         | `sameness_alone`                                                                              |
+| `groupoid.tung`         | `witherwend_alone`, `witherwend_witherwend`, `sameness_witherwend`, `witherwend_over_▷`       |
+| `ilk/kindful.tung`      | `heir_incast`, `heir_+`, `strike_+`, `+_∸`, `·_swap`                                          |
+| `ilk/list_setting.tung` | `warp_greatness`, `greatness_·`, `eftwend_greatness`                                          |
 
 `group_likeshaper.tung` defineth `likeshaped`, `kernel`, and `shadow` for
 `group_·` and proveth `one_f` and `/_f`; that the kernel is a normal subgroup
@@ -180,7 +180,7 @@ or a declaration applying a chosen bizen's law.
 
 every assumption is a listed `orsetting`:
 
-- `fall_umtake` in [`is.tung`](is.tung), function extensionality, serveth
+- `fall_umfang` in [`is.tung`](is.tung), function extensionality, serveth
   function-carrier laws, the freer and powerset laws, which compare
   continuations and characteristic functions, and deed proofs comparing bound
   continuations.

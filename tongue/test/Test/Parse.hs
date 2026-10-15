@@ -53,7 +53,7 @@ accepted =
     ("flock member with local type parameters", "flock owner:[a:*, *] { let member:[@b:*, b, a] }"),
     ("higher-order flock members", "flock downshaper:[f:[*, *], *] { let gather₀:[@a:*, @b:*, a f, b, [a, b, b], b] }"),
     ("flock constraints precede parameters", "flock convert:[a:*, @:a hath_≍, b:*, *] { let convert:[a, b] }"),
-    ("flock member requirement", "flock hath_throughwend:[f:[*, *], *] { let throughwend:[@m:[*, *], @:m atfoldsome, @a:*, @b:*, a f, [a, b m], (b f) m] }"),
+    ("flock member requirement", "flock hath_throughwend:[f:[*, *], *] { let throughwend:[@m:[*, *], @:m onwendsome, @a:*, @b:*, a f, [a, b m], (b f) m] }"),
     ("flock without parameters", "flock marker:* { let mark:ℤ }"),
     ("flock with a binary type constructor", "flock category:[⇨:[*, *, *], *] { let hath_≍:[@a:*, a ⇨ a] }"),
     ("law sides may inhold local blocks", "flock sameness:[a:*, *] { let rule:[x: a, (let y ≔ x yield y) = (let z ≔ x yield z)] }"),
@@ -288,9 +288,15 @@ localScopes =
       ("k", "k ≔ n yield {0 ^ k, m heir ^ m} x)"),
       ("m", "m heir ^ m"),
       ("heir", "heir ^ m"),
-      ("α", "α: *, *] { let get: α }")
+      ("α", "α: *, *] { let get: α }"),
+      ("p", "p: [y: ℕ, ({z: ℕ ^ z} y) = y], ℕ] ≔ {@c ^ c}"),
+      ("y", "y: ℕ, ({z: ℕ ^ z} y) = y]"),
+      ("z", "z: ℕ ^ z"),
+      ("c", "c ^ c")
     ]
     [(slice binder, slice scope) | (binderStart, binderEnd, scopeStart, scopeEnd) <- sortOn (\(start, _, _, _) -> start) (syntaxScopes (sourceSyntaxSummary source)), let binder = (binderStart, binderEnd), let scope = (scopeStart, scopeEnd)]
   where
-    source = "let f: [n: ℕ, x: n fan, ℕ] ≔ (let k ≔ n yield {0 ^ k, m heir ^ m} x)\nflock got: [α: *, *] { let get: α }\n"
+    -- an inner bracket or lambda of a header keepeth its own scope, and a
+    -- typed or implicit binder is scoped like a bare one.
+    source = "let f: [n: ℕ, x: n fan, ℕ] ≔ (let k ≔ n yield {0 ^ k, m heir ^ m} x)\nflock got: [α: *, *] { let get: α }\nlet g: [p: [y: ℕ, ({z: ℕ ^ z} y) = y], ℕ] ≔ {@c ^ c}\n"
     slice (start, end) = take (end - start) (drop start source)

@@ -16,14 +16,14 @@ show flock order_whole: [α: *, @: α order_half, *] {
 ## two worths that are not ordered one way are ordered the other way.
 show let ≤_flip
   : [@α: *, @: α order_whole, a: α, b: α, k: (a ≤ b) = nay, (b ≤ a) = yea]
-  ≔ {x: 𝟚 ^ (x ≍ nay) ≤ (b ≤ a)} yea_throughbear k (a ≤_whole b)
+  ≔ {c: 𝟚 ^ (c ≍ nay) ≤ (b ≤ a)} yea_throughbear k (a ≤_whole b)
 
 ## throughgoing for comparisons known to hold.
 show let ≤_yea_throughgo
   : [@α: *, @: α order_whole, a: α, b: α, c: α, k₀: (a ≤ b) = yea,
     k₁: (b ≤ c) = yea, (a ≤ c) = yea]
-  ≔ {x: 𝟚 ^ x ≤ (a ≤ c)} yea_throughbear k₁
-  ({x: 𝟚 ^ x ≤ ((b ≤ c) ≤ (a ≤ c))} yea_throughbear k₀ (a ≤_throughgo b c))
+  ≔ {d: 𝟚 ^ d ≤ (a ≤ c)} yea_throughbear k₁
+  ({d: 𝟚 ^ d ≤ ((b ≤ c) ≤ (a ≤ c))} yea_throughbear k₀ (a ≤_throughgo b c))
 
 show let compare: [@α: *, @: α order_whole, @: α hath_≤, a: α, b: α, 𝟛]
   ≔ (a ≤ b) if ((b ≤ a) if mid fore) aft

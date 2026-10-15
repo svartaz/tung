@@ -1,12 +1,12 @@
 bring flock/algebra/half/category.tung
 bring flock/functor.tung
-bring flock/functor/atfoldsome.tung
 bring flock/functor/bifunctor.tung
 bring flock/functor/downshaper.tung
 bring flock/functor/hath_throughwend.tung
 bring flock/functor/monad.tung
+bring flock/functor/onwendsome.tung
 bring flock/hath_same.tung
-bring flock/order/midfill.tung
+bring flock/order/upfill.tung
 bring flock/same_to_is.tung
 bring ilk/two.tung
 bring is.tung
@@ -51,23 +51,23 @@ bizen: [@α: *, (α ∑) functor] {
   }
 }
 
-bizen: [@α: *, (α ∑) atfoldsome] {
+bizen: [@α: *, (α ∑) onwendsome] {
   let sheer ≔ incast₁
-  let atfold ≔ {
+  let onwend ≔ {
     a incast₀, _         ^ a incast₀,
     _,         a incast₀ ^ a incast₀,
     b incast₁, f incast₁ ^ (b f) incast₁
   }
-  let atfold_sameness_sheer ≔ {
+  let onwend_sameness_sheer ≔ {
     _ incast₀;
     _ incast₁ ^ eftbend
   }
-  let sheer_atfold_sheer: [_:, _:] ≔ eftbend
-  let atfold_atfold ≔ {
+  let sheer_onwend_sheer: [_:, _:] ≔ eftbend
+  let onwend_onwend ≔ {
     _ incast₀, _, _;
     _ incast₁, _, _ ^ eftbend
   }
-  let sheer_atfold ≔ {
+  let sheer_onwend ≔ {
     _, _ incast₀;
     _, _ incast₁ ^ eftbend
   }
@@ -115,13 +115,13 @@ bizen: [@α: *, @: α hath_≍, @β: *, @: β hath_≍, (α ∑ β) hath_≍] {
 }
 
 bizen: [@α: *, @: α ≍_to_=, @β: *, @: β ≍_to_=, (α ∑ β) ≍_to_=] {
-  let ≍_=: [x:, y:, held:] ≔ match x, y {
+  let ≍_=: [c:, d:, held:] ≔ match c, d {
     a incast₀, b incast₀ ^ incast₀ leibnitz (a ≍_= b held),
     a incast₁, b incast₁ ^ incast₁ leibnitz (a ≍_= b held),
     _ incast₀, _ incast₁ ^ match held {},
     _ incast₁, _ incast₀ ^ match held {}
   }
-  let ≍_eftbend: [x:] ≔ match x {
+  let ≍_eftbend: [b:] ≔ match b {
     a incast₀ ^ a ≍_eftbend,
     a incast₁ ^ a ≍_eftbend
   }

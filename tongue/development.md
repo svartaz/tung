@@ -302,10 +302,33 @@ and name, with no shape matching or built-in bizen.
 
 `Tung.Format` is the canonical two-space neatener for the cli and editor. it
 parseth first and refuseth unparseable source, reporting the error and
-changing nothing. its output followeth only the tokens, their brackets, and
-the comments between them, so sources with one concrete syntax tree share one
-neat form: whitespace never changeth it and neatening is idempotent. a final
-check refuseth output whose tokens differ from the source's.
+changing nothing. it then shorteneth each redundant η-expansion and droppeth
+redundant parentheses; layout
+followeth only the tokens, their brackets, and the comments between them, so
+sources with one concrete syntax tree share one neat form: whitespace never
+changeth it and neatening is idempotent. a final check refuseth output whose
+tokens differ from the shortened source's.
+
+- a lambda whose binders are its body's last arguments, in order, is
+  η-expanded: `{a₁, …, aₙ ^ a₁ f a₂ … aₙ}` becometh `f`, and `{b ^ m tweak b}`
+  becometh `(m tweak)`, parenthesised unless the lambda is a whole expression, as a let's body or a
+  row's. its binders are distinct, bare, and not `_`; the rest is names
+  and literals that never name a binder; no comment standeth inside; and the
+  brace is not a `match`'s rows. a binder that is the first argument, as in
+  `{b ^ b tweak m}`, is not shortened. conversion hath function η, so the two
+  are one function, and a shortening may complete an outer one.
+- redundant parentheses are dropped where the parse cannot change: around
+  one atom (a name, literal, `*`, `sorry`, or bracketed group), unless `@(…)`
+  writeth an implicit argument or a `:` or `.` followeth; and around a run of
+  atoms that is a whole expression, as a let's body, a row's, or an item. a
+  pair holding `:`, `$`, a keyword, a projection, or a comment is kept. the two
+  shortenings repeat until neither applieth.
+- an annotated or implicit binder keepeth its expansion, which may guide
+  elaboration, as when `f`'s implicit inputs follow an explicit one; annotate
+  a binder to keep an expansion.
+- the neatener readeth no names, so a binder may be a constructor. a one-row
+  match on a constructor checketh only when it is its ilk's sole, nullary one,
+  where `f` agreeth with the match on every input.
 
 - it walketh the concrete tree: declarations and a bracket's items are the
   nodes the parser marked, each with its separator; an unmarked inside is one
@@ -373,14 +396,15 @@ protocol version.
   declaration, a block's let by the rest of its block, and a row's pattern by
   its row. offsets are utf-16 and cover broken regions too.
 - `names` returneth `files`, the canonical file of each bring path the
-  document reacheth; `resolved`, `[start, end, module, name]` for each
+  document reacheth; `resolved`, `[start, end, module, name, ilk]` for each
   written name checking resolved to a
   global, from every declaration that checketh, even beside an error; and
   `visible`, `[written, module, name, constructor]` for each name the module
   may write at top level, from its own declarations and its imports'
   interfaces, without checking. `module` is `<root>`, `<primitive>`, or a
-  bring path. elaboration recordeth a name where it resolveth one, and
-  speculative trials roll the record back.
+  bring path. `ilk` is whether the global's type, after its inputs, is a
+  sort. elaboration recordeth a name where it resolveth one, and speculative
+  trials roll the record back.
 - `proof` taketh `name` and optional `allowedOrsettings`; without it the
   nearest manifest decideth. it returneth `audit` (`name`, `ilk`,
   `dependencies`), `verified`, `message`, and the cli `report`. a dependency
@@ -424,7 +448,10 @@ constructor, and a field `ilk.field` is the named slot of its ilk's
 constructor. navigation fetcheth names for open documents, and references
 and rename for every document. a bring path's module is the file its
 document's names report, matched to a document by real path; the editor
-resolveth no bring itself. an edit forgetteth the names of documents that
+resolveth no bring itself. colouring taketh the parser's roles, except that a
+checked name is an ilk exactly when its `ilk` saith so: a value written in an
+annotation, as `naught` in `(naught · a) = naught`, is no ilk, which syntax
+cannot tell. an edit forgetteth the names of documents that
 reached the edited file, and a created or deleted file forgetteth all. lsp role names stay in the protocol;
 `roleLabel` showeth them to people as tung terms.
 `npm run benchmark:highlight --workspace=tung-vscode`, after both components

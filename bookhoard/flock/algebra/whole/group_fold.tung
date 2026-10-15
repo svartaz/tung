@@ -14,7 +14,7 @@ show flock group_·: [α: *, @: α monoid_·, *] {
 ## `a /· b` withwendeth `a`, then foldeth by `b`.
 show let /·: [@α: *, @: α group_·, a: α, b: α, α] ≔ (a /) · b
 
-show let /·_outstrike: [@α: *, @: α group_·, a: α, (a /· a) = one] ≔ a /_·
+show let /·_strike: [@α: *, @: α group_·, a: α, (a /· a) = one] ≔ a /_·
 
 ## a worth that leaveth every worth alone is `one`.
 show let one_alone
@@ -26,35 +26,35 @@ show let /_alone
   : [@α: *, @: α group_·, a: α, b: α, undoing: (b · a) = one, b = (a /)]
   ≔ >{throughgo,
     (b ·_one) evenmete,
-    {x ^ b · x} leibnitz ((a ·_/) evenmete),
+    (b ·) leibnitz ((a ·_/) evenmete),
     b ·_· a (a /),
-    {x ^ x · (a /)} leibnitz undoing,
+    {c ^ c · (a /)} leibnitz undoing,
     (a /) one_·
   }
 
 ## the same products with one left factor have the same right factors.
-show let ·_outstrike
+show let ·_strike
   : [@α: *, @: α group_·, a: α, b: α, c: α, same: (a · b) = (a · c), b = c]
   ≔ >{throughgo,
     (b one_·) evenmete,
-    {x ^ x · b} leibnitz ((a /_·) evenmete),
+    {d ^ d · b} leibnitz ((a /_·) evenmete),
     ((a /) ·_· a b) evenmete,
-    {x ^ (a /) · x} leibnitz same,
+    {d ^ (a /) · d} leibnitz same,
     (a /) ·_· a c,
-    {x ^ x · c} leibnitz (a /_·),
+    {d ^ d · c} leibnitz (a /_·),
     c one_·
   }
 
 ## the same products with one right factor have the same left factors.
-show let outstrike_·
+show let strike_·
   : [@α: *, @: α group_·, a: α, b: α, c: α, same: (b · a) = (c · a), b = c]
   ≔ >{throughgo,
     (b ·_one) evenmete,
-    {x ^ b · x} leibnitz ((a ·_/) evenmete),
+    (b ·) leibnitz ((a ·_/) evenmete),
     b ·_· a (a /),
-    {x ^ x · (a /)} leibnitz same,
+    {d ^ d · (a /)} leibnitz same,
     (c ·_· a (a /)) evenmete,
-    {x ^ c · x} leibnitz (a ·_/),
+    (c ·) leibnitz (a ·_/),
     c ·_one
   }
 
@@ -71,8 +71,8 @@ show let /_over_·
   : [@α: *, @: α group_·, a: α, b: α, ((a · b) /) = ((b /) · (a /))]
   ≔ ((a · b) /_alone ((b /) · (a /)) >{throughgo,
     ((b /) ·_· (a /) (a · b)) evenmete,
-    {x ^ (b /) · x} leibnitz ((a /) ·_· a b),
-    {x ^ (b /) · (x · b)} leibnitz (a /_·),
-    {x ^ (b /) · x} leibnitz (b one_·),
+    {c ^ (b /) · c} leibnitz ((a /) ·_· a b),
+    {c ^ (b /) · (c · b)} leibnitz (a /_·),
+    {c ^ (b /) · c} leibnitz (b one_·),
     b /_·
   }) evenmete

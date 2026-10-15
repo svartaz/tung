@@ -580,7 +580,12 @@ const semanticTokens = async (uri, requestedRange = undefined) => {
   const resolve = (token) =>
     workspace.resolveAt(uri, { line: token.line, character: token.char })
       .definition;
-  for (const token of buildHighlightRanges(source, roles, resolve)) {
+  const ilks = new Map(
+    workspace.namesOf(uri).resolved.map(([start, , , , ilk]) => [start, ilk]),
+  );
+  for (const token of buildHighlightRanges(source, roles, resolve, (start) =>
+    ilks.get(start),
+  )) {
     if (requestedRange && !rangeContainsLine(requestedRange, token.line)) {
       continue;
     }

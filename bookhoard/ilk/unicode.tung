@@ -36,10 +36,10 @@ bizen: unicode hath_≤ {
 let helpsetting_=
   : [a: unicode, b: unicode,
     same: (a unicode_to_kindful) = (b unicode_to_kindful), a = b]
-  ≔ {m: unicode maybe ^ match m {
+  ≔ {
     none   ^ a,
-    x some ^ x
-  }} leibnitz >{throughgo,
+    m some ^ m
+  } leibnitz >{throughgo,
     (a kindful_unicode) evenmete,
     kindful_to_unicode leibnitz same,
     b kindful_unicode

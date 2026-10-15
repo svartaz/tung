@@ -286,7 +286,7 @@ soundnessCases library =
       sameNormalIn program "closed" "direct",
     rejectContaining "a list is not its own double" "cannot unify" $
       compile "let bad: [l: ℕ list, (l · l) = l] ≔ eftbend",
-    rejectContaining "athanging is not commutative" "cannot unify" $
+    rejectContaining "onhanging is not commutative" "cannot unify" $
       compile "let bad: [a: ℕ list, b: ℕ list, (a · b) = (b · a)] ≔ match a { empty ^ (b ·_empty) evenmete, first ‥ leftover ^ (first ‥) leibnitz (leftover bad b) }",
     rejectContaining "distinct lists are not same" "cannot unify 1 with 2" $
       compile "let bad: (1 ‥ empty) = (2 ‥ empty) ≔ eftbend",

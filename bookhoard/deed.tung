@@ -3,8 +3,8 @@ bring combinator.tung
 bring flock/algebra/half/category.tung
 bring flock/algebra/half/semigroupoid.tung
 bring flock/functor.tung
-bring flock/functor/atfoldsome.tung
 bring flock/functor/monad.tung
+bring flock/functor/onwendsome.tung
 bring ilk/one.tung
 bring is.tung
 
@@ -18,22 +18,22 @@ show orsetting deed_bind_sheer: [@α: *, m: α deed, (m deed_bind deed_sheer) = 
 
 show orsetting deed_bind_bind
   : [@α: *, @β: *, @γ: *, m: α deed, f: [α, β deed], g: [β, γ deed],
-    ((m deed_bind f) deed_bind g) = (m deed_bind {x ^ (x f) deed_bind g})]
+    ((m deed_bind f) deed_bind g) = (m deed_bind {a ^ (a f) deed_bind g})]
 
 ## binding to a fall is binding to any fall that agreeth with it at every
 ## outcome.
 show let bind_same
   : [@α: *, @β: *, m: α deed, @f: [α, β deed], @g: [α, β deed],
-    pointwise: [x: α, (x f) = (x g)], (m deed_bind f) = (m deed_bind g)]
-  ≔ {h ^ m deed_bind h} leibnitz (pointwise fall_umtake)
+    pointwise: [a: α, (a f) = (a g)], (m deed_bind f) = (m deed_bind g)]
+  ≔ (m deed_bind) leibnitz (pointwise fall_umfang)
 
 ## mapping twice is mapping once with the composite.
 let warp_twice
   : [@α: *, @β: *, @γ: *, m: α deed, f: [α, β], g: [β, γ],
-    ((m deed_bind {x ^ (x f) deed_sheer}) deed_bind {y ^ (y g) deed_sheer}) =
-      (m deed_bind {x ^ (x f $ g) deed_sheer})]
-  ≔ (m deed_bind_bind {x ^ (x f) deed_sheer} {y ^ (y g) deed_sheer}) throughgo
-    (m bind_same {x ^ (x f) deed_sheer_bind {y ^ (y g) deed_sheer}})
+    ((m deed_bind {a ^ (a f) deed_sheer}) deed_bind {a ^ (a g) deed_sheer}) =
+      (m deed_bind {a ^ (a f $ g) deed_sheer})]
+  ≔ (m deed_bind_bind {a ^ (a f) deed_sheer} {a ^ (a g) deed_sheer}) throughgo
+    (m bind_same {a ^ (a f) deed_sheer_bind {b ^ (b g) deed_sheer}})
 
 ## deeds compose as a monad: `warp` tweaketh an outcome, and `bind` or `then`
 ## sequenceth deeds.
@@ -42,25 +42,22 @@ bizen: deed functor {
   let warp_sameness: [m:] ≔ m deed_bind_sheer
 }
 
-bizen: deed atfoldsome {
+bizen: deed onwendsome {
   let sheer ≔ deed_sheer
-  let atfold: [doing:, tweaks:] ≔ tweaks deed_bind {tweak ^ doing warp tweak}
-  let atfold_sameness_sheer: [m:]
-    ≔ (sameness deed_sheer_bind {tweak ^ m warp tweak}) throughgo
-      (m deed_bind_sheer)
-  let sheer_atfold_sheer: [a:, f:]
+  let onwend: [doing:, tweaks:] ≔ tweaks deed_bind (doing warp)
+  let onwend_sameness_sheer: [m:]
+    ≔ (sameness deed_sheer_bind (m warp)) throughgo (m deed_bind_sheer)
+  let sheer_onwend_sheer: [a:, f:]
     ≔ (f deed_sheer_bind {tweak ^ (a deed_sheer) warp tweak}) throughgo
       (a deed_sheer_bind (f ▷ deed_sheer))
-  let atfold_atfold: [m:, f:, g:] ≔ >{throughgo,
-    g deed_sheer_bind {
-      tweak ^ ((f deed_sheer) deed_bind {inner ^ m warp inner}) warp tweak
-    },
-    {inner ^ inner warp g} leibnitz (f deed_sheer_bind {tweak ^ m warp tweak}),
+  let onwend_onwend: [m:, f:, g:] ≔ >{throughgo,
+    g deed_sheer_bind {tweak ^ ((f deed_sheer) deed_bind (m warp)) warp tweak},
+    {inner ^ inner warp g} leibnitz (f deed_sheer_bind (m warp)),
     m warp_twice f g,
-    ((f ▷ g) deed_sheer_bind {tweak ^ m warp tweak}) evenmete
+    ((f ▷ g) deed_sheer_bind (m warp)) evenmete
   }
-  let sheer_atfold: [@α:, @β:, a:, fs:]
-    ≔ fs bind_same @([α, β]) @β @({tweak ^ (a deed_sheer) warp tweak}) {
+  let sheer_onwend: [@α:, @β:, a:, f…:]
+    ≔ f… bind_same @([α, β]) @β @({tweak ^ (a deed_sheer) warp tweak}) {
       tweak ^ a deed_sheer_bind (tweak ▷ deed_sheer)
     }
 }
@@ -68,11 +65,11 @@ bizen: deed atfoldsome {
 bizen: deed monad {
   let flat: [@α: *, doings: (α deed) deed, α deed] ≔ doings deed_bind sameness
   let sheer_bind: [a:, f:]
-    ≔ ({inner ^ inner flat} leibnitz (a deed_sheer_bind {x ^ (x f) deed_sheer}))
-      throughgo ((a f) deed_sheer_bind {y ^ y})
+    ≔ (flat leibnitz (a deed_sheer_bind {b ^ (b f) deed_sheer})) throughgo
+      ((a f) deed_sheer_bind {b ^ b})
   let warp_sheer_flat: [m:] ≔ >{throughgo,
-    m deed_bind_bind {x ^ (x deed_sheer) deed_sheer} {y ^ y},
-    m bind_same {x ^ (x deed_sheer) deed_sheer_bind {y ^ y}},
+    m deed_bind_bind {a ^ (a deed_sheer) deed_sheer} {a ^ a},
+    m bind_same {a ^ (a deed_sheer) deed_sheer_bind {b ^ b}},
     m deed_bind_sheer
   }
 }

@@ -10,24 +10,23 @@ bring is.tung
 ## since tweaking it only composeth the fall; only `unlift` needeth `φ`
 ## to be a functor.
 show ilk yoneda_co: [φ: [*, *], α: *, *] {
-  inwrap: [@β: *, β φ, [β, α], φ yoneda_co α]
+  wrap: [@β: *, β φ, [β, α], φ yoneda_co α]
 }
 
 ## a worth with nothing yet to tweak.
-show let lift: [@φ: [*, *], @α: *, a: α φ, φ yoneda_co α] ≔ a inwrap sameness
+show let lift: [@φ: [*, *], @α: *, a: α φ, φ yoneda_co α] ≔ a wrap sameness
 
 ## tweak the hidden worth by the waiting fall.
-show let unlift
-  : [@φ: [*, *], @: φ functor, @α: *, b inwrap f: φ yoneda_co α, α φ]
+show let unlift: [@φ: [*, *], @: φ functor, @α: *, b wrap f: φ yoneda_co α, α φ]
   ≔ b warp f
 
 bizen: [@φ: [*, *], (φ yoneda_co) functor] {
-  let warp: [b inwrap f:, g:] ≔ b inwrap (f ▷ g)
-  let warp_sameness ≔ {_ inwrap _ ^ eftbend}
+  let warp: [b wrap f:, g:] ≔ b wrap (f ▷ g)
+  let warp_sameness ≔ {_ wrap _ ^ eftbend}
 }
 
 ## lifting a worth and taking it back giveth the worth. the other way holdeth
-## only after `unlift`: `(b warp f) inwrap sameness` and `b inwrap f` are
+## only after `unlift`: `(b warp f) wrap sameness` and `b wrap f` are
 ## different worths with one meaning, and tung hath no quotient ilks to
 ## identify them.
 show let unlift_lift

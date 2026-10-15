@@ -7,8 +7,8 @@ bring flock/functor/downshaper.tung
 bring flock/functor/hath_sift.tung
 bring flock/hath_greatness.tung
 bring flock/hath_same.tung
-bring flock/order/midfill.tung
 bring flock/order/semilattice_upper.tung
+bring flock/order/upfill.tung
 bring ilk/kindful.tung
 bring ilk/list.tung
 bring ilk/maybe.tung
@@ -38,7 +38,7 @@ show let eftwend_string: [t: string, string]
 show let forehang_string: [staff: unicode, t: string, string]
   ≔ staff ‥ (t string_to_list) $ list_to_string
 
-show let athang_string: [t: string, staff: unicode, string]
+show let onhang_string: [t: string, staff: unicode, string]
   ≔ t string_to_list $ · (staff onesome) $ list_to_string
 
 let split_unicode_by

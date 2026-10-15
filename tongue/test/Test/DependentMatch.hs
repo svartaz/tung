@@ -55,7 +55,7 @@ tests example =
         )
         >>= \program -> sameNormalIn program "yes pick" "naught",
     expectEq "a case function argument waiteth for a later argument to fix its input" (Right True) $
-      compiled (example ++ "let atfold_to:[@α:*, @β:*, f:[α, β], a:α, β] ≔ a f\nlet answer ≔ { yes ^ no, no ^ yes } atfold_to yes\n")
+      compiled (example ++ "let onwend_to:[@α:*, @β:*, f:[α, β], a:α, β] ≔ a f\nlet answer ≔ { yes ^ no, no ^ yes } onwend_to yes\n")
         >>= \program -> sameNormalIn program "answer" "no",
     expectEq "a computed scrutinee is replaced in the goal by each row's constructor" (Right ()) $
       ()

@@ -9,79 +9,79 @@ bring is.tung
 
 ## the tail of a rowed list is rowed.
 show let rowed_tail
-  : [@α: *, @: α order_whole, a: α, l: α list, held: ((a ‥ l) rowed) = yea,
-    (l rowed) = yea]
-  ≔ (a above l) yea_if_latter (l rowed) held
+  : [@α: *, @: α order_whole, a: α, a…: α list, held: ((a ‥ a…) rowed) = yea,
+    (a… rowed) = yea]
+  ≔ (a above a…) yea_if_latter (a… rowed) held
 
 ## every limb of a list above `a` is tightly above `a`.
 let above_inhold
-  : [@α: *, @: α order_whole, a: α, l: α list, x: α,
-    all_above: (a above l) = yea, limb: (l inhold x) = yea, (a tight x) = yea]
-  ≔ match l {
+  : [@α: *, @: α order_whole, a: α, a…: α list, c: α,
+    all_above: (a above a…) = yea, limb: (a… inhold c) = yea, (a tight c) = yea]
+  ≔ match a… {
     empty        ^ match limb {},
-    b ‥ leftover ^ (x ≤ b) inlook @𝟚 @({_: 𝟚 ^ (a tight x) = yea}) {
+    b ‥ leftover ^ (c ≤ b) inlook @𝟚 @({_: 𝟚 ^ (a tight c) = yea}) {
       yea, below ^ (
-        let at_head: (b ≤ x) = yea ≔ {q: 𝟚 ^ q if (b ≤ x) (leftover inhold x)}
+        let at_head: (b ≤ c) = yea ≔ {q: 𝟚 ^ q if (b ≤ c) (leftover inhold c)}
           yea_throughbear below limb
-        yield {y: α ^ a tight y} yea_throughbear (b ≤_= x at_head below)
+        yield {d: α ^ a tight d} yea_throughbear (b ≤_= c at_head below)
           ((a tight b) yea_if_former (a above leftover) all_above)
       ),
       nay, below ^
-        a above_inhold leftover x
+        a above_inhold leftover c
           ((a tight b) yea_if_latter (a above leftover) all_above)
-          ({q: 𝟚 ^ q if (b ≤ x) (leftover inhold x)} yea_throughbear below limb)
+          ({q: 𝟚 ^ q if (b ≤ c) (leftover inhold c)} yea_throughbear below limb)
     }
   }
 
 ## every tail limb is tightly above its first element.
 show let rowed_tight_limb
-  : [@α: *, @: α order_whole, a: α, l: α list, x: α,
-    held: ((a ‥ l) rowed) = yea, limb: (l inhold x) = yea, (a tight x) = yea]
-  ≔ a above_inhold l x ((a above l) yea_if_former (l rowed) held) limb
+  : [@α: *, @: α order_whole, a: α, a…: α list, b: α,
+    held: ((a ‥ a…) rowed) = yea, limb: (a… inhold b) = yea, (a tight b) = yea]
+  ≔ a above_inhold a… b ((a above a…) yea_if_former (a… rowed) held) limb
 
 ## a limb is never below the first element of ordered search.
 show let inhold_first_below
-  : [@α: *, @: α order_whole, a: α, l: α list, x: α,
-    limb: ((a ‥ l) inhold x) = yea, (a ≤ x) = yea]
-  ≔ (x ≤ a) inlook @𝟚 @({_: 𝟚 ^ (a ≤ x) = yea}) {
-    yea, below ^ {q: 𝟚 ^ q if (a ≤ x) (l inhold x)} yea_throughbear below limb,
-    nay, below ^ x ≤_flip a below
+  : [@α: *, @: α order_whole, a: α, a…: α list, b: α,
+    limb: ((a ‥ a…) inhold b) = yea, (a ≤ b) = yea]
+  ≔ (b ≤ a) inlook @𝟚 @({_: 𝟚 ^ (a ≤ b) = yea}) {
+    yea, below ^ {q: 𝟚 ^ q if (a ≤ b) (a… inhold b)} yea_throughbear below limb,
+    nay, below ^ b ≤_flip a below
   }
 
 ## the first element belongeth to its list.
 show let inhold_first
-  : [@α: *, @: α order_whole, a: α, l: α list, ((a ‥ l) inhold a) = yea]
-  ≔ ({b: 𝟚 ^ b if (a ≤ a) (l inhold a)} leibnitz (a ≤_eftbend)) throughgo
+  : [@α: *, @: α order_whole, a: α, a…: α list, ((a ‥ a…) inhold a) = yea]
+  ≔ ({b: 𝟚 ^ b if (a ≤ a) (a… inhold a)} leibnitz (a ≤_eftbend)) throughgo
     (a ≤_eftbend)
 
 ## no tail limb lieth at or below the first element.
 let tail_missing_below
-  : [@α: *, @: α order_whole, a: α, l: α list, x: α,
-    held: ((a ‥ l) rowed) = yea, below: (x ≤ a) = yea, (l inhold x) = nay]
-  ≔ a above_missing l x ((a above l) yea_if_former (l rowed) held) below
+  : [@α: *, @: α order_whole, a: α, a…: α list, b: α,
+    held: ((a ‥ a…) rowed) = yea, below: (b ≤ a) = yea, (a… inhold b) = nay]
+  ≔ a above_missing a… b ((a above a…) yea_if_former (a… rowed) held) below
 
 ## ridding the same first element preserveth limbship sameness.
 let tails_same_first
-  : [@α: *, @: α order_whole, a: α, l: α list, m: α list,
-    left: ((a ‥ l) rowed) = yea, right: ((a ‥ m) rowed) = yea,
-    same_limbs: [x: α, ((a ‥ l) inhold x) = ((a ‥ m) inhold x)], x: α,
-    (l inhold x) = (m inhold x)]
-  ≔ (x ≤ a) inlook @𝟚 @({_: 𝟚 ^ (l inhold x) = (m inhold x)}) {
+  : [@α: *, @: α order_whole, a: α, a…: α list, b…: α list,
+    left: ((a ‥ a…) rowed) = yea, right: ((a ‥ b…) rowed) = yea,
+    same_limbs: [b: α, ((a ‥ a…) inhold b) = ((a ‥ b…) inhold b)], b: α,
+    (a… inhold b) = (b… inhold b)]
+  ≔ (b ≤ a) inlook @𝟚 @({_: 𝟚 ^ (a… inhold b) = (b… inhold b)}) {
     yea, below ^
-      (a tail_missing_below l x left below) throughgo
-        ((a tail_missing_below m x right below) evenmete),
+      (a tail_missing_below a… b left below) throughgo
+        ((a tail_missing_below b… b right below) evenmete),
     nay, below ^ (
-      let left_drop ≔ {q: 𝟚 ^ q if (a ≤ x) (l inhold x)} leibnitz below
-      let right_drop ≔ {q: 𝟚 ^ q if (a ≤ x) (m inhold x)} leibnitz below
-      yield (left_drop evenmete) throughgo ((x same_limbs) throughgo right_drop)
+      let left_drop ≔ {q: 𝟚 ^ q if (a ≤ b) (a… inhold b)} leibnitz below
+      let right_drop ≔ {q: 𝟚 ^ q if (a ≤ b) (b… inhold b)} leibnitz below
+      yield (left_drop evenmete) throughgo ((b same_limbs) throughgo right_drop)
     )
   }
 
 ## rowed unique lists with the same limbs are identical.
-show let umtake
+show let umfang
   : [@α: *, @: α order_whole, left_list: α list, right_list: α list,
     left: (left_list rowed) = yea, right: (right_list rowed) = yea,
-    same_limbs: [x: α, (left_list inhold x) = (right_list inhold x)],
+    same_limbs: [a: α, (left_list inhold a) = (right_list inhold a)],
     left_list = right_list]
   ≔ match left_list, right_list {
     empty, empty        ^ eftbend,
@@ -89,24 +89,24 @@ show let umtake
       leftover) {},
     a ‥ leftover, empty ^ match ((a same_limbs) evenmete) throughgo (a
       inhold_first leftover) {},
-    a ‥ l, b ‥ m ^ (
-      let a_limb ≔ ((a same_limbs) evenmete) throughgo (a inhold_first l)
-      let b_limb ≔ (b same_limbs) throughgo (b inhold_first m)
+    a ‥ a…, b ‥ b… ^ (
+      let a_limb ≔ ((a same_limbs) evenmete) throughgo (a inhold_first a…)
+      let b_limb ≔ (b same_limbs) throughgo (b inhold_first b…)
       let heads
-        ≔ a ≤_= b (a inhold_first_below l b b_limb)
-          (b inhold_first_below m a a_limb)
+        ≔ a ≤_= b (a inhold_first_below a… b b_limb)
+          (b inhold_first_below b… a a_limb)
       # the properties align only the right head.
-      let right_aligned: ((a ‥ m) rowed) = yea
+      let right_aligned: ((a ‥ b…) rowed) = yea
         ≔ (heads evenmete) throughbear @α @b @a @({
-          head: α ^ ((head ‥ m) rowed) = yea
+          head: α ^ ((head ‥ b…) rowed) = yea
         }) right
-      let limbs_aligned: [x: α, ((a ‥ l) inhold x) = ((a ‥ m) inhold x)]
+      let limbs_aligned: [c: α, ((a ‥ a…) inhold c) = ((a ‥ b…) inhold c)]
         ≔ (heads evenmete) throughbear @α @b @a @({
-          head: α ^ ((a ‥ l) inhold x) = ((head ‥ m) inhold x)
-        }) (x same_limbs)
+          head: α ^ ((a ‥ a…) inhold c) = ((head ‥ b…) inhold c)
+        }) (c same_limbs)
       let tails
-        ≔ l umtake m (a rowed_tail l left) (a rowed_tail m right_aligned)
-          (a tails_same_first l m left right_aligned limbs_aligned)
-      yield ((a ‥) leibnitz tails) throughgo ({x: α ^ x ‥ m} leibnitz heads)
+        ≔ a… umfang b… (a rowed_tail a… left) (a rowed_tail b… right_aligned)
+          (a tails_same_first a… b… left right_aligned limbs_aligned)
+      yield ((a ‥) leibnitz tails) throughgo ({c: α ^ c ‥ b…} leibnitz heads)
     )
   }

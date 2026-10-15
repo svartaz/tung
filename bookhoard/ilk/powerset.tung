@@ -2,9 +2,9 @@ bring combinator.tung
 bring flock/algebra/half/semigroupoid.tung
 bring flock/hath_inhold.tung
 bring flock/hath_same.tung
-bring flock/order/midfill.tung
 bring flock/order/semilattice_lower.tung
 bring flock/order/semilattice_upper.tung
+bring flock/order/upfill.tung
 bring ilk/two.tung
 bring is.tung
 
@@ -18,7 +18,7 @@ show let all: [@α: *, α powerset] ≔ yea singal
 show let onesome: [@α: *, @: α hath_≍, α, α powerset] ≔ ≍
 
 bizen: [@α: *, (α powerset) hath_∋ α] {
-  let ∋: [p:, α:] ≔ α p
+  let ∋: [p:, a:] ≔ a p
 }
 
 show let put: [@α: *, @: α hath_≍, s: α powerset, a: α, α powerset]
@@ -29,8 +29,8 @@ show let rid: [@α: *, @: α hath_≍, s: α powerset, a: α, α powerset]
 
 show let ∖: [@α: *, p₀: α powerset, p₁: α powerset, α powerset] ≔ p₀ ∧ (p₁ ¬)
 
-bizen: [@α: *, (α powerset) midfill] {
+bizen: [@α: *, (α powerset) upfill] {
   let ¬: [p:] ≔ p ▷ ¬
-  let ∧_¬: [a:] ≔ {x ^ (x a) ∧_¬} fall_umtake
-  let ∨_¬: [a:] ≔ {x ^ (x a) ∨_¬} fall_umtake
+  let ∧_¬: [a:] ≔ {b ^ (b a) ∧_¬} fall_umfang
+  let ∨_¬: [a:] ≔ {b ^ (b a) ∨_¬} fall_umfang
 }

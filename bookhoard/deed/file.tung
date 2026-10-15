@@ -6,4 +6,4 @@ show let read: [string, (string ∑ string) deed] ≔ 'read_file' fremmed
 
 show let write: [string, string, (string ∑ 𝟙) deed] ≔ 'write_file' fremmed
 
-show let athang: [string, string, (string ∑ 𝟙) deed] ≔ 'athang_file' fremmed
+show let onhang: [string, string, (string ∑ 𝟙) deed] ≔ 'onhang_file' fremmed

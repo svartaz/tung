@@ -15,19 +15,19 @@ show _lower, _upper
 show lower, upper
 
 bizen: [@β: *, @: β semigroup_·, @α: *, [α, β] semigroup_·] {
-  let ·: [f:, g:, α:] ≔ (α f) · (α g)
-  let ·_·: [f:, g:, h:] ≔ {x ^ (x f) ·_· (x g) (x h)} fall_umtake
+  let ·: [f:, g:, a:] ≔ (a f) · (a g)
+  let ·_·: [f:, g:, h:] ≔ {a ^ (a f) ·_· (a g) (a h)} fall_umfang
 }
 
 bizen: [@α: *, @: α semilattice_lower, (α _lower) semigroup_·] {
   let ·: [a lower:, b lower:] ≔ (a ∧ b) lower
-  let ·_·: [a lower:, b lower:, c lower:] ≔ {x: α ^ x lower} leibnitz
+  let ·_·: [a lower:, b lower:, c lower:] ≔ {d: α ^ d lower} leibnitz
     ((a ∧_∧ b c) evenmete)
 }
 
 bizen: [@α: *, @: α semilattice_upper, (α _upper) semigroup_·] {
   let ·: [a upper:, b upper:] ≔ (a ∨ b) upper
-  let ·_·: [a upper:, b upper:, c upper:] ≔ {x: α ^ x upper} leibnitz
+  let ·_·: [a upper:, b upper:, c upper:] ≔ {d: α ^ d upper} leibnitz
     ((a ∨_∨ b c) evenmete)
 }
 

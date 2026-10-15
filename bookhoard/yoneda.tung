@@ -16,9 +16,7 @@ show let kindful: [@φ: [*, *], @: φ functor, @α: *, n: φ yoneda α, *]
   ≔ [@β: *, @γ: *, f: [α, β], g: [β, γ], ((f n) warp g) = ((f ▷ g) n)]
 
 ## the transformation that a worth giveth: tweak it by each fall.
-show let lift: [@φ: [*, *], @: φ functor, @α: *, a: α φ, φ yoneda α] ≔ {
-  f ^ a warp f
-}
+show let lift: [@φ: [*, *], @: φ functor, @α: *, a: α φ, φ yoneda α] ≔ a warp
 
 ## the worth that a transformation determineth: its shadow of `sameness`.
 show let unlift: [@φ: [*, *], @α: *, n: φ yoneda α, α φ] ≔ sameness n

@@ -13,8 +13,8 @@ show flock lattice: [α: *, @: α semilattice_lower, @: α semilattice_upper, *]
 }
 
 bizen: [@β: *, @: β lattice, @α: *, [α, β] lattice] {
-  let ∧_∨_swallow: [f:, g:] ≔ {a ^ (a f) ∧_∨_swallow (a g)} fall_umtake
-  let ∨_∧_swallow: [f:, g:] ≔ {a ^ (a f) ∨_∧_swallow (a g)} fall_umtake
+  let ∧_∨_swallow: [f:, g:] ≔ {a ^ (a f) ∧_∨_swallow (a g)} fall_umfang
+  let ∨_∧_swallow: [f:, g:] ≔ {a ^ (a f) ∨_∧_swallow (a g)} fall_umfang
 }
 
 bizen: [@α: *, @: α order_whole, α lattice] {

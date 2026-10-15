@@ -17,5 +17,5 @@ bizen fallback: → category {
 ## an arrow that leaveth every following arrow alone is `sameness`.
 show let sameness_alone
   : [@⇨: [*, *, *], @: ⇨ category, @α: *, e: α ⇨ α,
-    leaving: [@β: *, f: α ⇨ β, (e ▷ f) = f], e = sameness]
-  ≔ ((e ▷_sameness) evenmete) throughgo (sameness leaving)
+    p: [@β: *, f: α ⇨ β, (e ▷ f) = f], e = sameness]
+  ≔ ((e ▷_sameness) evenmete) throughgo (sameness p)

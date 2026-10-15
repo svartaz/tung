@@ -13,20 +13,20 @@ show let likeshaped: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β
 show let kernel: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], a: α, *]
   ≔ (a f) = one
 
-## `y` is reached by `f`: some `a` hath `a f = y`.
-show ilk shadow: [@α: *, @β: *, f: [α, β], y: β, *] {
-  reach: [a: α, reached: (a f) = y, f shadow y]
+## `b` is reached by `f`: some `a` hath `a f = b`.
+show ilk shadow: [@α: *, @β: *, f: [α, β], b: β, *] {
+  reach: [a: α, reached: (a f) = b, f shadow b]
 }
 
 ## a likeshaper sendeth `one` to `one`: `(one f) · (one f) = one f`, and
 ## outstriking one `one f` leaveth `one`.
 show let one_f
   : [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f likeshaped,
-    ((one: α) f) = one]
-  ≔ ((one: α) f) outstrike_· ((one: α) f) one >{throughgo,
-    ((one: α) hom one) evenmete,
-    {z: α ^ z f} leibnitz ((one: α) ·_one),
-    (((one: α) f) one_·) evenmete
+    ((one @α) f) = one]
+  ≔ ((one @α) f) strike_· ((one @α) f) one >{throughgo,
+    ((one @α) hom one) evenmete,
+    {a: α ^ a f} leibnitz ((one @α) ·_one),
+    (((one @α) f) one_·) evenmete
   }
 
 ## a likeshaper sendeth a withwend to the withwend.
@@ -35,14 +35,14 @@ show let /_f
     a: α, ((a /) f) = ((a f) /)]
   ≔ (a f) /_alone ((a /) f) >{throughgo,
     ((a /) hom a) evenmete,
-    {z: α ^ z f} leibnitz (a /_·),
+    {b: α ^ b f} leibnitz (a /_·),
     f one_f hom
   }
 
 ## the kernel holdeth `one`.
 show let kernel_one
   : [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f likeshaped,
-    f kernel (one: α)]
+    f kernel (one @α)]
   ≔ f one_f hom
 
 ## the kernel is closed under products.
@@ -51,8 +51,8 @@ show let kernel_·
     a: α, b: α, in_a: f kernel a, in_b: f kernel b, f kernel (a · b)]
   ≔ >{throughgo,
     a hom b,
-    {z: β ^ z · (b f)} leibnitz in_a,
-    {z: β ^ one · z} leibnitz in_b,
+    {c: β ^ c · (b f)} leibnitz in_a,
+    {c: β ^ one · c} leibnitz in_b,
     one one_·
   }
 
@@ -60,7 +60,7 @@ show let kernel_·
 show let kernel_/
   : [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f likeshaped,
     a: α, in_a: f kernel a, f kernel (a /)]
-  ≔ >{throughgo, f /_f hom a, {z: β ^ z /} leibnitz in_a, one_/}
+  ≔ >{throughgo, f /_f hom a, {b: β ^ b /} leibnitz in_a, one_/}
 
 ## the kernel is normal: it is closed under turning by any worth.
 show let kernel_spin
@@ -68,34 +68,34 @@ show let kernel_spin
     a: α, b: α, in_a: f kernel a, f kernel ((b · a) · (b /))]
   ≔ >{throughgo,
     (b · a) hom (b /),
-    {z: β ^ z · ((b /) f)} leibnitz (b hom a),
-    {z: β ^ ((b f) · z) · ((b /) f)} leibnitz in_a,
-    {z: β ^ z · ((b /) f)} leibnitz ((b f) ·_one),
-    {z: β ^ (b f) · z} leibnitz (f /_f hom b),
+    {c: β ^ c · ((b /) f)} leibnitz (b hom a),
+    {c: β ^ ((b f) · c) · ((b /) f)} leibnitz in_a,
+    {c: β ^ c · ((b /) f)} leibnitz ((b f) ·_one),
+    {c: β ^ (b f) · c} leibnitz (f /_f hom b),
     (b f) ·_/
   }
 
 ## the shadow holdeth `one`.
 show let shadow_one
   : [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f likeshaped,
-    f shadow (one: β)]
+    f shadow (one @β)]
   ≔ one reach (f one_f hom)
 
 ## the shadow is closed under products.
 show let shadow_·
   : [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f likeshaped,
-    y: β, z: β, a reach p: f shadow y, b reach q: f shadow z, f shadow (y · z)]
+    c: β, d: β, a reach p: f shadow c, b reach q: f shadow d, f shadow (c · d)]
   ≔ (a · b) reach >{throughgo,
     a hom b,
-    {w: β ^ w · (b f)} leibnitz p,
-    {w: β ^ y · w} leibnitz q
+    {e: β ^ e · (b f)} leibnitz p,
+    {e: β ^ c · e} leibnitz q
   }
 
 ## the shadow is closed under withwends.
 show let shadow_/
   : [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f likeshaped,
-    y: β, a reach p: f shadow y, f shadow (y /)]
-  ≔ (a /) reach ((f /_f hom a) throughgo ({w: β ^ w /} leibnitz p))
+    b: β, a reach p: f shadow b, f shadow (b /)]
+  ≔ (a /) reach ((f /_f hom a) throughgo ({c: β ^ c /} leibnitz p))
 
 ## the first evenshaper setting, without quotient ilks: two worths have
 ## one shadow exactly when they lie in one coset of the kernel. so the warp from
@@ -108,8 +108,8 @@ show let fibre_kernel
     a: α, b: α, same: (a f) = (b f), f kernel (a /· b)]
   ≔ >{throughgo,
     (a /) hom b,
-    {z: β ^ z · (b f)} leibnitz (f /_f hom a),
-    {z: β ^ (z /) · (b f)} leibnitz same,
+    {c: β ^ c · (b f)} leibnitz (f /_f hom a),
+    {c: β ^ (c /) · (b f)} leibnitz same,
     (b f) /_·
   }
 
@@ -118,12 +118,12 @@ show let kernel_fibre
     a: α, b: α, in_kernel: f kernel (a /· b), (a f) = (b f)]
   ≔ (
     let undone: ((((a f) /) · (b f)) = one)
-      ≔ ((({z: β ^ z · (b f)} leibnitz (f /_f hom a)) evenmete) throughgo
+      ≔ ((({c: β ^ c · (b f)} leibnitz (f /_f hom a)) evenmete) throughgo
         (((a /) hom b) evenmete)) throughgo in_kernel
     let inverses: (((a f) /) = ((b f) /)) ≔ (b f) /_alone ((a f) /) undone
     yield >{throughgo,
       ((a f) /_/) evenmete,
-      {z: β ^ z /} leibnitz inverses,
+      {c: β ^ c /} leibnitz inverses,
       (b f) /_/
     }
   )

@@ -67,9 +67,7 @@ let ordered_scoreline
 let scoreline_of: [g: game, string ∑ scoreline]
   ≔ g.home_score checked_score $ bind {
     home_score ^
-      g.away_score checked_score $ bind {
-        away_score ^ g ordered_scoreline home_score away_score
-      }
+      g.away_score checked_score $ bind (g ordered_scoreline home_score)
   }
 
 let settle: [g: game, match_outcome] ≔ match g scoreline_of {
@@ -95,7 +93,7 @@ let eke_outcome: [standing, match_outcome, standing] ≔ {
     }
 }
 
-let atfold_outcome
+let onwend_outcome
   : [standings: standing list, outcome: match_outcome, standing list]
   ≔ standings warp {s ^ s eke_outcome outcome}
 
@@ -159,7 +157,7 @@ let eftbare: [outcomes: match_outcome list, 𝟙 deed] ≔ >{then,
   outcomes each print_outcome,
   '' write_line,
   'standings' write_line,
-  outcomes gather₁ initial_standings atfold_outcome $ each print_standing
+  outcomes gather₁ initial_standings onwend_outcome $ each print_standing
 }
 
 let main: 𝟙 deed ≔ >{then,

@@ -14,22 +14,22 @@ show flock semilattice_upper: [α: *, *] {
 
 bizen: [@β: *, @: β semilattice_upper, @α: *, (α → β) semilattice_upper] {
   let ∨: [f:, g:, a:] ≔ (a f) ∨ (a g)
-  let ∨_swallow: [f:] ≔ {a ^ (a f) ∨_swallow} fall_umtake
-  let ∨_swap: [f:, g:] ≔ {a ^ (a f) ∨_swap (a g)} fall_umtake
-  let ∨_∨: [f:, g:, h:] ≔ {a ^ (a f) ∨_∨ (a g) (a h)} fall_umtake
+  let ∨_swallow: [f:] ≔ {a ^ (a f) ∨_swallow} fall_umfang
+  let ∨_swap: [f:, g:] ≔ {a ^ (a f) ∨_swap (a g)} fall_umfang
+  let ∨_∨: [f:, g:, h:] ≔ {a ^ (a f) ∨_∨ (a g) (a h)} fall_umfang
 }
 
 ## for a whole order, `a ∨ b` is `b` when `a ≤ b` holdeth.
 show let ∨_yea
   : [@α: *, @: α order_whole, a: α, b: α, k: (a ≤ b) = yea,
     ((a ≤ b) if b a) = b]
-  ≔ {x: 𝟚 ^ x if b a} leibnitz k
+  ≔ {c: 𝟚 ^ c if b a} leibnitz k
 
 ## for a whole order, `a ∨ b` is `a` when `a ≤ b` faileth.
 show let ∨_nay
   : [@α: *, @: α order_whole, a: α, b: α, k: (a ≤ b) = nay,
     ((a ≤ b) if b a) = a]
-  ≔ {x: 𝟚 ^ x if b a} leibnitz k
+  ≔ {c: 𝟚 ^ c if b a} leibnitz k
 
 let helpsetting_∨_swap
   : [@α: *, @: α order_whole, a: α, b: α, ((a ≤ b) if b a) = ((b ≤ a) if a b)]

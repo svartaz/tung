@@ -69,12 +69,18 @@ interface SourceSyntax {
   scopes: [start: number, end: number, scopeStart: number, scopeEnd: number][];
 }
 // the compiler's names for a document: each written name checking resolved
-// to a global, the names it may write at top level, and the file each bring
-// path it reacheth resolved to. a module is `<root>` for the document itself,
-// `<primitive>`, or a bring path.
+// to a global and whether that global nameth an ilk, the names it may write
+// at top level, and the file each bring path it reacheth resolved to. a module
+// is `<root>` for the document itself, `<primitive>`, or a bring path.
 interface SourceNames {
   files: Record<string, string>;
-  resolved: [start: number, end: number, module: string, name: string][];
+  resolved: [
+    start: number,
+    end: number,
+    module: string,
+    name: string,
+    ilk: boolean,
+  ][];
   visible: [
     written: string,
     module: string,
@@ -508,7 +514,8 @@ const isResult = (value: unknown): value is CompilerResult => {
             Array.isArray(entry) &&
             isRange(entry[0], entry[1]) &&
             typeof entry[2] === "string" &&
-            typeof entry[3] === "string",
+            typeof entry[3] === "string" &&
+            typeof entry[4] === "boolean",
         ) &&
         Array.isArray(value.visible) &&
         value.visible.every(

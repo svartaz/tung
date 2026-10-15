@@ -2,7 +2,7 @@
 # matching on `eftbend` replaceth one side of an equation with the other.
 show ilk =: [@α: *, a: α, α, *] { eftbend: a = @α a }
 
-## sameness is kept by atfolding a fall.
+## sameness is kept by onwending a fall.
 show let leibnitz
   : [@α: *, @β: *, @a: α, @b: α, f: [α, β], eftbend: a = b, (a f) = (b f)]
   ≔ eftbend
@@ -21,7 +21,7 @@ show let throughgo
 show let throughbear
   : [@α: *, @a: α, @b: α, @property: [α, *], eftbend: a = b, a property,
     b property]
-  ≔ {x ^ x}
+  ≔ {c ^ c}
 
 ## a computed worth with the soothing of what it is, so that a case fall can
 ## match the worth and still know it: in
@@ -31,9 +31,10 @@ show let inlook
   : [@α: *, @property: [α, *], a: α, f: [b: α, a = b, b property], a property]
   ≔ a f eftbend
 
-## fall umtaking: a fall that agreeth with another at every input is the same as
+## fall umfanging: a fall that agreeth with another at every input is the same
+## as
 ## it.
 ## it is a listed assumption, as in agda and lean, where it is not provable
 ## from sameness unbuilding alone.
-show orsetting fall_umtake
+show orsetting fall_umfang
   : [@α: *, @β: *, @f: [α, β], @g: [α, β], [a: α, (a f) = (a g)], f = g]

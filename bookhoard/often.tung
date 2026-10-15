@@ -17,9 +17,9 @@ bring flock/algebra/whole/ring.tung
 bring flock/algebra/whole/semiring.tung
 bring flock/elementary.tung
 bring flock/functor.tung
-bring flock/functor/atfoldsome.tung
 bring flock/functor/bifunctor.tung
 bring flock/functor/monad.tung
+bring flock/functor/onwendsome.tung
 bring flock/hath_from_string.tung
 bring flock/hath_inhold.tung
 bring flock/hath_same.tung
@@ -28,13 +28,13 @@ bring flock/order/hath_at_most.tung
 bring flock/order/lattice.tung
 bring flock/order/lattice_hemmed.tung
 bring flock/order/lattice_spreadsome.tung
-bring flock/order/midfill.tung
 bring flock/order/order_half.tung
 bring flock/order/order_whole.tung
 bring flock/order/semilattice_hemmed_upper.tung
 bring flock/order/semilattice_lower.tung
 bring flock/order/semilattice_upper.tung
 bring flock/order/semilattice_upper_hemmed.tung
+bring flock/order/upfill.tung
 bring ilk/float.tung
 bring ilk/kindful.tung
 bring ilk/naught.tung
@@ -71,7 +71,7 @@ show hath_≤, order_half, order_whole
 
 show semilattice_lower, semilattice_upper, lattice, lattice_spreadsome
 
-show semilattice_hemmed_upper, semilattice_upper_hemmed, lattice_hemmed, midfill
+show semilattice_hemmed_upper, semilattice_upper_hemmed, lattice_hemmed, upfill
 
 show hath_to_string, hath_from_string
 
@@ -79,7 +79,7 @@ show hath_+, hath_naught, monoid_+, hath_·, hath_one, monoid_·, semiring
 
 show hath_-, -+, ∸, ring, hath_÷, field, hath_%, euclidean
 
-show functor, bifunctor, atfoldsome, monad, hath_∋
+show functor, bifunctor, onwendsome, monad, hath_∋
 
 show elementary
 
@@ -93,7 +93,7 @@ show write, write_line, read
 
 show random
 
-show fork, wait, outstrike, wait_for, sleep
+show fork, wait, strike, wait_for, sleep
 
 show ≍, ≭
 
@@ -119,7 +119,7 @@ show warp
 
 show biwarp
 
-show sheer, atfold, lift₂, lift₃, keep_first, keep_other
+show sheer, onwend, lift₂, lift₃, keep_first, keep_other
 
 show flat, bind, then, void
 

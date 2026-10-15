@@ -284,7 +284,7 @@ flockDeclarationBody :: Parser Declaration
 flockDeclarationBody tokens@(TIdent name : TColon : rest) = localTerms memberNames tokens do
   plainName tokens name
   markFirst "class" (familyModifiers rest) tokens
-  (signature, afterSignature) <- unscoped $ typeRoles (atom rest)
+  (signature, afterSignature) <- unscoped (typeRoles . atom) rest
   parameters <- case signature of
     Product parameters Universe -> pure parameters
     Universe -> pure []
@@ -326,7 +326,7 @@ bizenHeader fallback priority tokens = case tokens of
   marker@(TIdent "fallback") : rest | not fallback, Nothing <- priority -> markRole "keyword" [] marker >> bizenHeader True priority rest
   TNatural value : rest | Nothing <- priority -> bizenHeader fallback (Just (toInteger value)) rest
   TColon : rest -> do
-    (parts, afterType) <- unscoped $ typeRoles (applicationPartsUntil (== TLBrace) rest)
+    (parts, afterType) <- unscoped (typeRoles . applicationPartsUntil (== TLBrace)) rest
     ty <- liftAt rest (application parts)
     markClass ty
     case afterType of
@@ -374,7 +374,7 @@ inductiveDeclarationBody tokens@(TIdent name : TColon : rest) = localTerms heade
   markFirst "type" (familyModifiers rest) tokens
   -- the braces belong to the declaration. compound signatures can use a
   -- bracketed product or parentheses, leaving the opening brace unambiguous.
-  (signature, afterSignature) <- unscoped $ typeRoles (atom rest)
+  (signature, afterSignature) <- unscoped (typeRoles . atom) rest
   case afterSignature of
     TLBrace : afterOpen -> first (InductiveDeclaration name signature) <$> constructorDeclarations afterOpen
     _ -> failAt afterSignature "expected '{' after ilk signature"
@@ -413,7 +413,7 @@ letDeclarationBody fixpoint tokens = do
     _ -> failAt tokens ("expected " ++ keyword ++ " name")
   (annotation, bodyTokens) <- case afterHeader of
     TColon : rest -> do
-      (ty, afterType) <- unscoped $ typeRoles (letAnnotation rest)
+      (ty, afterType) <- unscoped (typeRoles . letAnnotation) rest
       case afterType of
         TEquals : body -> pure (Just ty, body)
         _ -> failAt afterType ("expected '≔' after " ++ keyword ++ " annotation")
@@ -805,11 +805,13 @@ lambdaBinder :: Parser Binder
 lambdaBinder (TAt : rest) = binder Implicit rest
 lambdaBinder rest = binder Explicit rest
 
+-- a typed or implicit binder is a parameter of its row.
 binder :: Plicity -> Parser Binder
-binder plicity (TIdent name : TColon : rest) = do
+binder plicity tokens@(TIdent name : TColon : rest) = do
+  markFirst "parameter" ["declaration"] tokens
   (annotation, remaining) <- typeRoles (expression rest)
   pure (Binder plicity (bindingName name) (Just annotation), remaining)
-binder plicity (TIdent name : rest) = pure (Binder plicity (bindingName name) Nothing, rest)
+binder plicity tokens@(TIdent name : rest) = markFirst "parameter" ["declaration"] tokens >> pure (Binder plicity (bindingName name) Nothing, rest)
 binder _ tokens = failAt tokens "a typed or implicit binder requireth a name"
 
 block :: Parser Expression
@@ -871,9 +873,15 @@ scoped parser tokens = case parser tokens of
   result -> result
 
 -- a declaration's header is seen by the whole declaration, so the header's
--- own brackets give its binders no narrower scope.
-unscoped :: Result a -> Result a
-unscoped (Result value marks) = Result value (Seq.filter (\case MarkScope {} -> False; _ -> True) marks)
+-- own bracket, which endeth with it, giveth its binders no narrower scope. an
+-- inner construct's scope, as a lambda's or an inner bracket's, endeth
+-- earlier and is kept.
+unscoped :: Parser a -> Parser a
+unscoped parser tokens = case parser tokens of
+  Result outcome@(Right (_, rest)) marks
+    | Just (SourceSpan _ end) <- consumedSpan tokens rest ->
+        Result outcome (Seq.filter (\case MarkScope _ (SourceSpan _ scopeEnd) -> scopeEnd /= end; _ -> True) marks)
+  result -> result
 
 marked :: NodeKind -> Parser a -> Parser a
 marked kind parser tokens = do

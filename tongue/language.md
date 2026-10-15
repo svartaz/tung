@@ -482,7 +482,7 @@ let evenmete: [@α: *, @x: α, @y: α, p: x = y, y = x] ≔
 ```
 
 `is.tung` also provideth `leibnitz`, `evenmete`, `throughgo`, `throughbear`,
-`inlook`, and function extensionality as the orsetting `fall_umtake`.
+`inlook`, and function extensionality as the orsetting `fall_umfang`.
 
 - `sorry` inhabiteth any expected type as an unfinished assumption. inspecting
   it faileth at runtime; leaving it unused doth nothing.
@@ -504,7 +504,7 @@ constructor fields; contained functions and deeds stay unperformed.
 - `sheer` wrappeth a value; `warp` changeth the result; `bind` chooseth the
   next deed from it; `then` performeth two and keepeth the latter result, and
   `>{then, a, b, c}` performeth several in order.
-- `lift₂`, `atfold`, and `each` perform deeds left to right.
+- `lift₂`, `onwend`, and `each` perform deeds left to right.
 - a [fast declaration](#local-blocks-and-recursion) loopeth without bound;
   bounded repetition useth induction. calling a fast function buildeth a deed
   and performeth nothing. performing it evaluateth its inputs to their outer
@@ -528,9 +528,10 @@ this sequencing:
   `misfare` faileth, `handle` handleth a fault, and `bind` stoppeth at it.
 - `deed/hade.tung`: `σ hade α` wrappeth `[σ, (α ∏ σ) deed]`; `get`, `put`,
   and `tweak` read and change the state.
-- both provide `lift` and `run`; qualify them when both are imported.
+- both provide `lift` and `unwrap`, which giveth the deed beneath; qualify
+  them when both are imported.
 
-tasks are opaque: `fork`, `wait`, `wait_for`, and `outstrike` control them.
+tasks are opaque: `fork`, `wait`, `wait_for`, and `strike` control them.
 
 ## host bindings
 
@@ -625,7 +626,7 @@ the root manifest may restrict orsettings:
 ```yaml
 dependencies: {}
 proof:
-  orsettings: [is~fall_umtake]
+  orsettings: [is~fall_umfang]
 ```
 
 - an absent policy alloweth every orsetting; `orsettings: []` alloweth none.

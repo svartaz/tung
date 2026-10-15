@@ -1,14 +1,15 @@
 -- | the canonical two-space neatener for the cli and editor. it parseth the
--- source first and refuseth what doth not parse. layout then followeth only
--- the tokens, their brackets, and the comments between them: whitespace in
--- the source never changeth the output, so each concrete syntax tree hath
--- one neat form, and neatening is idempotent.
+-- source first and refuseth what doth not parse. it shorteneth each redundant
+-- η-expansion, `{a ^ a f}` to `f`, and droppeth redundant parentheses. layout
+-- then followeth only the tokens, their brackets, and the comments between
+-- them: whitespace in the source never changeth the output, so each concrete
+-- syntax tree hath one neat form, and neatening is idempotent.
 module Tung.Format (formatSource) where
 
 import Control.Applicative ((<|>))
 import Control.Monad (guard)
 import Data.Char (isSpace)
-import Data.List (dropWhileEnd, intercalate, isPrefixOf, sort, sortOn)
+import Data.List (dropWhileEnd, intercalate, isPrefixOf, nub, sort, sortOn)
 import Data.Maybe (fromMaybe, isNothing, listToMaybe)
 import Tung.Concrete (Leaf (..), NodeKind (..), Tree (..))
 import Tung.Dependent.Source.Parse (parseProgram, sourceTree)
@@ -20,18 +21,173 @@ lineLimit :: Int
 lineLimit = 80
 
 formatSource :: String -> Either String String
-formatSource source = do
-  _ <- parseProgram source
-  let (declarations, closing) = topLevel (sourceTree source)
+formatSource written = do
+  _ <- parseProgram written
+  let source = shorten written
+      (declarations, closing) = topLevel (sourceTree source)
       rendered = renderDeclarations (sortBrings declarations) closing
       result = intercalate "\n" (alignRows (map (dropWhileEnd blank) (outLines rendered)))
       output = if all isSpace result then "" else dropWhileEnd (== '\n') result ++ "\n"
-  -- the neatener only moveth whitespace and comments, so the tokens agree.
+  -- layout only moveth whitespace and comments, so the tokens agree.
   after <- lexTokens output
   before <- lexTokens source
   if sort (map show after) == sort (map show before)
     then Right output
     else Left "the neatener changed the tokens; this is a compiler fault"
+
+-- shortening rewriteth tokens before layout: η-expansions and redundant
+-- parentheses, until neither applieth, as dropping one may expose the other.
+shorten :: String -> String
+shorten written = let once = shortenParens (shortenEta written) in if once == written then written else shorten once
+
+-- a lambda whose binders are its body's last arguments is η-expanded:
+-- `{a₁, …, aₙ ^ a₁ f a₂ … aₙ}` is `f`, and `{b ^ m tweak b}` is `m tweak`,
+-- parenthesised unless the lambda is a whole expression. its
+-- binders are distinct bare names, the rest is names and literals that never
+-- name a binder, and no comment standeth inside. an annotated binder keepeth
+-- its expansion, as elaboration may need it. the neatener readeth no names,
+-- so a binder may be a constructor; a one-row match on one then checketh only
+-- when that constructor is its ilk's sole, nullary one, and the shortened
+-- function agreeth with it on every input. a shortening may complete an
+-- outer one, so it is repeated.
+shortenEta :: String -> String
+shortenEta source = maybe source (shortenEta . concatMap T.pieceText) (rewrite [] (T.lexPieces source))
+  where
+    -- the lexemes before the brace, nearest first.
+    rewrite before pieces = case pieces of
+      [] -> Nothing
+      opening@T.Piece {T.pieceKind = T.Lexeme TLBrace} : rest
+        | not (matchRows before),
+          (inside, T.Piece {T.pieceKind = T.Lexeme TRBrace} : after) <- break closing rest,
+          all spaceOrLexeme inside,
+          Just kept <- reduced [(token, T.pieceText piece) | piece@T.Piece {T.pieceKind = T.Lexeme token} <- inside] ->
+            let alone = wholeExpression before after
+                text = case kept of
+                  [single] -> single
+                  _ | alone -> unwords kept
+                  _ -> "(" ++ unwords kept ++ ")"
+             in Just (opening {T.pieceText = text} : after)
+      first : rest -> (first :) <$> rewrite (lexemes first ++ before) rest
+    -- `match scrutinees {rows}`: its brace holdeth rows, not a function.
+    matchRows = (== Just TMatch) . listToMaybe . dropWhile (`notElem` (TMatch : expressionStarts))
+    closing = \case
+      T.Piece {T.pieceKind = T.Lexeme token} -> token `elem` [TLBrace, TRBrace]
+      _ -> False
+    -- the written tokens that remain, or nothing when the lambda is needed.
+    reduced written = do
+      let tokens = map fst written
+      (header, TMapsTo : body) <- Just (break (== TMapsTo) tokens)
+      binders <- names header
+      guard ("_" `notElem` binders && nub binders == binders)
+      let bound = map TIdent binders
+          count = length binders
+          offset = length header + 1
+          texts = map snd (drop offset written)
+          free = all (`notElem` bound)
+      case body of
+        -- every argument is a binder: `a₁ f a₂ … aₙ` is `f`.
+        first : function@(TIdent _) : others
+          | first : others == bound, free [function] -> Just [texts !! 1]
+        _
+          | length body - count >= 2,
+            drop (length body - count) body == bound,
+            all atomic (take (length body - count) body),
+            free (take (length body - count) body) ->
+              Just (take (length body - count) texts)
+        _ -> Nothing
+    atomic = \case
+      TIdent "_" -> False
+      TKindStar -> False
+      TSorry -> False
+      token -> literalOrName token
+    names = \case
+      [TIdent name] -> Just [name]
+      TIdent name : TComma : rest -> (name :) <$> names rest
+      _ -> Nothing
+
+-- parentheses are redundant where the parse cannot change: around one atom,
+-- a name, literal, or bracketed group, unless `@(…)` writeth an implicit
+-- argument or a `:` or `.` followeth; and around a run of atoms that is a
+-- whole expression. a comment inside keepeth them, and each becometh a space,
+-- so no tokens join.
+shortenParens :: String -> String
+shortenParens source = maybe source (shortenParens . concatMap T.pieceText) (strip [] (T.lexPieces source))
+  where
+    strip before pieces = case pieces of
+      [] -> Nothing
+      opening@T.Piece {T.pieceKind = T.Lexeme TLParen} : rest
+        | (inside, closer@T.Piece {T.pieceKind = T.Lexeme TRParen} : after) <- matching 0 rest,
+          all spaceOrLexeme inside,
+          Just items <- atoms (concatMap lexemes inside),
+          redundant before after items ->
+            let space piece = piece {T.pieceText = " ", T.pieceKind = T.Space}
+             in Just (space opening : inside ++ space closer : after)
+      first : rest -> (first :) <$> strip (lexemes first ++ before) rest
+    redundant before after = \case
+      [_] -> listToMaybe before /= Just TAt && listToMaybe (concatMap lexemes after) `notElem` [Just TColon, Just TDot]
+      _ : _ : _ -> wholeExpression before after
+      [] -> False
+    -- the pieces before the bracket that closeth this depth, and the rest.
+    matching :: Int -> [T.Piece] -> ([T.Piece], [T.Piece])
+    matching depth pieces = case pieces of
+      [] -> ([], [])
+      piece : rest
+        | depth == 0, closes piece -> ([], pieces)
+        | otherwise ->
+            let (inner, outer) = matching (depth + fromEnum (opens piece) - fromEnum (closes piece)) rest
+             in (piece : inner, outer)
+    opens = any opener . lexemes
+    closes = any closer . lexemes
+    opener token = token `elem` [TLParen, TLBracket, TLBrace] || isBraceKeyword token
+    closer token = token `elem` [TRParen, TRBracket, TRBrace]
+    -- the top-level items of a run, each an atom or a bracketed group.
+    atoms tokens = case tokens of
+      [] -> Just []
+      token : rest
+        | literalOrName token -> (() :) <$> atoms rest
+        | opener token -> (() :) <$> (atoms =<< afterGroup (0 :: Int) rest)
+        | otherwise -> Nothing
+    afterGroup depth = \case
+      [] -> Nothing
+      token : rest
+        | closer token -> if depth == 0 then Just rest else afterGroup (depth - 1) rest
+        | opener token -> afterGroup (depth + 1) rest
+        | otherwise -> afterGroup depth rest
+
+-- a whole expression followeth one of these, or `yield`, and precedeth a
+-- closing bracket, a separator, the next declaration, or the end.
+expressionStarts :: [Token]
+expressionStarts = [TLParen, TLBracket, TLBrace, TComma, TMapsTo, TEquals, TSemicolon]
+
+wholeExpression :: [Token] -> [T.Piece] -> Bool
+wholeExpression before after =
+  maybe False (`elem` (TYield : expressionStarts)) (listToMaybe before)
+    && maybe True (`elem` ends) (listToMaybe (concatMap lexemes after))
+  where
+    ends = [TRParen, TRBracket, TRBrace, TComma, TSemicolon, TLet, TFix, TExport, TType, TClass, TInstance, TOrsend, TImport, TYield]
+
+lexemes :: T.Piece -> [Token]
+lexemes = \case
+  T.Piece {T.pieceKind = T.Lexeme token} -> [token]
+  _ -> []
+
+spaceOrLexeme :: T.Piece -> Bool
+spaceOrLexeme = \case
+  T.Piece {T.pieceKind = T.Space} -> True
+  T.Piece {T.pieceKind = T.Lexeme _} -> True
+  _ -> False
+
+literalOrName :: Token -> Bool
+literalOrName = \case
+  TIdent _ -> True
+  TNatural _ -> True
+  TInteger _ -> True
+  TFloat _ -> True
+  TUnicode _ -> True
+  TText _ -> True
+  TKindStar -> True
+  TSorry -> True
+  _ -> False
 
 -- a token's own text with the comments before it and the one that endeth its
 -- line, as the concrete tree attacheth them.

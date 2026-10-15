@@ -32,7 +32,7 @@ show let wait: [@α: *, α task, (α maybe) deed] ≔ 'wait' fremmed
 
 show let wait_for: [@α: *, α task, ℕ, (α maybe) deed] ≔ 'wait_for' fremmed
 
-show let outstrike: [@α: *, α task, 𝟙 deed] ≔ 'outstrike' fremmed
+show let strike: [@α: *, α task, 𝟙 deed] ≔ 'strike' fremmed
 
 show let eke_float: [float, float, float] ≔ 'eke_float' fremmed
 

@@ -38,20 +38,20 @@ typeCompositionCases =
 
 kindCases :: [Test]
 kindCases =
-  [ typeOk "requirement inferreth a higher kind" "flock functor:[f:[*, *], *] {} flock atfoldsome:[f:[*, *], @:f functor, *] {}",
+  [ typeOk "requirement inferreth a higher kind" "flock functor:[f:[*, *], *] {} flock onwendsome:[f:[*, *], @:f functor, *] {}",
     typeOk "requirements reuse an owner parameter" "flock hath_≍:[a:*, *] {} flock owner:[a:*, *] { let id:[@:a hath_≍, a, a] }",
     typeOk "explicit requirement parameter may shadow a visible type" "ilk a: * {} flock hath_≍:[x:*, *] {} let keep:[@a:*, @:a hath_≍, x:a, a] ≔ x",
     typeOk "a compound requirement useth declared kinds" "flock hath_≍:[x:*, *] {} flock higher:[a:*, f:[*, *], @:(a f) hath_≍, *] { let keep:[a f, a f] }",
     typeOk "requirement parameter order supporteth explicit type input" "flock hath_≍:[a:*, *] {} bizen:ℤ hath_≍ {} let keep:[@a:*, @:a hath_≍, @b:*, x:a, _:b, a] ≔ x let outcome:ℤ ≔ +1 keep @ℤ @string 'x'",
     typeOk "compound requirement followeth source parameter order" "ilk _pair: [a:*, b:*, *] { pair: [a, b, a _pair b] } flock hath_≍:[a:*, *] {} bizen:(ℤ _pair string) hath_≍ {} let keep:[@a:*, @f:[*, *, *], @b:*, @:(a f b) hath_≍, x:a f b, a f b] ≔ x let outcome:ℤ _pair string ≔ (+1 pair 'x') keep @ℤ @_pair @string",
-    typeOk "forward class requirements resolve kinds" "flock atfoldsome:[f:[*, *], @:f functor, *] {} flock functor:[f:[*, *], *] {}",
+    typeOk "forward class requirements resolve kinds" "flock onwendsome:[f:[*, *], @:f functor, *] {} flock functor:[f:[*, *], *] {}",
     typeOk "a child may require a parent declared later" "flock child:[a:*, f:[*, *], @:a parent f, *] {} flock parent:[a:*, f:[*, *], @:(a f) hath_≍, *] { let worth:[ℤ f, ℤ f] } flock hath_≍:[a:*, *] {}",
     typeErrContaining "a requirement's kinds must agree with its flock" "cannot unify * with [*, *]" "flock child:[a:*, f:*, @:a parent f, *] {} flock parent:[a:*, f:[*, *], *] {}",
     typeErrContaining "a requirement nameth only declared parameters" "unknown name 'a'" "flock hath_≍:[a:*, *] {} let bad:[@:a hath_≍, @a:*, x:a, a] ≔ x",
     typeOk "expected GADT index floweth through a local block" "ilk tag: [a:*, *] { integer: [ℤ, ℤ tag], word: [string, string tag] } let get:[@a:*, x:a tag, a] ≔ (let y ≔ x yield match y { n integer ^ n, s word ^ s })",
     typeOk "expected GADT index floweth through a field" "ilk tag: [a:*, *] { integer: [ℤ, ℤ tag], word: [string, string tag] } ilk box: [a:*, *] { box_of: [worth: a, a box] } let get:[@a:*, x:a tag, a box] ≔ (match x { n integer ^ n, s word ^ s }) box_of",
     typeErr "an annotated strict initializer cannot refer to itself" "let worth:ℤ ≔ worth",
-    typeOkWith "imported class supplyeth parameter kinds" "bring classes.tung c flock atfoldsome:[f:[*, *], @:f c~functor, *] {}" (Map.singleton "classes.tung" "show flock functor:[f:[*, *], *] {}"),
+    typeOkWith "imported class supplyeth parameter kinds" "bring classes.tung c flock onwendsome:[f:[*, *], @:f c~functor, *] {}" (Map.singleton "classes.tung" "show flock functor:[f:[*, *], *] {}"),
     typeErr "ordinary type parameter cannot be a constructor" "let bad:[@a:*, @f:*, a f, a f] ≔ {x ^ x}",
     typeErr "requirements reject conflicting kinds" "flock hath_≍:[a:*, *] {} flock functor:[f:[*, *], *] {} flock bad:[a:*, @:a hath_≍, @:a functor, *] {}",
     typeErrContaining "a flock requirement nameth only declared parameters" "unknown name 'f'" "flock functor:[f:[*, *], *] {} flock bad:[@:f functor, *] {}"
@@ -63,7 +63,7 @@ kindCases =
         ("ordinary ilk parameter cannot be applied", "ilk box: [a:*, *] { make: [a a, a box] }"),
         ("primitive type cannot bizen a higher kind parameter", "ilk free: [f:[*, *], a:*, *] { bad: ℤ free a }"),
         ("flock member cannot use a constructor parameter as a worth type", "flock bad:[f:[*, *], *] { let wrong:[f, f] }"),
-        ("flock member cannot atfold an ordinary type parameter", "flock bad:[a:*, *] { let wrong:[ℤ a, ℤ] }")
+        ("flock member cannot onwend an ordinary type parameter", "flock bad:[a:*, *] { let wrong:[ℤ a, ℤ] }")
       ]
 
 -- unused binders still have kinds. exercise the same rule through binding,
@@ -92,7 +92,7 @@ annotationScopeCases =
   [ typeErrContaining label ("unknown name '" ++ name ++ "'") source
   | (label, name, source) <-
       [ ("annotation requireth an explicit parameter", "a", "let id:[x:a, a] ≔ x"),
-        ("nested annotation cannot introduce a free variable", "b", "let atfold:[@a:*, f:[a, b], x:a, a] ≔ x"),
+        ("nested annotation cannot introduce a free variable", "b", "let onwend:[@a:*, f:[a, b], x:a, a] ≔ x"),
         ("ascription requireth a scoped type", "a", "let id: [x:] ≔ (x:a)"),
         ("type constructor variable requireth a declaration", "f", "let id:[x:ℤ f, ℤ f] ≔ x"),
         ("constructor existential requireth a declaration", "a", "ilk packed: * { pack: [a, packed] }"),
@@ -170,7 +170,7 @@ accepted =
     ("bizen context dischargeth inner need", equalPrelude ++ boxData ++ "bizen:[@a:*, @:a hath_≍, (a _box) hath_≍] { let ≍: [x box:, y box:] ≔ x ≍ y }"),
     ("flock law useth its own methods", "bring is.tung flock hath_sameness:[a:*, *] { let sameness:[a, a] let rule:[x: a, (x sameness) = x] } bizen:ℤ hath_sameness { let sameness: [x:] ≔ x let rule ≔ sorry }"),
     ("a flock may require a proposition that its instances must prove", "bring is.tung flock claimed:[a:*, *] { let rule:[x: ℤ, x = +0] }"),
-    ("flock member carrieth its own constraint", memberConstraint ++ "bizen:maybe functor { let warp: [worth:, f:] ≔ match worth { none ^ none, x some ^ x f $ some } } bizen:maybe atfoldsome { let sheer ≔ some let atfold ≔ { x some, f some ^ x f $ some, _, _ ^ none } } bizen:maybe hath_throughwend { let throughwend: [worth:, f:] ≔ match worth { none ^ none sheer, x some ^ (x f) warp some } } let lifted:(ℤ maybe) maybe ≔ (+1 some) throughwend some"),
+    ("flock member carrieth its own constraint", memberConstraint ++ "bizen:maybe functor { let warp: [worth:, f:] ≔ match worth { none ^ none, x some ^ x f $ some } } bizen:maybe onwendsome { let sheer ≔ some let onwend ≔ { x some, f some ^ x f $ some, _, _ ^ none } } bizen:maybe hath_throughwend { let throughwend: [worth:, f:] ≔ match worth { none ^ none sheer, x some ^ (x f) warp some } } let lifted:(ℤ maybe) maybe ≔ (+1 some) throughwend some"),
     ("existing parent bizen satisfieth child", classHierarchy ++ "bizen:ℤ hath_parent { let parent: [x:] ≔ x } bizen:ℤ hath_child { let child: [x:] ≔ x }"),
     ("child bizen may supply parent member", classHierarchy ++ "bizen:ℤ hath_child { let parent: [x:] ≔ x let child: [x:] ≔ x } let ok:ℤ ≔ +1 parent"),
     ("parametric child bizen useth its parent method", inheritedMethodHierarchy),
@@ -417,8 +417,8 @@ memberConstraint :: String
 memberConstraint =
   "ilk maybe: [a:*, *] { none: a maybe, some: [a, a maybe] } ilk _box: [a:*, *] { box: [a, a _box] } "
     ++ "flock functor:[f:[*, *], *] { let warp:[@a:*, @b:*, a f, [a, b], b f] } "
-    ++ "flock atfoldsome:[f:[*, *], @:f functor, *] { let sheer:[@a:*, a, a f] let atfold:[@a:*, @b:*, a f, [a, b] f, b f] } "
-    ++ "flock hath_throughwend:[f:[*, *], *] { let throughwend:[@m:[*, *], @:m atfoldsome, @a:*, @b:*, a f, [a, b m], (b f) m] } "
+    ++ "flock onwendsome:[f:[*, *], @:f functor, *] { let sheer:[@a:*, a, a f] let onwend:[@a:*, @b:*, a f, [a, b] f, b f] } "
+    ++ "flock hath_throughwend:[f:[*, *], *] { let throughwend:[@m:[*, *], @:m onwendsome, @a:*, @b:*, a f, [a, b m], (b f) m] } "
 
 matchSource :: Int -> Maybe [String] -> String
 matchSource arity omitted =

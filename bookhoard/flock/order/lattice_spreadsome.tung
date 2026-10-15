@@ -14,8 +14,8 @@ show flock lattice_spreadsome: [α: *, @: α lattice, *] {
 }
 
 bizen: [@β: *, @: β lattice_spreadsome, @α: *, [α, β] lattice_spreadsome] {
-  let ∧_∨: [f:, g:, h:] ≔ {a ^ (a f) ∧_∨ (a g) (a h)} fall_umtake
-  let ∨_∧: [f:, g:, h:] ≔ {a ^ (a f) ∨_∧ (a g) (a h)} fall_umtake
+  let ∧_∨: [f:, g:, h:] ≔ {a ^ (a f) ∧_∨ (a g) (a h)} fall_umfang
+  let ∨_∧: [f:, g:, h:] ≔ {a ^ (a f) ∨_∧ (a g) (a h)} fall_umfang
 }
 
 let helpsetting_∧_∨
@@ -28,7 +28,7 @@ let helpsetting_∧_∨
       yea, k₁ ^
         ((a ∧_yea c (a ≤_yea_throughgo b c k₁ k₀)) throughgo
           ((a ∧_yea a (a ≤_eftbend)) evenmete)) throughgo
-          ({x: α ^ (a ≤ x) if x a} leibnitz
+          ({d: α ^ (a ≤ d) if d a} leibnitz
             ((a ∧_yea c (a ≤_yea_throughgo b c k₁ k₀)) evenmete)),
       nay, k₁ ^ (a ≤ c) inlook {
         yea, _ ^ (b ∨_yea a (a ≤_flip b k₁)) evenmete,
@@ -56,7 +56,7 @@ let helpsetting_∨_∧
   ≔ (b ≤ c) inlook {
     yea, k₀ ^ (a ≤ b) inlook {
       yea, k₁ ^
-        (({x: α ^ (b ≤ x) if b x} leibnitz
+        (({d: α ^ (b ≤ d) if b d} leibnitz
           (a ∨_yea c (a ≤_yea_throughgo b c k₁ k₀))) throughgo (b ∧_yea c k₀))
           evenmete,
       nay, _ ^ (a ≤ c) inlook {

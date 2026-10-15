@@ -116,7 +116,7 @@ show let hummingbird: [@α: *, @β: *, @γ: *, f: [α, β, α, γ], a: α, b: β
 
 # J f x y z = f x (f z y)
 # x and z share a type.
-show let jay: [@α: *, @β: *, f: [α, β, β], a: α, b: β, z: α, β] ≔ a f (z f b)
+show let jay: [@α: *, @β: *, f: [α, β, β], a: α, b: β, c: α, β] ≔ a f (c f b)
 
 # joy f x y = f x
 show let joy: [@α: *, @β: *, @γ: *, f: [α, γ], a: α, b: β, γ] ≔ a f
@@ -143,7 +143,7 @@ show let quizzical: [@α: *, @β: *, @γ: *, a: α, g: [β, γ], f: [α, β], γ
 show let quirky: [@α: *, @β: *, @γ: *, g: [β, α], b: β, f: [α, γ], γ] ≔ (b g) f
 
 # Q4 x y z = z (y x)
-show let quacky: [@α: *, @β: *, @γ: *, x: α, f: [α, β], g: [β, γ], γ] ≔ (x f) g
+show let quacky: [@α: *, @β: *, @γ: *, a: α, f: [α, β], g: [β, γ], γ] ≔ (a f) g
 
 # R x y z = y z x
 show let robin: [@α: *, @β: *, @γ: *, a: α, f: [γ, α, β], c: γ, β] ≔ c f a

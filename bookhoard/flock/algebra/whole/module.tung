@@ -32,27 +32,27 @@ bizen: [@ρ: *, @: ρ ring, ρ module ρ] {
   let one_∘: [a:] ≔ a one_·
 }
 
-## the zero scalar sendeth every worth to `naught`: `x + x = x` forceth
-## `x = naught` by outstriking.
+## the zero scalar sendeth every worth to `naught`: `b + b = b` forceth
+## `b = naught` by outstriking.
 show let naught_∘
-  : [@ρ: *, @μ: *, @: ρ module μ, a: μ, ((naught: ρ) ∘ a) = naught]
+  : [@ρ: *, @μ: *, @: ρ module μ, a: μ, ((naught @ρ) ∘ a) = naught]
   ≔ (
-    let doubled: ((((naught: ρ) ∘ a) + ((naught: ρ) ∘ a)) = ((naught: ρ) ∘ a))
+    let doubled: ((((naught @ρ) ∘ a) + ((naught @ρ) ∘ a)) = ((naught @ρ) ∘ a))
       ≔ ((+_∘ @ρ @μ naught naught a) evenmete) throughgo
         ({s: ρ ^ s ∘ a} leibnitz (naught_+ @ρ naught))
-    yield ((naught: ρ) ∘ a) +_outstrike ((naught: ρ) ∘ a) naught
-      (doubled throughgo ((naught_+ @μ ((naught: ρ) ∘ a)) evenmete))
+    yield ((naught @ρ) ∘ a) +_strike ((naught @ρ) ∘ a) naught
+      (doubled throughgo ((naught_+ @μ ((naught @ρ) ∘ a)) evenmete))
   )
 
 ## every scalar sendeth `naught` to `naught`.
 show let ∘_naught
-  : [@ρ: *, @μ: *, @: ρ module μ, r: ρ, (r ∘ (naught: μ)) = naught]
+  : [@ρ: *, @μ: *, @: ρ module μ, r: ρ, (r ∘ (naught @μ)) = naught]
   ≔ (
-    let doubled: (((r ∘ (naught: μ)) + (r ∘ (naught: μ))) = (r ∘ (naught: μ)))
+    let doubled: (((r ∘ (naught @μ)) + (r ∘ (naught @μ))) = (r ∘ (naught @μ)))
       ≔ ((∘_+ @ρ @μ r naught naught) evenmete) throughgo
-        ({v: μ ^ r ∘ v} leibnitz (naught_+ @μ naught))
-    yield (r ∘ (naught: μ)) +_outstrike (r ∘ (naught: μ)) naught
-      (doubled throughgo ((naught_+ @μ (r ∘ (naught: μ))) evenmete))
+        ({a: μ ^ r ∘ a} leibnitz (naught_+ @μ naught))
+    yield (r ∘ (naught @μ)) +_strike (r ∘ (naught @μ)) naught
+      (doubled throughgo ((naught_+ @μ (r ∘ (naught @μ))) evenmete))
   )
 
 ## a flipped scalar flippeth the outcome.
@@ -69,11 +69,11 @@ show let ∘_-
   : [@ρ: *, @μ: *, @: ρ module μ, r: ρ, a: μ, (r ∘ (a -)) = ((r ∘ a) -)]
   ≔ (r ∘ a) -_alone (r ∘ (a -)) >{throughgo,
     (r ∘_+ (a -) a) evenmete,
-    {v: μ ^ r ∘ v} leibnitz (a group_eke~-_+),
+    {b: μ ^ r ∘ b} leibnitz (a group_eke~-_+),
     r ∘_naught
   }
 
 ## the flipped unit scalar flippeth.
 show let one_-_∘
-  : [@ρ: *, @μ: *, @: ρ module μ, a: μ, (((one: ρ) -) ∘ a) = (a -)]
-  ≔ (one -_∘ a) throughgo ({v: μ ^ v -} leibnitz (a one_∘))
+  : [@ρ: *, @μ: *, @: ρ module μ, a: μ, (((one @ρ) -) ∘ a) = (a -)]
+  ≔ (one -_∘ a) throughgo ({b: μ ^ b -} leibnitz (a one_∘))

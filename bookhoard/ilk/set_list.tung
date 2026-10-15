@@ -16,23 +16,23 @@ show let tight: [@α: *, @: α order_whole, a: α, b: α, 𝟚]
   ≔ (a ≤ b) if ((b ≤ a) if nay yea) nay
 
 show let above: [@α: *, @: α order_whole, a: α, α list, 𝟚] ≔ {
-  empty ^ yea,
-  b ‥ l ^ (a tight b) if (a above l) nay
+  empty  ^ yea,
+  b ‥ b… ^ (a tight b) if (a above b…) nay
 }
 
 show let rowed: [@α: *, @: α order_whole, α list, 𝟚] ≔ {
-  empty ^ yea,
-  a ‥ l ^ (a above l) if (l rowed) nay
+  empty  ^ yea,
+  a ‥ a… ^ (a above a…) if (a… rowed) nay
 }
 
 show let inhold: [@α: *, @: α order_whole, α list, α, 𝟚] ≔ {
-  empty, _ ^ nay,
-  a ‥ l, x ^ (x ≤ a) if (a ≤ x) (l inhold x)
+  empty,  _ ^ nay,
+  a ‥ a…, b ^ (b ≤ a) if (a ≤ b) (a… inhold b)
 }
 
 show let put: [@α: *, @: α order_whole, α list, α, α list] ≔ {
-  empty, x ^ x ‥ empty,
-  a ‥ l, x ^ (x ≤ a) if ((a ≤ x) if (a ‥ l) (x ‥ (a ‥ l))) (a ‥ (l put x))
+  empty,  a ^ a ‥ empty,
+  a ‥ a…, b ^ (b ≤ a) if ((a ≤ b) if (a ‥ a…) (b ‥ (a ‥ a…))) (a ‥ (a… put b))
 }
 
 show let yoke: [@α: *, @: α order_whole, α list, α list, α list] ≔ {
@@ -82,9 +82,9 @@ show let tight_throughgo
   )
 
 show let above_throughgo
-  : [@α: *, @: α order_whole, a: α, b: α, l: α list, first: (a tight b) = yea,
-    leftover: (b above l) = yea, (a above l) = yea]
-  ≔ match l {
+  : [@α: *, @: α order_whole, a: α, b: α, a…: α list, first: (a tight b) = yea,
+    leftover: (b above a…) = yea, (a above a…) = yea]
+  ≔ match a… {
     empty    ^ eftbend,
     c ‥ tail ^
       (a tight c) both_yea (a above tail)
@@ -95,19 +95,19 @@ show let above_throughgo
   }
 
 show let above_put
-  : [@α: *, @: α order_whole, a: α, l: α list, x: α, tail: (a above l) = yea,
-    fresh: (a tight x) = yea, (a above (l put x)) = yea]
-  ≔ match l {
-    empty        ^ (a tight x) both_yea yea fresh eftbend,
-    b ‥ leftover ^ match x ≤ b {
-      yea ^ match b ≤ x {
+  : [@α: *, @: α order_whole, a: α, a…: α list, c: α, tail: (a above a…) = yea,
+    fresh: (a tight c) = yea, (a above (a… put c)) = yea]
+  ≔ match a… {
+    empty        ^ (a tight c) both_yea yea fresh eftbend,
+    b ‥ leftover ^ match c ≤ b {
+      yea ^ match b ≤ c {
         yea ^ tail,
-        nay ^ (a tight x) both_yea (a above (b ‥ leftover)) fresh tail
+        nay ^ (a tight c) both_yea (a above (b ‥ leftover)) fresh tail
       },
       nay ^
-        (a tight b) both_yea (a above (leftover put x))
+        (a tight b) both_yea (a above (leftover put c))
           ((a tight b) yea_if_former (a above leftover) tail)
-          (a above_put leftover x
+          (a above_put leftover c
             ((a tight b) yea_if_latter (a above leftover) tail) fresh)
     }
   }
@@ -116,47 +116,47 @@ show let empty_rowed: [@α: *, @: α order_whole, (empty rowed @α) = yea]
   ≔ eftbend
 
 show let put_rowed
-  : [@α: *, @: α order_whole, l: α list, x: α, held: (l rowed) = yea,
-    ((l put x) rowed) = yea]
-  ≔ match l {
+  : [@α: *, @: α order_whole, a…: α list, b: α, held: (a… rowed) = yea,
+    ((a… put b) rowed) = yea]
+  ≔ match a… {
     empty        ^ eftbend,
     a ‥ leftover ^ (
       let above_a ≔ (a above leftover) yea_if_former (leftover rowed) held
       let rowed_leftover
         ≔ (a above leftover) yea_if_latter (leftover rowed) held
-      yield (x ≤ a) inlook @𝟚 @({
+      yield (b ≤ a) inlook @𝟚 @({
         c: 𝟚 ^
-          ((c if ((a ≤ x) if (a ‥ leftover) (x ‥ (a ‥ leftover)))
-            (a ‥ (leftover put x))) rowed) = yea
+          ((c if ((a ≤ b) if (a ‥ leftover) (b ‥ (a ‥ leftover)))
+            (a ‥ (leftover put b))) rowed) = yea
       }) {
         yea, before ^
-          (a ≤ x) inlook @𝟚 @({
-            c: 𝟚 ^ ((c if (a ‥ leftover) (x ‥ (a ‥ leftover))) rowed) = yea
+          (a ≤ b) inlook @𝟚 @({
+            c: 𝟚 ^ ((c if (a ‥ leftover) (b ‥ (a ‥ leftover))) rowed) = yea
           }) {
             yea, _       ^ held,
             nay, eftwend ^ (
-              let less ≔ x tight_make a before eftwend
+              let less ≔ b tight_make a before eftwend
               let above_x
-                ≔ (x tight a) both_yea (x above leftover) less
-                  (x above_throughgo a leftover less above_a)
-              yield (x above (a ‥ leftover)) both_yea ((a ‥ leftover) rowed)
+                ≔ (b tight a) both_yea (b above leftover) less
+                  (b above_throughgo a leftover less above_a)
+              yield (b above (a ‥ leftover)) both_yea ((a ‥ leftover) rowed)
                 above_x held
             )
           },
         nay, after ^ (
-          let less ≔ a tight_make x (x ≤_flip a after) after
-          yield (a above (leftover put x)) both_yea ((leftover put x) rowed)
-            (a above_put leftover x above_a less)
-            (leftover put_rowed x rowed_leftover)
+          let less ≔ a tight_make b (b ≤_flip a after) after
+          yield (a above (leftover put b)) both_yea ((leftover put b) rowed)
+            (a above_put leftover b above_a less)
+            (leftover put_rowed b rowed_leftover)
         )
       }
     )
   }
 
 show let above_sift
-  : [@α: *, @: α order_whole, a: α, l: α list, f: [α, 𝟚],
-    held: (a above l) = yea, (a above (l sift f)) = yea]
-  ≔ match l {
+  : [@α: *, @: α order_whole, a: α, a…: α list, f: [α, 𝟚],
+    held: (a above a…) = yea, (a above (a… sift f)) = yea]
+  ≔ match a… {
     empty        ^ eftbend,
     b ‥ leftover ^ (
       let tail
@@ -172,9 +172,9 @@ show let above_sift
   }
 
 show let sift_rowed
-  : [@α: *, @: α order_whole, l: α list, f: [α, 𝟚], held: (l rowed) = yea,
-    ((l sift f) rowed) = yea]
-  ≔ match l {
+  : [@α: *, @: α order_whole, a…: α list, f: [α, 𝟚], held: (a… rowed) = yea,
+    ((a… sift f) rowed) = yea]
+  ≔ match a… {
     empty        ^ eftbend,
     a ‥ leftover ^ (
       let tail
@@ -191,42 +191,42 @@ show let sift_rowed
   }
 
 show let yoke_rowed
-  : [@α: *, @: α order_whole, l: α list, r: α list, held: (l rowed) = yea,
-    ((l yoke r) rowed) = yea]
+  : [@α: *, @: α order_whole, a…: α list, r: α list, held: (a… rowed) = yea,
+    ((a… yoke r) rowed) = yea]
   ≔ match r {
     empty        ^ held,
-    a ‥ leftover ^ (l put a) yoke_rowed leftover (l put_rowed a held)
+    a ‥ leftover ^ (a… put a) yoke_rowed leftover (a… put_rowed a held)
   }
 
 show let above_missing
-  : [@α: *, @: α order_whole, a: α, l: α list, x: α, tail: (a above l) = yea,
-    before: (x ≤ a) = yea, (l inhold x) = nay]
-  ≔ match l {
+  : [@α: *, @: α order_whole, a: α, a…: α list, d: α, tail: (a above a…) = yea,
+    before: (d ≤ a) = yea, (a… inhold d) = nay]
+  ≔ match a… {
     empty        ^ eftbend,
     b ‥ leftover ^
-      (x ≤ b) inlook @𝟚 @({c: 𝟚 ^ (c if (b ≤ x) (leftover inhold x)) = nay}) {
-        yea, _ ^ (b ≤ x) inlook @𝟚 @({c: 𝟚 ^ c = nay}) {
-          yea, held ^ match ((b ≤_yea_throughgo x a held before)
+      (d ≤ b) inlook @𝟚 @({c: 𝟚 ^ (c if (b ≤ d) (leftover inhold d)) = nay}) {
+        yea, _ ^ (b ≤ d) inlook @𝟚 @({c: 𝟚 ^ c = nay}) {
+          yea, held ^ match ((b ≤_yea_throughgo d a held before)
             evenmete) throughgo (a tight_right b
             ((a tight b) yea_if_former (a above leftover) tail)) {},
           nay, _ ^ eftbend
         },
         nay, _ ^
-          a above_missing leftover x
+          a above_missing leftover d
             ((a tight b) yea_if_latter (a above leftover) tail) before
       }
   }
 
 show let inhold_cons
-  : [@α: *, @: α order_whole, a: α, l: α list, x: α, held: (a above l) = yea,
-    ((a ‥ l) inhold x) = ((x same a) if yea (l inhold x))]
-  ≔ (x ≤ a) inlook @𝟚 @({
+  : [@α: *, @: α order_whole, a: α, a…: α list, b: α, held: (a above a…) = yea,
+    ((a ‥ a…) inhold b) = ((b same a) if yea (a… inhold b))]
+  ≔ (b ≤ a) inlook @𝟚 @({
     c: 𝟚 ^
-      (c if (a ≤ x) (l inhold x)) = ((c if (a ≤ x) nay) if yea (l inhold x))
+      (c if (a ≤ b) (a… inhold b)) = ((c if (a ≤ b) nay) if yea (a… inhold b))
   }) {
     yea, before ^ (
-      let missing ≔ a above_missing l x held before
-      yield match a ≤ x {
+      let missing ≔ a above_missing a… b held before
+      yield match a ≤ b {
         yea ^ eftbend,
         nay ^ missing evenmete
       }
@@ -262,55 +262,55 @@ show let same_is
     ((a ≤ b) yea_if_latter (b ≤ a) held)
 
 show let put_inhold_if
-  : [@α: *, @: α order_whole, l: α list, x: α, y: α, held: (l rowed) = yea,
-    ((l put x) inhold y) = ((l inhold y) if yea (y same x))]
-  ≔ match l {
+  : [@α: *, @: α order_whole, a…: α list, b: α, d: α, held: (a… rowed) = yea,
+    ((a… put b) inhold d) = ((a… inhold d) if yea (d same b))]
+  ≔ match a… {
     empty        ^ eftbend,
     a ‥ leftover ^ (
       let above_a ≔ (a above leftover) yea_if_former (leftover rowed) held
       let rowed_leftover
         ≔ (a above leftover) yea_if_latter (leftover rowed) held
-      let original ≔ a inhold_cons leftover y above_a
-      yield (x ≤ a) inlook @𝟚 @({
+      let original ≔ a inhold_cons leftover d above_a
+      yield (b ≤ a) inlook @𝟚 @({
         c: 𝟚 ^
-          ((c if ((a ≤ x) if (a ‥ leftover) (x ‥ (a ‥ leftover)))
-            (a ‥ (leftover put x))) inhold y) =
-            (((a ‥ leftover) inhold y) if yea (y same x))
+          ((c if ((a ≤ b) if (a ‥ leftover) (b ‥ (a ‥ leftover)))
+            (a ‥ (leftover put b))) inhold d) =
+            (((a ‥ leftover) inhold d) if yea (d same b))
       }) {
         yea, before ^
-          (a ≤ x) inlook @𝟚 @({
+          (a ≤ b) inlook @𝟚 @({
             c: 𝟚 ^
-              ((c if (a ‥ leftover) (x ‥ (a ‥ leftover))) inhold y) =
-                (((a ‥ leftover) inhold y) if yea (y same x))
+              ((c if (a ‥ leftover) (b ‥ (a ‥ leftover))) inhold d) =
+                (((a ‥ leftover) inhold d) if yea (d same b))
           }) {
             yea, eftwend ^ (
-              let alike ≔ x ≤_= a before eftwend
+              let alike ≔ b ≤_= a before eftwend
               yield original throughgo
-                (((y same a) either_swallow (leftover inhold y)) throughgo
-                  (({c: 𝟚 ^ c if yea (y same a)} leibnitz (original evenmete))
+                (((d same a) either_swallow (leftover inhold d)) throughgo
+                  (({c: 𝟚 ^ c if yea (d same a)} leibnitz (original evenmete))
                     throughgo
-                    ({z: α ^ ((a ‥ leftover) inhold y) if yea (y same z)}
+                    ({c: α ^ ((a ‥ leftover) inhold d) if yea (d same c)}
                       leibnitz (alike evenmete))))
             ),
             nay, eftwend ^ (
-              let less ≔ x tight_make a before eftwend
+              let less ≔ b tight_make a before eftwend
               let above_x
-                ≔ (x tight a) both_yea (x above leftover) less
-                  (x above_throughgo a leftover less above_a)
-              yield (x inhold_cons (a ‥ leftover) y above_x) throughgo
-                (((y same x) either_swap ((a ‥ leftover) inhold y)))
+                ≔ (b tight a) both_yea (b above leftover) less
+                  (b above_throughgo a leftover less above_a)
+              yield (b inhold_cons (a ‥ leftover) d above_x) throughgo
+                ((d same b) either_swap ((a ‥ leftover) inhold d))
             )
           },
         nay, after ^ (
-          let less ≔ a tight_make x (x ≤_flip a after) after
+          let less ≔ a tight_make b (b ≤_flip a after) after
           yield
-            (a inhold_cons (leftover put x) y
-              (a above_put leftover x above_a less)) throughgo
-            (({c: 𝟚 ^ (y same a) if yea c} leibnitz
-              (leftover put_inhold_if x y rowed_leftover)) throughgo
-              (((y same a) either_throughgo (leftover inhold y) (y same x))
+            (a inhold_cons (leftover put b) d
+              (a above_put leftover b above_a less)) throughgo
+            (({c: 𝟚 ^ (d same a) if yea c} leibnitz
+              (leftover put_inhold_if b d rowed_leftover)) throughgo
+              (((d same a) either_throughgo (leftover inhold d) (d same b))
                 throughgo
-                ({c: 𝟚 ^ c if yea (y same x)} leibnitz (original evenmete))))
+                ({c: 𝟚 ^ c if yea (d same b)} leibnitz (original evenmete))))
         )
       }
     )
@@ -334,58 +334,59 @@ let sift_other
   }
 
 show let sift_inhold_if
-  : [@α: *, @: α order_whole, l: α list, f: [α, 𝟚], x: α, held: (l rowed) = yea,
-    ((l sift f) inhold x) = ((l inhold x) if (x f) nay)]
-  ≔ match l {
+  : [@α: *, @: α order_whole, a…: α list, f: [α, 𝟚], b: α,
+    held: (a… rowed) = yea,
+    ((a… sift f) inhold b) = ((a… inhold b) if (b f) nay)]
+  ≔ match a… {
     empty        ^ eftbend,
     a ‥ leftover ^ (
       let above_a ≔ (a above leftover) yea_if_former (leftover rowed) held
       let rowed_leftover
         ≔ (a above leftover) yea_if_latter (leftover rowed) held
       let sifted
-        : (((a ‥ leftover) sift f) inhold x) =
-          (((a f) if (x same a) nay) if yea ((leftover sift f) inhold x))
+        : (((a ‥ leftover) sift f) inhold b) =
+          (((a f) if (b same a) nay) if yea ((leftover sift f) inhold b))
         ≔ match a f {
           yea ^
-            a inhold_cons (leftover sift f) x (a above_sift leftover f above_a),
+            a inhold_cons (leftover sift f) b (a above_sift leftover f above_a),
           nay ^ eftbend
         }
       let transformed
         ≔ sifted throughgo
-          ({c: 𝟚 ^ ((a f) if (x same a) nay) if yea c} leibnitz
-            (leftover sift_inhold_if f x rowed_leftover))
-      let original ≔ a inhold_cons leftover x above_a
+          ({c: 𝟚 ^ ((a f) if (b same a) nay) if yea c} leibnitz
+            (leftover sift_inhold_if f b rowed_leftover))
+      let original ≔ a inhold_cons leftover b above_a
       let distribution
-        : (((a f) if (x same a) nay) if yea ((leftover inhold x) if (x f) nay))
-          = (((x same a) if yea (leftover inhold x)) if (x f) nay)
-        ≔ (x same a) inlook @𝟚 @({
+        : (((a f) if (b same a) nay) if yea ((leftover inhold b) if (b f) nay))
+          = (((b same a) if yea (leftover inhold b)) if (b f) nay)
+        ≔ (b same a) inlook @𝟚 @({
           c: 𝟚 ^
-            (((a f) if c nay) if yea ((leftover inhold x) if (x f) nay)) =
-              ((c if yea (leftover inhold x)) if (x f) nay)
+            (((a f) if c nay) if yea ((leftover inhold b) if (b f) nay)) =
+              ((c if yea (leftover inhold b)) if (b f) nay)
         }) {
           yea, alike ^ (
-            let umbsay_alike ≔ f leibnitz (x same_is a alike)
+            let umbsay_alike ≔ f leibnitz (b same_is a alike)
             yield
-              ({c: 𝟚 ^ ((a f) if yea nay) if yea ((leftover inhold x) if c nay)}
+              ({c: 𝟚 ^ ((a f) if yea nay) if yea ((leftover inhold b) if c nay)}
                 leibnitz umbsay_alike) throughgo
-              (((a f) sift_same (leftover inhold x)) throughgo
-                ({c: 𝟚 ^ (yea if yea (leftover inhold x)) if c nay} leibnitz
+              (((a f) sift_same (leftover inhold b)) throughgo
+                ({c: 𝟚 ^ (yea if yea (leftover inhold b)) if c nay} leibnitz
                   (umbsay_alike evenmete)))
           ),
-          nay, _ ^ (a f) sift_other (x f) (leftover inhold x)
+          nay, _ ^ (a f) sift_other (b f) (leftover inhold b)
         }
       yield transformed throughgo
         (distribution throughgo
-          ({c: 𝟚 ^ c if (x f) nay} leibnitz (original evenmete)))
+          ({c: 𝟚 ^ c if (b f) nay} leibnitz (original evenmete)))
     )
   }
 
 show let yoke_inhold_if
-  : [@α: *, @: α order_whole, l: α list, r: α list, x: α, left: (l rowed) = yea,
-    right: (r rowed) = yea,
-    ((l yoke r) inhold x) = ((l inhold x) if yea (r inhold x))]
+  : [@α: *, @: α order_whole, a…: α list, r: α list, b: α,
+    left: (a… rowed) = yea, right: (r rowed) = yea,
+    ((a… yoke r) inhold b) = ((a… inhold b) if yea (r inhold b))]
   ≔ match r {
-    empty ^ match l inhold x {
+    empty ^ match a… inhold b {
       yea ^ eftbend,
       nay ^ eftbend
     },
@@ -394,14 +395,14 @@ show let yoke_inhold_if
       let rowed_leftover
         ≔ (a above leftover) yea_if_latter (leftover rowed) right
       yield
-        ((l put a) yoke_inhold_if leftover x (l put_rowed a left)
+        ((a… put a) yoke_inhold_if leftover b (a… put_rowed a left)
           rowed_leftover) throughgo
-        (({c: 𝟚 ^ c if yea (leftover inhold x)} leibnitz
-          (l put_inhold_if a x left)) throughgo
-          ((((l inhold x) either_throughgo (x same a) (leftover inhold x))
+        (({c: 𝟚 ^ c if yea (leftover inhold b)} leibnitz
+          (a… put_inhold_if a b left)) throughgo
+          ((((a… inhold b) either_throughgo (b same a) (leftover inhold b))
             evenmete) throughgo
-            ({c: 𝟚 ^ (l inhold x) if yea c} leibnitz
-              ((a inhold_cons leftover x above_a) evenmete))))
+            ({c: 𝟚 ^ (a… inhold b) if yea c} leibnitz
+              ((a inhold_cons leftover b above_a) evenmete))))
     )
   }
 
@@ -420,19 +421,19 @@ let ∨_if: [p: 𝟚, q: 𝟚, (p ∨ q) = (p if yea q)] ≔ match p, q {
 }
 
 show let put_inhold
-  : [@α: *, @: α order_whole, l: α list, x: α, y: α, held: (l rowed) = yea,
-    ((l put x) inhold y) = ((l inhold y) ∨ (y same x))]
-  ≔ (l put_inhold_if x y held) throughgo
-    (((l inhold y) ∨_if (y same x)) evenmete)
+  : [@α: *, @: α order_whole, a…: α list, a: α, b: α, held: (a… rowed) = yea,
+    ((a… put a) inhold b) = ((a… inhold b) ∨ (b same a))]
+  ≔ (a… put_inhold_if a b held) throughgo
+    (((a… inhold b) ∨_if (b same a)) evenmete)
 
 show let sift_inhold
-  : [@α: *, @: α order_whole, l: α list, f: [α, 𝟚], x: α, held: (l rowed) = yea,
-    ((l sift f) inhold x) = ((l inhold x) ∧ (x f))]
-  ≔ (l sift_inhold_if f x held) throughgo (((l inhold x) ∧_if (x f)) evenmete)
+  : [@α: *, @: α order_whole, a…: α list, f: [α, 𝟚], a: α,
+    held: (a… rowed) = yea, ((a… sift f) inhold a) = ((a… inhold a) ∧ (a f))]
+  ≔ (a… sift_inhold_if f a held) throughgo (((a… inhold a) ∧_if (a f)) evenmete)
 
 show let yoke_inhold
-  : [@α: *, @: α order_whole, l: α list, r: α list, x: α, left: (l rowed) = yea,
-    right: (r rowed) = yea,
-    ((l yoke r) inhold x) = ((l inhold x) ∨ (r inhold x))]
-  ≔ (l yoke_inhold_if r x left right) throughgo
-    (((l inhold x) ∨_if (r inhold x)) evenmete)
+  : [@α: *, @: α order_whole, a…: α list, r: α list, a: α,
+    left: (a… rowed) = yea, right: (r rowed) = yea,
+    ((a… yoke r) inhold a) = ((a… inhold a) ∨ (r inhold a))]
+  ≔ (a… yoke_inhold_if r a left right) throughgo
+    (((a… inhold a) ∨_if (r inhold a)) evenmete)

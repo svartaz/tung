@@ -296,10 +296,10 @@ perform host key arguments = case (key, arguments) of
   -- a failed or cancelled task hath no result.
   ("wait", [RTask handle]) -> option . either (const Nothing) Just <$> lift (hostWait host handle)
   ("wait_for", [RTask handle, natural -> Just milliseconds]) -> option . (>>= either (const Nothing) Just) <$> lift (hostWaitFor host handle milliseconds)
-  ("outstrike", [RTask handle]) -> lift (hostCancel host handle) >> pure only
+  ("strike", [RTask handle]) -> lift (hostCancel host handle) >> pure only
   ("read_file", [text -> Just path]) -> outcome textValue <$> lift (hostReadFile host path)
   ("write_file", [text -> Just path, text -> Just value]) -> outcome (const only) <$> lift (hostWriteFile host path value)
-  ("athang_file", [text -> Just path, text -> Just value]) -> outcome (const only) <$> lift (hostAppendFile host path value)
+  ("onhang_file", [text -> Just path, text -> Just value]) -> outcome (const only) <$> lift (hostAppendFile host path value)
   ("arguments", []) -> list . map textValue <$> lift (hostArguments host)
   ("environment", [text -> Just name]) -> option . fmap textValue <$> lift (hostEnvironment host name)
   ("exit", [natural -> Just status]) -> throwE (Exit status)

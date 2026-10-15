@@ -14,9 +14,9 @@ show let withwend_alone
     undoing: (g ▷ f) = sameness, g = (f withwend)]
   ≔ >{throughgo,
     (g ▷_sameness) evenmete,
-    {x ^ g ▷ x} leibnitz ((f ▷_withwend) evenmete),
+    (g ▷) leibnitz ((f ▷_withwend) evenmete),
     g ▷_▷ f (f withwend),
-    {x ^ x ▷ (f withwend)} leibnitz undoing,
+    {a ^ a ▷ (f withwend)} leibnitz undoing,
     (f withwend) sameness_▷
   }
 
@@ -29,7 +29,7 @@ show let withwend_withwend
 ## `sameness` is its own withwend.
 show let sameness_withwend
   : [@⇨: [*, *, *], @: ⇨ groupoid, @α: *,
-    ((sameness: α ⇨ α) withwend) = sameness]
+    ((sameness @⇨ @α) withwend) = sameness]
   ≔ (sameness withwend_alone sameness (sameness sameness_▷)) evenmete
 
 ## the withwend of a composite is the composite of the withwends, spun
@@ -39,8 +39,8 @@ show let withwend_over_▷
     ((f ▷ g) withwend) = ((g withwend) ▷ (f withwend))]
   ≔ ((f ▷ g) withwend_alone ((g withwend) ▷ (f withwend)) >{throughgo,
     ((g withwend) ▷_▷ (f withwend) (f ▷ g)) evenmete,
-    {x ^ (g withwend) ▷ x} leibnitz ((f withwend) ▷_▷ f g),
-    {x ^ (g withwend) ▷ (x ▷ g)} leibnitz (f withwend_▷),
-    {x ^ (g withwend) ▷ x} leibnitz (g sameness_▷),
+    {a ^ (g withwend) ▷ a} leibnitz ((f withwend) ▷_▷ f g),
+    {a ^ (g withwend) ▷ (a ▷ g)} leibnitz (f withwend_▷),
+    {a ^ (g withwend) ▷ a} leibnitz (g sameness_▷),
     g withwend_▷
   }) evenmete

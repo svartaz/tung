@@ -1,10 +1,10 @@
 bring combinator.tung
 bring flock/functor.tung
-bring flock/functor/atfoldsome.tung
+bring flock/functor/onwendsome.tung
 bring ilk/one.tung
 bring is.tung
 
-show flock monad: [φ: [*, *], @: φ atfoldsome, *] {
+show flock monad: [φ: [*, *], @: φ onwendsome, *] {
   let flat: [@α: *, (α φ) φ, α φ]
   let sheer_bind
     : [@α: *, @β: *, a: α, f: [α, β φ], ((a sheer) warp f $ flat) = (a f)]

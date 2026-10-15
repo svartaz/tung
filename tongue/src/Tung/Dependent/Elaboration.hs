@@ -109,9 +109,10 @@ data Inference = Inference
     -- checked input references survive normalisation of annotations and
     -- local bindings. speculative trials roll them back with their solutions.
     checkedReferences :: Set.Set SymbolId,
-    -- each written name resolved to a global, by its span, newest first.
-    -- speculative trials roll them back with their solutions.
-    resolvedNames :: [(SourceSpan, SymbolId)]
+    -- each written name resolved to a global, by its span, and whether that
+    -- global nameth an ilk, newest first. speculative trials roll them back
+    -- with their solutions.
+    resolvedNames :: [(SourceSpan, SymbolId, Bool)]
   }
 
 -- a `sorry` with its source span, context, local names (innermost first),
@@ -156,11 +157,21 @@ put = lift . State.put
 modify' :: (Inference -> Inference) -> Elaboration ()
 modify' = lift . State.modify'
 
+-- a global nameth an ilk when its type, after its inputs, is a sort; the
+-- editor coloureth a name by it, which syntax alone cannot tell.
 recordName :: SourceSpan -> SymbolId -> Elaboration ()
-recordName span symbol = modify' (\state -> state {resolvedNames = (span, symbol) : resolvedNames state})
+recordName span symbol = do
+  globals <- currentGlobals
+  let ilk = maybe False (sorted . definitionType) (Map.lookup symbol globals)
+  modify' (\state -> state {resolvedNames = (span, symbol, ilk) : resolvedNames state})
+  where
+    sorted = \case
+      Pi _ _ result -> sorted result
+      Sort _ -> True
+      _ -> False
 
 -- the names resolved so far, oldest first.
-takeNames :: Elaboration [(SourceSpan, SymbolId)]
+takeNames :: Elaboration [(SourceSpan, SymbolId, Bool)]
 takeNames = reverse . resolvedNames <$> get
 
 takeReferences :: Elaboration (Set.Set SymbolId)

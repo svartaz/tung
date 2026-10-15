@@ -1,8 +1,8 @@
 bring flock/algebra/half/category.tung
 bring flock/algebra/half/semigroupoid.tung
 bring flock/functor.tung
-bring flock/functor/atfoldsome.tung
 bring flock/functor/monad.tung
+bring flock/functor/onwendsome.tung
 bring is.tung
 
 ## a computation: either an outcome, or one request and the continuation that
@@ -34,23 +34,23 @@ show let flat: [@φ: [*, *], @α: *, forewrit: φ freer (φ freer α), φ freer 
 
 ## warping by `sameness` keepeth a forewrit, by inleading on its requests.
 let helpsetting_warp_sameness
-  : [@φ: [*, *], @α: *, forewrit: φ freer α, (forewrit warp {x ^ x}) = forewrit]
+  : [@φ: [*, *], @α: *, forewrit: φ freer α, (forewrit warp {a ^ a}) = forewrit]
   ≔ match forewrit {
     _ done                   ^ eftbend,
     request more throughwone ^
       (request more) leibnitz
-        ({answer ^ (answer throughwone) helpsetting_warp_sameness} fall_umtake)
+        ({answer ^ (answer throughwone) helpsetting_warp_sameness} fall_umfang)
   }
 
 ## mapping twice is mapping once with the composite.
 let warp_warp
   : [@φ: [*, *], @α: *, @β: *, @γ: *, forewrit: φ freer α, f: [α, β], g: [β, γ],
-    ((forewrit warp f) warp g) = (forewrit warp {x ^ x f $ g})]
+    ((forewrit warp f) warp g) = (forewrit warp {a ^ a f $ g})]
   ≔ match forewrit {
     _ done                   ^ eftbend,
     request more throughwone ^
       (request more) leibnitz
-        ({answer ^ (answer throughwone) warp_warp f g} fall_umtake)
+        ({answer ^ (answer throughwone) warp_warp f g} fall_umfang)
   }
 
 ## flattening a forewrit whose outcomes are wrapped in `done` keepeth it.
@@ -61,7 +61,7 @@ let warp_done_flat
     _ done                   ^ eftbend,
     request more throughwone ^
       (request more) leibnitz
-        ({answer ^ (answer throughwone) warp_done_flat} fall_umtake)
+        ({answer ^ (answer throughwone) warp_done_flat} fall_umfang)
   }
 
 ## interpret a forewrit: `handle` answereth each request by calling its
@@ -74,20 +74,20 @@ show let gather
       request handle {answer ^ leaf gather handle (answer throughwone)}
   }
 
-## general warping and right-sameness soothings need fall umtaking
+## general warping and right-sameness soothings need fall umfanging
 ## to make pointwise continuation soothings into sameness of `more` forewrits.
 bizen: [@φ: [*, *], (φ freer) functor] {
   let warp: [forewrit:, tweak:] ≔ forewrit warp tweak
   let warp_sameness ≔ helpsetting_warp_sameness
 }
 
-bizen: [@φ: [*, *], (φ freer) atfoldsome] {
+bizen: [@φ: [*, *], (φ freer) onwendsome] {
   let sheer ≔ done
-  let atfold: [forewrit:, tweaks:] ≔ tweaks bind {tweak ^ forewrit warp tweak}
-  let atfold_sameness_sheer ≔ helpsetting_warp_sameness
-  let sheer_atfold_sheer: [_:, _:] ≔ eftbend
-  let atfold_atfold: [a:, f:, g:] ≔ a warp_warp f g
-  let sheer_atfold: [_:, _:] ≔ eftbend
+  let onwend: [forewrit:, tweaks:] ≔ tweaks bind (forewrit warp)
+  let onwend_sameness_sheer ≔ helpsetting_warp_sameness
+  let sheer_onwend_sheer: [_:, _:] ≔ eftbend
+  let onwend_onwend: [a:, f:, g:] ≔ a warp_warp f g
+  let sheer_onwend: [_:, _:] ≔ eftbend
 }
 
 bizen: [@φ: [*, *], (φ freer) monad] {

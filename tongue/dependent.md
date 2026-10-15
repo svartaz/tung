@@ -770,7 +770,7 @@ every name.
 `leibnitz`, and `throughgo` prove substitution and composition without kernel
 rules. `inlook` passeth a matched value and its branch equation to a case
 function; a constant result family may need a written motive. function
-extensionality is the orsetting `fall_umtake`.
+extensionality is the orsetting `fall_umfang`.
 
 well-founded recursion is library code in
 [`ilk/grounded.tung`](../bookhoard/ilk/grounded.tung):

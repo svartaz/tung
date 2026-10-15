@@ -13,7 +13,7 @@ show flock semilattice_hemmed_upper: [α: *, @: α semilattice_lower, *] {
 bizen: [@β: *, @: β semilattice_hemmed_upper, @α: *,
   (α → β) semilattice_hemmed_upper] {
     let ⊤: [_:] ≔ ⊤
-    let ⊤_∧: [f:] ≔ {a ^ (a f) ⊤_∧} fall_umtake
+    let ⊤_∧: [f:] ≔ {a ^ (a f) ⊤_∧} fall_umfang
   }
 
 bizen: 𝟚 semilattice_hemmed_upper {

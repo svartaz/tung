@@ -54,7 +54,7 @@ flock functor: [φ: [*, *], *] {
 }
 
 ## a parent requirement maketh every applicative a functor.
-flock atfoldsome: [φ: [*, *], @: φ functor, *] {
+flock onwendsome: [φ: [*, *], @: φ functor, *] {
   let sheer: [@α: *, α, α φ]
 }
 
@@ -65,10 +65,10 @@ bizen: maybe functor {
   }
 }
 
-bizen: maybe atfoldsome {
+bizen: maybe onwendsome {
   let sheer: [a:] ≔ a some
 }
 
 ## the functor cometh from the applicative requirement.
-let lift: [@φ: [*, *], @: φ atfoldsome, @α: *, @β: *, a: α, f: [α, β], β φ]
+let lift: [@φ: [*, *], @: φ onwendsome, @α: *, @β: *, a: α, f: [α, β], β φ]
   ≔ (a sheer) warp f

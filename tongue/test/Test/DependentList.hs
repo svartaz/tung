@@ -27,7 +27,7 @@ tests source =
         ++ constructors
         ++ "\n",
     same "supplied and inferred implicit list elements agree" "" values "naught ‥ @nat ((naught heir) ‥ @nat (∅ @nat))",
-    expectEq "athang computeth at worth and type levels" (Right [True, True]) $
+    expectEq "onhang computeth at worth and type levels" (Right [True, True]) $
       traverse
         (uncurry (equalIn (extended "")))
         [ ("(>{‥, naught, ∅}) · (>{‥, naught heir, ∅})", values),
@@ -36,18 +36,18 @@ tests source =
     same "warp computeth from the ordinary list eliminator" "" (values ++ " warp heir") ">{‥, naught heir, (naught heir) heir, ∅}",
     same "warp can turn type constructors into types" "" (constructors ++ " warp {F:[*, *] ^ nat F}") ">{‥, nat list, nat, ∅}",
     same "fold replaceth constructors by its supplied methods" "" (values ++ " gather naught {_, rest ^ rest heir}") "(naught heir) heir",
-    expectEq "open athang retaineth an induction neutral and a checked type" (Right True) $ do
+    expectEq "open onhang retaineth an induction neutral and a checked type" (Right True) $ do
       program <- extended openAppend
-      result <- normaliseSourceExpression program "athang_empty"
+      result <- normaliseSourceExpression program "onhang_empty"
       infer (sourceEnvironment program) result >>= validate (sourceEnvironment program)
       identity <- normaliseSourceExpression program "{xs:nat list ^ xs}"
       pure (eraseLevels result /= eraseLevels identity),
-    same "open athang computeth after its list is substituted" openAppend (values ++ " athang_empty") values,
-    checked "athang and warp aliases convert inside family indices" $
+    same "open onhang computeth after its list is substituted" openAppend (values ++ " onhang_empty") values,
+    checked "onhang and warp aliases convert inside family indices" $
       indexed
-        ++ "let athanged ≔ (>{‥, nat, ∅}) · (>{‥, bool, ∅})\n"
+        ++ "let onhanged ≔ (>{‥, nat, ∅}) · (>{‥, bool, ∅})\n"
         ++ "let mapped ≔ row warp {α:* ^ α}\n"
-        ++ "let first:athanged tag ≔ witness\n"
+        ++ "let first:onhanged tag ≔ witness\n"
         ++ "let second:mapped tag ≔ witness\n",
     rejected "list indices preserve element order" (indexed ++ "let bad:(>{‥, bool, nat, ∅}) tag ≔ witness\n"),
     rejected "list indices preserve duplicate elements" (indexed ++ "let bad:(>{‥, nat, nat, bool, ∅}) tag ≔ witness\n"),
@@ -70,7 +70,7 @@ naturalSource =
   ilk bool:* { no: bool, yes: bool }
 
   """
-openAppend = "let athang_empty:[xs:nat list, nat list] ≔ xs · (∅ @nat)\n"
+openAppend = "let onhang_empty:[xs:nat list, nat list] ≔ xs · (∅ @nat)\n"
 indexed =
   """
   let row:* list ≔ >{‥, nat, bool, ∅}

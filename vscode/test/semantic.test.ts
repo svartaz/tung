@@ -230,6 +230,46 @@ test("compiler highlighting recovereth incomplete syntax without accepting it", 
     assert.equal(result.diagnostics[0]?.kind, "parse");
   }
 });
+test("checking decideth whether a name in an annotation is an ilk", () => {
+  const resolve = () => undefined;
+  // `(naught · a) = naught`: the parser readeth annotation names as ilks;
+  // checking resolveth `naught` and `·` to values and `=` to an ilk.
+  const source = "(naught · a) = naught";
+  const roles: SourceRole[] = [
+    [1, 7, "type", []],
+    [8, 9, "type", []],
+    [10, 11, "term", ["local"]],
+    [13, 14, "type", []],
+    [15, 21, "type", []],
+  ];
+  const checked = new Map([
+    [1, false],
+    [8, false],
+    [13, true],
+    [15, false],
+  ]);
+  assert.deepEqual(
+    buildHighlightRanges(source, roles, resolve, (start) => checked.get(start)),
+    [{ line: 0, char: 13, length: 1, type: "type", modifiers: [] }],
+  );
+  // an unchecked name keepeth the parser's role, and a value written where
+  // a term standeth becometh an ilk when checking saith so.
+  assert.deepEqual(
+    buildHighlightRanges(
+      "rime x",
+      [
+        [0, 4, "term", []],
+        [5, 6, "type", []],
+      ],
+      resolve,
+      (start) => (start === 0 ? true : undefined),
+    ),
+    [
+      { line: 0, char: 0, length: 4, type: "type", modifiers: [] },
+      { line: 0, char: 5, length: 1, type: "type", modifiers: [] },
+    ],
+  );
+});
 test("compiler spans warp unicode and line endings without eager name resolution", () => {
   const resolve = () => {
     throw new Error("navigation analysis was unnecessary");

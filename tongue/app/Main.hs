@@ -358,7 +358,7 @@ projectResponse cache EditorRequest {requestCommand, requestName, requestSource 
         object
           [ "kind" .= ("names" :: String),
             "files" .= files,
-            "resolved" .= [(spanStart span, spanEnd span, moduleLabel owner, name) | (span, SymbolId owner name) <- Dependent.reportNames report],
+            "resolved" .= [(spanStart span, spanEnd span, moduleLabel owner, name, ilk) | (span, SymbolId owner name, ilk) <- Dependent.reportNames report],
             "visible" .= [(written, moduleLabel owner, name, constructor) | (written, SymbolId owner name, constructor) <- visible]
           ]
     "ilk" ->

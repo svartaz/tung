@@ -63,8 +63,9 @@ data SourceProgram = SourceProgram
     programHoles :: [Hole],
     -- resolved source references survive computation during elaboration.
     programReferences :: Map.Map SymbolId (Set.Set SymbolId),
-    -- each written name that checking resolved to a global, by its span.
-    programNames :: [(SourceSpan, SymbolId)]
+    -- each written name that checking resolved to a global, by its span,
+    -- and whether the global nameth an ilk.
+    programNames :: [(SourceSpan, SymbolId, Bool)]
   }
   deriving stock (Eq, Show)
 
@@ -123,14 +124,14 @@ sourceExports = programExports
 sourceHoles :: SourceProgram -> [Hole]
 sourceHoles = programHoles
 
-sourceNames :: SourceProgram -> [(SourceSpan, SymbolId)]
+sourceNames :: SourceProgram -> [(SourceSpan, SymbolId, Bool)]
 sourceNames = programNames
 
 -- what checking a declaration reporteth beside its result, whether it
 -- succeeded or not: the goal of each `sorry` and each resolved written name.
 data Report = Report
   { reportHoles :: [Hole],
-    reportNames :: [(SourceSpan, SymbolId)]
+    reportNames :: [(SourceSpan, SymbolId, Bool)]
   }
   deriving stock (Eq, Show)
 

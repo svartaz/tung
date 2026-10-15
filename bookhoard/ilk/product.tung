@@ -4,11 +4,11 @@ bring flock/algebra/whole/hath_one.tung
 bring flock/algebra/whole/monoid_fold.tung
 bring flock/algebra/whole/semigroup_fold.tung
 bring flock/functor.tung
-bring flock/functor/atfoldsome.tung
 bring flock/functor/bifunctor.tung
 bring flock/functor/downshaper.tung
 bring flock/functor/hath_throughwend.tung
 bring flock/functor/monad.tung
+bring flock/functor/onwendsome.tung
 bring flock/hath_same.tung
 bring flock/order/lattice.tung
 bring flock/order/lattice_spreadsome.tung
@@ -24,11 +24,11 @@ show ilk ∏: [α: *, β: *, *] { both: [α, β, α ∏ β] }
 let helpsetting_both_=
   : [@α: *, @β: *, @a: α, @a′: α, @b: β, @b′: β, p: a = a′, q: b = b′,
     (a both b) = (a′ both b′)]
-  ≔ ({x: α ^ x both b} leibnitz p) throughgo ({y: β ^ a′ both y} leibnitz q)
+  ≔ ({c: α ^ c both b} leibnitz p) throughgo ({c: β ^ a′ both c} leibnitz q)
 
-show let forthcast₀: [@α: *, @β: *, α both _: α ∏ β, α] ≔ α
+show let forthcast₀: [@α: *, @β: *, a both _: α ∏ β, α] ≔ a
 
-show let forthcast₁: [@α: *, @β: *, α both β: α ∏ β, β] ≔ β
+show let forthcast₁: [@α: *, @β: *, a both b: α ∏ β, β] ≔ b
 
 show let swap: [@α: *, @β: *, a both b: α ∏ β, β ∏ α] ≔ b both a
 
@@ -43,21 +43,21 @@ bizen: [@α: *, (α ∏) functor] {
   let warp_sameness: [_ both _:] ≔ eftbend
 }
 
-bizen: [@α: *, @: α monoid_·, (α ∏) atfoldsome] {
+bizen: [@α: *, @: α monoid_·, (α ∏) onwendsome] {
   let sheer: [b:] ≔ one both b
-  let atfold: [a₀ both b:, a₁ both f:] ≔ (a₀ · a₁) both (b f)
-  let atfold_sameness_sheer: [w both b:] ≔ {x: α ^ x both b} leibnitz (w ·_one)
-  let sheer_atfold_sheer: [a:, f:] ≔ {x: α ^ x both (a f)} leibnitz (one ·_one)
-  let atfold_atfold: [w both b:, f:, g:] ≔ {x: α ^ x both (b f $ g)} leibnitz
-    ((w · one) ·_one)
-  let sheer_atfold: [a:, w both f:] ≔ {x: α ^ x both (a f)} leibnitz (w one_·)
+  let onwend: [a₀ both b:, a₁ both f:] ≔ (a₀ · a₁) both (b f)
+  let onwend_sameness_sheer: [a both b:] ≔ {c: α ^ c both b} leibnitz (a ·_one)
+  let sheer_onwend_sheer: [a:, f:] ≔ {b: α ^ b both (a f)} leibnitz (one ·_one)
+  let onwend_onwend: [a both b:, f:, g:] ≔ {c: α ^ c both (b f $ g)} leibnitz
+    ((a · one) ·_one)
+  let sheer_onwend: [a:, b both f:] ≔ {c: α ^ c both (a f)} leibnitz (b one_·)
 }
 
 bizen: [@α: *, @: α monoid_·, (α ∏) monad] {
-  let flat: [α both (β both γ):] ≔ (α · β) both γ
+  let flat: [a both (b both c):] ≔ (a · b) both c
   let sheer_bind: [a:, f:]
-    ≔ (a f) inlook {w both b, _ ^ {x: α ^ x both b} leibnitz (w one_·)}
-  let warp_sheer_flat: [w both b:] ≔ {x: α ^ x both b} leibnitz (w ·_one)
+    ≔ (a f) inlook {c both b, _ ^ {d: α ^ d both b} leibnitz (c one_·)}
+  let warp_sheer_flat: [a both b:] ≔ {c: α ^ c both b} leibnitz (a ·_one)
 }
 
 bizen: [@α: *, (α ∏) downshaper] {
@@ -125,9 +125,9 @@ bizen: [@α: *, @: α hath_≍, @β: *, @: β hath_≍, (α ∏ β) hath_≍] {
 
 bizen: [@α: *, @: α ≍_to_=, @β: *, @: β ≍_to_=, (α ∏ β) ≍_to_=] {
   let ≍_=: [a both b:, c both d:, held:]
-    ≔ ({z: α ^ z both b} leibnitz
+    ≔ ({e: α ^ e both b} leibnitz
       (a ≍_= c ((a ≍ c) yea_if_former (b ≍ d) held))) throughgo
       ((c both) leibnitz (b ≍_= d ((a ≍ c) yea_if_latter (b ≍ d) held)))
-  let ≍_eftbend: [a both b:] ≔ {w: 𝟚 ^ w if (b ≍ b) nay} yea_throughbear
+  let ≍_eftbend: [a both b:] ≔ {c: 𝟚 ^ c if (b ≍ b) nay} yea_throughbear
     ((a ≍_eftbend) evenmete) (b ≍_eftbend)
 }

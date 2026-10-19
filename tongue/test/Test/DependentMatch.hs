@@ -12,7 +12,7 @@ import Tung.Dependent.Source (SourceProgram)
 group :: IO Harness.Group
 group = do
   example <- exampleSource "match.tung"
-  Harness.group "dependent_match" (tests example ++ fixedIndexTests example ++ recursiveArityTests ++ repeatedScrutineeTests)
+  Harness.group "dependent_match" (tests example ++ fixedIndexTests example ++ recursiveArityTests ++ repeatedScrutineeTests ++ etaTests)
 
 tests :: String -> [Test]
 tests example =
@@ -32,7 +32,7 @@ tests example =
         >>= \program -> sameNormalIn program "only pair only" "yes",
     -- a local scrutinee is rebound at its refined type in each row.
     expectEq "a branch seeth a local scrutinee at its refined index" (Right ()) $
-      () <$ compiled (example ++ "let keep:[@α:*, @n:nat, v:α vec n, α vec n] ≔ match v { nil ^ v, _ cons _ _ ^ v }\n"),
+      () <$ compiled (example ++ "let keep:[@α:*, @n:nat, v:α vec n, α vec n] ≔ match v { nil ^ v, _ ‥′ _ _ ^ v }\n"),
     rejectContaining "one row cannot bind a variable twice" "'x' is bound twice in one row" $
       compiled (example ++ "let first:[bool, bool, bool] ≔ {x, x ^ x}\n"),
     expectEq "one bracket may repeat a constructor slot" (Right True) $
@@ -152,7 +152,7 @@ fixedIndexTests example =
           traverse
             (uncurry (sameNormalIn custom))
             [ (customPair ++ " predecessor_two", "naught heir"),
-              (customPair ++ " tail_two", "naught cons @nat (naught heir) (nil @nat)")
+              (customPair ++ " tail_two", "naught ‥′ @nat (naught heir) (nil @nat)")
             ]
         pure (literalResults ++ customResults)
     )
@@ -175,7 +175,7 @@ fixedIndexTests example =
     vector = "ilk vec:[α:*, [ℕ, *]] { nil:α vec 0, cons:[n:ℕ, head:α, tail:α vec n, α vec (n heir)] }\n"
     diagonal = "ilk diagonal:[ℕ, ℕ, *] { same:[n:ℕ, n diagonal n] }\n"
     pair = "(1 cons @ℤ +3 (0 cons @ℤ +7 (nil @ℤ)))"
-    customPair = "((naught heir) cons @nat naught (naught cons @nat (naught heir) (nil @nat)))"
+    customPair = "((naught heir) ‥′ @nat naught (naught ‥′ @nat (naught heir) (nil @nat)))"
     definitions =
       """
       let predecessor:[@α:*, v:α vec 2, ℕ] ≔ match v { n cons _ _ ^ n }
@@ -289,3 +289,31 @@ repeatedScrutineeTests =
 
 compiled :: String -> Either String SourceProgram
 compiled source = compileProject (SourceModule "dependent_match.tung") ("bring is.tung\n" ++ source) (Map.singleton "is.tung" equalitySource)
+
+-- a family with one constructor, no indices, and no recursive field hath η:
+-- a worth equaleth its constructor applied to its fields, and a match on an
+-- unknown worth reduceth through them. other families keep their neutrals.
+etaTests :: [Test]
+etaTests =
+  [ expectEq "a pair equaleth its fields, and a match on an unknown pair reduceth" (Right ()) $
+      () <$ compileAs "eta.tung" (families ++ "let eta: [@α: *, @β: *, p: α ∧ β, p = ((p first) ⸴ (p second))] ≔ eftbend\nlet swap: [@α: *, @β: *, α ∧ β, β ∧ α] ≔ {a ⸴ b ^ b ⸴ a}\nlet swap_swap: [@α: *, @β: *, p: α ∧ β, ((p swap) swap) = p] ≔ eftbend\nlet unit: [a: one, a = only] ≔ eftbend\n"),
+    rejectContaining "a family of two constructors hath no η" "cannot unify" $
+      compileAs "eta.tung" (families ++ "let bad: [a: two, a = yea] ≔ eftbend\n"),
+    rejectContaining "a recursive family hath no η" "cannot unify" $
+      compileAs "eta.tung" (families ++ "let bad: [s: stream, s = ((match s { a more _ ^ a }) more s)] ≔ eftbend\n"),
+    rejectContaining "an indexed family hath no η" "cannot unify" $
+      compileAs "eta.tung" (families ++ "let bad: [v: yea vec, v = nil] ≔ eftbend\n")
+  ]
+  where
+    families =
+      """
+      ilk =: [@α: *, x: α, α, *] { eftbend: x = x }
+      ilk ∧: [α: *, β: *, *] { ⸴: [α, β, α ∧ β] }
+      ilk one: * { only: one }
+      ilk two: * { yea: two, nay: two }
+      ilk stream: * { more: [two, stream, stream] }
+      ilk vec: [two, *] { nil: yea vec, cons: [two, nay vec] }
+      let first: [@α: *, @β: *, a ⸴ _: α ∧ β, α] ≔ a
+      let second: [@α: *, @β: *, _ ⸴ b: α ∧ β, β] ≔ b
+
+      """

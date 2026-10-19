@@ -16,7 +16,7 @@ bug-reports: https://github.com/svartaz/tung/issues
 build-type: Simple
 
 common warnings
-  ghc-options: -O2 -Wall -Wno-name-shadowing -Wno-unused-do-bind
+  ghc-options: -j -Wall -Wno-name-shadowing -Wno-unused-do-bind
   default-extensions:
       BlockArguments
     , DerivingStrategies

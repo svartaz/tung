@@ -22,6 +22,7 @@ show let unlift: [@φ: [*, *], @: φ functor, @α: *, b wrap f: φ yoneda_co α,
 
 bizen: [@φ: [*, *], (φ yoneda_co) functor] {
   let warp: [b wrap f:, g:] ≔ b wrap (f ▷ g)
+
   let warp_sameness ≔ {_ wrap _ ^ eftbend}
 }
 

@@ -9,8 +9,10 @@ bring is.tung
 ## a hemmed lattice with a chosen upfill for every worth.
 show flock upfill: [α: *, @: α lattice_hemmed, *] {
   let ¬: [α, α]
-  let ∧_¬: [a: α, (a ∧ (a ¬)) = ⟂]
-  let ∨_¬: [a: α, (a ∨ (a ¬)) = ⊤]
+
+  let ⋏_¬: [a: α, (a ⋏ (a ¬)) = ⟂]
+
+  let ⋎_¬: [a: α, (a ⋎ (a ¬)) = ⊤]
 }
 
 bizen: 𝟚 upfill {
@@ -18,11 +20,13 @@ bizen: 𝟚 upfill {
     yea ^ nay,
     nay ^ yea
   }
-  let ∧_¬ ≔ {
+
+  let ⋏_¬ ≔ {
     yea;
     nay ^ eftbend
   }
-  let ∨_¬ ≔ {
+
+  let ⋎_¬ ≔ {
     yea;
     nay ^ eftbend
   }

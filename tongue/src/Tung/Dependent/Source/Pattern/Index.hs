@@ -12,13 +12,14 @@ module Tung.Dependent.Source.Pattern.Index
     constructorView,
     unifiedMotive,
     columnValue,
+    contextType,
     fieldValues,
     constructorValue,
     abstractLevels,
   )
 where
 
-import Control.Monad (foldM, forM, unless, zipWithM)
+import Control.Monad (foldM, unless, zipWithM)
 import Data.Functor ((<&>))
 import Data.Functor.Identity (Identity (..))
 import Data.List (elemIndex)
@@ -54,9 +55,8 @@ patternLeaves = \case
 -- a constructor application and its fields; a number literal readeth as its
 -- outer constructor.
 constructorView :: K.Environment -> N.Value -> Elaboration (Maybe (SymbolId, [N.Value]))
-constructorView environment value = do
-  forced <- E.force value
-  pure $ case N.constructorForm forced of
+constructorView environment value =
+  E.force value <&> N.constructorForm <&> \case
     N.VNeutral neutral
       | (N.NGlobal constructor _, arguments) <- N.neutralSpine neutral,
         Just Definition {definitionBody = DataConstructor owner _} <- Map.lookup constructor (globals environment),
@@ -95,6 +95,7 @@ data IndexConstraint
   = ForcedField Int IndexPattern
   | IndexConflict
   | UnknownIndex
+  deriving stock (Eq)
 
 constructorFit :: K.Environment -> Split -> [IndexPattern] -> SymbolId -> [N.Value] -> Elaboration ConstructorFit
 constructorFit environment split indexPatterns constructor fieldValues = do
@@ -104,10 +105,10 @@ constructorFit environment split indexPatterns constructor fieldValues = do
   constraints <- concat <$> zipWithM (fits fields) indexPatterns indices
   let (forced, inconsistent) = foldl' constrain (Map.empty, False) constraints
   pure $
-    if inconsistent || any conflict constraints
+    if inconsistent || IndexConflict `elem` constraints
       then IndexImpossible forced
       else
-        if any unknown constraints
+        if UnknownIndex `elem` constraints
           then IndexUndecidable
           else IndexFits forced
   where
@@ -121,10 +122,6 @@ constructorFit environment split indexPatterns constructor fieldValues = do
             Just (actual, values)
               | actual /= expected -> pure [IndexConflict]
               | otherwise -> concat <$> zipWithM (fits fields) subpatterns values
-    conflict IndexConflict = True
-    conflict _ = False
-    unknown UnknownIndex = True
-    unknown _ = False
     -- an impossible method still needeth these splits so its motive can
     -- compute to the trivial type. on conflict the first shape sufficeth.
     constrain (forced, inconsistent) (ForcedField level pattern) =
@@ -153,26 +150,23 @@ constructorFits environment split indexPatterns constructor fieldValues =
 
 constructorPossible :: K.Environment -> Split -> [IndexPattern] -> SymbolId -> [N.Value] -> Elaboration Bool
 constructorPossible environment split indexPatterns constructor fieldValues =
-  constructorFits environment split indexPatterns constructor fieldValues >>= \case
-    Just possible -> pure possible
-    Nothing -> E.failure ("matching cannot decide whether " ++ symbolName constructor ++ " fiteth the indices")
+  constructorFits environment split indexPatterns constructor fieldValues
+    >>= maybe (E.failure ("matching cannot decide whether " ++ symbolName constructor ++ " fiteth the indices")) pure
 
 -- after forced fields have been split, each written index variable bindeth
 -- the matching part of the constructor's actual index in the branch.
 matchedIndexBindings :: K.Environment -> Split -> [IndexPattern] -> SymbolId -> [N.Value] -> Elaboration [(Int, N.Value)]
-matchedIndexBindings environment split indexPatterns constructor fieldValues = do
-  indices <- constructorIndices environment split constructor fieldValues
-  indexBindings environment indexPatterns indices
+matchedIndexBindings environment split indexPatterns constructor fieldValues =
+  constructorIndices environment split constructor fieldValues >>= indexBindings environment indexPatterns
 
 -- only known constructor shapes justify a recursive call in the declared
 -- domain. unlike field planning, this check cannot promise a later split.
 indexBindings :: K.Environment -> [IndexPattern] -> [N.Value] -> Elaboration [(Int, N.Value)]
 indexBindings environment = bindings
   where
-    bindings [] [] = pure []
-    bindings (pattern : rest) (value : values) =
-      (++) <$> bind pattern value <*> bindings rest values
-    bindings _ _ = mismatch
+    bindings patterns values
+      | length patterns == length values = concat <$> zipWithM bind patterns values
+      | otherwise = mismatch
     bind (IndexVariable level) value = pure [(level, value)]
     bind (IndexConstructor expected subpatterns) value =
       constructorView environment value >>= \case
@@ -187,13 +181,7 @@ indexBindings environment = bindings
 -- `[goal, goal]`. at the written indices it computeth back to the goal.
 unifiedMotive :: K.Environment -> Scope -> Int -> Split -> [Level] -> [Term] -> [IndexPattern] -> [Int] -> N.Value -> Elaboration Term
 unifiedMotive environment scope level Split {..} levels parameterTerms indexPatterns dependents expected = do
-  goalTerm <- quoteFolded scope expected
-  dependentDomains <- forM dependents (quote scope . contextType scope)
-  let reverted =
-        foldr
-          (Pi Explicit)
-          (abstractLevels (depth scope) dependents goalTerm)
-          (zipWith (\position term -> abstractLevels (depth scope) (take position dependents) term) [0 ..] dependentDomains)
+  reverted <- revert scope dependents =<< quoteFolded scope expected
   goalLevel <- requireUniverse scope =<< inferCore scope reverted
   motiveType <- inductiveMotiveType scope Split {..} levels parameterTerms
   bindIndices reverted goalLevel scope motiveType (inductiveIndexPlicities splitInfo) []
@@ -243,13 +231,8 @@ unifiedMotive environment scope level Split {..} levels parameterTerms indexPatt
       -- indices and constructor fields. revert their telescope before the
       -- split, then rebind it at each constructor's refined types.
       dependents <- dependentInputs current [target]
-      domains <- traverse (quote current . contextType current) dependents
-      let revertedResult =
-            foldr
-              (Pi Explicit)
-              (abstractLevels (depth current) dependents resultTerm)
-              (zipWith (\position term -> abstractLevels (depth current) (take position dependents) term) [0 ..] domains)
-          motive = Core.Lambda Explicit targetTypeTerm (abstractLevels (depth current) [target] revertedResult)
+      revertedResult <- revert current dependents resultTerm
+      let motive = Core.Lambda Explicit targetTypeTerm (abstractLevels (depth current) [target] revertedResult)
       (prefix, prefixType) <- eliminatorPrefix current split fresh parameterTerms' motive (columnValue current target) Nothing
       methods <- E.fromEither (inductiveMethods (globals environment) info)
       (applied, _) <-
@@ -271,7 +254,7 @@ unifiedMotive environment scope level Split {..} levels parameterTerms indexPatt
           )
           (prefix, prefixType)
           methods
-      pure (foldl (Apply Explicit) (Apply Explicit applied (Local (depth current - target - 1))) [Local (depth current - dependent - 1) | dependent <- dependents])
+      pure (applyArguments applied [(Explicit, localTerm current input) | input <- target : dependents])
     rebind current ty [] rebound continue = continue current ty rebound
     rebind current ty (old : rest) rebound continue = do
       (annotation, _, inner, next) <- bindInput "invalid reverted index motive" Explicit Nothing current ty
@@ -293,6 +276,14 @@ bindMethod current ty (field : rest) levels continue = do
   (fieldLevel, _, inner, next, wrap) <- methodField current ty field
   wrap <$> bindMethod inner next rest (fieldLevel : levels) continue
 
+-- the goal under one binder per reverted input, each domain abstracting the
+-- inputs before it.
+revert :: Scope -> [Int] -> Term -> Elaboration Term
+revert scope dependents goal = do
+  domains <- traverse (quote scope . contextType scope) dependents
+  let abstracted position = abstractLevels (depth scope) (take position dependents)
+  pure (foldr (Pi Explicit) (abstractLevels (depth scope) dependents goal) (zipWith abstracted [0 ..] domains))
+
 contextType :: Scope -> Int -> N.Value
 contextType scope level = K.contextTypes (scopeContext scope) !! (depth scope - level - 1)
 
@@ -306,7 +297,7 @@ fieldValues scope fields = [N.VNeutral (N.NLocal (depth scope + position)) | pos
 
 constructorValue :: SymbolId -> [Level] -> [N.Value] -> [(Plicity, N.Value)] -> N.Value
 constructorValue constructor levels parameters fields =
-  N.VNeutral (foldl (\function (plicity, argument) -> N.NApply plicity function argument) (N.NGlobal constructor levels) ([(Implicit, parameter) | parameter <- parameters] ++ fields))
+  N.VNeutral (N.applyNeutral (N.NGlobal constructor levels) (map (Implicit,) parameters ++ fields))
 
 -- the abstracted levels become new binders, the first outermost.
 abstractLevels :: Int -> [Int] -> Term -> Term

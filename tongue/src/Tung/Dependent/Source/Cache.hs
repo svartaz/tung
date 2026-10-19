@@ -14,10 +14,11 @@ module Tung.Dependent.Source.Cache
 where
 
 import Control.Exception (SomeException, evaluate, try)
-import Control.Monad (guard)
+import Control.Monad (guard, join, unless, void)
 import Data.Binary (Binary (..), decodeFileOrFail, encodeFile)
 import Data.Bits (xor)
 import Data.Char (ord)
+import Data.Either (fromRight)
 import Data.List (sort)
 import Data.Map.Lazy qualified as Lazy
 import Data.Map.Strict qualified as Map
@@ -121,7 +122,7 @@ cacheKeys build modules = Map.mapMaybe id candidates
     candidates = Lazy.mapWithKey key modules
     key path snapshot = do
       imports <- importsOf snapshot
-      importKeys <- traverse (\imported -> if imported == path then Nothing else Map.lookup imported candidates >>= id) imports
+      importKeys <- traverse (\imported -> if imported == path then Nothing else join (Map.lookup imported candidates)) imports
       pure (fingerprint (show interfaceVersion ++ "\0" ++ build ++ "\0" ++ path ++ "\0" ++ snapshotText snapshot ++ "\0" ++ concat (sort importKeys)))
 
 importsOf :: SourceSnapshot -> Maybe [String]
@@ -164,14 +165,14 @@ loadInterfaces directory modules keys = do
     load (path, key) = do
       let file = interfacePath directory key
       present <- doesFileExist file
-      if not present then pure [] else either (const []) id <$> (try (readInterface path file) :: IO (Either SomeException [(String, Interface)]))
+      if not present then pure [] else fromRight [] <$> (try (readInterface path file) :: IO (Either SomeException [(String, Interface)]))
     readInterface path file =
       decodeFileOrFail file >>= \case
         Left _ -> pure []
         Right interface -> [(path, interface)] <$ evaluate interface
     rebuild programs path (Interface own exports references) = do
       imports <- Map.lookup path modules >>= importsOf
-      imported <- traverse (\path -> Map.lookup path programs >>= id) imports
+      imported <- traverse (\path -> join (Map.lookup path programs)) imports
       let environments = map (globals . programEnvironment) imported
           definitions = Map.unions (own : H.primitiveDefinitions : environments)
           allReferences = Map.unionsWith Set.union (references : map programReferences imported)
@@ -193,9 +194,8 @@ saveInterfaces directory keys programs = do
           own = Map.filterWithKey (\symbol _ -> symbolModule symbol == SourceModule path) globals
           references = Map.restrictKeys (programReferences program) (Map.keysSet own)
       present <- doesFileExist file
-      if present
-        then pure ()
-        else () <$ (try (encodeFile temporary (Interface own (programExports program) references) >> renameFile temporary file) :: IO (Either SomeException ()))
+      unless present $
+        void (try (encodeFile temporary (Interface own (programExports program) references) >> renameFile temporary file) :: IO (Either SomeException ()))
 
 -- the running compiler's identity: its path and modification time.
 compilerBuild :: IO String

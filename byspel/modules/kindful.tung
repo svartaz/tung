@@ -9,6 +9,6 @@ show let plus: [x: nat, y: nat, nat] ≔ match x {
 }
 
 ## private: not visible to importers.
-let double: [x: nat, nat] ≔ x plus x
+let twofold: [x: nat, nat] ≔ x plus x
 
-show let four: nat ≔ ((naught heir) heir) double
+show let four: nat ≔ ((naught heir) heir) twofold

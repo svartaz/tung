@@ -90,9 +90,9 @@ oneData = HostData "ilk/one.tung" "𝟙"
 twoData = HostData "ilk/two.tung" "𝟚"
 listData = HostData "ilk/list.tung" "list"
 optionData = HostData "ilk/maybe.tung" "maybe"
-productData = HostData "ilk/product.tung" "∏"
--- a fallible host deed returneth `string ∑ α`: an error message or a result.
-sumData = HostData "ilk/sum.tung" "∑"
+productData = HostData "ilk/and.tung" "∧"
+-- a fallible host deed returneth `string ∨ α`: an error message or a result.
+sumData = HostData "ilk/or.tung" "∨"
 tableData = HostData "ilk/wordbook.tung" "wordbook"
 
 processResultData, requestData, responseData :: HostData
@@ -120,7 +120,7 @@ hostDataSchemas =
     schema twoData [] [("yea", []), ("nay", [])],
     schema optionData ["a"] [("none", []), ("some", [a])],
     schema listData ["a"] [("empty", []), ("‥", [a, app listData [a]])],
-    schema productData ["a", "b"] [("both", [a, b])],
+    schema productData ["a", "b"] [("⸴", [a, b])],
     schema sumData ["a", "b"] [("incast₀", [a]), ("incast₁", [b])],
     schema tableData ["a", "b"] [("from_list", [app listData [app productData [a, b]]])],
     schema processResultData [] [("process_outcome", [HostCon "ℤ", text, text])],
@@ -178,7 +178,7 @@ noneConstructorId = constructorId optionData "none"
 someConstructorId = constructorId optionData "some"
 
 productConstructorId :: SymbolId
-productConstructorId = constructorId productData "both"
+productConstructorId = constructorId productData "⸴"
 
 leftConstructorId, rightConstructorId :: SymbolId
 leftConstructorId = constructorId sumData "incast₀"

@@ -135,7 +135,7 @@ inductiveMethods :: Globals -> InductiveInfo -> Either String [(SymbolId, [(Plic
 inductiveMethods _ InductiveInfo {inductiveFamilies = [_], inductiveConstructorInfo} = pure inductiveConstructorInfo
 inductiveMethods globals info = concat <$> traverse methods (inductiveFamilies info)
   where
-    methods family = inductiveConstructorInfo <$> inductiveInfo globals family
+    methods = fmap inductiveConstructorInfo . inductiveInfo globals
 
 mapSymbols :: (SymbolId -> SymbolId) -> Term -> Term
 mapSymbols f = runIdentity . traverseScoped visit
@@ -201,8 +201,8 @@ mapChildren f = \case
   Apply plicity function argument -> Apply plicity <$> f 0 function <*> f 0 argument
   Let annotation value body -> Let <$> f 0 annotation <*> f 0 value <*> f 1 body
   Meta identity arguments -> Meta identity <$> traverse (f 0) arguments
-  RecordType fields -> RecordType <$> traverse (\(name, field) -> (name,) <$> f 0 field) fields
-  Record fields -> Record <$> traverse (\(name, field) -> (name,) <$> f 0 field) fields
+  RecordType fields -> RecordType <$> traverse (traverse (f 0)) fields
+  Record fields -> Record <$> traverse (traverse (f 0)) fields
   Project record name -> (`Project` name) <$> f 0 record
   Field index value -> Field index <$> f 0 value
   term@Local {} -> pure term

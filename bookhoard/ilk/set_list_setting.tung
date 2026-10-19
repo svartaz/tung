@@ -33,13 +33,13 @@ let above_inhold
     }
   }
 
-## every tail limb is tightly above its first element.
+## every tail limb is tightly above its first limb.
 show let rowed_tight_limb
   : [@α: *, @: α order_whole, a: α, a…: α list, b: α,
     held: ((a ‥ a…) rowed) = yea, limb: (a… inhold b) = yea, (a tight b) = yea]
   ≔ a above_inhold a… b ((a above a…) yea_if_former (a… rowed) held) limb
 
-## a limb is never below the first element of ordered search.
+## a limb is never below the first limb of ordered search.
 show let inhold_first_below
   : [@α: *, @: α order_whole, a: α, a…: α list, b: α,
     limb: ((a ‥ a…) inhold b) = yea, (a ≤ b) = yea]
@@ -48,19 +48,19 @@ show let inhold_first_below
     nay, below ^ b ≤_flip a below
   }
 
-## the first element belongeth to its list.
+## the first limb belongeth to its list.
 show let inhold_first
   : [@α: *, @: α order_whole, a: α, a…: α list, ((a ‥ a…) inhold a) = yea]
   ≔ ({b: 𝟚 ^ b if (a ≤ a) (a… inhold a)} leibnitz (a ≤_eftbend)) throughgo
     (a ≤_eftbend)
 
-## no tail limb lieth at or below the first element.
+## no tail limb lieth at or below the first limb.
 let tail_missing_below
   : [@α: *, @: α order_whole, a: α, a…: α list, b: α,
     held: ((a ‥ a…) rowed) = yea, below: (b ≤ a) = yea, (a… inhold b) = nay]
   ≔ a above_missing a… b ((a above a…) yea_if_former (a… rowed) held) below
 
-## ridding the same first element preserveth limbship sameness.
+## ridding the same first limb preserveth limbship sameness.
 let tails_same_first
   : [@α: *, @: α order_whole, a: α, a…: α list, b…: α list,
     left: ((a ‥ a…) rowed) = yea, right: ((a ‥ b…) rowed) = yea,

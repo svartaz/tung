@@ -3,8 +3,8 @@ bring deed/file.tung
 bring flock/algebra/whole/hath_fold.tung
 bring flock/hath_to_string.tung
 bring ilk/one.tung
+bring ilk/or.tung
 bring ilk/string/building.tung
-bring ilk/sum.tung
 
 ## a path kept distinct from arbitrary string at api boundaries.
 show ilk _path: * { path: [string, _path] }
@@ -15,10 +15,10 @@ bizen: _path hath_to_string {
 
 show let yoke: [t₀ path: _path, t₁ path: _path, _path] ≔ t₀ · '/' $ · t₁ $ path
 
-show let read: [t path: _path, (string ∑ string) deed] ≔ t file~read
+show let read: [t path: _path, (string ∨ string) deed] ≔ t file~read
 
-show let write: [t path: _path, contents: string, (string ∑ 𝟙) deed]
+show let write: [t path: _path, contents: string, (string ∨ 𝟙) deed]
   ≔ t file~write contents
 
-show let onhang: [t path: _path, contents: string, (string ∑ 𝟙) deed]
+show let onhang: [t path: _path, contents: string, (string ∨ 𝟙) deed]
   ≔ t file~onhang contents

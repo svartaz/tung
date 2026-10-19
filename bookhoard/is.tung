@@ -15,20 +15,19 @@ show let throughgo
   : [@α: *, @a: α, @b: α, @c: α, eftbend: a = b, q: b = c, a = c]
   ≔ q
 
-## a property of one side holdeth for the other. the property is found by
+## a umbsay of one side holdeth for the other. the umbsay is found by
 ## abstracting each occurrence of `b` in the expected ilk, or without one,
 ## each occurrence of `a` in the ilk of the other input.
 show let throughbear
-  : [@α: *, @a: α, @b: α, @property: [α, *], eftbend: a = b, a property,
-    b property]
+  : [@α: *, @a: α, @b: α, @umbsay: [α, *], eftbend: a = b, a umbsay, b umbsay]
   ≔ {c ^ c}
 
 ## a computed worth with the soothing of what it is, so that a case fall can
 ## match the worth and still know it: in
 ## `e inlook { yea, known ^ …, nay, known ^ … }` each case seeth `known`
-## as `e = yea` or `e = nay`. the property is found as for `throughbear`.
+## as `e = yea` or `e = nay`. the umbsay is found as for `throughbear`.
 show let inlook
-  : [@α: *, @property: [α, *], a: α, f: [b: α, a = b, b property], a property]
+  : [@α: *, @umbsay: [α, *], a: α, f: [b: α, a = b, b umbsay], a umbsay]
   ≔ a f eftbend
 
 ## fall umfanging: a fall that agreeth with another at every input is the same

@@ -8,7 +8,8 @@ module Tung.Dependent.Render
   )
 where
 
-import Data.List (intercalate)
+import Data.List (find, intercalate)
+import Data.Maybe (fromMaybe)
 import Tung.Dependent.Literal (renderLiteral)
 import Tung.Dependent.Syntax
 import Tung.Identity (SymbolId (..))
@@ -111,9 +112,7 @@ sorted = \case
 -- type binders take greek letters, others latin ones; a name in scope is
 -- never reused.
 fresh :: [String] -> Maybe Term -> String
-fresh names domain = case [name | name <- candidates, name `notElem` names] of
-  name : _ -> name
-  [] -> "x"
+fresh names domain = fromMaybe "x" (find (`notElem` names) candidates)
   where
     candidates
       | maybe False sorted domain = greek ++ [letter ++ show index | index <- [1 :: Int ..], letter <- greek]

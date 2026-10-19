@@ -41,7 +41,7 @@ nameHash = foldl' (\hash character -> (hash `xor` ord character) * 16777619) 216
 instance Show SymbolId where
   showsPrec depth (SymbolId owner name) =
     showParen (depth >= 11) $
-      showString "SymbolId {symbolModule = " . showsPrec 0 owner . showString ", symbolName = " . showsPrec 0 name . showString "}"
+      showString "SymbolId {symbolModule = " . shows owner . showString ", symbolName = " . shows name . showString "}"
 
 instance Eq SymbolId where
   left@(SymbolIdHashed leftHash leftModule leftName) == right@(SymbolIdHashed rightHash rightModule rightName) =
@@ -71,7 +71,7 @@ shared left right = isTrue# (reallyUnsafePtrEquality# left right)
 internSymbols :: Map.Map SymbolId a -> SymbolId -> SymbolId
 internSymbols symbols = \symbol -> Map.findWithDefault symbol symbol canonical
   where
-    canonical = Map.mapWithKey (\symbol _ -> symbol) symbols
+    canonical = Map.mapWithKey const symbols
 
 -- the eliminator of an ilk or flock, written `unbuild name`. its spelling
 -- containeth a space, so no source name can collide with it or name it.

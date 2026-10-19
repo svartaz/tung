@@ -11,7 +11,7 @@ module Tung.Project
   )
 where
 
-import Control.Monad (filterM)
+import Control.Monad (filterM, unless)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (ExceptT, runExceptT, throwE)
@@ -94,7 +94,7 @@ loadImport loading owner base importPath = do
             ++ intercalate ", " (map (\path -> "'" ++ path ++ "'") paths)
         )
   where
-    refuse message = if loadingLenient loading then pure () else failLoader message
+    refuse = unless (loadingLenient loading) . failLoader
     loadCandidate candidate = do
       absolute <- lift (liftIOError "resolve" candidate (canonicalizePath candidate))
       known <- gets (Map.lookup importPath)
@@ -143,9 +143,7 @@ readSource :: Map.Map FilePath String -> FilePath -> ExceptT String IO String
 readSource texts path = maybe (liftIOError "read" path (Text.unpack <$> Text.readFile path)) pure (Map.lookup path texts)
 
 liftIOError :: String -> FilePath -> IO a -> ExceptT String IO a
-liftIOError action path operation = do
-  result <- liftIO (tryIOError operation)
-  either (throwE . renderIoError action path . show) pure result
+liftIOError action path operation = liftIO (tryIOError operation) >>= either (throwE . renderIoError action path . show) pure
 
 failLoader :: String -> Loader a
 failLoader = lift . throwE

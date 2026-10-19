@@ -2,11 +2,11 @@ bring deed/file.tung
 bring deed/system.tung
 bring flock/algebra/whole/hath_fold.tung
 bring flock/functor/downshaper.tung
+bring ilk/and.tung
 bring ilk/list.tung
 bring ilk/maybe.tung
-bring ilk/product.tung
+bring ilk/or.tung
 bring ilk/string/operation.tung
-bring ilk/sum.tung
 bring ilk/wordbook.tung
 bring often.tung
 
@@ -21,7 +21,7 @@ let rime_words: [content: string, string wordbook ℤ] ≔ (
   yield words gather₁ wordbook~empty rime_word
 )
 
-let write_rime: [entry: string ∏ ℤ, 𝟙 deed] ≔ >{then,
+let write_rime: [entry: string ∧ ℤ, 𝟙 deed] ≔ >{then,
   (entry forthcast₀) often~write,
   ':' often~write,
   (entry forthcast₁) to_string $ write_line

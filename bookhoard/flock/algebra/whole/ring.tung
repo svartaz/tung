@@ -14,21 +14,29 @@ bring is.tung
 ## so laws about a ring and its additive group share one dictionary.
 show flock ring: [α: *, @: α semiring, @: α hath_-, *] {
   let +_-: [a: α, (a + (a -)) = naught]
+
   let -_+: [a: α, ((a -) + a) = naught]
+
   let -+_+: [a: α, b: α, (a -+ b) = ((a -) + b)]
 }
 
 bizen: [@α: *, @: α ring, α group_+] {
   let +_-: [a:] ≔ a +_-
+
   let -_+: [a:] ≔ a -_+
+
   let -+_+: [a:, b:] ≔ a -+_+ b
 }
 
 bizen: [@β: *, @: β ring, @α: *, [α, β] ring] {
   let -: [f:, a:] ≔ (a f) -
+
   let -+: [f:, g:, a:] ≔ (a f) -+ (a g)
+
   let +_-: [f:] ≔ {a ^ (a f) +_-} fall_umfang
+
   let -_+: [f:] ≔ {a ^ (a f) -_+} fall_umfang
+
   let -+_+: [f:, g:] ≔ {a ^ (a f) -+_+ (a g)} fall_umfang
 }
 
@@ -37,10 +45,12 @@ bizen: 𝟚 ring {
     nay;
     yea ^ eftbend
   }
+
   let -_+ ≔ {
     nay;
     yea ^ eftbend
   }
+
   let -+_+: [_:, _:] ≔ eftbend
 }
 

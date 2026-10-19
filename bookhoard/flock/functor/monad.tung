@@ -6,9 +6,27 @@ bring is.tung
 
 show flock monad: [φ: [*, *], @: φ onwendsome, *] {
   let flat: [@α: *, (α φ) φ, α φ]
+
   let sheer_bind
     : [@α: *, @β: *, a: α, f: [α, β φ], ((a sheer) warp f $ flat) = (a f)]
+
   let warp_sheer_flat: [@α: *, a: α φ, (a warp sheer $ flat) = a]
+
+  let bind_bind
+    : [@α: *, @β: *, @γ: *, m: α φ, f: [α, β φ], g: [β, γ φ],
+      ((m warp f $ flat) warp g $ flat) =
+        (m warp {a: α ^ flat @γ ((a f) warp g)} $ flat)]
+}
+
+## the reader flatteneth by reading the same input twice.
+bizen: [@ρ: *, (ρ →) monad] {
+  let flat: [a:, r:] ≔ r (r a)
+
+  let sheer_bind: [_:, _:] ≔ eftbend
+
+  let warp_sheer_flat: [_:] ≔ eftbend
+
+  let bind_bind: [_:, _:, _:] ≔ eftbend
 }
 
 show let bind

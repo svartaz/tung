@@ -96,7 +96,7 @@ webServerRoundTrip imports = do
         bring web/server.tung
 
         let route:[incoming: _request, _response deed] ≔ unix_time warp { _ ^
-          match ((incoming request~method) ≍ 'POST') ∧ ((incoming request~target) ≍ '/echo') {
+          match ((incoming request~method) ≍ 'POST') ⋏ ((incoming request~target) ≍ '/echo') {
             yea ^ match ((incoming request~headers) wordbook~lookup 'Host') {
               host maybe~some ^ match host ≍ 'localhost' {
                 yea ^ ((((incoming request~body) ok) with_header 'Transfer-Encoding' 'chunked') with_header 'X-Tung' 'old') with_header 'X-Tung' 'yea',

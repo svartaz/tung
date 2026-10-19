@@ -1,6 +1,6 @@
+bring ilk/and.tung
 bring ilk/maybe.tung
 bring ilk/one.tung
-bring ilk/product.tung
 bring ilk/task.tung
 bring ilk/two.tung
 
@@ -66,5 +66,5 @@ show let unicode_to_kindful: [unicode, ℕ] ≔ 'unicode_to_kindful' fremmed
 
 show let kindful_to_unicode: [ℕ, unicode maybe] ≔ 'kindful_to_unicode' fremmed
 
-show let behead_string: [string, (unicode ∏ string) maybe]
+show let behead_string: [string, (unicode ∧ string) maybe]
   ≔ 'behead_string' fremmed

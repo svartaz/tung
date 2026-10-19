@@ -173,11 +173,14 @@ let helpsetting_≤_=
 
 bizen: [@α: *, @: α order_whole, (α list) order_half] {
   let ≤_eftbend ≔ helpsetting_≤_eftbend
+
   let ≤_withevenmete ≔ helpsetting_≤_withevenmete
+
   let ≤_throughgo ≔ helpsetting_≤_throughgo
 }
 
 bizen: [@α: *, @: α order_whole, (α list) order_whole] {
   let ≤_whole ≔ helpsetting_≤_whole
+
   let ≤_= ≔ helpsetting_≤_=
 }

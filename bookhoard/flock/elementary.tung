@@ -7,8 +7,11 @@ bring singal.tung
 
 show flock elementary: [α: *, @: α hath_÷, *] {
   let exponent: [α, α]
+
   let logarithm: [α, α]
+
   let sine: [α, α]
+
   let cosine: [α, α]
 }
 
@@ -17,7 +20,10 @@ show let tangent: [@α: *, @: α elementary, @: α hath_÷, a: α, α]
 
 bizen: float elementary {
   let exponent ≔ exponent_float
+
   let logarithm ≔ logarithm_float
+
   let sine ≔ sine_float
+
   let cosine: [a:] ≔ a -+ (spin · 0.25) $ sine_float
 }

@@ -9,7 +9,6 @@ module Tung.Dependent.Source.Expression
 where
 
 import Control.Monad (forM_, unless)
-import Data.Functor ((<&>))
 import Data.List (elemIndex, partition)
 import Data.Map.Strict qualified as Map
 import Data.Maybe (isJust, isNothing)
@@ -37,11 +36,6 @@ type Elaboration = E.Elaboration
 patternChecker :: K.Environment -> Names -> Patterns.ExpressionChecker
 patternChecker environment names =
   Patterns.ExpressionChecker environment names (inferExpression environment names) (\scope annotation -> snd <$> inferAnnotation environment names scope annotation) (checkExpression environment names) (\scope -> applyTo environment names scope Nothing) (solveDeterminedInstances environment names)
-
-holes :: Term -> Bool
-holes = \case
-  Meta {} -> True
-  term -> any (holes . snd) (children term)
 
 inferAnnotation :: K.Environment -> Names -> Scope -> Expression -> Elaboration (Term, N.Value)
 inferAnnotation environment names scope expression = do
@@ -99,9 +93,7 @@ inferExpression environment names scope@Scope {scopeContext = context, scopeName
   Lambda [] body -> inferExpression environment names scope body
   Lambda (Binder {..} : remaining) body -> do
     (domain, domainValue) <- case binderAnnotation of
-      Nothing -> do
-        level <- E.freshLevel
-        E.newMeta context (N.VSort level)
+      Nothing -> E.freshLevel >>= E.newMeta context . N.VSort
       Just domainExpression -> inferAnnotation environment names scope domainExpression
     let current = extend scope binderName domainValue
     (bodyTerm, bodyType) <- inferExpression environment names current (Lambda remaining body)
@@ -218,7 +210,7 @@ applyTo environment names scope@Scope {scopeContext = context} goal function fun
         N.VPi plicity domain codomain -> do
           -- a written `@x` filleth the next implicit input that instance search
           -- doth not fill.
-          requirement <- if plicity == Implicit then isJust <$> classFamily names domain else pure False
+          requirement <- isRequirement names plicity domain
           let afterGoal = plicity == Explicit && open && maybe False ((position `elem`) . snd) motive
           (argumentTerm, argumentValue, nextExplicit, nextImplicit, nextDeferred, omitted) <- case (plicity, explicit, implicit) of
             (Explicit, arg : rest, _) -> supplied domain arg afterGoal rest implicit deferred
@@ -252,12 +244,15 @@ applyTo environment names scope@Scope {scopeContext = context} goal function fun
     unknownCaseInput expression domain = case expression of
       Cases _ ->
         E.force domain >>= \case
-          N.VPi _ input _ ->
-            E.force input <&> \case
-              N.VNeutral neutral | (N.NMeta _ _, _) <- N.neutralSpine neutral -> True
-              _ -> False
+          N.VPi _ input _ -> isJust . E.metaSpine <$> E.force input
           _ -> pure False
       _ -> pure False
+
+-- an implicit input whose type applieth a flock, filled by instance search.
+isRequirement :: Names -> Plicity -> N.Value -> Elaboration Bool
+isRequirement names plicity domain
+  | plicity == Implicit = isJust <$> classFamily names domain
+  | otherwise = pure False
 
 -- a function whose result applieth one of its own implicit type families,
 -- as `throughbear` applieth its property, is a motive function, as lean's
@@ -274,7 +269,7 @@ motiveInputs names scope functionType explicitCount = walk 0 explicitCount funct
     walk position remaining ty families carriers inputs =
       E.force ty >>= \case
         N.VPi plicity domain codomain -> do
-          requirement <- if plicity == Implicit then isJust <$> classFamily names domain else pure False
+          requirement <- isRequirement names plicity domain
           if remaining == 0 && (plicity == Explicit || not requirement)
             then pure Nothing
             else do
@@ -324,7 +319,7 @@ checkExpression environment names scope expression expected = E.force expected >
       -- inference hole.
       Sorry -> do
         ty <- quote scope expected
-        if holes ty
+        if not (null (E.termHoles ty))
           then inferred expected
           else do
             kind <- inferCore scope ty
@@ -343,11 +338,9 @@ checkExpression environment names scope expression expected = E.force expected >
         N.VPi plicity domain codomain -> do
           unless (plicity == binderPlicity) (E.failure "implicit and explicit lambda arguments do not match")
           domainTerm <- quote scope domain
-          case binderAnnotation of
-            Nothing -> pure ()
-            Just annotation -> do
-              (_, actual) <- inferAnnotation environment names scope annotation
-              E.unify (scopeContext scope) actual domain
+          forM_ binderAnnotation \annotation -> do
+            (_, actual) <- inferAnnotation environment names scope annotation
+            E.unify (scopeContext scope) actual domain
           (current, resultType) <- bindDomain scope binderName domain codomain
           bodyTerm <- checkExpression environment names current (Lambda remaining body) resultType
           pure (Core.Lambda plicity domainTerm bodyTerm)
@@ -360,7 +353,7 @@ checkExpression environment names scope expression expected = E.force expected >
       Cases rows -> Patterns.checkCases (patternChecker environment names) scope rows expected
       -- an unknown expected type would depend on the matched values; the
       -- match inferreth a result type without them instead.
-      Match {} | flexible expected -> inferred expected
+      Match {} | isJust (E.metaSpine expected) -> inferred expected
       Match scrutinees rows -> Patterns.checkMatch (patternChecker environment names) scope scrutinees rows expected
       -- an expected implicit input is introduced before any other expression is
       -- checked, so a polymorphic value meeteth a polymorphic type.
@@ -372,9 +365,6 @@ checkExpression environment names scope expression expected = E.force expected >
       domainTerm <- quote scope domain
       (current, resultType) <- bindDomain scope Nothing domain codomain
       Core.Lambda Implicit domainTerm <$> checkExpression environment names current expression resultType
-    flexible = \case
-      N.VNeutral neutral | (N.NMeta _ _, _) <- N.neutralSpine neutral -> True
-      _ -> False
     inferred expected = do
       (term, actual) <- case expression of
         Application function arguments
@@ -438,7 +428,7 @@ specialise names scope = go
               (argumentTerm, argumentValue) <- implicitArgument names (scopeContext scope) domain
               resultType <- E.instantiate codomain argumentValue
               go (Apply Implicit term argumentTerm) resultType expected
-        actual -> E.unify (scopeContext scope) actual expected >> pure term
+        actual -> term <$ E.unify (scopeContext scope) actual expected
     -- an unknown expected type receiveth an instance, as in hindley-milner.
     shouldSpecialise (N.VPi Implicit _ _) = False
     shouldSpecialise _ = True

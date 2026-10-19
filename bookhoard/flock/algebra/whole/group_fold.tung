@@ -7,7 +7,9 @@ bring is.tung
 ## a group: a monoid whose every worth hath a withwend on both sides.
 show flock group_·: [α: *, @: α monoid_·, *] {
   let /: [α, α]
+
   let ·_/: [a: α, (a · (a /)) = one]
+
   let /_·: [a: α, ((a /) · a) = one]
 }
 

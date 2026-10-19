@@ -15,14 +15,18 @@ where
 
 import Control.Exception (evaluate)
 import Data.Bifunctor (first)
+import Data.Bits (xor)
+import Data.Char (ord)
 import Data.IORef (IORef, atomicModifyIORef', newIORef)
+import Data.List (sort)
 import Data.Map.Strict qualified as Map
-import System.Directory (removePathForcibly)
+import System.Directory (createDirectoryIfMissing, doesDirectoryExist, listDirectory, removeFile)
 import System.Environment (lookupEnv)
+import System.FilePath (takeBaseName, takeExtension, (</>))
 import System.IO.Unsafe (unsafePerformIO)
 import Tung (readLibraryImports)
 import Tung.Dependent (Inferred, ModuleId)
-import Tung.Dependent.Source (CompileFailure (..), SourceProgram, SourceSnapshot, cacheKeys, compileImports, compileSnapshot, compilerBuild, loadInterfaces, saveInterfaces, sourceSnapshot)
+import Tung.Dependent.Source (CompileFailure (..), SourceProgram, SourceSnapshot, cacheKeys, compileImports, compileSnapshot, loadInterfaces, saveInterfaces, sourceSnapshot)
 
 compileSource :: ModuleId -> String -> Either String SourceProgram
 compileSource owner source = compileProject owner source Map.empty
@@ -66,22 +70,35 @@ bookhoard = unsafePerformIO do
   let snapshots = Map.map sourceSnapshot sources
   initial <-
     lookupEnv sharedVariable >>= \case
-      Just directory -> compilerBuild >>= loadInterfaces directory snapshots . (`cacheKeys` snapshots)
+      Just directory -> libraryBuild >>= loadInterfaces directory snapshots . (`cacheKeys` snapshots)
       Nothing -> pure Map.empty
   cache <- newIORef initial
   pure (sources, snapshots, cache)
 
--- the parent test process checketh all of bookhoard once and saveth its
--- interfaces in a fresh directory, which it nameth to its group processes.
--- a failure saveth nothing, so each group checketh and reporteth it again.
+-- the parent test process checketh bookhoard once and saveth its interfaces
+-- in a directory it nameth to its group processes. interfaces an earlier run
+-- saved for the same sources are reused, and stale ones removed. a failure
+-- saveth nothing, so each group checketh and reporteth it again.
 shareBookhoard :: IO (String, FilePath)
 shareBookhoard = do
   let directory = "dist-newstyle/test-interfaces"
       (_, snapshots, _) = bookhoard
-  removePathForcibly directory
-  build <- compilerBuild
-  either (const (pure ())) (saveInterfaces directory (cacheKeys build snapshots)) (compileImports Map.empty snapshots (Map.keys snapshots))
+  keys <- (`cacheKeys` snapshots) <$> libraryBuild
+  cached <- loadInterfaces directory snapshots keys
+  either (const (pure ())) (saveInterfaces directory keys . (`Map.difference` cached)) (compileImports cached snapshots (Map.keys snapshots))
+  createDirectoryIfMissing True directory
+  stale <- filter ((`notElem` Map.elems keys) . takeBaseName) <$> listDirectory directory
+  mapM_ (removeFile . (directory </>)) stale
   pure (sharedVariable, directory)
+
+-- checking dependeth only on the compiler library's sources, so interfaces
+-- outlive a rebuild that changed only the tests.
+libraryBuild :: IO String
+libraryBuild = show . foldl' (\hash character -> (hash `xor` ord character) * 16777619) (2166136261 :: Int) . concat <$> (traverse readFile . sort =<< sources "src")
+  where
+    sources directory = do
+      entries <- map (directory </>) <$> listDirectory directory
+      concat <$> traverse (\entry -> doesDirectoryExist entry >>= \nested -> if nested then sources entry else pure [entry | takeExtension entry == ".hs"]) entries
 
 sharedVariable :: String
 sharedVariable = "TUNG_TEST_INTERFACES"

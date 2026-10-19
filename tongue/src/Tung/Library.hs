@@ -12,7 +12,7 @@ module Tung.Library
 where
 
 import Control.Exception (finally)
-import Control.Monad (foldM, forM, unless, when)
+import Control.Monad (foldM, forM, forM_, unless, when)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (ExceptT (..), except, runExceptT, throwE)
 import Control.Monad.Trans.State.Strict (StateT, evalStateT, get, put)
@@ -22,9 +22,9 @@ import Data.Aeson.Key qualified as Key
 import Data.Aeson.KeyMap qualified as KeyMap
 import Data.Aeson.Types (Parser)
 import Data.Char (isHexDigit, toLower)
-import Data.List (intercalate, isInfixOf, isPrefixOf, nub, sort)
+import Data.List (find, intercalate, isInfixOf, isPrefixOf, nub, sort)
 import Data.Map.Strict qualified as Map
-import Data.Maybe (isNothing)
+import Data.Maybe (fromMaybe, isNothing)
 import Data.Text qualified as Text
 import Data.Text.IO qualified as Text
 import Data.Yaml qualified as Yaml
@@ -54,7 +54,7 @@ instance FromJSON LibrarySource where
     subdirectory <- fields .:? "subdir"
     path <- fields .:? "path"
     case (repository, commit, path) of
-      (Just source, Just revision, Nothing) -> pure (GitSource source revision (maybe "." id subdirectory))
+      (Just source, Just revision, Nothing) -> pure (GitSource source revision (fromMaybe "." subdirectory))
       (Nothing, Nothing, Just directory) | isNothing subdirectory -> pure (PathSource directory)
       _ -> fail "library needs either 'path' or 'repo' with 'hash' and optional 'subdir'"
 
@@ -84,9 +84,8 @@ parseProofPolicy = withObject "proof" \fields -> do
 
 rejectUnknown :: String -> [String] -> Aeson.Object -> Parser ()
 rejectUnknown context allowed fields =
-  case filter (`notElem` allowed) (map Key.toString (KeyMap.keys fields)) of
-    [] -> pure ()
-    unknown : _ -> fail ("unknown " ++ context ++ " field '" ++ unknown ++ "'")
+  forM_ (find (`notElem` allowed) (map Key.toString (KeyMap.keys fields))) \unknown ->
+    fail ("unknown " ++ context ++ " field '" ++ unknown ++ "'")
 
 data LibraryUse = LibraryUse
   { useName :: String,
@@ -281,7 +280,7 @@ repositoryAt manifest repository
   | otherwise = normalise (takeDirectory manifest </> repository)
   where
     scpStyle value = case break (== ':') value of
-      (host, ':' : _) -> not (null host) && all (/= '/') host
+      (host, ':' : _) -> not (null host) && notElem '/' host
       _ -> False
 
 resolveSource :: FilePath -> LibrarySource -> Step LibrarySource
@@ -348,9 +347,9 @@ verify root commit = do
 git :: Maybe FilePath -> [String] -> Step String
 git directory arguments = do
   let command = maybe arguments (\root -> ["-C", root] ++ arguments) directory
-  attempt ("cannot run git " ++ intercalate " " command) (readProcessWithExitCode "git" command "") >>= \case
+  attempt ("cannot run git " ++ unwords command) (readProcessWithExitCode "git" command "") >>= \case
     (ExitSuccess, output, _) -> pure (trim output)
-    (ExitFailure _, _, errorMessage) -> throwE ("git " ++ intercalate " " command ++ ": " ++ trim errorMessage)
+    (ExitFailure _, _, errorMessage) -> throwE ("git " ++ unwords command ++ ": " ++ trim errorMessage)
   where
     trim = Text.unpack . Text.strip . Text.pack
 

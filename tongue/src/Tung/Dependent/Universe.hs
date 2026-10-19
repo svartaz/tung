@@ -18,7 +18,7 @@ where
 import Data.Foldable (asum)
 import Data.List qualified as List
 import Data.Map.Strict qualified as Map
-import Data.Maybe (isJust, mapMaybe)
+import Data.Maybe (isJust, isNothing, mapMaybe)
 import Data.Set qualified as Set
 import Tung.Dependent.Syntax (Constraint (..), Level (..), constraintLevels, instantiateLevel)
 
@@ -32,12 +32,11 @@ data Edge = Edge Atom Atom Integer
 normaliseLevel :: Level -> Level
 normaliseLevel = foldl1 LMax . map rebuild . Map.toAscList . levelAtoms
   where
-    rebuild (atom, offset) = successors offset $ case atom of
+    rebuild (atom, offset) = iterate LSucc (base atom) !! fromInteger offset
+    base = \case
       Zero -> LZero
       Parameter index -> LParam index
       Meta index -> LMeta index
-    successors 0 level = level
-    successors count level = successors (count - 1) (LSucc level)
 
 -- max of variable-plus-offset atoms; natural variables dominate smaller constants.
 levelAtoms :: Level -> Map.Map Atom Integer
@@ -74,7 +73,14 @@ data Universes = Universes
   }
 
 -- an assignment and the difference edges it was built on.
-type Solution = (Map.Map Atom Integer, [Edge])
+type Solution = (Map.Map Atom Integer, Graph)
+
+-- difference edges by their source, so a changed vertex findeth the edges
+-- it may tighten.
+type Graph = Map.Map Atom [Edge]
+
+addEdges :: [Edge] -> Graph -> Graph
+addEdges edges graph = foldr (\edge@(Edge source _ _) -> Map.insertWith (++) source [edge]) graph edges
 
 hasConstraint :: Constraint -> Universes -> Bool
 hasConstraint constraint = Set.member constraint . universeKnown
@@ -108,10 +114,11 @@ constrain constraint current@Universes {..}
     allClauses = Set.union universeClauses (Set.fromList clauses)
     -- the new single edges join the last solution's edges, and every clause
     -- of several alternatives is searched from that solution.
-    extend (assignment, edges) = do
-      let fixed = [Edge atom Zero 0 | atom <- Set.toList atoms, atom /= Zero] ++ concat [clause | clause@[_] <- clauses] ++ edges
-      solution <- potentials (Map.union assignment (Map.fromSet (const 0) atoms)) fixed
-      search solution fixed (List.sortOn length [clause | clause <- Set.toList allClauses, length clause /= 1])
+    extend (assignment, graph) = do
+      let new = [Edge atom Zero 0 | atom <- Set.toList atoms, atom /= Zero] ++ concat [clause | clause@[_] <- clauses]
+          extended = addEdges new graph
+      solution <- potentials (Map.union assignment (Map.fromSet (const 0) atoms)) extended new
+      search solution extended (List.sortOn length [clause | clause <- Set.toList allClauses, length clause /= 1])
 
 -- an atom the assignment doth not mention taketh the value of zero, which keepeth
 -- every other constraint satisfied.
@@ -142,7 +149,7 @@ entails assumptions conclusion = entailsAll assumptions [conclusion]
 -- a declaration's obligations share the same assumptions. prepare their clauses
 -- once; each conclusion addeth only its own atoms and negated edges.
 entailsAll :: [Constraint] -> [Constraint] -> Bool
-entailsAll assumptions conclusions = all entailed conclusions
+entailsAll assumptions = all entailed
   where
     atoms = constraintAtoms assumptions
     clauses = constraintClauses assumptions
@@ -151,7 +158,7 @@ entailsAll assumptions conclusions = all entailed conclusions
         allAtoms = Set.union atoms (constraintAtoms [conclusion])
         proved target =
           any (`impliesClause` target) clauses
-            || not (isJust (solveFrom Map.empty allAtoms clauses (map negateEdge target)))
+            || isNothing (solveFrom Map.empty allAtoms clauses (map negateEdge target))
     -- a premise disjunction implieth a target when every premise alternative
     -- hath a weaker target edge. uncovered clauses still use the exact solver.
     impliesClause premise target = all (\edge -> any (weaker edge) target) premise
@@ -194,46 +201,53 @@ simplifyClauses = List.sortOn length . Set.toList . Set.fromList . mapMaybe simp
 -- starteth the search nearer a solution; feasibility doth not depend on it.
 solveFrom :: Map.Map Atom Integer -> Set.Set Atom -> [[Edge]] -> [Edge] -> Maybe Solution
 solveFrom seed atoms clauses initial = do
-  solution <- potentials (Map.union (Map.restrictKeys seed atoms) (Map.fromSet (const 0) atoms)) fixed
-  search solution fixed choices
+  solution <- potentials (Map.union (Map.restrictKeys seed atoms) (Map.fromSet (const 0) atoms)) graph fixed
+  search solution graph choices
   where
     (units, choices) = List.partition ((== 1) . length) clauses
     -- shifting a solution so Zero = 0 then maketh every other atom a natural.
     nonnegative = [Edge atom Zero 0 | atom <- Set.toList atoms, atom /= Zero]
     fixed = initial ++ nonnegative ++ concat units
+    graph = addEdges fixed Map.empty
 
 -- branch on the first violated clause; a clause no alternative can satisfy
 -- endeth the branch.
-search :: Map.Map Atom Integer -> [Edge] -> [[Edge]] -> Maybe Solution
-search solution edges remaining =
-  case List.break (not . any (satisfied solution)) remaining of
-    (_, []) -> Just (solution, edges)
+search :: Map.Map Atom Integer -> Graph -> [[Edge]] -> Maybe Solution
+search solution graph remaining =
+  case span (any (satisfied solution)) remaining of
+    (_, []) -> Just (solution, graph)
     (before, alternatives : after)
       | any impossible remaining -> Nothing
       | otherwise -> asum (map (extend (before ++ after)) alternatives)
   where
     impossible alternatives =
       not (any (satisfied solution) alternatives)
-        && all (not . isJust . potentials solution . (: edges)) alternatives
-    extend rest edge = potentials solution (edge : edges) >>= \next -> search next (edge : edges) rest
+        && all (isNothing . added) alternatives
+    added edge = potentials solution (addEdges [edge] graph) [edge]
+    extend rest edge = added edge >>= \next -> search next (addEdges [edge] graph) rest
     satisfied assignment (Edge source target weight) =
       Map.findWithDefault 0 target assignment <= Map.findWithDefault 0 source assignment + weight
 
 -- bellman-ford starteth with finite distances for every vertex: zero for the
 -- initial graph, or its existing solution when adding an edge. each seed is
 -- equivalent to weighted edges from a fresh source. a change on the nth pass
--- proveth a negative cycle; integer weights give integral solutions.
-potentials :: Map.Map Atom Integer -> [Edge] -> Maybe (Map.Map Atom Integer)
-potentials initial edges = passes (Map.size initial + 1) initial
+-- proveth a negative cycle; integer weights give integral solutions. the
+-- initial distances satisfy every edge of the graph but the pending ones, so
+-- those are relaxed first; then only the edges leaving a vertex that last
+-- changed can tighten, as in yen's refinement.
+potentials :: Map.Map Atom Integer -> Graph -> [Edge] -> Maybe (Map.Map Atom Integer)
+potentials initial graph = passes (Map.size initial + 1) initial
   where
-    passes 0 _ = Nothing
-    passes count distances =
-      let (next, changed) = List.foldl' relax (distances, False) edges
-       in if changed then passes (count - 1) next else Just next
+    passes 0 _ _ = Nothing
+    passes count distances pending =
+      let (next, changed) = List.foldl' relax (distances, Set.empty) pending
+       in if Set.null changed
+            then Just next
+            else passes (count - 1) next (concatMap (\atom -> Map.findWithDefault [] atom graph) (Set.toList changed))
     relax (distances, changed) (Edge source target weight) =
       let candidate = Map.findWithDefault 0 source distances + weight
        in if candidate < Map.findWithDefault 0 target distances
-            then (Map.insert target candidate distances, True)
+            then (Map.insert target candidate distances, Set.insert target changed)
             else (distances, changed)
 
 -- the arguments are checked and indexed once per partial application.
@@ -246,7 +260,7 @@ instantiateConstraint arguments = \constraint -> do
   where
     checked = mapM_ checkArgument arguments
     instantiate = instantiateLevel arguments
-    replace level = normaliseLevel <$> instantiate level
+    replace = fmap normaliseLevel . instantiate
     checkArgument = \case
       LParam index | index < 0 -> Left "unbound universe parameter"
       LMeta index | index < 0 -> Left "unresolved universe inference hole"

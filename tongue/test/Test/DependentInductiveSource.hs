@@ -155,7 +155,7 @@ nestedTests :: String -> [Test]
 nestedTests example =
   [ expectEq "nested induction, patterns, and automatic descendants compute" (Right (replicate 6 True)) $ do
       program <- compile example
-      traverse (uncurry (sameNormalIn program)) [("leaf rime", "1"), ("fork rime", "3"), ("fork first", "leaf"), ("fork children", "leaf cons @rose (leaf cons @rose (empty @rose))"), ("leaf height", "1"), ("fork height", "2")],
+      traverse (uncurry (sameNormalIn program)) [("leaf rime", "1"), ("fork rime", "3"), ("fork first", "leaf"), ("fork children", "leaf ‥ @rose (leaf ‥ @rose (empty @rose))"), ("leaf height", "1"), ("fork height", "2")],
     do
       actual <- Harness.evaluateSource (example ++ "\nyield fork rime") Map.empty
       expectEq "the runner executes the same nested induction rules" "eval ok: 3" actual,
@@ -205,17 +205,17 @@ nestedTests example =
              ("nested container arguments cannot use a constructor field", "constructor-local", "ilk container:[α:*, n:ℕ, *] { hold:[α, α container n] }\nilk bad:* { make:[n:ℕ, bad container n, bad] }")
            ]
        ]
-    ++ [ reject label (compile (example ++ source))
+    ++ [ rejectContaining label "direct child of the matched input" (compile (example ++ source))
        | (label, source) <-
-           [ ("nested evidence cannot justify the whole input", "let bad:[v:rose,ℕ] ≔ match v { empty node ^ 0, (_ cons _) node ^ v bad }"),
-             ("nested evidence cannot justify the reconstructed root", "let bad:[rose,ℕ] ≔ { empty node ^ 0, (x cons leftover) node ^ ((x cons @rose leftover) node) bad }"),
-             ("nested evidence cannot justify an unrelated input", "let bad:[v:rose,other:rose,ℕ] ≔ match v { empty node ^ 0, (_ cons _) node ^ other bad other }"),
+           [ ("nested evidence cannot justify the whole input", "let bad:[v:rose,ℕ] ≔ match v { empty knot ^ 0, (_ ‥ _) knot ^ v bad }"),
+             ("nested evidence cannot justify the reconstructed root", "let bad:[rose,ℕ] ≔ { empty knot ^ 0, (x ‥ leftover) knot ^ ((x ‥ @rose leftover) knot) bad }"),
+             ("nested evidence cannot justify an unrelated input", "let bad:[v:rose,other:rose,ℕ] ≔ match v { empty knot ^ 0, (_ ‥ _) knot ^ other bad other }"),
              ( "a generic list helper cannot inherit outer descendant evidence",
                """
-               let bad:[rose,ℕ] ≔ { xs node ^
+               let bad:[rose,ℕ] ≔ { xs knot ^
                  (let sum:[rose list,ℕ] ≔ {
                    empty ^ 0,
-                   first cons leftover ^ (first bad) add (leftover sum)
+                   first ‥ leftover ^ (first bad) eke (leftover sum)
                  } yield xs sum)
                }
                """

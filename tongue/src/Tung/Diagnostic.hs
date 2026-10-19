@@ -14,7 +14,7 @@ import Data.List (intercalate)
 import Data.Map.Strict qualified as Map
 import Data.Maybe (fromMaybe)
 import Tung.Dependent.Source (CompileFailure (..), FailureKind (..))
-import Tung.Token (SourceSpan (..))
+import Tung.Token (SourceSpan (..), utf16Length, utf16Width)
 
 data DiagnosticKind = ParseDiagnostic | TypeDiagnostic | GoalDiagnostic
   deriving (Eq, Show)
@@ -69,10 +69,3 @@ renderKind :: DiagnosticKind -> String
 renderKind ParseDiagnostic = "parse"
 renderKind TypeDiagnostic = "ilk"
 renderKind GoalDiagnostic = "goal"
-
-utf16Length :: String -> Int
-utf16Length = sum . map utf16Width
-
--- a character outside the basic plane is a surrogate pair.
-utf16Width :: Char -> Int
-utf16Width character = if fromEnum character > 0xffff then 2 else 1

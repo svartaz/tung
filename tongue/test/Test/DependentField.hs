@@ -14,8 +14,8 @@ group = do
 tests :: Library -> String -> [Test]
 tests library example =
   [ computes "a projection selecteth its field" "someone.name" "'tung'",
-    computes "a value built from old fields" "older.age" "+2",
-    computes "projections chain leftward" "entry.who.age" "+2",
+    computes "a value built from old fields" "older.eld" "+2",
+    computes "projections chain leftward" "entry.who.eld" "+2",
     computes "a parameterised ilk projecteth at its argument" "pair.other" "+2",
     computes "a dependent field retaineth earlier fields" "entry.sure" "(eftbend: 'x' = 'x')",
     computesSource
@@ -70,12 +70,12 @@ tests library example =
     rejectContaining "an ilk of two constructors hath no fields" "hath no field 'x'" $
       compiled (example ++ "ilk either: * { left: [x: ℤ, either], right: [x: ℤ, either] }\nlet bad ≔ (+1 left).x\n"),
     rejectContaining "an indexed ilk hath no fields" "hath no field 'n'" $
-      compiled (example ++ "ilk by_greatness: [ℤ, *] { by_greatness_of: [n: ℤ, n by_greatness] }\nlet bad ≔ (+1 by_greatness_of).n\n"),
+      compiled (example ++ "ilk by_manyhood: [ℤ, *] { by_manyhood_of: [n: ℤ, n by_manyhood] }\nlet bad ≔ (+1 by_manyhood_of).n\n"),
     rejectContaining "an accessor's hidden name cannot be written" "hath no field 'name'" $
-      compiled (example ++ "let bad ≔ someone person.name\n"),
+      compiled (example ++ "let bad ≔ someone wight.name\n"),
     expectEq "an importer projecteth a shown ilk's fields" (Right True) do
-      let shown = withModules [("people.tung", "show ilk person: * { person_of: [name: string, age: ℤ, person] }\n")] library
-      program <- compileWith shown "importer.tung" "bring people.tung\nlet someone: person ≔ 'tung' person_of +1\nlet name: string ≔ someone.name\n"
+      let shown = withModules [("people.tung", "show ilk wight: * { wight_of: [name: string, eld: ℤ, wight] }\n")] library
+      program <- compileWith shown "importer.tung" "bring people.tung\nlet someone: wight ≔ 'tung' wight_of +1\nlet name: string ≔ someone.name\n"
       sameNormalIn program "name" "'tung'",
     expectEq "the runner projecteth fields" (Right (Right 0, "tung")) $
       compileWith library "dependent_fields.tung" (example ++ "bring ilk/one.tung\nlet write:[string, 𝟙 deed] ≔ 'write' fremmed\nlet main:𝟙 deed ≔ someone.name write\n")

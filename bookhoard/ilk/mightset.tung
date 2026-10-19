@@ -1,0 +1,38 @@
+bring combinator.tung
+bring flock/algebra/half/semigroupoid.tung
+bring flock/hath_inhold.tung
+bring flock/hath_same.tung
+bring flock/order/semilattice_lower.tung
+bring flock/order/semilattice_upper.tung
+bring flock/order/upfill.tung
+bring ilk/two.tung
+bring is.tung
+
+## a mightset represented by its limbship umbsay.
+show let mightset: [α: *, *] ≔ [α, 𝟚]
+
+show let empty: [@α: *, α mightset] ≔ nay singal
+
+show let all: [@α: *, α mightset] ≔ yea singal
+
+show let onesome: [@α: *, @: α hath_≍, α, α mightset] ≔ ≍
+
+bizen: [@α: *, (α mightset) hath_∋ α] {
+  let ∋: [p:, a:] ≔ a p
+}
+
+show let put: [@α: *, @: α hath_≍, s: α mightset, a: α, α mightset]
+  ≔ s ⋎ (a onesome)
+
+show let rid: [@α: *, @: α hath_≍, s: α mightset, a: α, α mightset]
+  ≔ s ⋏ (a onesome $ ¬)
+
+show let ∖: [@α: *, p₀: α mightset, p₁: α mightset, α mightset] ≔ p₀ ⋏ (p₁ ¬)
+
+bizen: [@α: *, (α mightset) upfill] {
+  let ¬: [p:] ≔ p ▷ ¬
+
+  let ⋏_¬: [a:] ≔ {b ^ (b a) ⋏_¬} fall_umfang
+
+  let ⋎_¬: [a:] ≔ {b ^ (b a) ⋎_¬} fall_umfang
+}

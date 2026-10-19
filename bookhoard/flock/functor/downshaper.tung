@@ -14,6 +14,7 @@ bring flock/order/semilattice_upper_hemmed.tung
 
 show flock downshaper: [φ: [*, *], *] {
   let gather₀: [@α: *, @β: *, α φ, β, [α, β, β], β]
+
   let gather₁: [@α: *, @β: *, α φ, β, [β, α, β], β]
 }
 
@@ -26,17 +27,17 @@ show let gather_warp
     f: [α, β], β]
   ≔ af gather₁ one {folded, a ^ folded · (a f)}
 
-## combine every worth with ∧; an empty collection yieldeth ⊤.
-show let …∧
+## combine every worth with ⋏; an empty collection yieldeth ⊤.
+show let …⋏
   : [@φ: [*, *], @: φ downshaper, @α: *, @: α semilattice_hemmed_upper, af: α φ,
     α]
-  ≔ af gather₁ ⊤ ∧
+  ≔ af gather₁ ⊤ ⋏
 
-## combine every worth with ∨; an empty collection yieldeth ⟂.
-show let …∨
+## combine every worth with ⋎; an empty collection yieldeth ⟂.
+show let …⋎
   : [@φ: [*, *], @: φ downshaper, @α: *, @: α semilattice_upper_hemmed, af: α φ,
     α]
-  ≔ af gather₁ ⟂ ∨
+  ≔ af gather₁ ⟂ ⋎
 
 ## eke every worth in a gatherable collection.
 show let …+: [@φ: [*, *], @: φ downshaper, @α: *, @: α monoid_+, af: α φ, α]

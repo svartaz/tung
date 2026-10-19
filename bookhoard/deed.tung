@@ -35,27 +35,40 @@ let warp_twice
   ≔ (m deed_bind_bind {a ^ (a f) deed_sheer} {a ^ (a g) deed_sheer}) throughgo
     (m bind_same {a ^ (a f) deed_sheer_bind {b ^ (b g) deed_sheer}})
 
+## mapping and then flattening is binding.
+let warp_flat
+  : [@α: *, @β: *, m: α deed, f: [α, β deed],
+    ((m deed_bind {a ^ (a f) deed_sheer}) deed_bind {d ^ d}) = (m deed_bind f)]
+  ≔ (m deed_bind_bind {a ^ (a f) deed_sheer} {d ^ d}) throughgo
+    (m bind_same {a ^ (a f) deed_sheer_bind {d ^ d}})
+
 ## deeds compose as a monad: `warp` tweaketh an outcome, and `bind` or `then`
 ## sequenceth deeds.
 bizen: deed functor {
   let warp: [doing:, tweak:] ≔ doing deed_bind (tweak ▷ deed_sheer)
+
   let warp_sameness: [m:] ≔ m deed_bind_sheer
 }
 
 bizen: deed onwendsome {
   let sheer ≔ deed_sheer
+
   let onwend: [doing:, tweaks:] ≔ tweaks deed_bind (doing warp)
+
   let onwend_sameness_sheer: [m:]
     ≔ (sameness deed_sheer_bind (m warp)) throughgo (m deed_bind_sheer)
+
   let sheer_onwend_sheer: [a:, f:]
     ≔ (f deed_sheer_bind {tweak ^ (a deed_sheer) warp tweak}) throughgo
       (a deed_sheer_bind (f ▷ deed_sheer))
+
   let onwend_onwend: [m:, f:, g:] ≔ >{throughgo,
     g deed_sheer_bind {tweak ^ ((f deed_sheer) deed_bind (m warp)) warp tweak},
     {inner ^ inner warp g} leibnitz (f deed_sheer_bind (m warp)),
     m warp_twice f g,
     ((f ▷ g) deed_sheer_bind (m warp)) evenmete
   }
+
   let sheer_onwend: [@α:, @β:, a:, f…:]
     ≔ f… bind_same @([α, β]) @β @({tweak ^ (a deed_sheer) warp tweak}) {
       tweak ^ a deed_sheer_bind (tweak ▷ deed_sheer)
@@ -64,13 +77,23 @@ bizen: deed onwendsome {
 
 bizen: deed monad {
   let flat: [@α: *, doings: (α deed) deed, α deed] ≔ doings deed_bind sameness
+
   let sheer_bind: [a:, f:]
     ≔ (flat leibnitz (a deed_sheer_bind {b ^ (b f) deed_sheer})) throughgo
       ((a f) deed_sheer_bind {b ^ b})
+
   let warp_sheer_flat: [m:] ≔ >{throughgo,
     m deed_bind_bind {a ^ (a deed_sheer) deed_sheer} {a ^ a},
     m bind_same {a ^ (a deed_sheer) deed_sheer_bind {b ^ b}},
     m deed_bind_sheer
+  }
+
+  let bind_bind: [m:, f:, g:] ≔ >{throughgo,
+    (m warp f $ flat) warp_flat g,
+    {d ^ d deed_bind g} leibnitz (m warp_flat f),
+    m deed_bind_bind f g,
+    m bind_same {a ^ ((a f) warp_flat g) evenmete},
+    (m warp_flat {a ^ (a f) warp g $ flat}) evenmete
   }
 }
 

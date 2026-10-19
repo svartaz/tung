@@ -5,11 +5,11 @@ module Tung.Dependent.Source.Declaration
   )
 where
 
-import Control.Monad (foldM, unless, when)
+import Control.Monad (foldM, forM_, unless, when)
 import Control.Monad.Trans.Except (ExceptT (..), except, mapExceptT, runExceptT)
 import Control.Monad.Trans.Writer.Strict (Writer, runWriter, writer)
 import Data.Functor.Identity (Identity (..))
-import Data.List (intercalate)
+import Data.List (intercalate, uncons)
 import Data.Map.Strict qualified as Map
 import Data.Maybe (fromMaybe)
 import Data.Set qualified as Set
@@ -122,7 +122,7 @@ checkDeclaration owner program = \case
 -- and not yet declared.
 constant :: String -> ModuleId -> SourceProgram -> String -> (SymbolId -> Checking a) -> Checking a
 constant keyword owner SourceProgram {localNames} name check = inContext ("in " ++ keyword ++ " '" ++ name ++ "': ") do
-  unless (name /= "_") (failure ("a top-level " ++ keyword ++ " requireth a name"))
+  when (name == "_") (failure ("a top-level " ++ keyword ++ " requireth a name"))
   fromSource (repeated localNames [name])
   check (SymbolId owner name)
 
@@ -202,7 +202,7 @@ insertInductives owner program@SourceProgram {..} declarations = inContext conte
     _ -> failure "a mutual group requireth only ilk declarations"
   let members = concat [name : map constructorName constructors | (_, name, _, constructors) <- group]
       families = [SymbolId owner name | (_, name, _, _) <- group]
-  unless (all (/= "_") members) (failure "ilk and constructor declarations require names")
+  when ("_" `elem` members) (failure "ilk and constructor declarations require names")
   fromSource (repeated localNames members)
   signaturesWithReferences <- for group \(span, name, annotation, constructors) -> maybe id atSpan span do
     let family = SymbolId owner name
@@ -210,11 +210,11 @@ insertInductives owner program@SourceProgram {..} declarations = inContext conte
     (signature, references) <- elaborateSignature program annotation
     fromString (K.validate programEnvironment signature)
     normal <- fromString (N.normalise (globals programEnvironment) 0 (K.inferredTerm signature))
-    let info = InductiveInfo families (length uniform) (length uniform) (drop (length uniform) (productPlicities normal)) [] []
+    let info = InductiveInfo families (length uniform) (length uniform) (drop (length uniform) (map fst (fst (termTelescope normal)))) [] []
         definition = Definition (K.inferredUniverses signature) (K.inferredConstraints signature) (K.inferredTerm signature) (TypeConstructor info)
     pure ((span, name, constructors, family, uniform, signature, definition), references)
-  let headerReferences = Set.unions (map snd signaturesWithReferences)
-      signatures = map fst signaturesWithReferences
+  let (signatures, referenceSets) = unzip signaturesWithReferences
+      headerReferences = Set.unions referenceSets
   let provisional = K.Environment (Map.union (Map.fromList [(family, definition) | (_, _, _, family, _, _, definition) <- signatures]) (globals programEnvironment))
   ((raw, references), constraints) <- runWithHoles program (globals provisional) do
     staged <- for signatures \(span, name, constructors, family, uniform, signature, _) -> do
@@ -235,7 +235,7 @@ insertInductives owner program@SourceProgram {..} declarations = inContext conte
     remaining <- E.takeInstanceGoals
     unless (null remaining) (E.failure "a bizen requirement hath an ilk that is still unknown; add an annotation")
     checked <- for raw \(family, parameters, signature, constructors) ->
-      (family,parameters,,) <$> E.zonk signature <*> mapM (\(name, ty) -> (name,) <$> E.zonk ty) constructors
+      (family,parameters,,) <$> E.zonk signature <*> traverse (traverse E.zonk) constructors
     references <- E.takeReferences
     pure (checked, Set.union headerReferences references)
   environment <- fromString (I.inferInductives programEnvironment [I.InductiveDeclaration family (inductionSymbol family) parameters 0 constraints signature constructors | (family, parameters, signature, constructors) <- raw])
@@ -283,7 +283,7 @@ defineAccessor program (identity, inferred) = do
 -- result passeth them unchanged; the rest are indices, as in a GADT.
 uniformParameters :: String -> [ConstructorDeclaration] -> Expression -> [Parameter]
 uniformParameters family constructors (Product parameters _) =
-  [parameter | (_, parameter) <- takeWhile uniform (zip [0 ..] parameters)]
+  map snd (takeWhile uniform (zip [0 ..] parameters))
   where
     uniform (index, Parameter {parameterPlicity, parameterName = Just name}) =
       let position = length [() | Parameter {parameterPlicity = earlier} <- take index parameters, earlier == parameterPlicity]
@@ -304,10 +304,6 @@ uniformParameters family constructors (Product parameters _) =
       -- an unrecognised result keepeth the header's reading.
       _ -> True
 uniformParameters _ _ _ = []
-
-productPlicities :: Term -> [Plicity]
-productPlicities (Pi plicity _ body) = plicity : productPlicities body
-productPlicities _ = []
 
 bindUniform :: Scope -> [Parameter] -> Term -> Elaboration (Scope, [Term])
 bindUniform = go
@@ -342,7 +338,7 @@ insertClass owner program FlockDeclaration {..} = inContext ("in flock '" ++ flo
   let members = [(name, ty) | FlockMember name ty <- flockMembers]
       constructor = flockName ++ "_make"
       family = Application (Name flockName) [Argument parameterPlicity (Name name) | Parameter {parameterPlicity, parameterName = Just name} <- parameters]
-      parentName index = "#parent_" ++ show index
+      parentName = ("#parent_" ++) . show
       -- generated local binders cannot capture source parameter names.
       parentFields = [Parameter Implicit (Just (parentName index)) parent | (index, parent) <- zip [1 :: Int ..] parents]
       memberFields = [Parameter Explicit (Just name) ty | (name, ty) <- members]
@@ -378,9 +374,15 @@ insertClass owner program FlockDeclaration {..} = inContext ("in flock '" ++ flo
   foldM define withParents (zip (map fst members) (drop (length parents) accessors))
   where
     classOf parent current = case parent of
-      Application (Name name) _ | Just (FreshName symbol _) <- lookupName name (globalNames current), Map.member symbol (nameClasses (globalNames current)) -> pure symbol
-      Name name | Just (FreshName symbol _) <- lookupName name (globalNames current), Map.member symbol (nameClasses (globalNames current)) -> pure symbol
+      Application (Name name) _ -> named name
+      Name name -> named name
       _ -> failure "a parent requirement must apply a flock"
+      where
+        named name
+          | Just (FreshName symbol _) <- lookupName name (globalNames current),
+            Map.member symbol (nameClasses (globalNames current)) =
+              pure symbol
+          | otherwise = failure "a parent requirement must apply a flock"
 insertClass _ _ _ = failure "expected flock declaration"
 
 -- one accessor per field: replace earlier fields by projections from the
@@ -395,7 +397,7 @@ projections valuePlicity parameterPlicities family Definition {definitionUnivers
   where
     parameterCount = length parameterPlicities
     (parameters, fields) = splitAt parameterCount (fst (termTelescope definitionType))
-    levels = [LParam level | level <- [0 .. definitionUniverses - 1]]
+    levels = map LParam [0 .. definitionUniverses - 1]
     valueType = foldl (\function (plicity, index) -> Apply plicity function (Local index)) (Global family levels) (zip parameterPlicities (reverse [0 .. parameterCount - 1]))
     wrap binder body = foldr (binder Implicit . snd) (binder valuePlicity valueType body) parameters
     -- field `index` seeth the parameters and earlier fields; under the
@@ -471,17 +473,15 @@ lowerDictionary SourceProgram {..} = bindHeader
       E.force expected >>= \case
         N.VPi Implicit domain codomain -> do
           annotation <- quoteFolded scope domain
-          let (name, rest) = case written of
-                name : rest -> (name, rest)
-                [] -> (Nothing, [])
+          let (name, rest) = fromMaybe (Nothing, []) (uncons written)
           (current, next) <- bindDomain scope name domain codomain
           Core.Lambda Implicit annotation <$> bindHeader current next rest definitions
         N.VPi Explicit _ _ -> E.failure "a bizen ilk taketh only implicit parameters"
         target -> do
           (_, term, used, bindings) <- build scope target definitions
-          case Set.toList (Map.keysSet definitions `Set.difference` used) of
-            name : _ -> E.failure ("'" ++ name ++ "' is not a member of this flock or a parent it witnesseth")
-            [] -> pure (foldr (uncurry Let) term bindings)
+          forM_ (Set.lookupMin (Map.keysSet definitions `Set.difference` used)) \name ->
+            E.failure ("'" ++ name ++ "' is not a member of this flock or a parent it witnesseth")
+          pure (foldr (uncurry Let) term bindings)
     build scope target definitions = do
       (family, arguments, info) <- classApplication target >>= maybe (E.failure "a bizen ilk must end in a flock application") pure
       constructor <- case Map.lookup family (globals programEnvironment) of

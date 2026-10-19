@@ -7,11 +7,13 @@ bring ilk/two.tung
 ## `+`.
 show flock hath_-: [α: *, *] {
   let -: [α, α]
+
   let -+: [α, α, α]
 }
 
 ## `+` on `𝟚` is exclusive or, so each worth is its own flipping.
 bizen: 𝟚 hath_- {
   let -: [a:] ≔ a
+
   let -+: [a:, b:] ≔ a + b
 }

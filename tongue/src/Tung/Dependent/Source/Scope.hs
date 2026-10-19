@@ -15,6 +15,8 @@ module Tung.Dependent.Source.Scope
     define,
     bindingName,
     depth,
+    localTerm,
+    mentionedLevels,
     quote,
     quoteFolded,
     eval,
@@ -55,6 +57,7 @@ data Role = Fixed Int | Structural | Quantified | Index Int
 -- an index in constructor form over variables, as `n s` or `a ‥ empty`.
 -- leaf levels identify the declaration's inputs, even after branch refinement.
 data IndexPattern = IndexVariable Int | IndexConstructor SymbolId [IndexPattern]
+  deriving stock (Eq)
 
 data Recursion = Recursion
   { recursionName :: String,
@@ -103,6 +106,14 @@ bindingName name = name
 
 depth :: Scope -> Int
 depth = length . scopeNames
+
+-- the local at a level, as a term of the scope.
+localTerm :: Scope -> Int -> Term
+localTerm scope level = Local (depth scope - level - 1)
+
+-- the levels a term's free indices name in the scope.
+mentionedLevels :: Scope -> Term -> [Int]
+mentionedLevels scope = map (\index -> depth scope - index - 1) . freeIndices
 
 quote :: Scope -> N.Value -> Elaboration Term
 quote scope = E.quote (depth scope)

@@ -75,12 +75,12 @@ let pairs: [@α: *, l: α list, rime: nat, nat] ≔ match l {
 
 ilk vec: [α: *, [nat, *]] {
   nil: α vec naught,
-  cons: [n: nat, head: α, tail: α vec n, α vec (n heir)]
+  ‥′: [n: nat, head: α, tail: α vec n, α vec (n heir)]
 }
 
 ## a fixed length determineth the constructor's predecessor and tail length.
-let predecessor_two: [@α: *, α vec ((naught heir) heir), nat] ≔ {n cons _ _ ^ n}
+let predecessor_two: [@α: *, α vec ((naught heir) heir), nat] ≔ {n ‥′ _ _ ^ n}
 
 let tail_two: [@α: *, α vec ((naught heir) heir), α vec (naught heir)] ≔ {
-  _ cons _ tail ^ tail
+  _ ‥′ _ tail ^ tail
 }

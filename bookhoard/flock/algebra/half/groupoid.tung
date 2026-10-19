@@ -4,7 +4,9 @@ bring is.tung
 
 show flock groupoid: [⇨: [*, *, *], @: ⇨ category, *] {
   let withwend: [@α: *, @β: *, α ⇨ β, β ⇨ α]
+
   let ▷_withwend: [@α: *, @β: *, f: α ⇨ β, (f ▷ (f withwend)) = sameness]
+
   let withwend_▷: [@α: *, @β: *, f: α ⇨ β, ((f withwend) ▷ f) = sameness]
 }
 

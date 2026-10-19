@@ -10,6 +10,7 @@ bring is.tung
 
 show flock monoid_·: [α: *, @: α semigroup_·, @: α hath_one, *] {
   let one_·: [a: α, (one · a) = a]
+
   let ·_one: [a: α, (a · one) = a]
 }
 
@@ -18,6 +19,7 @@ bizen: 𝟚 monoid_· {
     nay;
     yea ^ eftbend
   }
+
   let ·_one ≔ {
     nay;
     yea ^ eftbend
@@ -26,20 +28,26 @@ bizen: 𝟚 monoid_· {
 
 bizen: [@β: *, @: β monoid_·, @α: *, [α, β] monoid_·] {
   let one: [_:] ≔ one
+
   let one_·: [f:] ≔ {a ^ (a f) one_·} fall_umfang
+
   let ·_one: [f:] ≔ {a ^ (a f) ·_one} fall_umfang
 }
 
 bizen: [@α: *, @: α semilattice_hemmed_upper, (α _lower) monoid_·] {
   let one ≔ ⊤ lower
-  let one_·: [a lower:] ≔ {b: α ^ b lower} leibnitz (a ⊤_∧)
+
+  let one_·: [a lower:] ≔ {b: α ^ b lower} leibnitz (a ⊤_⋏)
+
   let ·_one: [a lower:] ≔ {b: α ^ b lower} leibnitz
-    ((a ∧_swap ⊤) throughgo (a ⊤_∧))
+    ((a ⋏_swap ⊤) throughgo (a ⊤_⋏))
 }
 
 bizen: [@α: *, @: α semilattice_upper_hemmed, (α _upper) monoid_·] {
   let one ≔ ⟂ upper
-  let one_·: [a upper:] ≔ {b: α ^ b upper} leibnitz (a ⟂_∨)
+
+  let one_·: [a upper:] ≔ {b: α ^ b upper} leibnitz (a ⟂_⋎)
+
   let ·_one: [a upper:] ≔ {b: α ^ b upper} leibnitz
-    ((a ∨_swap ⟂) throughgo (a ⟂_∨))
+    ((a ⋎_swap ⟂) throughgo (a ⟂_⋎))
 }

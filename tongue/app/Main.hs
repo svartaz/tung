@@ -11,7 +11,7 @@ import Control.Monad (unless)
 import Data.Aeson (FromJSON (..), Value, eitherDecodeStrict', encode, object, withObject, (.!=), (.:), (.:?), (.=))
 import Data.ByteString.Char8 qualified as ByteString
 import Data.ByteString.Lazy qualified as LazyByteString
-import Data.Either (isRight)
+import Data.Either (fromLeft, isRight)
 import Data.Functor ((<&>))
 import Data.List (intercalate, isPrefixOf)
 import Data.Map.Strict qualified as Map
@@ -80,7 +80,7 @@ withProject base load failed action =
             Left problem -> failure cached problem
             Right reached -> do
               Dependent.saveInterfaces directory keys (Map.difference reached cached)
-              either (failure reached) action (fst <$> Dependent.compileSnapshot reached (SourceModule projectPath) projectSnapshot projectImportSnapshots)
+              either (failure reached) (action . fst) (Dependent.compileSnapshot reached (SourceModule projectPath) projectSnapshot projectImportSnapshots)
 
 -- a file's failure is reported in the file that raised it.
 withProgram :: FilePath -> (Dependent.SourceProgram -> IO ()) -> IO ()
@@ -210,10 +210,7 @@ checkStdin strict = do
     either typeFailure (const (checkedOk strict "<stdin>" source program)) (DependentRun.checkMain program)
 
 listLibraryPaths :: FilePath -> IO ()
-listLibraryPaths path =
-  resolveLibraryRoots path >>= \case
-    Left message -> projectFailure message
-    Right roots -> mapM_ putStrLn roots
+listLibraryPaths path = resolveLibraryRoots path >>= either projectFailure (mapM_ putStrLn)
 
 typeFailure :: String -> IO a
 typeFailure message = putStrLn ("ilk error: " ++ message) >> exitFailure
@@ -395,7 +392,7 @@ proofResponse audit verified =
     [ "kind" .= ("proof" :: String),
       "audit" .= object ["name" .= Dependent.auditName audit, "ilk" .= Dependent.auditType audit, "dependencies" .= map dependencyJSON (Dependent.auditDependencies audit)],
       "verified" .= isRight verified,
-      "message" .= either id (const "name ok") verified,
+      "message" .= fromLeft "name ok" verified,
       "report" .= proofReport audit verified
     ]
   where
@@ -418,7 +415,7 @@ moduleLabel = \case
   PrimitiveModule -> "<primitive>"
 
 compiled :: ImportCache -> Maybe FilePath -> String -> Map.Map String String -> IO (Either Dependent.CompileFailure Dependent.SourceProgram)
-compiled cache path source imports = (\(result, _, _) -> result) <$> compilationReport cache path source imports
+compiled cache path source = fmap (\(result, _, _) -> result) . compilationReport cache path source
 
 compilationReport :: ImportCache -> Maybe FilePath -> String -> Map.Map String String -> IO CompilationReport
 compilationReport ImportCache {cacheBuild, cacheState} path source imports = modifyMVar cacheState \previous@(memory, root) ->

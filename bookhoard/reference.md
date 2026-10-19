@@ -14,21 +14,28 @@ spelling of its flock name.
   alone; a lattice requireth both and swallowing.
 - integers provide exact euclidean division. floats expose IEEE operations
   without claiming exact field or total-order laws.
-- `powerset` is a characteristic function `[α, 𝟚]`; its pointwise `·` is
+- `mightset` is a characteristic function `[α, 𝟚]`; its pointwise `·` is
   intersection, and `upper` giveth union. `set` and `wordbook` are finite,
   list-backed collections ([sets](#sets)).
 - `tree` is a finite table kept as a weight-balanced search tree, needing only
   a total order on keys. logarithmic paths require ordered, balanced trees
   with correct stored weights: `empty`, `onesome`, `put`, and `rid` keep these
-  invariants, while the public `node` constructor may break them. `entries`
+  invariants, while the public `knot` constructor may break them. `entries`
   and `keys` follow stored order.
 - `bifunctor` mappeth both sides of products and sums.
+- functions from `ρ` are the reader `(ρ →)`, a functor, applicative, and
+  monad; functions into `ρ` are `(ρ ←)`, a `contravariant` functor whose
+  `witherwarp` precomposeth. a function ilk is no application, so search
+  cannot find `φ` from it: write `warp @(ρ →)`.
+- `monad` stateth `bind_bind`, binding's associativity, beside its unit laws.
+  `ilk/kleisli.tung` wrappeth `[α, β φ]` as `α (φ kleisli) β`, a category for
+  any monad: `▷` bindeth and `sheer` is `sameness`.
 - `ilk/freer.tung` provideth `freer`, `bind`, `lift`, mapping, flattening, and
   folding. a request `ξ φ` nameth its answer type `ξ` and the program keepeth
   the continuation, so any `φ` serveth and every function stayeth total.
 - `deed.tung` maketh `deed` a functor, applicative, and monad, so ordinary
   combinators such as `bind`, `then`, `throughwend`, and `each` sequence
-  actions. fallible operations return `maybe` or `string ∑ α`; nothing
+  actions. fallible operations return `maybe` or `string ∨ α`; nothing
   throweth.
 - `deed/misfaresome.tung` and `deed/hade.tung` layer failure and state over
   `deed` as one-constructor wrappers with their own functor, applicative, and
@@ -49,8 +56,8 @@ spelling of its flock name.
   `wellgrounded_selfcall_by` lifteth it through a computed measure with an
   explicit dependent motive and a decrease proof per call. `ilk/kindful.tung`
   showeth `under`, the strict order as a relation, with `under_wellgrounded`;
-  `ilk/list_setting.tung` showeth `‥_greatness` and `‥_greatness_under`,
-  since `greatness` is a left fold and a tail's size is not below its list's
+  `ilk/list_setting.tung` showeth `‥_manyhood` and `‥_manyhood_under`,
+  since `manyhood` is a left fold and a tail's size is not below its list's
   by conversion alone. the
   [language document](../tongue/language.md#local-blocks-and-recursion) giveth
   the call notation.
@@ -91,7 +98,7 @@ proved theorems:
 | `category.tung`         | `sameness_alone`                                                                              |
 | `groupoid.tung`         | `witherwend_alone`, `witherwend_witherwend`, `sameness_witherwend`, `witherwend_over_▷`       |
 | `ilk/kindful.tung`      | `heir_incast`, `heir_+`, `strike_+`, `+_∸`, `·_swap`                                          |
-| `ilk/list_setting.tung` | `warp_greatness`, `greatness_·`, `eftwend_greatness`                                          |
+| `ilk/list_setting.tung` | `warp_manyhood`, `manyhood_·`, `eftwend_manyhood`                                             |
 
 `group_likeshaper.tung` defineth `likeshaped`, `kernel`, and `shadow` for
 `group_·` and proveth `one_f` and `/_f`; that the kernel is a normal subgroup
@@ -122,8 +129,8 @@ group is the kernel-coset relation.
   stayeth only where a header would need a type the lambda inferreth, as a
   pattern input after implicit type inputs, `{@β ^ {entries from_list ^ …}}`.
 - a let whose body is a one-row match on its inputs destructureth them in the
-  header: `let deal_step: [e: ℕ, q both r: ℕ ∏ ℕ, ℕ ∏ ℕ]`, not `p: ℕ ∏ ℕ` with
-  `match p { q both r ^ … }`. an input keepeth its name only when a later slot
+  header: `let deal_step: [e: ℕ, q ⸴ r: ℕ ∧ ℕ, ℕ ∧ ℕ]`, not `p: ℕ ∧ ℕ` with
+  `match p { q ⸴ r ^ … }`. an input keepeth its name only when a later slot
   or the result nameth it.
 - a let whose named inputs are matched at once is a case function over bare
   slots: `let f: [ℕ, ℕ, ℕ] ≔ {m, 0 ^ m, …}`, not
@@ -162,7 +169,7 @@ or a declaration applying a chosen bizen's law.
   carried by its dictionary; function-carrier laws hold pointwise from the
   result carrier's. no native equation is assumed.
 - `order_whole` requireth `≤_=`, antisymmetry in identity, not only boolean
-  sameness, so the generic total-order bizens of `∧` and `∨` need only
+  sameness, so the generic total-order bizens of `⋏` and `⋎` need only
   `order_whole` and prove commutativity, associativity, swallowing, and both
   distributive laws by cases on comparisons. a separate `≍_to_=` requirement
   would fail: a parent is a dictionary field, so two requirements reaching `≍`
@@ -181,9 +188,9 @@ or a declaration applying a chosen bizen's law.
 every assumption is a listed `orsetting`:
 
 - `fall_umfang` in [`is.tung`](is.tung), function extensionality, serveth
-  function-carrier laws, the freer and powerset laws, which compare
-  continuations and characteristic functions, and deed proofs comparing bound
-  continuations.
+  function-carrier laws, the freer and mightset laws, which compare
+  continuations and characteristic functions, the kleisli laws, and deed proofs
+  comparing bound continuations.
 - [`deed.tung`](deed.tung) assumeth the monad laws of the host's `deed_sheer`
   and `deed_bind`: `deed_sheer_bind`, `deed_bind_sheer`, and `deed_bind_bind`,
   from which the functor, applicative, and monad laws of `deed` follow. deeds
@@ -224,7 +231,7 @@ that insertion order and repetition do not matter.
 `wordbook` still exposeth its raw `from_list` constructor and may hold
 duplicate keys; `set~from_list`, a smart constructor, and `wordbook~from_list`
 stay distinct by qualification. a set needeth a decidable total order, while
-`powerset` keepeth its unrestricted predicate. the planned order-insensitive
+`mightset` keepeth its unrestricted predicate. the planned order-insensitive
 bag is tracked in [`todo.md`](../todo.md).
 
 ## comparisons
@@ -239,9 +246,9 @@ informeth the small surface; the mapping is approximate:
 | `semiring`, `ring`, `field`       | arithmetic and euclidean flocks                  | IEEE float division doth not claim exact algebra                       |
 | `functor`, `applicative`, `monad` | collection flocks                                | product applicative and monad require a monoid for the first component |
 | `foldable`, `traversable`         | `downshaper`, `throughwend`                      | applicative evidence belongeth to each polymorphic traversal           |
-| `maybe`, `either`, `tuple`        | `maybe`, `∑`, `∏`                                | sums and products are library inductives                               |
+| `maybe`, `either`, `tuple`        | `maybe`, `∨`, `∧`                                | sums and products are library inductives                               |
 | `effect`                          | `deed`                                           | a primitive type; `deed.tung` supplieth its monad bizens               |
-| `array`, `map`, `set`             | `list`, `wordbook`, `set`, `powerset`            | a packed random-access array is absent                                 |
+| `array`, `map`, `set`             | `list`, `wordbook`, `set`, `mightset`            | a packed random-access array is absent                                 |
 
 [purescript traversable](https://pursuit.purescript.org/packages/purescript-foldable-traversable/docs/Data.Traversable)
 informeth the `functor` and `downshaper` parents. tung copieth neither its open

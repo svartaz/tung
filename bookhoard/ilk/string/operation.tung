@@ -5,7 +5,7 @@ bring flock/algebra/whole/semigroup_fold.tung
 bring flock/functor.tung
 bring flock/functor/downshaper.tung
 bring flock/functor/hath_sift.tung
-bring flock/hath_greatness.tung
+bring flock/hath_manyhood.tung
 bring flock/hath_same.tung
 bring flock/order/semilattice_upper.tung
 bring flock/order/upfill.tung
@@ -22,8 +22,8 @@ show let is_empty_string: [t: string, 𝟚] ≔ match t behead_string {
 }
 
 ## rime unicode code points, not bytes or utf-16 units.
-bizen: string hath_greatness {
-  let greatness: [t:] ≔ t string_to_list $ greatness
+bizen: string hath_manyhood {
+  let manyhood: [t:] ≔ t string_to_list $ manyhood
 }
 
 show let take_string: [t: string, rime: ℕ, string]
@@ -57,7 +57,7 @@ let split_unicode_by
 let split_unicode: [l: unicode list, shedder: unicode, (unicode list) list]
   ≔ l split_unicode_by {staff ^ staff ≍ shedder}
 
-let is_whitespace: [c: unicode, 𝟚] ≔ <{∨,
+let is_whitespace: [c: unicode, 𝟚] ≔ <{⋎,
   c ≍ `\32;,
   c ≍ `\9;,
   c ≍ `\10;,

@@ -16,7 +16,8 @@ module Tung.Dependent.Source.Parse
 where
 
 import Control.Monad (forM_, when)
-import Data.Bifunctor (first)
+import Data.Bifunctor (bimap, first)
+import Data.Either (fromRight)
 import Data.Foldable (toList, traverse_)
 import Data.List (isSuffixOf, nub)
 import Data.Maybe (isJust)
@@ -86,14 +87,14 @@ liftAt :: [Token] -> Either String a -> Result a
 liftAt tokens = either (failAt tokens) pure
 
 parseSource :: String -> Either String [Declaration]
-parseSource = either (Left . failureMessage) (Right . fst) . parseProgramDetailed
+parseSource = bimap failureMessage fst . parseProgramDetailed
 
 -- declarations, optionally ended by `yield` and the expression to evaluate.
 parseProgram :: String -> Either String ([Declaration], Maybe Expression)
-parseProgram = either (Left . failureMessage) Right . parseProgramDetailed
+parseProgram = first failureMessage . parseProgramDetailed
 
 parseProgramDetailed :: String -> Either SourceFailure ([Declaration], Maybe Expression)
-parseProgramDetailed source = first (map snd) <$> parseProgramLocated source
+parseProgramDetailed = fmap (first (map snd)) . parseProgramLocated
 
 -- each top-level declaration with the span of the name it declareth, or of its
 -- keyword when it nameth nothing.
@@ -134,7 +135,7 @@ recover :: String -> Recovery
 recover source = walk tokens
   where
     lexed = located source
-    tokens = either (const (map locatedToken (lexLocatedPrefix source))) id lexed
+    tokens = fromRight (map locatedToken (lexLocatedPrefix source)) lexed
     boundary = recoveryHead source
     walk [] = Recovery [] Nothing [] Seq.empty
     walk input@(TYield : _) = case marked DeclarationNode yielded input of
@@ -192,13 +193,13 @@ program tokens = do
   (found, rest) <- locatedDeclarations tokens
   case rest of
     TYield : _ -> (found,) . Just <$> whole (marked DeclarationNode yielded) rest
-    _ -> (found, Nothing) <$ whole (\remaining -> pure ((), remaining)) rest
+    _ -> (found, Nothing) <$ whole (pure . ((),)) rest
 
 parseExpression :: String -> Either String Expression
-parseExpression source = either (Left . failureMessage) Right (located source >>= resultEither . whole expression)
+parseExpression source = first failureMessage (located source >>= resultEither . whole expression)
 
 located :: String -> Either SourceFailure [Token]
-located source = map locatedToken <$> lexLocatedTokensDetailed source
+located = fmap (map locatedToken) . lexLocatedTokensDetailed
 
 whole :: Parser a -> [Token] -> Result a
 whole parser tokens = do
@@ -274,7 +275,7 @@ reexported names tokens = case tokens of
 
 -- `show` wrapeth exactly one following declaration.
 shown :: Parser Declaration
-shown tokens = first ShownDeclaration <$> oneDeclaration tokens
+shown = fmap (first ShownDeclaration) . oneDeclaration
 
 -- `flock name:[parameters, @:parent, *] { members }`. the signature endeth in `*`.
 flockDeclaration :: Parser Declaration
@@ -490,7 +491,7 @@ annotationSlot items = case items of
     named = first (`Slot` Nothing) <$> parameter items
 
 unslotted :: Parser (Expression, [Slot])
-unslotted tokens = first (,[]) <$> expression tokens
+unslotted = fmap (first (,[])) . expression
 
 -- a let annotation slot, with the pattern that bindeth it when written.
 data Slot = Slot
@@ -646,9 +647,7 @@ composition marker tokens = do
     function : first : second : remaining -> do
       markFunction "call" function
       let combine left right = Application function [Argument Explicit left, Argument Explicit right]
-          rightAssociated left [] = left
-          rightAssociated left (next : following) = combine left (rightAssociated next following)
-          value = if marker == "<" then foldl combine first (second : remaining) else rightAssociated first (second : remaining)
+          value = (if marker == "<" then foldl1 else foldr1) combine (first : second : remaining)
       pure (value, rest)
     _ -> failAt tokens "composition requireth a function and at least two operands"
 
@@ -698,9 +697,8 @@ plainName tokens name
 
 -- a bracket nameth each slot once.
 distinctNames :: [Token] -> [String] -> Result ()
-distinctNames tokens names = case repeatedNames names of
-  name : _ -> failAt tokens ("'" ++ name ++ "' nameth two slots of one bracket")
-  [] -> pure ()
+distinctNames tokens names =
+  forM_ (take 1 (repeatedNames names)) \name -> failAt tokens ("'" ++ name ++ "' nameth two slots of one bracket")
 
 -- `name:` with nothing before the next item leaveth its type to inference.
 namedParameter :: Plicity -> Token -> String -> Parser Parameter
@@ -993,10 +991,4 @@ recoveryHead source = boundary
     boundary token =
       token `elem` [TLet, TFix, TType, TClass, TInstance, TOrsend, TImport, TExport, TYield]
         && maybe False ((`Set.member` starts) . spanStart) (tokenSpan token)
-    starts = Set.fromList (0 : lineStarts 0 source)
-    lineStarts _ [] = []
-    lineStarts offset (character : rest)
-      | character == '\n' || character == '\r' = next : lineStarts next rest
-      | otherwise = lineStarts next rest
-      where
-        next = offset + if fromEnum character > 0xffff then 2 else 1
+    starts = Set.fromList (0 : [after | (character, after) <- zip source (drop 1 (scanl (+) 0 (map utf16Width source))), character `elem` "\n\r"])

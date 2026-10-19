@@ -13,6 +13,7 @@ module Tung.Concrete
 where
 
 import Data.List (sortOn)
+import Data.Maybe (isJust)
 import Data.Ord (Down (..))
 import Tung.Token
 
@@ -93,7 +94,7 @@ brackets = fst . go Nothing
                          in (TreeNode BracketNode (tree : inside ++ [closer]) : siblings, final)
                   _ -> let (siblings, final) = go closing afterInside in (tree : inside ++ siblings, final)
         | Just token <- leafToken tree, Just token == closing -> ([], tree : rest)
-        | Just token <- leafToken tree, token `elem` [TRParen, TRBracket, TRBrace], closing /= Nothing -> ([], tree : rest)
+        | Just token <- leafToken tree, token `elem` [TRParen, TRBracket, TRBrace], isJust closing -> ([], tree : rest)
         | otherwise -> let (siblings, final) = go closing rest in (tree : siblings, final)
     opening tree = case leafToken tree of
       Just TLParen -> Just TRParen

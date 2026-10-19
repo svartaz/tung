@@ -14,7 +14,7 @@ import Tung.Dependent.Source (inferSourceExpression, normaliseSourceExpression, 
 group :: IO Harness.Group
 group = do
   example <- exampleSource "deed_loop.tung"
-  library <- loadLibrary ["_fremmed.tung", "ilk/one.tung", "ilk/maybe.tung", "ilk/product.tung"]
+  library <- loadLibrary ["_fremmed.tung", "ilk/one.tung", "ilk/maybe.tung", "ilk/and.tung"]
   Harness.group "dependent_deed" (hostSchemaTests ++ yieldTests ++ tests library example)
 
 -- public erasure requireth a complete, validated typing judgement.
@@ -143,7 +143,7 @@ tests library example =
     -- the model shareth the binding's checked type, so its universe
     -- parameters agree even when the annotation nameth several families.
     expectEq "a model's annotation may name several universe-polymorphic families" (Right ()) $
-      () <$ compile (prelude ++ "bring ilk/product.tung\nlet deal:[ℕ, ℕ, (ℕ ∏ ℕ) maybe] ≔ 'deal_leftover_kindful' fremmed {_, _ ^ none}\n"),
+      () <$ compile (prelude ++ "bring ilk/and.tung\nlet deal:[ℕ, ℕ, (ℕ ∧ ℕ) maybe] ≔ 'deal_leftover_kindful' fremmed {_, _ ^ none}\n"),
     rejectContaining "only a sheer operation hath a model" "cannot have a model" $
       compile "let wrap:[@α:*, a: α, α deed] ≔ 'deed_sheer' fremmed sorry\n",
     rejectContaining "without a model, a fremmed annotation cannot bind inputs" "cannot bind inputs" $
@@ -219,12 +219,12 @@ hostSchemaTests =
         ( "ilk/wordbook.tung",
           """
           bring ilk/list.tung
-          bring ilk/product.tung
-          show ilk wordbook:[α:*, β:*, *] { from_list:[(α ∏ β) list, α wordbook β] }
+          bring ilk/and.tung
+          show ilk wordbook:[α:*, β:*, *] { from_list:[(α ∧ β) list, α wordbook β] }
 
           """
         ),
-        ("ilk/product.tung", "show ilk ∏:[α:*, β:*, *] { both:[α, β, α ∏ β] }\n"),
+        ("ilk/and.tung", "show ilk ∧:[α:*, β:*, *] { ⸴:[α, β, α ∧ β] }\n"),
         ("ilk/list.tung", wrongList)
       ],
     expectEq "canonical host constructors may be reordered" (Right True) do

@@ -9,7 +9,9 @@ bring is.tung
 ## an additive group: a monoid whose every worth hath a flipping on both sides.
 show flock group_+: [α: *, @: α monoid_+, @: α hath_-, *] {
   let +_-: [a: α, (a + (a -)) = naught]
+
   let -_+: [a: α, ((a -) + a) = naught]
+
   let -+_+: [a: α, b: α, (a -+ b) = ((a -) + b)]
 }
 
@@ -18,10 +20,12 @@ bizen: 𝟚 group_+ {
     nay;
     yea ^ eftbend
   }
+
   let -_+ ≔ {
     nay;
     yea ^ eftbend
   }
+
   let -+_+: [_:, _:] ≔ eftbend
 }
 

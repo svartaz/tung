@@ -10,22 +10,35 @@ bring is.tung
 
 show flock semiring: [α: *, @: α monoid_+, @: α monoid_·, *] {
   let +_swap: [a: α, b: α, (a + b) = (b + a)]
+
   let ·_+: [a: α, b: α, c: α, (a · (b + c)) = ((a · b) + (a · c))]
+
   let +_·: [a: α, b: α, c: α, ((a + b) · c) = ((a · c) + (b · c))]
+
   let naught_·: [a: α, (naught · a) = naught]
+
   let ·_naught: [a: α, (a · naught) = naught]
 }
 
 bizen: [@β: *, @: β semiring, @α: *, [α, β] semiring] {
   let +: [f:, g:, a:] ≔ (a f) + (a g)
+
   let naught: [_:] ≔ naught
+
   let +_+: [f:, g:, h:] ≔ {a ^ (a f) +_+ (a g) (a h)} fall_umfang
+
   let naught_+: [f:] ≔ {a ^ (a f) naught_+} fall_umfang
+
   let +_naught: [f:] ≔ {a ^ (a f) +_naught} fall_umfang
+
   let +_swap: [f:, g:] ≔ {a ^ (a f) +_swap (a g)} fall_umfang
+
   let ·_+: [f:, g:, h:] ≔ {a ^ (a f) ·_+ (a g) (a h)} fall_umfang
+
   let +_·: [f:, g:, h:] ≔ {a ^ (a f) +_· (a g) (a h)} fall_umfang
+
   let naught_·: [f:] ≔ {a ^ (a f) naught_·} fall_umfang
+
   let ·_naught: [f:] ≔ {a ^ (a f) ·_naught} fall_umfang
 }
 
@@ -36,6 +49,7 @@ bizen: 𝟚 semiring {
     yea, nay;
     yea, yea ^ eftbend
   }
+
   let ·_+ ≔ {
     nay, _,   _;
     yea, nay, nay;
@@ -43,6 +57,7 @@ bizen: 𝟚 semiring {
     yea, yea, nay;
     yea, yea, yea ^ eftbend
   }
+
   let +_· ≔ {
     nay, nay, nay;
     nay, nay, yea;
@@ -53,7 +68,9 @@ bizen: 𝟚 semiring {
     yea, yea, nay;
     yea, yea, yea ^ eftbend
   }
+
   let naught_·: [_:] ≔ eftbend
+
   let ·_naught ≔ {
     nay;
     yea ^ eftbend

@@ -94,7 +94,7 @@ defineHost environment@(K.Environment globals) name key model signature@K.Inferr
       _ -> Left "a model must be a let definition"
     unless (definitionUniverses == inferredUniverses) (Left "a model must have the binding's universe parameters")
     modelType <- N.normalise globals 0 definitionType
-    unless (modelType == ty) (Left ("a model must have the binding's ilk"))
+    unless (modelType == ty) (Left "a model must have the binding's ilk")
   pure (K.Environment (Map.insert name (Definition inferredUniverses inferredConstraints ty (Host key model)) globals))
   where
     isHost wanted (Host actual _) = wanted == actual

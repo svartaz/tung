@@ -10,6 +10,7 @@ bring is.tung
 ## withevenmete holdeth in `=`, not only in boolean sameness.
 show flock order_whole: [α: *, @: α order_half, *] {
   let ≤_whole: [a: α, b: α, (((a ≤ b) ≍ nay) ≤ (b ≤ a)) = yea]
+
   let ≤_=: [a: α, b: α, below: (a ≤ b) = yea, above: (b ≤ a) = yea, a = b]
 }
 
@@ -40,6 +41,7 @@ bizen: 𝟚 order_whole {
     yea, nay;
     yea, yea ^ eftbend
   }
+
   let ≤_=: [a:, b:, below:, above:] ≔ match a, b, below, above {
     yea, yea, _, _;
     nay, nay, _, _ ^ eftbend,
@@ -58,6 +60,7 @@ bizen: 𝟛 order_whole {
     aft,  mid;
     aft,  aft  ^ eftbend
   }
+
   let ≤_=: [a:, b:, below:, above:] ≔ match a, b, below, above {
     fore, fore, _, _;
     mid,  mid,  _, _;

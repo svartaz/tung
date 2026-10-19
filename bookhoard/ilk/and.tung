@@ -1,0 +1,152 @@
+bring flock/algebra/half/category.tung
+bring flock/algebra/whole/hath_fold.tung
+bring flock/algebra/whole/hath_one.tung
+bring flock/algebra/whole/monoid_fold.tung
+bring flock/algebra/whole/semigroup_fold.tung
+bring flock/functor.tung
+bring flock/functor/bifunctor.tung
+bring flock/functor/downshaper.tung
+bring flock/functor/hath_throughwend.tung
+bring flock/functor/monad.tung
+bring flock/functor/onwendsome.tung
+bring flock/hath_same.tung
+bring flock/order/lattice.tung
+bring flock/order/lattice_spreadsome.tung
+bring flock/order/semilattice_lower.tung
+bring flock/order/semilattice_upper.tung
+bring flock/same_to_is.tung
+bring ilk/two.tung
+bring is.tung
+
+show ilk ∧: [α: *, β: *, *] { ⸴: [α, β, α ∧ β] }
+
+## the same components make the same pairs.
+let helpsetting_⸴_=
+  : [@α: *, @β: *, @a: α, @a′: α, @b: β, @b′: β, p: a = a′, q: b = b′,
+    (a ⸴ b) = (a′ ⸴ b′)]
+  ≔ ({c: α ^ c ⸴ b} leibnitz p) throughgo ({c: β ^ a′ ⸴ c} leibnitz q)
+
+show let forthcast₀: [@α: *, @β: *, a ⸴ _: α ∧ β, α] ≔ a
+
+show let forthcast₁: [@α: *, @β: *, a ⸴ b: α ∧ β, β] ≔ b
+
+show let swap: [@α: *, @β: *, a ⸴ b: α ∧ β, β ∧ α] ≔ b ⸴ a
+
+bizen: ∧ bifunctor {
+  let biwarp: [a ⸴ b:, f:, g:] ≔ (a f) ⸴ (b g)
+
+  let biwarp_sameness_sameness: [_ ⸴ _:] ≔ eftbend
+
+  let biwarp_biwarp: [_ ⸴ _:, _:, _:, _:, _:] ≔ eftbend
+}
+
+bizen: [@α: *, (α ∧) functor] {
+  let warp: [thing:, f:] ≔ thing biwarp sameness f
+
+  let warp_sameness: [_ ⸴ _:] ≔ eftbend
+}
+
+bizen: [@α: *, @: α monoid_·, (α ∧) onwendsome] {
+  let sheer: [b:] ≔ one ⸴ b
+
+  let onwend: [a₀ ⸴ b:, a₁ ⸴ f:] ≔ (a₀ · a₁) ⸴ (b f)
+
+  let onwend_sameness_sheer: [a ⸴ b:] ≔ {c: α ^ c ⸴ b} leibnitz (a ·_one)
+
+  let sheer_onwend_sheer: [a:, f:] ≔ {b: α ^ b ⸴ (a f)} leibnitz (one ·_one)
+
+  let onwend_onwend: [a ⸴ b:, f:, g:] ≔ {c: α ^ c ⸴ (b f $ g)} leibnitz
+    ((a · one) ·_one)
+
+  let sheer_onwend: [a:, b ⸴ f:] ≔ {c: α ^ c ⸴ (a f)} leibnitz (b one_·)
+}
+
+bizen: [@α: *, @: α monoid_·, (α ∧) monad] {
+  let flat: [a ⸴ (b ⸴ c):] ≔ (a · b) ⸴ c
+
+  let sheer_bind: [a:, f:]
+    ≔ (a f) inlook {c ⸴ b, _ ^ {d: α ^ d ⸴ b} leibnitz (c one_·)}
+
+  let warp_sheer_flat: [a ⸴ b:] ≔ {c: α ^ c ⸴ b} leibnitz (a ·_one)
+
+  let bind_bind: [a ⸴ b:, f:, g:] ≔ match b f {
+    c ⸴ d ^ match d g { e ⸴ x ^ {y: α ^ y ⸴ x} leibnitz ((a ·_· c e) evenmete) }
+  }
+}
+
+bizen: [@α: *, (α ∧) downshaper] {
+  let gather₀: [_ ⸴ a:, b:, f:] ≔ a f b
+
+  let gather₁: [_ ⸴ a:, b:, f:] ≔ b f a
+}
+
+bizen: [@α: *, (α ∧) hath_throughwend] {
+  let throughwend: [a ⸴ b:, f:] ≔ (b f) warp (a ⸴)
+}
+
+bizen: [@α: *, @: α semilattice_lower, @β: *, @: β semilattice_lower,
+  (α ∧ β) semilattice_lower] {
+    let ⋏: [a₀ ⸴ b₀:, a₁ ⸴ b₁:] ≔ (a₀ ⋏ a₁) ⸴ (b₀ ⋏ b₁)
+
+    let ⋏_swallow: [a₀ ⸴ b₀:] ≔ (a₀ ⋏_swallow) helpsetting_⸴_= (b₀ ⋏_swallow)
+
+    let ⋏_swap: [a₀ ⸴ b₀:, a₁ ⸴ b₁:]
+      ≔ (a₀ ⋏_swap a₁) helpsetting_⸴_= (b₀ ⋏_swap b₁)
+
+    let ⋏_⋏: [a₀ ⸴ b₀:, a₁ ⸴ b₁:, a₂ ⸴ b₂:]
+      ≔ (a₀ ⋏_⋏ a₁ a₂) helpsetting_⸴_= (b₀ ⋏_⋏ b₁ b₂)
+  }
+
+bizen: [@α: *, @: α semilattice_upper, @β: *, @: β semilattice_upper,
+  (α ∧ β) semilattice_upper] {
+    let ⋎: [a₀ ⸴ b₀:, a₁ ⸴ b₁:] ≔ (a₀ ⋎ a₁) ⸴ (b₀ ⋎ b₁)
+
+    let ⋎_swallow: [a₀ ⸴ b₀:] ≔ (a₀ ⋎_swallow) helpsetting_⸴_= (b₀ ⋎_swallow)
+
+    let ⋎_swap: [a₀ ⸴ b₀:, a₁ ⸴ b₁:]
+      ≔ (a₀ ⋎_swap a₁) helpsetting_⸴_= (b₀ ⋎_swap b₁)
+
+    let ⋎_⋎: [a₀ ⸴ b₀:, a₁ ⸴ b₁:, a₂ ⸴ b₂:]
+      ≔ (a₀ ⋎_⋎ a₁ a₂) helpsetting_⸴_= (b₀ ⋎_⋎ b₁ b₂)
+  }
+
+bizen: [@α: *, @: α lattice, @β: *, @: β lattice, (α ∧ β) lattice] {
+  let ⋏_⋎_swallow: [a₀ ⸴ b₀:, a₁ ⸴ b₁:]
+    ≔ (a₀ ⋏_⋎_swallow a₁) helpsetting_⸴_= (b₀ ⋏_⋎_swallow b₁)
+
+  let ⋎_⋏_swallow: [a₀ ⸴ b₀:, a₁ ⸴ b₁:]
+    ≔ (a₀ ⋎_⋏_swallow a₁) helpsetting_⸴_= (b₀ ⋎_⋏_swallow b₁)
+}
+
+bizen: [@α: *, @: α lattice_spreadsome, @β: *, @: β lattice_spreadsome,
+  (α ∧ β) lattice_spreadsome] {
+    let ⋏_⋎: [a₀ ⸴ b₀:, a₁ ⸴ b₁:, a₂ ⸴ b₂:]
+      ≔ (a₀ ⋏_⋎ a₁ a₂) helpsetting_⸴_= (b₀ ⋏_⋎ b₁ b₂)
+
+    let ⋎_⋏: [a₀ ⸴ b₀:, a₁ ⸴ b₁:, a₂ ⸴ b₂:]
+      ≔ (a₀ ⋎_⋏ a₁ a₂) helpsetting_⸴_= (b₀ ⋎_⋏ b₁ b₂)
+  }
+
+show let uncurry: [@α: *, @β: *, @γ: *, a ⸴ b: α ∧ β, f: [α, β, γ], γ] ≔ a f b
+
+show let uncurry₃
+  : [@α: *, @β: *, @γ: *, @δ: *, a ⸴ (b ⸴ c): α ∧ (β ∧ γ), f: [α, β, γ, δ], δ]
+  ≔ a f b c
+
+## pairs are the same when both sides are.
+show let same: [@α: *, @: α hath_≍, @β: *, @: β hath_≍, α ∧ β, α ∧ β, 𝟚] ≔ {
+  a ⸴ b, c ⸴ d ^ (a ≍ c) if (b ≍ d) nay
+}
+
+bizen: [@α: *, @: α hath_≍, @β: *, @: β hath_≍, (α ∧ β) hath_≍] {
+  let ≍ ≔ same
+}
+
+bizen: [@α: *, @: α ≍_to_=, @β: *, @: β ≍_to_=, (α ∧ β) ≍_to_=] {
+  let ≍_=: [a ⸴ b:, c ⸴ d:, held:]
+    ≔ ({e: α ^ e ⸴ b} leibnitz (a ≍_= c ((a ≍ c) yea_if_former (b ≍ d) held)))
+      throughgo ((c ⸴) leibnitz (b ≍_= d ((a ≍ c) yea_if_latter (b ≍ d) held)))
+
+  let ≍_eftbend: [a ⸴ b:] ≔ {c: 𝟚 ^ c if (b ≍ b) nay} yea_throughbear
+    ((a ≍_eftbend) evenmete) (b ≍_eftbend)
+}

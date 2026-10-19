@@ -6,8 +6,8 @@ bring flock/algebra/whole/hath_offdraw.tung
 bring flock/algebra/whole/ring.tung
 bring flock/order/hath_at_most.tung
 bring flock/order/order_whole.tung
+bring ilk/and.tung
 bring ilk/maybe.tung
-bring ilk/product.tung
 bring ilk/two.tung
 bring is.tung
 
@@ -15,16 +15,18 @@ bring is.tung
 ## length. dealing by naught yieldeth none, which the laws skip.
 show flock euclidean: [α: *, @: α ring, @: α hath_%, @: α order_whole, *] {
   let %_·_+: [dealt: α, dealer: α, (match dealt % dealer {
-    none                          ^ dealt,
-    (quotient both leftover) some ^ (quotient · dealer) + leftover
+    none                       ^ dealt,
+    (quotient ⸴ leftover) some ^ (quotient · dealer) + leftover
   }) = dealt]
+
   let %_nonnegative: [dealt: α, dealer: α, (match dealt % dealer {
-    none                   ^ yea,
-    (_ both leftover) some ^ naught ≤ leftover
+    none                ^ yea,
+    (_ ⸴ leftover) some ^ naught ≤ leftover
   }) = yea]
+
   let %_hemmed: [dealt: α, dealer: α, (match dealt % dealer {
-    none                   ^ yea,
-    (_ both leftover) some ^
+    none                ^ yea,
+    (_ ⸴ leftover) some ^
       (naught ≤ dealer) if (leftover < dealer) (leftover < (dealer -+ naught))
   }) = yea]
 }

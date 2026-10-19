@@ -18,5 +18,6 @@ bizen: 𝟙 hath_≍ {
 
 bizen: 𝟙 ≍_to_= {
   let ≍_=: [only:, only:, _:] ≔ eftbend
+
   let ≍_eftbend: [_:] ≔ eftbend
 }

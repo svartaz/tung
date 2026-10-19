@@ -2,24 +2,24 @@ bring flock/algebra/half/category.tung
 bring flock/functor.tung
 bring flock/functor/downshaper.tung
 bring flock/functor/hath_sift.tung
-bring flock/hath_greatness.tung
 bring flock/hath_inhold.tung
+bring flock/hath_manyhood.tung
 bring flock/hath_same.tung
+bring ilk/and.tung
 bring ilk/list.tung
 bring ilk/maybe.tung
-bring ilk/product.tung
 bring ilk/two.tung
 bring is.tung
 
 ## a list-backed finite association wordbook.
-show ilk wordbook: [α: *, β: *, *] { from_list: [(α ∏ β) list, α wordbook β] }
+show ilk wordbook: [α: *, β: *, *] { from_list: [(α ∧ β) list, α wordbook β] }
 
 show let empty: [@α: *, @β: *, α wordbook β] ≔ list~empty from_list
 
 show let onesome: [@α: *, @β: *, key: α, worth: β, α wordbook β]
-  ≔ key both worth $ ‥ list~empty $ from_list
+  ≔ key ⸴ worth $ ‥ list~empty $ from_list
 
-show let entries: [@α: *, @β: *, l from_list: α wordbook β, (α ∏ β) list] ≔ l
+show let entries: [@α: *, @β: *, l from_list: α wordbook β, (α ∧ β) list] ≔ l
 
 show let lookup
   : [@α: *, @: α hath_≍, @β: *, l from_list: α wordbook β, key: α, β maybe]
@@ -28,7 +28,7 @@ show let lookup
 show let put
   : [@α: *, @: α hath_≍, @β: *, l from_list: α wordbook β, key: α, worth: β,
     α wordbook β]
-  ≔ (key both worth) ‥ (l sift {pair ^ key ≭ (pair forthcast₀)}) $ from_list
+  ≔ (key ⸴ worth) ‥ (l sift {pair ^ key ≭ (pair forthcast₀)}) $ from_list
 
 show let rid
   : [@α: *, @: α hath_≍, @β: *, l from_list: α wordbook β, key: α, α wordbook β]
@@ -46,14 +46,15 @@ bizen: [@α: *, @: α hath_≍, @β: *, (α wordbook β) hath_∋ α] {
 
 bizen: [@α: *, (α wordbook) functor] {
   let warp: [l from_list:, f:] ≔ l warp {pair ^ pair warp f} $ from_list
+
   let warp_sameness: [@β:, entries from_list:]
     ≔ from_list leibnitz
       ({
-        l: (α ∏ β) list ^
+        l: (α ∧ β) list ^
           (l functor~warp {pair ^ pair functor~warp sameness}) = l
       } unbuild list eftbend {
         first, _, soothing ^ match first {
-          a both b ^ ((a both b) ‥) leibnitz soothing
+          a ⸴ b ^ ((a ⸴ b) ‥) leibnitz soothing
         }
       } entries)
 }
@@ -63,8 +64,8 @@ bizen: [@α: *, (α wordbook) hath_sift] {
     ≔ l sift {pair ^ (pair forthcast₁) umbsay} $ from_list
 }
 
-bizen: [@α: *, @β: *, (α wordbook β) hath_greatness] {
-  let greatness: [t:] ≔ (t entries) greatness
+bizen: [@α: *, @β: *, (α wordbook β) hath_manyhood] {
+  let manyhood: [t:] ≔ (t entries) manyhood
 }
 
 show let merge

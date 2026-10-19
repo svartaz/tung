@@ -1,9 +1,9 @@
+bring ilk/and.tung
 ## pure host functions compute during checking when every input is a literal.
 ## a comparison returneth bookhoard's `𝟚`; a partial operation returneth an
 ## option, which is none when no result existeth.
 bring ilk/maybe.tung
 bring ilk/one.tung
-bring ilk/product.tung
 bring ilk/two.tung
 
 let +: [ℤ, ℤ, ℤ] ≔ 'eke_wholetale' fremmed
@@ -12,7 +12,7 @@ let offdraw: [ℤ, ℤ, ℤ] ≔ 'offdraw_wholetale' fremmed
 
 let ·: [ℤ, ℤ, ℤ] ≔ 'fold_wholetale' fremmed
 
-let deal_leftover: [ℤ, ℤ, (ℤ ∏ ℤ) maybe] ≔ 'deal_leftover_wholetale' fremmed
+let deal_leftover: [ℤ, ℤ, (ℤ ∧ ℤ) maybe] ≔ 'deal_leftover_wholetale' fremmed
 
 let ≤: [ℤ, ℤ, 𝟚] ≔ 'at_most_wholetale' fremmed
 
@@ -26,7 +26,7 @@ let ⌊: [float, ℤ maybe] ≔ '⌊' fremmed
 
 let yoke: [string, string, string] ≔ 'yoke_string' fremmed
 
-let behead: [string, (unicode ∏ string) maybe] ≔ 'behead_string' fremmed
+let behead: [string, (unicode ∧ string) maybe] ≔ 'behead_string' fremmed
 
 let code: [unicode, ℕ] ≔ 'unicode_to_kindful' fremmed
 
@@ -40,9 +40,9 @@ let to_wholetale: [ℕ, ℤ] ≔ 'kindful_to_wholetale' fremmed
 let to_kindful: [ℤ, ℕ maybe] ≔ 'wholetale_to_kindful' fremmed
 
 ## a type may depend on a computed comparison.
-let by_greatness: [n: ℤ, *] ≔ match n ≤ +0 {
+let by_manyhood: [n: ℤ, *] ≔ match n ≤ +0 {
   yea ^ string,
   nay ^ ℤ
 }
 
-let five: (+1 by_greatness) ≔ +2 + +3
+let five: (+1 by_manyhood) ≔ +2 + +3

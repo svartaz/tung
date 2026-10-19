@@ -20,8 +20,8 @@ each other. a patient is named by its past participle, as `rowed` and
 ### compounds and mathematical families
 
 mathematical structure names stay as they are: `order`, `functor`, `monad`,
-`monoid`, `semigroup`, `group`, `semiring`, `lattice`, `category`, the `-oid`
-family, and their compounds. a literal calque such as `one_shaped` doth not
+`monoid`, `semigroup`, `group`, `semiring`, `lattice`, `category`,
+`contravariant`, `kleisli`, the `-oid` family, and their compounds. a literal calque such as `one_shaped` doth not
 explain a monoid's laws.
 
 | english           | anglish       | origin         |
@@ -32,6 +32,7 @@ explain a monoid's laws.
 | accumulate        | hoard         |                |
 | action            | deed          |                |
 | add               | eke           |                |
+| age               | eld           |                |
 | anamorphism       | upshaper      | calque         |
 | antisymmetry      | withevenmete  | calque         |
 | append            | onhang        | _anhängen_     |
@@ -43,6 +44,7 @@ explain a monoid's laws.
 | binary            | twostead      |                |
 | bounded           | hemmed        |                |
 | cancel            | strike        |                |
+| cardinality       | manyhood      |                |
 | catamorphism      | downshaper    | calque         |
 | change            | tweak         |                |
 | character         | staff         |                |
@@ -52,6 +54,7 @@ explain a monoid's laws.
 | complex number    | twintale      | _tvinntala_    |
 | condition         | kilter        |                |
 | constant          | singal        |                |
+| contramap         | witherwarp    | see _invert_   |
 | contain           | inhold        | calque         |
 | continue          | throughwone   | _þurhwunian_   |
 | corollary         | followsetting |                |
@@ -62,11 +65,14 @@ explain a monoid's laws.
 | divide            | deal          |                |
 | dividend          | dealt         |                |
 | divisor           | dealer        |                |
+| double            | twofold       |                |
+| element           | limb          |                |
 | eliminate         | unbuild       |                |
 | endomorphism      | inshaper      | calque         |
 | epimorphism       | onshaper      | calque         |
 | equal             | same          |                |
 | example           | byspel        |                |
+| exchange          | trade         |                |
 | extension         | umfanging     | _Umfang_       |
 | failure           | misfare       |                |
 | fallible          | misfaresome   |                |
@@ -107,17 +113,21 @@ explain a monoid's laws.
 | negate            | flip          |                |
 | negate            | gainsay       |                |
 | negative          | undernaught   |                |
+| node              | knot          |                |
 | nullary           | naughtstead   |                |
 | number            | tale          |                |
 | optional          | maybe         |                |
 | part              | deal          |                |
 | partial           | half          |                |
+| person            | wight         |                |
 | positive          | overnaught    |                |
+| power             | might         |                |
 | predicate         | umbsay        | _umsögn_       |
 | preimage          | foreshadow    |                |
 | program           | forewrit      | calque         |
 | project           | forthcast     | calque         |
 | proof             | soothing      |                |
+| property          | umbsay        |                |
 | prove             | soothe        |                |
 | pure              | sheer         |                |
 | recur             | selfcall      |                |
@@ -129,6 +139,7 @@ explain a monoid's laws.
 | second            | other         |                |
 | separate          | shed          |                |
 | sign              | mark          |                |
+| single            | onefold       |                |
 | singleton         | onesome       |                |
 | sort              | row           |                |
 | state             | hade          |                |

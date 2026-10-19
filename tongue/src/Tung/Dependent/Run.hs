@@ -23,14 +23,16 @@ import Control.Concurrent (forkIO, killThread, threadDelay)
 import Control.Concurrent.MVar (newEmptyMVar, readMVar, tryPutMVar)
 import Control.DeepSeq (rnf)
 import Control.Exception (IOException, SomeException, displayException, try)
-import Control.Monad (foldM, unless, void, (>=>))
+import Control.Monad (foldM, unless, void, when, (>=>))
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (ExceptT (..), runExceptT, throwE)
+import Data.Bifunctor (first)
 import Data.Functor ((<&>))
 import Data.IORef (atomicModifyIORef', newIORef, readIORef)
 import Data.List (findIndex, intercalate, sortOn)
 import Data.Map.Lazy qualified as Lazy
 import Data.Map.Strict qualified as Map
+import Data.Maybe (isJust)
 import Data.Text qualified as Text
 import Data.Text.IO qualified as TextIO
 import Data.Time.Clock.POSIX (getPOSIXTime)
@@ -114,7 +116,7 @@ ioHost arguments = do
           hFlush stdout
           ended <- isEOF
           if ended then pure (Left "end of input") else Right <$> getLine,
-        hostReadFile = \path -> io (Text.unpack <$> TextIO.readFile path),
+        hostReadFile = io . fmap Text.unpack . TextIO.readFile,
         hostWriteFile = \path text -> io (TextIO.writeFile path (Text.pack text)),
         hostAppendFile = \path text -> io (TextIO.appendFile path (Text.pack text)),
         hostRandom = (\time -> realToFrac (time - fromInteger (floor time))) <$> getPOSIXTime,
@@ -122,20 +124,15 @@ ioHost arguments = do
         hostArguments = pure arguments,
         hostEnvironment = lookupEnv,
         hostRunProcess = \command inputs ->
-          io (readProcessWithExitCode command inputs "")
-            >>= pure . fmap \(status, output, errors) ->
-              (case status of ExitSuccess -> 0; ExitFailure code -> toInteger code, output, errors),
+          fmap (\(status, output, errors) -> (case status of ExitSuccess -> 0; ExitFailure code -> toInteger code, output, errors))
+            <$> io (readProcessWithExitCode command inputs ""),
         hostFork = \action -> do
           result <- newEmptyMVar
-          thread <- forkIO do
-            outcome <- try action
-            void (tryPutMVar result (either (Left . displayException @SomeException) id outcome))
+          thread <- forkIO (try action >>= void . tryPutMVar result . either (Left . displayException @SomeException) id)
           atomicModifyIORef' tasks \(next, table) -> ((next + 1, Map.insert next (result, thread) table), next),
         hostWait = \handle -> task handle >>= maybe (pure (Left "unknown task")) (readMVar . fst),
         hostWaitFor = \handle milliseconds ->
-          task handle >>= \case
-            Nothing -> pure (Just (Left "unknown task"))
-            Just (result, _) -> timeout (microseconds milliseconds) (readMVar result),
+          task handle >>= maybe (pure (Just (Left "unknown task"))) (timeout (microseconds milliseconds) . readMVar . fst),
         hostCancel = \handle ->
           task handle >>= mapM_ \(result, thread) -> do
             killThread thread
@@ -144,12 +141,12 @@ ioHost arguments = do
         hostServe = \port respond ->
           if port < 1 || port > 65535
             then pure (Left "web port must be between 1 and 65535")
-            else either (Left . displayException) Right <$> try @IOException (Web.serve port respond)
+            else first displayException <$> try @IOException (Web.serve port respond)
       }
   where
     microseconds milliseconds = fromInteger (max 0 (min (toInteger (maxBound :: Int) `div` 1000) milliseconds)) * 1000
     io :: IO a -> IO (Either String a)
-    io action = either (Left . displayException) Right <$> try @IOException action
+    io = fmap (first displayException) . try @IOException
 
 data Runtime
   = RFunction (Runtime -> Either String Runtime)
@@ -184,7 +181,7 @@ requireMain = void . checkedMain "a runnable file"
 -- a checked file may be a module without `main`; a `main` it defineth must
 -- be runnable.
 checkMain :: SourceProgram -> Either String ()
-checkMain program = maybe (Right ()) (const (requireMain program)) (sourceGlobal program "main")
+checkMain program = when (isJust (sourceGlobal program "main")) (requireMain program)
 
 -- validation and execution share the same checked entry point.
 checkedMain :: String -> SourceProgram -> Either String (Globals, SymbolId)
@@ -250,7 +247,7 @@ renderRuntime :: Runtime -> String
 renderRuntime = \case
   RLiteral literal -> renderLiteral literal
   RRecord fields -> "r{" ++ intercalate ", " [name ++ " ≔ " ++ renderRuntime value | (name, value) <- sortOn fst fields] ++ "}"
-  RConstructor name values -> case [value | value <- values, not (erased value)] of
+  RConstructor name values -> case filter (not . erased) values of
     [] -> constructorName name
     shown -> "(" ++ unwords (map renderRuntime shown) ++ " " ++ constructorName name ++ ")"
   RFunction _ -> "<function>"
@@ -271,20 +268,16 @@ execute host = \case
     -- continuation receiveth it. bind stayeth in tail position, so a
     -- loop retaineth neither pending arithmetic nor return frames.
     DPure value -> runtime (settled value)
-    DBind action continuation -> do
-      value <- execute host action
-      continue continuation [value]
+    DBind action continuation -> execute host action >>= runtime . apply continuation >>= execute host
     DFast unfolded -> runtime unfolded >>= execute host
     DHost key arguments -> do
       inputs <- runtime (traverse settled arguments)
       perform host key inputs >>= runtime . settled
   RFailure message -> throwE (Failure message)
   _ -> throwE (Failure "runtime value is not a deed")
-  where
-    continue function arguments = runtime (foldM apply function arguments) >>= execute host
 
 -- each case followeth the catalogue type of its key. a fallible deed returneth
--- an option or `string ∑ α`, as in the ordinary runner.
+-- an option or `string ∨ α`, as in the ordinary runner.
 perform :: (Monad m) => HostIO m -> String -> [Runtime] -> Execution m Runtime
 perform host key arguments = case (key, arguments) of
   ("write", [text -> Just value]) -> lift (hostWrite host value) >>= runtime >> pure only
@@ -314,9 +307,7 @@ perform host key arguments = case (key, arguments) of
       Right (Failure message) -> pure (textValue message)
       Right stop -> throwE stop
     where
-      respond request = do
-        value <- runtime (apply handler (requestValue request)) >>= execute host
-        runtime (responseOf value)
+      respond request = runtime (apply handler (requestValue request)) >>= execute host >>= runtime . responseOf
   _ -> throwE (Failure ("invalid runtime host call '" ++ key ++ "'"))
   where
     taskOutcome = \case
@@ -497,7 +488,7 @@ evaluate table environment = \case
   Sort _ -> pure RErased
   Pi {} -> pure RErased
   Lambda _ _ body -> pure (RFunction \argument -> evaluate table (argument : environment) body)
-  Apply _ function argument -> evaluate table environment function >>= \functionValue -> apply functionValue (delayed (evaluate table environment argument))
+  Apply _ function argument -> evaluate table environment function >>= (`apply` delayed (evaluate table environment argument))
   Let _ value body -> evaluate table (delayed (evaluate table environment value) : environment) body
   Meta {} -> Left "runtime term inholdeth an inference hole"
   Literal _ value -> pure (RLiteral value)

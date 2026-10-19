@@ -13,6 +13,7 @@ ilk maybe: [α: *, *] {
 ## a flock nameth the members that each bizen supplieth.
 flock hath_≍: [α: *, *] {
   let ≍: [α, α, 𝟚]
+
   let ≍_eftbend: [x: α, (x ≍ x) = yea]
 }
 
@@ -30,6 +31,7 @@ bizen: 𝟚 hath_≍ {
     nay, nay ^ yea,
     _,   _   ^ nay
   }
+
   let ≍_eftbend ≔ {
     yea ^ eftbend,
     nay ^ eftbend
@@ -43,6 +45,7 @@ bizen: [@α: *, @: α hath_≍, (α maybe) hath_≍] {
     a some, b some ^ a ≍ b,
     _,      _      ^ nay
   }
+
   let ≍_eftbend ≔ {
     none   ^ eftbend,
     a some ^ a ≍_eftbend

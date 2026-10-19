@@ -1,10 +1,19 @@
+bring combinator.tung
 bring flock/algebra/half/category.tung
 bring ilk/one.tung
 bring is.tung
 
 show flock functor: [φ: [*, *], *] {
   let warp: [@α: *, @β: *, α φ, [α, β], β φ]
+
   let warp_sameness: [@α: *, af: α φ, (af warp sameness) = af]
+}
+
+## a function from `ρ` warpeth its outcome: `(ρ →)` is the reader.
+bizen: [@ρ: *, (ρ →) functor] {
+  let warp: [a:, f:, r:] ≔ (r a) f
+
+  let warp_sameness: [_:] ≔ eftbend
 }
 
 show let void: [@φ: [*, *], @: φ functor, @α: *, af: α φ, 𝟙 φ]

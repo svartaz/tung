@@ -4,6 +4,8 @@
 -- the independent kernel never accepteth these temporary terms.
 module Tung.Dependent.Elaboration
   ( Elaboration,
+    termHoles,
+    metaSpine,
     runElaboration,
     recover,
     kernel,
@@ -49,16 +51,18 @@ module Tung.Dependent.Elaboration
 where
 
 import Control.Applicative ((<|>))
-import Control.Monad (filterM, foldM, forM, unless, when, zipWithM_)
+import Control.Monad (filterM, foldM, forM, mfilter, replicateM, unless, when, zipWithM_)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (ExceptT, catchE, runExceptT, throwE, withExceptT)
 import Control.Monad.Trans.State.Strict (State, StateT, runState, runStateT)
 import Control.Monad.Trans.State.Strict qualified as State
 import Data.Either (isRight)
 import Data.Functor.Const (Const (..))
+import Data.List (find)
 import Data.Map.Strict qualified as Map
-import Data.Maybe (isJust, isNothing)
+import Data.Maybe (catMaybes, isJust, isNothing)
 import Data.Set qualified as Set
+import Data.Traversable (mapAccumM)
 import Tung.Dependent.Check qualified as K
 import Tung.Dependent.Normalise qualified as N
 import Tung.Dependent.Render (renderMismatchWith)
@@ -226,12 +230,12 @@ located span = withExceptT (\message -> message {failureSpan = failureSpan messa
 -- run an action and keep its effects only if it succeedeth. instance search
 -- useth this to try candidates without leaking a failed unification.
 attempt :: Elaboration a -> Elaboration (Maybe a)
-attempt action = trial action >>= either (const (pure Nothing)) (\(result, commit) -> commit >> pure (Just result))
+attempt action = speculate action >>= traverse (\(result, commit) -> result <$ commit)
 
 -- run an action without keeping its effects. a success returneth the result and
 -- an action that keepeth them, so a search runneth each candidate once.
 speculate :: Elaboration a -> Elaboration (Maybe (a, Elaboration ()))
-speculate action = either (const Nothing) Just <$> trial action
+speculate = fmap (either (const Nothing) Just) . trial
 
 -- retain a rejected candidate's reason for source diagnostics, without
 -- committing its metavariable or universe state.
@@ -240,9 +244,7 @@ trial action = do
   inference <- get
   constraints <- lift (lift State.get)
   let ((result, inference'), constraints') = runState (runStateT (runExceptT action) inference) constraints
-  pure case result of
-    Left message -> Left message
-    Right result -> Right (result, put inference' >> lift (lift (State.put constraints')))
+  pure ((,put inference' >> lift (lift (State.put constraints'))) <$> result)
 
 -- shared fixed-point scheduling. each phase retaineth its own queue and
 -- progress rule; no last-resort search is moved before ordinary constraints.
@@ -251,7 +253,7 @@ repeatProgress step = step >>= \progressed -> when progressed (repeatProgress st
 
 -- report whether an action would succeed, without keeping its effects.
 probe :: Elaboration a -> Elaboration Bool
-probe action = isRight <$> trial action
+probe = fmap isRight . trial
 
 failure :: String -> Elaboration a
 failure = either raise pure . Error.failure
@@ -270,19 +272,15 @@ freshLevel = do
   pure (LMeta index)
 
 freshLevels :: Int -> Elaboration [Level]
-freshLevels count = mapM (const freshLevel) [1 .. count]
+freshLevels count = replicateM count freshLevel
 
 -- fresh universe levels for each of a global's universe parameters.
 freshUniverses :: SymbolId -> Elaboration [Level]
 freshUniverses symbol =
-  currentGlobals >>= \globals -> case Map.lookup symbol globals of
-    Just definition -> freshLevels (definitionUniverses definition)
-    Nothing -> failure "missing global definition"
+  currentGlobals >>= maybe (failure "missing global definition") (freshLevels . definitionUniverses) . Map.lookup symbol
 
 entry :: Int -> Elaboration MetaEntry
-entry identity = do
-  entries <- metaEntries <$> get
-  maybe (failure "unknown term inference hole") pure (Map.lookup identity entries)
+entry identity = Map.lookup identity . metaEntries <$> get >>= maybe (failure "unknown term inference hole") pure
 
 resolver :: Elaboration N.MetaResolver
 resolver = do
@@ -296,41 +294,35 @@ currentGlobals = inferenceGlobals <$> get
 normaliser :: Elaboration N.Normaliser
 normaliser = N.Normaliser <$> resolver <*> currentGlobals
 
+-- run a normalisation with the current hole solutions and definitions.
+normalised :: (N.Normaliser -> Either String a) -> Elaboration a
+normalised use = normaliser >>= fromEither . use
+
 evaluate :: K.Context -> Term -> Elaboration N.Value
 evaluate K.Context {contextValues} term = do
   recordReferences term
-  normal <- normaliser
-  fromEither (N.evaluateWith normal contextValues term)
+  normalised \normal -> N.evaluateWith normal contextValues term
 
 -- a worth whose definitions stay folded until forced, for an argument that
 -- only instantiateth a codomain.
 evaluateGlued :: K.Context -> Term -> Elaboration N.Value
 evaluateGlued K.Context {contextValues} term = do
   recordReferences term
-  normal <- normaliser
-  fromEither (N.evaluateGlued normal contextValues term)
+  normalised \normal -> N.evaluateGlued normal contextValues term
 
 instantiate :: N.Closure -> N.Value -> Elaboration N.Value
-instantiate closure argument = do
-  normal <- normaliser
-  fromEither (N.instantiateWith normal closure argument)
+instantiate closure argument = normalised \normal -> N.instantiateWith normal closure argument
 
 quote :: Int -> N.Value -> Elaboration Term
-quote depth value = do
-  normal <- normaliser
-  fromEither (N.quoteWith normal depth value)
+quote depth value = normalised \normal -> N.quoteWith normal depth value
 
 -- the same value with definitions kept by name, for terms that are evaluated
 -- again, such as motives.
 quoteFolded :: Int -> N.Value -> Elaboration Term
-quoteFolded depth value = do
-  normal <- normaliser
-  fromEither (N.quoteFoldedWith normal depth value)
+quoteFolded depth value = normalised \normal -> N.quoteFoldedWith normal depth value
 
 force :: N.Value -> Elaboration N.Value
-force value = do
-  normal <- normaliser
-  fromEither (N.forceWith normal value)
+force value = normalised (`N.forceWith` value)
 
 operations :: K.Checking Elaboration
 operations =
@@ -365,13 +357,12 @@ newMetaWithout K.Context {..} excluded expected = do
     pure case forced of
       N.VNeutral (N.NLocal level) | level `notElem` excluded -> Just (level, (forced, ty))
       _ -> Nothing
-  let telescope = Map.toAscList (Map.fromList [capture | Just capture <- captures])
+  let telescope = Map.toAscList (Map.fromList (catMaybes captures))
       originalDepth = length contextTypes
       values = map (fst . snd) telescope
       mapping = Map.fromList (zip (map fst telescope) [0 ..])
-  domains <- forM (zip [0 ..] telescope) \(position, (_, (_, ty))) -> do
-    domain <- quote originalDepth ty
-    fromEither (rename originalDepth position (Map.filter (< position) mapping) domain)
+  domains <- forM (zip [0 ..] telescope) \(position, (_, (_, ty))) ->
+    quote originalDepth ty >>= fromEither . rename originalDepth position (Map.filter (< position) mapping)
   annotation <- quote originalDepth expected >>= fromEither . rename originalDepth (length telescope) mapping
   kind <- infer K.emptyContext (foldr (Pi Explicit) annotation domains) >>= force
   case kind of
@@ -411,7 +402,7 @@ ensurePi plicity value =
       unless (length arguments == metaArity meta) (failure "wrong term inference telescope arity")
       pattern <- rigidLevels arguments
       when (isNothing pattern) (failure "nonpattern function ilk inference requireth an annotation")
-      (context, domains) <- telescope metaDomains K.emptyContext
+      (context, domains) <- mapAccumM telescope K.emptyContext metaDomains
       kind <- evaluate context metaTarget
       force kind >>= \case
         N.VSort _ -> pure ()
@@ -427,12 +418,10 @@ ensurePi plicity value =
         _ -> failure "function inference did not produce a product"
     _ -> failure "application requireth a function"
   where
-    telescope [] context = pure (context, [])
-    telescope (annotation : rest) context = do
+    telescope context annotation = do
       domain <- evaluate context annotation
       domainTerm <- quote (K.contextDepth context) domain
-      (current, domains) <- telescope rest (K.bind context domain)
-      pure (current, domainTerm : domains)
+      pure (K.bind context domain, domainTerm)
 
 unify :: K.Context -> N.Value -> N.Value -> Elaboration ()
 unify context left right = do
@@ -499,8 +488,7 @@ unifyForced context left right = do
         then pure False
         else do
           lambdaSide <- instantiate body variable
-          normal <- normaliser
-          otherSide <- fromEither (N.applyValueWith normal plicity other variable)
+          otherSide <- normalised \normal -> N.applyValueWith normal plicity other variable
           let current = K.bind context domain
           if flipped then unify current otherSide lambdaSide else unify current lambdaSide otherSide
           pure True
@@ -529,7 +517,25 @@ unifyForced context left right = do
         if solved then pure True else abstracted identity arguments actual actual expected
       _ -> do
         blocked <- (||) <$> blockedComputation context actual <*> blockedComputation context expected
-        if blocked then quotedEqual actual expected else congruent actual expected
+        if blocked then quotedEqual actual expected else structure actual expected
+    -- η for a family with one constructor and no indices: its constructor
+    -- applied to fields equaleth a rigid worth by those fields; two
+    -- applications of the constructor are compared by congruence.
+    structure actual expected = do
+      globals <- currentGlobals
+      let fields = \case
+            N.VNeutral neutral -> N.etaFields globals neutral
+            _ -> Nothing
+          byFields constructed other flipped = do
+            let project index value = do
+                  projected <- force (N.VNeutral (N.NField index other))
+                  if flipped then unify context projected value else unify context value projected
+            zipWithM_ project [0 ..] constructed
+            pure True
+      case (fields actual, fields expected) of
+        (Just constructed, Nothing) | rigid expected, N.VNeutral other <- expected -> byFields constructed other False
+        (Nothing, Just constructed) | rigid actual, N.VNeutral other <- actual -> byFields constructed other True
+        _ -> congruent actual expected
     -- occurrences are abstracted up to universe levels, so the solved sides
     -- are equated again.
     abstracted identity arguments rigidSide actual expected = do
@@ -576,7 +582,7 @@ unifyForced context left right = do
 metaSpine :: N.Value -> Maybe (Int, [(Plicity, N.Value)])
 metaSpine (N.VNeutral neutral)
   | (N.NMeta identity arguments, rest) <- N.neutralSpine neutral =
-      Just (identity, [(Explicit, argument) | argument <- arguments] ++ rest)
+      Just (identity, map (Explicit,) arguments ++ rest)
 metaSpine _ = Nothing
 
 -- eliminators, projections, and native computations are not injective. a
@@ -612,9 +618,7 @@ blockedComputation context value = do
       case metaSpine actual of
         Just _ -> pure True
         _ -> blockedComputation context actual
-    containsMeta input = holes <$> quote (K.contextDepth context) input
-    holes Meta {} = True
-    holes term = any (holes . snd) (children term)
+    containsMeta = fmap (not . null . termHoles) . quote (K.contextDepth context)
 
 -- a pattern solution abstracts every distinct rigid argument, including extra
 -- applications after the captured telescope. it is checked before committing.
@@ -638,9 +642,7 @@ solvePattern context identity arguments right = do
         Right renamed -> do
           ty <- evaluate K.emptyContext (metaType meta)
           domains <- patternDomains depth mapping ty arguments
-          case domains of
-            Nothing -> pure False
-            Just binders -> settle identity (foldr (uncurry Lambda) renamed binders)
+          maybe (pure False) (settle identity . foldr (uncurry Lambda) renamed) domains
     _ -> pure False
 
 -- a hole of function type applied to inputs that are not all distinct
@@ -674,9 +676,7 @@ solveAbstraction context identity arguments right = do
             Just binders
               | not (null targets),
                 map fst (drop (metaArity meta) binders) == map fst extra ->
-                  candidate mapping targets binders quoteFolded >>= \case
-                    True -> pure True
-                    False -> candidate mapping targets binders quote
+                  anyM (candidate mapping targets binders) [quoteFolded, quote]
             _ -> pure False
     _ -> pure False
   where
@@ -689,7 +689,7 @@ solveAbstraction context identity arguments right = do
       case rename (depth + length targets) (length binders) extended abstraction of
         Right renamed
           | and found,
-            null (concatMap termHoles (body : abstracted)) ->
+            all (null . termHoles) (body : abstracted) ->
               speculate (settle identity (foldr (uncurry Lambda) renamed binders)) >>= \case
                 Just (True, keep) -> True <$ keep
                 _ -> pure False
@@ -715,9 +715,9 @@ telescopeDomains count = go 0
 -- solution is quoted again. the body is quoted at `depth`; `mapping` holdeth
 -- the levels the solution may mention.
 prune :: Int -> Map.Map Int Int -> Term -> Elaboration Term
-prune depth mapping body = case filter (not . and . snd) (candidates body) of
-  [] -> pure body
-  (target, keeps) : _ ->
+prune depth mapping body = case find (not . and . snd) (candidates body) of
+  Nothing -> pure body
+  Just (target, keeps) ->
     narrow target keeps >>= \case
       True -> requote
       False -> pure body
@@ -732,10 +732,7 @@ prune depth mapping body = case filter (not . and . snd) (candidates body) of
         | index < bound -> Just True
         | otherwise -> Just (Map.member (depth - 1 - (index - bound)) mapping)
       _ -> Nothing
-    requote = do
-      normal <- normaliser
-      value <- fromEither (N.evaluateWith normal (N.openEnvironment depth) body)
-      quote depth value >>= prune depth mapping
+    requote = normalised (\normal -> N.evaluateWith normal (N.openEnvironment depth) body) >>= quote depth >>= prune depth mapping
     narrow target keeps = do
       MetaEntry {metaDomains = domains, metaTarget = result, metaSolution} <- entry target
       case metaSolution of
@@ -767,9 +764,7 @@ strengthened keeps domains result = do
 rigidLevels :: [N.Value] -> Elaboration (Maybe [Int])
 rigidLevels arguments = do
   levels <- traverse (fmap rigid . force) arguments
-  pure case sequence levels of
-    Just variables | length variables == Set.size (Set.fromList variables) -> Just variables
-    _ -> Nothing
+  pure (mfilter (\variables -> length variables == Set.size (Set.fromList variables)) (sequence levels))
   where
     rigid (N.VNeutral (N.NLocal level)) = Just level
     rigid _ = Nothing
@@ -810,7 +805,7 @@ assign identity candidate = do
   meta@MetaEntry {metaSolution = solution} <- entry identity
   active <- checkingSolutions <$> get
   when (Set.member identity active) (failure "cyclic term inference solution")
-  unless (isNothing solution) (failure "term inference solution was already assigned")
+  when (isJust solution) (failure "term inference solution was already assigned")
   cyclic <- occurs identity Set.empty candidate
   when cyclic (failure "occurs check failed for term inference hole")
   firstNewEquation <- nextEquation <$> get
@@ -826,7 +821,7 @@ assign identity candidate = do
         new@(_ : _) -> Left . (,Nothing) . Set.unions <$> traverse equationHoles new
         [] -> do
           latest <- entry identity
-          unless (isNothing (metaSolution latest)) (failure "term inference solution changed during checking")
+          when (isJust (metaSolution latest)) (failure "term inference solution changed during checking")
           modify' (\state -> state {metaEntries = Map.insert identity (latest {metaSolution = Just candidate}) (metaEntries state), checkingSolutions = Set.delete identity (checkingSolutions state), solutionVersion = solutionVersion state + 1})
           pure (Right ())
   where
@@ -870,9 +865,7 @@ occurs target visited = \case
         inArguments <- anyM (occurs target visited) arguments
         if inArguments || Set.member identity visited
           then pure inArguments
-          else do
-            solution <- metaSolution <$> entry identity
-            maybe (pure False) (occurs target (Set.insert identity visited)) solution
+          else entry identity >>= maybe (pure False) (occurs target (Set.insert identity visited)) . metaSolution
   term -> anyM (occurs target visited . snd) (children term)
 
 anyM :: (a -> Elaboration Bool) -> [a] -> Elaboration Bool
@@ -948,8 +941,8 @@ approximateWith both = do
               modify' (\state -> state {pendingEquations = reverse kept ++ rest})
               unify context function otherFunction
               unify context argument otherArgument
-              -- the postponed parts are split at once, as `?φ ?a x = ∏ α x`
-              -- needeth two splits to reach `?φ = ∏`; each split shorteneth
+              -- the postponed parts are split at once, as `?φ ?a x = ∧ α x`
+              -- needeth two splits to reach `?φ = ∧`; each split shorteneth
               -- a spine, so this endeth. a split that only postponeth its parts
               -- is no progress, so a caller that retrieth on progress stopeth.
               deeper <- approximateWith both
@@ -979,10 +972,7 @@ zonk term = do
   when (any (isNothing . metaSolution) (Map.elems metaEntries)) (failure "unsolved implicit argument or lambda domain")
   traverseScoped expand term
   where
-    expand depth meta@Meta {} _ = do
-      normal <- normaliser
-      value <- fromEither (N.evaluateWith normal (N.openEnvironment depth) meta)
-      -- a folded solution keepeth definitions by name; normalising it would
-      -- inline every dictionary and proof it reacheth.
-      quoteFolded depth value
+    -- a folded solution keepeth definitions by name; normalising it would
+    -- inline every dictionary and proof it reacheth.
+    expand depth meta@Meta {} _ = normalised (\normal -> N.evaluateWith normal (N.openEnvironment depth) meta) >>= quoteFolded depth
     expand _ _ descend = descend

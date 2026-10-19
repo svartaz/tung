@@ -13,7 +13,7 @@ import Tung.Dependent.Source (SourceProgram, inferSourceExpression, sourceDefini
 group :: IO Harness.Group
 group = do
   example <- exampleSource "host_tales.tung"
-  library <- loadLibrary ["ilk/one.tung", "ilk/maybe.tung", "ilk/product.tung", "ilk/two.tung"]
+  library <- loadLibrary ["ilk/one.tung", "ilk/maybe.tung", "ilk/and.tung", "ilk/two.tung"]
   Harness.group "dependent-literal" (tests (compileWith library "dependent_tales.tung") example ++ numericIndexTests ++ subjectReductionTests)
 
 numericIndexTests :: [Test]
@@ -56,9 +56,9 @@ tests :: (String -> Either String SourceProgram) -> String -> [Test]
 tests compiled example =
   [ computes "integer addition computeth during checking" "+2 + +2" "+4",
     computes "integer arithmetic composeth" "(+7 · +6) offdraw +2" "+40",
-    computes "division is euclidean for a undernaught divisor" "+7 deal_leftover -2" "(-3 both +1) some",
-    computes "division is euclidean for a undernaught dividend" "-7 deal_leftover +2" "(-4 both +1) some",
-    computes "division by naught hath no result" "+5 deal_leftover +0" "(none : (ℤ ∏ ℤ) maybe)",
+    computes "division is euclidean for a undernaught divisor" "+7 deal_leftover -2" "(-3 ⸴ +1) some",
+    computes "division is euclidean for a undernaught dividend" "-7 deal_leftover +2" "(-4 ⸴ +1) some",
+    computes "division by naught hath no result" "+5 deal_leftover +0" "(none : (ℤ ∧ ℤ) maybe)",
     computes "a comparison yieldeth yea for true" "+1 ≤ +2" "yea",
     computes "a comparison yieldeth nay for false" "+2 ≍ +3" "nay",
     computes "integers convert to string" "+42 to_string" "'42'",
@@ -68,8 +68,8 @@ tests compiled example =
       program <- compiled (example ++ "let deal_float:[float,float,float] ≔ 'deal_float' fremmed\n")
       traverse (\number -> sameNormalIn program ("(" ++ number ++ " deal_float 0.0) ⌊") "(none:ℤ maybe)") ["1.0", "-1.0", "0.0"],
     computes "string yoketh" "'tu' yoke 'ng'" "'tung'",
-    computes "string splitteth off its first scalar" "'tung' behead" "(`t both 'ung') some",
-    computes "empty string hath no first scalar" "'' behead" "(none : (unicode ∏ string) maybe)",
+    computes "string splitteth off its first scalar" "'tung' behead" "(`t ⸴ 'ung') some",
+    computes "empty string hath no first scalar" "'' behead" "(none : (unicode ∧ string) maybe)",
     computes "a unicode scalar hath a natural code" "`a code" "97",
     computes "unsigned digits are a natural" "2 ⊞ 3" "5",
     computes "natural subtraction stopth at naught" "2 ⊟ 3" "0",
@@ -84,9 +84,9 @@ tests compiled example =
       compiled (example ++ "let small:[ℕ, string] ≔ { 2 ^ 'two', _ ^ 'other' }\nlet write:[string, 𝟙 deed] ≔ 'write' fremmed\nlet main:𝟙 deed ≔ (1 heir) small $ write\n")
         >>= (`runSimulated` []),
     expectEq "a type may be chosen by an integer comparison" (Right True) $
-      True <$ compiled (example ++ "let six:(+0 by_greatness) ≔ 'six'\n"),
+      True <$ compiled (example ++ "let six:(+0 by_manyhood) ≔ 'six'\n"),
     rejectContaining "the comparison decideth the chosen type" "cannot unify" $
-      compiled (example ++ "let wrong:(+0 by_greatness) ≔ +6\n"),
+      compiled (example ++ "let wrong:(+0 by_manyhood) ≔ +6\n"),
     rejectContaining "a float literal is not an integer" "cannot unify" $
       compiled (example ++ "let wrong:ℤ ≔ 1.5\n"),
     rejectContaining "an unsigned literal is not an integer" "cannot unify" $
@@ -136,16 +136,16 @@ hostEncodingProgram =
     """
     bring ilk/two.tung
     bring ilk/maybe.tung
-    bring ilk/product.tung
+    bring ilk/and.tung
     bring ilk/list.tung
     let compare:[ℤ,ℤ,𝟚] ≔ 'same_wholetale' fremmed
-    let deal:[ℤ,ℤ,(ℤ ∏ ℤ) maybe] ≔ 'deal_leftover_wholetale' fremmed
+    let deal:[ℤ,ℤ,(ℤ ∧ ℤ) maybe] ≔ 'deal_leftover_wholetale' fremmed
     let scalars:[string,unicode list] ≔ 'string_to_list' fremmed
     """
     ( Map.fromList
         [ ("ilk/two.tung", "show ilk 𝟚:* { yea:𝟚, nay:𝟚 }"),
           ("ilk/maybe.tung", "show ilk maybe:[α:*,*] { none:α maybe, some:[α,α maybe] }"),
-          ("ilk/product.tung", "show ilk ∏:[α:*,β:*,*] { both:[α,β,α ∏ β] }"),
+          ("ilk/and.tung", "show ilk ∧:[α:*,β:*,*] { ⸴:[α,β,α ∧ β] }"),
           ("ilk/list.tung", "show ilk list:[α:*,*] { empty:α list, ‥:[α,α list,α list] }")
         ]
     )

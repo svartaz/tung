@@ -53,6 +53,7 @@ module Tung.Dependent.Source
   )
 where
 
+import Data.Either (fromRight)
 import Data.List (sortOn)
 import Data.Map.Strict qualified as Map
 import Tung.Dependent.Check qualified as K
@@ -103,7 +104,7 @@ recoverSnapshotReport compiled owner source modules =
   where
     (declarations, yielded, _) = recoverSnapshot source
     reached = foldl load compiled [path | (_, ImportDeclaration path _) <- declarations]
-    load done path = either (const done) id (compileImports done modules [path])
+    load done path = fromRight done (compileImports done modules [path])
     yieldedReport program@SourceProgram {..} = maybe mempty (\expression -> snd (elaborateHolesReport program ((\(term, ty) -> (term, ty, ())) <$> inferExpression programEnvironment globalNames emptyScope expression))) yielded
 
 -- the names a source may write at its top level, without checking it: its own
@@ -114,7 +115,7 @@ snapshotVisible compiled source modules = own ++ imported
   where
     (declarations, _, _) = recoverSnapshot source
     reached = foldl load compiled [path | (_, ImportDeclaration path _) <- declarations]
-    load done path = either (const done) id (compileImports done modules [path])
+    load done path = fromRight done (compileImports done modules [path])
     available = [entry | entry@(_, ImportDeclaration path _) <- declarations, Map.member path reached]
     own = [(name, SymbolId RootModule name, constructor) | (_, declaration) <- declarations, (name, constructor) <- defined (unshown declaration)]
     defined = \case
@@ -139,7 +140,7 @@ inferSourceExpression :: SourceProgram -> String -> Either String K.Inferred
 inferSourceExpression program source = parseExpression source >>= Error.toString . inferIn program
 
 inferIn :: SourceProgram -> Expression -> Either SourceFailure K.Inferred
-inferIn program expression = fst <$> inferInHoles program expression
+inferIn program = fmap fst . inferInHoles program
 
 inferInHoles :: SourceProgram -> Expression -> Either SourceFailure (K.Inferred, [Hole])
 inferInHoles program@SourceProgram {..} expression = do

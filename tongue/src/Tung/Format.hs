@@ -10,7 +10,7 @@ import Control.Applicative ((<|>))
 import Control.Monad (guard)
 import Data.Char (isSpace)
 import Data.List (dropWhileEnd, intercalate, isPrefixOf, nub, sort, sortOn)
-import Data.Maybe (fromMaybe, isNothing, listToMaybe)
+import Data.Maybe (fromMaybe, isJust, isNothing, listToMaybe)
 import Tung.Concrete (Leaf (..), NodeKind (..), Tree (..))
 import Tung.Dependent.Source.Parse (parseProgram, sourceTree)
 import Tung.Token hiding (Piece (..), PieceKind (..), Placement (..))
@@ -328,7 +328,7 @@ declarationDoc written =
    in commentsDoc comments <> case (declaresBody nodes, reverse nodes) of
         (True, Bracket open inside close : before)
           | braceLike open ->
-              sequenceDoc (reverse before) <> Text " " <> bracketDoc DeclarationBody open inside close
+              sequenceDoc (reverse before) <> Text " " <> bracketDoc (if any (atomIn [TClass, TInstance]) nodes then MemberBody else DeclarationBody) open inside close
         _ -> itemDoc nodes
   where
     declaresBody = \case
@@ -338,8 +338,9 @@ declarationDoc written =
 -- a brace that holdeth an ilk's constructors, a flock's members, or a
 -- bizen's members is a declaration body, and one after `match …` is a match
 -- body: both are padded. a declaration body and a case block of more than one
--- row always break.
-data Context = Ordinary | DeclarationBody | MatchBody
+-- row always break, and a blank line standeth between a flock's or a bizen's
+-- members.
+data Context = Ordinary | DeclarationBody | MemberBody | MatchBody
   deriving (Eq)
 
 -- an item is one slot, row, member, or argument of its bracket. a binding
@@ -469,12 +470,13 @@ bracketDoc context open Inside {..} close
   | maybe False isBraceKeyword (pieceToken open),
     first : rest <- insideItems =
       FromLine (Group (pieceDoc open <> itemDoc first <> Nest 2 (mconcat [Line <> itemDoc item | item <- rest]) <> SoftLine <> pieceDoc close))
-  | otherwise = blockDoc (context /= Ordinary) ((context == DeclarationBody && (several || insideDeclares)) || (insideRows && several))
+  | otherwise = blockDoc (context /= Ordinary) ((context `elem` [DeclarationBody, MemberBody] && (several || insideDeclares)) || (insideRows && several))
   where
     has piece token = pieceToken piece == Just token
     several = length insideItems > 1
     blockDoc padded forced =
-      let inner = mconcat (zipWith (\index item -> (if index == (0 :: Int) then Nil else Line) <> itemDoc item) [0 ..] insideItems)
+      let between = if context == MemberBody then BlankLine else Line
+          inner = mconcat (zipWith (\index item -> (if index == (0 :: Int) then Nil else between) <> itemDoc item) [0 ..] insideItems)
           edge = if padded then Line else SoftLine
           body = pieceDoc open <> Nest 2 (edge <> inner) <> edge <> pieceDoc close
        in FromLine (if forced then Break body else Group body)
@@ -502,6 +504,8 @@ data Doc
   | Line
   | SoftLine
   | HardLine
+  | -- a break that leaveth exactly one empty line.
+    BlankLine
   | Nest Int Doc
   | Group Doc
   | Break Doc
@@ -556,6 +560,8 @@ layout doc = dropWhileEnd blank (go 0 (Just 0) 0 [(0, Broken, doc)])
       Nest more inner -> go column pending lineAt ((indent + more, mode, inner) : rest)
       FromLine inner -> go column pending lineAt ((current', mode, inner) : rest)
       Line | mode == Flat -> if isNothing pending then Out ' ' : go (column + 1) Nothing lineAt rest else go column pending lineAt rest
+      BlankLine | mode == Flat -> go column pending lineAt ((indent, mode, Line) : rest)
+      BlankLine -> map Out (if isJust pending then "\n" else "\n\n") ++ go column (Just indent) lineAt rest
       SoftLine | mode == Flat -> go column pending lineAt rest
       Group inner
         | mode == Flat -> go column pending lineAt ((indent, Flat, inner) : rest)
@@ -584,6 +590,7 @@ layout doc = dropWhileEnd blank (go 0 (Just 0) 0 [(0, Broken, doc)])
             Nest more inner -> fits width ((indent + more, mode, inner) : others) rest
             FromLine inner -> fits width ((indent, mode, inner) : others) rest
             Line | mode == Flat -> fits (width - 1) others rest
+            BlankLine | mode == Flat -> fits (width - 1) others rest
             SoftLine | mode == Flat -> fits width others rest
             Group inner -> fits width ((indent, mode, inner) : others) rest
             Break inner -> fits width ((indent, Broken, inner) : others) rest

@@ -26,7 +26,8 @@ where
 
 import Control.Monad (foldM, unless)
 import Data.Map.Strict qualified as Map
-import Data.Maybe (isJust)
+import Data.Maybe (isJust, listToMaybe)
+import Text.Printf (printf)
 import Tung.Dependent.Check qualified as K
 import Tung.Dependent.Elaboration qualified as E
 import Tung.Dependent.Normalise qualified as N
@@ -108,8 +109,9 @@ familyOf environment ty =
       | (N.NGlobal family levels, arguments) <- N.neutralSpine neutral,
         Just Definition {definitionBody = TypeConstructor info} <- Map.lookup family (globals environment),
         let eliminator = inductionSymbol family,
-        Just Definition {definitionBody = Eliminator _} <- Map.lookup eliminator (globals environment) ->
-          pure (Just (Split levels info (map snd (take (inductiveParameterCount info) arguments)) (map snd (drop (inductiveParameterCount info) arguments)) eliminator))
+        Just Definition {definitionBody = Eliminator _} <- Map.lookup eliminator (globals environment),
+        let (parameters, indices) = splitAt (inductiveParameterCount info) (map snd arguments) ->
+          pure (Just (Split levels info parameters indices eliminator))
     _ -> pure Nothing
 
 -- later bound inputs whose domains depend transitively on the split locals.
@@ -117,12 +119,12 @@ familyOf environment ty =
 dependentInputs :: Scope -> [Int] -> Elaboration [Int]
 dependentInputs _ [] = pure []
 dependentInputs scope targets =
-  foldM include [] [level | level <- [minimum targets + 1 .. depth scope - 1], level `notElem` targets]
+  foldM include [] (filter (`notElem` targets) [minimum targets + 1 .. depth scope - 1])
   where
     include found level = do
       let position = depth scope - level - 1
           context = scopeContext scope
-      mentioned <- map (\index -> depth scope - index - 1) . freeIndices <$> quote scope (K.contextTypes context !! position)
+      mentioned <- mentionedLevels scope <$> quote scope (K.contextTypes context !! position)
       bound <- E.force (K.contextValues context !! position)
       pure case bound of
         N.VNeutral (N.NLocal same)
@@ -228,7 +230,7 @@ trivialMethod current ty (field : rest) = do
 
 -- recursive fields are named in order; zero padding keepeth the record sorted.
 childName :: Int -> String
-childName index = "child" ++ replicate (3 - length (show index)) '0' ++ show index
+childName = printf "child%03d"
 
 -- a function field's record taketh the same arguments as the field. a known
 -- prefix must match before its remaining arguments may select a descendant.
@@ -237,13 +239,15 @@ memoRecord scope Memo {memoEntries} value = do
   wanted <- quote scope value
   known <- traverse (\(entry, place) -> (,place) <$> quote scope entry) memoEntries
   let (function, arguments) = termSpine wanted
-      find [] = Nothing
-      find ((entry, (target, level, path)) : rest) =
-        let (entryFunction, prefix) = termSpine entry
-         in if sameUpToLevels function entryFunction && length prefix <= length arguments && and (zipWith (\(plicity, value) (other, entry) -> plicity == other && sameUpToLevels value entry) arguments prefix)
-              then Just (target, applyArguments (foldl Project (Local (depth scope - level - 1)) path) (drop (length prefix) arguments))
-              else find rest
-  pure (find known)
+  pure $
+    listToMaybe
+      [ (target, applyArguments (foldl Project (localTerm scope level) path) (drop (length prefix) arguments))
+      | (entry, (target, level, path)) <- known,
+        let (entryFunction, prefix) = termSpine entry,
+        sameUpToLevels function entryFunction,
+        length prefix <= length arguments,
+        and (zipWith (\(plicity, value) (other, entry) -> plicity == other && sameUpToLevels value entry) arguments prefix)
+      ]
 
 -- the memoised motive applied to a value, quoted in the given scope.
 applyMemo :: Scope -> Memo -> SymbolId -> N.Value -> Elaboration Term

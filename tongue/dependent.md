@@ -25,12 +25,21 @@ and runtime erasure is separate.
   applications, local bindings, and globals. locals use de bruijn indices and
   semantic neutrals stable levels.
 - conversion useth beta reduction, local substitution, transparent
-  definitions, function eta, and exact universe equality; there is no
-  cumulative subtyping.
+  definitions, function eta, structure eta, and exact universe equality; there
+  is no cumulative subtyping.
+- structure eta holdeth for a family with one constructor, no indices, and no
+  field that nameth a family of its group, as lean's structures, and so for a
+  fieldless one such as `𝟙`. a saturated constructor application equaleth any
+  term whose fields equal its fields, compared after the structural cases, and
+  an eliminator of such a family reduceth on a neutral that no hole blocketh by
+  passing its fields as `Field` projections. the unifier useth the rule only
+  against a rigid neutral, so a hole is still solved by assignment. a recursive
+  family is excluded, since eliminating its neutral child would unfold without
+  end.
 - evaluation is glued. a transparent global applied to arguments stayeth
   folded and unfoldeth only when forced. public results are forced at the
   head, except an application's argument, which only instantiateth the
-  codomain and stayeth folded, so checking `t greatness` computeth no closed
+  codomain and stayeth folded, so checking `t manyhood` computeth no closed
   `t`. conversion accepteth identical folded terms, universe arguments
   included, and otherwise compareth both normal forms. folding changeth no
   equality. motives keep definitions folded.
@@ -62,7 +71,9 @@ and runtime erasure is separate.
   hath a weaker counterpart in it; otherwise the exact solver refuteth its
   negation, keeping disjunctions and both directions of equality.
 - the exact solver useth difference constraints with negative-cycle detection.
-  a new edge restarteth bellman-ford from the current feasible assignment. it
+  a new edge restarteth bellman-ford from the current feasible assignment,
+  which every older edge satisfieth: only the new edges are relaxed first,
+  then only the edges leaving a vertex that changed. it
   accepteth an assignment satisfying every remaining clause before branching,
   rejecteth a maximum clause whose every alternative contradicteth the fixed
   graph, and skippeth clauses the assignment satisfieth. maximum constraints
@@ -154,7 +165,7 @@ normalisation.
 - bracket binders scope over later domains and results; bare and `_` slots add
   binder depth without a name. named header slots and `@:` requirements lower
   to lambdas and precede bare slots. a header slot may bind a pattern,
-  `a both b: α ∏ β`: the lambda bindeth a hidden local the body matcheth. a
+  `a ⸴ b: α ∧ β`: the lambda bindeth a hidden local the body matcheth. a
   bracket whose last slot bindeth, as `let f: [x:] ≔ x`, leaveth its result
   to inference.
 - `fall slots, result ^ body` elaborateth as `({binders ^ body} : [slots, result])`.
@@ -444,7 +455,7 @@ patterns, and structural recursion.
   dependeth on it, transitively in telescope order, and rebindeth them at the
   refined domains. named index inputs use their refined values' types. the
   trivial type is `[reverted goal, reverted goal]`, in the goal's universe.
-- a constructor's result index may constrain its own fields: matching `cons`
+- a constructor's result index may constrain its own fields: matching `‥`
   at `n heir` against index `2` forceth `n` to `1`, so the tail hath type
   `α vec 1`. the planner intersecteth shape requirements on each field without
   assigning locals or holes; each constrained field is split by its ordinary
@@ -653,7 +664,7 @@ syntax; [`flocks.tung`](../byspel/flocks.tung) showeth these rules.
   a waiting goal may still be solved by local requirements and their parents.
   when nothing else progresseth, a stuck equation is split (see the
   [inference boundary](#inference-boundary)), its parts at once again, so
-  `?φ ?a x = ∏ α x` reacheth `?φ = ∏`. last come the flock's fallback bizens,
+  `?φ ?a x = ∧ α x` reacheth `?φ = ∧`. last come the flock's fallback bizens,
   as lean's default instances; a goal still unknown asketh for an annotation.
 - search trieth local dictionaries, innermost first, then registered bizens,
   then inherited instances; a later tier runneth only when no earlier candidate
@@ -698,7 +709,7 @@ useth files, tasks, and strings.
 
 normalisation and execution share one catalogue, `hostBindings` in
 `Tung.Primitive`, and one failure convention: a fallible operation returneth
-`maybe` or `string ∑ α`. bookhoard declareth every key, with its signature, in
+`maybe` or `string ∨ α`. bookhoard declareth every key, with its signature, in
 `_fremmed.tung` and the `deed/` modules.
 
 `let name:type ≔ 'key' fremmed`, at top level, bindeth one trusted host
@@ -711,7 +722,7 @@ every name.
 - each key is bound at most once. unknown keys, different types, local
   bindings, and missing annotations are rejected.
 - primitive types match by name. a host data type, such as `𝟙`, `𝟚`,
-  `maybe`, `∏`, `∑`, `list`, `wordbook`, `_process_outcome`, `_request`, or
+  `maybe`, `∧`, `∨`, `list`, `wordbook`, `_process_outcome`, `_request`, or
   `_response`, matcheth only the `ilk` of that name in its bookhoard file, as
   `ilk/maybe.tung`; a lookalike elsewhere differeth.
 - the catalogue fixeth each data family's parameters, constructor identities,
@@ -738,7 +749,7 @@ every name.
   name against its checked type, so a self-call is structural recursion, and
   stored as the hidden global `model name`, shown as `name`. that type's
   universe parameters stay rigid, so the model shareth them even with several
-  universe-polymorphic families, as `(ℕ ∏ ℕ) maybe`. the model must be
+  universe-polymorphic families, as `(ℕ ∧ ℕ) maybe`. the model must be
   transparent with the binding's universe parameters and normalised type, and
   only pure operations may have one. bookhoard tests compare each model with
   its native operation on generated literals; the kernel trusteth that

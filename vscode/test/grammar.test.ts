@@ -70,7 +70,7 @@ test("textmate leaveth name roles to the compiler", async () => {
     "}",
     "show let void:[@a:*, @f:[*, *], af:a f, 𝟙 f] ≔",
     "  af warp {_ ^ only}",
-    "show let read:[string path:_path, (string ∑ string) deed] ≔",
+    "show let read:[string path:_path, (string ∨ string) deed] ≔",
     "show let yoke:[string₀ path:_path, string₁ path:_path, _path] ≔",
     "x ‥ xs · list~‥",
     "let rime:* ≔ ℤ",

@@ -64,6 +64,29 @@ let warp_done_flat
         ({answer ^ (answer throughwone) warp_done_flat} fall_umfang)
   }
 
+## mapping into forewrits and then flattening is binding.
+let warp_flat
+  : [@φ: [*, *], @α: *, @β: *, forewrit: φ freer α, f: [α, φ freer β],
+    ((forewrit warp f) flat) = (forewrit bind f)]
+  ≔ match forewrit {
+    _ done                   ^ eftbend,
+    request more throughwone ^
+      (request more) leibnitz
+        ({answer ^ (answer throughwone) warp_flat f} fall_umfang)
+  }
+
+## binding twice is binding once to the bound continuation.
+let helpsetting_bind_bind
+  : [@φ: [*, *], @α: *, @β: *, @γ: *, forewrit: φ freer α, f: [α, φ freer β],
+    g: [β, φ freer γ],
+    ((forewrit bind f) bind g) = (forewrit bind {a ^ (a f) bind g})]
+  ≔ match forewrit {
+    _ done                   ^ eftbend,
+    request more throughwone ^
+      (request more) leibnitz
+        ({answer ^ (answer throughwone) helpsetting_bind_bind f g} fall_umfang)
+  }
+
 ## interpret a forewrit: `handle` answereth each request by calling its
 ## continuation, and `leaf` turneth the outcome into the answer.
 show let gather
@@ -78,20 +101,36 @@ show let gather
 ## to make pointwise continuation soothings into sameness of `more` forewrits.
 bizen: [@φ: [*, *], (φ freer) functor] {
   let warp: [forewrit:, tweak:] ≔ forewrit warp tweak
+
   let warp_sameness ≔ helpsetting_warp_sameness
 }
 
 bizen: [@φ: [*, *], (φ freer) onwendsome] {
   let sheer ≔ done
+
   let onwend: [forewrit:, tweaks:] ≔ tweaks bind (forewrit warp)
+
   let onwend_sameness_sheer ≔ helpsetting_warp_sameness
+
   let sheer_onwend_sheer: [_:, _:] ≔ eftbend
+
   let onwend_onwend: [a:, f:, g:] ≔ a warp_warp f g
+
   let sheer_onwend: [_:, _:] ≔ eftbend
 }
 
 bizen: [@φ: [*, *], (φ freer) monad] {
   let flat: [forewrit:] ≔ forewrit flat
+
   let sheer_bind: [_:, _:] ≔ eftbend
+
   let warp_sheer_flat ≔ warp_done_flat
+
+  let bind_bind: [m:, f:, g:] ≔ >{throughgo,
+    (m warp f $ flat) warp_flat g,
+    {d ^ d bind g} leibnitz (m warp_flat f),
+    m helpsetting_bind_bind f g,
+    (m bind) leibnitz ({a ^ ((a f) warp_flat g) evenmete} fall_umfang),
+    (m warp_flat {a ^ (a f) warp g $ flat}) evenmete
+  }
 }

@@ -281,10 +281,13 @@ and name, with no shape matching or built-in bizen.
 
 ## test machinery
 
-- a full run checketh all of bookhoard once in the parent process and saveth
-  its interfaces in `dist-newstyle/test-interfaces`; each group process
-  beginneth from them, and a single selected group checketh what it needeth.
-  a module whose private names a test readeth is checked again from source.
+- a full run checketh bookhoard once in the parent process and saveth its
+  interfaces in `dist-newstyle/test-interfaces`; each group process beginneth
+  from them, and a single selected group checketh what it needeth. their keys
+  hash the compiler library's sources rather than the test executable, so a
+  later run reuseth every interface whose module and library are unchanged,
+  and removeth the rest. a module whose private names a test readeth is
+  checked again from source.
 - `Test.Harness` compileth further bookhoard imports once per process; a test
   replacing a library source invalidateth that cache and its compiled
   dependants in both shared helpers.
@@ -296,7 +299,9 @@ and name, with no shape matching or built-in bizen.
   results; dependent groups test kernel and source rules directly.
 - `TUNG_TEST_GROUP` rejecteth unknown names and an empty explicit selection.
 - executable tests compare byspel output and exit status exactly; `word_rime`
-  receiveth a real file.
+  receiveth a real file. one check first fileth the interfaces of every
+  library module the byspels bring, then the byspels run side by side, each
+  within its own time limit.
 
 ## neatening
 
@@ -333,6 +338,9 @@ tokens differ from the shortened source's.
 - it walketh the concrete tree: declarations and a bracket's items are the
   nodes the parser marked, each with its separator; an unmarked inside is one
   item, and a row's `;` endeth each alternative.
+- a blank line standeth between declarations, except between `bring`s, and
+  between a flock's or a bizen's members; a block's lets stand on consecutive
+  lines. no other break leaveth an empty line.
 - a comment keepeth the lexer's attachment, a leading one at its item's
   indentation; this is the only layout read from the source.
 - one blank line parteth top-level declarations; consecutive `bring`s stay

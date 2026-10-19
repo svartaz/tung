@@ -27,6 +27,7 @@ bizen: [@α: *, @: α hath_naught, (α twintale) hath_naught] {
 
 bizen: [@α: *, @: α hath_-, (α twintale) hath_-] {
   let -: [a +i b:] ≔ (a -) +i (b -)
+
   let -+: [a +i b:, c +i d:] ≔ (a -+ c) +i (b -+ d)
 }
 
@@ -56,14 +57,17 @@ bizen: (float twintale) elementary {
     let c ≔ a elementary~exponent
     yield (c · (b cosine)) +i (c · (b sine))
   )
+
   let logarithm: [a +i b:]
     ≔ ((a · a) + (b · b) $ logarithm) +i (a arctan_float b)
+
   let sine: [a +i b:] ≔ (
     let overnaught ≔ ((b -+ naught) +i a) exponent
     let undernaught ≔ (b +i (a -+ naught)) exponent
     yield (((undernaught imaginary) -+ (overnaught imaginary)) · 0.5) +i
       (((overnaught real) -+ (undernaught real)) · 0.5)
   )
+
   let cosine: [a +i b:] ≔ (
     let overnaught ≔ ((b -+ naught) +i a) exponent
     let undernaught ≔ (b +i (a -+ naught)) exponent

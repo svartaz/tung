@@ -114,7 +114,7 @@ most non-space, non-reserved characters may occur in names. punctuation:
 | spelling | meaning                             |
 | -------- | ----------------------------------- |
 | `~`      | imported namespace, as `list~empty` |
-| `.`      | field projection, as `person.name`  |
+| `.`      | field projection, as `wight.name`   |
 | `^`      | patterns followed by their result   |
 | `≔`      | definition                          |
 | `*`      | universe, only when standalone      |
@@ -206,12 +206,12 @@ and be partially applied:
 
 ```tung
 let sameness ≔ fall @α: *, x: α, α ^ x
-let powerset: [α: *, *] ≔ [α, 𝟚]
+let mightset: [α: *, *] ≔ [α, 𝟚]
 let wholetale_type: * ≔ ℤ
 ```
 
-`(term: type)` ascribeth any expression. `α ∏ β` is the product type and
-`a both b` a product value. `→`, from `combinator.tung` and re-exported by
+`(term: type)` ascribeth any expression. `α ∧ β` is the product type and
+`a ⸴ b` a product value. `→`, from `combinator.tung` and re-exported by
 `often.tung`, is `show let →: [α: *, β: *, *] ≔ [α, β]`. it hath no special
 associativity, so write `α → (β → γ)`, and may be passed unapplied, as in
 `bizen: → semigroupoid`.
@@ -302,7 +302,7 @@ well-founded recursion is library code in `ilk/grounded.tung`:
 `wellgrounded_selfcall_by` taketh a result motive, a measure, a
 well-foundedness proof, a step, and an input, and the step's recursive call
 requireth a smaller-measure proof. `ilk/kindful.tung` provideth
-`under_wellgrounded` and `ilk/list_setting.tung` `‥_greatness_under` for list
+`under_wellgrounded` and `ilk/list_setting.tung` `‥_manyhood_under` for list
 tails; [`wellgrounded.tung`](../byspel/wellgrounded.tung) is an example.
 
 ## ilks
@@ -368,7 +368,7 @@ let classify: [string, ℤ] ≔ {'yes' ^ +1, _ ^ +0}
 - a case function that destructureth constructors needeth an expected type.
 
 a named annotation slot may hold a constructor pattern without parentheses,
-`[a both b: α ∏ β, α]`; literal patterns belong in `match`. matching
+`[a ⸴ b: α ∧ β, α]`; literal patterns belong in `match`. matching
 `eftbend: a = b` refineth the result, while `_: a = b` discardeth the proof.
 
 `n heir` matcheth a positive natural and bindeth its predecessor; as a term,
@@ -410,9 +410,9 @@ an unindexed ilk with one constructor hath a field per named explicit
 constructor input. `value.field` projecteth it; chains read leftward.
 
 ```tung
-ilk person: * { person_of: [name: string, age: ℤ, person] }
-let someone: person ≔ 'naoki' person_of +35
-let older ≔ someone.name person_of (someone.age + +1)
+ilk wight: * { wight_of: [name: string, eld: ℤ, wight] }
+let someone: wight ≔ 'naoki' wight_of +35
+let older ≔ someone.name wight_of (someone.eld + +1)
 ```
 
 separate ilks may share field names. nested constructor brackets extend the
@@ -484,6 +484,16 @@ let evenmete: [@α: *, @x: α, @y: α, p: x = y, y = x] ≔
 `is.tung` also provideth `leibnitz`, `evenmete`, `throughgo`, `throughbear`,
 `inlook`, and function extensionality as the orsetting `fall_umfang`.
 
+computation includeth η. a fall equaleth the lambda that applieth it, and a
+worth of an ilk with one constructor, no indices, and no field of its own ilk
+equaleth that constructor applied to its fields, so a match on an unknown
+pair computeth and every `𝟙` is `only`:
+
+```tung
+let swap: [@α: *, @β: *, α ∧ β, β ∧ α] ≔ {a ⸴ b ^ b ⸴ a}
+let swap_swap: [@α: *, @β: *, p: α ∧ β, ((p swap) swap) = p] ≔ eftbend
+```
+
 - `sorry` inhabiteth any expected type as an unfinished assumption. inspecting
   it faileth at runtime; leaving it unused doth nothing.
 - `orsetting name: type` declareth a named axiom without a body. its
@@ -519,14 +529,14 @@ let main: 𝟙 deed ≔ read bind {
 }
 ```
 
-fallible operations return values: `maybe` for absence, or `ε ∑ α` with
+fallible operations return values: `maybe` for absence, or `ε ∨ α` with
 `incast₀` for failure and `incast₁` for success. file and process operations
-use `string ∑ α`; `read` returneth none at end of input. library wrappers keep
+use `string ∨ α`; `read` returneth none at end of input. library wrappers keep
 this sequencing:
 
-- `deed/misfaresome.tung`: `ε misfaresome α` wrappeth `(ε ∑ α) deed`;
+- `deed/misfaresome.tung`: `ε misfaresome α` wrappeth `(ε ∨ α) deed`;
   `misfare` faileth, `handle` handleth a fault, and `bind` stoppeth at it.
-- `deed/hade.tung`: `σ hade α` wrappeth `[σ, (α ∏ σ) deed]`; `get`, `put`,
+- `deed/hade.tung`: `σ hade α` wrappeth `[σ, (α ∧ σ) deed]`; `get`, `put`,
   and `tweak` read and change the state.
 - both provide `lift` and `unwrap`, which giveth the deed beneath; qualify
   them when both are imported.

@@ -17,18 +17,26 @@ bring is.tung
 ## that `+` on `μ` is commutative, so no law stateth it.
 show flock module: [ρ: *, μ: *, @: ρ ring, @: μ group_+, *] {
   let ∘: [ρ, μ, μ]
+
   let ∘_+: [r: ρ, a: μ, b: μ, (r ∘ (a + b)) = ((r ∘ a) + (r ∘ b))]
+
   let +_∘: [r: ρ, s: ρ, a: μ, ((r + s) ∘ a) = ((r ∘ a) + (s ∘ a))]
+
   let ·_∘: [r: ρ, s: ρ, a: μ, ((r · s) ∘ a) = (r ∘ (s ∘ a))]
+
   let one_∘: [a: μ, (one ∘ a) = a]
 }
 
 ## every ring is a module over itself, acting by its own folding.
 bizen: [@ρ: *, @: ρ ring, ρ module ρ] {
   let ∘ ≔ ·
+
   let ∘_+: [r:, a:, b:] ≔ r ·_+ a b
+
   let +_∘: [r:, s:, a:] ≔ r +_· s a
+
   let ·_∘: [r:, s:, a:] ≔ (r ·_· s a) evenmete
+
   let one_∘: [a:] ≔ a one_·
 }
 
@@ -37,22 +45,22 @@ bizen: [@ρ: *, @: ρ ring, ρ module ρ] {
 show let naught_∘
   : [@ρ: *, @μ: *, @: ρ module μ, a: μ, ((naught @ρ) ∘ a) = naught]
   ≔ (
-    let doubled: ((((naught @ρ) ∘ a) + ((naught @ρ) ∘ a)) = ((naught @ρ) ∘ a))
+    let twofolded: ((((naught @ρ) ∘ a) + ((naught @ρ) ∘ a)) = ((naught @ρ) ∘ a))
       ≔ ((+_∘ @ρ @μ naught naught a) evenmete) throughgo
         ({s: ρ ^ s ∘ a} leibnitz (naught_+ @ρ naught))
     yield ((naught @ρ) ∘ a) +_strike ((naught @ρ) ∘ a) naught
-      (doubled throughgo ((naught_+ @μ ((naught @ρ) ∘ a)) evenmete))
+      (twofolded throughgo ((naught_+ @μ ((naught @ρ) ∘ a)) evenmete))
   )
 
 ## every scalar sendeth `naught` to `naught`.
 show let ∘_naught
   : [@ρ: *, @μ: *, @: ρ module μ, r: ρ, (r ∘ (naught @μ)) = naught]
   ≔ (
-    let doubled: (((r ∘ (naught @μ)) + (r ∘ (naught @μ))) = (r ∘ (naught @μ)))
+    let twofolded: (((r ∘ (naught @μ)) + (r ∘ (naught @μ))) = (r ∘ (naught @μ)))
       ≔ ((∘_+ @ρ @μ r naught naught) evenmete) throughgo
         ({a: μ ^ r ∘ a} leibnitz (naught_+ @μ naught))
     yield (r ∘ (naught @μ)) +_strike (r ∘ (naught @μ)) naught
-      (doubled throughgo ((naught_+ @μ (r ∘ (naught @μ))) evenmete))
+      (twofolded throughgo ((naught_+ @μ (r ∘ (naught @μ))) evenmete))
   )
 
 ## a flipped scalar flippeth the outcome.

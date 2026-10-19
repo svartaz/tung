@@ -21,6 +21,7 @@ where
 
 import Control.DeepSeq (NFData)
 import Data.Char (isControl, ord)
+import Data.Maybe (fromMaybe)
 import Data.Word (Word64)
 import GHC.Float (castDoubleToWord64, castWord64ToDouble)
 import GHC.Generics (Generic)
@@ -103,10 +104,10 @@ coreConstructor (SymbolId owner name) = SymbolId owner (drop 1 (dropWhile (/= '@
 -- a literal as source spelleth it.
 renderLiteral :: HostLiteral -> String
 renderLiteral = \case
-  TextValue x -> "'" ++ concatMap (\character -> maybe [character] id (escaped character)) x ++ "'"
+  TextValue x -> "'" ++ concatMap (\character -> fromMaybe [character] (escaped character)) x ++ "'"
   NaturalValue x -> show x
   IntegerValue x -> (if x < 0 then "" else "+") ++ show x
   FloatBits x -> show (castWord64ToDouble x)
-  UnicodeValue x -> '`' : maybe (if isControl x then "\\" ++ show (ord x) ++ ";" else [x]) id (escaped x)
+  UnicodeValue x -> '`' : fromMaybe (if isControl x then "\\" ++ show (ord x) ++ ";" else [x]) (escaped x)
   where
     escaped character = lookup character [('\n', "\\n"), ('\r', "\\r"), ('\t', "\\t"), ('\'', "\\'"), ('\\', "\\\\")]

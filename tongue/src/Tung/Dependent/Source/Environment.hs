@@ -39,9 +39,10 @@ module Tung.Dependent.Source.Environment
   )
 where
 
-import Control.Monad (foldM)
-import Data.List (intercalate, nub)
+import Control.Monad (foldM, forM_)
+import Data.List (intercalate, isPrefixOf, nub)
 import Data.Map.Strict qualified as Map
+import Data.Maybe (fromMaybe, listToMaybe, mapMaybe)
 import Data.Set qualified as Set
 import Tung.Dependent.Check qualified as K
 import Tung.Dependent.Source.Error qualified as Error
@@ -223,9 +224,7 @@ lookupName name = Map.lookup name . nameTable
 displayName :: Names -> SymbolId -> String
 displayName names identity | Just family <- inducedFamily identity = "unbuild " ++ displayName names family
 displayName names identity | Just host <- modelledHost identity = displayName names host
-displayName Names {nameTable} identity = case qualified of
-  name : _ -> name
-  [] -> symbolName identity
+displayName Names {nameTable} identity = fromMaybe (symbolName identity) (listToMaybe qualified)
   where
     qualified = [name | (name, binding) <- Map.toList nameTable, '~' `elem` name, matches binding]
     matches binding = bindingSymbol binding == Just identity
@@ -235,9 +234,8 @@ displayName Names {nameTable} identity = case qualified of
 briefName :: Names -> SymbolId -> String
 briefName names identity | Just family <- inducedFamily identity = "unbuild " ++ briefName names family
 briefName names identity | Just host <- modelledHost identity = briefName names host
-briefName names@Names {nameTable} identity = case [name | (name, binding) <- Map.toList nameTable, '~' `notElem` name, bindingSymbol binding == Just identity] of
-  name : _ -> name
-  [] -> displayName names identity
+briefName names@Names {nameTable} identity =
+  fromMaybe (displayName names identity) (listToMaybe [name | (name, binding) <- Map.toList nameTable, '~' `notElem` name, bindingSymbol binding == Just identity])
 
 insertName :: String -> NameBinding -> Names -> Names
 insertName name binding names = names {nameTable = Map.insert name binding (nameTable names)}
@@ -256,9 +254,9 @@ bindLocal name binding program@SourceProgram {..} =
 
 -- types, classes, constructors, members, and definitions share one namespace.
 repeated :: Set.Set String -> [String] -> Either SourceFailure ()
-repeated declared names = case [name | (index, name) <- zip [0 :: Int ..] names, name `Set.member` declared || name `elem` take index names] of
-  name : _ -> Error.failure ("top-level name repeateth '" ++ name ++ "'")
-  [] -> pure ()
+repeated declared names =
+  forM_ (take 1 [name | (index, name) <- zip [0 :: Int ..] names, name `Set.member` declared || name `elem` take index names]) \name ->
+    Error.failure ("top-level name repeateth '" ++ name ++ "'")
 
 symbolOf :: String -> SourceProgram -> Either SourceFailure SymbolId
 symbolOf name SourceProgram {globalNames} = case lookupName name globalNames of
@@ -278,7 +276,7 @@ exportIntroduced before after = exportNames (Set.difference (localNames after) (
 exportNames :: Set.Set String -> SourceProgram -> SourceProgram
 exportNames introduced after@SourceProgram {globalNames, programExports} =
   let exported = Map.restrictKeys (nameTable globalNames) introduced
-      shownClasses = Map.restrictKeys (nameClasses globalNames) (Set.fromList [symbol | binding <- Map.elems exported, Just symbol <- [bindingSymbol binding]])
+      shownClasses = Map.restrictKeys (nameClasses globalNames) (Set.fromList (mapMaybe bindingSymbol (Map.elems exported)))
    in after {programExports = programExports {nameTable = Map.union exported (nameTable programExports), nameClasses = Map.unionWith mergeClass (nameClasses programExports) shownClasses}}
 
 -- re-exported names keep their identities and class registries. a qualified
@@ -318,9 +316,9 @@ sorryAssumptions program@SourceProgram {..} =
       | otherwise = reach (Set.insert symbol seen) (Map.findWithDefault [] symbol users ++ rest)
     assuming = reach Set.empty [SymbolId PrimitiveModule "sorry"]
     assumes symbol = symbol `Set.member` assuming
-    shown = Set.fromList [symbol | binding <- Map.elems (nameTable programExports), Just symbol <- [bindingSymbol binding]]
+    shown = Set.fromList (mapMaybe bindingSymbol (Map.elems (nameTable programExports)))
     reported symbol = symbol `Set.member` shown || isInstance symbol || symbolName symbol == "main"
-    isInstance symbol = take 10 (symbolName symbol) == "#instance_"
+    isInstance symbol = "#instance_" `isPrefixOf` symbolName symbol
     describe symbol
       | isInstance symbol = "bizen " ++ maybe "?" (renderClosed program . definitionType) (Map.lookup symbol definitions)
       | otherwise = displayName globalNames symbol

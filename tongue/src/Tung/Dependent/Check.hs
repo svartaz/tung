@@ -46,7 +46,7 @@ module Tung.Dependent.Check
   )
 where
 
-import Control.Monad (unless, when)
+import Control.Monad (unless, when, zipWithM_)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.State.Strict (StateT, get, put, runStateT)
 import Data.Containers.ListUtils (nubOrd)
@@ -97,8 +97,7 @@ infer environment@(Environment globals) term = do
   (ty, U.universeConstraints -> constraints) <- runStateT (inferTerm globals emptyContext term) (U.universes [])
   annotation <- N.quote globals 0 ty
   result <- generalise term annotation constraints
-  validate environment result
-  pure result
+  result <$ validate environment result
 
 check :: Environment -> Term -> Term -> Either String Inferred
 check environment@(Environment globals) term annotation = do
@@ -107,12 +106,11 @@ check environment@(Environment globals) term annotation = do
   traverse_ (validLevel Nothing True) (termLevels term ++ termLevels annotation)
   (_, U.universeConstraints -> constraints) <- runStateT (checkType globals emptyContext annotation >> checkTerm globals emptyContext term annotation) (U.universes [])
   result <- generalise term annotation constraints
-  validate environment result
-  pure result
+  result <$ validate environment result
 
 define :: Environment -> SymbolId -> Maybe Term -> Term -> Either String Environment
 define environment@(Environment globals) name annotation body = do
-  when (Map.member name globals) (Left "duplicate definition")
+  requireNew globals name
   result <- maybe (infer environment body) (check environment body) annotation
   pure (insertChecked globals name result)
 
@@ -121,7 +119,7 @@ define environment@(Environment globals) name annotation body = do
 -- an assumption is a constant whose checked type is all the kernel knoweth.
 assume :: Environment -> SymbolId -> Inferred -> Either String Environment
 assume environment@(Environment globals) name signature@Inferred {..} = do
-  when (Map.member name globals) (Left "duplicate definition")
+  requireNew globals name
   validate environment signature
   N.normalise globals 0 inferredType >>= \case
     Sort _ -> pure ()
@@ -130,9 +128,13 @@ assume environment@(Environment globals) name signature@Inferred {..} = do
 
 defineInferred :: Environment -> SymbolId -> Inferred -> Either String Environment
 defineInferred environment@(Environment globals) name result = do
-  when (Map.member name globals) (Left "duplicate definition")
+  requireNew globals name
   validate environment result
   pure (insertChecked globals name result)
+
+-- each identity is defined once.
+requireNew :: Globals -> SymbolId -> Either String ()
+requireNew globals name = when (Map.member name globals) (Left "duplicate definition")
 
 insertChecked :: Globals -> SymbolId -> Inferred -> Environment
 insertChecked globals name Inferred {..} =
@@ -161,9 +163,7 @@ openObligations assumptions obligations = [obligation | obligation <- nubOrd obl
 -- unchecked evaluation is private: a caller cannot normalise omega or an
 -- arbitrary cyclic environment by bypassing the kernel.
 normalise :: Environment -> Term -> Either String Term
-normalise environment@(Environment globals) term = do
-  result <- infer environment term
-  N.normalise globals 0 (inferredTerm result)
+normalise environment@(Environment globals) term = infer environment term >>= N.normalise globals 0 . inferredTerm
 
 universeNormalise :: Level -> Level
 universeNormalise = U.normaliseLevel
@@ -279,7 +279,7 @@ inferTermWith operations@Checking {..} context@Context {..} = \case
     pure (N.VSort (U.normaliseLevel (foldr LMax LZero levels)))
   Record fields -> do
     unless (canonicalFields fields) (failCheck "record fields must be distinct and sorted")
-    N.VRecordType <$> traverse (\(name, field) -> (name,) <$> inferTermWith operations context field) fields
+    N.VRecordType <$> traverse (traverse (inferTermWith operations context)) fields
   Project record name ->
     inferTermWith operations context record >>= forceCheck >>= \case
       N.VRecordType fields | Just ty <- lookup name fields -> pure ty
@@ -360,14 +360,25 @@ convert globals Context {contextTypes} actual expected = do
     compareTerms (Lambda lp ld lb) (Lambda rp rd rb) | lp == rp = compareTerms ld rd >> compareTerms lb rb
     compareTerms (Apply lp lf la) (Apply rp rf ra) | lp == rp = compareTerms lf rf >> compareTerms la ra
     compareTerms (Literal ln lv) (Literal rn rv) | ln == rn, lv == rv = pure ()
-    compareTerms (RecordType left) (RecordType right) | map fst left == map fst right = traverse_ (uncurry compareTerms) (zip (map snd left) (map snd right))
-    compareTerms (Record left) (Record right) | map fst left == map fst right = traverse_ (uncurry compareTerms) (zip (map snd left) (map snd right))
+    compareTerms (RecordType left) (RecordType right) | map fst left == map fst right = zipWithM_ compareTerms (map snd left) (map snd right)
+    compareTerms (Record left) (Record right) | map fst left == map fst right = zipWithM_ compareTerms (map snd left) (map snd right)
     compareTerms (Project left ln) (Project right rn) | ln == rn = compareTerms left right
     compareTerms (Field li left) (Field ri right) | li == ri = compareTerms left right
     -- η: a function equaleth the lambda that applieth it.
     compareTerms (Lambda lp _ lb) right = compareTerms lb (Apply lp (shiftTerm 1 right) (Local 0))
     compareTerms left (Lambda rp _ rb) = compareTerms (Apply rp (shiftTerm 1 left) (Local 0)) rb
+    -- η for a family with one constructor and no indices: its constructor
+    -- applied to fields equaleth any worth whose fields are those.
+    compareTerms left right | Just fields <- etaTerm left = zipWithM_ (\index value -> compareTerms value (Field index right)) [0 ..] fields
+    compareTerms left right | Just fields <- etaTerm right = zipWithM_ (\index value -> compareTerms (Field index left) value) [0 ..] fields
     compareTerms a b = failure (renderMismatch (length contextTypes) a b)
+    etaTerm term = case termSpine term of
+      (Global constructor _, arguments)
+        | Just Definition {definitionBody = DataConstructor owner _} <- Map.lookup constructor globals,
+          Just (_, parameters, count) <- N.etaFamily globals owner,
+          length arguments == parameters + count ->
+            Just (map snd (drop parameters arguments))
+      _ -> Nothing
 
 canonicalFields :: [(String, a)] -> Bool
 canonicalFields fields = and (zipWith (<) names (drop 1 names))

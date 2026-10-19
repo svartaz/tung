@@ -9,16 +9,18 @@ bring is.tung
 
 ## a lattice whose infimum and supremum distribute over each other.
 show flock lattice_spreadsome: [α: *, @: α lattice, *] {
-  let ∧_∨: [a: α, b: α, c: α, (a ∧ (b ∨ c)) = ((a ∧ b) ∨ (a ∧ c))]
-  let ∨_∧: [a: α, b: α, c: α, (a ∨ (b ∧ c)) = ((a ∨ b) ∧ (a ∨ c))]
+  let ⋏_⋎: [a: α, b: α, c: α, (a ⋏ (b ⋎ c)) = ((a ⋏ b) ⋎ (a ⋏ c))]
+
+  let ⋎_⋏: [a: α, b: α, c: α, (a ⋎ (b ⋏ c)) = ((a ⋎ b) ⋏ (a ⋎ c))]
 }
 
 bizen: [@β: *, @: β lattice_spreadsome, @α: *, [α, β] lattice_spreadsome] {
-  let ∧_∨: [f:, g:, h:] ≔ {a ^ (a f) ∧_∨ (a g) (a h)} fall_umfang
-  let ∨_∧: [f:, g:, h:] ≔ {a ^ (a f) ∨_∧ (a g) (a h)} fall_umfang
+  let ⋏_⋎: [f:, g:, h:] ≔ {a ^ (a f) ⋏_⋎ (a g) (a h)} fall_umfang
+
+  let ⋎_⋏: [f:, g:, h:] ≔ {a ^ (a f) ⋎_⋏ (a g) (a h)} fall_umfang
 }
 
-let helpsetting_∧_∨
+let helpsetting_⋏_⋎
   : [@α: *, @: α order_whole, a: α, b: α, c: α,
     ((a ≤ ((b ≤ c) if c b)) if a ((b ≤ c) if c b)) =
       ((((a ≤ b) if a b) ≤ ((a ≤ c) if a c)) if ((a ≤ c) if a c)
@@ -26,29 +28,29 @@ let helpsetting_∧_∨
   ≔ (b ≤ c) inlook {
     yea, k₀ ^ (a ≤ b) inlook {
       yea, k₁ ^
-        ((a ∧_yea c (a ≤_yea_throughgo b c k₁ k₀)) throughgo
-          ((a ∧_yea a (a ≤_eftbend)) evenmete)) throughgo
+        ((a ⋏_yea c (a ≤_yea_throughgo b c k₁ k₀)) throughgo
+          ((a ⋏_yea a (a ≤_eftbend)) evenmete)) throughgo
           ({d: α ^ (a ≤ d) if d a} leibnitz
-            ((a ∧_yea c (a ≤_yea_throughgo b c k₁ k₀)) evenmete)),
+            ((a ⋏_yea c (a ≤_yea_throughgo b c k₁ k₀)) evenmete)),
       nay, k₁ ^ (a ≤ c) inlook {
-        yea, _ ^ (b ∨_yea a (a ≤_flip b k₁)) evenmete,
-        nay, _ ^ (b ∨_yea c k₀) evenmete
+        yea, _ ^ (b ⋎_yea a (a ≤_flip b k₁)) evenmete,
+        nay, _ ^ (b ⋎_yea c k₀) evenmete
       }
     },
     nay, k₀ ^ (a ≤ b) inlook {
       yea, _ ^ (a ≤ c) inlook {
-        yea, _  ^ (a ∧_yea a (a ≤_eftbend)) evenmete,
-        nay, k₂ ^ (a ∨_nay c k₂) evenmete
+        yea, _  ^ (a ⋏_yea a (a ≤_eftbend)) evenmete,
+        nay, k₂ ^ (a ⋎_nay c k₂) evenmete
       },
       nay, k₁ ^ (a ≤ c) inlook {
         yea, k₂ ^ match (k₀ evenmete) throughgo (b ≤_yea_throughgo a c
           (a ≤_flip b k₁) k₂) {},
-        nay, _ ^ (b ∨_nay c k₀) evenmete
+        nay, _ ^ (b ⋎_nay c k₀) evenmete
       }
     }
   }
 
-let helpsetting_∨_∧
+let helpsetting_⋎_⋏
   : [@α: *, @: α order_whole, a: α, b: α, c: α,
     ((a ≤ ((b ≤ c) if b c)) if ((b ≤ c) if b c) a) =
       ((((a ≤ b) if b a) ≤ ((a ≤ c) if c a)) if ((a ≤ b) if b a)
@@ -57,27 +59,28 @@ let helpsetting_∨_∧
     yea, k₀ ^ (a ≤ b) inlook {
       yea, k₁ ^
         (({d: α ^ (b ≤ d) if b d} leibnitz
-          (a ∨_yea c (a ≤_yea_throughgo b c k₁ k₀))) throughgo (b ∧_yea c k₀))
+          (a ⋎_yea c (a ≤_yea_throughgo b c k₁ k₀))) throughgo (b ⋏_yea c k₀))
           evenmete,
       nay, _ ^ (a ≤ c) inlook {
-        yea, k₂ ^ (a ∧_yea c k₂) evenmete,
-        nay, _  ^ (a ∧_yea a (a ≤_eftbend)) evenmete
+        yea, k₂ ^ (a ⋏_yea c k₂) evenmete,
+        nay, _  ^ (a ⋏_yea a (a ≤_eftbend)) evenmete
       }
     },
     nay, k₀ ^ (a ≤ b) inlook {
       yea, k₁ ^ (a ≤ c) inlook {
-        yea, _ ^ (b ∧_nay c k₀) evenmete,
-        nay, _ ^ ((b helpsetting_∧_swap a) throughgo (a ∧_yea b k₁)) evenmete
+        yea, _ ^ (b ⋏_nay c k₀) evenmete,
+        nay, _ ^ ((b helpsetting_⋏_swap a) throughgo (a ⋏_yea b k₁)) evenmete
       },
       nay, k₁ ^ (a ≤ c) inlook {
         yea, k₂ ^ match (k₀ evenmete) throughgo (b ≤_yea_throughgo a c
           (a ≤_flip b k₁) k₂) {},
-        nay, _ ^ (a ∧_yea a (a ≤_eftbend)) evenmete
+        nay, _ ^ (a ⋏_yea a (a ≤_eftbend)) evenmete
       }
     }
   }
 
 bizen: [@α: *, @: α order_whole, α lattice_spreadsome] {
-  let ∧_∨ ≔ helpsetting_∧_∨
-  let ∨_∧ ≔ helpsetting_∨_∧
+  let ⋏_⋎ ≔ helpsetting_⋏_⋎
+
+  let ⋎_⋏ ≔ helpsetting_⋎_⋏
 }

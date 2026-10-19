@@ -26,6 +26,7 @@ bizen: [@α: *, @: α semigroup_·, (α maybe) semigroup_·] {
     a,      none   ^ a,
     a some, b some ^ a · b $ some
   }
+
   let ·_· ≔ {
     none,   _,      _      ^ eftbend,
     _ some, none,   _      ^ eftbend,
@@ -36,7 +37,9 @@ bizen: [@α: *, @: α semigroup_·, (α maybe) semigroup_·] {
 
 bizen: [@α: *, @: α semigroup_·, (α maybe) monoid_·] {
   let one ≔ none
+
   let one_·: [_:] ≔ eftbend
+
   let ·_one ≔ {
     none   ^ eftbend,
     _ some ^ eftbend
@@ -48,6 +51,7 @@ bizen: maybe functor {
     none,   _ ^ none,
     a some, f ^ a f $ some
   }
+
   let warp_sameness ≔ {
     none   ^ eftbend,
     _ some ^ eftbend
@@ -56,19 +60,24 @@ bizen: maybe functor {
 
 bizen: maybe onwendsome {
   let sheer ≔ some
+
   let onwend ≔ {
     a some, f some ^ a f $ some,
     _,      _      ^ none
   }
+
   let onwend_sameness_sheer ≔ {
     none   ^ eftbend,
     _ some ^ eftbend
   }
+
   let sheer_onwend_sheer: [a:, f:] ≔ eftbend
+
   let onwend_onwend ≔ {
     none,   _, _ ^ eftbend,
     _ some, _, _ ^ eftbend
   }
+
   let sheer_onwend ≔ {
     _, none   ^ eftbend,
     _, _ some ^ eftbend
@@ -80,10 +89,17 @@ bizen: maybe monad {
     none   ^ none,
     a some ^ a
   }
+
   let sheer_bind: [a:, f:] ≔ eftbend
+
   let warp_sheer_flat ≔ {
     none   ^ eftbend,
     _ some ^ eftbend
+  }
+
+  let bind_bind ≔ {
+    none,   _, _;
+    _ some, _, _ ^ eftbend
   }
 }
 
@@ -99,6 +115,7 @@ bizen: maybe downshaper {
     none,   b, _ ^ b,
     a some, b, f ^ a f b
   }
+
   let gather₁ ≔ {
     none,   b, _ ^ b,
     a some, b, f ^ b f a
@@ -157,6 +174,7 @@ bizen: [@α: *, @: α ≍_to_=, (α maybe) ≍_to_=] {
     none,   _ some, same ^ match same {},
     _ some, none,   same ^ match same {}
   }
+
   let ≍_eftbend ≔ {
     none   ^ eftbend,
     a some ^ a ≍_eftbend

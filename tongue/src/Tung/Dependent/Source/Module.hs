@@ -9,7 +9,8 @@ module Tung.Dependent.Source.Module
   )
 where
 
-import Control.Monad (foldM, forM)
+import Control.Applicative ((<|>))
+import Control.Monad (foldM, foldM_, forM)
 import Data.Bifunctor (first)
 import Data.Graph (SCC (..), flattenSCC, stronglyConnComp)
 import Data.List (intercalate, nub, sortOn)
@@ -66,7 +67,7 @@ compileImportsAt check compiled modules = foldM (compileImport []) compiled
             pure (Map.insert path program done')
     -- the innermost existing module keepeth its path; outer modules extend the
     -- message without changing the owner or source span.
-    inModule path = first (\failure -> failure {failurePath = maybe (Just path) Just (failurePath failure), failureText = "in bring '" ++ path ++ "': " ++ failureText failure})
+    inModule path = first (\failure -> failure {failurePath = failurePath failure <|> Just path, failureText = "in bring '" ++ path ++ "': " ++ failureText failure})
 
 importEdges :: [(Maybe SourceSpan, Declaration)] -> [(Maybe SourceSpan, String)]
 importEdges declarations = [(span, importPath) | (span, ImportDeclaration {importPath}) <- declarations]
@@ -110,7 +111,7 @@ moduleEnvironment declarations compiled = do
   imports <- forM [(span, path, alias) | (span, ImportDeclaration path alias) <- declarations] \(span, path, alias) ->
     (span,Name.importAlias path alias,path,) <$> maybe (Left (CompileFailure CheckFailure Nothing span ("missing bring '" ++ path ++ "'"))) Right (Map.lookup path compiled)
   -- every namespace nameth one module, including when an import is repeated.
-  foldM claimNamespace Map.empty imports
+  foldM_ claimNamespace Map.empty imports
   definitions <- foldM mergeGlobals H.primitiveDefinitions imports
   let qualified = Map.fromList [(space ++ "~" ++ name, binding) | (_, space, _, program) <- imports, (name, binding) <- Map.toList (nameTable (sourceExports program))]
       -- provenance is the visible import namespace, not the defining module.

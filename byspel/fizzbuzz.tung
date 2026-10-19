@@ -1,14 +1,14 @@
 bring flock/algebra/half/semigroupoid.tung
+bring ilk/and.tung
 bring ilk/list.tung
 bring ilk/maybe.tung
-bring ilk/product.tung
 bring often.tung
 
 let can_deal
   : [@α: *, @: α hath_%, @: α hath_naught, @: α hath_≍, dealer: α, dealt: α, 𝟚]
   ≔ match dealt % dealer {
-    (_ both leftover) some ^ leftover ≍ naught,
-    none                   ^ nay
+    (_ ⸴ leftover) some ^ leftover ≍ naught,
+    none                ^ nay
   }
 
 ilk _fizzbuzz: * {

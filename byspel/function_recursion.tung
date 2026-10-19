@@ -3,14 +3,14 @@ bring is.tung
 ## function fields retain descendant records at each argument.
 ilk tree: * {
   tip: tree,
-  node: [tree, [ℕ, tree], tree]
+  knot: [tree, [ℕ, tree], tree]
 }
 
 let depth: [x: tree, ℕ] ≔ match x {
   tip             ^ 0,
-  _ node children ^ match 0 children {
+  _ knot children ^ match 0 children {
     tip            ^ 1,
-    _ node smaller ^ (((0 smaller) depth) heir) heir
+    _ knot smaller ^ (((0 smaller) depth) heir) heir
   }
 }
 
@@ -22,28 +22,28 @@ let hoard: [ℕ, ℕ, ℕ] ≔ {
 
 let deep_hoard: [x: tree, whole: ℕ, ℕ] ≔ match x {
   tip             ^ whole,
-  _ node children ^ match 0 children {
+  _ knot children ^ match 0 children {
     tip            ^ whole heir,
-    _ node smaller ^ (
+    _ knot smaller ^ (
       let leftover ≔ (0 smaller) deep_hoard
       yield ((whole heir) heir) leftover
     )
   }
 }
 
-let leaf: tree ≔ tip node {_ ^ tip}
+let leaf: tree ≔ tip knot {_ ^ tip}
 
-let sample: tree ≔ tip node {_ ^ leaf}
+let sample: tree ≔ tip knot {_ ^ leaf}
 
 ## dependent matches carry the record with the computed child and its aliases.
 let soothing: [x: tree, x = x] ≔ match x {
   tip             ^ eftbend,
-  _ node children ^ (
+  _ knot children ^ (
     let call ≔ children
     let child ≔ 0 call
     let known: child = child ≔ match child {
       tip            ^ eftbend,
-      _ node smaller ^ (let child_known ≔ (0 smaller) soothing yield eftbend)
+      _ knot smaller ^ (let child_known ≔ (0 smaller) soothing yield eftbend)
     }
     yield eftbend
   )

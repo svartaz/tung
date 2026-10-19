@@ -340,16 +340,16 @@ importCases =
 
 tableAndSetCases :: Map.Map String String -> [Test]
 tableAndSetCases imports =
-  [ typeOkWith "wordbook, set, and powerset may qualify shared names" (source ++ qualifiedValues) imports,
-    typeErrWith "wordbook, set, powerset, and list empty values are ambiguous bare" (source ++ "let bad ≔ empty") imports,
+  [ typeOkWith "wordbook, set, and mightset may qualify shared names" (source ++ qualifiedValues) imports,
+    typeErrWith "wordbook, set, mightset, and list empty values are ambiguous bare" (source ++ "let bad ≔ empty") imports,
     typeErrWith "wordbook and set from_list names are ambiguous bare" (source ++ "let values:ℤ list ≔ list~empty let bad ≔ values from_list") imports
   ]
   where
-    source = "bring ilk/wholetale.tung bring ilk/list.tung bring ilk/wordbook.tung bring ilk/set.tung bring ilk/powerset.tung "
+    source = "bring ilk/wholetale.tung bring ilk/list.tung bring ilk/wordbook.tung bring ilk/set.tung bring ilk/mightset.tung "
     qualifiedValues =
       "let wordbook_worth:ℤ wordbook string ≔ wordbook~empty "
         ++ "let set_worth:ℤ set ≔ set~empty "
-        ++ "let powerset_worth:ℤ powerset ≔ powerset~empty "
+        ++ "let mightset_worth:ℤ mightset ≔ mightset~empty "
         ++ "let wordbook_built:ℤ wordbook string ≔ list~empty wordbook~from_list "
         ++ "let set_built:ℤ set ≔ list~empty set~from_list"
 
@@ -380,25 +380,25 @@ orderCases imports =
 boundCases :: Map.Map String String -> [Test]
 boundCases imports =
   [ typeOkWith "finite orders provide both endpoints" (prefix ++ "let low:𝟚 ≔ ⟂ let high:𝟛 ≔ ⊤") imports,
-    typeOkWith "natural supporteth the lower-bound fold" (prefix ++ "let worth:ℕ ≔ (0 ‥ list~empty) …∨") imports,
-    typeErrWith "natural doth not claim an upper bound" (prefix ++ "let worth:ℕ ≔ (kindful~naught ‥ list~empty) …∧") imports,
-    typeOkWith "powerset is a bounded lattice without whole order" (powersetPrefix ++ "let yoked:ℤ powerset ≔ (empty_set ‥ (full_set ‥ list~empty)) …∨") imports,
+    typeOkWith "natural supporteth the lower-bound fold" (prefix ++ "let worth:ℕ ≔ (0 ‥ list~empty) …⋎") imports,
+    typeErrWith "natural doth not claim an upper bound" (prefix ++ "let worth:ℕ ≔ (kindful~naught ‥ list~empty) …⋏") imports,
+    typeOkWith "mightset is a bounded lattice without whole order" (powersetPrefix ++ "let yoked:ℤ mightset ≔ (empty_set ‥ (full_set ‥ list~empty)) …⋎") imports,
     typeErrWith "lattice doth not imply whole order" (powersetPrefix ++ "let bad ≔ empty_set ≤ full_set") imports,
-    typeErrWith "float doth not claim a lawful lattice" "bring often.tung let bad:float ≔ 1.0 ∧ 2.0" imports,
-    typeOkWith "infimum semilattice stands without supremum" (semilatticePrefix ++ "let good ≔ item ∧ item") imports,
-    typeErrWith "infimum semilattice doth not supply supremum" (semilatticePrefix ++ "let bad ≔ item ∨ item") imports,
-    typeOkWith "supremum semilattice stands without infimum" (supremumPrefix ++ "let good ≔ item ∨ item") imports,
-    typeErrWith "supremum semilattice doth not supply infimum" (supremumPrefix ++ "let bad ≔ item ∧ item") imports
+    typeErrWith "float doth not claim a lawful lattice" "bring often.tung let bad:float ≔ 1.0 ⋏ 2.0" imports,
+    typeOkWith "infimum semilattice stands without supremum" (semilatticePrefix ++ "let good ≔ item ⋏ item") imports,
+    typeErrWith "infimum semilattice doth not supply supremum" (semilatticePrefix ++ "let bad ≔ item ⋎ item") imports,
+    typeOkWith "supremum semilattice stands without infimum" (supremumPrefix ++ "let good ≔ item ⋎ item") imports,
+    typeErrWith "supremum semilattice doth not supply infimum" (supremumPrefix ++ "let bad ≔ item ⋏ item") imports
   ]
   where
     prefix = "bring often.tung bring ilk/list.tung bring ilk/kindful.tung bring flock/functor/downshaper.tung "
-    powersetPrefix = "bring often.tung bring ilk/list.tung bring ilk/powerset.tung bring flock/functor/downshaper.tung let empty_set:ℤ powerset ≔ powerset~empty let full_set:ℤ powerset ≔ all "
-    semilatticePrefix = "bring flock/order/semilattice_lower.tung ilk one_sided: * { item: one_sided } bizen:one_sided semilattice_lower { let ∧: [_:, _:] ≔ item let ∧_swallow ≔ sorry let ∧_swap ≔ sorry let ∧_∧ ≔ sorry } "
-    supremumPrefix = "bring flock/order/semilattice_upper.tung ilk one_sided: * { item: one_sided } bizen:one_sided semilattice_upper { let ∨: [_:, _:] ≔ item let ∨_swallow ≔ sorry let ∨_swap ≔ sorry let ∨_∨ ≔ sorry } "
+    powersetPrefix = "bring often.tung bring ilk/list.tung bring ilk/mightset.tung bring flock/functor/downshaper.tung let empty_set:ℤ mightset ≔ mightset~empty let full_set:ℤ mightset ≔ all "
+    semilatticePrefix = "bring flock/order/semilattice_lower.tung ilk one_sided: * { item: one_sided } bizen:one_sided semilattice_lower { let ⋏: [_:, _:] ≔ item let ⋏_swallow ≔ sorry let ⋏_swap ≔ sorry let ⋏_⋏ ≔ sorry } "
+    supremumPrefix = "bring flock/order/semilattice_upper.tung ilk one_sided: * { item: one_sided } bizen:one_sided semilattice_upper { let ⋎: [_:, _:] ≔ item let ⋎_swallow ≔ sorry let ⋎_swap ≔ sorry let ⋎_⋎ ≔ sorry } "
 
 numericHierarchyCases :: Map.Map String String -> [Test]
 numericHierarchyCases imports =
-  [ typeOkWith "ℤ supplieth euclidean division" "bring often.tung bring ilk/maybe.tung bring ilk/product.tung let deal_with_leftover:[@a:*, @:a euclidean, x: a, y: a, (a ∏ a) maybe] ≔ x % y let worth:(ℤ ∏ ℤ) maybe ≔ -5 deal_with_leftover +3" imports,
+  [ typeOkWith "ℤ supplieth euclidean division" "bring often.tung bring ilk/maybe.tung bring ilk/and.tung let deal_with_leftover:[@a:*, @:a euclidean, x: a, y: a, (a ∧ a) maybe] ≔ x % y let worth:(ℤ ∧ ℤ) maybe ≔ -5 deal_with_leftover +3" imports,
     typeOkWith "float retaineth raw numeric and comparison operations" "bring often.tung let sum:float ≔ 1.0 + 2.0 let quotient:float ≔ 1.0 ÷ 2.0 let compared:𝟚 ≔ 1.0 ≤ 2.0" imports,
     typeErrWith "float doth not claim exact semiring laws" "bring often.tung let twice:[@a:*, @:a semiring, x: a, a] ≔ x + x let bad:float ≔ 1.0 twice" imports,
     typeErrWith "float doth not claim partial-order laws" "bring often.tung let eftbend:[@a:*, @:a order_half, x: a, 𝟚] ≔ x ≤ x let bad:𝟚 ≔ 1.0 eftbend" imports

@@ -14,7 +14,7 @@ import Tung.Dependent.Source (SourceProgram)
 group :: IO Harness.Group
 group = do
   example <- exampleSource "host_deeds.tung"
-  library <- loadLibrary ["_fremmed.tung", "deed/file.tung", "ilk/one.tung", "ilk/maybe.tung", "ilk/product.tung", "ilk/sum.tung"]
+  library <- loadLibrary ["_fremmed.tung", "deed/file.tung", "ilk/one.tung", "ilk/maybe.tung", "ilk/and.tung", "ilk/or.tung"]
   Harness.group "dependent_host" (tests (compileWith library "dependent_host.tung") example)
 
 tests :: (String -> Either String SourceProgram) -> String -> [Test]

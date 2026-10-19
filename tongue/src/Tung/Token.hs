@@ -3,7 +3,9 @@
 -- | source lexer. a name containeth any non-space character not reserved by
 -- 'specialNameChars'; literals and comments are consumed before name parsing.
 module Tung.Token
-  ( Token (TIdent, TNatural, TInteger, TFloat, TUnicode, TText, TBraceKeyword, TLet, TFix, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TOrsend, TInduce, TFall, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TEquals, TKindStar, TDollar, TAt),
+  ( utf16Width,
+    utf16Length,
+    Token (TIdent, TNatural, TInteger, TFloat, TUnicode, TText, TBraceKeyword, TLet, TFix, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TOrsend, TInduce, TFall, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TEquals, TKindStar, TDollar, TAt),
     SourceSpan (..),
     LocatedToken (..),
     Piece (..),
@@ -24,7 +26,10 @@ module Tung.Token
 where
 
 import Control.Applicative (many, some)
+import Control.Monad (void)
+import Data.Bifunctor (first)
 import Data.Char (chr, isSpace, ord)
+import Data.Either (fromRight)
 import Data.IntMap.Strict qualified as IntMap
 import Data.List.NonEmpty qualified as NE
 import Data.Maybe (fromMaybe, isJust)
@@ -192,7 +197,7 @@ lexTokens :: String -> Either String [Token]
 lexTokens = fmap (map (withoutTokenSpan . locatedToken)) . lexLocatedTokens
 
 lexLocatedTokens :: String -> Either String [LocatedToken]
-lexLocatedTokens = either (Left . failureMessage) Right . lexLocatedTokensDetailed
+lexLocatedTokens = first failureMessage . lexLocatedTokensDetailed
 
 -- the strict lexer accepteth only a source that lexeth whole; its failure
 -- message cometh from the same rules run strictly.
@@ -233,13 +238,13 @@ data Placement = Leading | Trailing
 lexPieces :: String -> [Piece]
 lexPieces source = place False False (map locate raw)
   where
-    raw = either (const []) id (M.parse (concat <$> many (M.try ((: []) <$> piece) M.<|> unlexed)) "source" source)
+    raw = fromRight [] (M.parse (concat <$> many (M.try ((: []) <$> piece) M.<|> unlexed)) "source" source)
     offsets = utf16Offsets source
     offset = (offsets IntMap.!)
     locate (start, finish, kind) = Piece (SourceSpan (offset start) (offset finish)) (take (finish - start) (drop start source)) kind
     unlexed = do
       start <- M.getOffset
-      _ <- M.choice [() <$ (C.string "/*" *> M.takeRest), () <$ M.anySingle <* M.takeWhileP Nothing (/= '\n')]
+      _ <- M.choice [void (C.string "/*" *> M.takeRest), void M.anySingle <* M.takeWhileP Nothing (/= '\n')]
       finish <- M.getOffset
       pure [(start, finish, Unlexed)]
     piece = do
@@ -257,20 +262,23 @@ lexPieces source = place False False (map locate raw)
 
 -- the tokens of the pieces, each knowing the end of the token before it.
 piecesTokens :: [Piece] -> [LocatedToken]
-piecesTokens pieces = attach 0 [(span, token) | Piece span _ (Lexeme token) <- pieces]
+piecesTokens pieces = zipWith attach (0 : map (spanEnd . fst) lexemes) lexemes
   where
     finalEnd = case [span | Piece span _ (Lexeme _) <- pieces] of
       [] -> 0
       spans -> spanEnd (last spans)
-    attach _ [] = []
-    attach previous ((span, Token _ kind) : rest) =
-      LocatedToken span (Token (Just (TokenCursor span previous finalEnd)) kind) : attach (spanEnd span) rest
+    lexemes = [(span, token) | Piece span _ (Lexeme token) <- pieces]
+    attach previous (span, Token _ kind) = LocatedToken span (Token (Just (TokenCursor span previous finalEnd)) kind)
 
 utf16Offsets :: String -> IntMap.IntMap Int
 utf16Offsets source = IntMap.fromList (zip [0 ..] (scanl (+) 0 (map utf16Width source)))
 
+-- a character outside the basic plane is a surrogate pair.
 utf16Width :: Char -> Int
 utf16Width character = if ord character > 0xffff then 2 else 1
+
+utf16Length :: String -> Int
+utf16Length = sum . map utf16Width
 
 rawTokenParser :: Lexer Token
 rawTokenParser =
@@ -400,7 +408,7 @@ validNameQualification name = case break (== '~') name of
   _ -> False
 
 spaceConsumer :: Lexer ()
-spaceConsumer = L.space C.space1 (() <$ lineComment) (() <$ blockComment)
+spaceConsumer = L.space C.space1 (void lineComment) (void blockComment)
 
 lineComment :: Lexer String
 lineComment = C.char '#' *> M.takeWhileP Nothing (/= '\n')

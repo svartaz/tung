@@ -84,9 +84,9 @@ setCases library =
         (uncurry (sameNormalIn program))
         [ ("left", "right"),
           ("left to_list", "nay ‥ (yea ‥ list~empty)"),
-          ("left ∨ right", "left"),
-          ("left ∧ right", "left"),
-          ("set~empty ∨ left", "left"),
+          ("left ⋎ right", "left"),
+          ("left ⋏ right", "left"),
+          ("set~empty ⋎ left", "left"),
           ("(left set~∖ (yea set~onesome)) to_list", "nay ‥ list~empty")
         ],
     rejectContaining "finite sets need a lawful element order" "order_whole" $
@@ -120,11 +120,11 @@ setCases library =
       """
     laws =
       """
-      let yoke_swap:[@α:*, @:α order_whole, a:α set, b:α set, (a ∨ b) = (b ∨ a)] ≔ a ∨_swap b
-      let meet_swap:[@α:*, @:α order_whole, a:α set, b:α set, (a ∧ b) = (b ∧ a)] ≔ a ∧_swap b
-      let yoke_associate:[@α:*, @:α order_whole, a:α set, b:α set, c:α set, ((a ∨ b) ∨ c) = (a ∨ (b ∨ c))] ≔ a ∨_∨ b c
-      let distribute:[@α:*, @:α order_whole, a:α set, b:α set, c:α set, (a ∧ (b ∨ c)) = ((a ∧ b) ∨ (a ∧ c))] ≔ a ∧_∨ b c
-      let least:[@α:*, @:α order_whole, a:α set, (set~empty ∨ a) = a] ≔ a ⟂_∨
+      let yoke_swap:[@α:*, @:α order_whole, a:α set, b:α set, (a ⋎ b) = (b ⋎ a)] ≔ a ⋎_swap b
+      let meet_swap:[@α:*, @:α order_whole, a:α set, b:α set, (a ⋏ b) = (b ⋏ a)] ≔ a ⋏_swap b
+      let yoke_associate:[@α:*, @:α order_whole, a:α set, b:α set, c:α set, ((a ⋎ b) ⋎ c) = (a ⋎ (b ⋎ c))] ≔ a ⋎_⋎ b c
+      let distribute:[@α:*, @:α order_whole, a:α set, b:α set, c:α set, (a ⋏ (b ⋎ c)) = ((a ⋏ b) ⋎ (a ⋏ c))] ≔ a ⋏_⋎ b c
+      let least:[@α:*, @:α order_whole, a:α set, (set~empty ⋎ a) = a] ≔ a ⟂_⋎
       let same_sound:[@α:*, @:α order_whole, a:α set, b:α set, (a ≍ b) = yea, a = b] ≔ a ≍_= b
       """
 

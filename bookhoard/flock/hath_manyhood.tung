@@ -1,0 +1,5 @@
+bring ilk/kindful.tung
+
+show flock hath_manyhood: [α: *, *] {
+  let manyhood: [α, ℕ]
+}

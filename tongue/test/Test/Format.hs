@@ -149,15 +149,27 @@ cases =
 
       """
     ),
-    ( "a flock body breaketh and a short lambda stayeth whole",
+    ( "a flock body breaketh with a blank line between members and a short lambda stayeth whole",
       "flock hath_flip: [α: *, *] { let flip: [α, α] let flip_flip: [x: α, (x flip $ flip) = x] }\nlet twice: [ℕ, ℕ] ≔ {x ^ (x + x)}\n",
       """
       flock hath_flip: [α: *, *] {
         let flip: [α, α]
+
         let flip_flip: [x: α, (x flip $ flip) = x]
       }
 
       let twice: [ℕ, ℕ] ≔ {x ^ x + x}
+
+      """
+    ),
+    ( "a bizen body breaketh with a blank line between members",
+      "bizen: ℕ hath_flip { let flip ≔ heir let flip_flip ≔ sorry }\n",
+      """
+      bizen: ℕ hath_flip {
+        let flip ≔ heir
+
+        let flip_flip ≔ sorry
+      }
 
       """
     ),

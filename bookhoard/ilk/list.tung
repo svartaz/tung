@@ -12,15 +12,15 @@ bring flock/functor/hath_sift.tung
 bring flock/functor/hath_throughwend.tung
 bring flock/functor/monad.tung
 bring flock/functor/onwendsome.tung
-bring flock/hath_greatness.tung
 bring flock/hath_inhold.tung
+bring flock/hath_manyhood.tung
 bring flock/hath_same.tung
 bring flock/order/hath_at_most.tung
 bring flock/same_to_is.tung
+bring ilk/and.tung
 bring ilk/kindful.tung
 bring ilk/maybe.tung
 bring ilk/one.tung
-bring ilk/product.tung
 bring ilk/two.tung
 bring ilk/wholetale.tung
 bring is.tung
@@ -52,7 +52,7 @@ show let till: [start: ℤ, stop: ℤ, ℤ list] ≔ match (start -+ stop) to_�
   rime some ^ start rime_up rime
 }
 
-## build a one-element list.
+## build a one-limb list.
 show let onesome: [@α: *, a: α, α list] ≔ a ‥ empty
 
 let onhang: [@α: *, α list, α list, α list] ≔ {
@@ -62,13 +62,16 @@ let onhang: [@α: *, α list, α list, α list] ≔ {
 
 bizen: [@α: *, (α list) semigroup_·] {
   let · ≔ onhang
+
   let ·_·: [a:, b:, c:] ≔ {a…: α list ^ (a… · (b · c)) = ((a… · b) · c)} unbuild
     list eftbend {first, _, soothing ^ (first ‥) leibnitz soothing} a
 }
 
 bizen: [@α: *, (α list) monoid_·] {
   let one ≔ empty
+
   let one_·: [_:] ≔ eftbend
+
   let ·_one: [a:] ≔ {a…: α list ^ (a… · empty) = a…} unbuild list eftbend {
     first, _, soothing ^ (first ‥) leibnitz soothing
   } a
@@ -81,6 +84,7 @@ let warp: [@α: *, @β: *, α list, [α, β], β list] ≔ {
 
 bizen: list functor {
   let warp ≔ warp
+
   let warp_sameness: [@α:, a:] ≔ {a…: α list ^ (a… warp sameness) = a…} unbuild
     list eftbend {first, _, soothing ^ (first ‥) leibnitz soothing} a
 }
@@ -95,27 +99,60 @@ let flat: [@α: *, (α list) list, α list] ≔ {
   first ‥ leftover ^ first onhang (leftover flat)
 }
 
+## binding a joined list is joining the bound parts.
+let helpsetting_bind_·
+  : [@α: *, @β: *, a…: α list, b…: α list, f: [α, β list],
+    (((a… · b…) warp f) flat) = (((a… warp f) flat) · ((b… warp f) flat))]
+  ≔ match a… {
+    empty   ^ eftbend,
+    a ‥ a…′ ^
+      (((a f) ·) leibnitz (a…′ helpsetting_bind_· b… f)) throughgo
+        ((a f) ·_· ((a…′ warp f) flat) ((b… warp f) flat))
+  }
+
+## binding twice is binding once to the bound continuation.
+let helpsetting_bind_bind
+  : [@α: *, @β: *, @γ: *, a…: α list, f: [α, β list], g: [β, γ list],
+    ((((a… warp f) flat) warp g) flat) =
+      ((a… warp {a ^ ((a f) warp g) flat}) flat)]
+  ≔ match a… {
+    empty   ^ eftbend,
+    a ‥ a…′ ^
+      ((a f) helpsetting_bind_· ((a…′ warp f) flat) g) throughgo
+        (((((a f) warp g) flat) ·) leibnitz (a…′ helpsetting_bind_bind f g))
+  }
+
 bizen: list monad {
   let sheer: [@α: *, a: α, α list] ≔ a ‥ empty
+
   let onwend ≔ onwend
+
   let flat ≔ flat
+
   let sheer_bind: [@α:, @β:, a:, f:] ≔ {a…: β list ^ (a… · empty) = a…} unbuild
     list eftbend {first, _, soothing ^ (first ‥) leibnitz soothing} (a f)
+
   let warp_sheer_flat: [@α:, a:] ≔ {a…: α list ^ (a… warp sheer $ flat) = a…}
     unbuild list eftbend {first, _, soothing ^ (first ‥) leibnitz soothing} a
+
   let onwend_sameness_sheer: [@α:, a:] ≔ {
     a…: α list ^ (a… onwend (sameness sheer)) = a…
   } unbuild list eftbend {first, _, soothing ^ (first ‥) leibnitz soothing} a
+
   let sheer_onwend_sheer: [_:, _:] ≔ eftbend
+
   let onwend_onwend: [@α:, @β:, @γ:, a:, f:, g:] ≔ {
     a…: α list ^ <{onwend, a…, f sheer, g sheer} = (a… onwend (f ▷ g $ sheer))
   } unbuild list eftbend {
     first, _, soothing ^ ((first f $ g) ‥) leibnitz soothing
   } a
+
   let sheer_onwend: [@α:, @β:, a:, f…:] ≔ {
     a…: [α, β] list ^ ((a sheer) onwend a…) = (a… warp (a call))
   } unbuild list eftbend {first, _, soothing ^ ((a first) ‥) leibnitz soothing}
     f…
+
+  let bind_bind ≔ helpsetting_bind_bind
 }
 
 let sift: [@α: *, α list, [α, 𝟚], α list] ≔ {
@@ -130,43 +167,43 @@ bizen: list hath_sift {
   let sift ≔ sift
 }
 
-## perform a deed for each element, in order.
+## perform a deed for each limb, in order.
 show let each
   : [@α: *, @φ: [*, *], @: φ onwendsome, a…: α list, doing: [α, 𝟙 φ], 𝟙 φ]
   ≔ a… gather₁ (only sheer) {done, a ^ done keep_other (a doing)}
 
-## first list element, if present.
+## first list limb, if present.
 show let head: [@α: *, α list, α maybe] ≔ {
   empty     ^ none,
   first ‥ _ ^ first some
 }
 
-## list without its first element, if present.
+## list without its first limb, if present.
 show let tail: [@α: *, α list, (α list) maybe] ≔ {
   empty        ^ none,
   _ ‥ leftover ^ leftover some
 }
 
-show let behead: [@α: *, α list, (α ∏ (α list)) maybe] ≔ {
+show let behead: [@α: *, α list, (α ∧ (α list)) maybe] ≔ {
   empty            ^ none,
-  first ‥ leftover ^ (first both leftover) some
+  first ‥ leftover ^ (first ⸴ leftover) some
 }
 
-## first rime elements.
+## first rime limbs.
 show let take: [@α: *, α list, ℕ, α list] ≔ {
   _,                0;
   empty,            _ ^ empty,
   first ‥ leftover, n ^ first ‥ (leftover take (n ∸ 1))
 }
 
-## list after ridding rime elements.
+## list after ridding rime limbs.
 show let drop: [@α: *, α list, ℕ, α list] ≔ {
   a…,           0 ^ a…,
   empty,        _ ^ empty,
   _ ‥ leftover, n ^ leftover drop (n ∸ 1)
 }
 
-## first element accepted by an umbsay.
+## first limb accepted by an umbsay.
 show let find: [@α: *, α list, [α, 𝟚], α maybe] ≔ {
   empty,            _ ^ none,
   first ‥ leftover, f ^ match first f {
@@ -187,6 +224,7 @@ let gather₁: [@α: *, @β: *, α list, β, [β, α, β], β] ≔ {
 
 bizen: list downshaper {
   let gather₀ ≔ gather₀
+
   let gather₁ ≔ gather₁
 }
 
@@ -201,26 +239,26 @@ bizen: list hath_throughwend {
   let throughwend ≔ throughwend
 }
 
-bizen: [@α: *, (α list) hath_greatness] {
-  let greatness: [a…:] ≔ a… gather₁ 0 {n, _ ^ n + 1}
+bizen: [@α: *, (α list) hath_manyhood] {
+  let manyhood: [a…:] ≔ a… gather₁ 0 {n, _ ^ n + 1}
 }
 
 show let eftwend: [@α: *, a…: α list, α list]
   ≔ a… gather₁ empty {outcome, a ^ a ‥ outcome}
 
-show let zip: [@α: *, @β: *, α list, β list, (α ∏ β) list] ≔ {
+show let zip: [@α: *, @β: *, α list, β list, (α ∧ β) list] ≔ {
   empty,  _;
   _,      empty  ^ empty,
-  a ‥ a…, b ‥ b… ^ (a both b) ‥ (a… zip b…)
+  a ‥ a…, b ‥ b… ^ (a ⸴ b) ‥ (a… zip b…)
 }
 
-## element at a naught-based index, if present.
+## limb at a naught-based index, if present.
 show let at: [@α: *, a…: α list, index: ℕ, α maybe] ≔ match a… drop index {
   empty     ^ none,
   first ‥ _ ^ first some
 }
 
-## final element, if present.
+## final limb, if present.
 show let last: [@α: *, a…: α list, α maybe] ≔ a… gather₁ none {_, a ^ a some}
 
 ## repeat a worth rime times.
@@ -230,17 +268,15 @@ show let eftfold: [@α: *, α, ℕ, α list] ≔ {
 }
 
 ## split worths accepted and forsaken by an umbsay.
-show let partition: [@α: *, a…: α list, f: [α, 𝟚], (α list) ∏ (α list)]
-  ≔ a… gather₀ (empty both empty) {
-    a, accepted both forsaken ^
-      (a f) if ((a ‥ accepted) both forsaken) (accepted both (a ‥ forsaken))
+show let partition: [@α: *, a…: α list, f: [α, 𝟚], (α list) ∧ (α list)]
+  ≔ a… gather₀ (empty ⸴ empty) {
+    a, accepted ⸴ forsaken ^
+      (a f) if ((a ‥ accepted) ⸴ forsaken) (accepted ⸴ (a ‥ forsaken))
   }
 
 ## split a list of products into two lists.
-show let unzip: [@α: *, @β: *, pairs: (α ∏ β) list, (α list) ∏ (β list)]
-  ≔ pairs gather₀ (empty both empty) {
-    a both b, α… both β… ^ (a ‥ α…) both (b ‥ β…)
-  }
+show let unzip: [@α: *, @β: *, pairs: (α ∧ β) list, (α list) ∧ (β list)]
+  ≔ pairs gather₀ (empty ⸴ empty) {a ⸴ b, a… ⸴ b… ^ (a ‥ a…) ⸴ (b ‥ b…)}
 
 ## lists are the same when they have the same length and the same worths in
 ## order.
@@ -278,5 +314,6 @@ let helpsetting_≍_eftbend: [@α: *, @: α ≍_to_=, a…: α list, (a… same 
 
 bizen: [@α: *, @: α ≍_to_=, (α list) ≍_to_=] {
   let ≍_= ≔ helpsetting_≍_=
+
   let ≍_eftbend ≔ helpsetting_≍_eftbend
 }

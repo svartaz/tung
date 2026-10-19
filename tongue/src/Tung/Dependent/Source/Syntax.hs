@@ -39,10 +39,11 @@ module Tung.Dependent.Source.Syntax
 where
 
 import Data.List (intercalate)
+import Data.Maybe (fromMaybe)
 import Data.Set qualified as Set
 import Tung.Dependent.Literal (renderLiteral)
 import Tung.Dependent.Syntax (HostLiteral (..), Plicity (..))
-import Tung.Token (SourceSpan (..))
+import Tung.Token (SourceSpan (..), utf16Length)
 
 -- an expression's constructors are written without their `Raw` prefix: each
 -- name below is a pattern that looketh through `Located`, so a span never
@@ -83,7 +84,7 @@ expressionSpan = \case
 -- the span of a name that endeth an expression's span, as a field or the
 -- family after `unbuild`, in utf-16 units.
 trailingSpan :: SourceSpan -> String -> SourceSpan
-trailingSpan (SourceSpan _ end) name = SourceSpan (end - sum [if fromEnum character > 0xffff then 2 else 1 | character <- name]) end
+trailingSpan (SourceSpan _ end) name = SourceSpan (end - utf16Length name) end
 
 unlocated :: Expression -> Expression
 unlocated = \case
@@ -349,7 +350,7 @@ sketch = \case
   Inferred -> "?"
   where
     parameter Parameter {..} = (if parameterPlicity == Implicit then "@" else "") ++ maybe "" (++ ": ") parameterName ++ sketch parameterType
-    binder Binder {..} = (if binderPlicity == Implicit then "@" else "") ++ maybe "_" id binderName ++ maybe "" ((": " ++) . sketch) binderAnnotation
+    binder Binder {..} = (if binderPlicity == Implicit then "@" else "") ++ fromMaybe "_" binderName ++ maybe "" ((": " ++) . sketch) binderAnnotation
     argument Argument {..} = (if argumentPlicity == Implicit then "@" else "") ++ sketch argumentExpression
     row Row {..} = intercalate ", " (map sketch rowPatterns) ++ " ^ " ++ sketch rowBody
     declaration = \case

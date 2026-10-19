@@ -97,7 +97,7 @@ show fork, wait, strike, wait_for, sleep
 
 show ≍, ≭
 
-show ≤, <, compare, clamp, ∧, ∨, ⟂, ⊤
+show ≤, <, compare, clamp, ⋏, ⋎, ⟂, ⊤
 
 show ∋
 

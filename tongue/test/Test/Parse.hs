@@ -36,7 +36,7 @@ accepted =
     ("constraints, then type parameters, then values", "let keep:[@a:*, @:a hath_≍, @b:*, x:a, y:b, a] ≔ x"),
     ("quantified parameter kind may be a type constructor", "let choose:[f:[@a:[*, *], ℤ a, ℤ], ℤ] ≔ +1"),
     ("named prefix and nested bare argument", "let f: [@b:*, @c:*, @d:*, x:, y: b, [c, d], d] ≔ { z ^ z }"),
-    ("infix slot pattern with or without grouping", "ilk ∏: [a:*, b:*, *] { both: [a, b, a ∏ b] } let f:[(a both b): a ∏ b, ℤ] ≔ +1 let g:[a both b: a ∏ b, ℤ] ≔ +1"),
+    ("infix slot pattern with or without grouping", "ilk ∧: [a:*, b:*, *] { both: [a, b, a ∧ b] } let f:[(a both b): a ∧ b, ℤ] ≔ +1 let g:[a both b: a ∧ b, ℤ] ≔ +1"),
     ("sorry is an expression", "let answer:ℤ ≔ sorry"),
     ("string-keyed fremmed let", "let plus:[ℤ, ℤ, ℤ] ≔ 'eke_wholetale' fremmed"),
     ("adjacent declarations and final yield", "let x ≔ +1 let y ≔ +2 yield x + y"),

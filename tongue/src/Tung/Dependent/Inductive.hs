@@ -12,12 +12,12 @@ module Tung.Dependent.Inductive
   )
 where
 
-import Control.Monad (foldM, forM, forM_, unless, when)
+import Control.Monad (foldM, forM, forM_, unless, when, zipWithM)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.State.Strict (get, modify, runStateT)
 import Data.Foldable (traverse_)
 import Data.Functor.Identity (Identity (..))
-import Data.List (nub)
+import Data.List (elemIndex, find, nub)
 import Data.Map.Strict qualified as Map
 import Tung.Dependent.Check qualified as K
 import Tung.Dependent.Normalise qualified as N
@@ -168,9 +168,7 @@ buildWithNested allowNested environment@(K.Environment globals) declarations@(fi
       (translated, targets) <- specialiseNested staged peers headers
       if null targets
         then finishInductives globals headers staged peers
-        else do
-          certified <- buildWithNested False environment (translated ++ map nestedDeclaration targets)
-          restoreNested globals headers targets certified
+        else buildWithNested False environment (translated ++ map nestedDeclaration targets) >>= restoreNested globals headers targets
     else finishInductives globals headers staged peers
 
 finishInductives :: Globals -> [Family] -> Globals -> Map.Map SymbolId Family -> K.Typing K.Environment
@@ -179,7 +177,7 @@ finishInductives _ headers@(header : _) staged peers = do
       families = map (inductiveName . familyDeclaration) headers
       universes = inductiveUniverses first
       constraints = nub (concatMap (inductiveConstraints . familyDeclaration) headers)
-      entry annotation body = Definition universes constraints annotation body
+      entry = Definition universes constraints
   checked <- forM headers \family@Family {familyDeclaration = InductiveDeclaration {inductiveConstructors}} ->
     traverse (checkConstructor staged peers family) inductiveConstructors
   let familyGlobals = foldl (\environment (family, own) -> Map.insert (inductiveName (familyDeclaration family)) (familyDefinition families family own []) environment) staged (zip headers checked)
@@ -275,18 +273,16 @@ specialiseNested globals peers families@(first : _) = do
             traverse_ (lift . validateRootArguments depth . snd) arguments
             carrier <- lift (lift (projectParameters depth term))
             targets <- get
-            target <- case [nestedDeclaration target | target <- targets, nestedCarrier target == carrier] of
-              target : _ -> pure target
-              [] -> do
+            target <- case find ((== carrier) . nestedCarrier) targets of
+              Just target -> pure (nestedDeclaration target)
+              Nothing -> do
                 -- specialise every peer with the same fixed parameter vector.
                 forM_ [peer | peer <- inductiveFamilies info, Just Definition {definitionBody = TypeConstructor _} <- [Map.lookup peer globals]] \peer -> do
                   let candidate = applyArguments (Global peer universeArguments) (snd (termSpine carrier))
                   existing <- get
                   unless (any ((== candidate) . nestedCarrier) existing) (addTarget peer universeArguments candidate)
                 created <- get
-                case [nestedDeclaration target | target <- created, nestedCarrier target == carrier] of
-                  target : _ -> pure target
-                  [] -> lift (K.failure "missing nested target")
+                maybe (lift (K.failure "missing nested target")) (pure . nestedDeclaration) (find ((== carrier) . nestedCarrier) created)
             pure (applyArguments (Global (inductiveName target) levels) [(plicity, Local (depth - position - 1)) | (position, (plicity, _)) <- zip [0 ..] parameters])
       _ -> mapChildren (\binders -> rewrite (depth + binders)) term
     validateRootArguments depth term = case termSpine term of
@@ -301,7 +297,7 @@ specialiseNested globals peers families@(first : _) = do
       case fst (termSpine term) of
         Global _ actual -> do
           unless (length actual == length levels) (K.failure "wrong number of inductive universe arguments")
-          traverse_ (K.oblige . uncurry LevelEqual) (zip actual levels)
+          traverse_ K.oblige (zipWith LevelEqual actual levels)
         _ -> K.failure "invalid nested family application"
     -- only the shared parameter telescope may appear in a specialisation key.
     -- constructor fields and function inputs cannot grow an infinite worklist.
@@ -337,7 +333,7 @@ specialiseNested globals peers families@(first : _) = do
       targets <- get
       case drop position targets of
         target : _ -> do
-          constructors <- forM (inductiveConstructors (nestedDeclaration target)) \(name, annotation) -> (name,) <$> rewrite 0 annotation
+          constructors <- traverse (traverse (rewrite 0)) (inductiveConstructors (nestedDeclaration target))
           modify (zipWith (\index current -> if index == position then current {nestedDeclaration = (nestedDeclaration current) {inductiveConstructors = constructors}} else current) [0 ..])
           close (position + 1)
         [] -> pure ()
@@ -389,7 +385,7 @@ restoreNested original families@(first : _) targets (K.Environment certified) = 
   pure (K.Environment final)
 
 opaqueRecursors :: Globals -> [SymbolId] -> Globals
-opaqueRecursors = foldl (\globals name -> Map.adjust (\definition -> definition {definitionBody = Assumption}) name globals)
+opaqueRecursors = foldr (Map.adjust (\definition -> definition {definitionBody = Assumption}))
 
 -- the native and restored rules use one check. motives and methods have the
 -- common prefix; actual fields follow without hypothesis binders. a private
@@ -505,17 +501,14 @@ familyApplication globals peers Family {familyDeclaration = InductiveDeclaration
     Global name universeArguments | name == inductiveName -> pure universeArguments
     _ -> K.failure "inductive occurrence must be a direct saturated family application"
   unless (length levels == inductiveUniverses) (K.failure "wrong number of inductive universe arguments")
-  traverse_ (K.oblige . uncurry LevelEqual) (zip levels (map LParam [0 .. inductiveUniverses - 1]))
+  traverse_ K.oblige (zipWith LevelEqual levels (map LParam [0 .. inductiveUniverses - 1]))
   unless (length arguments == length expectedPlicities && map fst arguments == expectedPlicities) (K.failure "inductive result requireth every parameter and index")
   when (any (containsFamilies (Map.keys peers) . snd) arguments) (K.failure "inductive family cannot occur inside its arguments")
   let (actualParameters, resultIndices) = splitAt inductiveParameters arguments
-  traverse_
-    ( \(position, (_, argument)) -> do
-        actual <- K.evaluate globals context argument
-        expected <- K.evaluate globals context (Local (K.contextDepth context - position - 1))
-        K.convert globals context actual expected
-    )
-    (zip [0 ..] actualParameters)
+  forM_ (zip [0 ..] actualParameters) \(position, (_, argument)) -> do
+    actual <- K.evaluate globals context argument
+    expected <- K.evaluate globals context (Local (K.contextDepth context - position - 1))
+    K.convert globals context actual expected
   pure resultIndices
 
 -- generated signatures use stable binder levels while construction proceeds.
@@ -523,18 +516,17 @@ familyApplication globals peers Family {familyDeclaration = InductiveDeclaration
 -- extra binders without appearing in that map. quotation back to indices is
 -- explicit below, so later dependent fields retain their original references.
 generateRecursor :: [Family] -> [Constructor] -> Family -> Either String Term
-generateRecursor families constructors target@Family {familyDeclaration = InductiveDeclaration {inductiveUniverses}, familyParameters = parameters, familyIndices = indices} = parameterBinders parameters
+generateRecursor families constructors target@Family {familyDeclaration = InductiveDeclaration {inductiveUniverses}, familyParameters = parameters, familyIndices = indices} = do
+  motiveTypes <- zipWithM (\depth family -> motiveType family depth parameterLevels (familyIndices family)) [parameterCount ..] families
+  let methodDepth = parameterCount + length families
+  methods <- zipWithM methodType [methodDepth ..] constructors
+  inner <- indexBinders (methodDepth + length constructors) parameterLevels indices
+  pure (foldr (Pi Implicit . snd) (foldr (Pi Explicit) inner (motiveTypes ++ methods)) parameters)
   where
     parameterCount = length parameters
     levels = map LParam [0 .. inductiveUniverses - 1]
     motives = Map.fromList [(inductiveName (familyDeclaration family), (parameterCount + index, LParam (inductiveUniverses + index))) | (index, family) <- zip [0 ..] families]
     parameterLevels = [0 .. parameterCount - 1]
-    parameterBinders [] = motiveBinders parameterCount families
-    parameterBinders ((_, domain) : rest) = Pi Implicit domain <$> parameterBinders rest
-    motiveBinders depth [] = methodBinders depth constructors
-    motiveBinders depth (family : rest) = do
-      motive <- motiveType family depth parameterLevels (familyIndices family)
-      Pi Explicit motive <$> motiveBinders (depth + 1) rest
     motiveType family depth mapping [] = do
       self <- familyTerm family depth mapping
       (_, resultLevel) <- motiveOf (inductiveName (familyDeclaration family))
@@ -542,10 +534,6 @@ generateRecursor families constructors target@Family {familyDeclaration = Induct
     motiveType family depth mapping ((plicity, domain) : rest) = do
       moved <- renameTerm mapping depth domain
       Pi plicity moved <$> motiveType family (depth + 1) (mapping ++ [depth]) rest
-    methodBinders depth [] = indexBinders depth parameterLevels indices
-    methodBinders depth (constructor : rest) = do
-      method <- methodType depth constructor
-      Pi Explicit method <$> methodBinders (depth + 1) rest
     methodType depth Constructor {..} = fields depth parameterLevels constructorFields
       where
         fields current mapping [] = do
@@ -584,14 +572,14 @@ generateRecursor families constructors target@Family {familyDeclaration = Induct
     familyTerm family depth mapping =
       pure (applyArguments (Global (inductiveName (familyDeclaration family)) levels) (zipWith (\(plicity, _) level -> (plicity, localAt depth level)) (familyParameters family ++ familyIndices family) mapping))
     motiveOf family = maybe (Left "missing inductive family motive") Right (Map.lookup family motives)
-    moveArgument mapping depth (plicity, argument) = (plicity,) <$> renameTerm mapping depth argument
+    moveArgument mapping depth = traverse (renameTerm mapping depth)
 
 -- a rule is scoped over the shared prefix and the actual constructor fields.
 -- its recursive calls are ordinary checked core terms, reused by both evaluators.
 generateRule :: [Family] -> [Constructor] -> Constructor -> Either String Term
 generateRule [] _ _ = Left "missing inductive group"
 generateRule families@(firstFamily : _) constructors Constructor {..} = do
-  methodIndex <- maybe (Left "missing inductive method") pure (lookup constructorName (zip (map constructorNameOf constructors) [0 ..]))
+  methodIndex <- maybe (Left "missing inductive method") pure (elemIndex constructorName (map constructorNameOf constructors))
   arguments <- fmap concat $ forM (zip [0 ..] constructorFields) \(position, (plicity, domain, recursive)) -> do
     let field = localAt depth (prefixCount + position)
         mapping = parameterLevels ++ [prefixCount .. prefixCount + position - 1]

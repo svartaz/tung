@@ -49,7 +49,7 @@ wellFoundedTests library example =
 boundedTests :: Library -> [Test]
 boundedTests library =
   [ expectEq
-      "under measures count down by two and over list greatness"
+      "under measures count down by two and over list manyhood"
       (Right [True, True])
       ( do
           program <- compile ""
@@ -60,13 +60,13 @@ boundedTests library =
         expectEq "the runner computeth library measure recursion" "eval ok: 6" actual
     ),
     rejectContaining "a number is not under itself" "cannot unify" (compile "let bad: [n: ℕ, n under n] ≔ n under_heir"),
-    rejectContaining "a list is not under its own greatness" "cannot unify" (compile "let bad: [x: ℕ, l: ℕ list, ((x ‥ l) greatness) under ((x ‥ l) greatness)] ≔ x ‥_greatness_under l")
+    rejectContaining "a list is not under its own manyhood" "cannot unify" (compile "let bad: [x: ℕ, l: ℕ list, ((x ‥ l) manyhood) under ((x ‥ l) manyhood)] ≔ x ‥_manyhood_under l")
   ]
   where
     compile extra = compileWith library "under.tung" (prelude ++ extra)
     prelude =
       """
-      bring flock/hath_greatness.tung
+      bring flock/hath_manyhood.tung
       bring often.tung
       bring ilk/grounded.tung
       bring ilk/list.tung
@@ -80,10 +80,10 @@ boundedTests library =
             (k heir) heir ^ (k selfcall (k under_throughgo (k heir) ((k heir) heir) (k under_heir) ((k heir) under_heir))) + 1
           }} n
       let total: [l:ℕ list, ℕ] ≔
-        {_:ℕ list ^ ℕ} wellgrounded_selfcall_by greatness under_wellgrounded
+        {_:ℕ list ^ ℕ} wellgrounded_selfcall_by manyhood under_wellgrounded
           {l, selfcall ^ match l {
             empty ^ 0,
-            x ‥ leftover ^ x + (leftover selfcall (x ‥_greatness_under leftover))
+            x ‥ leftover ^ x + (leftover selfcall (x ‥_manyhood_under leftover))
           }} l
 
       """
@@ -359,7 +359,7 @@ positiveTests =
         -- an indexed structural input whose indices are earlier inputs.
         ("recursion may match an indexed value whose index is an implicit input", vector ++ "let length:[@α:*, @n:nat, v:α vec n, nat] ≔ match v { nil ^ naught, _ cons _ t ^ (t length) heir }", pair ++ " length", two),
         ("an indexed recursion's result may mention the index", vector ++ "let warp:[@α:*, @β:*, @n:nat, v:α vec n, f:[α, β], β vec n] ≔ match v { nil ^ nil, k cons a t ^ k cons (a f) (t warp f) }", pair ++ " warp {x ^ x heir}", "(naught heir) cons @nat (naught heir) ((naught cons @nat (naught heir) (nil @nat)))"),
-        ("an explicit index input is refined in each branch", vector ++ "let greatness:[@α:*, n:nat, v:α vec n, nat] ≔ match v { nil ^ n, k cons _ t ^ (k greatness t) heir }", two ++ " greatness " ++ pair, two)
+        ("an explicit index input is refined in each branch", vector ++ "let manyhood:[@α:*, n:nat, v:α vec n, nat] ≔ match v { nil ^ n, k cons _ t ^ (k manyhood t) heir }", two ++ " manyhood " ++ pair, two)
       ]
   ]
 
@@ -368,8 +368,8 @@ rejectionTests =
   [ reject label (compile source)
   | (label, source) <-
       [ ("a shadowing worth is not the former child", count "(let n ≔ naught yield n rime)"),
-        ("an explicit index argument must be the child's index", vector ++ "let greatness:[@α:*, n:nat, v:α vec n, nat] ≔ match v { nil ^ n, k cons _ t ^ (naught greatness t) heir }"),
-        ("an index input cannot be matched by a constructor", vector ++ "let greatness:[@α:*, n:nat, v:α vec n, nat] ≔ { naught, nil ^ naught, _, k cons _ t ^ (k greatness t) heir }"),
+        ("an explicit index argument must be the child's index", vector ++ "let manyhood:[@α:*, n:nat, v:α vec n, nat] ≔ match v { nil ^ n, k cons _ t ^ (naught manyhood t) heir }"),
+        ("an index input cannot be matched by a constructor", vector ++ "let manyhood:[@α:*, n:nat, v:α vec n, nat] ≔ { naught, nil ^ naught, _, k cons _ t ^ (k manyhood t) heir }"),
         ("a recursive lambda cannot ignore a wrong binder annotation", "let rime:[nat,nat] ≔ {x:string ^ match x {naught ^ naught, n heir ^ (n rime) heir}}"),
         ("a rebuilt matched input is not a descendant", count "(n heir) rime"),
         ( "an inner child is not an outer induction hypothesis",

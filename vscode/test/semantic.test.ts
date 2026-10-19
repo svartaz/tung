@@ -55,7 +55,7 @@ const sourceLabels = async (source: string) => {
 test("compiler roles keep types, header binders and application positions consistent", async () => {
   const source =
     "show let constant:[@a:*, @b:*, x:a, _:b, a] ≔ x\n" +
-    "show let read:[string path:_path, (string ∑ string) deed] ≔ string read_file\n" +
+    "show let read:[string path:_path, (string ∨ string) deed] ≔ string read_file\n" +
     "show let yoke:[string₀ path:_path, string₁ path:_path, _path] ≔ string₀ · '/' $ · string₁ $ path";
   const labels = await sourceLabels(source);
   assert.deepEqual(labels("a"), [

@@ -220,10 +220,10 @@ layeredCase library (name, performed, expected) =
       bring deed/hade.tung
       bring flock/functor/monad.tung
       bring often.tung
-      bring ilk/product.tung
-      bring ilk/sum.tung
+      bring ilk/and.tung
+      bring ilk/or.tung
       let tick: ℕ hade 𝟙 ≔ {n ^ n + 1} tweak
-      let eftbare: [string ∑ 𝟙, 𝟙 deed] ≔ {e incast₀ ^ e write, _ incast₁ ^ '!' write}
+      let eftbare: [string ∨ 𝟙, 𝟙 deed] ≔ {e incast₀ ^ e write, _ incast₁ ^ '!' write}
 
       """
 

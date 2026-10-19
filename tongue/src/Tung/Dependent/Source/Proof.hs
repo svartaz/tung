@@ -16,6 +16,7 @@ where
 import Control.Monad (unless)
 import Data.List (intercalate, sortOn)
 import Data.Map.Strict qualified as Map
+import Data.Maybe (maybeToList)
 import Data.Set qualified as Set
 import Tung.Dependent.Source.Environment
 import Tung.Dependent.Syntax
@@ -124,7 +125,7 @@ definitionReferences Definition {definitionType, definitionBody} = termReference
     body = \case
       Transparent term -> termReferences term
       Fixpoint _ term -> termReferences term
-      Host _ model -> maybe [] (: []) model
+      Host _ model -> maybeToList model
       TypeConstructor info -> metadata info
       EliminationTarget info term -> termReferences term ++ metadata info
       DataConstructor family _ -> [family]
@@ -132,7 +133,7 @@ definitionReferences Definition {definitionType, definitionBody} = termReference
       Assumption -> []
     metadata InductiveInfo {..} =
       inductiveFamilies
-        ++ concat [constructor : concat [termReferences ty ++ maybe [] (: []) recursive | (_, ty, recursive) <- fields] | (constructor, fields) <- inductiveConstructorInfo]
+        ++ concat [constructor : concat [termReferences ty ++ maybeToList recursive | (_, ty, recursive) <- fields] | (constructor, fields) <- inductiveConstructorInfo]
         ++ concatMap termReferences inductiveRules
 
 termReferences :: Term -> [SymbolId]

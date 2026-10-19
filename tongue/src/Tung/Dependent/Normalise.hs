@@ -5,6 +5,7 @@ module Tung.Dependent.Normalise
     Closure (..),
     Neutral (..),
     neutralSpine,
+    applyNeutral,
     constructorForm,
     evaluate,
     instantiate,
@@ -22,12 +23,15 @@ module Tung.Dependent.Normalise
     quoteFoldedWith,
     quoteDisplayWith,
     forceWith,
+    etaFamily,
+    etaFields,
   )
 where
 
-import Control.Monad (foldM)
-import Data.List (findIndex)
+import Control.Monad (foldM, zipWithM)
+import Data.List (find, findIndex)
 import Data.Map.Strict qualified as Map
+import Data.Maybe (isNothing)
 import Tung.Dependent.Literal (constructedLiteral, coreConstructor, literalConstructor, literalType, literalValue, valueLiteral)
 import Tung.Dependent.Syntax
 import Tung.Dependent.Universe (normaliseLevel)
@@ -117,12 +121,11 @@ evaluateGlued normaliser environment = \case
   Let _ value body -> do
     valueValue <- evaluateGlued normaliser environment value
     evaluateGlued normaliser (valueValue : environment) body
-  Meta identity arguments -> do
-    values <- traverse (evaluateGlued normaliser environment) arguments
-    forceWith normaliser (VNeutral (NMeta identity values))
+  Meta identity arguments ->
+    traverse (evaluateGlued normaliser environment) arguments >>= forceWith normaliser . VNeutral . NMeta identity
   Literal name value -> Right (VLiteral name value)
-  RecordType fields -> VRecordType <$> traverse (\(name, field) -> (name,) <$> evaluateGlued normaliser environment field) fields
-  Record fields -> VRecord <$> traverse (\(name, field) -> (name,) <$> evaluateGlued normaliser environment field) fields
+  RecordType fields -> VRecordType <$> traverse (traverse (evaluateGlued normaliser environment)) fields
+  Record fields -> VRecord <$> traverse (traverse (evaluateGlued normaliser environment)) fields
   Project record name -> evaluateGlued normaliser environment record >>= project normaliser name
   Field index value -> evaluateGlued normaliser environment value >>= field normaliser index
   where
@@ -138,6 +141,13 @@ applyGlued normaliser plicity function argument = case function of
   VGlued name levels spine unfolded ->
     Right (VGlued name levels (spine ++ [(plicity, argument)]) (unfolded >>= \value -> applyValueWith normaliser plicity value argument))
   _ -> applyValueWith normaliser plicity function argument
+
+-- a value applied to a spine of arguments.
+applySpine :: Normaliser -> Value -> [(Plicity, Value)] -> Either String Value
+applySpine normaliser = foldM (\function (plicity, argument) -> applyValueWith normaliser plicity function argument)
+
+applyGluedSpine :: Normaliser -> Value -> [(Plicity, Value)] -> Either String Value
+applyGluedSpine normaliser = foldM (\function (plicity, argument) -> applyGlued normaliser plicity function argument)
 
 instantiate :: Globals -> Closure -> Value -> Either String Value
 instantiate = instantiateWith . closed
@@ -205,7 +215,28 @@ field normaliser index value =
       | otherwise -> Right (VNeutral (NField index neutral))
     _ -> Left "field of a non-constructor value"
 
--- induction reduceth only on constructors. recursive calls use direct children,
+-- a family with one constructor, no indices, and no field that nameth a
+-- family of its group hath η, as lean's structures: each of its worths
+-- equaleth its constructor applied to its fields. a recursive family is
+-- excluded, since eliminating a neutral child would unfold without end.
+etaFamily :: Globals -> SymbolId -> Maybe (SymbolId, Int, Int)
+etaFamily globals family = case definitionBody <$> Map.lookup family globals of
+  Just (TypeConstructor InductiveInfo {inductiveFamilies = [_], inductiveIndexPlicities = [], inductiveConstructorInfo = [(constructor, fields)], inductiveParameterCount})
+    | all (\(_, _, recursive) -> isNothing recursive) fields -> Just (constructor, inductiveParameterCount, length fields)
+  _ -> Nothing
+
+-- the fields of a saturated constructor application of an η family.
+etaFields :: Globals -> Neutral -> Maybe [Value]
+etaFields globals neutral = case neutralSpine neutral of
+  (NGlobal constructor _, arguments)
+    | Just Definition {definitionBody = DataConstructor owner _} <- Map.lookup constructor globals,
+      Just (_, parameters, count) <- etaFamily globals owner,
+      length arguments == parameters + count ->
+        Just (map snd (drop parameters arguments))
+  _ -> Nothing
+
+-- induction reduceth on constructors and, for an η family, on any neutral
+-- that no hole blocketh, through its fields. recursive calls use direct children,
 -- never an arbitrary source function or a user-supplied recursion annotation.
 reduceNeutral :: Normaliser -> Neutral -> Either String Value
 reduceNeutral normaliser neutral = case neutralHead neutral of
@@ -248,7 +279,7 @@ reduceSpine normaliser headDefinition neutral = case neutralSpine neutral of
       | Just operation <- pureOperation key,
         Just HostBinding {hostSignature = HostSignature {hostVariables, hostArguments}} <- findForeignBinding key,
         length arguments == length hostVariables + length hostArguments -> do
-          inputs <- sequence <$> traverse (uncurry decode) (zip hostArguments (map snd (drop (length hostVariables) arguments)))
+          inputs <- sequence <$> zipWithM decode hostArguments (map snd (drop (length hostVariables) arguments))
           case inputs >>= operation of
             Just result -> do
               annotation <- instantiateLevels levels definitionType >>= evaluateWith normaliser []
@@ -259,7 +290,7 @@ reduceSpine normaliser headDefinition neutral = case neutralSpine neutral of
             Nothing -> case model of
               Just symbol -> do
                 function <- evaluateGlued normaliser [] (Global symbol levels)
-                foldM (\value (plicity, argument) -> applyGlued normaliser plicity value argument) function arguments
+                applyGluedSpine normaliser function arguments
               Nothing -> stuck
     Just Definition {definitionBody = Eliminator family} -> do
       info <- inductiveInfo (normalGlobals normaliser) family
@@ -310,7 +341,7 @@ reduceSpine normaliser headDefinition neutral = case neutralSpine neutral of
                   let parameters = [(Implicit, parameter) | (_, parameter) <- arguments]
                   fieldType <- foldM instantiateProduct annotation parameters
                   fields <- encodeFields fieldType writtenFields
-                  pure (VNeutral (foldl (\function (plicity, argument) -> NApply plicity function argument) (NGlobal symbol levels) (parameters ++ fields)))
+                  pure (VNeutral (applyNeutral (NGlobal symbol levels) (parameters ++ fields)))
             _ -> Left "invalid checked host result family"
       | otherwise = Left "invalid checked host result value"
     encodeFields ty [] =
@@ -342,6 +373,12 @@ reduceSpine normaliser headDefinition neutral = case neutralSpine neutral of
         else do
           let (applied, extra) = splitAt total arguments
               prefix = map snd (take prefixCount applied)
+              -- a rule computeth over the prefix and the fields, then taketh
+              -- any arguments beyond the eliminated value.
+              fire rule values = do
+                body <- instantiateLevels levels rule
+                result <- evaluateWith normaliser (reverse (prefix ++ values)) body
+                applySpine normaliser result extra
           scrutinee <- constructorForm <$> forceWith normaliser (snd (last applied))
           case scrutinee of
             VNeutral value -> case neutralSpine value of
@@ -351,13 +388,23 @@ reduceSpine normaliser headDefinition neutral = case neutralSpine neutral of
                   row >= 0,
                   ((selected, fields), rule) : _ <- drop row (zip inductiveConstructorInfo inductiveRules),
                   selected == constructor,
-                  length constructorArguments == inductiveConstructorParameterCount + length fields -> do
-                    let values = map snd (drop inductiveConstructorParameterCount constructorArguments)
-                    body <- instantiateLevels levels rule
-                    result <- evaluateWith normaliser (reverse (prefix ++ values)) body
-                    foldM (\function (plicity, argument) -> applyValueWith normaliser plicity function argument) result extra
+                  length constructorArguments == inductiveConstructorParameterCount + length fields ->
+                    fire rule (map snd (drop inductiveConstructorParameterCount constructorArguments))
+              (headValue, _)
+                | Just (_, _, count) <- etaFamily (normalGlobals normaliser) family,
+                  unblocked headValue,
+                  [rule] <- inductiveRules ->
+                    traverse (\index -> field normaliser index scrutinee) [0 .. count - 1] >>= fire rule
               _ -> stuck
             _ -> stuck
+    -- a neutral headed by a hole waiteth for the hole, and a constructor
+    -- of another family is no worth of this one.
+    unblocked = \case
+      NMeta {} -> False
+      NGlobal name _ | Just Definition {definitionBody = DataConstructor {}} <- Map.lookup name (normalGlobals normaliser) -> False
+      NField _ inner -> unblocked (fst (neutralSpine inner))
+      NProject inner _ -> unblocked (fst (neutralSpine inner))
+      _ -> True
 
 -- a numeric literal readeth as its outer constructor; its fields stay literal
 -- so induction, index matching, and unification share the same compact view.
@@ -365,8 +412,12 @@ constructorForm :: Value -> Value
 constructorForm = \case
   VLiteral _ literal
     | Just (constructor, fields) <- literalConstructor literal ->
-        VNeutral (foldl (\function field -> NApply Explicit function (VLiteral (literalType field) field)) (NGlobal constructor []) fields)
+        VNeutral (applyNeutral (NGlobal constructor []) [(Explicit, VLiteral (literalType field) field) | field <- fields])
   value -> value
+
+-- a neutral applied to a spine of arguments; 'neutralSpine' undoeth it.
+applyNeutral :: Neutral -> [(Plicity, Value)] -> Neutral
+applyNeutral = foldl (\function (plicity, argument) -> NApply plicity function argument)
 
 neutralSpine :: Neutral -> (Neutral, [(Plicity, Value)])
 neutralSpine = go []
@@ -430,16 +481,11 @@ quoteDisplayWith normaliser depth value =
                     length spine == position + 1 + length extra,
                     map fst (drop (position + 1) spine) == map fst extra
                   ]
-            firstCandidate stuck currentDepth candidates
+            Right (find (\(name, levels, spine) -> candidateNormal currentDepth name levels spine == Right stuck) candidates)
       _ -> Right Nothing
-    firstCandidate _ _ [] = Right Nothing
-    firstCandidate stuck currentDepth ((name, levels, spine) : rest) =
-      case candidateNormal currentDepth name levels spine of
-        Right normal | normal == stuck -> Right (Just (name, levels, spine))
-        _ -> firstCandidate stuck currentDepth rest
     candidateNormal currentDepth name levels spine = do
       folded <- evaluateGlued normaliser [] (Global name levels)
-      applied <- foldM (\function (plicity, argument) -> applyGlued normaliser plicity function argument) folded spine
+      applied <- applyGluedSpine normaliser folded spine
       eraseGlobalLevels <$> quoteWith normaliser currentDepth applied
 
 -- one structural walk for normal, folded, and display quotation. normal
@@ -487,8 +533,8 @@ quoteShaped normaliser foldImplicit unfold refold = go
                 Just (name, levels, spine) -> applied context depth name levels spine
                 Nothing -> neutralTerm context depth neutral
             VLiteral name literal -> Right (Literal name literal)
-            VRecordType fields -> RecordType <$> traverse (\(name, field) -> (name,) <$> go context depth field) fields
-            VRecord fields -> Record <$> traverse (\(name, field) -> (name,) <$> go context depth field) fields
+            VRecordType fields -> RecordType <$> traverse (traverse (go context depth)) fields
+            VRecord fields -> Record <$> traverse (traverse (go context depth)) fields
             VGlued {} -> Left "a forced value is still folded"
     applied context depth name levels spine =
       foldM (\function (plicity, argument) -> Apply plicity function <$> argumentTerm context depth plicity argument) (Global name (map normaliseLevel levels)) spine
@@ -515,9 +561,7 @@ quoteShaped normaliser foldImplicit unfold refold = go
 normalise :: Globals -> Int -> Term -> Either String Term
 normalise globals depth term
   | depth < 0 = Left "negative normalisation depth"
-  | otherwise = do
-      value <- evaluate globals (openEnvironment depth) term
-      quote globals depth value
+  | otherwise = evaluate globals (openEnvironment depth) term >>= quote globals depth
 
 -- each open local as itself; the innermost index denoteth the newest level.
 openEnvironment :: Int -> [Value]

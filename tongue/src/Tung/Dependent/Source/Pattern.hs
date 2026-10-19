@@ -15,9 +15,10 @@ where
 
 import Control.Applicative ((<|>))
 import Control.Monad (foldM, forM, forM_, unless, when)
+import Data.Bifunctor (second)
 import Data.Functor ((<&>))
-import Data.List (nub)
-import Data.Maybe (fromMaybe, isJust)
+import Data.List (elemIndex, nub)
+import Data.Maybe (catMaybes, fromMaybe, isJust)
 import Tung.Dependent.Check qualified as K
 import Tung.Dependent.Elaboration qualified as E
 import Tung.Dependent.Host (deedInputs)
@@ -92,7 +93,7 @@ gatherClauses checker@ExpressionChecker {checkerEnvironment = environment, check
               pure (resolved, resolved, [])
           pure (Clauses scope (reverse inputs) resultType rows writtenRows aliases)
     scrutineeColumn columnNames = \case
-      Name name -> lookup (Name name) (zip columnNames [0 :: Int ..]) >>= \position -> if name == "_" then Nothing else Just position
+      Name name | name /= "_" -> elemIndex (Name name) columnNames
       _ -> Nothing
 
 -- `let f:annotation ≔ body` whose body nameth `f`. the recursion is compiled
@@ -112,7 +113,7 @@ elaborateRecursive checker@ExpressionChecker {checkerEnvironment = environment} 
     (position, Just Split {splitIndices, splitParameters}) -> do
       patterns <- traverse (indexPattern environment) splitIndices
       let structuralLevel = fst (explicitInputs !! position)
-      parameterLevels <- concat <$> traverse (\parameter -> map (\level -> depth scope - level - 1) . freeIndices <$> quote scope parameter) splitParameters
+      parameterLevels <- concat <$> traverse (fmap (mentionedLevels scope) . quote scope) splitParameters
       pure case sequence patterns of
         Just patterns
           | let leaves = concatMap patternLeaves patterns,
@@ -122,7 +123,7 @@ elaborateRecursive checker@ExpressionChecker {checkerEnvironment = environment} 
         _ -> Nothing
     _ -> pure Nothing
   let positions = [position | Just (position, _) <- indexed]
-      patternsAt position = fromMaybe [] (lookup position [entry | Just entry <- indexed])
+      patternsAt position = fromMaybe [] (lookup position (catMaybes indexed))
       -- candidate checking useth the same local bindings and induction evidence
       -- as expression checking. failed trials cannot influence later choices.
       select previous [] = maybe (recursionFailure loops ("'" ++ name ++ "' needs a structurally decreasing input")) E.raise previous
@@ -156,9 +157,7 @@ elaborateRecursive checker@ExpressionChecker {checkerEnvironment = environment} 
         resultMotive <- unifiedMotive environment scope structuralLevel split levels parameters indexPatterns (map fst quantified) clauseResult
         (motive, memo) <-
           if deep
-            then do
-              (memoMotive, memo) <- memoisedMotive environment scope structuralType resultMotive
-              pure (memoMotive, Just memo)
+            then second Just <$> memoisedMotive environment scope structuralType resultMotive
             else pure (resultMotive, Nothing)
         forM_ rows \row -> forM_ dropped \inputPosition -> case unnamed (matchPatterns row !! inputPosition) of
           (_, PVariable _) -> pure ()
@@ -171,16 +170,14 @@ elaborateRecursive checker@ExpressionChecker {checkerEnvironment = environment} 
         (split, used) <- splitColumn checker scope columns keptRows clauseResult structuralColumn (Just (motive, memo, enter))
         requireUsed clauseWrittenRows used
         let result = if deep then Project split "now" else split
-            applied = foldl (\term (level, plicity) -> Apply plicity term (Local (depth scope - level - 1))) result quantified
+            applied = applyArguments result [(plicity, localTerm scope level) | (level, plicity) <- quantified]
         appliedType <- inferCore scope applied
         E.unify (scopeContext scope) appliedType clauseResult
         wrapInputs clauseInputs applied
   -- inputs the first row matcheth come first: the case tree then splitteth
   -- where the definition's first row sayeth, as `m, 0 ^ m` maketh `x ∸ 0`
   -- reduce to `x` for any `x`, and a failure nameth the matched input.
-  let demanded = case rows of
-        row : _ -> [position | (position, pattern) <- zip [0 ..] (matchPatterns row), refutable (snd (unnamed pattern))]
-        [] -> []
+  let demanded = [position | row <- take 1 rows, (position, pattern) <- zip [0 ..] (matchPatterns row), refutable (snd (unnamed pattern))]
       ordered = filter (`elem` demanded) positions ++ filter (`notElem` demanded) positions
   select Nothing [(position, deep) | deep <- [False, True], position <- ordered]
 
@@ -233,7 +230,7 @@ memoisedMotive environment scope structuralType resultMotive = do
           annotation <- quote current domain
           (inner, next) <- bindDomain current Nothing domain codomain
           Core.Lambda plicity annotation <$> telescope inner next (inputs ++ [(plicity, depth current)]) finish
-        N.VSort _ -> finish current [(plicity, Local (depth current - level - 1)) | (plicity, level) <- inputs]
+        N.VSort _ -> finish current [(plicity, localTerm current level) | (plicity, level) <- inputs]
         _ -> E.failure "invalid course-of-values motive telescope"
     supplySort level ((term, ty), domains) (target, info) =
       E.force ty >>= \case
@@ -247,8 +244,8 @@ memoisedMotive environment scope structuralType resultMotive = do
     -- bind the fields and their type-valued hypotheses, then build the record.
     belowMethod root plicities result current _ [] children = do
       entries <- forM (zip [0 :: Int ..] (reverse children)) \(index, (target, field, hypothesis)) -> do
-        let fieldTerm = Local (depth current - field - 1)
-            hypothesisTerm = Local (depth current - hypothesis - 1)
+        let fieldTerm = localTerm current field
+            hypothesisTerm = localTerm current hypothesis
         fieldType <- inferCore current fieldTerm
         record <- childRecord root plicities result target current fieldType fieldTerm hypothesisTerm
         pure (childName index, record)
@@ -318,8 +315,8 @@ recursiveCall checker scope Recursion {..} arguments = do
         _ -> refuse "a recursive call must pass a direct child of the matched input"
       checkIndices value
       -- a function child's hypothesis first taketh the child's inputs.
-      arguments <- traverse (\(plicity, value) -> (plicity,) <$> quote scope value) childArguments
-      let term = applyArguments (Local (depth scope - hypothesis - 1)) arguments
+      arguments <- traverse (traverse (quote scope)) childArguments
+      let term = applyArguments (localTerm scope hypothesis) arguments
       ty <- inferCore scope term
       applyTerm checker scope term ty rest []
     -- both kinds of evidence require the declaration's entire index shape.
@@ -329,9 +326,8 @@ recursiveCall checker scope Recursion {..} arguments = do
         childTerm <- quote scope value
         childType <- inferCore scope childTerm
         indices <-
-          familyOf (checkerEnvironment checker) childType >>= \case
-            Just Split {splitIndices} -> pure splitIndices
-            Nothing -> refuse "a recursive call must pass a child of the indexed family"
+          familyOf (checkerEnvironment checker) childType
+            >>= maybe (refuse "a recursive call must pass a child of the indexed family") (pure . splitIndices)
         bindings <- indexBindings (checkerEnvironment checker) recursionIndices indices
         forM_ [(leaf, argument) | (Index leaf, argument) <- zip recursionRoles (map argumentExpression arguments)] \(leaf, argument) -> do
           (term, _) <- inferTerm checker scope argument

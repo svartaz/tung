@@ -11,92 +11,108 @@ bring flock/same_to_is.tung
 bring ilk/two.tung
 bring is.tung
 
-show ilk ∑: [α: *, β: *, *] {
-  incast₀: [α, α ∑ β],
-  incast₁: [β, α ∑ β]
+show ilk ∨: [α: *, β: *, *] {
+  incast₀: [α, α ∨ β],
+  incast₁: [β, α ∨ β]
 }
 
-show let either: [@α: *, @β: *, @γ: *, α ∑ β, [α, γ], [β, γ], γ] ≔ {
+show let either: [@α: *, @β: *, @γ: *, α ∨ β, [α, γ], [β, γ], γ] ≔ {
   a incast₀, f₀, _  ^ a f₀,
   b incast₁, _,  f₁ ^ b f₁
 }
 
-bizen: ∑ bifunctor {
+bizen: ∨ bifunctor {
   let biwarp ≔ {
     a incast₀, f, _ ^ (a f) incast₀,
     b incast₁, _, g ^ (b g) incast₁
   }
+
   let biwarp_sameness_sameness ≔ {
     _ incast₀;
     _ incast₁ ^ eftbend
   }
+
   let biwarp_biwarp ≔ {
     _ incast₀, _, _, _, _;
     _ incast₁, _, _, _, _ ^ eftbend
   }
 }
 
-show let is_incast₀: [@α: *, @β: *, α ∑ β, 𝟚] ≔ {
+show let is_incast₀: [@α: *, @β: *, α ∨ β, 𝟚] ≔ {
   _ incast₀ ^ yea,
   _ incast₁ ^ nay
 }
 
-show let is_incast₁: [@α: *, @β: *, sum: α ∑ β, 𝟚] ≔ sum is_incast₀ $ ¬
+show let is_incast₁: [@α: *, @β: *, sum: α ∨ β, 𝟚] ≔ sum is_incast₀ $ ¬
 
-bizen: [@α: *, (α ∑) functor] {
+bizen: [@α: *, (α ∨) functor] {
   let warp: [sum:, f:] ≔ sum biwarp sameness f
+
   let warp_sameness ≔ {
     _ incast₀;
     _ incast₁ ^ eftbend
   }
 }
 
-bizen: [@α: *, (α ∑) onwendsome] {
+bizen: [@α: *, (α ∨) onwendsome] {
   let sheer ≔ incast₁
+
   let onwend ≔ {
     a incast₀, _         ^ a incast₀,
     _,         a incast₀ ^ a incast₀,
     b incast₁, f incast₁ ^ (b f) incast₁
   }
+
   let onwend_sameness_sheer ≔ {
     _ incast₀;
     _ incast₁ ^ eftbend
   }
+
   let sheer_onwend_sheer: [_:, _:] ≔ eftbend
+
   let onwend_onwend ≔ {
     _ incast₀, _, _;
     _ incast₁, _, _ ^ eftbend
   }
+
   let sheer_onwend ≔ {
     _, _ incast₀;
     _, _ incast₁ ^ eftbend
   }
 }
 
-bizen: [@α: *, (α ∑) monad] {
+bizen: [@α: *, (α ∨) monad] {
   let flat ≔ {
     a incast₀ ^ a incast₀,
     b incast₁ ^ b
   }
+
   let sheer_bind: [_:, _:] ≔ eftbend
+
   let warp_sheer_flat ≔ {
     _ incast₀;
     _ incast₁ ^ eftbend
   }
+
+  let bind_bind ≔ {
+    _ incast₀, _, _;
+    _ incast₁, _, _ ^ eftbend
+  }
 }
 
-bizen: [@α: *, (α ∑) downshaper] {
+bizen: [@α: *, (α ∨) downshaper] {
   let gather₀ ≔ {
     _ incast₀, b, _ ^ b,
     a incast₁, b, f ^ a f b
   }
+
   let gather₁ ≔ {
     _ incast₀, b, _ ^ b,
     a incast₁, b, f ^ b f a
   }
 }
 
-bizen: [@α: *, (α ∑) hath_throughwend] {
+bizen: [@α: *, (α ∨) hath_throughwend] {
   let throughwend ≔ {
     a incast₀, _ ^ (a incast₀) sheer,
     b incast₁, f ^ (b f) warp incast₁
@@ -104,23 +120,24 @@ bizen: [@α: *, (α ∑) hath_throughwend] {
 }
 
 ## sums are the same when both take one side with the same worth.
-show let same: [@α: *, @: α hath_≍, @β: *, @: β hath_≍, α ∑ β, α ∑ β, 𝟚] ≔ {
+show let same: [@α: *, @: α hath_≍, @β: *, @: β hath_≍, α ∨ β, α ∨ β, 𝟚] ≔ {
   a incast₀, b incast₀ ^ a ≍ b,
   a incast₁, b incast₁ ^ a ≍ b,
   _,         _         ^ nay
 }
 
-bizen: [@α: *, @: α hath_≍, @β: *, @: β hath_≍, (α ∑ β) hath_≍] {
+bizen: [@α: *, @: α hath_≍, @β: *, @: β hath_≍, (α ∨ β) hath_≍] {
   let ≍ ≔ same
 }
 
-bizen: [@α: *, @: α ≍_to_=, @β: *, @: β ≍_to_=, (α ∑ β) ≍_to_=] {
+bizen: [@α: *, @: α ≍_to_=, @β: *, @: β ≍_to_=, (α ∨ β) ≍_to_=] {
   let ≍_=: [c:, d:, held:] ≔ match c, d {
     a incast₀, b incast₀ ^ incast₀ leibnitz (a ≍_= b held),
     a incast₁, b incast₁ ^ incast₁ leibnitz (a ≍_= b held),
     _ incast₀, _ incast₁ ^ match held {},
     _ incast₁, _ incast₀ ^ match held {}
   }
+
   let ≍_eftbend: [b:] ≔ match b {
     a incast₀ ^ a ≍_eftbend,
     a incast₁ ^ a ≍_eftbend

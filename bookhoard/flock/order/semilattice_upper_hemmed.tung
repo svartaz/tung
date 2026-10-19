@@ -7,18 +7,21 @@ bring is.tung
 ## a supremum semilattice with a least worth.
 show flock semilattice_upper_hemmed: [α: *, @: α semilattice_upper, *] {
   let ⟂: α
-  let ⟂_∨: [a: α, (⟂ ∨ a) = a]
+
+  let ⟂_⋎: [a: α, (⟂ ⋎ a) = a]
 }
 
 bizen: [@β: *, @: β semilattice_upper_hemmed, @α: *,
   (α → β) semilattice_upper_hemmed] {
     let ⟂: [_:] ≔ ⟂
-    let ⟂_∨: [f:] ≔ {a ^ (a f) ⟂_∨} fall_umfang
+
+    let ⟂_⋎: [f:] ≔ {a ^ (a f) ⟂_⋎} fall_umfang
   }
 
 bizen: 𝟚 semilattice_upper_hemmed {
   let ⟂ ≔ nay
-  let ⟂_∨ ≔ {
+
+  let ⟂_⋎ ≔ {
     yea;
     nay ^ eftbend
   }
@@ -26,7 +29,8 @@ bizen: 𝟚 semilattice_upper_hemmed {
 
 bizen: 𝟛 semilattice_upper_hemmed {
   let ⟂ ≔ fore
-  let ⟂_∨ ≔ {
+
+  let ⟂_⋎ ≔ {
     fore;
     mid;
     aft  ^ eftbend

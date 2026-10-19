@@ -1,0 +1,19 @@
+bring combinator.tung
+bring flock/algebra/half/category.tung
+bring is.tung
+
+## an ilk maker that taketh arrows backwards: a fall from `β` to `α`
+## witherwarpeth an `α φ` into a `β φ`.
+show flock contravariant: [φ: [*, *], *] {
+  let witherwarp: [@α: *, @β: *, α φ, [β, α], β φ]
+
+  let witherwarp_sameness: [@α: *, a: α φ, (a witherwarp sameness) = a]
+}
+
+## a function into `ρ` witherwarpeth its input: `(ρ ←)` taketh `α` to
+## `[α, ρ]`.
+bizen: [@ρ: *, (ρ ←) contravariant] {
+  let witherwarp: [a:, f:, b:] ≔ (b f) a
+
+  let witherwarp_sameness: [_:] ≔ eftbend
+}

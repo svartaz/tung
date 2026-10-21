@@ -17,4 +17,4 @@ bizen: [@ρ: *, (ρ →) functor] {
 }
 
 show let void: [@φ: [*, *], @: φ functor, @α: *, af: α φ, 𝟙 φ]
-  ≔ af warp {_ ^ only}
+  ≔ af warp (only singal)

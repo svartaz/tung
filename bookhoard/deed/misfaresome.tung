@@ -59,7 +59,7 @@ let wrap_unwrap: [@ε: *, @α: *, m: ε misfaresome α, ((m unwrap) wrap) = m]
 ## changing a sum twice is changing it once with the composite.
 let helpsetting_warp_warp
   : [@ε: *, @α: *, @β: *, @γ: *, s: ε ∨ α, f: [α, β], g: [β, γ],
-    ((s warp f) warp g) = (s warp (f ▷ g))]
+    <{warp, s, f, g} = (s warp (f ▷ g))]
   ≔ match s {
     _ incast₀ ^ eftbend,
     _ incast₁ ^ eftbend
@@ -75,7 +75,7 @@ let tweak_sameness: [@ε: *, @α: *, m: ε misfaresome α, (m tweak sameness) = 
 
 let tweak_tweak
   : [@ε: *, @α: *, @β: *, @γ: *, m: ε misfaresome α, f: [α, β], g: [β, γ],
-    ((m tweak f) tweak g) = (m tweak (f ▷ g))]
+    <{tweak, m, f, g} = (m tweak (f ▷ g))]
   ≔ match m {
     d wrap ^
       wrap leibnitz >{throughgo,
@@ -130,21 +130,19 @@ let warp_flat
     ((m tweak f) flatten) = (m follow f)]
   ≔ wrap leibnitz >{throughgo,
     (m unwrap) deed_bind_bind {s ^ (s warp f) deed_sheer} unfold,
-    (m unwrap) bind_same @(ε ∨ α) @(ε ∨ β) @({
-      s: ε ∨ α ^ ((s warp f) deed_sheer) deed_bind unfold
-    }) @({s: ε ∨ α ^ (s warp f) unfold}) {s ^ (s warp f) deed_sheer_bind unfold}
+    (m unwrap) bind_same {s ^ (s warp f) deed_sheer_bind unfold}
   }
 
 ## following twice is following once by the followed continuation.
 let helpsetting_bind_bind
   : [@ε: *, @α: *, @β: *, @γ: *, m: ε misfaresome α, f: [α, ε misfaresome β],
     g: [β, ε misfaresome γ],
-    ((m follow f) follow g) = (m follow {a ^ (a f) follow g})]
+    <{follow, m, f, g} = (m follow {a ^ (a f) follow g})]
   ≔ wrap leibnitz >{throughgo,
     (m unwrap) deed_bind_bind {s ^ (s warp f) unfold} {s ^ (s warp g) unfold},
-    (m unwrap) bind_same @(ε ∨ α) @(ε ∨ γ) @({
+    (m unwrap) bind_same @(ε ∨ α) @(ε ∨ γ) @{
       s: ε ∨ α ^ ((s warp f) unfold) deed_bind {t ^ (t warp g) unfold}
-    }) @({s: ε ∨ α ^ (s warp {a ^ (a f) follow g}) unfold}) {
+    } @{s: ε ∨ α ^ (s warp {a ^ (a f) follow g}) unfold} {
       e incast₀ ^ (e incast₀) deed_sheer_bind {t ^ (t warp g) unfold},
       _ incast₁ ^ eftbend
     }
@@ -187,8 +185,8 @@ bizen: [@ε: *, (ε misfaresome) onwendsome] {
 
   let sheer_onwend: [a:, f…:] ≔ >{throughgo,
     {k ^ (f… tweak k) flatten} leibnitz ((a give_tweak) fall_umfang),
-    flatten leibnitz ((f… tweak_tweak (a call) give) evenmete),
-    (f… tweak (a call)) tweak_give_flatten
+    flatten leibnitz ((f… tweak_tweak (a ▶) give) evenmete),
+    (f… tweak (a ▶)) tweak_give_flatten
   }
 }
 

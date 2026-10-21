@@ -106,9 +106,9 @@ shortenEta source = maybe source (shortenEta . concatMap T.pieceText) (rewrite [
       _ -> Nothing
 
 -- parentheses are redundant where the parse cannot change: around one atom,
--- a name, literal, or bracketed group, unless `@(…)` writeth an implicit
--- argument or a `:` or `.` followeth; and around a run of atoms that is a
--- whole expression. a comment inside keepeth them, and each becometh a space,
+-- a name, literal, or bracketed group, unless a `:` or `.` followeth, so an
+-- implicit argument is written `@{…}` or `@[…]`; and around a run of atoms
+-- that is a whole expression. a comment inside keepeth them, and each becometh a space,
 -- so no tokens join.
 shortenParens :: String -> String
 shortenParens source = maybe source (shortenParens . concatMap T.pieceText) (strip [] (T.lexPieces source))
@@ -124,7 +124,7 @@ shortenParens source = maybe source (shortenParens . concatMap T.pieceText) (str
              in Just (space opening : inside ++ space closer : after)
       first : rest -> (first :) <$> strip (lexemes first ++ before) rest
     redundant before after = \case
-      [_] -> listToMaybe before /= Just TAt && listToMaybe (concatMap lexemes after) `notElem` [Just TColon, Just TDot]
+      [_] -> listToMaybe (concatMap lexemes after) `notElem` [Just TColon, Just TDot]
       _ : _ : _ -> wholeExpression before after
       [] -> False
     -- the pieces before the bracket that closeth this depth, and the rest.

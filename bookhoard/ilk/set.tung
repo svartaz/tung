@@ -148,15 +148,14 @@ let yoke_swap
     c ^ (
       let left₀ ≔ a ∋_yoke b c
       let right₀ ≔ b ∋_yoke a c
-      yield (left₀ throughgo ((a ∋ c) ⋎_swap (b ∋ c))) throughgo
-        (right₀ evenmete)
+      yield <{throughgo, left₀, (a ∋ c) ⋎_swap (b ∋ c), right₀ evenmete}
     )
   }
 
 let yoke_yoke
   : [@α: *, @: α order_whole, a: α set, b: α set, c: α set,
-    ((a yoke b) yoke c) = (a yoke (b yoke c))]
-  ≔ ((a yoke b) yoke c) umfang (a yoke (b yoke c)) {
+    <{yoke, a, b, c} = >{yoke, a, b, c}]
+  ≔ <{yoke, a, b, c} umfang >{yoke, a, b, c} {
     d ^ (
       let left₀ ≔ a ∋_yoke b d
       let left₁ ≔ (a yoke b) ∋_yoke c d
@@ -164,8 +163,7 @@ let yoke_yoke
       let right₀ ≔ b ∋_yoke c d
       let right₁ ≔ a ∋_yoke (b yoke c) d
       let right₂ ≔ right₁ throughgo ({p: 𝟚 ^ (a ∋ d) ⋎ p} leibnitz right₀)
-      yield (left₂ throughgo ((a ∋ d) ⋎_⋎ (b ∋ d) (c ∋ d))) throughgo
-        (right₂ evenmete)
+      yield <{throughgo, left₂, (a ∋ d) ⋎_⋎ (b ∋ d) (c ∋ d), right₂ evenmete}
     )
   }
 
@@ -180,15 +178,14 @@ let meet_swap
     c ^ (
       let left₀ ≔ a ∋_meet b c
       let right₀ ≔ b ∋_meet a c
-      yield (left₀ throughgo ((a ∋ c) ⋏_swap (b ∋ c))) throughgo
-        (right₀ evenmete)
+      yield <{throughgo, left₀, (a ∋ c) ⋏_swap (b ∋ c), right₀ evenmete}
     )
   }
 
 let meet_meet
   : [@α: *, @: α order_whole, a: α set, b: α set, c: α set,
-    ((a meet b) meet c) = (a meet (b meet c))]
-  ≔ ((a meet b) meet c) umfang (a meet (b meet c)) {
+    <{meet, a, b, c} = >{meet, a, b, c}]
+  ≔ <{meet, a, b, c} umfang >{meet, a, b, c} {
     d ^ (
       let left₀ ≔ a ∋_meet b d
       let left₁ ≔ (a meet b) ∋_meet c d
@@ -196,8 +193,7 @@ let meet_meet
       let right₀ ≔ b ∋_meet c d
       let right₁ ≔ a ∋_meet (b meet c) d
       let right₂ ≔ right₁ throughgo ({p: 𝟚 ^ (a ∋ d) ⋏ p} leibnitz right₀)
-      yield (left₂ throughgo ((a ∋ d) ⋏_⋏ (b ∋ d) (c ∋ d))) throughgo
-        (right₂ evenmete)
+      yield <{throughgo, left₂, (a ∋ d) ⋏_⋏ (b ∋ d) (c ∋ d), right₂ evenmete}
     )
   }
 
@@ -238,8 +234,7 @@ let meet_yoke
         ≔ right₂ throughgo ({p: 𝟚 ^ p ⋎ ((a meet c) ∋ d)} leibnitz right₀)
       let right₄
         ≔ right₃ throughgo ({p: 𝟚 ^ ((a ∋ d) ⋏ (b ∋ d)) ⋎ p} leibnitz right₁)
-      yield (left₂ throughgo ((a ∋ d) ⋏_⋎ (b ∋ d) (c ∋ d))) throughgo
-        (right₄ evenmete)
+      yield <{throughgo, left₂, (a ∋ d) ⋏_⋎ (b ∋ d) (c ∋ d), right₄ evenmete}
     )
   }
 
@@ -258,8 +253,7 @@ let yoke_meet
         ≔ right₂ throughgo ({p: 𝟚 ^ p ⋏ ((a yoke c) ∋ d)} leibnitz right₀)
       let right₄
         ≔ right₃ throughgo ({p: 𝟚 ^ ((a ∋ d) ⋎ (b ∋ d)) ⋏ p} leibnitz right₁)
-      yield (left₂ throughgo ((a ∋ d) ⋎_⋏ (b ∋ d) (c ∋ d))) throughgo
-        (right₄ evenmete)
+      yield <{throughgo, left₂, (a ∋ d) ⋎_⋏ (b ∋ d) (c ∋ d), right₄ evenmete}
     )
   }
 
@@ -272,7 +266,7 @@ let yoke_empty: [@α: *, @: α order_whole, a: α set, (a yoke empty) = a]
   ≔ (a yoke empty) umfang a {
     b ^ (
       let left₀ ≔ a ∋_yoke empty b
-      yield left₀ throughgo (((a ∋ b) ⋎_swap nay) throughgo ((a ∋ b) ⟂_⋎))
+      yield >{throughgo, left₀, (a ∋ b) ⋎_swap nay, (a ∋ b) ⟂_⋎}
     )
   }
 

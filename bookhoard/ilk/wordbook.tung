@@ -1,4 +1,5 @@
 bring flock/algebra/half/category.tung
+bring flock/algebra/half/semigroupoid.tung
 bring flock/functor.tung
 bring flock/functor/downshaper.tung
 bring flock/functor/hath_sift.tung
@@ -60,8 +61,7 @@ bizen: [@α: *, (α wordbook) functor] {
 }
 
 bizen: [@α: *, (α wordbook) hath_sift] {
-  let sift: [l from_list:, umbsay:]
-    ≔ l sift {pair ^ (pair forthcast₁) umbsay} $ from_list
+  let sift: [l from_list:, umbsay:] ≔ l sift (forthcast₁ ▷ umbsay) $ from_list
 }
 
 bizen: [@α: *, @β: *, (α wordbook β) hath_manyhood] {

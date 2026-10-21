@@ -9,6 +9,12 @@ show flock semigroupoid: [⇨: [*, *, *], *] {
       (f ▷ (g ▷ h)) = ((f ▷ g) ▷ h)]
 }
 
+## composition written from the other side: `g ◁ f` is `f ▷ g`.
+show let ◁
+  : [@⇨: [*, *, *], @: ⇨ semigroupoid, @α: *, @β: *, @γ: *, g: β ⇨ γ, f: α ⇨ β,
+    α ⇨ γ]
+  ≔ f ▷ g
+
 bizen fallback: → semigroupoid {
   let ▷: [f:, g:, a:] ≔ a f $ g
 

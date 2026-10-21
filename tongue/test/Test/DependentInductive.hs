@@ -226,11 +226,11 @@ vectorDeclaration =
     (Pi Implicit (Sort (LParam 0)) (Pi Explicit natural (Sort (LParam 0))))
     [ (symbol "vector_empty", Pi Implicit (Sort (LParam 0)) (vectorAt (LParam 0) (Local 0) zero)),
       ( symbol "vector_cons",
-        Pi Implicit (Sort (LParam 0)) $
-          Pi Explicit natural $
-            Pi Explicit (Local 1) $
-              Pi Explicit (vectorAt (LParam 0) (Local 2) (Local 1)) $
-                vectorAt (LParam 0) (Local 3) (successor (Local 2))
+        Pi Implicit (Sort (LParam 0))
+          $ Pi Explicit natural
+          $ Pi Explicit (Local 1)
+          $ Pi Explicit (vectorAt (LParam 0) (Local 2) (Local 1))
+          $ vectorAt (LParam 0) (Local 3) (successor (Local 2))
       )
     ]
 
@@ -246,11 +246,11 @@ vectorOne = vectorCons zero zero vectorEmpty
 vectorReconstruction =
   let motive = Lambda Explicit natural (Lambda Explicit (vector natural (Local 0)) (vector natural (Local 1)))
       method =
-        Lambda Explicit natural $
-          Lambda Explicit natural $
-            Lambda Explicit (vector natural (Local 1)) $
-              Lambda Explicit (vector natural (Local 2)) $
-                vectorCons (Local 3) (Local 2) (Local 0)
+        Lambda Explicit natural
+          $ Lambda Explicit natural
+          $ Lambda Explicit (vector natural (Local 1))
+          $ Lambda Explicit (vector natural (Local 2))
+          $ vectorCons (Local 3) (Local 2) (Local 0)
    in apply Explicit (Apply Implicit (global "vector_induction" [level 0, level 0]) natural) [motive, vectorEmpty, method, successor zero, vectorOne]
 
 vectorCons :: Term -> Term -> Term -> Term
@@ -279,9 +279,9 @@ identity = identityAt (level 0)
 reflexivity, transport, transportedIdentity :: Term
 reflexivity = apply Implicit (global "reflexivity" [level 0]) [natural, zero]
 transport =
-  Lambda Explicit (Pi Explicit natural (sort 0)) $
-    Lambda Explicit (Apply Explicit (Local 0) zero) $
-      let motive = Lambda Explicit natural (Lambda Explicit (identity natural zero (Local 0)) (Apply Explicit (Local 3) (Local 1)))
+  Lambda Explicit (Pi Explicit natural (sort 0))
+    $ Lambda Explicit (Apply Explicit (Local 0) zero)
+    $ let motive = Lambda Explicit natural (Lambda Explicit (identity natural zero (Local 0)) (Apply Explicit (Local 3) (Local 1)))
        in apply Explicit (apply Implicit (global "sameness_induction" [level 0, level 0]) [natural, zero]) [motive, Local 0, zero, reflexivity]
 transportedIdentity = Lambda Explicit (Pi Explicit natural (sort 0)) (Lambda Explicit (Apply Explicit (Local 0) zero) (Local 0))
 

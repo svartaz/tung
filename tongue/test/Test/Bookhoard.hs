@@ -305,7 +305,23 @@ soundnessCases library =
     rejectContaining "a list of one type is not a list of another" "cannot unify ℕ with" $
       compile "let bad: [ℕ list, 𝟚 list] ≔ {l ^ l}",
     rejectContaining "a host binding cannot inhabit an empty type" "requireth a different ilk" $
-      compileAs "soundness_host.tung" "ilk void: * {}\nlet bad: void ≔ 'eke_kindful' fremmed"
+      compileAs "soundness_host.tung" "ilk void: * {}\nlet bad: void ≔ 'eke_kindful' fremmed",
+    -- a wrong model proveth `(a e 0) = 0` by induction, and carrying that to a
+    -- literal computeth `1 = 0`; only the tested bookhoard model is trusted.
+    rejectContaining "a program cannot trust its own model of a host operation" "belongeth to ilk/kindful.tung" $
+      compileWith
+        library
+        "soundness_model.tung"
+        """
+        bring is.tung
+        bring ilk/naught.tung
+        let e: [ℕ, ℕ, ℕ] ≔ 'eke_kindful' fremmed { 0, _ ^ 0, _ heir, _ ^ 0 }
+        let always: [a: ℕ, (a e 0) = 0] ≔ match a { 0 ^ eftbend, _ heir ^ eftbend }
+        let claim: [ℕ, *] ≔ {x ^ (x e 0) = 0}
+        let move: [n: ℕ, p: n = 1, 1 claim] ≔ p throughbear @ℕ @n @1 @claim (n always)
+        let one_naught: [1 = 0, 𝟘] ≔ {}
+        let bad: 𝟘 ≔ (1 move eftbend) one_naught
+        """
   ]
   where
     compile source =

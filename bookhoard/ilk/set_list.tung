@@ -124,15 +124,15 @@ show let put_rowed
       let above_a ≔ (a above leftover) yea_if_former (leftover rowed) held
       let rowed_leftover
         ≔ (a above leftover) yea_if_latter (leftover rowed) held
-      yield (b ≤ a) inlook @𝟚 @({
+      yield (b ≤ a) inlook @𝟚 @{
         c: 𝟚 ^
           ((c if ((a ≤ b) if (a ‥ leftover) (b ‥ (a ‥ leftover)))
             (a ‥ (leftover put b))) rowed) = yea
-      }) {
+      } {
         yea, before ^
-          (a ≤ b) inlook @𝟚 @({
+          (a ≤ b) inlook @𝟚 @{
             c: 𝟚 ^ ((c if (a ‥ leftover) (b ‥ (a ‥ leftover))) rowed) = yea
-          }) {
+          } {
             yea, _       ^ held,
             nay, eftwend ^ (
               let less ≔ b tight_make a before eftwend
@@ -204,8 +204,8 @@ show let above_missing
   ≔ match a… {
     empty        ^ eftbend,
     b ‥ leftover ^
-      (d ≤ b) inlook @𝟚 @({c: 𝟚 ^ (c if (b ≤ d) (leftover inhold d)) = nay}) {
-        yea, _ ^ (b ≤ d) inlook @𝟚 @({c: 𝟚 ^ c = nay}) {
+      (d ≤ b) inlook @𝟚 @{c: 𝟚 ^ (c if (b ≤ d) (leftover inhold d)) = nay} {
+        yea, _ ^ (b ≤ d) inlook @𝟚 @{c: 𝟚 ^ c = nay} {
           yea, held ^ match ((b ≤_yea_throughgo d a held before)
             evenmete) throughgo (a tight_right b
             ((a tight b) yea_if_former (a above leftover) tail)) {},
@@ -220,10 +220,10 @@ show let above_missing
 show let inhold_‥
   : [@α: *, @: α order_whole, a: α, a…: α list, b: α, held: (a above a…) = yea,
     ((a ‥ a…) inhold b) = ((b same a) if yea (a… inhold b))]
-  ≔ (b ≤ a) inlook @𝟚 @({
+  ≔ (b ≤ a) inlook @𝟚 @{
     c: 𝟚 ^
       (c if (a ≤ b) (a… inhold b)) = ((c if (a ≤ b) nay) if yea (a… inhold b))
-  }) {
+  } {
     yea, before ^ (
       let missing ≔ a above_missing a… b held before
       yield match a ≤ b {
@@ -271,18 +271,18 @@ show let put_inhold_if
       let rowed_leftover
         ≔ (a above leftover) yea_if_latter (leftover rowed) held
       let original ≔ a inhold_‥ leftover d above_a
-      yield (b ≤ a) inlook @𝟚 @({
+      yield (b ≤ a) inlook @𝟚 @{
         c: 𝟚 ^
           ((c if ((a ≤ b) if (a ‥ leftover) (b ‥ (a ‥ leftover)))
             (a ‥ (leftover put b))) inhold d) =
             (((a ‥ leftover) inhold d) if yea (d same b))
-      }) {
+      } {
         yea, before ^
-          (a ≤ b) inlook @𝟚 @({
+          (a ≤ b) inlook @𝟚 @{
             c: 𝟚 ^
               ((c if (a ‥ leftover) (b ‥ (a ‥ leftover))) inhold d) =
                 (((a ‥ leftover) inhold d) if yea (d same b))
-          }) {
+          } {
             yea, eftwend ^ (
               let alike ≔ b ≤_= a before eftwend
               yield original throughgo
@@ -303,14 +303,13 @@ show let put_inhold_if
           },
         nay, after ^ (
           let less ≔ a tight_make b (b ≤_flip a after) after
-          yield
-            (a inhold_‥ (leftover put b) d
-              (a above_put leftover b above_a less)) throughgo
-            (({c: 𝟚 ^ (d same a) if yea c} leibnitz
-              (leftover put_inhold_if b d rowed_leftover)) throughgo
-              (((d same a) either_throughgo (leftover inhold d) (d same b))
-                throughgo
-                ({c: 𝟚 ^ c if yea (d same b)} leibnitz (original evenmete))))
+          yield >{throughgo,
+            a inhold_‥ (leftover put b) d (a above_put leftover b above_a less),
+            {c: 𝟚 ^ (d same a) if yea c} leibnitz
+              (leftover put_inhold_if b d rowed_leftover),
+            (d same a) either_throughgo (leftover inhold d) (d same b),
+            {c: 𝟚 ^ c if yea (d same b)} leibnitz (original evenmete)
+          }
         )
       }
     )
@@ -359,11 +358,11 @@ show let sift_inhold_if
       let distribution
         : (((a f) if (b same a) nay) if yea ((leftover inhold b) if (b f) nay))
           = (((b same a) if yea (leftover inhold b)) if (b f) nay)
-        ≔ (b same a) inlook @𝟚 @({
+        ≔ (b same a) inlook @𝟚 @{
           c: 𝟚 ^
             (((a f) if c nay) if yea ((leftover inhold b) if (b f) nay)) =
               ((c if yea (leftover inhold b)) if (b f) nay)
-        }) {
+        } {
           yea, alike ^ (
             let umbsay_alike ≔ f leibnitz (b same_is a alike)
             yield

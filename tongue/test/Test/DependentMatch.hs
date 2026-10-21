@@ -297,6 +297,11 @@ etaTests :: [Test]
 etaTests =
   [ expectEq "a pair equaleth its fields, and a match on an unknown pair reduceth" (Right ()) $
       () <$ compileAs "eta.tung" (families ++ "let eta: [@α: *, @β: *, p: α ∧ β, p = ((p first) ⸴ (p second))] ≔ eftbend\nlet swap: [@α: *, @β: *, α ∧ β, β ∧ α] ≔ {a ⸴ b ^ b ⸴ a}\nlet swap_swap: [@α: *, @β: *, p: α ∧ β, ((p swap) swap) = p] ≔ eftbend\nlet unit: [a: one, a = only] ≔ eftbend\n"),
+    -- without fields, any two worths are equal; only their types tell so.
+    expectEq "any two worths of a fieldless family are equal" (Right ()) $
+      () <$ compileAs "eta.tung" (families ++ "let units: [a: one, b: one, a = b] ≔ eftbend\nlet under: [f: [two, one], g: [two, one], b: two, (b f) = (b g)] ≔ eftbend\n"),
+    rejectContaining "a pair is not determined by its type" "cannot unify" $
+      compileAs "eta.tung" (families ++ "let bad: [p: one ∧ two, q: one ∧ two, p = q] ≔ eftbend\n"),
     rejectContaining "a family of two constructors hath no η" "cannot unify" $
       compileAs "eta.tung" (families ++ "let bad: [a: two, a = yea] ≔ eftbend\n"),
     rejectContaining "a recursive family hath no η" "cannot unify" $

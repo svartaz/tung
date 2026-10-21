@@ -22,7 +22,7 @@ show flock onwendsome: [φ: [*, *], @: φ functor, *] {
 
   let sheer_onwend
     : [@α: *, @β: *, a: α, fs: [α, β] φ,
-      ((a sheer) onwend fs) = (fs warp (a call))]
+      ((a sheer) onwend fs) = (fs warp (a ▶))]
 }
 
 ## the reader sheereth a constant and onwendeth pointwise.

@@ -57,6 +57,7 @@ import Control.Monad.Trans.Except (ExceptT, catchE, runExceptT, throwE, withExce
 import Control.Monad.Trans.State.Strict (State, StateT, runState, runStateT)
 import Control.Monad.Trans.State.Strict qualified as State
 import Data.Either (isRight)
+import Data.Functor ((<&>))
 import Data.Functor.Const (Const (..))
 import Data.List (find)
 import Data.Map.Strict qualified as Map
@@ -543,10 +544,13 @@ unifyForced context left right = do
       when solved (unify context actual expected)
       pure solved
     congruent (N.VNeutral (N.NLocal left)) (N.VNeutral (N.NLocal right)) | left == right = pure True
-    congruent (N.VNeutral (N.NApply p function argument)) (N.VNeutral (N.NApply q otherFunction otherArgument)) | p == q = do
-      unify context (N.VNeutral function) (N.VNeutral otherFunction)
-      unify context argument otherArgument
-      pure True
+    -- applications of different worths may still be equal by their type.
+    congruent left@(N.VNeutral (N.NApply p function argument)) right@(N.VNeutral (N.NApply q otherFunction otherArgument)) | p == q = do
+      trial (unify context (N.VNeutral function) (N.VNeutral otherFunction) >> unify context argument otherArgument) >>= \case
+        Right ((), keep) -> True <$ keep
+        Left problem -> do
+          unit <- (&&) <$> (quote depth left >>= unitTyped) <*> (quote depth right >>= unitTyped)
+          if unit then pure True else raise problem
     congruent (N.VNeutral (N.NGlobal name levels)) (N.VNeutral (N.NGlobal otherName otherLevels))
       | name == otherName,
         length levels == length otherLevels = do
@@ -572,11 +576,24 @@ unifyForced context left right = do
     congruent neutral@N.VNeutral {} literal@N.VLiteral {}
       | N.VNeutral constructor <- N.constructorForm literal =
           congruent neutral (N.VNeutral constructor)
+    -- when a family with one constructor hath no fields, any two of its
+    -- worths are equal, which only their types can tell.
     congruent left right = do
       a <- quote depth left
       b <- quote depth right
-      display <- displaySymbol <$> get
-      failure (renderMismatchWith display depth a b)
+      unit <- (&&) <$> unitTyped a <*> unitTyped b
+      if unit
+        then pure True
+        else do
+          display <- displaySymbol <$> get
+          failure (renderMismatchWith display depth a b)
+    -- inference here only decideth; its effects are not kept.
+    unitTyped term =
+      speculate (infer context term >>= force) >>= \case
+        Just (N.VNeutral neutral, _)
+          | (N.NGlobal family _, _) <- N.neutralSpine neutral ->
+              currentGlobals <&> \globals -> maybe False (\(_, _, count) -> count == 0) (N.etaFamily globals family)
+        _ -> pure False
     sameFields fields others = True <$ zipWithM_ (unify context) (map snd fields) (map snd others)
 
 metaSpine :: N.Value -> Maybe (Int, [(Plicity, N.Value)])
@@ -938,16 +955,25 @@ approximateWith both = do
           | p == q,
             both || flexible actual /= flexible expected -> do
               Inference {solutionVersion = before, pendingEquations = waiting} <- get
-              modify' (\state -> state {pendingEquations = reverse kept ++ rest})
-              unify context function otherFunction
-              unify context argument otherArgument
               -- the postponed parts are split at once, as `?φ ?a x = ∧ α x`
               -- needeth two splits to reach `?φ = ∧`; each split shorteneth
               -- a spine, so this endeth. a split that only postponeth its parts
               -- is no progress, so a caller that retrieth on progress stopeth.
-              deeper <- approximateWith both
-              Inference {solutionVersion = after, pendingEquations = now} <- get
-              pure (deeper || after > before || length now < length waiting)
+              -- a split whose parts contradict, as `?f x = g (h y)` with `x`
+              -- and `h y` of different ilks, is no solution: the equation is
+              -- kept for a later one, such as a fallback bizen fixing a hole
+              -- in `g`.
+              let parts = do
+                    modify' (\state -> state {pendingEquations = reverse kept ++ rest})
+                    unify context function otherFunction
+                    unify context argument otherArgument
+                    approximateWith both
+              speculate parts >>= \case
+                Just (deeper, keep) -> do
+                  keep
+                  Inference {solutionVersion = after, pendingEquations = now} <- get
+                  pure (deeper || after > before || length now < length waiting)
+                Nothing -> split rest (equation : kept)
         _ -> split rest (equation : kept)
     applied = \case
       N.VNeutral (N.NApply plicity function argument) -> Just (plicity, N.VNeutral function, argument)

@@ -151,7 +151,7 @@ lawPrograms = twoLaws ++ concatMap carrierLaws carriers
         law (carrier ++ " warp composeth") worths (\l -> "(" ++ l ++ " warp f) warp g") (\l -> l ++ " warp (f ▷ g)"),
         law (carrier ++ " onwend keepeth sheer sameness") worths (\l -> l ++ " onwend ((sameness: [ℤ, ℤ]) sheer)") id,
         law (carrier ++ " sheer onwend sheer") values (\a -> "((" ++ a ++ " sheer): " ++ sheerType ++ ") onwend (f sheer)") (\a -> "((" ++ a ++ " f) sheer: " ++ sheerType ++ ")"),
-        law (carrier ++ " sheer onwend") values (\a -> "((" ++ a ++ " sheer): " ++ sheerType ++ ") onwend (" ++ fs ++ ")") (\a -> "(" ++ fs ++ ") warp (" ++ a ++ " call)"),
+        law (carrier ++ " sheer onwend") values (\a -> "((" ++ a ++ " sheer): " ++ sheerType ++ ") onwend (" ++ fs ++ ")") (\a -> "(" ++ fs ++ ") warp (" ++ a ++ " ▶)"),
         law (carrier ++ " sheer bind") values (\a -> "((" ++ a ++ " sheer): " ++ sheerType ++ ") bind " ++ k) (\a -> a ++ " " ++ k),
         law (carrier ++ " bind sheer") worths (\l -> l ++ " bind sheer") id,
         law (carrier ++ " bind associateth") worths (\l -> "(" ++ l ++ " bind " ++ k ++ ") bind " ++ k) (\l -> l ++ " bind {y: ℤ ^ (y " ++ k ++ ") bind " ++ k ++ "}"),

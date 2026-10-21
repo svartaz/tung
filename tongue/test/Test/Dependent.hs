@@ -112,12 +112,12 @@ universeTests =
             universeEntails [LevelBelow p q] (LevelEqual p q),
             universeEntails [LevelBelow p q, LevelBelow q r] (LevelBelow p r)
           ],
-    expect "an impossible maximum is rejected before unrelated choices" $
-      not $
-        universeSatisfiable
-          ( [LevelEqual (LParam 64) LZero, LevelEqual (LParam 65) LZero]
-              ++ [LevelBelow (LSucc LZero) (LMax (LParam (2 * index)) (LParam (2 * index + 1))) | index <- [0 .. 32]]
-          ),
+    expect "an impossible maximum is rejected before unrelated choices"
+      $ not
+      $ universeSatisfiable
+        ( [LevelEqual (LParam 64) LZero, LevelEqual (LParam 65) LZero]
+            ++ [LevelBelow (LSucc LZero) (LMax (LParam (2 * index)) (LParam (2 * index + 1))) | index <- [0 .. 32]]
+        ),
     expect "universe search rechecketh previously satisfied choices" $
       let x = LParam 0
           y = LParam 1

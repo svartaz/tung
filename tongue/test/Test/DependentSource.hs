@@ -154,12 +154,12 @@ assumptionTests =
 inspectTests :: Library -> [Test]
 inspectTests library =
   [ expectEq "inlook retaineth computed branch equations and reduceth" (Right True) do
-      program <- compile "let remembered:[b:two,two] ≔ (b flip) inlook @two @({_ ^ two}) {yea, known ^ (let k:(b flip) = yea ≔ known yield nay), nay, known ^ (let k:(b flip) = nay ≔ known yield yea)}"
+      program <- compile "let remembered:[b:two,two] ≔ (b flip) inlook @two @{_ ^ two} {yea, known ^ (let k:(b flip) = yea ≔ known yield nay), nay, known ^ (let k:(b flip) = nay ≔ known yield yea)}"
       forM_ (sourceDefinitions program) (validate (sourceEnvironment program) . snd)
       sameNormalIn program "yea remembered" "yea",
-    rejectContaining "inlook's equation nameth only its own branch" "cannot unify yea with nay" (compile "let wrong:[b:two,two] ≔ b inlook @two @({_ ^ two}) {yea,known ^ (let k:b = nay ≔ known yield nay), nay,_ ^ yea}"),
+    rejectContaining "inlook's equation nameth only its own branch" "cannot unify yea with nay" (compile "let wrong:[b:two,two] ≔ b inlook @two @{_ ^ two} {yea,known ^ (let k:b = nay ≔ known yield nay), nay,_ ^ yea}"),
     expectEq "inlook inferreth a result with a written motive" (Right True) do
-      program <- compile "let swap ≔ {b:two ^ b inlook @two @({_ ^ two}) {yea,known ^ nay, nay,known ^ yea}}"
+      program <- compile "let swap ≔ {b:two ^ b inlook @two @{_ ^ two} {yea,known ^ nay, nay,known ^ yea}}"
       sameNormalIn program "yea swap" "nay",
     expectEq "inlook supporteth dependent and outer-dependent results" (Right [True, True, True]) do
       program <-
@@ -167,7 +167,7 @@ inspectTests library =
           """
           let choice:[b:two,*] ≔ match b {yea ^ ℕ, nay ^ string}
           let dependent:[b:two,b choice] ≔ b inlook {yea,known ^ 0, nay,known ^ 'x'}
-          let retained:[b:two,b = b] ≔ (b flip) inlook @two @({_ ^ b = b}) {yea,known ^ eftbend, nay,known ^ eftbend}
+          let retained:[b:two,b = b] ≔ (b flip) inlook @two @{_ ^ b = b} {yea,known ^ eftbend, nay,known ^ eftbend}
           """
       traverse (uncurry (sameNormalIn program)) [("yea dependent", "0"), ("nay dependent", "'x'"), ("yea retained", "(eftbend:yea = yea)")]
   ]
@@ -195,7 +195,7 @@ proofAuditTests =
       audited <- auditProof program "unfinished"
       pure (dependencies audited, [verifyProof program strict Nothing audited | strict <- [True, False]]),
     expectEq "a host model's sorry preventeth certification and retaineth host trust" (Right (expectedHostDependencies, Left "unfinished proof: sorry")) do
-      program <- compile hostModel
+      program <- compileProject kindfulModule ("bring is.tung\n" ++ hostModel) (Map.singleton "is.tung" equalitySource)
       audited <- auditProof program "selected"
       pure (dependencies audited, verifyProof program True Nothing audited),
     expectEq "an inductive field retaineth its private type assumption" (Right [(SymbolId sourceModule "hidden", AxiomDependency)]) do
@@ -218,7 +218,9 @@ proofAuditTests =
   where
     dependencies = sortOn fst . map (\ProofDependency {dependencySymbol, dependencyKind} -> (dependencySymbol, dependencyKind)) . auditDependencies
     expectedTypeDependencies = sortOn fst [(SymbolId sourceModule "unfinished", AxiomDependency), (SymbolId PrimitiveModule "sorry", SorryDependency)]
-    expectedHostDependencies = sortOn fst [(SymbolId sourceModule "add", HostDependency "eke_kindful"), (SymbolId PrimitiveModule "sorry", SorryDependency)]
+    -- a model is trusted only in its catalogued bookhoard file.
+    kindfulModule = SourceModule "ilk/kindful.tung"
+    expectedHostDependencies = sortOn fst [(SymbolId kindfulModule "add", HostDependency "eke_kindful"), (SymbolId PrimitiveModule "sorry", SorryDependency)]
     dictionaryProof =
       """
       flock law:[α:*,*] { let rule:[x:α,x = x] }

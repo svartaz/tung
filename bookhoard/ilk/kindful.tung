@@ -278,7 +278,7 @@ let helpsetting_≤_=
   : [a: ℕ, b: ℕ, below: (a ≤ b) = yea, above: (b ≤ a) = yea, a = b]
   ≔ a helpsetting_≍_= b
     ({c: 𝟚 ^ c ≤ (a ≍ b)} yea_throughbear above
-      ({c: 𝟚 ^ c ≤ ((b ≤ a) ≤ (a ≍ b))} yea_throughbear below
+      ({c: 𝟚 ^ >{≤, c, b ≤ a, a ≍ b}} yea_throughbear below
         (a helpsetting_≤_withevenmete b)))
 
 bizen: ℕ ≍_to_= {
@@ -395,13 +395,13 @@ let helpsetting_deal_step_eftbuild
     (n heir) eftbuild e (e deal_step p)]
   ≔ match p {
     q ⸴ r ^
-      (r ≍ e) inlook @𝟚 @({
+      (r ≍ e) inlook @𝟚 @{
         c: 𝟚 ^ (n heir) eftbuild e (c if ((q heir) ⸴ 0) (q ⸴ (r heir)))
-      }) {
+      } {
         yea, known ^ >{throughgo,
           {a: ℕ ^ a + (q heir)} leibnitz (q heir_· e),
           {a: ℕ ^ a heir} leibnitz ((q · e) helpsetting_+_spin e q),
-          {a: ℕ ^ (((q · e) + q) + a) heir} leibnitz
+          {a: ℕ ^ <{+, q · e, q, a} heir} leibnitz
             ((r helpsetting_≍_= e known) evenmete),
           heir leibnitz held
         },
@@ -413,7 +413,7 @@ let helpsetting_deal_step_hem
   : [e: ℕ, p: ℕ ∧ ℕ, held: e hem p, e hem (e deal_step p)]
   ≔ match p {
     q ⸴ r ^
-      (r ≍ e) inlook @𝟚 @({c: 𝟚 ^ e hem (c if ((q heir) ⸴ 0) (q ⸴ (r heir)))}) {
+      (r ≍ e) inlook @𝟚 @{c: 𝟚 ^ e hem (c if ((q heir) ⸴ 0) (q ⸴ (r heir)))} {
         yea, _     ^ eftbend,
         nay, known ^ r helpsetting_≤_≭ e held known
       }
@@ -445,14 +445,14 @@ show let %_eftbuild
   : [n: ℕ, e: ℕ, q: ℕ, r: ℕ, dealt: (n % (e heir)) = ((q ⸴ r) some),
     ((q · (e heir)) + r) = n]
   ≔ (n helpsetting_%_pair e q r dealt) throughbear @(ℕ ∧ ℕ) @(n deal e) @(q ⸴ r)
-    @({a: ℕ ∧ ℕ ^ n eftbuild e a}) (n helpsetting_deal_eftbuild e)
+    @{a: ℕ ∧ ℕ ^ n eftbuild e a} (n helpsetting_deal_eftbuild e)
 
 ## the leftover of dealing by `e heir` is at most `e`.
 show let %_leftover
   : [n: ℕ, e: ℕ, q: ℕ, r: ℕ, dealt: (n % (e heir)) = ((q ⸴ r) some),
     (r ≤ e) = yea]
   ≔ (n helpsetting_%_pair e q r dealt) throughbear @(ℕ ∧ ℕ) @(n deal e) @(q ⸴ r)
-    @({a: ℕ ∧ ℕ ^ e hem a}) (n helpsetting_deal_hem e)
+    @{a: ℕ ∧ ℕ ^ e hem a} (n helpsetting_deal_hem e)
 
 ## taking away at most `e` and eking it back giveth `e`.
 show let ∸_+: [a: ℕ, b: ℕ, below: (b ≤ a) = yea, ((a ∸ b) + b) = a]

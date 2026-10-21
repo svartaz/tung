@@ -56,6 +56,17 @@ tests example =
       compiled (example ++ "ilk unit:* { only: unit }\nlet bad:𝟚 ≔ only ≍ only\n"),
     rejectContaining "a second bizen of one type is rejected" "a bizen with the same ilk already exists" $
       compiled (example ++ "bizen:𝟚 hath_≍ { let ≍ ≔ {_, _ ^ yea}\nlet ≍_eftbend ≔ sorry }\n"),
+    -- neither module seeth the other's bizen, so bring order must not choose.
+    rejectContaining "bizens of one type from two imports are rejected" "bizens of flock 'pointed' from" $
+      compileProject
+        (SourceModule "both.tung")
+        "bring left.tung\nbring right.tung\n"
+        ( Map.fromList
+            [ ("pointed.tung", "show ilk two:* { yea:two, nay:two }\nshow flock pointed:[α:*, *] { let point:α }\n"),
+              ("left.tung", "bring pointed.tung\nbizen:two pointed { let point ≔ yea }\n"),
+              ("right.tung", "bring pointed.tung\nbizen:two pointed { let point ≔ nay }\n")
+            ]
+        ),
     rejectContaining "a member must have its declared type" "in bizen of" $
       compiled (example ++ "bizen:(𝟚 maybe) maybe hath_≍ { let ≍ ≔ yea\nlet ≍_eftbend ≔ sorry }\n"),
     rejectContaining "a bizen defineth each law" "bizen is missing member '≍_eftbend'" $
@@ -113,6 +124,18 @@ selectionTests =
       sameNormalIn program "worth" "+7",
     rejectContaining "without a fallback, a carrier that only one bizen fiteth stayeth unknown" "still unknown" $
       compiled "let →:[α:*, β:*, *] ≔ [α, β] flock marker:[φ:[*, *, *], *] { let mark:[@α:*, α φ α, ℤ] } bizen:→ marker { let mark: [_:] ≔ +7 } let worth:ℤ ≔ ({x ^ x}:[ℤ, ℤ]) mark",
+    -- `?g x = k x same` waiteth on `same`'s dictionary. its first-order split
+    -- `?g = k x` is ill-typed, so it is undone, and the fallback's
+    -- dictionary letteth `?g` be abstracted.
+    expectEq "an ill-typed approximation leaveth its equation to a fallback bizen" (Right ()) . (() <$) $
+      compiled
+        """
+        let →:[α:*, β:*, *] ≔ [α, β]
+        flock marker:[φ:[*, *, *], *] { let same:[@α:*, α φ α] }
+        bizen fallback:→ marker { let same: [a:] ≔ a }
+        let pointwise:[@α:*, @β:*, x:α, @f:[α, β], @g:[α, β], each:[a:α, (a f) = (a g)], (x f) = (x g)] ≔ x each
+        let probe:[x:ℤ, k:[ℤ, [ℤ, ℤ], ℤ], (x {p ^ p k same}) = (x {p ^ p k same})] ≔ x pointwise {p ^ eftbend}
+        """,
     expectEq "the innermost local dictionary outranketh a global instance" (Right True) do
       program <-
         compiled

@@ -148,7 +148,7 @@ bizen: list monad {
   } a
 
   let sheer_onwend: [@α:, @β:, a:, f…:] ≔ {
-    a…: [α, β] list ^ ((a sheer) onwend a…) = (a… warp (a call))
+    a…: [α, β] list ^ ((a sheer) onwend a…) = (a… warp (a ▶))
   } unbuild list eftbend {first, _, soothing ^ ((a first) ‥) leibnitz soothing}
     f…
 

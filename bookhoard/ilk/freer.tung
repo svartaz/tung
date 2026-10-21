@@ -45,7 +45,7 @@ let helpsetting_warp_sameness
 ## mapping twice is mapping once with the composite.
 let warp_warp
   : [@φ: [*, *], @α: *, @β: *, @γ: *, forewrit: φ freer α, f: [α, β], g: [β, γ],
-    ((forewrit warp f) warp g) = (forewrit warp {a ^ a f $ g})]
+    <{warp, forewrit, f, g} = (forewrit warp {a ^ a f $ g})]
   ≔ match forewrit {
     _ done                   ^ eftbend,
     request more throughwone ^
@@ -79,7 +79,7 @@ let warp_flat
 let helpsetting_bind_bind
   : [@φ: [*, *], @α: *, @β: *, @γ: *, forewrit: φ freer α, f: [α, φ freer β],
     g: [β, φ freer γ],
-    ((forewrit bind f) bind g) = (forewrit bind {a ^ (a f) bind g})]
+    <{bind, forewrit, f, g} = (forewrit bind {a ^ (a f) bind g})]
   ≔ match forewrit {
     _ done                   ^ eftbend,
     request more throughwone ^

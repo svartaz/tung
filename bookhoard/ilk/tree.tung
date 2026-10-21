@@ -38,7 +38,7 @@ bizen: [@α: *, @β: *, (α tree β) hath_manyhood] {
 
 let make
   : [@α: *, @β: *, key: α, worth: β, left: α tree β, right: α tree β, α tree β]
-  ≔ (((left weight) + (right weight)) + 1) knot key worth left right
+  ≔ <{+, left weight, right weight, 1} knot key worth left right
 
 # rotations keep the order of keys; a missing child leaveth the knot as is.
 let onefold_left
@@ -118,14 +118,13 @@ show let put
   }
 
 # the least entry and the leftover of the tree, if any.
-let behead: [@α: *, @β: *, t: α tree β, ((α ∧ β) ∧ (α tree β)) maybe]
-  ≔ match t {
-    leaf           ^ none,
-    _ knot k v l r ^ match l behead {
-      none                    ^ ((k ⸴ v) ⸴ r) some,
-      (least ⸴ leftover) some ^ (least ⸴ (k balance v leftover r)) some
-    }
+let behead: [@α: *, @β: *, t: α tree β, <{∧, α, β, α tree β} maybe] ≔ match t {
+  leaf           ^ none,
+  _ knot k v l r ^ match l behead {
+    none                    ^ ((k ⸴ v) ⸴ r) some,
+    (least ⸴ leftover) some ^ (least ⸴ (k balance v leftover r)) some
   }
+}
 
 # two trees whose keys are ordered one before the other, yoked.
 let glue: [@α: *, @β: *, left: α tree β, right: α tree β, α tree β]

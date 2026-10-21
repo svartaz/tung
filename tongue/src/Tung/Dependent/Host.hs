@@ -20,17 +20,18 @@ module Tung.Dependent.Host
 where
 
 import Control.Monad (foldM, forM_, unless, void, when)
-import Data.List (elemIndex, find, sort)
+import Data.List (elemIndex, find, isSuffixOf, sort)
 import Data.Map.Strict qualified as Map
 import Data.Maybe (isNothing)
 import Data.Set qualified as Set
+import System.FilePath (splitDirectories)
 import Tung.Dependent.Check qualified as K
 import Tung.Dependent.Inductive qualified as I
 import Tung.Dependent.Literal (coreConstructor, hostTypeSymbol, literalTypeNames)
 import Tung.Dependent.Normalise qualified as N
 import Tung.Dependent.Syntax
 import Tung.Identity (ModuleId (..), SymbolId (..), inductionSymbol)
-import Tung.Primitive (HostBinding (..), HostDataSchema (..), HostSignature (..), HostType (..), findForeignBinding, hostDataSchemas, integerNegativeId, integerPositiveId, naturalSuccessorId, naturalZeroId, oneName, opaqueTypeFamilyNames, pureOperation)
+import Tung.Primitive (HostBinding (..), HostDataSchema (..), HostSignature (..), HostType (..), findForeignBinding, hostDataSchemas, integerNegativeId, integerPositiveId, modelSource, naturalSuccessorId, naturalZeroId, oneName, opaqueTypeFamilyNames, pureOperation)
 
 -- primitive types and `sorry` precede every module. host value types live in
 -- the base universe, so literals carry no levels. `sorry` inhabiteth every type;
@@ -88,6 +89,8 @@ defineHost environment@(K.Environment globals) name key model signature@K.Inferr
   validateHostData globals hostSignature
   forM_ model \symbol -> do
     when (isNothing (pureOperation key)) (Left ("host key '" ++ key ++ "' is not a pure operation, so it cannot have a model"))
+    unless (any (catalogued (symbolModule name)) (modelSource key)) $
+      Left (maybe ("host key '" ++ key ++ "' hath no trusted model") (\source -> "the model of host key '" ++ key ++ "' belongeth to " ++ source) (modelSource key))
     Definition {definitionUniverses, definitionType, definitionBody} <- maybe (Left "unknown model") pure (Map.lookup symbol globals)
     case definitionBody of
       Transparent _ -> pure ()
@@ -99,6 +102,10 @@ defineHost environment@(K.Environment globals) name key model signature@K.Inferr
   where
     isHost wanted (Host actual _) = wanted == actual
     isHost _ _ = False
+    -- a bookhoard file checked by itself, as in an editor, is named by its
+    -- full path.
+    catalogued (SourceModule path) source = splitDirectories source `isSuffixOf` splitDirectories path
+    catalogued _ _ = False
 
 -- a canonical name alone doth not establish its runtime representation. check
 -- the nominal schema and its dependencies before a host can produce values.

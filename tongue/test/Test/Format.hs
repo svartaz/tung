@@ -52,13 +52,13 @@ respace split = go False
 cases :: [(String, String, String)]
 cases =
   [ ( "redundant parentheses are dropped where the parse cannot change",
-      "let a ≔ (m warp)\nlet b ≔ g ((x)) (h) f(x)y [(q r), (c)]\nlet c ≔ g (m tweak) @([α, β]) (p).left (x: ℕ) ((a b) c)\nlet d ≔ ({a ^ (a f)})\nlet e ≔ (a /* kept */ b)\nyield (a b)\n",
+      "let a ≔ (m warp)\nlet b ≔ g ((x)) (h) f(x)y [(q r), (c)]\nlet c ≔ g (m tweak) @([α, β]) @({a ^ a}) @(α) @(ℕ list) (p).left (x: ℕ) ((a b) c)\nlet d ≔ ({a ^ (a f)})\nlet e ≔ (a /* kept */ b)\nyield (a b)\n",
       """
       let a ≔ m warp
 
       let b ≔ g x h f x y [q r, c]
 
-      let c ≔ g (m tweak) @([α, β]) (p).left (x: ℕ) ((a b) c)
+      let c ≔ g (m tweak) @[α, β] @{a ^ a} @α @(ℕ list) (p).left (x: ℕ) ((a b) c)
 
       let d ≔ f
 

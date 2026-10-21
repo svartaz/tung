@@ -729,7 +729,7 @@ let helpsetting_<_spun
   : [a: ℕ, b: ℕ, below: (a ≤ b) = yea,
     ((a overnaught) < ((b heir_undernaught) -+ naught)) = yea]
   ≔ (heir leibnitz ((b naught_+) evenmete)) throughbear @ℕ @(b heir) @((0 + b)
-    heir) @({c: ℕ ^ ((a overnaught) < (c overnaught)) = yea})
+    heir) @{c: ℕ ^ ((a overnaught) < (c overnaught)) = yea}
     (a helpsetting_<_heir b below)
 
 let helpsetting_nonnegative
@@ -897,7 +897,7 @@ let helpsetting_≤_=
   : [a: ℤ, b: ℤ, below: (a ≤ b) = yea, above: (b ≤ a) = yea, a = b]
   ≔ a helpsetting_≍_= b
     ({c: 𝟚 ^ c ≤ (a ≍ b)} yea_throughbear above
-      ({c: 𝟚 ^ c ≤ ((b ≤ a) ≤ (a ≍ b))} yea_throughbear below
+      ({c: 𝟚 ^ >{≤, c, b ≤ a, a ≍ b}} yea_throughbear below
         (a helpsetting_≤_withevenmete b)))
 
 bizen: ℤ ≍_to_= {

@@ -57,9 +57,8 @@ bizen: [@α: *, (α unempty) semigroup_·] {
   let ·_·: [first ‥′ leftover:, next ‥′ middle:, last ‥′ end:]
     ≔ (first ‥′) leibnitz
       ({
-        l: α list ^
-          (l hath_fold~· ((next ‥ middle) hath_fold~· (last ‥ end))) =
-            ((l hath_fold~· (next ‥ middle)) hath_fold~· (last ‥ end))
+        l: α list ^ >{hath_fold~·, l, next ‥ middle, last ‥ end}
+          = <{hath_fold~·, l, next ‥ middle, last ‥ end}
       } unbuild list eftbend {head, _, soothing ^ (head ‥) leibnitz soothing}
         leftover)
 }
@@ -91,7 +90,7 @@ bizen: unempty onwendsome {
     ≔ ((a f) ‥′) leibnitz
       ({
         a…: [α, β] list ^
-          ((a list~onesome) onwendsome~onwend a…) = (a… warp (a call))
+          ((a list~onesome) onwendsome~onwend a…) = (a… warp (a ▶))
       } unbuild list eftbend {
         head, _, soothing ^ ((a head) ‥) leibnitz soothing
       } f…)
@@ -132,8 +131,7 @@ let gather_to_list
 ## binding an unempty list is binding its list.
 let bind_to_list
   : [@α: *, @β: *, a: α unempty, f: [α, β unempty],
-    ((a warp f $ flatten) to_list) =
-      ((a to_list) warp {c ^ (c f) to_list} $ flat)]
+    ((a warp f $ flatten) to_list) = ((a to_list) warp (f ▷ to_list) $ flat)]
   ≔ match a {
     b ‥′ b…′ ^
       ((b…′ warp f) gather_to_list (b f)) throughgo
@@ -148,9 +146,8 @@ let helpsetting_bind_bind
   ≔ ((m warp f $ flatten) warp g $ flatten) helpsetting_to_list_=
     (m warp {a: α ^ (a f) warp g $ flatten} $ flatten) >{throughgo,
       (m warp f $ flatten) bind_to_list g,
-      {l: β list ^ l warp {c ^ (c g) to_list} $ flat} leibnitz
-        (m bind_to_list f),
-      (m to_list) bind_bind {c ^ (c f) to_list} {c ^ (c g) to_list},
+      {l: β list ^ l warp (g ▷ to_list) $ flat} leibnitz (m bind_to_list f),
+      (m to_list) bind_bind (f ▷ to_list) (g ▷ to_list),
       {h: [α, γ list] ^ (m to_list) warp h $ flat} leibnitz
         ({a ^ ((a f) bind_to_list g) evenmete} fall_umfang),
       (m bind_to_list {a: α ^ (a f) warp g $ flatten}) evenmete

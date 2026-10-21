@@ -36,6 +36,13 @@ and runtime erasure is separate.
   against a rigid neutral, so a hole is still solved by assignment. a recursive
   family is excluded, since eliminating its neutral child would unfold without
   end.
+- when such a family hath no fields, any two of its worths are equal, as
+  lean's unit-like structures, so `[a: 𝟙, b: 𝟙, a = b] ≔ eftbend` holdeth.
+  only types can tell this, so it is the last resort: where kernel conversion
+  or the unifier would report a mismatch, or would fail to equate two
+  applications part by part, it infereth both sides' types, with the context
+  grown under each binder, and accepteth two worths of a fieldless family.
+  that inference keepeth no constraint or hole solution.
 - evaluation is glued. a transparent global applied to arguments stayeth
   folded and unfoldeth only when forced. public results are forced at the
   head, except an application's argument, which only instantiateth the
@@ -239,6 +246,8 @@ substituted; occurs and scope checks reject cyclic or escaping solutions.
   between an applied hole and a rigid application is split by first-order
   approximation, as in agda and lean: `?f a = g b` becometh `?f = g` and
   `a = b`. it may miss a higher-order solution, so it is never tried earlier.
+  a split whose parts contradict is undone and its equation waiteth, so a
+  later fallback bizen may still solve it.
   while an annotation is settled, two applied holes `?f a = ?g b` split too.
   general higher-order unification is unsupported; remaining equations need
   annotations or explicit `@` arguments.
@@ -673,7 +682,9 @@ syntax; [`flocks.tung`](../byspel/flocks.tung) showeth these rules.
   comparing parent dictionaries.
 - registered bizens go by priority, higher first, then latest first, as lean
   doth; the first match with its requirements solved winneth, so overlap is
-  never ambiguous. equivalent instance patterns are rejected at registration.
+  never ambiguous. equivalent instance patterns are rejected at registration,
+  and again when imports are merged, since two modules that do not see each
+  other may each register one; bring order never chooseth between them.
   failure reporteth the goal, local requirements, and a rejected candidate's
   reason when known.
 - a candidate's requirements are solved recursively to depth 16, and a goal
@@ -751,9 +762,17 @@ every name.
   universe parameters stay rigid, so the model shareth them even with several
   universe-polymorphic families, as `(ℕ ∧ ℕ) maybe`. the model must be
   transparent with the binding's universe parameters and normalised type, and
-  only pure operations may have one. bookhoard tests compare each model with
-  its native operation on generated literals; the kernel trusteth that
-  agreement as it trusteth the native operation.
+  only pure operations may have one. `modelSource` in `Tung.Primitive` nameth
+  the one bookhoard file that may give each operation's model, matched by its
+  bring path or, for a file checked by itself, a full path ending in it.
+  bookhoard tests compare those models with their native operations on
+  generated literals, and the kernel trusteth that agreement as it trusteth
+  the native operation. a model written anywhere else is rejected: proved by
+  induction and carried to a literal by `throughbear`, a wrong model would
+  contradict the native computation. module identity is the bring path, so a
+  project file at that path, which shadoweth the bookhoard's, replaceth the
+  trusted model too, as it would a host data type; the proof audit still
+  listeth the operation as a host dependency.
 - deed constants never reduce in checking: `x deed_sheer deed_bind f` doth not
   convert with `x f`.
 - a `fast` declaration is a kernel `Fixpoint`, which conversion never

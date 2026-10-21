@@ -143,7 +143,13 @@ tests library example =
     -- the model shareth the binding's checked type, so its universe
     -- parameters agree even when the annotation nameth several families.
     expectEq "a model's annotation may name several universe-polymorphic families" (Right ()) $
-      () <$ compile (prelude ++ "bring ilk/and.tung\nlet deal:[ℕ, ℕ, (ℕ ∧ ℕ) maybe] ≔ 'deal_leftover_kindful' fremmed {_, _ ^ none}\n"),
+      () <$ compileWith library "ilk/kindful.tung" (prelude ++ "bring ilk/and.tung\nlet deal:[ℕ, ℕ, (ℕ ∧ ℕ) maybe] ≔ 'deal_leftover_kindful' fremmed {_, _ ^ none}\n"),
+    -- only the bookhoard file whose model is tested may give one, so a wrong
+    -- model elsewhere cannot make a proof contradict a computation.
+    rejectContaining "a model belongeth to its catalogued bookhoard file" "belongeth to ilk/kindful.tung" $
+      compile (prelude ++ "let plus:[ℕ, ℕ, ℕ] ≔ 'eke_kindful' fremmed {a, _ ^ a}\n"),
+    expectEq "a catalogued file checked by its full path may give its model" (Right ()) $
+      () <$ compileWith library "/checked/bookhoard/ilk/kindful.tung" (prelude ++ "let plus:[ℕ, ℕ, ℕ] ≔ 'eke_kindful' fremmed {a, _ ^ a}\n"),
     rejectContaining "only a sheer operation hath a model" "cannot have a model" $
       compile "let wrap:[@α:*, a: α, α deed] ≔ 'deed_sheer' fremmed sorry\n",
     rejectContaining "without a model, a fremmed annotation cannot bind inputs" "cannot bind inputs" $

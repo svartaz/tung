@@ -1,3 +1,5 @@
+bring flock/algebra/half/category.tung
+bring flock/algebra/half/semigroupoid.tung
 bring flock/algebra/whole/hath_eke.tung
 bring flock/algebra/whole/hath_fold.tung
 bring flock/algebra/whole/monoid_eke.tung
@@ -44,15 +46,16 @@ show let ·_·
   }
 
 ## warping by `sameness` tweaketh nothing.
-show let warp_sameness: [@α: *, a…: α list, (a… warp {a ^ a}) = a…] ≔ match a… {
-  empty            ^ eftbend,
-  first ‥ leftover ^ (first ‥) leibnitz (leftover warp_sameness)
-}
+show let warp_sameness: [@α: *, a…: α list, (a… warp sameness) = a…]
+  ≔ match a… {
+    empty            ^ eftbend,
+    first ‥ leftover ^ (first ‥) leibnitz (leftover warp_sameness)
+  }
 
 ## two warps are one warp by the composite fall.
 show let warp_warp
   : [@α: *, @β: *, @γ: *, a…: α list, f: [α, β], g: [β, γ],
-    ((a… warp f) warp g) = (a… warp {a ^ a f $ g})]
+    <{warp, a…, f, g} = (a… warp (f ▷ g))]
   ≔ match a… {
     empty            ^ eftbend,
     first ‥ leftover ^ ((first f $ g) ‥) leibnitz (leftover warp_warp f g)
@@ -114,7 +117,7 @@ show let sift_dropped
 
 ## sifting twice by one umbsay is sifting once.
 show let sift_sift
-  : [@α: *, a…: α list, p: [α, 𝟚], ((a… sift p) sift p) = (a… sift p)]
+  : [@α: *, a…: α list, p: [α, 𝟚], <{sift, a…, p, p} = (a… sift p)]
   ≔ match a… {
     empty            ^ eftbend,
     first ‥ leftover ^ (first p) inlook {
@@ -141,7 +144,7 @@ show let eftwend_onto
       let eftgrouped ≔ (leftover eftwend) ·_· (first ‥ empty) start
       let unshifted ≔ {a ^ a · start} leibnitz
         ((leftover eftwend_onto (first ‥ empty)) evenmete)
-      yield (shifted throughgo eftgrouped) throughgo unshifted
+      yield <{throughgo, shifted, eftgrouped, unshifted}
     )
   }
 
@@ -160,7 +163,7 @@ show let eftwend_eftwend: [@α: *, a…: α list, ((a… eftwend) eftwend) = a�
       let unfolded ≔ eftwend leibnitz (leftover eftwend_onto (first ‥ empty))
       let split ≔ (leftover eftwend) eftwend_· (first ‥ empty)
       let eftmade ≔ (first ‥) leibnitz (leftover eftwend_eftwend)
-      yield (unfolded throughgo split) throughgo eftmade
+      yield <{throughgo, unfolded, split, eftmade}
     )
   }
 
@@ -177,7 +180,7 @@ show let warp_eftwend
       let inner ≔ {a ^ a · ((first f) ‥ empty)} leibnitz
         (leftover warp_eftwend f)
       let folded ≔ ((leftover warp f) eftwend_onto ((first f) ‥ empty)) evenmete
-      yield ((unfolded throughgo split) throughgo inner) throughgo folded
+      yield <{throughgo, unfolded, split, inner, folded}
     )
   }
 

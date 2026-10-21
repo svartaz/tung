@@ -19,7 +19,7 @@ let above_inhold
     all_above: (a above a…) = yea, limb: (a… inhold c) = yea, (a tight c) = yea]
   ≔ match a… {
     empty        ^ match limb {},
-    b ‥ leftover ^ (c ≤ b) inlook @𝟚 @({_: 𝟚 ^ (a tight c) = yea}) {
+    b ‥ leftover ^ (c ≤ b) inlook @𝟚 @{_: 𝟚 ^ (a tight c) = yea} {
       yea, below ^ (
         let at_head: (b ≤ c) = yea ≔ {q: 𝟚 ^ q if (b ≤ c) (leftover inhold c)}
           yea_throughbear below limb
@@ -43,7 +43,7 @@ show let rowed_tight_limb
 show let inhold_first_below
   : [@α: *, @: α order_whole, a: α, a…: α list, b: α,
     limb: ((a ‥ a…) inhold b) = yea, (a ≤ b) = yea]
-  ≔ (b ≤ a) inlook @𝟚 @({_: 𝟚 ^ (a ≤ b) = yea}) {
+  ≔ (b ≤ a) inlook @𝟚 @{_: 𝟚 ^ (a ≤ b) = yea} {
     yea, below ^ {q: 𝟚 ^ q if (a ≤ b) (a… inhold b)} yea_throughbear below limb,
     nay, below ^ b ≤_flip a below
   }
@@ -66,14 +66,14 @@ let tails_same_first
     left: ((a ‥ a…) rowed) = yea, right: ((a ‥ b…) rowed) = yea,
     same_limbs: [b: α, ((a ‥ a…) inhold b) = ((a ‥ b…) inhold b)], b: α,
     (a… inhold b) = (b… inhold b)]
-  ≔ (b ≤ a) inlook @𝟚 @({_: 𝟚 ^ (a… inhold b) = (b… inhold b)}) {
+  ≔ (b ≤ a) inlook @𝟚 @{_: 𝟚 ^ (a… inhold b) = (b… inhold b)} {
     yea, below ^
       (a tail_missing_below a… b left below) throughgo
         ((a tail_missing_below b… b right below) evenmete),
     nay, below ^ (
       let left_drop ≔ {q: 𝟚 ^ q if (a ≤ b) (a… inhold b)} leibnitz below
       let right_drop ≔ {q: 𝟚 ^ q if (a ≤ b) (b… inhold b)} leibnitz below
-      yield (left_drop evenmete) throughgo ((b same_limbs) throughgo right_drop)
+      yield >{throughgo, left_drop evenmete, b same_limbs, right_drop}
     )
   }
 
@@ -97,13 +97,13 @@ show let umfang
           (b inhold_first_below b… a a_limb)
       # the properties align only the right head.
       let right_aligned: ((a ‥ b…) rowed) = yea
-        ≔ (heads evenmete) throughbear @α @b @a @({
+        ≔ (heads evenmete) throughbear @α @b @a @{
           head: α ^ ((head ‥ b…) rowed) = yea
-        }) right
+        } right
       let limbs_aligned: [c: α, ((a ‥ a…) inhold c) = ((a ‥ b…) inhold c)]
-        ≔ (heads evenmete) throughbear @α @b @a @({
+        ≔ (heads evenmete) throughbear @α @b @a @{
           head: α ^ ((a ‥ a…) inhold c) = ((head ‥ b…) inhold c)
-        }) (c same_limbs)
+        } (c same_limbs)
       let tails
         ≔ a… umfang b… (a rowed_tail a… left) (a rowed_tail b… right_aligned)
           (a tails_same_first a… b… left right_aligned limbs_aligned)

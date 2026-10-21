@@ -10,7 +10,7 @@ module Tung.Dependent.Source.Module
 where
 
 import Control.Applicative ((<|>))
-import Control.Monad (foldM, foldM_, forM)
+import Control.Monad (foldM, foldM_, forM, forM_)
 import Data.Bifunctor (first)
 import Data.Graph (SCC (..), flattenSCC, stronglyConnComp)
 import Data.List (intercalate, nub, sortOn)
@@ -22,6 +22,7 @@ import Tung.Dependent.Host qualified as H
 import Tung.Dependent.Source.Environment
 import Tung.Dependent.Source.Error (CompileFailure (..), FailureKind (..))
 import Tung.Dependent.Source.Error qualified as Error
+import Tung.Dependent.Source.Instance (sameInstance)
 import Tung.Dependent.Source.Parse (SourceSnapshot (..))
 import Tung.Dependent.Source.Syntax
 import Tung.Dependent.Syntax (Definition (..), Plicity (..), Term (..))
@@ -125,8 +126,17 @@ moduleEnvironment declarations compiled = do
       -- imported and local names shadow primitive types.
       primitives = Map.fromList [(symbolName symbol, FreshName symbol (definitionUniverses definition)) | (symbol, definition) <- Map.toList H.primitiveDefinitions, symbol /= H.sorrySymbol, isNothing (inducedFamily symbol)]
       references = Map.unionsWith Set.union [programReferences program | (_, _, _, program) <- imports]
+  -- bizens of one pattern from two imports would make selection depend on
+  -- bring order. registration compareth only the bizens a module seeth, so
+  -- those from different modules are compared again here.
+  forM_ (Map.toList instances) \(family, ClassInfo {classInstances}) ->
+    forM_ (take 1 [(left, right) | (index, left) <- zip [0 :: Int ..] classInstances, right <- drop (index + 1) classInstances, symbolModule left /= symbolModule right, sameInstance (K.Environment definitions) left right]) \(left, right) ->
+      Left (CompileFailure CheckFailure Nothing Nothing ("bizens of flock '" ++ symbolName family ++ "' from " ++ owner left ++ " and " ++ owner right ++ " have the same ilk"))
   pure (SourceProgram (K.Environment definitions) [] (Names (Map.unions [qualified, Map.map resolve alternatives, primitives]) instances) Set.empty (Names Map.empty instances) [] references [])
   where
+    owner symbol = case symbolModule symbol of
+      SourceModule path -> "'" ++ path ++ "'"
+      _ -> "this module"
     -- cached modules may have been checked independently. shared identities
     -- must retain the same definitions, including transitive dependencies.
     mergeGlobals definitions (span, _, path, program) =

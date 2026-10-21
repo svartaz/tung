@@ -386,7 +386,7 @@ precise restrictions.
 `inlook` from `is.tung` also passeth the branch equation:
 `e inlook {p, known ^ body, …}` giveth `known: e = p`, matching a fresh input
 rather than refining `e`. when its result family cannot be inferred, write
-`e inlook @τ @({_ ^ T}) {p, known ^ body, …}`.
+`e inlook @τ @{_ ^ T} {p, known ^ body, …}`.
 
 ### induction
 

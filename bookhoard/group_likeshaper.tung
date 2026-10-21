@@ -65,11 +65,11 @@ show let kernel_/
 ## the kernel is normal: it is closed under turning by any worth.
 show let kernel_spin
   : [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f likeshaped,
-    a: α, b: α, in_a: f kernel a, f kernel ((b · a) · (b /))]
+    a: α, b: α, in_a: f kernel a, f kernel <{·, b, a, b /}]
   ≔ >{throughgo,
     (b · a) hom (b /),
     {c: β ^ c · ((b /) f)} leibnitz (b hom a),
-    {c: β ^ ((b f) · c) · ((b /) f)} leibnitz in_a,
+    {c: β ^ <{·, b f, c, (b /) f}} leibnitz in_a,
     {c: β ^ c · ((b /) f)} leibnitz ((b f) ·_one),
     {c: β ^ (b f) · c} leibnitz (f /_f hom b),
     (b f) ·_/

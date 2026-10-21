@@ -342,8 +342,7 @@ rejectMetas = \case
   term -> traverse_ (rejectMetas . snd) (children term)
 
 convert :: Globals -> Context -> N.Value -> N.Value -> Typing ()
-convert globals Context {contextTypes} actual expected = do
-  let depth = length contextTypes
+convert globals context@Context {contextTypes} actual expected = do
   -- identical folded terms are definitionally equal, including their levels.
   -- other comparisons use the complete normal forms below.
   leftFolded <- lift (N.quoteFoldedWith (N.closed globals) depth actual)
@@ -351,27 +350,48 @@ convert globals Context {contextTypes} actual expected = do
   unless (leftFolded == rightFolded) do
     left <- lift (N.quote globals depth actual)
     right <- lift (N.quote globals depth expected)
-    compareTerms left right
+    compareTerms context left right
   where
-    compareTerms (Sort left) (Sort right) = oblige (LevelEqual left right)
-    compareTerms (Local left) (Local right) | left == right = pure ()
-    compareTerms (Global left ls) (Global right rs) | left == right, length ls == length rs = traverse_ oblige (zipWith LevelEqual ls rs)
-    compareTerms (Pi lp ld lc) (Pi rp rd rc) | lp == rp = compareTerms ld rd >> compareTerms lc rc
-    compareTerms (Lambda lp ld lb) (Lambda rp rd rb) | lp == rp = compareTerms ld rd >> compareTerms lb rb
-    compareTerms (Apply lp lf la) (Apply rp rf ra) | lp == rp = compareTerms lf rf >> compareTerms la ra
-    compareTerms (Literal ln lv) (Literal rn rv) | ln == rn, lv == rv = pure ()
-    compareTerms (RecordType left) (RecordType right) | map fst left == map fst right = zipWithM_ compareTerms (map snd left) (map snd right)
-    compareTerms (Record left) (Record right) | map fst left == map fst right = zipWithM_ compareTerms (map snd left) (map snd right)
-    compareTerms (Project left ln) (Project right rn) | ln == rn = compareTerms left right
-    compareTerms (Field li left) (Field ri right) | li == ri = compareTerms left right
+    depth = length contextTypes
+    -- the context groweth under each binder, so a worth's type is known
+    -- where only its type can decide.
+    compareTerms _ (Sort left) (Sort right) = oblige (LevelEqual left right)
+    compareTerms _ (Local left) (Local right) | left == right = pure ()
+    compareTerms _ (Global left ls) (Global right rs) | left == right, length ls == length rs = traverse_ oblige (zipWith LevelEqual ls rs)
+    compareTerms current (Pi lp ld lc) (Pi rp rd rc) | lp == rp = compareTerms current ld rd >> under current ld \inner -> compareTerms inner lc rc
+    compareTerms current (Lambda lp ld lb) (Lambda rp rd rb) | lp == rp = compareTerms current ld rd >> under current ld \inner -> compareTerms inner lb rb
+    compareTerms current left@(Apply lp lf la) right@(Apply rp rf ra) | lp == rp = do
+      -- applications of different worths may still be equal by their type.
+      universes <- get
+      case runStateT (compareTerms current lf rf >> compareTerms current la ra) universes of
+        Right ((), after) -> put after
+        Left problem -> do
+          unit <- (&&) <$> unitTyped current left <*> unitTyped current right
+          unless unit (lift (Left problem))
+    compareTerms _ (Literal ln lv) (Literal rn rv) | ln == rn, lv == rv = pure ()
+    compareTerms current (RecordType left) (RecordType right) | map fst left == map fst right = zipWithM_ (compareTerms current) (map snd left) (map snd right)
+    compareTerms current (Record left) (Record right) | map fst left == map fst right = zipWithM_ (compareTerms current) (map snd left) (map snd right)
+    compareTerms current (Project left ln) (Project right rn) | ln == rn = compareTerms current left right
+    compareTerms current (Field li left) (Field ri right) | li == ri = compareTerms current left right
     -- η: a function equaleth the lambda that applieth it.
-    compareTerms (Lambda lp _ lb) right = compareTerms lb (Apply lp (shiftTerm 1 right) (Local 0))
-    compareTerms left (Lambda rp _ rb) = compareTerms (Apply rp (shiftTerm 1 left) (Local 0)) rb
+    compareTerms current (Lambda lp ld lb) right = under current ld \inner -> compareTerms inner lb (Apply lp (shiftTerm 1 right) (Local 0))
+    compareTerms current left (Lambda rp rd rb) = under current rd \inner -> compareTerms inner (Apply rp (shiftTerm 1 left) (Local 0)) rb
     -- η for a family with one constructor and no indices: its constructor
     -- applied to fields equaleth any worth whose fields are those.
-    compareTerms left right | Just fields <- etaTerm left = zipWithM_ (\index value -> compareTerms value (Field index right)) [0 ..] fields
-    compareTerms left right | Just fields <- etaTerm right = zipWithM_ (\index value -> compareTerms (Field index left) value) [0 ..] fields
-    compareTerms a b = failure (renderMismatch (length contextTypes) a b)
+    compareTerms current left right | Just fields <- etaTerm left = zipWithM_ (\index value -> compareTerms current value (Field index right)) [0 ..] fields
+    compareTerms current left right | Just fields <- etaTerm right = zipWithM_ (\index value -> compareTerms current (Field index left) value) [0 ..] fields
+    -- when the family hath no fields, any two of its worths are equal, which
+    -- only their types can tell.
+    compareTerms current a b = do
+      unit <- (&&) <$> unitTyped current a <*> unitTyped current b
+      unless unit (failure (renderMismatch depth a b))
+    under current domain continue = evaluate globals current domain >>= continue . bind current
+    -- inference here only decideth; its constraints and failures are dropped.
+    unitTyped current term = do
+      universes <- get
+      pure case runStateT (inferTerm globals current term) universes >>= N.quote globals (contextDepth current) . fst of
+        Right ty | (Global family _, _) <- termSpine ty, Just (_, _, 0) <- N.etaFamily globals family -> True
+        _ -> False
     etaTerm term = case termSpine term of
       (Global constructor _, arguments)
         | Just Definition {definitionBody = DataConstructor owner _} <- Map.lookup constructor globals,

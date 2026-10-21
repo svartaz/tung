@@ -29,6 +29,7 @@ module Tung.Primitive
     findForeignBinding,
     HostValue (..),
     pureOperation,
+    modelSource,
     naturalZeroId,
     naturalSuccessorId,
     integerPositiveId,
@@ -274,6 +275,20 @@ data HostValue
 -- floor, or unreadable text yieldeth none. integer division is euclidean.
 pureOperation :: String -> Maybe ([HostValue] -> Maybe HostValue)
 pureOperation key = snd <$> find ((== key) . hostName . fst) pureBindings
+
+-- the bookhoard file whose model of a pure operation is trusted. bookhoard
+-- tests compare each such model with its native operation; a model written
+-- elsewhere could disagree with it, and a proof by the model could then
+-- contradict a computation.
+modelSource :: String -> Maybe FilePath
+modelSource key = fst <$> find ((key `elem`) . snd) modelSources
+  where
+    modelSources =
+      [ ("ilk/kindful.tung", ["same_kindful", "at_most_kindful", "eke_kindful", "offdraw_kindful", "fold_kindful", "deal_leftover_kindful"]),
+        ("ilk/wholetale.tung", ["kindful_to_wholetale", "wholetale_to_kindful", "eke_wholetale", "offdraw_wholetale", "fold_wholetale", "same_wholetale", "at_most_wholetale", "flip_wholetale", "deal_leftover_wholetale"]),
+        ("ilk/unicode.tung", ["same_unicode", "at_most_unicode"]),
+        ("ilk/string/building.tung", ["same_string", "at_most_string", "yoke_string"])
+      ]
 
 -- codecs are private trusted ABI mappings. the binding GADT coupleth each
 -- native function to its input and result codecs; one entry deriveth both

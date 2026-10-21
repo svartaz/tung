@@ -21,7 +21,7 @@ show let underset_limb
     (b… inhold c) = yea]
   ≔ match a… {
     empty        ^ match limb {},
-    a ‥ leftover ^ (c ≤ a) inlook @𝟚 @({_: 𝟚 ^ (b… inhold c) = yea}) {
+    a ‥ leftover ^ (c ≤ a) inlook @𝟚 @{_: 𝟚 ^ (b… inhold c) = yea} {
       yea, below ^ (
         let head
           ≔ (({b: 𝟚 ^ b if (a ≤ c) (leftover inhold c)} leibnitz below)
@@ -107,9 +107,9 @@ show let underset_=
     right: (b… rowed) = yea, forth: (a… underset b…) = yea,
     back: (b… underset a…) = yea, a… = b…]
   ≔ a… umfang b… left right {
-    a ^ (a… inhold a) inlook @𝟚 @({b: 𝟚 ^ b = (b… inhold a)}) {
+    a ^ (a… inhold a) inlook @𝟚 @{b: 𝟚 ^ b = (b… inhold a)} {
       yea, limb    ^ (a… underset_limb b… a forth limb) evenmete,
-      nay, missing ^ (b… inhold a) inlook @𝟚 @({b: 𝟚 ^ nay = b}) {
+      nay, missing ^ (b… inhold a) inlook @𝟚 @{b: 𝟚 ^ nay = b} {
         yea, limb ^ match (missing evenmete) throughgo (b… underset_limb a… a
           back limb) {},
         nay, _ ^ eftbend

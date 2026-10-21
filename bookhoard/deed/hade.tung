@@ -89,7 +89,7 @@ let tweak_outcome_sameness
 
 let tweak_outcome_tweak_outcome
   : [@σ: *, @α: *, @β: *, @γ: *, m: σ hade α, f: [α, β], g: [β, γ],
-    ((m tweak_outcome f) tweak_outcome g) = (m tweak_outcome (f ▷ g))]
+    <{tweak_outcome, m, f, g} = (m tweak_outcome (f ▷ g))]
   ≔ match m {
     step wrap ^
       wrap leibnitz
@@ -151,9 +151,7 @@ let warp_flat
       s ^ >{throughgo,
         (m unwrap s) deed_bind_bind {p ^ (p biwarp f sameness) deed_sheer}
           unfold,
-        (m unwrap s) bind_same @(α ∧ σ) @(β ∧ σ) @({
-          p: α ∧ σ ^ ((p biwarp f sameness) deed_sheer) deed_bind unfold
-        }) @({p: α ∧ σ ^ (p biwarp f sameness) unfold}) {
+        (m unwrap s) bind_same {
           p ^ (p biwarp f sameness) deed_sheer_bind unfold
         }
       }
@@ -162,7 +160,7 @@ let warp_flat
 ## following twice is following once by the followed continuation.
 let helpsetting_bind_bind
   : [@σ: *, @α: *, @β: *, @γ: *, m: σ hade α, f: [α, σ hade β],
-    g: [β, σ hade γ], ((m follow f) follow g) = (m follow {a ^ (a f) follow g})]
+    g: [β, σ hade γ], <{follow, m, f, g} = (m follow {a ^ (a f) follow g})]
   ≔ wrap leibnitz
     ({
       s ^
@@ -212,8 +210,8 @@ bizen: [@σ: *, (σ hade) onwendsome] {
   let sheer_onwend: [a:, f…:] ≔ >{throughgo,
     {k ^ (f… tweak_outcome k) flatten} leibnitz
       ((a give_tweak_outcome) fall_umfang),
-    flatten leibnitz ((f… tweak_outcome_tweak_outcome (a call) give) evenmete),
-    (f… tweak_outcome (a call)) tweak_outcome_give_flatten
+    flatten leibnitz ((f… tweak_outcome_tweak_outcome (a ▶) give) evenmete),
+    (f… tweak_outcome (a ▶)) tweak_outcome_give_flatten
   }
 }
 

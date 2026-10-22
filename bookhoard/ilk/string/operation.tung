@@ -55,7 +55,7 @@ let split_unicode_by
   }
 
 let split_unicode: [l: unicode list, shedder: unicode, (unicode list) list]
-  ≔ l split_unicode_by {staff ^ staff ≍ shedder}
+  ≔ l split_unicode_by (_ ≍ shedder)
 
 let is_whitespace: [c: unicode, 𝟚] ≔ <{⋎,
   c ≍ `\32;,

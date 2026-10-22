@@ -21,15 +21,15 @@ let above_inhold
     empty        ^ match limb {},
     b ‥ leftover ^ (c ≤ b) inlook @𝟚 @{_ ^ (a tight c) = yea} {
       yea, below ^ (
-        let at_head: (b ≤ c) = yea ≔ {q ^ q if (b ≤ c) (leftover inhold c)}
-          yea_throughbear below limb
+        let at_head: (b ≤ c) = yea
+          ≔ (_ if (b ≤ c) (leftover inhold c)) yea_throughbear below limb
         yield (a tight) yea_throughbear (b ≤_= c at_head below)
           ((a tight b) yea_if_former (a above leftover) all_above)
       ),
       nay, below ^
         a above_inhold leftover c
           ((a tight b) yea_if_latter (a above leftover) all_above)
-          ({q ^ q if (b ≤ c) (leftover inhold c)} yea_throughbear below limb)
+          ((_ if (b ≤ c) (leftover inhold c)) yea_throughbear below limb)
     }
   }
 
@@ -44,14 +44,14 @@ show let inhold_first_below
   : [@α: *, @: α order_whole, a: α, a…: α list, b: α,
     limb: ((a ‥ a…) inhold b) = yea, (a ≤ b) = yea]
   ≔ (b ≤ a) inlook @𝟚 @{_ ^ (a ≤ b) = yea} {
-    yea, below ^ {q ^ q if (a ≤ b) (a… inhold b)} yea_throughbear below limb,
+    yea, below ^ (_ if (a ≤ b) (a… inhold b)) yea_throughbear below limb,
     nay, below ^ b ≤_flip a below
   }
 
 ## the first limb belongeth to its list.
 show let inhold_first
   : [@α: *, @: α order_whole, a: α, a…: α list, ((a ‥ a…) inhold a) = yea]
-  ≔ ({b ^ b if (a ≤ a) (a… inhold a)} leibnitz (a ≤_eftbend)) throughgo
+  ≔ ((_ if (a ≤ a) (a… inhold a)) leibnitz (a ≤_eftbend)) throughgo
     (a ≤_eftbend)
 
 ## no tail limb lieth at or below the first limb.
@@ -71,9 +71,9 @@ let tails_same_first
       (a tail_missand_below a… b left below) throughgo
         ((a tail_missand_below b… b right below) evenmete),
     nay, below ^ >{throughgo,
-      {q ^ q if (a ≤ b) (a… inhold b)} leibnitz (below evenmete),
+      (_ if (a ≤ b) (a… inhold b)) leibnitz (below evenmete),
       b same_limbs,
-      {q ^ q if (a ≤ b) (b… inhold b)} leibnitz below
+      (_ if (a ≤ b) (b… inhold b)) leibnitz below
     }
   }
 
@@ -107,6 +107,6 @@ show let umfang
       let tails
         ≔ a… umfang b… (a rowed_tail a… left) (a rowed_tail b… right_aligned)
           (a tails_same_first a… b… left right_aligned limbs_aligned)
-      yield ((a ‥) leibnitz tails) throughgo ({c ^ c ‥ b…} leibnitz heads)
+      yield ((a ‥) leibnitz tails) throughgo ((_ ‥ b…) leibnitz heads)
     )
   }

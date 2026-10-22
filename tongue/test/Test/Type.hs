@@ -139,6 +139,7 @@ accepted =
     ("constructor fields preserve polymorphism through a match", "ilk holder: * { hold: [[@a:*, a, a], holder] } let unpack:[h:holder, [@a:*, a, a]] ≔ match h { f hold ^ f } let id:[@a:*, x:a, a] ≔ x let answer:ℤ ≔ +1 ((id hold) unpack) @ℤ"),
     ("higher-rank argument instantiateth at distinct types", polymorphicPrelude ++ "let sameness:[@a:*, x:a, a] ≔ x let good ≔ sameness both let lambda ≔ {x ^ x} both"),
     ("rank-three annotation floweth into a lambda argument", "let run:[k:[[@a:*, a, a], ℤ], ℤ] ≔ {x ^ x} k let good:ℤ ≔ {f ^ +1 f} run"),
+    ("a hole maketh its application a function of each hole", "ilk nat: * { zero: nat, succ: [nat, nat] } let first:[nat, nat, nat] ≔ {a, _ ^ a} let pick:[nat, nat] ≔ zero first _ let both:[nat, nat, nat] ≔ _ first _"),
     ("polymorphic result is checked and reused", polymorphicPrelude ++ "let make:[_:ℤ, [@a:*, a, a]] ≔ {x ^ x} let good ≔ (+1 make) both"),
     ("explicit polymorphic ascription retaineth its quantifier", polymorphicPrelude ++ "let good ≔ ({x ^ x}:[@t1:*, t1, t1]) both"),
     ("quantified alias accepteth higher-kinded parameters", "ilk _box: [a:*, *] { box: [a, a _box] } let ⇒:[f:[*, *], g:[*, *], *] ≔ [@a:*, a f, a g] let lift:_box ⇒ _box ≔ {x ^ x}"),
@@ -181,6 +182,8 @@ accepted =
 rejected :: [(String, String)]
 rejected =
   [ ("literal type mismatch", "let bad:ℤ ≔ 'wrong'"),
+    ("a hole belongeth to its innermost application", "ilk nat: * { zero: nat, succ: [nat, nat] } let bad:[nat, nat] ≔ (_ succ) succ"),
+    ("a lone hole is no term", "ilk nat: * { zero: nat } let bad:nat ≔ _"),
     ("a bizen oweth the laws of a parent it witnesseth", "bring is.tung flock parent:[a:*, *] { let tag:[a, ℤ] let tagged:[x: a, (x tag) = (x tag)] } flock child:[a:*, @:a parent, *] {} bizen:ℤ child { let tag: [_:] ≔ +1 }"),
     ("deed taketh a type argument", "let bad:[deed, deed] ≔ { x ^ x }"),
     ("a deed is not its result", deedPrelude ++ "let bad:ℤ ≔ +1 sheer"),

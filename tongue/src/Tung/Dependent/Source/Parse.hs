@@ -9,7 +9,6 @@ module Tung.Dependent.Source.Parse
     parseProgram,
     parseExpression,
     SourceRole (..),
-    parseSourceRoles,
     sourceTree,
     sourceSyntax,
   )
@@ -980,9 +979,6 @@ markFunction _ _ = pure ()
 
 -- unindented declaration heads bound recovery work, so unfinished brackets
 -- cannot rescan the whole buffer.
-parseSourceRoles :: String -> [SourceRole]
-parseSourceRoles = (\(_, roles, _) -> roles) . sourceSyntax
-
 -- both diagnostic recovery and highlighting resume only at source line starts.
 -- lexer offsets use UTF-16 code units, including supplementary characters.
 recoveryHead :: String -> Token -> Bool

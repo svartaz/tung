@@ -24,7 +24,7 @@ show let underset_limb
     a ‥ leftover ^ (c ≤ a) inlook @𝟚 @{_ ^ (b… inhold c) = yea} {
       yea, below ^ (
         let head
-          ≔ (({b ^ b if (a ≤ c) (leftover inhold c)} leibnitz below) evenmete)
+          ≔ (((_ if (a ≤ c) (leftover inhold c)) leibnitz below) evenmete)
             throughgo limb
         yield (b… inhold) yea_throughbear (a ≤_= c head below)
           ((b… inhold a) yea_if_former (leftover underset b…) beneath)
@@ -32,7 +32,7 @@ show let underset_limb
       nay, below ^
         leftover underset_limb b… c
           ((b… inhold a) yea_if_latter (leftover underset b…) beneath)
-          ((({b ^ b if (a ≤ c) (leftover inhold c)} leibnitz below) evenmete)
+          ((((_ if (a ≤ c) (leftover inhold c)) leibnitz below) evenmete)
             throughgo limb)
     }
   }
@@ -42,7 +42,7 @@ show let inhold_tail
   : [@α: *, @: α order_whole, a: α, a…: α list, c: α,
     rowed: ((a ‥ a…) rowed) = yea, limb: (a… inhold c) = yea,
     ((a ‥ a…) inhold c) = yea]
-  ≔ ({b ^ b if (a ≤ c) (a… inhold c)} leibnitz
+  ≔ ((_ if (a ≤ c) (a… inhold c)) leibnitz
     (a tight_right c (a rowed_tight_limb a… c rowed limb))) throughgo limb
 
 ## pointwise limbship sufficeth for undersetting a rowed list.
@@ -53,7 +53,7 @@ show let underset_by
   ≔ match a… {
     empty        ^ eftbend,
     a ‥ leftover ^ >{throughgo,
-      {b ^ b if (leftover underset b…) nay} leibnitz
+      (_ if (leftover underset b…) nay) leibnitz
         (a limbs (a inhold_first leftover)),
       leftover underset_by b… (a rowed_tail leftover rowed) {
         b, limb ^ b limbs (a inhold_tail leftover b rowed limb)
@@ -75,7 +75,7 @@ show let underset_throughgo
   ≔ match a… {
     empty        ^ eftbend,
     a ‥ leftover ^ >{throughgo,
-      {b ^ b if (leftover underset n) nay} leibnitz
+      (_ if (leftover underset n) nay) leibnitz
         (b… underset_limb n a latter
           ((b… inhold a) yea_if_former (leftover underset b…) first)),
       leftover underset_throughgo b… n
@@ -99,13 +99,11 @@ show let underset_=
   : [@α: *, @: α order_whole, a…: α list, b…: α list, left: (a… rowed) = yea,
     right: (b… rowed) = yea, forth: (a… underset b…) = yea,
     back: (b… underset a…) = yea, a… = b…]
-  ≔ a… umfang b… left right {
-    a ^ (a… inhold a) inlook @𝟚 @{b ^ b = (b… inhold a)} {
-      yea, limb    ^ (a… underset_limb b… a forth limb) evenmete,
-      nay, missand ^ (b… inhold a) inlook @𝟚 @(nay =) {
-        yea, limb ^ match (missand evenmete) throughgo (b… underset_limb a… a
-          back limb) {},
-        nay, _ ^ eftbend
-      }
+  ≔ a… umfang b… left right {a ^ (a… inhold a) inlook @𝟚 @(_ = (b… inhold a)) {
+    yea, limb    ^ (a… underset_limb b… a forth limb) evenmete,
+    nay, missand ^ (b… inhold a) inlook @𝟚 @(nay =) {
+      yea, limb ^ match (missand evenmete) throughgo (b… underset_limb a… a back
+        limb) {},
+      nay, _ ^ eftbend
     }
-  }
+  }}

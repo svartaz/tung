@@ -29,7 +29,7 @@ bizen: [@φ: [*, *], @: φ monad, (φ kleisli) semigroupoid] {
 bizen: [@φ: [*, *], @: φ monad, (φ kleisli) category] {
   let sameness ≔ sheer wrap
 
-  let sameness_▷: [f wrap:] ≔ wrap leibnitz ({a ^ a sheer_bind f} fall_umfang)
+  let sameness_▷: [f wrap:] ≔ wrap leibnitz ((_ sheer_bind f) fall_umfang)
 
   let ▷_sameness: [f wrap:]
     ≔ wrap leibnitz ({a ^ (a f) warp_sheer_flat} fall_umfang)

@@ -142,9 +142,9 @@ let yoke_yoke
   ≔ <{yoke, a, b, c} umfang >{yoke, a, b, c} {
     d ^ >{throughgo,
       (a yoke b) ∋_yoke c d,
-      {p ^ p ⋎ (c ∋ d)} leibnitz (a ∋_yoke b d),
+      (_ ⋎ (c ∋ d)) leibnitz (a ∋_yoke b d),
       (a ∋ d) ⋎_⋎ (b ∋ d) (c ∋ d),
-      {p ^ (a ∋ d) ⋎ p} leibnitz ((b ∋_yoke c d) evenmete),
+      ((a ∋ d) ⋎ _) leibnitz ((b ∋_yoke c d) evenmete),
       (a ∋_yoke (b yoke c) d) evenmete
     }
   }
@@ -217,9 +217,9 @@ bizen: [@α: *, @: α order_whole, (α set) semilattice_lower] {
   let ⋏_⋏: [a:, b:, c:] ≔ <{meet, a, b, c} umfang >{meet, a, b, c} {
     d ^ >{throughgo,
       (a meet b) ∋_meet c d,
-      {p ^ p semilattice_lower~⋏ (c ∋ d)} leibnitz (a ∋_meet b d),
+      (_ semilattice_lower~⋏ (c ∋ d)) leibnitz (a ∋_meet b d),
       (a ∋ d) ⋏_⋏ (b ∋ d) (c ∋ d),
-      {p ^ (a ∋ d) semilattice_lower~⋏ p} leibnitz ((b ∋_meet c d) evenmete),
+      ((a ∋ d) semilattice_lower~⋏ _) leibnitz ((b ∋_meet c d) evenmete),
       (a ∋_meet (b meet c) d) evenmete
     }
   }
@@ -248,7 +248,7 @@ bizen: [@α: *, @: α order_whole, (α set) lattice] {
     ≔ (a meet (a yoke b)) umfang a {
       c ^ >{throughgo,
         a ∋_meet (a yoke b) c,
-        {p ^ (a ∋ c) ⋏ p} leibnitz (a ∋_yoke b c),
+        ((a ∋ c) ⋏ _) leibnitz (a ∋_yoke b c),
         (a ∋ c) ⋏_⋎_swallow (b ∋ c)
       }
     }
@@ -257,7 +257,7 @@ bizen: [@α: *, @: α order_whole, (α set) lattice] {
     ≔ (a yoke (a meet b)) umfang a {
       c ^ >{throughgo,
         a ∋_yoke (a meet b) c,
-        {p ^ (a ∋ c) ⋎ p} leibnitz (a ∋_meet b c),
+        ((a ∋ c) ⋎ _) leibnitz (a ∋_meet b c),
         (a ∋ c) ⋎_⋏_swallow (b ∋ c)
       }
     }
@@ -268,10 +268,10 @@ bizen: [@α: *, @: α order_whole, (α set) lattice_spreadsome] {
     ≔ (a meet (b yoke c)) umfang ((a meet b) yoke (a meet c)) {
       d ^ >{throughgo,
         a ∋_meet (b yoke c) d,
-        {p ^ (a ∋ d) ⋏ p} leibnitz (b ∋_yoke c d),
+        ((a ∋ d) ⋏ _) leibnitz (b ∋_yoke c d),
         (a ∋ d) ⋏_⋎ (b ∋ d) (c ∋ d),
-        {p ^ ((a ∋ d) ⋏ (b ∋ d)) ⋎ p} leibnitz ((a ∋_meet c d) evenmete),
-        {p ^ p ⋎ ((a meet c) ∋ d)} leibnitz ((a ∋_meet b d) evenmete),
+        (((a ∋ d) ⋏ (b ∋ d)) ⋎ _) leibnitz ((a ∋_meet c d) evenmete),
+        (_ ⋎ ((a meet c) ∋ d)) leibnitz ((a ∋_meet b d) evenmete),
         ((a meet b) ∋_yoke (a meet c) d) evenmete
       }
     }
@@ -280,10 +280,10 @@ bizen: [@α: *, @: α order_whole, (α set) lattice_spreadsome] {
     ≔ (a yoke (b meet c)) umfang ((a yoke b) meet (a yoke c)) {
       d ^ >{throughgo,
         a ∋_yoke (b meet c) d,
-        {p ^ (a ∋ d) ⋎ p} leibnitz (b ∋_meet c d),
+        ((a ∋ d) ⋎ _) leibnitz (b ∋_meet c d),
         (a ∋ d) ⋎_⋏ (b ∋ d) (c ∋ d),
-        {p ^ ((a ∋ d) ⋎ (b ∋ d)) ⋏ p} leibnitz ((a ∋_yoke c d) evenmete),
-        {p ^ p ⋏ ((a yoke c) ∋ d)} leibnitz ((a ∋_yoke b d) evenmete),
+        (((a ∋ d) ⋎ (b ∋ d)) ⋏ _) leibnitz ((a ∋_yoke c d) evenmete),
+        (_ ⋏ ((a yoke c) ∋ d)) leibnitz ((a ∋_yoke b d) evenmete),
         ((a yoke b) ∋_meet (a yoke c) d) evenmete
       }
     }

@@ -174,7 +174,7 @@ let helpsetting_+_trade
   ≔ (
     let inner: [(b + (c + d)) = (c + (b + d))] ≔ >{throughgo,
       b helpsetting_+_+ c d,
-      {e ^ e + d} leibnitz (b helpsetting_+_swap c),
+      (_ + d) leibnitz (b helpsetting_+_swap c),
       (c helpsetting_+_+ b d) evenmete
     }
     yield >{throughgo,
@@ -198,7 +198,7 @@ let helpsetting_·_+: [a: ℕ, b: ℕ, c: ℕ, (a · (b + c)) = ((a · b) + (a �
   ≔ match c {
     0       ^ eftbend,
     c′ next ^
-      ({d ^ d + a} leibnitz (a helpsetting_·_+ b c′)) throughgo
+      ((_ + a) leibnitz (a helpsetting_·_+ b c′)) throughgo
         (((a · b) helpsetting_+_+ (a · c′) a) evenmete)
   }
 
@@ -206,7 +206,7 @@ let helpsetting_+_·: [a: ℕ, b: ℕ, c: ℕ, ((a + b) · c) = ((a · c) + (b �
   ≔ match c {
     0       ^ eftbend,
     c′ next ^
-      ({d ^ d + (a + b)} leibnitz (a helpsetting_+_· b c′)) throughgo
+      ((_ + (a + b)) leibnitz (a helpsetting_+_· b c′)) throughgo
         ((a · c′) helpsetting_+_trade (b · c′) a b)
   }
 
@@ -215,7 +215,7 @@ let helpsetting_·_·: [a: ℕ, b: ℕ, c: ℕ, (a · (b · c)) = ((a · b) · c
     0       ^ eftbend,
     c′ next ^
       (a helpsetting_·_+ (b · c′) b) throughgo
-        ({d ^ d + (a · b)} leibnitz (a helpsetting_·_· b c′))
+        ((_ + (a · b)) leibnitz (a helpsetting_·_· b c′))
   }
 
 bizen: ℕ order_half {
@@ -277,7 +277,7 @@ let helpsetting_≍_eftbend: [a: ℕ, (a ≍ a) = yea] ≔ match a {
 let helpsetting_≤_=
   : [a: ℕ, b: ℕ, below: (a ≤ b) = yea, above: (b ≤ a) = yea, a = b]
   ≔ a helpsetting_≍_= b
-    ({c ^ c ≤ (a ≍ b)} yea_throughbear above
+    ((_ ≤ (a ≍ b)) yea_throughbear above
       ({c ^ >{≤, c, b ≤ a, a ≍ b}} yea_throughbear below
         (a helpsetting_≤_witherevenmete b)))
 
@@ -326,15 +326,14 @@ let helpsetting_+_spin: [a: ℕ, b: ℕ, c: ℕ, ((a + b) + c) = ((a + c) + b)]
 show let next_·: [a: ℕ, b: ℕ, ((a next) · b) = ((a · b) + b)] ≔ match b {
   0       ^ eftbend,
   b′ next ^
-    ({c ^ c + (a next)} leibnitz (a next_· b′)) throughgo
+    ((_ + (a next)) leibnitz (a next_· b′)) throughgo
       (next leibnitz ((a · b′) helpsetting_+_spin b′ a))
 }
 
 ## folding is commutative.
 show let ·_swap: [a: ℕ, b: ℕ, (a · b) = (b · a)] ≔ match b {
   0       ^ (a helpsetting_naught_·) evenmete,
-  b′ next ^
-    ({c ^ c + a} leibnitz (a ·_swap b′)) throughgo ((b′ next_· a) evenmete)
+  b′ next ^ ((_ + a) leibnitz (a ·_swap b′)) throughgo ((b′ next_· a) evenmete)
 }
 
 ## `a` is under `b` when `a` is smaller: `(a next) ≤ b`. as a relation it is
@@ -399,7 +398,7 @@ let helpsetting_deal_step_eftbuild
         c: 𝟚 ^ (n next) eftbuild e (c if ((q next) ⸴ 0) (q ⸴ (r next)))
       } {
         yea, known ^ >{throughgo,
-          {a ^ a + (q next)} leibnitz (q next_· e),
+          (_ + (q next)) leibnitz (q next_· e),
           next leibnitz ((q · e) helpsetting_+_spin e q),
           {a ^ <{+, q · e, q, a} next} leibnitz
             ((r helpsetting_≍_= e known) evenmete),

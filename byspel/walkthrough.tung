@@ -54,6 +54,9 @@ let twofold: [x: ℤ, ℤ] ≔ x + x
 # a slot without a name is supplied by a lambda `{input ^ outcome}`.
 let triple: [ℤ, ℤ] ≔ {x ^ (x + x) + x}
 
+# `_` as an input maketh a function of it: `_ + +1` is `{x ^ x + +1}`.
+let one_more: [ℤ, ℤ] ≔ _ + +1
+
 # a slot's type or the result may be left out when it can be inferred.
 let quadruple: [x: ℤ] ≔ x twofold $ twofold
 

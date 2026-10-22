@@ -46,18 +46,16 @@ bizen: [@α: *, @: α hath_≍, @β: *, (α wordbook β) hath_∋ α] {
 }
 
 bizen: [@α: *, (α wordbook) functor] {
-  let warp: [l from_list:, f:] ≔ l warp {pair ^ pair warp f} $ from_list
+  let warp: [l from_list:, f:] ≔ l warp (_ warp f) $ from_list
 
   let warp_sameness: [@β:, entries from_list:]
     ≔ from_list leibnitz
-      ({
-        l: (α ∧ β) list ^
-          (l functor~warp {pair ^ pair functor~warp sameness}) = l
-      } unbuild list eftbend {
-        first, _, soothing ^ match first {
-          a ⸴ b ^ ((a ⸴ b) ‥) leibnitz soothing
-        }
-      } entries)
+      ({l: (α ∧ β) list ^ (l functor~warp (_ functor~warp sameness)) = l}
+        unbuild list eftbend {
+          first, _, soothing ^ match first {
+            a ⸴ b ^ ((a ⸴ b) ‥) leibnitz soothing
+          }
+        } entries)
 }
 
 bizen: [@α: *, (α wordbook) hath_sift] {

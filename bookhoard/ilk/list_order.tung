@@ -167,7 +167,7 @@ let helpsetting_≤_=
             below above)
           ((b ≤ a) helpsetting_step_tail (a ≤ b) (o at_most k) (k at_most o)
             above below)
-      yield ({c ^ c ‥ k} leibnitz head) throughgo ((b ‥) leibnitz leftover)
+      yield ((_ ‥ k) leibnitz head) throughgo ((b ‥) leibnitz leftover)
     )
   }
 

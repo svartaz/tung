@@ -159,6 +159,11 @@ delimiteth such a segment. for values and types alike:
 - `<{f, a, b, c}` meaneth `(a f b) f c`, and `>{f, a, b, c}` meaneth
   `a f (b f c)`. each needeth a function and at least two operands, and the
   marker toucheth `{`.
+- `_` as an explicit input maketh its innermost application a function of
+  each `_`, left to right: `_ ‥ k` is `{a ^ a ‥ k}`, and `_ + _` is
+  `{a, b ^ a + b}`. a nested application is a function of its own holes, so
+  `+1 ‥ (+2 ‥ _)` giveth the outer `‥` a function. a lone `_` is no term; in
+  patterns and binders `_` still discardeth an input.
 
 evaluation is call-by-need: inputs, lets, globals, and constructor fields are
 shared and computed when inspected. `match` computeth only its selected branch,

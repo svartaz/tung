@@ -142,8 +142,7 @@ show let eftwend_onto
     first ‥ leftover ^ >{throughgo,
       leftover eftwend_onto (first ‥ start),
       (leftover eftwend) ·_· (first ‥ empty) start,
-      {a ^ a · start} leibnitz
-        ((leftover eftwend_onto (first ‥ empty)) evenmete)
+      (_ · start) leibnitz ((leftover eftwend_onto (first ‥ empty)) evenmete)
     }
   }
 
@@ -172,9 +171,9 @@ show let warp_eftwend
   ≔ match a… {
     empty            ^ eftbend,
     first ‥ leftover ^ >{throughgo,
-      {a ^ a warp f} leibnitz (leftover eftwend_onto (first ‥ empty)),
+      (_ warp f) leibnitz (leftover eftwend_onto (first ‥ empty)),
       (leftover eftwend) warp_· (first ‥ empty) f,
-      {a ^ a · ((first f) ‥ empty)} leibnitz (leftover warp_eftwend f),
+      (_ · ((first f) ‥ empty)) leibnitz (leftover warp_eftwend f),
       ((leftover warp f) eftwend_onto ((first f) ‥ empty)) evenmete
     }
   }
@@ -231,7 +230,7 @@ show let manyhood_·
       a ‥_manyhood (leftover · b…),
       next leibnitz (leftover manyhood_· b…),
       ((leftover manyhood) next_+ (b… manyhood)) evenmete,
-      {m ^ m + (b… manyhood)} leibnitz ((a ‥_manyhood leftover) evenmete)
+      (_ + (b… manyhood)) leibnitz ((a ‥_manyhood leftover) evenmete)
     }
   }
 
@@ -243,7 +242,7 @@ show let eftwend_manyhood
     a ‥ leftover ^ >{throughgo,
       manyhood leibnitz ((a ‥ empty) eftwend_· leftover),
       (leftover eftwend) manyhood_· (a ‥ empty),
-      {m ^ m + 1} leibnitz (leftover eftwend_manyhood),
+      (_ + 1) leibnitz (leftover eftwend_manyhood),
       (a ‥_manyhood leftover) evenmete
     }
   }
@@ -279,12 +278,12 @@ show let flat_·
 ## warping a flattened list warpeth each inner list.
 show let warp_flat
   : [@α: *, @β: *, a…: (α list) list, f: [α, β],
-    ((a… flat) warp f) = ((a… warp {b… ^ b… warp f}) flat)]
+    ((a… flat) warp f) = ((a… warp (_ warp f)) flat)]
   ≔ match a… {
     empty   ^ eftbend,
     a ‥ a…′ ^
       (a warp_· (a…′ flat) f) throughgo
-        ({c… ^ (a warp f) · c…} leibnitz (a…′ warp_flat f))
+        (((a warp f) · _) leibnitz (a…′ warp_flat f))
   }
 
 ## dropping rime limbs leaveth the manyhood less that rime.
@@ -295,7 +294,7 @@ show let drop_manyhood
     empty,   _ next  ^ eftbend,
     a ‥ a…′, m′ next ^
       (a…′ drop_manyhood m′) throughgo
-        ({n ^ n ∸ (m′ next)} leibnitz ((a ‥_manyhood a…′) evenmete))
+        ((_ ∸ (m′ next)) leibnitz ((a ‥_manyhood a…′) evenmete))
   }
 
 ## a repeated worth may be onhanged at either end.
@@ -313,7 +312,7 @@ show let eftwend_eftfold
     0       ^ eftbend,
     m′ next ^ >{throughgo,
       (a ‥ empty) eftwend_· (a eftfold m′),
-      {c… ^ c… · (a ‥ empty)} leibnitz (a eftwend_eftfold m′),
+      (_ · (a ‥ empty)) leibnitz (a eftwend_eftfold m′),
       a helpsetting_eftfold_· m′
     }
   }

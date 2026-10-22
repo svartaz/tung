@@ -217,6 +217,7 @@ importedCases imports =
     evalOkWith "list membership findeth a worth" "bring often.tung bring ilk/list.tung yield (+1 ‥ (+2 ‥ empty)) ∋ +2" imports "eval ok: yea",
     evalOkWith "list membership rejecteth a missing worth" "bring often.tung bring ilk/list.tung yield (+1 ‥ (+2 ‥ empty)) ∋ +3" imports "eval ok: nay",
     evalOkWith "list replicate useth a nonnegative count" "bring ilk/list.tung yield 'x' eftfold 3" imports "eval ok: ('x' ('x' ('x' empty ‥) ‥) ‥)",
+    evalOkWith "holes make functions of their inputs" "bring often.tung bring ilk/and.tung bring ilk/list.tung yield ((+0 till +3) warp (_ + +10)) ⸴ (+2 (_ · _) +3)" imports "eval ok: ((+10 (+11 (+12 empty ‥) ‥) ‥) +6 ⸴)",
     evalOkWith "list shedding preserveth order" "bring often.tung bring ilk/list.tung yield (+0 till +5) shed { x ^ +2 ≤ x }" imports "eval ok: ((+2 (+3 (+4 empty ‥) ‥) ‥) (+0 (+1 empty ‥) ‥) ⸴)",
     evalOkWith "list unzip preserveth both sides" "bring ilk/list.tung bring ilk/and.tung yield ((+1 ⸴ 'a') ‥ ((+2 ⸴ 'b') ‥ empty)) unzip" imports "eval ok: ((+1 (+2 empty ‥) ‥) ('a' ('b' empty ‥) ‥) ⸴)",
     evalOkWith "n-ary sum addeth a foldable collection" "bring often.tung bring ilk/list.tung bring flock/functor/downshaper.tung yield (+1 ‥ (+2 ‥ (+3 ‥ empty))) …+" imports "eval ok: +6",

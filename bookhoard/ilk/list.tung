@@ -296,8 +296,8 @@ let helpsetting_≍_=
   ≔ match a…, b… {
     empty,   empty   ^ eftbend,
     a ‥ a…′, b ‥ b…′ ^
-      ({c ^ c ‥ a…′} leibnitz
-        (a ≍_= b ((a ≍ b) yea_if_former (a…′ same b…′) held))) throughgo
+      ((_ ‥ a…′) leibnitz (a ≍_= b ((a ≍ b) yea_if_former (a…′ same b…′) held)))
+        throughgo
         ((b ‥) leibnitz
           (a…′ helpsetting_≍_= b…′
             ((a ≍ b) yea_if_latter (a…′ same b…′) held))),
@@ -308,8 +308,9 @@ let helpsetting_≍_=
 let helpsetting_≍_eftbend: [@α: *, @: α ≍_to_=, a…: α list, (a… same a…) = yea]
   ≔ match a… {
     empty   ^ eftbend,
-    a ‥ a…′ ^ {b ^ b if (a…′ same a…′) nay} yea_throughbear
-      ((a ≍_eftbend) evenmete) (a…′ helpsetting_≍_eftbend)
+    a ‥ a…′ ^
+      (_ if (a…′ same a…′) nay) yea_throughbear ((a ≍_eftbend) evenmete)
+        (a…′ helpsetting_≍_eftbend)
   }
 
 bizen: [@α: *, @: α ≍_to_=, (α list) ≍_to_=] {

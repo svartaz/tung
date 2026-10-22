@@ -30,13 +30,13 @@ bizen: [@β: *, @: β semilattice_lower, @α: *, (α → β) semilattice_lower] 
 show let ⋏_yea
   : [@α: *, @: α order_whole, a: α, b: α, k: (a ≤ b) = yea,
     ((a ≤ b) if a b) = a]
-  ≔ {c ^ c if a b} leibnitz k
+  ≔ (_ if a b) leibnitz k
 
 ## for a whole order, `a ⋏ b` is `b` when `a ≤ b` faileth.
 show let ⋏_nay
   : [@α: *, @: α order_whole, a: α, b: α, k: (a ≤ b) = nay,
     ((a ≤ b) if a b) = b]
-  ≔ {c ^ c if a b} leibnitz k
+  ≔ (_ if a b) leibnitz k
 
 show let helpsetting_⋏_swap
   : [@α: *, @: α order_whole, a: α, b: α, ((a ≤ b) if a b) = ((b ≤ a) if b a)]

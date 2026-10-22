@@ -58,7 +58,7 @@ bizen: 𝟚 ring {
 show let -_·: [@α: *, @: α ring, a: α, b: α, ((a -) · b) = ((a · b) -)]
   ≔ (a · b) group_eke~-_alone ((a -) · b) >{throughgo,
     ((a -) +_· a b) evenmete,
-    {c ^ c · b} leibnitz (a -_+),
+    (_ · b) leibnitz (a -_+),
     b naught_·
   }
 

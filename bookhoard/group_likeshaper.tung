@@ -51,7 +51,7 @@ show let kernel_·
     a: α, b: α, in_a: f kernel a, in_b: f kernel b, f kernel (a · b)]
   ≔ >{throughgo,
     a hom b,
-    {c ^ c · (b f)} leibnitz in_a,
+    (_ · (b f)) leibnitz in_a,
     (one ·) leibnitz in_b,
     one one_·
   }
@@ -68,10 +68,10 @@ show let kernel_spin
     a: α, b: α, in_a: f kernel a, f kernel <{·, b, a, b /}]
   ≔ >{throughgo,
     (b · a) hom (b /),
-    {c ^ c · ((b /) f)} leibnitz (b hom a),
+    (_ · ((b /) f)) leibnitz (b hom a),
     {c ^ <{·, b f, c, (b /) f}} leibnitz in_a,
-    {c ^ c · ((b /) f)} leibnitz ((b f) ·_one),
-    {c ^ (b f) · c} leibnitz (f /_f hom b),
+    (_ · ((b /) f)) leibnitz ((b f) ·_one),
+    ((b f) · _) leibnitz (f /_f hom b),
     (b f) ·_/
   }
 
@@ -87,7 +87,7 @@ show let shadow_·
     c: β, d: β, a reach p: f shadow c, b reach q: f shadow d, f shadow (c · d)]
   ≔ (a · b) reach >{throughgo,
     a hom b,
-    {e ^ e · (b f)} leibnitz p,
+    (_ · (b f)) leibnitz p,
     (c ·) leibnitz q
   }
 
@@ -108,7 +108,7 @@ show let fibre_kernel
     a: α, b: α, same: (a f) = (b f), f kernel (a /· b)]
   ≔ >{throughgo,
     (a /) hom b,
-    {c ^ c · (b f)} leibnitz (f /_f hom a),
+    (_ · (b f)) leibnitz (f /_f hom a),
     {c ^ (c /) · (b f)} leibnitz same,
     (b f) /_·
   }
@@ -118,7 +118,7 @@ show let kernel_fibre
     a: α, b: α, in_kernel: f kernel (a /· b), (a f) = (b f)]
   ≔ (
     let undone: ((((a f) /) · (b f)) = one) ≔ <{throughgo,
-      ({c ^ c · (b f)} leibnitz (f /_f hom a)) evenmete,
+      ((_ · (b f)) leibnitz (f /_f hom a)) evenmete,
       ((a /) hom b) evenmete,
       in_kernel
     }

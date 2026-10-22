@@ -121,7 +121,7 @@ nest marks trees = go marks trees
             later = [mark | mark@(_, SourceSpan markStart _) <- pending, markStart > start]
          in case [(mark, covered, after) | mark@(_, SourceSpan _ end) <- here, Just (covered, after) <- [coverTo end (tree : rest)]] of
               ((kind, SourceSpan _ end), covered, after) : _ ->
-                let inner = [mark | mark@(_, SourceSpan markStart markEnd) <- drop 1 here ++ later, markStart >= start, markEnd <= end, (mark /= (kind, SourceSpan start end))]
+                let inner = [mark | mark@(_, SourceSpan markStart markEnd) <- drop 1 here ++ later, markStart >= start, markEnd <= end, mark /= (kind, SourceSpan start end)]
                     outer = [mark | mark@(_, SourceSpan markStart _) <- later, markStart >= end]
                  in TreeNode kind (nest inner covered) : go outer after
               [] -> descend (filter (within tree) later) tree : go (filter (not . within tree) later) rest

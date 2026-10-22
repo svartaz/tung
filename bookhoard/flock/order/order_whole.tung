@@ -20,8 +20,8 @@ show let ≤_flip
 show let ≤_yea_throughgo
   : [@α: *, @: α order_whole, a: α, b: α, c: α, k₀: (a ≤ b) = yea,
     k₁: (b ≤ c) = yea, (a ≤ c) = yea]
-  ≔ {d ^ d ≤ (a ≤ c)} yea_throughbear k₁
-  ({d ^ >{≤, d, b ≤ c, a ≤ c}} yea_throughbear k₀ (a ≤_throughgo b c))
+  ≔ (_ ≤ (a ≤ c)) yea_throughbear k₁
+    ({d ^ >{≤, d, b ≤ c, a ≤ c}} yea_throughbear k₀ (a ≤_throughgo b c))
 
 show let compare: [@α: *, @: α order_whole, @: α hath_≤, a: α, b: α, 𝟛]
   ≔ (a ≤ b) if ((b ≤ a) if mid fore) aft

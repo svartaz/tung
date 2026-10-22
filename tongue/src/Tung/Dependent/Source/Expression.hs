@@ -99,6 +99,8 @@ inferExpression environment names scope@Scope {scopeContext = context, scopeName
     (bodyTerm, bodyType) <- inferExpression environment names current (Lambda remaining body)
     codomain <- quote current bodyType
     pure (Core.Lambda binderPlicity domain bodyTerm, N.VPi binderPlicity domainValue (N.Closure (K.contextValues context) codomain))
+  Application function arguments
+    | Just lambda <- placeholderLambda function arguments -> inferExpression environment names scope lambda
   Application (Name name) arguments
     | Nothing <- elemIndex (Just name) locals,
       Just recursion <- recursiveBinding name scope ->
@@ -157,6 +159,22 @@ inferExpression environment names scope@Scope {scopeContext = context, scopeName
     (_, resultType) <- E.newMetaWithout (scopeContext scope) matched (N.VSort level)
     term <- Patterns.checkMatch (patternChecker environment names) scope scrutinees rows resultType
     pure (term, resultType)
+
+-- `_` as an explicit input maketh its innermost application a function of
+-- each such input, left to right: `_ ‥ k` is `{a ^ a ‥ k}`. the generated
+-- names begin with `#`, which no written name doth, so nothing is captured.
+placeholderLambda :: Expression -> [Argument] -> Maybe Expression
+placeholderLambda function arguments
+  | null names = Nothing
+  | otherwise = Just (Lambda [Binder Explicit (Just name) Nothing | name <- names] (Application function filled))
+  where
+    (names, filled) = fill (0 :: Int) arguments
+    fill _ [] = ([], [])
+    fill index (Argument Explicit Wildcard : rest) =
+      let name = '#' : show index
+          (later, others) = fill (index + 1) rest
+       in (name : later, Argument Explicit (Name name) : others)
+    fill index (argument : rest) = (argument :) <$> fill index rest
 
 -- a recursive call is applied through its hypothesis instead.
 recursiveApplication :: Scope -> Expression -> Bool
@@ -346,6 +364,8 @@ checkExpression environment names scope expression expected = E.force expected >
           pure (Core.Lambda plicity domainTerm bodyTerm)
         _ -> inferred expected
       Lambda [] body -> checkExpression environment names scope body expected
+      Application function arguments
+        | Just lambda <- placeholderLambda function arguments -> checkExpression environment names scope lambda expected
       -- a written type with holes learnth from the expected type before the body
       -- is checked. a polymorphic annotation is specialised instead.
       Ascription body annotation -> checkAscription environment names scope body annotation expected (checkExpression environment names)

@@ -47,7 +47,7 @@ show let naught_∘
   ≔ (
     let twofolded: ((((naught @ρ) ∘ a) + ((naught @ρ) ∘ a)) = ((naught @ρ) ∘ a))
       ≔ ((+_∘ @ρ @μ naught naught a) evenmete) throughgo
-        ({s ^ s ∘ a} leibnitz (naught_+ @ρ naught))
+        ((_ ∘ a) leibnitz (naught_+ @ρ naught))
     yield ((naught @ρ) ∘ a) +_strike ((naught @ρ) ∘ a) naught
       (twofolded throughgo ((naught_+ @μ ((naught @ρ) ∘ a)) evenmete))
   )
@@ -68,7 +68,7 @@ show let -_∘
   : [@ρ: *, @μ: *, @: ρ module μ, r: ρ, a: μ, ((r -) ∘ a) = ((r ∘ a) -)]
   ≔ (r ∘ a) -_alone ((r -) ∘ a) >{throughgo,
     ((r -) +_∘ r a) evenmete,
-    {s ^ s ∘ a} leibnitz (r group_eke~-_+),
+    (_ ∘ a) leibnitz (r group_eke~-_+),
     a naught_∘
   }
 

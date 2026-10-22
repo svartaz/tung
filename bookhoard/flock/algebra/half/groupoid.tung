@@ -18,7 +18,7 @@ show let witherwend_alone
     (g ▷_sameness) evenmete,
     (g ▷) leibnitz ((f ▷_witherwend) evenmete),
     g ▷_▷ f (f witherwend),
-    {a ^ a ▷ (f witherwend)} leibnitz undoing,
+    (_ ▷ (f witherwend)) leibnitz undoing,
     (f witherwend) sameness_▷
   }
 
@@ -41,8 +41,8 @@ show let witherwend_over_▷
     ((f ▷ g) witherwend) = ((g witherwend) ▷ (f witherwend))]
   ≔ ((f ▷ g) witherwend_alone ((g witherwend) ▷ (f witherwend)) >{throughgo,
     ((g witherwend) ▷_▷ (f witherwend) (f ▷ g)) evenmete,
-    {a ^ (g witherwend) ▷ a} leibnitz ((f witherwend) ▷_▷ f g),
+    ((g witherwend) ▷ _) leibnitz ((f witherwend) ▷_▷ f g),
     {a ^ (g witherwend) ▷ (a ▷ g)} leibnitz (f witherwend_▷),
-    {a ^ (g witherwend) ▷ a} leibnitz (g sameness_▷),
+    ((g witherwend) ▷ _) leibnitz (g sameness_▷),
     g witherwend_▷
   }) evenmete

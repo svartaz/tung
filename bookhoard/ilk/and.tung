@@ -24,7 +24,7 @@ show ilk ∧: [α: *, β: *, *] { ⸴: [α, β, α ∧ β] }
 let helpsetting_⸴_=
   : [@α: *, @β: *, @a: α, @a′: α, @b: β, @b′: β, p: a = a′, q: b = b′,
     (a ⸴ b) = (a′ ⸴ b′)]
-  ≔ ({c ^ c ⸴ b} leibnitz p) throughgo ((a′ ⸴) leibnitz q)
+  ≔ ((_ ⸴ b) leibnitz p) throughgo ((a′ ⸴) leibnitz q)
 
 show let forthcast₀: [@α: *, @β: *, a ⸴ _: α ∧ β, α] ≔ a
 
@@ -51,26 +51,26 @@ bizen: [@α: *, @: α monoid_·, (α ∧) onwendsome] {
 
   let onwend: [a₀ ⸴ b:, a₁ ⸴ f:] ≔ (a₀ · a₁) ⸴ (b f)
 
-  let onwend_sameness_sheer: [a ⸴ b:] ≔ {c ^ c ⸴ b} leibnitz (a ·_one)
+  let onwend_sameness_sheer: [a ⸴ b:] ≔ (_ ⸴ b) leibnitz (a ·_one)
 
-  let sheer_onwend_sheer: [a:, f:] ≔ {b ^ b ⸴ (a f)} leibnitz (one ·_one)
+  let sheer_onwend_sheer: [a:, f:] ≔ (_ ⸴ (a f)) leibnitz (one ·_one)
 
-  let onwend_onwend: [a ⸴ b:, f:, g:] ≔ {c ^ c ⸴ (b f $ g)} leibnitz
-    ((a · one) ·_one)
+  let onwend_onwend: [a ⸴ b:, f:, g:]
+    ≔ (_ ⸴ (b f $ g)) leibnitz ((a · one) ·_one)
 
-  let sheer_onwend: [a:, b ⸴ f:] ≔ {c ^ c ⸴ (a f)} leibnitz (b one_·)
+  let sheer_onwend: [a:, b ⸴ f:] ≔ (_ ⸴ (a f)) leibnitz (b one_·)
 }
 
 bizen: [@α: *, @: α monoid_·, (α ∧) monad] {
   let flat: [a ⸴ (b ⸴ c):] ≔ (a · b) ⸴ c
 
   let sheer_bind: [a:, f:]
-    ≔ (a f) inlook {c ⸴ b, _ ^ {d ^ d ⸴ b} leibnitz (c one_·)}
+    ≔ (a f) inlook {c ⸴ b, _ ^ (_ ⸴ b) leibnitz (c one_·)}
 
-  let warp_sheer_flat: [a ⸴ b:] ≔ {c ^ c ⸴ b} leibnitz (a ·_one)
+  let warp_sheer_flat: [a ⸴ b:] ≔ (_ ⸴ b) leibnitz (a ·_one)
 
   let bind_bind: [a ⸴ b:, f:, g:] ≔ match b f {
-    c ⸴ d ^ match d g { e ⸴ x ^ {y ^ y ⸴ x} leibnitz ((a ·_· c e) evenmete) }
+    c ⸴ d ^ match d g { e ⸴ x ^ (_ ⸴ x) leibnitz ((a ·_· c e) evenmete) }
   }
 }
 
@@ -144,9 +144,9 @@ bizen: [@α: *, @: α hath_≍, @β: *, @: β hath_≍, (α ∧ β) hath_≍] {
 
 bizen: [@α: *, @: α ≍_to_=, @β: *, @: β ≍_to_=, (α ∧ β) ≍_to_=] {
   let ≍_=: [a ⸴ b:, c ⸴ d:, held:]
-    ≔ ({e ^ e ⸴ b} leibnitz (a ≍_= c ((a ≍ c) yea_if_former (b ≍ d) held)))
+    ≔ ((_ ⸴ b) leibnitz (a ≍_= c ((a ≍ c) yea_if_former (b ≍ d) held)))
       throughgo ((c ⸴) leibnitz (b ≍_= d ((a ≍ c) yea_if_latter (b ≍ d) held)))
 
-  let ≍_eftbend: [a ⸴ b:] ≔ {c ^ c if (b ≍ b) nay} yea_throughbear
-    ((a ≍_eftbend) evenmete) (b ≍_eftbend)
+  let ≍_eftbend: [a ⸴ b:]
+    ≔ (_ if (b ≍ b) nay) yea_throughbear ((a ≍_eftbend) evenmete) (b ≍_eftbend)
 }

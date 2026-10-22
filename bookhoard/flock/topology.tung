@@ -90,8 +90,8 @@ show let foreshadow_meet
 ## two open deals yoke to an open deal, as a family over `𝟚`.
 show let either_open
   : [@α: *, @: α topology, u: [α, *], v: [α, *], u_open: u open, v_open: v open,
-    {a ^ {c ^ c if u v} among a} open]
-  ≔ {c ^ c if u v} yoke_open {c ^ match c {
+    ((_ if u v) among _) open]
+  ≔ (_ if u v) yoke_open {c ^ match c {
     yea ^ u_open,
     nay ^ v_open
   }}

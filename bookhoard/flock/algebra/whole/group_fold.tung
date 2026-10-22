@@ -30,7 +30,7 @@ show let /_alone
     (b ·_one) evenmete,
     (b ·) leibnitz ((a ·_/) evenmete),
     b ·_· a (a /),
-    {c ^ c · (a /)} leibnitz undoing,
+    (_ · (a /)) leibnitz undoing,
     (a /) one_·
   }
 
@@ -39,11 +39,11 @@ show let ·_strike
   : [@α: *, @: α group_·, a: α, b: α, c: α, same: (a · b) = (a · c), b = c]
   ≔ >{throughgo,
     (b one_·) evenmete,
-    {d ^ d · b} leibnitz ((a /_·) evenmete),
+    (_ · b) leibnitz ((a /_·) evenmete),
     ((a /) ·_· a b) evenmete,
-    {d ^ (a /) · d} leibnitz same,
+    ((a /) · _) leibnitz same,
     (a /) ·_· a c,
-    {d ^ d · c} leibnitz (a /_·),
+    (_ · c) leibnitz (a /_·),
     c one_·
   }
 
@@ -54,7 +54,7 @@ show let strike_·
     (b ·_one) evenmete,
     (b ·) leibnitz ((a ·_/) evenmete),
     b ·_· a (a /),
-    {d ^ d · (a /)} leibnitz same,
+    (_ · (a /)) leibnitz same,
     (c ·_· a (a /)) evenmete,
     (c ·) leibnitz (a ·_/),
     c ·_one
@@ -73,8 +73,8 @@ show let /_over_·
   : [@α: *, @: α group_·, a: α, b: α, ((a · b) /) = ((b /) · (a /))]
   ≔ ((a · b) /_alone ((b /) · (a /)) >{throughgo,
     ((b /) ·_· (a /) (a · b)) evenmete,
-    {c ^ (b /) · c} leibnitz ((a /) ·_· a b),
+    ((b /) · _) leibnitz ((a /) ·_· a b),
     {c ^ (b /) · (c · b)} leibnitz (a /_·),
-    {c ^ (b /) · c} leibnitz (b one_·),
+    ((b /) · _) leibnitz (b one_·),
     b /_·
   }) evenmete

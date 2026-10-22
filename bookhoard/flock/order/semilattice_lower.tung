@@ -1,5 +1,6 @@
 bring combinator.tung
 bring flock/order/hath_at_most.tung
+bring flock/order/order_half.tung
 bring flock/order/order_whole.tung
 bring ilk/two.tung
 bring is.tung
@@ -29,13 +30,13 @@ bizen: [@β: *, @: β semilattice_lower, @α: *, (α → β) semilattice_lower] 
 show let ⋏_yea
   : [@α: *, @: α order_whole, a: α, b: α, k: (a ≤ b) = yea,
     ((a ≤ b) if a b) = a]
-  ≔ {c: 𝟚 ^ c if a b} leibnitz k
+  ≔ {c ^ c if a b} leibnitz k
 
 ## for a whole order, `a ⋏ b` is `b` when `a ≤ b` faileth.
 show let ⋏_nay
   : [@α: *, @: α order_whole, a: α, b: α, k: (a ≤ b) = nay,
     ((a ≤ b) if a b) = b]
-  ≔ {c: 𝟚 ^ c if a b} leibnitz k
+  ≔ {c ^ c if a b} leibnitz k
 
 show let helpsetting_⋏_swap
   : [@α: *, @: α order_whole, a: α, b: α, ((a ≤ b) if a b) = ((b ≤ a) if b a)]
@@ -50,11 +51,18 @@ show let helpsetting_⋏_swap
     }
   }
 
-let helpsetting_⋏_⋏
-  : [@α: *, @: α order_whole, a: α, b: α, c: α,
-    ((((a ≤ b) if a b) ≤ c) if ((a ≤ b) if a b) c) =
-      ((a ≤ ((b ≤ c) if b c)) if a ((b ≤ c) if b c))]
-  ≔ (a ≤ b) inlook {
+bizen: [@α: *, @: α order_whole, α semilattice_lower] {
+  let ⋏: [a:, b:] ≔ (a ≤ b) if a b
+
+  # each comparison outcome chooseth a, so matching on it sootheth the law.
+  let ⋏_swallow: [a:] ≔ match a ≤ a {
+    yea ^ eftbend,
+    nay ^ eftbend
+  }
+
+  let ⋏_swap ≔ helpsetting_⋏_swap
+
+  let ⋏_⋏: [a:, b:, c:] ≔ (a ≤ b) inlook {
     yea, k₀ ^ (b ≤ c) inlook {
       yea, k₁ ^
         (a ⋏_yea c (a ≤_yea_throughgo b c k₀ k₁)) throughgo
@@ -71,17 +79,4 @@ let helpsetting_⋏_⋏
       }
     }
   }
-
-bizen: [@α: *, @: α order_whole, α semilattice_lower] {
-  let ⋏: [a:, b:] ≔ (a ≤ b) if a b
-
-  # each comparison outcome chooseth a, so matching on it sootheth the law.
-  let ⋏_swallow: [a:] ≔ match a ≤ a {
-    yea ^ eftbend,
-    nay ^ eftbend
-  }
-
-  let ⋏_swap ≔ helpsetting_⋏_swap
-
-  let ⋏_⋏ ≔ helpsetting_⋏_⋏
 }

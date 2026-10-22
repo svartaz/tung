@@ -94,7 +94,7 @@ three syntax facts cause frequent mistakes:
 
 | change                                | required follow-up                                                                                 |
 | ------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| syntax or tokens                      | parser marks, neatener, diagnostics, language document, byspels, tests, and `vscode/` grammar      |
+| syntax or tokens                      | parser marks, tidier, diagnostics, language document, byspels, tests, and `vscode/` grammar        |
 | type, deed, flock, or bizen semantics | type and evaluator regressions, bookhoard checking, and language document                          |
 | dependent core or source              | dependent test groups, their byspels, and `tongue/dependent.md`                                    |
 | runtime or host surface               | primitive or host catalogue, `bookhoard/_fremmed.tung`, exact evaluator tests, and runner boundary |
@@ -104,7 +104,7 @@ three syntax facts cause frequent mistakes:
 before handoff:
 
 - run `make compiler-test` for compiler or bookhoard work;
-- run `make editor-test` after editor, neatener, or syntax work;
+- run `make editor-test` after editor, tidier, or syntax work;
 - run `make byspel-test` after runner or checker changes;
 - run `make prose-test` after prose changes;
 - run `git diff --check`;
@@ -127,4 +127,4 @@ several lines, and delete cases that only restate another case.
 ## formatting
 
 the pre-commit hook formateth staged haskell with ormolu, tung with
-`tung --neaten`, and markdown with prettier. use ormolu, not fourmolu.
+`tung --tidy`, and markdown with prettier. use ormolu, not fourmolu.

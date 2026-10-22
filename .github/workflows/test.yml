@@ -25,7 +25,7 @@ jobs:
           - { check: byspel, target: byspel-test, os: ubuntu-latest }
           - { check: byspel, target: byspel-test, os: macos-latest }
           - { check: editor, target: editor-test, os: ubuntu-latest }
-          - { check: neaten, target: neaten-check, os: ubuntu-latest }
+          - { check: tidy, target: tidy-check, os: ubuntu-latest }
           - { check: prose, target: prose-test, os: ubuntu-latest }
           - { check: formula, target: formula-check, os: ubuntu-latest }
 

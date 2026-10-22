@@ -243,7 +243,7 @@ interfaceRoundTrip = withDirectory \root -> do
           show let rose_sample:rose ≔ (leaf pack @rose) node
           show let depth:[rose, ℕ] ≔
             {_:rose ^ ℕ} unbuild rose {_:rose box ^ ℕ}
-              0 {child:rose box ^ {below:ℕ ^ below heir}}
+              0 {child:rose box ^ {below:ℕ ^ below next}}
               {child:rose ^ {below:ℕ ^ below}}
           """
         ),

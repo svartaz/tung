@@ -77,5 +77,5 @@ show let words_string: [t: string, string list]
 show let yoke_with_string: [string list, string, string] ≔ {
   empty,            _       ^ '',
   string ‥ strings, shedder ^
-    strings gather₁ string {yoked, next ^ (yoked · shedder) · next}
+    strings gather₁ string {yoked, followand ^ (yoked · shedder) · followand}
 }

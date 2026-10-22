@@ -156,7 +156,7 @@ show let or_else: [@α: *, α maybe, [𝟙, α], α] ≔ {
   a some, _        ^ a
 }
 
-## options are the same when both are missing or hold the same worth.
+## options are the same when both are missand or hold the same worth.
 show let same: [@α: *, @: α hath_≍, α maybe, α maybe, 𝟚] ≔ {
   none,   none   ^ yea,
   a some, b some ^ a ≍ b,

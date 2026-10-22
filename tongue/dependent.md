@@ -237,8 +237,8 @@ substituted; occurs and scope checks reject cyclic or escaping solutions.
   in the final term. two applications of one constant are compared by folded
   arguments before unfolding.
 - a numeric literal meeting a constructor application exposeth its outer
-  constructor in either orientation: `2` against `?n heir` solveth `?n` as
-  `1`, and integers use `overnaught` and `heir_undernaught` likewise. fields
+  constructor in either orientation: `2` against `?n next` solveth `?n` as
+  `1`, and integers use `overnaught` and `next_undernaught` likewise. fields
   stay literals and literal comparison stayeth constant-time. induction and
   index matching share this view.
 - nonpattern equations wait and are retried after each new assignment. when
@@ -259,11 +259,11 @@ substituted; occurs and scope checks reject cyclic or escaping solutions.
 ```tung
 ilk ℕ: * {
   naught: ℕ,
-  heir: [ℕ, ℕ]
+  next: [ℕ, ℕ]
 }
 
 let eftbuild: [x: ℕ, ℕ] ≔
-  {_: ℕ ^ ℕ} unbuild ℕ naught {n, ih ^ ih heir} x
+  {_: ℕ ^ ℕ} unbuild ℕ naught {n, ih ^ ih next} x
 
 ilk sameness: [α: *, x: α, α, *] {
   refl: α sameness x x
@@ -386,18 +386,18 @@ patterns, and structural recursion.
 - rows are tried in order. a missing constructor case and an unreachable row
   are errors.
 - a pattern is `_`, a variable, a literal, or a constructor applied to
-  sub-patterns in application order, as `n heir` or `head ‥ tail`. explicit
+  sub-patterns in application order, as `n next` or `head ‥ tail`. explicit
   sub-patterns fill explicit fields in order, `@p` filleth implicit fields, and
   omitted implicit fields are wildcards.
 - a name whose visible binding is not a constructor bindeth a variable, so a
   local shadoweth a same-spelled constructor; qualification still reacheth
   it. a name two imports show is rejected only when one is a constructor.
-- `ℕ` is an inductive family with constructors `0` and `heir`. a natural
-  literal pattern `k` is `k` applications of `heir` to `0`, and literals stay
+- `ℕ` is an inductive family with constructors `0` and `next`. a natural
+  literal pattern `k` is `k` applications of `next` to `0`, and literals stay
   the representation: kernel and runner read a literal as its constructor and
-  build literals from `heir`. `ℤ` hath `overnaught: [ℕ, ℤ]` and
-  `heir_undernaught: [ℕ, ℤ]`, `n heir_undernaught` being `-(n + 1)`, so `+3`
-  is `3 overnaught` and `-4` is `3 heir_undernaught`. integer, string,
+  build literals from `next`. `ℤ` hath `overnaught: [ℕ, ℤ]` and
+  `next_undernaught: [ℕ, ℤ]`, `n next_undernaught` being `-(n + 1)`, so `+3`
+  is `3 overnaught` and `-4` is `3 next_undernaught`. integer, string,
   unicode, and float literal patterns compile to the primitive `literal_case:
 [@α: *, @β, x: α, k: α, yes: β, no: β, β]`, which chooseth once `x` and `k`
   are literals.
@@ -465,7 +465,7 @@ patterns, and structural recursion.
   refined domains. named index inputs use their refined values' types. the
   trivial type is `[reverted goal, reverted goal]`, in the goal's universe.
 - a constructor's result index may constrain its own fields: matching `‥`
-  at `n heir` against index `2` forceth `n` to `1`, so the tail hath type
+  at `n next` against index `2` forceth `n` to `1`, so the tail hath type
   `α vec 1`. the planner intersecteth shape requirements on each field without
   assigning locals or holes; each constrained field is split by its ordinary
   eliminator before later dependent fields and hypotheses are bound, and the
@@ -532,13 +532,13 @@ result may depend on indices or the value. before using a child's hypothesis,
 every actual child index is matched against the declaration's whole index
 shape: explicit leaf arguments must equal their parts, and implicit leaf inputs
 still need the shape to match. so a fixed `α vec 2` function cannot recurse on
-its `α vec 1` tail, and one on `α vec (n heir)` may recurse on a tail of index
-`k` only after a split establisheth `k = m heir`.
+its `α vec 1` tail, and one on `α vec (n next)` may recurse on a tail of index
+`k` only after a split establisheth `k = m next`.
 [`index_recursion.tung`](../byspel/index_recursion.tung) showeth fixed
 indices, dependent results, and leaf inputs.
 
 course-of-values recursion: a call on a deeper descendant, as
-`(n heir) heir ^ ((n heir) fibonacci) + (n fibonacci)`, useth records like
+`(n next) next ^ ((n next) fibonacci) + (n fibonacci)`, useth records like
 lean's `brecOn`. joint large elimination buildeth a `below` type for every
 target, specialised containers included, holding each recursive field's
 `r{below, now}` record; the structural family's `now` is the result motive

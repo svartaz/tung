@@ -4,7 +4,7 @@ bring kindful.tung tale
 ## bare names come from an unambiguous import; qualified names always work.
 let repeat: [nat, 𝟙 deed, 𝟙 deed] ≔ {
   naught, _     ^ only deed_sheer,
-  n heir, doing ^ doing then (n repeat doing)
+  n next, doing ^ doing then (n repeat doing)
 }
 
 let main: 𝟙 deed ≔ >{then, tale~four repeat ('tung ' write), '\n' host~write}

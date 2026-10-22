@@ -1,9 +1,9 @@
--- | the canonical two-space neatener for the cli and editor. it parseth the
+-- | the canonical two-space tidier for the cli and editor. it parseth the
 -- source first and refuseth what doth not parse. it shorteneth each redundant
 -- η-expansion, `{a ^ a f}` to `f`, and droppeth redundant parentheses. layout
 -- then followeth only the tokens, their brackets, and the comments between
 -- them: whitespace in the source never changeth the output, so each concrete
--- syntax tree hath one neat form, and neatening is idempotent.
+-- syntax tree hath one tidy form, and tidying is idempotent.
 module Tung.Format (formatSource) where
 
 import Control.Applicative ((<|>))
@@ -16,7 +16,7 @@ import Tung.Dependent.Source.Parse (parseProgram, sourceTree)
 import Tung.Token hiding (Piece (..), PieceKind (..), Placement (..))
 import Tung.Token qualified as T
 
--- the widest line the neatener leaveth when the line can be broken.
+-- the widest line the tidier leaveth when the line can be broken.
 lineLimit :: Int
 lineLimit = 80
 
@@ -33,7 +33,7 @@ formatSource written = do
   before <- lexTokens source
   if sort (map show after) == sort (map show before)
     then Right output
-    else Left "the neatener changed the tokens; this is a compiler fault"
+    else Left "the tidier changed the tokens; this is a compiler fault"
 
 -- shortening rewriteth tokens before layout: η-expansions and redundant
 -- parentheses, until neither applieth, as dropping one may expose the other.
@@ -45,7 +45,7 @@ shorten written = let once = shortenParens (shortenEta written) in if once == wr
 -- parenthesised unless the lambda is a whole expression. its
 -- binders are distinct bare names, the rest is names and literals that never
 -- name a binder, and no comment standeth inside. an annotated binder keepeth
--- its expansion, as elaboration may need it. the neatener readeth no names,
+-- its expansion, as elaboration may need it. the tidier readeth no names,
 -- so a binder may be a constructor; a one-row match on one then checketh only
 -- when that constructor is its ilk's sole, nullary one, and the shortened
 -- function agreeth with it on every input. a shortening may complete an

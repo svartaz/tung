@@ -100,8 +100,7 @@ let list_sameness
     same: (a to_list) = (b to_list), a = b]
   ≔ match a, b {
     a… ordered left, m ordered right ^ match same {
-      eftbend ^ {soothing: (a… rowed) holds ^ a… ordered soothing} leibnitz
-        ((a… rowed) holds_unique left right)
+      eftbend ^ (a… ordered) leibnitz ((a… rowed) holds_unique left right)
     }
   }
 
@@ -137,138 +136,21 @@ let ∋_meet
   }
 
 # set sameness followeth from the corresponding boolean limbship laws.
-let yoke_swallow: [@α: *, @: α order_whole, a: α set, (a yoke a) = a]
-  ≔ (a yoke a) umfang a {
-    b ^ (let left₀ ≔ a ∋_yoke a b yield left₀ throughgo ((a ∋ b) ⋎_swallow))
-  }
-
-let yoke_swap
-  : [@α: *, @: α order_whole, a: α set, b: α set, (a yoke b) = (b yoke a)]
-  ≔ (a yoke b) umfang (b yoke a) {
-    c ^ (
-      let left₀ ≔ a ∋_yoke b c
-      let right₀ ≔ b ∋_yoke a c
-      yield <{throughgo, left₀, (a ∋ c) ⋎_swap (b ∋ c), right₀ evenmete}
-    )
-  }
-
 let yoke_yoke
   : [@α: *, @: α order_whole, a: α set, b: α set, c: α set,
     <{yoke, a, b, c} = >{yoke, a, b, c}]
   ≔ <{yoke, a, b, c} umfang >{yoke, a, b, c} {
-    d ^ (
-      let left₀ ≔ a ∋_yoke b d
-      let left₁ ≔ (a yoke b) ∋_yoke c d
-      let left₂ ≔ left₁ throughgo ({p: 𝟚 ^ p ⋎ (c ∋ d)} leibnitz left₀)
-      let right₀ ≔ b ∋_yoke c d
-      let right₁ ≔ a ∋_yoke (b yoke c) d
-      let right₂ ≔ right₁ throughgo ({p: 𝟚 ^ (a ∋ d) ⋎ p} leibnitz right₀)
-      yield <{throughgo, left₂, (a ∋ d) ⋎_⋎ (b ∋ d) (c ∋ d), right₂ evenmete}
-    )
-  }
-
-let meet_swallow: [@α: *, @: α order_whole, a: α set, (a meet a) = a]
-  ≔ (a meet a) umfang a {
-    b ^ (let left₀ ≔ a ∋_meet a b yield left₀ throughgo ((a ∋ b) ⋏_swallow))
-  }
-
-let meet_swap
-  : [@α: *, @: α order_whole, a: α set, b: α set, (a meet b) = (b meet a)]
-  ≔ (a meet b) umfang (b meet a) {
-    c ^ (
-      let left₀ ≔ a ∋_meet b c
-      let right₀ ≔ b ∋_meet a c
-      yield <{throughgo, left₀, (a ∋ c) ⋏_swap (b ∋ c), right₀ evenmete}
-    )
-  }
-
-let meet_meet
-  : [@α: *, @: α order_whole, a: α set, b: α set, c: α set,
-    <{meet, a, b, c} = >{meet, a, b, c}]
-  ≔ <{meet, a, b, c} umfang >{meet, a, b, c} {
-    d ^ (
-      let left₀ ≔ a ∋_meet b d
-      let left₁ ≔ (a meet b) ∋_meet c d
-      let left₂ ≔ left₁ throughgo ({p: 𝟚 ^ p ⋏ (c ∋ d)} leibnitz left₀)
-      let right₀ ≔ b ∋_meet c d
-      let right₁ ≔ a ∋_meet (b meet c) d
-      let right₂ ≔ right₁ throughgo ({p: 𝟚 ^ (a ∋ d) ⋏ p} leibnitz right₀)
-      yield <{throughgo, left₂, (a ∋ d) ⋏_⋏ (b ∋ d) (c ∋ d), right₂ evenmete}
-    )
-  }
-
-let meet_yoke_swallow
-  : [@α: *, @: α order_whole, a: α set, b: α set, (a meet (a yoke b)) = a]
-  ≔ (a meet (a yoke b)) umfang a {
-    c ^ (
-      let left₀ ≔ a ∋_yoke b c
-      let left₁ ≔ a ∋_meet (a yoke b) c
-      let left₂ ≔ left₁ throughgo ({p: 𝟚 ^ (a ∋ c) ⋏ p} leibnitz left₀)
-      yield left₂ throughgo ((a ∋ c) ⋏_⋎_swallow (b ∋ c))
-    )
-  }
-
-let yoke_meet_swallow
-  : [@α: *, @: α order_whole, a: α set, b: α set, (a yoke (a meet b)) = a]
-  ≔ (a yoke (a meet b)) umfang a {
-    c ^ (
-      let left₀ ≔ a ∋_meet b c
-      let left₁ ≔ a ∋_yoke (a meet b) c
-      let left₂ ≔ left₁ throughgo ({p: 𝟚 ^ (a ∋ c) ⋎ p} leibnitz left₀)
-      yield left₂ throughgo ((a ∋ c) ⋎_⋏_swallow (b ∋ c))
-    )
-  }
-
-let meet_yoke
-  : [@α: *, @: α order_whole, a: α set, b: α set, c: α set,
-    (a meet (b yoke c)) = ((a meet b) yoke (a meet c))]
-  ≔ (a meet (b yoke c)) umfang ((a meet b) yoke (a meet c)) {
-    d ^ (
-      let left₀ ≔ b ∋_yoke c d
-      let left₁ ≔ a ∋_meet (b yoke c) d
-      let left₂ ≔ left₁ throughgo ({p: 𝟚 ^ (a ∋ d) ⋏ p} leibnitz left₀)
-      let right₀ ≔ a ∋_meet b d
-      let right₁ ≔ a ∋_meet c d
-      let right₂ ≔ (a meet b) ∋_yoke (a meet c) d
-      let right₃
-        ≔ right₂ throughgo ({p: 𝟚 ^ p ⋎ ((a meet c) ∋ d)} leibnitz right₀)
-      let right₄
-        ≔ right₃ throughgo ({p: 𝟚 ^ ((a ∋ d) ⋏ (b ∋ d)) ⋎ p} leibnitz right₁)
-      yield <{throughgo, left₂, (a ∋ d) ⋏_⋎ (b ∋ d) (c ∋ d), right₄ evenmete}
-    )
-  }
-
-let yoke_meet
-  : [@α: *, @: α order_whole, a: α set, b: α set, c: α set,
-    (a yoke (b meet c)) = ((a yoke b) meet (a yoke c))]
-  ≔ (a yoke (b meet c)) umfang ((a yoke b) meet (a yoke c)) {
-    d ^ (
-      let left₀ ≔ b ∋_meet c d
-      let left₁ ≔ a ∋_yoke (b meet c) d
-      let left₂ ≔ left₁ throughgo ({p: 𝟚 ^ (a ∋ d) ⋎ p} leibnitz left₀)
-      let right₀ ≔ a ∋_yoke b d
-      let right₁ ≔ a ∋_yoke c d
-      let right₂ ≔ (a yoke b) ∋_meet (a yoke c) d
-      let right₃
-        ≔ right₂ throughgo ({p: 𝟚 ^ p ⋏ ((a yoke c) ∋ d)} leibnitz right₀)
-      let right₄
-        ≔ right₃ throughgo ({p: 𝟚 ^ ((a ∋ d) ⋎ (b ∋ d)) ⋏ p} leibnitz right₁)
-      yield <{throughgo, left₂, (a ∋ d) ⋎_⋏ (b ∋ d) (c ∋ d), right₄ evenmete}
-    )
+    d ^ >{throughgo,
+      (a yoke b) ∋_yoke c d,
+      {p ^ p ⋎ (c ∋ d)} leibnitz (a ∋_yoke b d),
+      (a ∋ d) ⋎_⋎ (b ∋ d) (c ∋ d),
+      {p ^ (a ∋ d) ⋎ p} leibnitz ((b ∋_yoke c d) evenmete),
+      (a ∋_yoke (b yoke c) d) evenmete
+    }
   }
 
 let empty_yoke: [@α: *, @: α order_whole, a: α set, (empty yoke a) = a]
-  ≔ (empty yoke a) umfang a {
-    b ^ (let left₀ ≔ empty ∋_yoke a b yield left₀ throughgo ((a ∋ b) ⟂_⋎))
-  }
-
-let yoke_empty: [@α: *, @: α order_whole, a: α set, (a yoke empty) = a]
-  ≔ (a yoke empty) umfang a {
-    b ^ (
-      let left₀ ≔ a ∋_yoke empty b
-      yield >{throughgo, left₀, (a ∋ b) ⋎_swap nay, (a ∋ b) ⟂_⋎}
-    )
-  }
+  ≔ (empty yoke a) umfang a {b ^ (empty ∋_yoke a b) throughgo ((a ∋ b) ⟂_⋎)}
 
 let implication_chain
   : [p: 𝟚, q: 𝟚, r: 𝟚, soothe: [p = yea, q = yea, r = yea], (p ≤ (q ≤ r)) = yea]
@@ -288,18 +170,6 @@ bizen: [@α: *, @: α order_whole, (α set) hath_≤] {
   let ≤: [a:, b:] ≔ (a to_list) underset (b to_list)
 }
 
-bizen: [@α: *, @: α order_whole, (α set) order_half] {
-  let ≤_eftbend: [a:] ≔ (a to_list) underset_eftbend (a limbs_rowed)
-
-  let ≤_withevenmete: [a:, b:] ≔ (a to_list) underset_withevenmete (b to_list)
-
-  let ≤_throughgo: [a:, b:, c:]
-    ≔ (a ≤ b) implication_chain (b ≤ c) (a ≤ c) {
-      first, latter ^
-        (a to_list) underset_throughgo (b to_list) (c to_list) first latter
-    }
-}
-
 bizen: [@α: *, @: α order_whole, (α set) ≍_to_=] {
   let ≍_=: [a:, b:, same:]
     ≔ a list_sameness b
@@ -307,39 +177,116 @@ bizen: [@α: *, @: α order_whole, (α set) ≍_to_=] {
         ((a ≤ b) yea_if_former (b ≤ a) same)
         ((a ≤ b) yea_if_latter (b ≤ a) same))
 
-  let ≍_eftbend: [a:] ≔ (a ≤ a) both_yea (a ≤ a) (a ≤_eftbend) (a ≤_eftbend)
+  let ≍_eftbend: [a:] ≔ (
+    let below ≔ (a to_list) underset_eftbend (a limbs_rowed)
+    yield (a ≤ a) both_yea (a ≤ a) below below
+  )
+}
+
+bizen: [@α: *, @: α order_whole, (α set) order_half] {
+  let ≤_eftbend: [a:] ≔ (a to_list) underset_eftbend (a limbs_rowed)
+
+  let ≤_witherevenmete: [a:, b:]
+    ≔ (a to_list) underset_witherevenmete (b to_list)
+
+  let ≤_throughgo: [a:, b:, c:]
+    ≔ (a ≤ b) implication_chain (b ≤ c) (a ≤ c) {
+      first, latter ^
+        (a to_list) underset_throughgo (b to_list) (c to_list) first latter
+    }
+
+  let ≤_=: [a:, b:, below:, above:]
+    ≔ a ≍_= b ((a ≤ b) both_yea (b ≤ a) below above)
 }
 
 bizen: [@α: *, @: α order_whole, (α set) semilattice_lower] {
   let ⋏ ≔ meet
 
-  let ⋏_swallow ≔ meet_swallow
+  let ⋏_swallow: [a:]
+    ≔ (a meet a) umfang a {b ^ (a ∋_meet a b) throughgo ((a ∋ b) ⋏_swallow)}
 
-  let ⋏_swap ≔ meet_swap
+  let ⋏_swap: [a:, b:]
+    ≔ (a meet b) umfang (b meet a) {
+      c ^ >{throughgo,
+        a ∋_meet b c,
+        (a ∋ c) ⋏_swap (b ∋ c),
+        (b ∋_meet a c) evenmete
+      }
+    }
 
-  let ⋏_⋏ ≔ meet_meet
+  let ⋏_⋏: [a:, b:, c:] ≔ <{meet, a, b, c} umfang >{meet, a, b, c} {
+    d ^ >{throughgo,
+      (a meet b) ∋_meet c d,
+      {p ^ p semilattice_lower~⋏ (c ∋ d)} leibnitz (a ∋_meet b d),
+      (a ∋ d) ⋏_⋏ (b ∋ d) (c ∋ d),
+      {p ^ (a ∋ d) semilattice_lower~⋏ p} leibnitz ((b ∋_meet c d) evenmete),
+      (a ∋_meet (b meet c) d) evenmete
+    }
+  }
 }
 
 bizen: [@α: *, @: α order_whole, (α set) semilattice_upper] {
   let ⋎ ≔ yoke
 
-  let ⋎_swallow ≔ yoke_swallow
+  let ⋎_swallow: [a:]
+    ≔ (a yoke a) umfang a {b ^ (a ∋_yoke a b) throughgo ((a ∋ b) ⋎_swallow)}
 
-  let ⋎_swap ≔ yoke_swap
+  let ⋎_swap: [a:, b:]
+    ≔ (a yoke b) umfang (b yoke a) {
+      c ^ >{throughgo,
+        a ∋_yoke b c,
+        (a ∋ c) ⋎_swap (b ∋ c),
+        (b ∋_yoke a c) evenmete
+      }
+    }
 
   let ⋎_⋎ ≔ yoke_yoke
 }
 
 bizen: [@α: *, @: α order_whole, (α set) lattice] {
-  let ⋏_⋎_swallow ≔ meet_yoke_swallow
+  let ⋏_⋎_swallow: [a:, b:]
+    ≔ (a meet (a yoke b)) umfang a {
+      c ^ >{throughgo,
+        a ∋_meet (a yoke b) c,
+        {p ^ (a ∋ c) ⋏ p} leibnitz (a ∋_yoke b c),
+        (a ∋ c) ⋏_⋎_swallow (b ∋ c)
+      }
+    }
 
-  let ⋎_⋏_swallow ≔ yoke_meet_swallow
+  let ⋎_⋏_swallow: [a:, b:]
+    ≔ (a yoke (a meet b)) umfang a {
+      c ^ >{throughgo,
+        a ∋_yoke (a meet b) c,
+        {p ^ (a ∋ c) ⋎ p} leibnitz (a ∋_meet b c),
+        (a ∋ c) ⋎_⋏_swallow (b ∋ c)
+      }
+    }
 }
 
 bizen: [@α: *, @: α order_whole, (α set) lattice_spreadsome] {
-  let ⋏_⋎ ≔ meet_yoke
+  let ⋏_⋎: [a:, b:, c:]
+    ≔ (a meet (b yoke c)) umfang ((a meet b) yoke (a meet c)) {
+      d ^ >{throughgo,
+        a ∋_meet (b yoke c) d,
+        {p ^ (a ∋ d) ⋏ p} leibnitz (b ∋_yoke c d),
+        (a ∋ d) ⋏_⋎ (b ∋ d) (c ∋ d),
+        {p ^ ((a ∋ d) ⋏ (b ∋ d)) ⋎ p} leibnitz ((a ∋_meet c d) evenmete),
+        {p ^ p ⋎ ((a meet c) ∋ d)} leibnitz ((a ∋_meet b d) evenmete),
+        ((a meet b) ∋_yoke (a meet c) d) evenmete
+      }
+    }
 
-  let ⋎_⋏ ≔ yoke_meet
+  let ⋎_⋏: [a:, b:, c:]
+    ≔ (a yoke (b meet c)) umfang ((a yoke b) meet (a yoke c)) {
+      d ^ >{throughgo,
+        a ∋_yoke (b meet c) d,
+        {p ^ (a ∋ d) ⋎ p} leibnitz (b ∋_meet c d),
+        (a ∋ d) ⋎_⋏ (b ∋ d) (c ∋ d),
+        {p ^ ((a ∋ d) ⋎ (b ∋ d)) ⋏ p} leibnitz ((a ∋_yoke c d) evenmete),
+        {p ^ p ⋏ ((a yoke c) ∋ d)} leibnitz ((a ∋_yoke b d) evenmete),
+        ((a yoke b) ∋_meet (a yoke c) d) evenmete
+      }
+    }
 }
 
 bizen: [@α: *, @: α order_whole, (α set) semilattice_upper_hemmed] {
@@ -359,5 +306,8 @@ bizen: [@α: *, @: α order_whole, (α set) monoid_·] {
 
   let one_· ≔ empty_yoke
 
-  let ·_one ≔ yoke_empty
+  let ·_one: [a:]
+    ≔ (a yoke empty) umfang a {
+      b ^ >{throughgo, a ∋_yoke empty b, (a ∋ b) ⋎_swap nay, (a ∋ b) ⟂_⋎}
+    }
 }

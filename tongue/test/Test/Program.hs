@@ -62,22 +62,22 @@ languagePrograms =
     ("checked ℤ match", "yield match +1 { +0 ^ +10, +1 ^ +20, _ ^ +30 }", "eval ok: +20"),
     ("checked class evidence", "flock hath_sameness:[a:*, *] { let sameness:[a, a] } bizen:ℤ hath_sameness { let sameness: [x:] ≔ x } yield +7 sameness", "eval ok: +7"),
     ("checked value retaineth unused required evidence", "ilk unit: * { only: unit } flock capability:[a:*, *] {} bizen:ℤ capability {} let empty:[@a:*, @:a capability, unit] ≔ only yield empty @ℤ", "eval ok: only"),
-    ("checked annotated local selfcalling", "bring often.tung yield (let rime:[ℕ, ℕ] ≔ { 0 ^ 0, n heir ^ n rime } yield 2 rime)", "eval ok: 0"),
+    ("checked annotated local selfcalling", "bring often.tung yield (let rime:[ℕ, ℕ] ≔ { 0 ^ 0, n next ^ n rime } yield 2 rime)", "eval ok: 0"),
     ( "checked nested deep selfcalling with repeated scrutinees",
       """
-      ilk nat:* { naught:nat, heir:[nat,nat] }
+      ilk nat:* { naught:nat, next:[nat,nat] }
       let +:[ℤ,ℤ,ℤ] ≔ 'eke_wholetale' fremmed
-      let tale:[nat,ℤ] ≔ { naught ^ +0, n heir ^ (n tale) + +1 }
+      let tale:[nat,ℤ] ≔ { naught ^ +0, n next ^ (n tale) + +1 }
       let deep:[x:nat,nat] ≔ match x,x {
         naught,_ ^ naught,
-        naught heir,_ ^ naught heir,
-        (n heir) heir,(m heir) heir ^ (let local:[nat,nat] ≔ {
-          naught ^ (m heir) deep,
-          naught heir ^ (m heir) deep,
-          (k heir) heir ^ (k heir) local
-        } yield m local) heir
+        naught next,_ ^ naught next,
+        (n next) next,(m next) next ^ (let local:[nat,nat] ≔ {
+          naught ^ (m next) deep,
+          naught next ^ (m next) deep,
+          (k next) next ^ (k next) local
+        } yield m local) next
       }
-      yield (((((naught heir) heir) heir) heir) deep) tale
+      yield (((((naught next) next) next) next) deep) tale
       """,
       "eval ok: +4"
     ),

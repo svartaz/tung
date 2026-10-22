@@ -28,7 +28,7 @@ show let bind_same
   ≔ (m deed_bind) leibnitz (pointwise fall_umfang)
 
 ## mapping twice is mapping once with the composite.
-let warp_twice
+let warp_warp
   : [@α: *, @β: *, @γ: *, m: α deed, f: [α, β], g: [β, γ],
     <{deed_bind, m, f ▷ deed_sheer, g ▷ deed_sheer} =
       (m deed_bind ((f ▷ g) ▷ deed_sheer))]
@@ -65,7 +65,7 @@ bizen: deed onwendsome {
   let onwend_onwend: [m:, f:, g:] ≔ >{throughgo,
     g deed_sheer_bind {tweak ^ ((f deed_sheer) deed_bind (m warp)) warp tweak},
     {inner ^ inner warp g} leibnitz (f deed_sheer_bind (m warp)),
-    m warp_twice f g,
+    m warp_warp f g,
     ((f ▷ g) deed_sheer_bind (m warp)) evenmete
   }
 

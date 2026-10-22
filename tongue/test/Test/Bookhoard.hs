@@ -38,6 +38,8 @@ group = do
       ++ soundnessCases library
       ++ groundedCases library
       ++ yonedaCases library
+      ++ topologyCases library
+      ++ lawCases library
       ++ moduleCases library
       ++ groupCases library
       ++ setCases library
@@ -132,9 +134,9 @@ setCases library =
 -- structural model otherwise; the two must agree, and proofs may use the model.
 numberCases :: Library -> [Test]
 numberCases library =
-  [ agreement "ℕ" (libraryModule library "ilk/kindful.tung") ["is_same", "is_at_most", "eke", "offdraw", "fold", "deal_leftover"] (0, 12) (show :: Int -> String),
-    agreement "ℤ" (libraryModule library "ilk/wholetale.tung") ["is_same", "is_at_most", "eke", "offdraw", "fold", "deal_leftover"] (-12, 12) signed,
-    agreement "unicode" (libraryModule library "ilk/unicode.tung") ["same_unicode", "at_most_unicode"] (0, 3) (\index -> ['`', staffs !! index]),
+  [ agreement "ℕ" (libraryModule library "ilk/kindful.tung") ["same", "at_most", "eke", "offdraw", "fold", "deal_leftover"] (0, 12) (show :: Int -> String),
+    agreement "ℤ" (libraryModule library "ilk/wholetale.tung") ["same", "at_most", "eke", "offdraw", "fold", "deal_leftover"] (-12, 12) signed,
+    agreement "unicode" (libraryModule library "ilk/unicode.tung") ["same", "at_most"] (0, 3) (\index -> ['`', staffs !! index]),
     agreement "string" (libraryModule library "ilk/string/building.tung") ["same_string", "at_most_string", "yoke_string"] (0, 40) (\index -> "'" ++ spelled index ++ "'"),
     expectEq "a modelled operation is proved by computation and by induction" (Right ()) $
       () <$ compileWith library "kindful_soothing.tung" proofs
@@ -173,7 +175,7 @@ numberCases library =
       let left_naught: [n: ℕ, (0 + n) = n] ≔
         match n {
           0 ^ eftbend,
-          k heir ^ {x: ℕ ^ x heir} leibnitz (k left_naught)
+          k next ^ {x: ℕ ^ x next} leibnitz (k left_naught)
         }
       """
 
@@ -256,6 +258,100 @@ moduleCases library =
 
 -- a relation with nothing smaller is well-founded, and recursion on it runneth
 -- the step once.
+-- the discrete topology satisfieth every law, so every fall out of it is
+-- steady, also after another; a bizen whose whole deal is not open is rejected.
+-- lying under goeth through meets, but a deal lieth not under its meet.
+topologyCases :: Library -> [Test]
+topologyCases library =
+  [ expectEq "the discrete topology maketh every fall steady" (Right ()) $
+      () <$ compile discrete,
+    rejectContaining "a topology must open the whole deal" "cannot unify one~𝟙 with naught~𝟘" $
+      compile
+        """
+        ilk point: * { lone: point }
+        bizen: point topology {
+          let open: [_:] ≔ 𝟘
+          let whole_open ≔ only
+          let empty_open ≔ only
+          let meet_open: [_:, _:, _:, _:] ≔ only
+          let yoke_open: [_:, _:] ≔ only
+        }
+        """,
+    expectEq "lying under goeth through meets" (Right ()) $
+      ()
+        <$ compile
+          """
+          let left_twice: [@α: *, u: [α, *], v: [α, *], w: [α, *], ((u meet v) meet w) underset u]
+            ≔ ((u meet v) meet w) underset_throughgo (u meet v) u ((u meet v) meet_underset_former w) (u meet_underset_former v)
+          """,
+    rejectContaining "a deal lieth not under its meet" "cannot unify" $
+      compile "let bad: [@α: *, u: [α, *], v: [α, *], u underset (u meet v)] ≔ {_, held ^ held}"
+  ]
+  where
+    compile source = compileWith library "topology_test.tung" (imports ++ "\n" ++ source)
+    imports =
+      """
+      bring flock/algebra/half/semigroupoid.tung
+      bring flock/topology.tung
+      bring ilk/naught.tung
+      bring ilk/one.tung
+      """
+    discrete =
+      """
+      ilk discrete: [α: *, *] { lay: [α, α discrete] }
+      bizen: [@α: *, (α discrete) topology] {
+        let open: [_:] ≔ 𝟙
+        let whole_open ≔ only
+        let empty_open ≔ only
+        let meet_open: [_:, _:, _:, _:] ≔ only
+        let yoke_open: [_:, _:] ≔ only
+      }
+      let discrete_steady: [@α: *, @β: *, @: β topology, f: [α discrete, β], f steady] ≔ {_, _ ^ only}
+      let both: [@α: *, @β: *, @γ: *, @: γ topology, f: [α discrete, β discrete], g: [β discrete, γ], (f ▷ g) steady]
+        ≔ f ▷_steady g (f discrete_steady) (g discrete_steady)
+      """
+
+-- flock laws must rule out lax bizens: euclidean dealing yieldeth an outcome
+-- for every dealer but naught, and a half order is witherevenmete in `=`, so
+-- a preorder with a sameness that holdeth everywhere is not one.
+lawCases :: Library -> [Test]
+lawCases library =
+  [ expectEq "dealing by a dealer other than naught yieldeth an outcome" (Right ()) $
+      ()
+        <$ compileWith
+          library
+          "euclidean_test.tung"
+          """
+          bring flock/algebra/whole/euclidean.tung
+          bring flock/algebra/whole/hath_deal_leftover.tung
+          bring ilk/maybe.tung
+          bring ilk/two.tung
+          bring ilk/wholetale.tung
+          bring is.tung
+          let dealt: ((+7 % -2) is_some) = yea ≔ +7 %_some -2 {k ^ match k {}}
+          """,
+    rejectContaining "a lax sameness maketh no half order" "cannot unify" $
+      compileWith
+        library
+        "half_order_test.tung"
+        """
+        bring flock/hath_same.tung
+        bring flock/order/hath_at_most.tung
+        bring flock/order/order_half.tung
+        bring ilk/two.tung
+        bring is.tung
+        ilk rank: * { lesser: rank, greater: rank }
+        bizen: rank hath_≍ { let ≍ ≔ {_, _ ^ yea} }
+        bizen: rank order_half {
+          let ≤ ≔ {_, _ ^ yea}
+          let ≤_eftbend ≔ {_ ^ eftbend}
+          let ≤_witherevenmete ≔ {_, _ ^ eftbend}
+          let ≤_throughgo ≔ {_, _, _ ^ eftbend}
+          let ≤_= ≔ {_, _, _, _ ^ eftbend}
+        }
+        """
+  ]
+
 groundedCases :: Library -> [Test]
 groundedCases library =
   [ expectEq "well-founded selfcalling computeth its step" (Right True) do
@@ -269,7 +365,7 @@ groundedCases library =
       bring ilk/naught.tung
       let never: [_: ℕ, _: ℕ, *] ≔ 𝟘
       let founded: ℕ wellgrounded never ≔ {x ^ {y, impossible ^ impossible ({}: [𝟘, ℕ grounded never y])} ground}
-      let answer: ℕ ≔ founded wellgrounded_selfcall {x, _ ^ x heir} 3
+      let answer: ℕ ≔ founded wellgrounded_selfcall {x, _ ^ x next} 3
       """
 
 -- the list theorems are proved; false or ill-founded statements beside them
@@ -315,8 +411,8 @@ soundnessCases library =
         """
         bring is.tung
         bring ilk/naught.tung
-        let e: [ℕ, ℕ, ℕ] ≔ 'eke_kindful' fremmed { 0, _ ^ 0, _ heir, _ ^ 0 }
-        let always: [a: ℕ, (a e 0) = 0] ≔ match a { 0 ^ eftbend, _ heir ^ eftbend }
+        let e: [ℕ, ℕ, ℕ] ≔ 'eke_kindful' fremmed { 0, _ ^ 0, _ next, _ ^ 0 }
+        let always: [a: ℕ, (a e 0) = 0] ≔ match a { 0 ^ eftbend, _ next ^ eftbend }
         let claim: [ℕ, *] ≔ {x ^ (x e 0) = 0}
         let move: [n: ℕ, p: n = 1, 1 claim] ≔ p throughbear @ℕ @n @1 @claim (n always)
         let one_naught: [1 = 0, 𝟘] ≔ {}

@@ -51,8 +51,8 @@ primitiveDefinitions =
       Pi Implicit (Sort LZero) . Pi Implicit (Sort (LParam 0)) $
         Pi Explicit (Local 1) (Pi Explicit (Local 2) (Pi Explicit (Local 2) (Pi Explicit (Local 3) (Local 4))))
 
--- `ℕ` is an inductive family with `0` and `heir`, and `ℤ` one with
--- `overnaught` and `heir_undernaught` over `ℕ`. each is checked like any
+-- `ℕ` is an inductive family with `0` and `next`, and `ℤ` one with
+-- `overnaught` and `next_undernaught` over `ℕ`. each is checked like any
 -- other and eliminated by `unbuild`. literals represent their values; the
 -- normaliser and the runner read a literal as its constructors.
 numberDefinitions :: Globals

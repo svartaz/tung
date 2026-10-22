@@ -26,16 +26,16 @@ tests source =
         ++ "let constructors:[*, *] list ≔ "
         ++ constructors
         ++ "\n",
-    same "supplied and inferred implicit list elements agree" "" values "naught ‥ @nat ((naught heir) ‥ @nat (∅ @nat))",
+    same "supplied and inferred implicit list elements agree" "" values "naught ‥ @nat ((naught next) ‥ @nat (∅ @nat))",
     expectEq "onhang computeth at worth and type levels" (Right [True, True]) $
       traverse
         (uncurry (equalIn (extended "")))
-        [ ("(>{‥, naught, ∅}) · (>{‥, naught heir, ∅})", values),
+        [ ("(>{‥, naught, ∅}) · (>{‥, naught next, ∅})", values),
           ("(>{‥, nat, ∅}) · (>{‥, bool, ∅})", types)
         ],
-    same "warp computeth from the ordinary list eliminator" "" (values ++ " warp heir") ">{‥, naught heir, (naught heir) heir, ∅}",
+    same "warp computeth from the ordinary list eliminator" "" (values ++ " warp next") ">{‥, naught next, (naught next) next, ∅}",
     same "warp can turn type constructors into types" "" (constructors ++ " warp {F:[*, *] ^ nat F}") ">{‥, nat list, nat, ∅}",
-    same "fold replaceth constructors by its supplied methods" "" (values ++ " gather naught {_, rest ^ rest heir}") "(naught heir) heir",
+    same "fold replaceth constructors by its supplied methods" "" (values ++ " gather naught {_, rest ^ rest next}") "(naught next) next",
     expectEq "open onhang retaineth an induction neutral and a checked type" (Right True) $ do
       program <- extended openAppend
       result <- normaliseSourceExpression program "onhang_empty"
@@ -66,7 +66,7 @@ tests source =
 naturalSource, openAppend, indexed, values, types, constructors :: String
 naturalSource =
   """
-  ilk nat:* { naught: nat, heir:[nat, nat] }
+  ilk nat:* { naught: nat, next:[nat, nat] }
   ilk bool:* { no: bool, yes: bool }
 
   """
@@ -77,7 +77,7 @@ indexed =
   ilk tag:[* list, *] { witness:row tag }
 
   """
-values = ">{‥, naught, naught heir, ∅}"
+values = ">{‥, naught, naught next, ∅}"
 types = ">{‥, nat, bool, ∅}"
 constructors = ">{‥, list, {α:* ^ α}, ∅ @([*, *])}"
 

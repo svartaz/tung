@@ -3,46 +3,46 @@ bring flock/algebra/half/semigroupoid.tung
 bring is.tung
 
 show flock groupoid: [⇨: [*, *, *], @: ⇨ category, *] {
-  let withwend: [@α: *, @β: *, α ⇨ β, β ⇨ α]
+  let witherwend: [@α: *, @β: *, α ⇨ β, β ⇨ α]
 
-  let ▷_withwend: [@α: *, @β: *, f: α ⇨ β, (f ▷ (f withwend)) = sameness]
+  let ▷_witherwend: [@α: *, @β: *, f: α ⇨ β, (f ▷ (f witherwend)) = sameness]
 
-  let withwend_▷: [@α: *, @β: *, f: α ⇨ β, ((f withwend) ▷ f) = sameness]
+  let witherwend_▷: [@α: *, @β: *, f: α ⇨ β, ((f witherwend) ▷ f) = sameness]
 }
 
-## an arrow that undoeth `f` from the left is its withwend.
-show let withwend_alone
+## an arrow that undoeth `f` from the left is its witherwend.
+show let witherwend_alone
   : [@⇨: [*, *, *], @: ⇨ groupoid, @α: *, @β: *, f: α ⇨ β, g: β ⇨ α,
-    undoing: (g ▷ f) = sameness, g = (f withwend)]
+    undoing: (g ▷ f) = sameness, g = (f witherwend)]
   ≔ >{throughgo,
     (g ▷_sameness) evenmete,
-    (g ▷) leibnitz ((f ▷_withwend) evenmete),
-    g ▷_▷ f (f withwend),
-    {a ^ a ▷ (f withwend)} leibnitz undoing,
-    (f withwend) sameness_▷
+    (g ▷) leibnitz ((f ▷_witherwend) evenmete),
+    g ▷_▷ f (f witherwend),
+    {a ^ a ▷ (f witherwend)} leibnitz undoing,
+    (f witherwend) sameness_▷
   }
 
-## the withwend of a withwend is the arrow.
-show let withwend_withwend
+## the witherwend of a witherwend is the arrow.
+show let witherwend_witherwend
   : [@⇨: [*, *, *], @: ⇨ groupoid, @α: *, @β: *, f: α ⇨ β,
-    ((f withwend) withwend) = f]
-  ≔ ((f withwend) withwend_alone f (f ▷_withwend)) evenmete
+    ((f witherwend) witherwend) = f]
+  ≔ ((f witherwend) witherwend_alone f (f ▷_witherwend)) evenmete
 
-## `sameness` is its own withwend.
-show let sameness_withwend
+## `sameness` is its own witherwend.
+show let sameness_witherwend
   : [@⇨: [*, *, *], @: ⇨ groupoid, @α: *,
-    ((sameness @⇨ @α) withwend) = sameness]
-  ≔ (sameness withwend_alone sameness (sameness sameness_▷)) evenmete
+    ((sameness @⇨ @α) witherwend) = sameness]
+  ≔ (sameness witherwend_alone sameness (sameness sameness_▷)) evenmete
 
-## the withwend of a composite is the composite of the withwends, spun
+## the witherwend of a composite is the composite of the witherwends, spun
 ## around.
-show let withwend_over_▷
+show let witherwend_over_▷
   : [@⇨: [*, *, *], @: ⇨ groupoid, @α: *, @β: *, @γ: *, f: α ⇨ β, g: β ⇨ γ,
-    ((f ▷ g) withwend) = ((g withwend) ▷ (f withwend))]
-  ≔ ((f ▷ g) withwend_alone ((g withwend) ▷ (f withwend)) >{throughgo,
-    ((g withwend) ▷_▷ (f withwend) (f ▷ g)) evenmete,
-    {a ^ (g withwend) ▷ a} leibnitz ((f withwend) ▷_▷ f g),
-    {a ^ (g withwend) ▷ (a ▷ g)} leibnitz (f withwend_▷),
-    {a ^ (g withwend) ▷ a} leibnitz (g sameness_▷),
-    g withwend_▷
+    ((f ▷ g) witherwend) = ((g witherwend) ▷ (f witherwend))]
+  ≔ ((f ▷ g) witherwend_alone ((g witherwend) ▷ (f witherwend)) >{throughgo,
+    ((g witherwend) ▷_▷ (f witherwend) (f ▷ g)) evenmete,
+    {a ^ (g witherwend) ▷ a} leibnitz ((f witherwend) ▷_▷ f g),
+    {a ^ (g witherwend) ▷ (a ▷ g)} leibnitz (f witherwend_▷),
+    {a ^ (g witherwend) ▷ a} leibnitz (g sameness_▷),
+    g witherwend_▷
   }) evenmete

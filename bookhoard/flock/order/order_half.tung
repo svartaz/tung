@@ -4,13 +4,18 @@ bring ilk/three.tung
 bring ilk/two.tung
 bring is.tung
 
-## a decidable half order.
+## a decidable half order. `≤_witherevenmete` speaketh of boolean sameness,
+## which
+## the flock doth not bind to identity, so `≤_=` stateth witherevenmete in `=`
+## as well; without it any preorder with a lax `≍` would pass.
 show flock order_half: [α: *, @: α hath_≤, *] {
   let ≤_eftbend: [a: α, (a ≤ a) = yea]
 
-  let ≤_withevenmete: [a: α, b: α, >{≤, a ≤ b, b ≤ a, a ≍ b} = yea]
+  let ≤_witherevenmete: [a: α, b: α, >{≤, a ≤ b, b ≤ a, a ≍ b} = yea]
 
   let ≤_throughgo: [a: α, b: α, c: α, >{≤, a ≤ b, b ≤ c, a, c} = yea]
+
+  let ≤_=: [a: α, b: α, below: (a ≤ b) = yea, above: (b ≤ a) = yea, a = b]
 }
 
 bizen: 𝟚 order_half {
@@ -19,7 +24,7 @@ bizen: 𝟚 order_half {
     nay ^ eftbend
   }
 
-  let ≤_withevenmete ≔ {
+  let ≤_witherevenmete ≔ {
     yea, yea;
     yea, nay;
     nay, yea;
@@ -35,6 +40,13 @@ bizen: 𝟚 order_half {
     nay, nay, yea;
     nay, nay, nay ^ eftbend
   }
+
+  let ≤_=: [a:, b:, below:, above:] ≔ match a, b, below, above {
+    yea, yea, _, _;
+    nay, nay, _, _ ^ eftbend,
+    yea, nay, k, _ ^ match k {},
+    nay, yea, _, k ^ match k {}
+  }
 }
 
 bizen: 𝟛 order_half {
@@ -44,7 +56,7 @@ bizen: 𝟛 order_half {
     aft  ^ eftbend
   }
 
-  let ≤_withevenmete ≔ {
+  let ≤_witherevenmete ≔ {
     fore, fore;
     fore, mid;
     fore, aft;
@@ -78,5 +90,17 @@ bizen: 𝟛 order_half {
     aft,  aft,  fore;
     aft,  aft,  mid;
     aft,  aft,  aft  ^ eftbend
+  }
+
+  let ≤_=: [a:, b:, below:, above:] ≔ match a, b, below, above {
+    fore, fore, _, _;
+    mid,  mid,  _, _;
+    aft,  aft,  _, _ ^ eftbend,
+    fore, mid,  _, k ^ match k {},
+    fore, aft,  _, k ^ match k {},
+    mid,  fore, k, _ ^ match k {},
+    mid,  aft,  _, k ^ match k {},
+    aft,  fore, k, _ ^ match k {},
+    aft,  mid,  k, _ ^ match k {}
   }
 }

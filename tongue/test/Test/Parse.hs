@@ -48,7 +48,7 @@ accepted =
     ("nullary signatures and empty data", "ilk ℕ: * { naught: ℕ, suc: [ℕ, ℕ] } ilk 𝟘: * {}"),
     ("a function type may start a constructor header", "ilk _request: [a:*, *] { ask: [[ℤ, a], a _request], stop: a _request }"),
     ("deed is an ordinary type constructor", "let echo:[string, 𝟙 deed] ≔ write let main:𝟙 deed ≔ 'x' echo"),
-    ("fast declarations take a let header and may be shown", "fast echo:𝟙 deed ≔ echo show fast count:[n:ℕ, 𝟙 deed] ≔ (n heir) count"),
+    ("fast declarations take a let header and may be shown", "fast echo:𝟙 deed ≔ echo show fast count:[n:ℕ, 𝟙 deed] ≔ (n next) count"),
     ("flock members and laws need no separators", "flock sameness:[a:*, *] { let sameness:[a, a] let hath_≍:[a, a] let rule:[x: a, (x sameness) = x] }"),
     ("flock member with local type parameters", "flock owner:[a:*, *] { let member:[@b:*, b, a] }"),
     ("higher-order flock members", "flock downshaper:[f:[*, *], *] { let gather₀:[@a:*, @b:*, a f, b, [a, b, b], b] }"),
@@ -283,11 +283,11 @@ localScopes :: Test
 localScopes =
   expectEq
     "the parser scopeth each local binder"
-    [ ("n", "n: ℕ, x: n fan, ℕ] ≔ (let k ≔ n yield {0 ^ k, m heir ^ m} x)"),
-      ("x", "x: n fan, ℕ] ≔ (let k ≔ n yield {0 ^ k, m heir ^ m} x)"),
-      ("k", "k ≔ n yield {0 ^ k, m heir ^ m} x)"),
-      ("m", "m heir ^ m"),
-      ("heir", "heir ^ m"),
+    [ ("n", "n: ℕ, x: n fan, ℕ] ≔ (let k ≔ n yield {0 ^ k, m next ^ m} x)"),
+      ("x", "x: n fan, ℕ] ≔ (let k ≔ n yield {0 ^ k, m next ^ m} x)"),
+      ("k", "k ≔ n yield {0 ^ k, m next ^ m} x)"),
+      ("m", "m next ^ m"),
+      ("next", "next ^ m"),
       ("α", "α: *, *] { let get: α }"),
       ("p", "p: [y: ℕ, ({z: ℕ ^ z} y) = y], ℕ] ≔ {@c ^ c}"),
       ("y", "y: ℕ, ({z: ℕ ^ z} y) = y]"),
@@ -298,5 +298,5 @@ localScopes =
   where
     -- an inner bracket or lambda of a header keepeth its own scope, and a
     -- typed or implicit binder is scoped like a bare one.
-    source = "let f: [n: ℕ, x: n fan, ℕ] ≔ (let k ≔ n yield {0 ^ k, m heir ^ m} x)\nflock got: [α: *, *] { let get: α }\nlet g: [p: [y: ℕ, ({z: ℕ ^ z} y) = y], ℕ] ≔ {@c ^ c}\n"
+    source = "let f: [n: ℕ, x: n fan, ℕ] ≔ (let k ≔ n yield {0 ^ k, m next ^ m} x)\nflock got: [α: *, *] { let get: α }\nlet g: [p: [y: ℕ, ({z: ℕ ^ z} y) = y], ℕ] ≔ {@c ^ c}\n"
     slice (start, end) = take (end - start) (drop start source)

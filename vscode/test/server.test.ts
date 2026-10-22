@@ -323,7 +323,7 @@ test("server implementeth the editor workflow over stdio", async (context) => {
   assert.equal(
     capabilities.documentRangeFormattingProvider,
     undefined,
-    "a canonical neat form hath no range of its own",
+    "a canonical tidy form hath no range of its own",
   );
   connection.sendNotification("textDocument/didClose", {
     textDocument: { uri: depUri },

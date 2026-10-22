@@ -8,12 +8,18 @@ bring flock/order/hath_at_most.tung
 bring flock/order/order_whole.tung
 bring ilk/and.tung
 bring ilk/maybe.tung
+bring ilk/naught.tung
 bring ilk/two.tung
 bring is.tung
 
 ## euclidean dealing, whose leftover lieth between naught and the dealer's
-## length. dealing by naught yieldeth none, which the laws skip.
+## length. dealing by any dealer but naught yieldeth an outcome; dealing by
+## naught may yield none, which the other laws skip.
 show flock euclidean: [α: *, @: α ring, @: α hath_%, @: α order_whole, *] {
+  let %_some
+    : [dealt: α, dealer: α, unnaught: [dealer = naught, 𝟘],
+      ((dealt % dealer) is_some) = yea]
+
   let %_·_+: [dealt: α, dealer: α, (match dealt % dealer {
     none                       ^ dealt,
     (quotient ⸴ leftover) some ^ (quotient · dealer) + leftover

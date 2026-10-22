@@ -1,25 +1,25 @@
 ## indexed course-of-values recursion retaineth each descendant's own indices.
 ilk chain: [ℕ, *] {
   empty: 0 chain,
-  link: [n: ℕ, n chain, (n heir) chain]
+  link: [n: ℕ, n chain, (n next) chain]
 }
 
 let depth: [@n: ℕ, n chain, ℕ] ≔ {
   empty                 ^ 0,
   _ link empty          ^ 1,
-  _ link (_ link child) ^ ((child depth) heir) heir
+  _ link (_ link child) ^ ((child depth) next) next
 }
 
 let copy: [@n: ℕ, n chain, n chain] ≔ {
   empty                 ^ empty,
   0 link empty          ^ 0 link empty,
-  _ link (m link child) ^ (m heir) link (m link (child copy))
+  _ link (m link child) ^ (m next) link (m link (child copy))
 }
 
 let hoard: [n: ℕ, x: n chain, whole: ℕ, ℕ] ≔ match x {
   empty                 ^ whole,
-  _ link empty          ^ whole heir,
-  _ link (m link child) ^ m hoard child ((whole heir) heir)
+  _ link empty          ^ whole next,
+  _ link (m link child) ^ m hoard child ((whole next) next)
 }
 
 ## an intermediate descendant may lie outside the declaration's domain.
@@ -31,10 +31,10 @@ ilk cycle: [ℕ, *] {
 
 let laps: [0 cycle, ℕ] ≔ {
   stop            ^ 0,
-  (child up) down ^ (child laps) heir
+  (child up) down ^ (child laps) next
 }
 
-let spins: [k: ℕ, x: (k heir) cycle, ℕ] ≔ match x {
+let spins: [k: ℕ, x: (k next) cycle, ℕ] ≔ match x {
   stop up         ^ 0,
-  (child down) up ^ (0 spins child) heir
+  (child down) up ^ (0 spins child) next
 }

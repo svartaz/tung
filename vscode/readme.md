@@ -38,14 +38,14 @@ the extension provideth:
 - declaration, definition, type-definition, implementation, and reference
   navigation;
 - document and workspace symbols, highlights, and checked rename;
-- document links for `bring`, whole-document neatening, and supported quick
+- document links for `bring`, whole-document tidying, and supported quick
   fixes; and
 - a `Run Tung File` command and editor play button.
 
 completion and navigation follow local and declared-library imports. unsaved
 imported files are checked with their current contents. navigation and
 highlighting work while a file is incomplete. compiler results remain
-authoritative for diagnostics, inferred ilks, and neatening.
+authoritative for diagnostics, inferred ilks, and tidying.
 recoverable `sorry` goals and named contexts appear beside checking errors.
 failed declarations and their dependants remain unavailable; broken imports
 provide no partial names. unfinished delimiters or strings may limit recovery

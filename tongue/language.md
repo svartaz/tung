@@ -193,7 +193,7 @@ against one. the header is one name; inputs belong in the annotation:
 - bare input types bind no names; the body supplieth their function.
 - named and implicit slots precede bare slots. after a named last slot the
   result may be omitted for inference.
-- the neatener writeth `x: α`: no space before `:`, one after.
+- the tidier writeth `x: α`: no space before `:`, one after.
 
 a let's type must be determined: unknown types are never implicitly
 quantified, so write polymorphic parameters. every name in an annotation is
@@ -362,7 +362,7 @@ let classify: [string, ℤ] ≔ {'yes' ^ +1, _ ^ +0}
 - a variable bindeth once per row; `_` discardeth.
 - constructors follow second-is-function order, as `x ‥ leftover`.
 - natural, integer, and string literals match exactly; integer and string
-  literal rows need a catch-all. `0` and `n heir` cover the naturals.
+  literal rows need a catch-all. `0` and `n next` cover the naturals.
 - rows must be exhaustive and non-redundant; impossible constructors need no
   row. `{}` eliminateth an annotated uninhabited input.
 - a case function that destructureth constructors needeth an expected type.
@@ -371,10 +371,10 @@ a named annotation slot may hold a constructor pattern without parentheses,
 `[a ⸴ b: α ∧ β, α]`; literal patterns belong in `match`. matching
 `eftbend: a = b` refineth the result, while `_: a = b` discardeth the proof.
 
-`n heir` matcheth a positive natural and bindeth its predecessor; as a term,
-`heir` addeth one unless a constructor of that name is in scope.
-`n overnaught` and `n heir_undernaught` cover nonnegative and negative
-integers; `3 heir_undernaught` is `-4`.
+`n next` matcheth a positive natural and bindeth its predecessor; as a term,
+`next` addeth one unless a constructor of that name is in scope.
+`n overnaught` and `n next_undernaught` cover nonnegative and negative
+integers; `3 next_undernaught` is `-4`.
 
 matching a computed scrutinee replaceth its occurrences in the expected result
 with the branch constructor. an indexed constructor may determine fields: a
@@ -551,7 +551,7 @@ an annotated top-level let may bind a foreign operation:
 let write: [string, 𝟙 deed] ≔ 'write' fremmed
 let eke_kindful: [ℕ, ℕ, ℕ] ≔ 'eke_kindful' fremmed {
   m, 0      ^ m,
-  m, k heir ^ (m eke_kindful k) heir
+  m, k next ^ (m eke_kindful k) next
 }
 ```
 

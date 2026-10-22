@@ -31,19 +31,19 @@ show ilk list: [α: *, *] {
   ‥: [α, α list, α list]
 }
 
-let holds: [@α: *, @: α hath_≍, α list, α, 𝟚] ≔ {
+let inhold: [@α: *, @: α hath_≍, α list, α, 𝟚] ≔ {
   empty,            _ ^ nay,
-  first ‥ leftover, a ^ (a ≍ first) if yea (leftover holds a)
+  first ‥ leftover, a ^ (a ≍ first) if yea (leftover inhold a)
 }
 
 bizen: [@α: *, @: α hath_≍, (α list) hath_∋ α] {
-  let ∋ ≔ holds
+  let ∋ ≔ inhold
 }
 
 ## `rime` wholetales from start.
 let rime_up: [ℤ, ℕ, ℤ list] ≔ {
   _,     0      ^ empty,
-  start, n heir ^ start ‥ (start + +1 $ rime_up n)
+  start, n next ^ start ‥ (start + +1 $ rime_up n)
 }
 
 ## wholetale range from start up to stop, excluding stop.
@@ -63,8 +63,8 @@ let onhang: [@α: *, α list, α list, α list] ≔ {
 bizen: [@α: *, (α list) semigroup_·] {
   let · ≔ onhang
 
-  let ·_·: [a:, b:, c:] ≔ {a…: α list ^ (a… · (b · c)) = ((a… · b) · c)} unbuild
-    list eftbend {first, _, soothing ^ (first ‥) leibnitz soothing} a
+  let ·_·: [a:, b:, c:] ≔ {a… ^ (a… · (b · c)) = ((a… · b) · c)} unbuild list
+    eftbend {first, _, soothing ^ (first ‥) leibnitz soothing} a
 }
 
 bizen: [@α: *, (α list) monoid_·] {
@@ -72,7 +72,7 @@ bizen: [@α: *, (α list) monoid_·] {
 
   let one_·: [_:] ≔ eftbend
 
-  let ·_one: [a:] ≔ {a…: α list ^ (a… · empty) = a…} unbuild list eftbend {
+  let ·_one: [a:] ≔ {a… ^ (a… · empty) = a…} unbuild list eftbend {
     first, _, soothing ^ (first ‥) leibnitz soothing
   } a
 }
@@ -129,11 +129,11 @@ bizen: list monad {
 
   let flat ≔ flat
 
-  let sheer_bind: [@α:, @β:, a:, f:] ≔ {a…: β list ^ (a… · empty) = a…} unbuild
-    list eftbend {first, _, soothing ^ (first ‥) leibnitz soothing} (a f)
+  let sheer_bind: [@α:, @β:, a:, f:] ≔ {a… ^ (a… · empty) = a…} unbuild list
+    eftbend {first, _, soothing ^ (first ‥) leibnitz soothing} (a f)
 
-  let warp_sheer_flat: [@α:, a:] ≔ {a…: α list ^ (a… warp sheer $ flat) = a…}
-    unbuild list eftbend {first, _, soothing ^ (first ‥) leibnitz soothing} a
+  let warp_sheer_flat: [@α:, a:] ≔ {a… ^ (a… warp sheer $ flat) = a…} unbuild
+    list eftbend {first, _, soothing ^ (first ‥) leibnitz soothing} a
 
   let onwend_sameness_sheer: [@α:, a:] ≔ {
     a…: α list ^ (a… onwend (sameness sheer)) = a…
@@ -264,11 +264,11 @@ show let last: [@α: *, a…: α list, α maybe] ≔ a… gather₁ none {_, a ^
 ## repeat a worth rime times.
 show let eftfold: [@α: *, α, ℕ, α list] ≔ {
   _, 0      ^ empty,
-  a, n heir ^ a ‥ (a eftfold n)
+  a, n next ^ a ‥ (a eftfold n)
 }
 
 ## split worths accepted and forsaken by an umbsay.
-show let partition: [@α: *, a…: α list, f: [α, 𝟚], (α list) ∧ (α list)]
+show let shed: [@α: *, a…: α list, f: [α, 𝟚], (α list) ∧ (α list)]
   ≔ a… gather₀ (empty ⸴ empty) {
     a, accepted ⸴ forsaken ^
       (a f) if ((a ‥ accepted) ⸴ forsaken) (accepted ⸴ (a ‥ forsaken))
@@ -296,7 +296,7 @@ let helpsetting_≍_=
   ≔ match a…, b… {
     empty,   empty   ^ eftbend,
     a ‥ a…′, b ‥ b…′ ^
-      ({c: α ^ c ‥ a…′} leibnitz
+      ({c ^ c ‥ a…′} leibnitz
         (a ≍_= b ((a ≍ b) yea_if_former (a…′ same b…′) held))) throughgo
         ((b ‥) leibnitz
           (a…′ helpsetting_≍_= b…′
@@ -308,7 +308,7 @@ let helpsetting_≍_=
 let helpsetting_≍_eftbend: [@α: *, @: α ≍_to_=, a…: α list, (a… same a…) = yea]
   ≔ match a… {
     empty   ^ eftbend,
-    a ‥ a…′ ^ {b: 𝟚 ^ b if (a…′ same a…′) nay} yea_throughbear
+    a ‥ a…′ ^ {b ^ b if (a…′ same a…′) nay} yea_throughbear
       ((a ≍_eftbend) evenmete) (a…′ helpsetting_≍_eftbend)
   }
 

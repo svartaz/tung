@@ -12,13 +12,13 @@ import Tung.Dependent.Source (SourceProgram, inferSourceExpression, sourceDefini
 
 group :: IO Harness.Group
 group = do
-  mutual <- exampleSource "evensided.tung"
+  mutual <- exampleSource "gainsided.tung"
   nested <- exampleSource "nested.tung"
   Harness.group "dependent-inductive-source" (tests ++ mutualTests mutual ++ nestedTests nested)
 
 tests :: [Test]
 tests =
-  [ sameNormal "source natural induction computeth" naturalSource naturalFold "(naught heir) heir",
+  [ sameNormal "source natural induction computeth" naturalSource naturalFold "(naught next) next",
     expectEq "polymorphic constructors accept ordinary and higher-universe elements" (Right ()) $ do
       program <-
         compile
@@ -34,9 +34,9 @@ tests =
     sameNormal "source indexed induction preserveth the result index" (naturalSource ++ vectorSource) vectorFold vectorOne,
     sameNormal "a constructor index is unified with each constructor's index" (naturalSource ++ vectorSource ++ vectorHead) ("(" ++ vectorOne ++ ") head") "naught",
     expectEq "same successors have same predecessors" (Right ()) $
-      () <$ compile (naturalSource ++ identitySource ++ "let predecessor:[@a:nat, @b:nat, refl:(a heir) hath_≍ @nat (b heir), a hath_≍ @nat b] ≔ refl\n"),
-    expectEq "naught is not a heir" (Right ()) $
-      () <$ compile (naturalSource ++ identitySource ++ "ilk void:* {}\nlet distinct:[naught hath_≍ @nat (naught heir), void] ≔ {}\n"),
+      () <$ compile (naturalSource ++ identitySource ++ "let predecessor:[@a:nat, @b:nat, refl:(a next) hath_≍ @nat (b next), a hath_≍ @nat b] ≔ refl\n"),
+    expectEq "naught is not a successor" (Right ()) $
+      () <$ compile (naturalSource ++ identitySource ++ "ilk void:* {}\nlet distinct:[naught hath_≍ @nat (naught next), void] ≔ {}\n"),
     sameNormal "a field after a recursive child retaineth its original dependencies" (naturalSource ++ identitySource ++ vectorProofSource) vectorProofFold vectorProofOne,
     rejectContaining "an indexed constructor cannot inhabit another index" "cannot unify" $ do
       program <-
@@ -120,7 +120,7 @@ mutualTests example =
       ]
   where
     evenTwo = "(naught_even from_even) from_odd"
-    deep = "let deep:[even, ℕ] ≔ { naught_even ^ 0, (e from_even) from_odd ^ (e deep) heir }\n"
+    deep = "let deep:[even, ℕ] ≔ { naught_even ^ 0, (e from_even) from_odd ^ (e deep) next }\n"
     mutualDeclarations = ["ilk even:* { naught_even:even, from_odd:[odd, even] }", "ilk odd:* { from_even:[even, odd] }"]
     parameterisedSource =
       """
@@ -128,25 +128,25 @@ mutualTests example =
       ilk forest:[α:*, *] { empty:α forest, link:[first:α branch, leftover:α forest, α forest] }
       let probe:[@α:*, α branch, ℕ] ≔
         {_:α branch ^ ℕ} unbuild branch @α {_:α forest ^ ℕ}
-          {value:α ^ {children:[ℕ, α forest] ^ {below:[ℕ, ℕ] ^ (0 below) heir}}}
+          {value:α ^ {children:[ℕ, α forest] ^ {below:[ℕ, ℕ] ^ (0 below) next}}}
           0
           {first:α branch ^ {first_below:ℕ ^ {leftover:α forest ^ {leftover_below:ℕ ^ first_below}}}}
       let length:[@α:*, α forest, ℕ] ≔ {
         empty ^ 0,
-        _ link leftover ^ (leftover length) heir
+        _ link leftover ^ (leftover length) next
       }
 
       """
     indexedSource =
       """
-      ilk one_index:[ℕ, *] { initial:0 one_index, to_one:[n:ℕ, p:n two_index n, (n heir) one_index] }
+      ilk one_index:[ℕ, *] { initial:0 one_index, to_one:[n:ℕ, p:n two_index n, (n next) one_index] }
       ilk two_index:[ℕ, ℕ, *] { to_two:[n:ℕ, p:n one_index, n two_index n] }
       let depth:[n:ℕ, n one_index, ℕ] ≔
         {n:ℕ ^ {_:n one_index ^ ℕ}} unbuild one_index
           {n:ℕ ^ {m:ℕ ^ {_:n two_index m ^ ℕ}}}
           0
-          {n:ℕ ^ {p:n two_index n ^ {below:ℕ ^ below heir}}}
-          {n:ℕ ^ {p:n one_index ^ {below:ℕ ^ below heir}}}
+          {n:ℕ ^ {p:n two_index n ^ {below:ℕ ^ below next}}}
+          {n:ℕ ^ {p:n one_index ^ {below:ℕ ^ below next}}}
           n
 
       """
@@ -167,7 +167,7 @@ nestedTests example =
     expectEq "container aliases expose nested occurrences" (Right ()) $
       () <$ compile (listSource ++ "let children:[α:*, *] ≔ α list\nilk rose:* { node:[rose children, rose] }"),
     expectEq "automatic recursion may use the second container parameter" (Right True) $ do
-      program <- compile "ilk pair:[α:*, β:*, *] { both:[α, β, α pair β] }\nilk tree:* { tip:tree, node:[ℕ pair tree, tree] }\nlet depth:[tree,ℕ] ≔ { tip ^ 0, (_ both t) node ^ (t depth) heir }"
+      program <- compile "ilk pair:[α:*, β:*, *] { both:[α, β, α pair β] }\nilk tree:* { tip:tree, node:[ℕ pair tree, tree] }\nlet depth:[tree,ℕ] ≔ { tip ^ 0, (_ both t) node ^ (t depth) next }"
       sameNormalIn program "((0 both tip) node) depth" "1",
     expectEq "distinct nested specialisations sharing constructor identities compute" (Right (replicate 4 True)) $ do
       program <- compile (listSource ++ layered)
@@ -190,7 +190,7 @@ nestedTests example =
                  let depth:[@α:*, α tree, ℕ] ≔ {
                    _ tip ^ 0,
                    empty node ^ 1,
-                   (first cons _) node ^ (first depth) heir
+                   (first cons _) node ^ (first depth) next
                  }
                  """
           )
@@ -229,7 +229,7 @@ nestedTests example =
       ilk tree:* { tip:tree, node:[tree thunk, tree] }
       let rime:[tree, ℕ] ≔
         {_:tree ^ ℕ} unbuild tree {_:tree thunk ^ ℕ}
-          0 {stored:tree thunk ^ {below:ℕ ^ below heir}}
+          0 {stored:tree thunk ^ {below:ℕ ^ below next}}
           {call:[ℕ, tree] ^ {below:[ℕ, ℕ] ^ 0 below}}
 
       """
@@ -239,36 +239,36 @@ nestedTests example =
       let depth:[tree,ℕ] ≔ {
         empty node ^ 1,
         (empty cons _) node ^ 1,
-        ((first cons _) cons _) node ^ (first depth) heir
+        ((first cons _) cons _) node ^ (first depth) next
       }
       let rime:[tree, ℕ] ≔
         {_:tree ^ ℕ} unbuild tree
           {_: (tree list) list ^ ℕ} {_:tree list ^ ℕ}
-          {xs:(tree list) list ^ {below:ℕ ^ below heir}}
+          {xs:(tree list) list ^ {below:ℕ ^ below next}}
           0
           {first:tree list ^ {first_below:ℕ ^ {leftover:(tree list) list ^ {leftover_below:ℕ ^ first_below add leftover_below}}}}
           0
           {first:tree ^ {first_below:ℕ ^ {leftover:tree list ^ {leftover_below:ℕ ^ first_below add leftover_below}}}}
       let add:[n:ℕ, m:ℕ, ℕ] ≔
-        {_:ℕ ^ ℕ} unbuild ℕ m {_:ℕ ^ {below:ℕ ^ below heir}} n
+        {_:ℕ ^ ℕ} unbuild ℕ m {_:ℕ ^ {below:ℕ ^ below next}} n
 
       """
 
 naturalSource, listSource, vectorSource, vectorProofSource, identitySource, transportSource, vectorHead :: String
-naturalSource = "ilk nat:* { naught: nat, heir:[n:nat, nat] }\n"
+naturalSource = "ilk nat:* { naught: nat, next:[n:nat, nat] }\n"
 listSource = "ilk list:[α:*, *] { empty: α list, cons:[head:α, tail:α list, α list] }\n"
-vectorSource = "ilk vec:[α:*, [nat, *]] { nil:α vec naught, cons:[n:nat, head:α, tail:α vec n, α vec (n heir)] }\n"
-vectorProofSource = "ilk vec_proof:[α:*, [nat, *]] { nil:α vec_proof naught, cons:[n:nat, tail:α vec_proof n, proof:(n hath_≍ @nat n), α vec_proof (n heir)] }\n"
+vectorSource = "ilk vec:[α:*, [nat, *]] { nil:α vec naught, cons:[n:nat, head:α, tail:α vec n, α vec (n next)] }\n"
+vectorProofSource = "ilk vec_proof:[α:*, [nat, *]] { nil:α vec_proof naught, cons:[n:nat, tail:α vec_proof n, proof:(n hath_≍ @nat n), α vec_proof (n next)] }\n"
 identitySource = "ilk hath_≍:[@α:*, x:α, [α, *]] { refl:(x hath_≍ @α x) }\n"
-vectorHead = "let head:[@α:*, @n:nat, v:α vec (n heir), α] ≔ match v { _ cons a _ ^ a }\n"
+vectorHead = "let head:[@α:*, @n:nat, v:α vec (n next), α] ≔ match v { _ cons a _ ^ a }\n"
 transportSource = "let throughbear:[F:[nat, *], worth:naught F, naught F] ≔ {y:nat ^ {soothing:(naught hath_≍ @nat y) ^ y F}} unbuild hath_≍ @nat @naught worth naught (refl @nat @naught)\n"
 
 naturalFold, vectorOne, vectorFold, vectorProofOne, vectorProofFold :: String
-naturalFold = "{n:nat ^ nat} unbuild nat naught {n:nat ^ {ih:nat ^ ih heir}} ((naught heir) heir)"
+naturalFold = "{n:nat ^ nat} unbuild nat naught {n:nat ^ {ih:nat ^ ih next}} ((naught next) next)"
 vectorOne = "naught cons @nat naught (nil @nat)"
-vectorFold = "{n:nat ^ {worth:(nat vec n) ^ nat vec n}} unbuild vec @nat (nil @nat) {n:nat ^ {head:nat ^ {tail:(nat vec n) ^ {ih:(nat vec n) ^ n cons @nat head ih}}}} (naught heir) (" ++ vectorOne ++ ")"
+vectorFold = "{n:nat ^ {worth:(nat vec n) ^ nat vec n}} unbuild vec @nat (nil @nat) {n:nat ^ {head:nat ^ {tail:(nat vec n) ^ {ih:(nat vec n) ^ n cons @nat head ih}}}} (naught next) (" ++ vectorOne ++ ")"
 vectorProofOne = "naught cons @nat (nil @nat) (refl @nat @naught)"
-vectorProofFold = "{n:nat ^ {worth:(nat vec_proof n) ^ nat vec_proof n}} unbuild vec_proof @nat (nil @nat) {n:nat ^ {tail:(nat vec_proof n) ^ {ih:(nat vec_proof n) ^ {proof:(n hath_≍ @nat n) ^ n cons @nat ih proof}}}} (naught heir) (" ++ vectorProofOne ++ ")"
+vectorProofFold = "{n:nat ^ {worth:(nat vec_proof n) ^ nat vec_proof n}} unbuild vec_proof @nat (nil @nat) {n:nat ^ {tail:(nat vec_proof n) ^ {ih:(nat vec_proof n) ^ {proof:(n hath_≍ @nat n) ^ n cons @nat ih proof}}}} (naught next) (" ++ vectorProofOne ++ ")"
 
 compile :: String -> Either String SourceProgram
 compile = compileAs "inductive_example.tung"

@@ -1,1 +1,1 @@
-show ilk _upper: [a: *, *] { upper: [a, a _upper] }
+show ilk _upper: [α: *, *] { upper: [α, α _upper] }

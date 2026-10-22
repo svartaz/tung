@@ -153,17 +153,17 @@ hostTypeId name = dataTypeId <$> find matches hostData
   where
     matches dataType = name == hostDataName dataType || name == canonicalDataTypeName dataType
 
--- `ℕ` is primitive but structural: `0` and `n heir` are its
+-- `ℕ` is primitive but structural: `0` and `n next` are its
 -- constructors, and a literal is a compact chain of them.
 naturalZeroId, naturalSuccessorId :: SymbolId
 naturalZeroId = SymbolId PrimitiveModule "0"
-naturalSuccessorId = SymbolId PrimitiveModule "heir"
+naturalSuccessorId = SymbolId PrimitiveModule "next"
 
 -- `ℤ` is structural in the same way: `n overnaught` is `n` and
--- `n heir_undernaught` is `-(n + 1)`, so each integer hath one form.
+-- `n next_undernaught` is `-(n + 1)`, so each integer hath one form.
 integerPositiveId, integerNegativeId :: SymbolId
 integerPositiveId = SymbolId PrimitiveModule "overnaught"
-integerNegativeId = SymbolId PrimitiveModule "heir_undernaught"
+integerNegativeId = SymbolId PrimitiveModule "next_undernaught"
 
 onlyConstructorId, yeaConstructorId, nayConstructorId :: SymbolId
 onlyConstructorId = constructorId oneData "only"

@@ -19,13 +19,13 @@ bring is.tung
 show let ‥_not_empty: [@α: *, @a: α, @a…: α list, (a ‥ a…) = empty, 𝟘] ≔ {}
 
 ## the same unempty lists have the same first limbs.
-show let ‥_injective_first
+show let ‥_incast_first
   : [@α: *, @a: α, @b: α, @a…: α list, @b…: α list,
     eftbend: (a ‥ a…) = (b ‥ b…), a = b]
   ≔ eftbend
 
 ## the same unempty lists have the same rests.
-show let ‥_injective_leftover
+show let ‥_incast_leftover
   : [@α: *, @a: α, @b: α, @a…: α list, @b…: α list,
     eftbend: (a ‥ a…) = (b ‥ b…), a… = b…]
   ≔ eftbend
@@ -139,13 +139,12 @@ show let eftwend_onto
     (a… gather₁ start {outcome, a ^ a ‥ outcome}) = ((a… eftwend) · start)]
   ≔ match a… {
     empty            ^ eftbend,
-    first ‥ leftover ^ (
-      let shifted ≔ leftover eftwend_onto (first ‥ start)
-      let eftgrouped ≔ (leftover eftwend) ·_· (first ‥ empty) start
-      let unshifted ≔ {a ^ a · start} leibnitz
+    first ‥ leftover ^ >{throughgo,
+      leftover eftwend_onto (first ‥ start),
+      (leftover eftwend) ·_· (first ‥ empty) start,
+      {a ^ a · start} leibnitz
         ((leftover eftwend_onto (first ‥ empty)) evenmete)
-      yield <{throughgo, shifted, eftgrouped, unshifted}
-    )
+    }
   }
 
 ## eftwending an onhanged list onhangeth the eftwended deals in order.
@@ -159,12 +158,11 @@ show let eftwend_·
 show let eftwend_eftwend: [@α: *, a…: α list, ((a… eftwend) eftwend) = a…]
   ≔ match a… {
     empty            ^ eftbend,
-    first ‥ leftover ^ (
-      let unfolded ≔ eftwend leibnitz (leftover eftwend_onto (first ‥ empty))
-      let split ≔ (leftover eftwend) eftwend_· (first ‥ empty)
-      let eftmade ≔ (first ‥) leibnitz (leftover eftwend_eftwend)
-      yield <{throughgo, unfolded, split, eftmade}
-    )
+    first ‥ leftover ^ >{throughgo,
+      eftwend leibnitz (leftover eftwend_onto (first ‥ empty)),
+      (leftover eftwend) eftwend_· (first ‥ empty),
+      (first ‥) leibnitz (leftover eftwend_eftwend)
+    }
   }
 
 ## warping swappeth with eftwending.
@@ -173,15 +171,12 @@ show let warp_eftwend
     ((a… eftwend) warp f) = ((a… warp f) eftwend)]
   ≔ match a… {
     empty            ^ eftbend,
-    first ‥ leftover ^ (
-      let unfolded ≔ {a ^ a warp f} leibnitz
-        (leftover eftwend_onto (first ‥ empty))
-      let split ≔ (leftover eftwend) warp_· (first ‥ empty) f
-      let inner ≔ {a ^ a · ((first f) ‥ empty)} leibnitz
-        (leftover warp_eftwend f)
-      let folded ≔ ((leftover warp f) eftwend_onto ((first f) ‥ empty)) evenmete
-      yield <{throughgo, unfolded, split, inner, folded}
-    )
+    first ‥ leftover ^ >{throughgo,
+      {a ^ a warp f} leibnitz (leftover eftwend_onto (first ‥ empty)),
+      (leftover eftwend) warp_· (first ‥ empty) f,
+      {a ^ a · ((first f) ‥ empty)} leibnitz (leftover warp_eftwend f),
+      ((leftover warp f) eftwend_onto ((first f) ‥ empty)) evenmete
+    }
   }
 
 ## warping a repeated worth repeateth the warped worth.
@@ -190,28 +185,28 @@ show let warp_eftfold
     ((a eftfold rime) warp f) = ((a f) eftfold rime)]
   ≔ match rime {
     0      ^ eftbend,
-    m heir ^ ((a f) ‥) leibnitz (a warp_eftfold m f)
+    m next ^ ((a f) ‥) leibnitz (a warp_eftfold m f)
   }
 
-## riming from an heir endeth one higher.
-let helpsetting_manyhood_heir
+## riming from a tale's next endeth one higher.
+let helpsetting_manyhood_next
   : [@α: *, a…: α list, m: ℕ,
-    (a… gather₁ (m heir) {k, _ ^ k + 1}) = ((a… gather₁ m {k, _ ^ k + 1}) heir)]
+    (a… gather₁ (m next) {k, _ ^ k + 1}) = ((a… gather₁ m {k, _ ^ k + 1}) next)]
   ≔ match a… {
     empty        ^ eftbend,
-    _ ‥ leftover ^ leftover helpsetting_manyhood_heir (m + 1)
+    _ ‥ leftover ^ leftover helpsetting_manyhood_next (m + 1)
   }
 
 ## a list with one more limb hath one more in manyhood.
 show let ‥_manyhood
-  : [@α: *, a: α, a…: α list, ((a ‥ a…) manyhood) = ((a… manyhood) heir)]
-  ≔ a… helpsetting_manyhood_heir 0
+  : [@α: *, a: α, a…: α list, ((a ‥ a…) manyhood) = ((a… manyhood) next)]
+  ≔ a… helpsetting_manyhood_next 0
 
 ## a tail is under its list in manyhood, for wellgrounded selfcalling by
 ## `manyhood`.
 show let ‥_manyhood_under
   : [@α: *, a: α, a…: α list, (a… manyhood) under ((a ‥ a…) manyhood)]
-  ≔ ((a ‥_manyhood a…) evenmete) throughbear ((a… manyhood) under_heir)
+  ≔ ((a ‥_manyhood a…) evenmete) throughbear ((a… manyhood) under_next)
 
 ## mapping keepeth a list's manyhood.
 show let warp_manyhood
@@ -221,7 +216,7 @@ show let warp_manyhood
     empty        ^ eftbend,
     a ‥ leftover ^ >{throughgo,
       (a f) ‥_manyhood (leftover warp f),
-      {m: ℕ ^ m heir} leibnitz (leftover warp_manyhood f),
+      next leibnitz (leftover warp_manyhood f),
       (a ‥_manyhood leftover) evenmete
     }
   }
@@ -234,9 +229,9 @@ show let manyhood_·
     empty        ^ ((b… manyhood) naught_+) evenmete,
     a ‥ leftover ^ >{throughgo,
       a ‥_manyhood (leftover · b…),
-      {m: ℕ ^ m heir} leibnitz (leftover manyhood_· b…),
-      ((leftover manyhood) heir_+ (b… manyhood)) evenmete,
-      {m: ℕ ^ m + (b… manyhood)} leibnitz ((a ‥_manyhood leftover) evenmete)
+      next leibnitz (leftover manyhood_· b…),
+      ((leftover manyhood) next_+ (b… manyhood)) evenmete,
+      {m ^ m + (b… manyhood)} leibnitz ((a ‥_manyhood leftover) evenmete)
     }
   }
 
@@ -246,9 +241,9 @@ show let eftwend_manyhood
   ≔ match a… {
     empty        ^ eftbend,
     a ‥ leftover ^ >{throughgo,
-      {b…: α list ^ b… manyhood} leibnitz ((a ‥ empty) eftwend_· leftover),
+      manyhood leibnitz ((a ‥ empty) eftwend_· leftover),
       (leftover eftwend) manyhood_· (a ‥ empty),
-      {m: ℕ ^ m + 1} leibnitz (leftover eftwend_manyhood),
+      {m ^ m + 1} leibnitz (leftover eftwend_manyhood),
       (a ‥_manyhood leftover) evenmete
     }
   }
@@ -257,9 +252,9 @@ show let eftwend_manyhood
 show let eftfold_manyhood: [@α: *, a: α, m: ℕ, ((a eftfold m) manyhood) = m]
   ≔ match m {
     0       ^ eftbend,
-    m′ heir ^
+    m′ next ^
       (a ‥_manyhood (a eftfold m′)) throughgo
-        ({n: ℕ ^ n heir} leibnitz (a eftfold_manyhood m′))
+        (next leibnitz (a eftfold_manyhood m′))
   }
 
 ## the first rime limbs, onhanged to the rest, give the list back.
@@ -267,8 +262,8 @@ show let take_·_drop
   : [@α: *, a…: α list, m: ℕ, ((a… take m) · (a… drop m)) = a…]
   ≔ match a…, m {
     _,       0       ^ eftbend,
-    empty,   _ heir  ^ eftbend,
-    a ‥ a…′, m′ heir ^ (a ‥) leibnitz (a…′ take_·_drop m′)
+    empty,   _ next  ^ eftbend,
+    a ‥ a…′, m′ next ^ (a ‥) leibnitz (a…′ take_·_drop m′)
   }
 
 ## flattening distributeth over onhanging.
@@ -278,8 +273,7 @@ show let flat_·
   ≔ match a… {
     empty   ^ eftbend,
     a ‥ a…′ ^
-      ({c…: α list ^ a · c…} leibnitz (a…′ flat_· b…)) throughgo
-        (a ·_· (a…′ flat) (b… flat))
+      ((a ·) leibnitz (a…′ flat_· b…)) throughgo (a ·_· (a…′ flat) (b… flat))
   }
 
 ## warping a flattened list warpeth each inner list.
@@ -290,7 +284,7 @@ show let warp_flat
     empty   ^ eftbend,
     a ‥ a…′ ^
       (a warp_· (a…′ flat) f) throughgo
-        ({c…: β list ^ (a warp f) · c…} leibnitz (a…′ warp_flat f))
+        ({c… ^ (a warp f) · c…} leibnitz (a…′ warp_flat f))
   }
 
 ## dropping rime limbs leaveth the manyhood less that rime.
@@ -298,10 +292,10 @@ show let drop_manyhood
   : [@α: *, a…: α list, m: ℕ, ((a… drop m) manyhood) = ((a… manyhood) ∸ m)]
   ≔ match a…, m {
     _,       0       ^ eftbend,
-    empty,   _ heir  ^ eftbend,
-    a ‥ a…′, m′ heir ^
+    empty,   _ next  ^ eftbend,
+    a ‥ a…′, m′ next ^
       (a…′ drop_manyhood m′) throughgo
-        ({n: ℕ ^ n ∸ (m′ heir)} leibnitz ((a ‥_manyhood a…′) evenmete))
+        ({n ^ n ∸ (m′ next)} leibnitz ((a ‥_manyhood a…′) evenmete))
   }
 
 ## a repeated worth may be onhanged at either end.
@@ -309,7 +303,7 @@ let helpsetting_eftfold_·
   : [@α: *, a: α, m: ℕ, ((a eftfold m) · (a ‥ empty)) = (a ‥ (a eftfold m))]
   ≔ match m {
     0       ^ eftbend,
-    m′ heir ^ (a ‥) leibnitz (a helpsetting_eftfold_· m′)
+    m′ next ^ (a ‥) leibnitz (a helpsetting_eftfold_· m′)
   }
 
 ## a repeated worth readeth the same backwards.
@@ -317,9 +311,9 @@ show let eftwend_eftfold
   : [@α: *, a: α, m: ℕ, ((a eftfold m) eftwend) = (a eftfold m)]
   ≔ match m {
     0       ^ eftbend,
-    m′ heir ^ >{throughgo,
+    m′ next ^ >{throughgo,
       (a ‥ empty) eftwend_· (a eftfold m′),
-      {c…: α list ^ c… · (a ‥ empty)} leibnitz (a eftwend_eftfold m′),
+      {c… ^ c… · (a ‥ empty)} leibnitz (a eftwend_eftfold m′),
       a helpsetting_eftfold_· m′
     }
   }

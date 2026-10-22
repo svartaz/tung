@@ -68,17 +68,17 @@ bizen: [@α: *, @β: *, (α wordbook β) hath_manyhood] {
   let manyhood: [t:] ≔ (t entries) manyhood
 }
 
-show let merge
+show let yoke
   : [@α: *, @: α hath_≍, @β: *, first: α wordbook β, other: α wordbook β,
     α wordbook β]
   ≔ (other entries) gather₁ first {
     t, pair ^ t put (pair forthcast₀) (pair forthcast₁)
   }
 
-show let adjust
-  : [@α: *, @: α hath_≍, @β: *, l from_list: α wordbook β, key: α,
-    tweak: [β, β], α wordbook β]
+show let tweak
+  : [@α: *, @: α hath_≍, @β: *, l from_list: α wordbook β, key: α, f: [β, β],
+    α wordbook β]
   ≔ l warp {pair ^ match key ≍ (pair forthcast₀) {
     nay ^ pair,
-    yea ^ pair warp tweak
+    yea ^ pair warp f
   }} $ from_list

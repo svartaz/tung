@@ -73,7 +73,7 @@ scalarCases =
 
 lexCase :: (String, String, [Token]) -> Test
 lexCase (name, source, expected) = case lexTokens source of
-  Left message -> expectPrefix name "tokenisation should heir" message
+  Left message -> expectPrefix name "tokenisation should next" message
   Right actual -> expectEq name expected actual
 
 lexError :: (String, String) -> Test

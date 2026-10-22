@@ -27,8 +27,8 @@ and formula check.
 | ----------------------- | ----------------------------------------------------------------------- |
 | `make build`            | buildeth the compiler and editor                                        |
 | `make test`             | runneth compiler, byspel, prose, editor, and formula checks             |
-| `make check`            | runneth `make test`, `make neaten-check`, and `git diff --check`        |
-| `make neaten-check`     | checketh ormolu and canonical tung neatening without changing files     |
+| `make check`            | runneth `make test`, `make tidy-check`, and `git diff --check`          |
+| `make tidy-check`       | checketh ormolu and canonical tung tidying without changing files       |
 | `make compiler-test`    | testeth parsing, typing, evaluation, bookhoard modules, and integration |
 | `make byspel-test`      | runneth the deterministic byspels and checketh their results            |
 | `make editor-test`      | runneth the VS Code extension tests                                     |
@@ -46,7 +46,7 @@ requests; the homebrew workflow also testeth formula installation.
 
 | path         | purpose                                                          |
 | ------------ | ---------------------------------------------------------------- |
-| `tongue/`    | haskell compiler, evaluator, neatener, repl, runner, and tests   |
+| `tongue/`    | haskell compiler, evaluator, tidier, repl, runner, and tests     |
 | `bookhoard/` | standard library source and design guide                         |
 | `vscode/`    | npm workspace for the VS Code extension                          |
 | `Formula/`   | homebrew formula                                                 |
@@ -303,15 +303,15 @@ and name, with no shape matching or built-in bizen.
   library module the byspels bring, then the byspels run side by side, each
   within its own time limit.
 
-## neatening
+## tidying
 
-`Tung.Format` is the canonical two-space neatener for the cli and editor. it
+`Tung.Format` is the canonical two-space tidier for the cli and editor. it
 parseth first and refuseth unparseable source, reporting the error and
 changing nothing. it then shorteneth each redundant η-expansion and droppeth
 redundant parentheses; layout
 followeth only the tokens, their brackets, and the comments between them, so
-sources with one concrete syntax tree share one neat form: whitespace never
-changeth it and neatening is idempotent. a final check refuseth output whose
+sources with one concrete syntax tree share one tidy form: whitespace never
+changeth it and tidying is idempotent. a final check refuseth output whose
 tokens differ from the shortened source's.
 
 - a lambda whose binders are its body's last arguments, in order, is
@@ -331,7 +331,7 @@ tokens differ from the shortened source's.
 - an annotated or implicit binder keepeth its expansion, which may guide
   elaboration, as when `f`'s implicit inputs follow an explicit one; annotate
   a binder to keep an expansion.
-- the neatener readeth no names, so a binder may be a constructor. a one-row
+- the tidier readeth no names, so a binder may be a constructor. a one-row
   match on a constructor checketh only when it is its ilk's sole, nullary one,
   where `f` agreeth with the match on every input.
 
@@ -371,13 +371,13 @@ tokens differ from the shortened source's.
 
 the layout is a wadler–leijen document: a group lieth flat when its content to
 the next possible break fitteth, a comment endeth its line without breaking
-its group, and consecutive line breaks merge. range neatening is not offered,
+its group, and consecutive line breaks merge. range tidying is not offered,
 since a canonical form keepeth no source lines.
 
 ## editor protocol
 
 `tung --editor-session` serveth diagnostics, inferred ilks, highlighting, and
-neatening over utf-8 json lines, one complete message per line with embedded
+tidying over utf-8 json lines, one complete message per line with embedded
 newlines and control characters escaped. compiler and extension must share the
 protocol version.
 
@@ -499,5 +499,5 @@ each choice was weighed against an alternative.
 - the parser's `Result` monad backtracketh by inspecting roles, so a
   transformer stack would not shrink it.
 - the concrete tree is built from the parser's marks rather than by a second
-  grammar: the neatener, highlighting, and the editor read the one parse, and
+  grammar: the tidier, highlighting, and the editor read the one parse, and
   the abstract syntax stayeth the parser's own result.

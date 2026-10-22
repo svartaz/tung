@@ -6,22 +6,22 @@ import Test.Harness qualified as Harness
 import Tung (formatSource)
 
 group :: IO Group
-group = Harness.group "format" (map neatenCase cases ++ [refusal, idempotence, canonical])
+group = Harness.group "format" (map tidyCase cases ++ [refusal, idempotence, canonical])
 
-neatenCase :: (String, String, String) -> Test
-neatenCase (name, source, expected) = expectEq name (Right expected) (formatSource source)
+tidyCase :: (String, String, String) -> Test
+tidyCase (name, source, expected) = expectEq name (Right expected) (formatSource source)
 
 refusal :: Test
 refusal = expectEq "source that doth not parse is refused" (Left "expected an expression") (formatSource "let worth ≔ (\n")
 
 idempotence :: Test
-idempotence = expect "neatening is idempotent" (all (\(_, source, _) -> formatSource source == (formatSource source >>= formatSource)) cases)
+idempotence = expect "tidying is idempotent" (all (\(_, source, _) -> formatSource source == (formatSource source >>= formatSource)) cases)
 
--- the neat form followeth the tokens alone: breaking every space into a
+-- the tidy form followeth the tokens alone: breaking every space into a
 -- line, or joining every line into one, changeth nothing while each
 -- comment keepeth its place before or after a line end.
 canonical :: Test
-canonical = expect "whitespace never changeth the neat form" (all same cases)
+canonical = expect "whitespace never changeth the tidy form" (all same cases)
   where
     same (_, source, _) = all (\respaced -> formatSource respaced == formatSource source) [respace True source, respace False source]
 
@@ -101,7 +101,7 @@ cases =
       """
     ),
     ( "comments keep their tokens and case blocks of several rows break",
-      "## doc for f.\nlet f: [𝟚, ℕ] ≔ { yea ^ 1, nay ^ 0 } # trailing\n# before g\nlet g: [x: ℕ, ℕ] ≔ match x { 0 ^ 0, k heir ^ k }\n",
+      "## doc for f.\nlet f: [𝟚, ℕ] ≔ { yea ^ 1, nay ^ 0 } # trailing\n# before g\nlet g: [x: ℕ, ℕ] ≔ match x { 0 ^ 0, k next ^ k }\n",
       """
       ## doc for f.
       let f: [𝟚, ℕ] ≔ {
@@ -112,7 +112,7 @@ cases =
       # before g
       let g: [x: ℕ, ℕ] ≔ match x {
         0      ^ 0,
-        k heir ^ k
+        k next ^ k
       }
 
       """
@@ -163,10 +163,10 @@ cases =
       """
     ),
     ( "a bizen body breaketh with a blank line between members",
-      "bizen: ℕ hath_flip { let flip ≔ heir let flip_flip ≔ sorry }\n",
+      "bizen: ℕ hath_flip { let flip ≔ next let flip_flip ≔ sorry }\n",
       """
       bizen: ℕ hath_flip {
-        let flip ≔ heir
+        let flip ≔ next
 
         let flip_flip ≔ sorry
       }

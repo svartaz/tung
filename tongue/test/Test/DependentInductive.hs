@@ -197,7 +197,7 @@ naturalEnvironment :: Either String Environment
 naturalEnvironment = defineInductive emptyEnvironment naturalDeclaration
 
 naturalDeclaration :: InductiveDeclaration
-naturalDeclaration = InductiveDeclaration (symbol "natural") (symbol "natural_induction") 0 0 [] (sort 0) [(symbol "naught", natural), (symbol "heir", Pi Explicit natural natural)]
+naturalDeclaration = InductiveDeclaration (symbol "natural") (symbol "natural_induction") 0 0 [] (sort 0) [(symbol "naught", natural), (symbol "next", Pi Explicit natural natural)]
 
 natural, zero, two, naturalMotive, successorMethod :: Term
 natural = global "natural" []
@@ -207,7 +207,7 @@ naturalMotive = Lambda Explicit natural natural
 successorMethod = Lambda Explicit natural (Lambda Explicit natural (successor (Local 0)))
 
 successor :: Term -> Term
-successor = Apply Explicit (global "heir" [])
+successor = Apply Explicit (global "next" [])
 
 naturalInduction :: Term -> Term -> Term -> Term -> Term
 naturalInduction motive initial method value = apply Explicit (global "natural_induction" [level 0]) [motive, initial, method, value]

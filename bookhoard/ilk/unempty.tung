@@ -54,11 +54,11 @@ bizen: unempty functor {
 bizen: [@α: *, (α unempty) semigroup_·] {
   let ·: [first ‥′ leftover:, right:] ≔ first ‥′ (leftover · (right to_list))
 
-  let ·_·: [first ‥′ leftover:, next ‥′ middle:, last ‥′ end:]
+  let ·_·: [first ‥′ leftover:, followand ‥′ middle:, last ‥′ end:]
     ≔ (first ‥′) leibnitz
       ({
-        l: α list ^ >{hath_fold~·, l, next ‥ middle, last ‥ end}
-          = <{hath_fold~·, l, next ‥ middle, last ‥ end}
+        l: α list ^ >{hath_fold~·, l, followand ‥ middle, last ‥ end}
+          = <{hath_fold~·, l, followand ‥ middle, last ‥ end}
       } unbuild list eftbend {head, _, soothing ^ (head ‥) leibnitz soothing}
         leftover)
 }
@@ -97,11 +97,11 @@ bizen: unempty onwendsome {
 }
 
 ## flatten an unempty list of unempty lists by onhanging them in order.
-let flatten: [@α: *, first ‥′ leftover: (α unempty) unempty, α unempty]
+let flat: [@α: *, first ‥′ leftover: (α unempty) unempty, α unempty]
   ≔ leftover gather₁ first ·
 
 bizen: unempty monad {
-  let flat ≔ flatten
+  let flat ≔ flat
 
   let sheer_bind: [_:, _:] ≔ eftbend
 
@@ -119,38 +119,38 @@ let helpsetting_to_list_=
 ## flattening by a gathering is flattening the lists beneath.
 let gather_to_list
   : [@α: *, a…: (α unempty) list, b: α unempty,
-    ((a… gather₁ b ·) to_list) = ((b to_list) · ((a… warp to_list) flat))]
+    ((a… gather₁ b ·) to_list) = ((b to_list) · ((a… warp to_list) monad~flat))]
   ≔ match a… {
     empty   ^ ((b to_list) helpsetting_·_empty) evenmete,
     c ‥ c…′ ^
       (c…′ gather_to_list (b · c)) throughgo
-        (((b to_list) helpsetting_·_· (c to_list) ((c…′ warp to_list) flat))
-          evenmete)
+        (((b to_list) helpsetting_·_· (c to_list)
+          ((c…′ warp to_list) monad~flat)) evenmete)
   }
 
 ## binding an unempty list is binding its list.
 let bind_to_list
   : [@α: *, @β: *, a: α unempty, f: [α, β unempty],
-    ((a warp f $ flatten) to_list) = ((a to_list) warp (f ▷ to_list) $ flat)]
+    ((a warp f $ flat) to_list) = ((a to_list) warp (f ▷ to_list) $ monad~flat)]
   ≔ match a {
     b ‥′ b…′ ^
       ((b…′ warp f) gather_to_list (b f)) throughgo
         ((((b f) to_list) ·) leibnitz
-          ({l: (β list) list ^ l flat} leibnitz (b…′ warp_warp f to_list)))
+          (monad~flat leibnitz (b…′ warp_warp f to_list)))
   }
 
 let helpsetting_bind_bind
   : [@α: *, @β: *, @γ: *, m: α unempty, f: [α, β unempty], g: [β, γ unempty],
-    ((m warp f $ flatten) warp g $ flatten) =
-      (m warp {a: α ^ (a f) warp g $ flatten} $ flatten)]
-  ≔ ((m warp f $ flatten) warp g $ flatten) helpsetting_to_list_=
-    (m warp {a: α ^ (a f) warp g $ flatten} $ flatten) >{throughgo,
-      (m warp f $ flatten) bind_to_list g,
-      {l: β list ^ l warp (g ▷ to_list) $ flat} leibnitz (m bind_to_list f),
+    ((m warp f $ flat) warp g $ flat) =
+      (m warp {a ^ (a f) warp g $ flat} $ flat)]
+  ≔ ((m warp f $ flat) warp g $ flat) helpsetting_to_list_=
+    (m warp {a ^ (a f) warp g $ flat} $ flat) >{throughgo,
+      (m warp f $ flat) bind_to_list g,
+      {l ^ l warp (g ▷ to_list) $ monad~flat} leibnitz (m bind_to_list f),
       (m to_list) bind_bind (f ▷ to_list) (g ▷ to_list),
-      {h: [α, γ list] ^ (m to_list) warp h $ flat} leibnitz
+      {h ^ (m to_list) warp h $ monad~flat} leibnitz
         ({a ^ ((a f) bind_to_list g) evenmete} fall_umfang),
-      (m bind_to_list {a: α ^ (a f) warp g $ flatten}) evenmete
+      (m bind_to_list {a ^ (a f) warp g $ flat}) evenmete
     }
 
 ## list onhang equations for the unempty flattening soothing.
@@ -175,10 +175,11 @@ let gather_onesomes
   ≔ match l, start {
     empty, first ‥′ leftover ^
       ((first ‥′) leibnitz (leftover helpsetting_·_empty)) evenmete,
-    next ‥ tail, first ‥′ leftover ^
-      (tail gather_onesomes ((first ‥′ leftover) · (next onesome))) throughgo
+    followand ‥ tail, first ‥′ leftover ^
+      (tail gather_onesomes ((first ‥′ leftover) · (followand onesome)))
+        throughgo
         ((first ‥′) leibnitz
-          ((leftover helpsetting_·_· (next ‥ empty) tail) evenmete))
+          ((leftover helpsetting_·_· (followand ‥ empty) tail) evenmete))
   }
 
 bizen: unempty downshaper {

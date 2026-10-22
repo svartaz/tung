@@ -12,4 +12,4 @@ show let singal: [@α: *, @β: *, a: α, _: β, α] ≔ a
 
 show let flip: [@α: *, @β: *, @γ: *, f: [α, β, γ], b: β, a: α, γ] ≔ a f b
 
-show let duplicate: [@α: *, @β: *, a: α, f: [α, α, β], β] ≔ a f a
+show let twofold: [@α: *, @β: *, a: α, f: [α, α, β], β] ≔ a f a

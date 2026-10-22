@@ -47,7 +47,7 @@ show let naught_∘
   ≔ (
     let twofolded: ((((naught @ρ) ∘ a) + ((naught @ρ) ∘ a)) = ((naught @ρ) ∘ a))
       ≔ ((+_∘ @ρ @μ naught naught a) evenmete) throughgo
-        ({s: ρ ^ s ∘ a} leibnitz (naught_+ @ρ naught))
+        ({s ^ s ∘ a} leibnitz (naught_+ @ρ naught))
     yield ((naught @ρ) ∘ a) +_strike ((naught @ρ) ∘ a) naught
       (twofolded throughgo ((naught_+ @μ ((naught @ρ) ∘ a)) evenmete))
   )
@@ -58,7 +58,7 @@ show let ∘_naught
   ≔ (
     let twofolded: (((r ∘ (naught @μ)) + (r ∘ (naught @μ))) = (r ∘ (naught @μ)))
       ≔ ((∘_+ @ρ @μ r naught naught) evenmete) throughgo
-        ({a: μ ^ r ∘ a} leibnitz (naught_+ @μ naught))
+        ((r ∘) leibnitz (naught_+ @μ naught))
     yield (r ∘ (naught @μ)) +_strike (r ∘ (naught @μ)) naught
       (twofolded throughgo ((naught_+ @μ (r ∘ (naught @μ))) evenmete))
   )
@@ -68,7 +68,7 @@ show let -_∘
   : [@ρ: *, @μ: *, @: ρ module μ, r: ρ, a: μ, ((r -) ∘ a) = ((r ∘ a) -)]
   ≔ (r ∘ a) -_alone ((r -) ∘ a) >{throughgo,
     ((r -) +_∘ r a) evenmete,
-    {s: ρ ^ s ∘ a} leibnitz (r group_eke~-_+),
+    {s ^ s ∘ a} leibnitz (r group_eke~-_+),
     a naught_∘
   }
 
@@ -77,11 +77,11 @@ show let ∘_-
   : [@ρ: *, @μ: *, @: ρ module μ, r: ρ, a: μ, (r ∘ (a -)) = ((r ∘ a) -)]
   ≔ (r ∘ a) -_alone (r ∘ (a -)) >{throughgo,
     (r ∘_+ (a -) a) evenmete,
-    {b: μ ^ r ∘ b} leibnitz (a group_eke~-_+),
+    (r ∘) leibnitz (a group_eke~-_+),
     r ∘_naught
   }
 
 ## the flipped unit scalar flippeth.
 show let one_-_∘
   : [@ρ: *, @μ: *, @: ρ module μ, a: μ, (((one @ρ) -) ∘ a) = (a -)]
-  ≔ (one -_∘ a) throughgo ({b: μ ^ b -} leibnitz (a one_∘))
+  ≔ (one -_∘ a) throughgo (- leibnitz (a one_∘))

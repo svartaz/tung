@@ -10,23 +10,23 @@ let depth: [x: tree, ℕ] ≔ match x {
   tip             ^ 0,
   _ knot children ^ match 0 children {
     tip            ^ 1,
-    _ knot smaller ^ (((0 smaller) depth) heir) heir
+    _ knot smaller ^ (((0 smaller) depth) next) next
   }
 }
 
 ## after the decreasing input, a recursive call may leave an accumulator open.
 let hoard: [ℕ, ℕ, ℕ] ≔ {
   0,      whole ^ whole,
-  n heir, whole ^ (let leftover ≔ n hoard yield (whole heir) leftover)
+  n next, whole ^ (let leftover ≔ n hoard yield (whole next) leftover)
 }
 
 let deep_hoard: [x: tree, whole: ℕ, ℕ] ≔ match x {
   tip             ^ whole,
   _ knot children ^ match 0 children {
-    tip            ^ whole heir,
+    tip            ^ whole next,
     _ knot smaller ^ (
       let leftover ≔ (0 smaller) deep_hoard
-      yield ((whole heir) heir) leftover
+      yield ((whole next) next) leftover
     )
   }
 }
@@ -59,7 +59,7 @@ let fan_depth: [@n: ℕ, n fan, ℕ] ≔ {
   stop          ^ 0,
   children more ^ match eftbend children @0 {
     stop         ^ 1,
-    smaller more ^ (((eftbend smaller @1) fan_depth) heir) heir
+    smaller more ^ (((eftbend smaller @1) fan_depth) next) next
   }
 }
 
@@ -67,7 +67,7 @@ let fan_leaf: 0 fan ≔ {_ ^ stop} more
 
 let branches: [@i: ℕ, known: i = i, i fan] ≔ match i {
   0      ^ fan_leaf,
-  _ heir ^ stop
+  _ next ^ stop
 }
 
 let fan_sample: 0 fan ≔ branches more
@@ -84,7 +84,7 @@ let height: [rose, ℕ] ≔ {
   bud                   ^ 0,
   (children hold) bloom ^ match 0 children {
     bud                  ^ 1,
-    (smaller hold) bloom ^ (((0 smaller) height) heir) heir
+    (smaller hold) bloom ^ (((0 smaller) height) next) next
   }
 }
 
@@ -95,5 +95,5 @@ let rose_sample: rose ≔ ({_ ^ rose_leaf} hold @rose) bloom
 ## an open quantified input keepeth the child's specialised dependent type.
 let retain: [n: ℕ, known: n = n, ℕ] ≔ match n {
   0      ^ 0,
-  m heir ^ (let leftover: [m = m, ℕ] ≔ m retain yield eftbend leftover)
+  m next ^ (let leftover: [m = m, ℕ] ≔ m retain yield eftbend leftover)
 }

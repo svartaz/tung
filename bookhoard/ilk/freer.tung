@@ -17,9 +17,9 @@ show ilk freer: [φ: [*, *], α: *, *] {
 ## run the continuation on the outcome, after every request.
 show let bind: [@φ: [*, *], @α: *, @β: *, φ freer α, [α, φ freer β], φ freer β]
   ≔ {
-    worth done,               next ^ worth next,
-    request more throughwone, next ^
-      request more {answer ^ (answer throughwone) bind next}
+    worth done,               onward ^ worth onward,
+    request more throughwone, onward ^
+      request more {answer ^ (answer throughwone) bind onward}
   }
 
 ## a forewrit of one request, whose answer is its outcome.

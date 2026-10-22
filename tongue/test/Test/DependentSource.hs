@@ -27,7 +27,7 @@ shadowingTests =
       [ ("a header binder may share its declaration's name", "let sameness:[sameness:ℤ, ℤ] ≔ sameness", "+1 sameness", "+1"),
         ("a lambda binder may share its declaration's name", "let sameness: [@α: *, α, α] ≔ {sameness ^ sameness}", "+1 sameness", "+1"),
         ("a local binding hides its enclosing declaration's name", "let worth ≔ (let worth ≔ +1 yield worth)", "worth", "+1"),
-        ("a case variable may share its declaration's name", "let predecessor:[ℕ, ℕ] ≔ {0 ^ 0, predecessor heir ^ predecessor}", "2 predecessor", "1"),
+        ("a case variable may share its declaration's name", "let predecessor:[ℕ, ℕ] ≔ {0 ^ 0, predecessor next ^ predecessor}", "2 predecessor", "1"),
         ("a local function's binder is not a recursive reference", "let outer:[ℤ, ℤ] ≔ {x ^ (let inner ≔ {inner ^ inner} yield x inner)}", "+1 outer", "+1"),
         ("capture surviveth fields and lets", "ilk box: * { box_of: [worth: ℤ, box] } let keep: [ℤ, string, ℤ] ≔ {x ^ (let stored ≔ x box_of yield {y ^ stored.worth})}", "+1 keep 'ignored'", "+1"),
         ("a product parameter may share its alias's name", "let endo ≔ [endo:*, endo, endo]", "endo", "[α:*, α, α]")

@@ -1,7 +1,7 @@
 -- | the lossless concrete syntax tree. it endeth in the lexer's pieces, so
 -- the tree's text is the source's text. brackets pair lexically; declarations,
 -- items, and rows are the spans the parser marked; a region the parser could
--- not read is a broken node. the neatener and editor read this one tree.
+-- not read is a broken node. the tidier and editor read this one tree.
 module Tung.Concrete
   ( Tree (..),
     Leaf (..),

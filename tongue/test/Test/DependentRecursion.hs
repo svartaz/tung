@@ -59,7 +59,7 @@ boundedTests library =
         actual <- Harness.evaluateSource (prelude ++ "yield (1 ‥ (2 ‥ (3 ‥ empty))) total") Map.empty
         expectEq "the runner computeth library measure recursion" "eval ok: 6" actual
     ),
-    rejectContaining "a number is not under itself" "cannot unify" (compile "let bad: [n: ℕ, n under n] ≔ n under_heir"),
+    rejectContaining "a number is not under itself" "cannot unify" (compile "let bad: [n: ℕ, n under n] ≔ n under_next"),
     rejectContaining "a list is not under its own manyhood" "cannot unify" (compile "let bad: [x: ℕ, l: ℕ list, ((x ‥ l) manyhood) under ((x ‥ l) manyhood)] ≔ x ‥_manyhood_under l")
   ]
   where
@@ -77,7 +77,7 @@ boundedTests library =
           {n, selfcall ^ match n {
             0 ^ 0,
             1 ^ 0,
-            (k heir) heir ^ (k selfcall (k under_throughgo (k heir) ((k heir) heir) (k under_heir) ((k heir) under_heir))) + 1
+            (k next) next ^ (k selfcall (k under_throughgo (k next) ((k next) next) (k under_next) ((k next) under_next))) + 1
           }} n
       let total: [l:ℕ list, ℕ] ≔
         {_:ℕ list ^ ℕ} wellgrounded_selfcall_by manyhood under_wellgrounded
@@ -119,8 +119,8 @@ functionRecursionTests library example =
             ("a function field must return the decreasing value before a recursive call", "let bad:[tree,ℕ] ≔ {tip ^ 0, _ node children ^ children bad}"),
             ("a generic function input cannot inherit pointwise evidence", "let bad:[tree,ℕ] ≔ {tip ^ 0, _ node children ^ (let run:[call:[ℕ,tree],ℕ] ≔ (0 call) bad yield children run)}"),
             ("a function descendant must retain its actual index", "let bad:[n:ℕ,x:n fan,ℕ] ≔ match x {stop ^ 0, children more ^ match eftbend children @0 {stop ^ 1, smaller more ^ 0 bad (eftbend smaller @1)}}"),
-            ("a recursive name without a decreasing input cannot be passed as a value", "let bad:[ℕ,ℕ] ≔ {0 ^ 0, n heir ^ (let run ≔ bad yield n run)}"),
-            ("a partial call cannot omit its structural input", "ilk chain:[ℕ,*] {stop:0 chain, step:[n:ℕ,n chain,(n heir) chain]}\nlet bad:[n:ℕ,x:n chain,total:ℕ,ℕ] ≔ match x {stop ^ total, k step child ^ (let leftover ≔ k bad yield 0 leftover)}")
+            ("a recursive name without a decreasing input cannot be passed as a value", "let bad:[ℕ,ℕ] ≔ {0 ^ 0, n next ^ (let run ≔ bad yield n run)}"),
+            ("a partial call cannot omit its structural input", "ilk chain:[ℕ,*] {stop:0 chain, step:[n:ℕ,n chain,(n next) chain]}\nlet bad:[n:ℕ,x:n chain,total:ℕ,ℕ] ≔ match x {stop ^ total, k step child ^ (let leftover ≔ k bad yield 0 leftover)}")
           ]
       ]
   where
@@ -150,31 +150,31 @@ indexRecursionTests library example =
       )
     : [ reject label (compileIndex (example ++ source))
       | (label, source) <-
-          [ ("a recursive call must pass the child's matching index leaf", "let bad:[k:ℕ, x:(k heir) tag, ℕ] ≔ match x { one_case ^ 0, child grow ^ 1 bad child }"),
+          [ ("a recursive call must pass the child's matching index leaf", "let bad:[k:ℕ, x:(k next) tag, ℕ] ≔ match x { one_case ^ 0, child grow ^ 1 bad child }"),
             ("a fixed-index root is not its own child", "let bad:[x:1 tag, ℕ] ≔ match x { one_case ^ 0, child grow ^ x bad }"),
             ("a rebuilt fixed-index root is not a child", "let bad:[1 tag, ℕ] ≔ { one_case ^ 0, child grow ^ (child grow) bad }"),
             ("an unrelated fixed-index input is not a child", "let bad:[1 tag, y:1 tag, ℕ] ≔ { one_case,_ ^ 0, child grow,y ^ y bad y }"),
             ("a fixed vector's tail cannot change its recursive domain", vectorSource ++ "let bad:[@α:*, α vec 2, ℕ] ≔ { _ cons _ tail ^ tail bad }"),
-            ("a unempty vector's arbitrary tail need not be unempty", vectorSource ++ "let bad:[@α:*, @n:ℕ, α vec (n heir), ℕ] ≔ { _ cons _ tail ^ tail bad }"),
-            ("reverted induction evidence cannot justify an unrelated vector", vectorSource ++ "let bad:[@α:*, @n:ℕ, v:α vec (n heir), other:α vec (n heir), ℕ] ≔ match v { k cons _ tail ^ match k { 0 ^ 0, m heir ^ other bad other } }")
+            ("a unempty vector's arbitrary tail need not be unempty", vectorSource ++ "let bad:[@α:*, @n:ℕ, α vec (n next), ℕ] ≔ { _ cons _ tail ^ tail bad }"),
+            ("reverted induction evidence cannot justify an unrelated vector", vectorSource ++ "let bad:[@α:*, @n:ℕ, v:α vec (n next), other:α vec (n next), ℕ] ≔ match v { k cons _ tail ^ match k { 0 ^ 0, m next ^ other bad other } }")
           ]
       ]
   where
     compileIndex = compileWith library "dependent_index_recursion.tung"
     grown = "((one_case grow) grow)"
     vectorPair = "(1 cons @ℕ 3 (0 cons @ℕ 7 (nil @ℕ)))"
-    vectorSource = "ilk vec:[α:*, [ℕ, *]] { nil:α vec 0, cons:[n:ℕ, head:α, tail:α vec n, α vec (n heir)] }\n"
+    vectorSource = "ilk vec:[α:*, [ℕ, *]] { nil:α vec 0, cons:[n:ℕ, head:α, tail:α vec n, α vec (n next)] }\n"
     nonemptyDefinitions =
       """
-      let unempty_length:[@α:*, @n:ℕ, v:α vec (n heir), ℕ] ≔ match v {
+      let unempty_length:[@α:*, @n:ℕ, v:α vec (n next), ℕ] ≔ match v {
         k cons _ tail ^ match k {
           0 ^ 1,
-          m heir ^ (tail unempty_length) heir
+          m next ^ (tail unempty_length) next
         }
       }
-      let unempty_copy:[@α:*, @n:ℕ, v:α vec (n heir), α vec (n heir)] ≔ match v {
+      let unempty_copy:[@α:*, @n:ℕ, v:α vec (n next), α vec (n next)] ≔ match v {
         0 cons _ _ ^ v,
-        (m heir) cons _ tail ^ (let known:α vec (m heir) ≔ tail unempty_copy yield v)
+        (m next) cons _ tail ^ (let known:α vec (m next) ≔ tail unempty_copy yield v)
       }
       """
 
@@ -204,7 +204,7 @@ indexMemoTests example =
       )
     : [ reject label (compileMemo (example ++ source))
       | (label, source) <-
-          [ ("a constructor-shaped memo call must pass the matching leaf", "let bad:[k:ℕ,x:(k heir) cycle,ℕ] ≔ match x {stop up ^ 0,(child down) up ^ 1 bad child}"),
+          [ ("a constructor-shaped memo call must pass the matching leaf", "let bad:[k:ℕ,x:(k next) cycle,ℕ] ≔ match x {stop up ^ 0,(child down) up ^ 1 bad child}"),
             ("an off-domain memo result cannot be used as the source result", "let bad:[0 cycle,ℕ] ≔ {stop ^ 0, child down ^ (child bad) 0}"),
             ("a deep indexed recursive call must pass the child's actual index", "let bad:[n:ℕ,x:n chain,ℕ] ≔ match x {empty ^ 0,_ link empty ^ 1,_ link (_ link child) ^ 0 bad child}"),
             ("an unrelated indexed value carrieth no descendant evidence", "let bad:[@n:ℕ,v:n chain,other:n chain,ℕ] ≔ match v {empty ^ 0,_ link _ ^ other bad other}"),
@@ -220,7 +220,7 @@ indexMemoTests example =
         empty ^ 0,
         _ link tail ^ (let alias ≔ tail yield match alias {
           empty ^ 1,
-          _ link child ^ (let known ≔ child yield ((known named_depth) heir) heir)
+          _ link child ^ (let known ≔ child yield ((known named_depth) next) next)
         })
       }
       """
@@ -232,21 +232,21 @@ indexMemoTests example =
         naught_leaf ^ 0,
         leaf ^ 0,
         nil node ^ 0,
-        (child cons _) node ^ (child height) heir
+        (child cons _) node ^ (child height) next
       }
       """
     mutual =
       """
       ilk one:[ℕ,*] {
         initial:0 one,
-        to_one:[n:ℕ,m:ℕ,m two @(n heir),(n heir) one]
+        to_one:[n:ℕ,m:ℕ,m two @(n next),(n next) one]
       }
       ilk two:[@j:ℕ,m:ℕ,*] {
-        to_two:[@n:ℕ,m:ℕ,n one,m two @(n heir)]
+        to_two:[@n:ℕ,m:ℕ,n one,m two @(n next)]
       }
       let rime:[@n:ℕ,n one,ℕ] ≔ {
         initial ^ 0,
-        _ to_one _ (_ to_two child) ^ (child rime) heir
+        _ to_one _ (_ to_two child) ^ (child rime) next
       }
       """
 
@@ -257,7 +257,7 @@ positiveTests =
       sameNormalIn program actual expected
   | (label, source, actual, expected) <-
       [ ( "the input the first row matcheth is split first",
-          "let sub:[nat, nat, nat] ≔ {m, naught ^ m, naught, _ heir ^ naught, j heir, k heir ^ j sub k}\n",
+          "let sub:[nat, nat, nat] ≔ {m, naught ^ m, naught, _ next ^ naught, j next, k next ^ j sub k}\n",
           "{x: nat ^ x sub naught}",
           "{x: nat ^ x}"
         ),
@@ -270,8 +270,8 @@ positiveTests =
           """
           let right:[x:nat, y:nat, nat] ≔ match x,y {
             naught,_ ^ naught,
-            n heir,naught ^ naught,
-            n heir,m heir ^ (let n ≔ n heir yield n right m) heir
+            n next,naught ^ naught,
+            n next,m next ^ (let n ≔ n next yield n right m) next
           }
           """,
           two ++ " right " ++ three,
@@ -282,7 +282,7 @@ positiveTests =
             """
             (let local:[nat,nat] ≔ {
               naught ^ n rime,
-              m heir ^ m local
+              m next ^ m local
             } yield n local)
             """,
           two ++ " rime",
@@ -292,12 +292,12 @@ positiveTests =
           """
           let deep:[nat,nat] ≔ {
             naught ^ naught,
-            naught heir ^ naught heir,
-            (n heir) heir ^ (let local:[nat,nat] ≔ {
-              naught ^ (n heir) deep,
-              naught heir ^ (n heir) deep,
-              (m heir) heir ^ (m heir) local
-            } yield n local) heir
+            naught next ^ naught next,
+            (n next) next ^ (let local:[nat,nat] ≔ {
+              naught ^ (n next) deep,
+              naught next ^ (n next) deep,
+              (m next) next ^ (m next) local
+            } yield n local) next
           }
           """,
           four ++ " deep",
@@ -307,28 +307,28 @@ positiveTests =
           """
           let deep:[nat,nat] ≔ {
             naught ^ naught,
-            naught heir ^ naught heir,
-            (n heir) heir ^ match n {
+            naught next ^ naught next,
+            (n next) next ^ match n {
               naught ^ (let inner:[nat,nat] ≔ {
-                naught ^ naught heir,
-                naught heir ^ naught heir,
-                (m heir) heir ^ match m {
+                naught ^ naught next,
+                naught next ^ naught next,
+                (m next) next ^ match m {
                   naught ^ match naught {
                     naught ^ (naught deep) keep (naught inner),
-                    _ heir ^ naught
+                    _ next ^ naught
                   },
-                  k heir ^ (k inner) heir
+                  k next ^ (k inner) next
                 }
-              } yield ((naught heir) heir) inner) heir,
-              k heir ^ (k deep) heir
+              } yield ((naught next) next) inner) next,
+              k next ^ (k deep) next
             }
           }
           """,
           two ++ " deep",
-          "naught heir"
+          "naught next"
         ),
         ( "a recursive lambda retaineth its binder annotation",
-          "let rime:[nat,nat] ≔ {x:nat ^ match x {naught ^ naught, n heir ^ (n rime) heir}}",
+          "let rime:[nat,nat] ≔ {x:nat ^ match x {naught ^ naught, n next ^ (n rime) next}}",
           two ++ " rime",
           two
         ),
@@ -338,10 +338,10 @@ positiveTests =
           ilk right:* { back:[left,right] }
           let hoard:[left,nat,nat] ≔ {
             stop,total ^ total,
-            (child back) step,total ^ child hoard (total heir)
+            (child back) step,total ^ child hoard (total next)
           }
           """,
-          "((stop back) step) hoard (naught heir)",
+          "((stop back) step) hoard (naught next)",
           two
         ),
         ( "course-of-values recursion crosses an indexed peer",
@@ -350,16 +350,16 @@ positiveTests =
           ilk indexed:[nat,*] { to_indexed:[plain,naught indexed] }
           let deep:[plain,nat] ≔ {
             stop ^ naught,
-            (child to_indexed) from_indexed ^ (child deep) heir
+            (child to_indexed) from_indexed ^ (child deep) next
           }
           """,
           "((stop to_indexed) from_indexed) deep",
-          "naught heir"
+          "naught next"
         ),
         -- an indexed structural input whose indices are earlier inputs.
-        ("recursion may match an indexed value whose index is an implicit input", vector ++ "let length:[@α:*, @n:nat, v:α vec n, nat] ≔ match v { nil ^ naught, _ cons _ t ^ (t length) heir }", pair ++ " length", two),
-        ("an indexed recursion's result may mention the index", vector ++ "let warp:[@α:*, @β:*, @n:nat, v:α vec n, f:[α, β], β vec n] ≔ match v { nil ^ nil, k cons a t ^ k cons (a f) (t warp f) }", pair ++ " warp {x ^ x heir}", "(naught heir) cons @nat (naught heir) ((naught cons @nat (naught heir) (nil @nat)))"),
-        ("an explicit index input is refined in each branch", vector ++ "let manyhood:[@α:*, n:nat, v:α vec n, nat] ≔ match v { nil ^ n, k cons _ t ^ (k manyhood t) heir }", two ++ " manyhood " ++ pair, two)
+        ("recursion may match an indexed value whose index is an implicit input", vector ++ "let length:[@α:*, @n:nat, v:α vec n, nat] ≔ match v { nil ^ naught, _ cons _ t ^ (t length) next }", pair ++ " length", two),
+        ("an indexed recursion's result may mention the index", vector ++ "let warp:[@α:*, @β:*, @n:nat, v:α vec n, f:[α, β], β vec n] ≔ match v { nil ^ nil, k cons a t ^ k cons (a f) (t warp f) }", pair ++ " warp {x ^ x next}", "(naught next) cons @nat (naught next) ((naught cons @nat (naught next) (nil @nat)))"),
+        ("an explicit index input is refined in each branch", vector ++ "let manyhood:[@α:*, n:nat, v:α vec n, nat] ≔ match v { nil ^ n, k cons _ t ^ (k manyhood t) next }", two ++ " manyhood " ++ pair, two)
       ]
   ]
 
@@ -368,16 +368,16 @@ rejectionTests =
   [ reject label (compile source)
   | (label, source) <-
       [ ("a shadowing worth is not the former child", count "(let n ≔ naught yield n rime)"),
-        ("an explicit index argument must be the child's index", vector ++ "let manyhood:[@α:*, n:nat, v:α vec n, nat] ≔ match v { nil ^ n, k cons _ t ^ (naught manyhood t) heir }"),
-        ("an index input cannot be matched by a constructor", vector ++ "let manyhood:[@α:*, n:nat, v:α vec n, nat] ≔ { naught, nil ^ naught, _, k cons _ t ^ (k manyhood t) heir }"),
-        ("a recursive lambda cannot ignore a wrong binder annotation", "let rime:[nat,nat] ≔ {x:string ^ match x {naught ^ naught, n heir ^ (n rime) heir}}"),
-        ("a rebuilt matched input is not a descendant", count "(n heir) rime"),
+        ("an explicit index argument must be the child's index", vector ++ "let manyhood:[@α:*, n:nat, v:α vec n, nat] ≔ match v { nil ^ n, k cons _ t ^ (naught manyhood t) next }"),
+        ("an index input cannot be matched by a constructor", vector ++ "let manyhood:[@α:*, n:nat, v:α vec n, nat] ≔ { naught, nil ^ naught, _, k cons _ t ^ (k manyhood t) next }"),
+        ("a recursive lambda cannot ignore a wrong binder annotation", "let rime:[nat,nat] ≔ {x:string ^ match x {naught ^ naught, n next ^ (n rime) next}}"),
+        ("a rebuilt matched input is not a descendant", count "(n next) rime"),
         ( "an inner child is not an outer induction hypothesis",
           count
             """
             (let local:[nat,nat] ≔ {
               naught ^ naught,
-              m heir ^ (m rime) keep (m local)
+              m next ^ (m rime) keep (m local)
             } yield n local)
             """
         )
@@ -385,23 +385,23 @@ rejectionTests =
   ]
 
 count :: String -> String
-count body = "let rime:[x:nat,nat] ≔ match x { naught ^ naught, n heir ^ (" ++ body ++ ") heir }"
+count body = "let rime:[x:nat,nat] ≔ match x { naught ^ naught, n next ^ (" ++ body ++ ") next }"
 
 vector, pair :: String
-vector = "ilk vec:[α:*, [nat, *]] { nil:α vec naught, cons:[n:nat, head:α, tail:α vec n, α vec (n heir)] }\n"
-pair = "((naught heir) cons @nat naught (naught cons @nat naught (nil @nat)))"
+vector = "ilk vec:[α:*, [nat, *]] { nil:α vec naught, cons:[n:nat, head:α, tail:α vec n, α vec (n next)] }\n"
+pair = "((naught next) cons @nat naught (naught cons @nat naught (nil @nat)))"
 
 two, three, four :: String
-two = "((naught heir) heir)"
-three = "(" ++ two ++ " heir)"
-four = "(" ++ three ++ " heir)"
+two = "((naught next) next)"
+three = "(" ++ two ++ " next)"
+four = "(" ++ three ++ " next)"
 
 compile :: String -> Either String SourceProgram
 compile = compileAs "dependent_selfcall.tung" . (prefix ++)
   where
     prefix =
       """
-      ilk nat:* { naught:nat, heir:[nat,nat] }
+      ilk nat:* { naught:nat, next:[nat,nat] }
       let keep:[x:nat,y:nat,nat] ≔ x
 
       """

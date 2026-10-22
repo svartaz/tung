@@ -38,8 +38,8 @@ main = do
     ["--library-paths"] -> getCurrentDirectory >>= listLibraryPaths
     ["--library-paths", path] -> listLibraryPaths path
     ["--check", path] -> checkFile strict path
-    ["--neaten-stdin"] -> getContents >>= either (\message -> putStrLn ("neaten error: " ++ message) >> exitFailure) putStr . formatSource
-    "--neaten" : paths | not (null paths) -> mapM formatFile paths >>= \results -> unless (and results) exitFailure
+    ["--tidy-stdin"] -> getContents >>= either (\message -> putStrLn ("tidy error: " ++ message) >> exitFailure) putStr . formatSource
+    "--tidy" : paths | not (null paths) -> mapM formatFile paths >>= \results -> unless (and results) exitFailure
     ["--help"] -> putStr usage
     path : programArgs
       | not ("-" `isPrefixOf` path) -> runFile strict path programArgs
@@ -117,14 +117,14 @@ runProgram programArgs program = do
         Right 0 -> pure ()
         Right status -> exitWith (ExitFailure (fromInteger status))
 
--- each file is neatened on its own; one that doth not parse is reported and
+-- each file is tidied on its own; one that doth not parse is reported and
 -- left unchanged.
 formatFile :: FilePath -> IO Bool
 formatFile path = do
   source <- readFile path
   _ <- Exception.evaluate (length source)
   case formatSource source of
-    Left message -> putStrLn ("neaten error: " ++ path ++ ": " ++ message) >> pure False
+    Left message -> putStrLn ("tidy error: " ++ path ++ ": " ++ message) >> pure False
     Right formatted -> unless (formatted == source) (writeFile path formatted) >> pure True
 
 runFile :: Bool -> FilePath -> [String] -> IO ()
@@ -308,13 +308,13 @@ cancelEditorRequest workers outputLock requestId =
     thread <- modifyMVar workers \running -> pure (Map.delete requestId running, Map.lookup requestId running)
     mapM_ killThread thread
 
--- neatening and highlighting read only the source. every other command
+-- tidying and highlighting read only the source. every other command
 -- checketh it with the modules its brings reach, resolved as the command
 -- line resolveth them.
 editorResponse :: ImportCache -> EditorRequest -> IO Value
 editorResponse cache request@EditorRequest {requestCommand, requestSource = source} =
   case requestCommand of
-    "format" -> pure (either (editorError . ("neaten error: " ++)) (\formatted -> object ["kind" .= ("format" :: String), "source" .= formatted]) (formatSource source))
+    "format" -> pure (either (editorError . ("tidy error: " ++)) (\formatted -> object ["kind" .= ("format" :: String), "source" .= formatted]) (formatSource source))
     "highlight" -> pure (syntaxResponse (sourceSyntaxSummary source))
     _ ->
       editorProject cache request >>= \case
@@ -456,8 +456,8 @@ usage =
   usage: tung <file.tung> [arguments...]
          tung --check <file.tung>
          tung --name <name> <file.tung>
-         tung --neaten <file.tung>...
-         tung --neaten-stdin
+         tung --tidy <file.tung>...
+         tung --tidy-stdin
          tung --language-metadata
          tung --library-paths [project-path]
 

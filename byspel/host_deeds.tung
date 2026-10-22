@@ -7,8 +7,8 @@ bring ilk/one.tung
 bring ilk/or.tung
 bring ilk/string/building.tung
 
-let then: [@α: *, @β: *, first: α deed, next: β deed, β deed]
-  ≔ first deed_bind {_ ^ next}
+let then: [@α: *, @β: *, first: α deed, after: β deed, β deed]
+  ≔ first deed_bind {_ ^ after}
 
 let line: [a: string, 𝟙 deed] ≔ (a yoke_string '\n') _fremmed~write
 

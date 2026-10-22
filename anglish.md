@@ -17,148 +17,157 @@ or an action taketh `-ing`, as `doing`. `-and` and `-ing` never stand for
 each other. a patient is named by its past participle, as `rowed` and
 `hemmed`.
 
-### compounds and mathematical families
+## intentionally kept non-germanic words
 
-mathematical structure names stay as they are: `order`, `functor`, `monad`,
-`monoid`, `semigroup`, `group`, `semiring`, `lattice`, `category`,
-`contravariant`, `kleisli`, the `-oid` family, and their compounds. a literal calque such as `one_shaped` doth not
-explain a monoid's laws.
+- category
+- contravariant
+- functor
+- group
+- lattice
+- monad
+- monoid
+- order
+- semigroup
+- semiring
 
-| english           | anglish       | origin         |
-| ----------------- | ------------- | -------------- |
-| absent            | missing       |                |
-| absolute          | length        |                |
-| absorb            | swallow       |                |
-| accumulate        | hoard         |                |
-| action            | deed          |                |
-| add               | eke           |                |
-| age               | eld           |                |
-| anamorphism       | upshaper      | calque         |
-| antisymmetry      | withevenmete  | calque         |
-| append            | onhang        | _anhängen_     |
-| applicative       | onwendsome    | see _apply_    |
-| apply             | onwend        | _anwenden_     |
-| automorphism      | selfshaper    | calque         |
-| axiom             | orsetting     |                |
-| bimap             | biwarp        |                |
-| binary            | twostead      |                |
-| bounded           | hemmed        |                |
-| cancel            | strike        |                |
-| cardinality       | manyhood      |                |
-| catamorphism      | downshaper    | calque         |
-| change            | tweak         |                |
-| character         | staff         |                |
-| class             | flock         |                |
-| commute           | swap          |                |
-| complement        | upfill        | _ergänzen_     |
-| complex number    | twintale      | _tvinntala_    |
-| condition         | kilter        |                |
-| constant          | singal        |                |
-| contramap         | witherwarp    | see _invert_   |
-| contain           | inhold        | calque         |
-| continue          | throughwone   | _þurhwunian_   |
-| corollary         | followsetting |                |
-| count             | rime          |                |
-| default           | fallback      |                |
-| depend            | offhang       | calque         |
-| distributive      | spreadsome    |                |
-| divide            | deal          |                |
-| dividend          | dealt         |                |
-| divisor           | dealer        |                |
-| double            | twofold       |                |
-| element           | limb          |                |
-| eliminate         | unbuild       |                |
-| endomorphism      | inshaper      | calque         |
-| epimorphism       | onshaper      | calque         |
-| equal             | same          |                |
-| example           | byspel        |                |
-| exchange          | trade         |                |
-| extension         | umfanging     | _Umfang_       |
-| failure           | misfare       |                |
-| fallible          | misfaresome   |                |
-| filter            | sift          |                |
-| fixed             | fast          |                |
-| fixed point       | steadfast     |                |
-| fold              | gather        |                |
-| foreign           | fremmed       |                |
-| format            | neaten        |                |
-| function          | fall          | from icelandic |
-| homomorphic       | likeshaped    | calque         |
-| homomorphism      | likeshaper    | calque         |
-| identity          | sameness      |                |
-| identity morphism | sameshaper    | calque         |
-| image             | shadow        |                |
-| induce            | inlead        | calque         |
-| inject            | incast        | calque         |
-| inspect           | inlook        | calque         |
-| instance          | bizen         |                |
-| integer           | wholetale     | _ganze Zahl_   |
-| invert            | witherwend    |                |
-| is equal to       | is            |                |
-| isomorphic        | evenshaped    | calque         |
-| isomorphism       | evenshaper    | calque         |
-| join              | yoke          |                |
-| language          | tongue        |                |
-| lemma             | helpsetting   |                |
-| library           | bookhoard     |                |
-| map               | warp          |                |
-| measure           | mete          |                |
-| member            | limb          |                |
-| monomorphism      | oneshaper     | calque         |
-| morphism          | shaper        |                |
-| motive            | drive         |                |
-| multiply          | fold          |                |
-| mutual            | evensided     |                |
-| natural           | kindful       |                |
-| negate            | flip          |                |
-| negate            | gainsay       |                |
-| negative          | undernaught   |                |
-| node              | knot          |                |
-| nullary           | naughtstead   |                |
-| number            | tale          |                |
-| optional          | maybe         |                |
-| part              | deal          |                |
-| partial           | half          |                |
-| person            | wight         |                |
-| positive          | overnaught    |                |
-| power             | might         |                |
-| predicate         | umbsay        | _umsögn_       |
-| preimage          | foreshadow    |                |
-| program           | forewrit      | calque         |
-| project           | forthcast     | calque         |
-| proof             | soothing      |                |
-| property          | umbsay        |                |
-| prove             | soothe        |                |
-| pure              | sheer         |                |
-| recur             | selfcall      |                |
-| reflect           | eftbend       | calque         |
-| remainder         | leftover      |                |
-| remove            | rid           |                |
-| rest              | leftover      |                |
-| result            | outcome       |                |
-| second            | other         |                |
-| separate          | shed          |                |
-| sign              | mark          |                |
-| single            | onefold       |                |
-| singleton         | onesome       |                |
-| sort              | row           |                |
-| state             | hade          |                |
-| strict            | tight         |                |
-| structure         | building      |                |
-| subset            | underset      | calque         |
-| subtract          | offdraw       | _abziehen_     |
-| successor         | heir          |                |
-| symmetry          | evenmete      | calque         |
-| theorem           | setting       |                |
-| total             | whole         |                |
-| transit           | throughgo     | calque         |
-| traverse          | throughwend   | calque         |
-| turn              | spin          |                |
-| type              | ilk           |                |
-| unary             | onestead      |                |
-| universe          | world         |                |
-| value             | worth         |                |
-| well-founded      | wellgrounded  |                |
+## rewritten words
+
+| english              | anglish        | origin         |
+| -------------------- | -------------- | -------------- |
+| absent               | missand        |                |
+| absolute             | length         |                |
+| absorb               | swallow        |                |
+| accumulate           | hoard          |                |
+| action               | deed           |                |
+| add                  | eke            |                |
+| age                  | eld            |                |
+| anamorphism          | upshaper       | calque         |
+| antisymmetry         | witherevenmete | calque         |
+| append               | onhang         | _anhängen_     |
+| applicative          | onwendsome     | see _apply_    |
+| apply                | onwend         | _anwenden_     |
+| automorphism         | selfshaper     | calque         |
+| axiom                | orsetting      |                |
+| bimap                | biwarp         |                |
+| binary               | twostead       |                |
+| bounded              | hemmed         |                |
+| cancel               | strike         |                |
+| cardinality          | manyhood       |                |
+| catamorphism         | downshaper     | calque         |
+| change               | tweak          |                |
+| character            | staff          |                |
+| class                | flock          |                |
+| commute              | swap           |                |
+| complement           | upfill         | _ergänzen_     |
+| complex number       | twintale       | _tvinntala_    |
+| condition            | kilter         |                |
+| constant             | singal         |                |
+| contramap            | witherwarp     | see _invert_   |
+| contain              | inhold         | calque         |
+| continue             | throughwone    | _þurhwunian_   |
+| continuous           | steady         | _stetig_       |
+| corollary            | followsetting  | _Folgesatz_    |
+| count                | rime           |                |
+| default              | fallback       |                |
+| depend               | offhang        | calque         |
+| distributive         | spreadsome     |                |
+| divide               | deal           |                |
+| dividend             | dealt          |                |
+| divisor              | dealer         |                |
+| double               | twofold        |                |
+| element              | limb           |                |
+| eliminate            | unbuild        |                |
+| endomorphism         | inshaper       | calque         |
+| epimorphism          | onshaper       | calque         |
+| equal                | same           |                |
+| example              | byspel         |                |
+| exchange             | trade          |                |
+| extension            | umfanging      | _Umfang_       |
+| failure              | misfare        |                |
+| fallible             | misfaresome    |                |
+| filter               | sift           |                |
+| fixed                | fast           |                |
+| fixed point          | steadfast      |                |
+| fold                 | gather         |                |
+| foreign              | fremmed        |                |
+| format               | tidy           |                |
+| function             | fall           | from icelandic |
+| homomorphic          | likeshaped     | calque         |
+| homomorphism         | likeshaper     | calque         |
+| identity             | sameness       |                |
+| identity morphism    | sameshaper     | calque         |
+| image                | shadow         |                |
+| induce               | inlead         | calque         |
+| inject               | incast         | calque         |
+| inspect              | inlook         | calque         |
+| instance             | bizen          |                |
+| integer              | wholetale      | _ganze Zahl_   |
+| invert               | witherwend     |                |
+| is equal to          | is             |                |
+| isomorphic           | evenshaped     | calque         |
+| isomorphism          | evenshaper     | calque         |
+| join                 | yoke           |                |
+| language             | tongue         |                |
+| lemma                | helpsetting    | _Hilfssatz_    |
+| library              | bookhoard      |                |
+| map                  | warp           | _vörpun_       |
+| measure              | mete           |                |
+| member               | limb           |                |
+| monomorphism         | oneshaper      | calque         |
+| morphism             | shaper         |                |
+| motive               | drive          |                |
+| multiply             | fold           |                |
+| mutual               | gainsided      | _gegenseitig_  |
+| natural              | kindful        |                |
+| negate (proposition) | gainsay        |                |
+| negate (number)      | flip           |                |
+| negative             | undernaught    |                |
+| node                 | knot           |                |
+| nullary              | naughtstead    |                |
+| number               | tale           |                |
+| optional             | maybe          |                |
+| part                 | deal           |                |
+| partial              | half           |                |
+| person               | wight          |                |
+| positive             | overnaught     |                |
+| power                | might          |                |
+| predicate            | umbsay         | _umsögn_       |
+| preimage             | foreshadow     |                |
+| program              | forewrit       | calque         |
+| project              | forthcast      | calque         |
+| proof                | soothing       |                |
+| property             | umbsay         |                |
+| prove                | soothe         |                |
+| pure                 | sheer          |                |
+| recur                | selfcall       |                |
+| reflect              | eftbend        | calque         |
+| remainder            | leftover       |                |
+| remove               | rid            |                |
+| rest                 | leftover       |                |
+| result               | outcome        |                |
+| second               | other          |                |
+| separate             | shed           |                |
+| sign                 | mark           |                |
+| single               | onefold        |                |
+| singleton            | onesome        |                |
+| sort                 | row            |                |
+| state                | hade           |                |
+| strict               | tight          |                |
+| structure            | building       |                |
+| subset               | underset       | calque         |
+| subtract             | offdraw        | _abziehen_     |
+| successor            | next           |                |
+| symmetry             | evenmete       | calque         |
+| theorem              | setting        | _Satz_         |
+| total                | whole          |                |
+| transit              | throughgo      | calque         |
+| traverse             | throughwend    | calque         |
+| turn                 | spin           |                |
+| type                 | ilk            |                |
+| unary                | onestead       |                |
+| universe             | world          |                |
+| value                | worth          |                |
+| well-founded         | wellgrounded   |                |
 
 - if a and b are _evenshaped_,
 - a and b are in _evenshapeship_

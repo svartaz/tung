@@ -14,26 +14,18 @@ let first: [rose, rose] ≔ {
   (x ‥ _) knot ^ x
 }
 
-let eke: [n: ℕ, m: ℕ, ℕ] ≔ {_: ℕ ^ ℕ} unbuild ℕ m {
-  _: ℕ ^ {below: ℕ ^ below heir}
-} n
+let eke: [n: ℕ, m: ℕ, ℕ] ≔ {_ ^ ℕ} unbuild ℕ m {_: ℕ ^ next} n
 
 ## joint induction taketh the rose motive, the list motive, then the knot,
 ## empty, and ‥ methods. each method receiveth its child hypotheses.
-let rime: [rose, ℕ] ≔ {_: rose ^ ℕ} unbuild rose {_: rose list ^ ℕ} {
-  xs: rose list ^ {below: ℕ ^ below heir}
-} 0 {
-  head: rose ^ {
-    head_below: ℕ ^ {
-      tail: rose list ^ {tail_below: ℕ ^ head_below eke tail_below}
-    }
-  }
+let rime: [rose, ℕ] ≔ {_ ^ ℕ} unbuild rose {_ ^ ℕ} {xs: rose list ^ next} 0 {
+  head: rose ^ {head_below: ℕ ^ {tail: rose list ^ head_below eke}}
 }
 
 ## selfcalling may follow a child through its ordinary inholder.
 let height: [rose, ℕ] ≔ {
   empty knot   ^ 1,
-  (x ‥ _) knot ^ (x height) heir
+  (x ‥ _) knot ^ (x height) next
 }
 
 let leaf: rose ≔ (empty @rose) knot

@@ -40,7 +40,7 @@ let make
   : [@α: *, @β: *, key: α, worth: β, left: α tree β, right: α tree β, α tree β]
   ≔ <{+, left weight, right weight, 1} knot key worth left right
 
-# rotations keep the order of keys; a missing child leaveth the knot as is.
+# rotations keep the order of keys; a missand child leaveth the knot as is.
 let onefold_left
   : [@α: *, @β: *, key: α, worth: β, left: α tree β, right: α tree β, α tree β]
   ≔ match right {

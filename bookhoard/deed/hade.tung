@@ -36,17 +36,17 @@ show let lift: [@σ: *, @α: *, doing: α deed, σ hade α] ≔ {
   s ^ doing deed_bind {a ^ (a ⸴ s) deed_sheer}
 } wrap
 
-let give: [@σ: *, @α: *, a: α, σ hade α] ≔ {s ^ (a ⸴ s) deed_sheer} wrap
+let sheer: [@σ: *, @α: *, a: α, σ hade α] ≔ {s ^ (a ⸴ s) deed_sheer} wrap
 
-let tweak_outcome: [@σ: *, @α: *, @β: *, m: σ hade α, f: [α, β], σ hade β] ≔ {
+let warp: [@σ: *, @α: *, @β: *, m: σ hade α, f: [α, β], σ hade β] ≔ {
   s ^ (m unwrap s) deed_bind {p ^ (p biwarp f sameness) deed_sheer}
 } wrap
 
-## the continuation of `flatten`: run the inner step from the hade left.
+## the continuation of `flat`: run the inner step from the hade left.
 let unfold: [@σ: *, @α: *, inner ⸴ t: (σ hade α) ∧ σ, (α ∧ σ) deed]
   ≔ inner unwrap t
 
-let flatten: [@σ: *, @α: *, m: σ hade (σ hade α), σ hade α] ≔ {
+let flat: [@σ: *, @α: *, m: σ hade (σ hade α), σ hade α] ≔ {
   s ^ (m unwrap s) deed_bind unfold
 } wrap
 
@@ -66,7 +66,7 @@ let helpsetting_biwarp_biwarp
       ((p biwarp (f ▷ g) sameness) deed_sheer)]
   ≔ match p { _ ⸴ _ ^ eftbend }
 
-let helpsetting_tweak_outcome_tweak_outcome
+let helpsetting_warp_warp
   : [@σ: *, @α: *, @β: *, @γ: *, p: α ∧ σ, f: [α, β], g: [β, γ],
     (((p biwarp f sameness) deed_sheer) deed_bind {
       q ^ (q biwarp g sameness) deed_sheer
@@ -75,8 +75,7 @@ let helpsetting_tweak_outcome_tweak_outcome
     q ^ (q biwarp g sameness) deed_sheer
   }) throughgo (p helpsetting_biwarp_biwarp f g)
 
-let tweak_outcome_sameness
-  : [@σ: *, @α: *, m: σ hade α, (m tweak_outcome sameness) = m]
+let warp_sameness: [@σ: *, @α: *, m: σ hade α, (m warp sameness) = m]
   ≔ match m {
     step wrap ^
       wrap leibnitz
@@ -87,9 +86,9 @@ let tweak_outcome_sameness
         } fall_umfang)
   }
 
-let tweak_outcome_tweak_outcome
+let warp_warp
   : [@σ: *, @α: *, @β: *, @γ: *, m: σ hade α, f: [α, β], g: [β, γ],
-    <{tweak_outcome, m, f, g} = (m tweak_outcome (f ▷ g))]
+    <{warp, m, f, g} = (m warp (f ▷ g))]
   ≔ match m {
     step wrap ^
       wrap leibnitz
@@ -98,54 +97,51 @@ let tweak_outcome_tweak_outcome
             (s step) deed_bind_bind {p ^ (p biwarp f sameness) deed_sheer} {
               p ^ (p biwarp g sameness) deed_sheer
             },
-            (s step) bind_same {
-              p ^ p helpsetting_tweak_outcome_tweak_outcome f g
-            }
+            (s step) bind_same {p ^ p helpsetting_warp_warp f g}
           }
         } fall_umfang)
   }
 
-let give_tweak_outcome
+let sheer_warp
   : [@σ: *, @α: *, @β: *, a: α, f: [α, β],
-    ((a give @σ) tweak_outcome f) = ((a f) give)]
+    ((a sheer @σ) warp f) = ((a f) sheer)]
   ≔ wrap leibnitz
     ({s ^ (a ⸴ s) deed_sheer_bind {p ^ (p biwarp f sameness) deed_sheer}}
       fall_umfang)
 
-let give_flatten: [@σ: *, @α: *, m: σ hade α, ((m give @σ) flatten) = m]
+let sheer_flat: [@σ: *, @α: *, m: σ hade α, ((m sheer @σ) flat) = m]
   ≔ (wrap leibnitz ({s ^ (m ⸴ s) deed_sheer_bind unfold} fall_umfang)) throughgo
     (m wrap_unwrap)
 
-## giving an outcome and unfolding it yieldeth it again.
-let helpsetting_give_unfold
+## sheering an outcome and unfolding it yieldeth it again.
+let helpsetting_sheer_unfold
   : [@σ: *, @α: *, p: α ∧ σ,
-    (((p biwarp give sameness) deed_sheer) deed_bind unfold) = (p deed_sheer)]
-  ≔ match p { a ⸴ t ^ ((a give) ⸴ t) deed_sheer_bind unfold }
+    (((p biwarp sheer sameness) deed_sheer) deed_bind unfold) = (p deed_sheer)]
+  ≔ match p { a ⸴ t ^ ((a sheer) ⸴ t) deed_sheer_bind unfold }
 
-let tweak_outcome_give_flatten
-  : [@σ: *, @α: *, m: σ hade α, ((m tweak_outcome give) flatten) = m]
+let warp_sheer_flat: [@σ: *, @α: *, m: σ hade α, ((m warp sheer) flat) = m]
   ≔ match m {
     step wrap ^
       wrap leibnitz
         ({
           s ^ >{throughgo,
-            (s step) deed_bind_bind {p ^ (p biwarp give sameness) deed_sheer}
+            (s step) deed_bind_bind {p ^ (p biwarp sheer sameness) deed_sheer}
               unfold,
-            (s step) bind_same helpsetting_give_unfold,
+            (s step) bind_same helpsetting_sheer_unfold,
             (s step) deed_bind_sheer
           }
         } fall_umfang)
   }
 
 ## run a step, then the hade its outcome chooseth, from the hade left.
-let follow: [@σ: *, @α: *, @β: *, m: σ hade α, f: [α, σ hade β], σ hade β] ≔ {
+let bind: [@σ: *, @α: *, @β: *, m: σ hade α, f: [α, σ hade β], σ hade β] ≔ {
   s ^ (m unwrap s) deed_bind {p ^ (p biwarp f sameness) unfold}
 } wrap
 
-## tweaking into hades and then flattening is following.
+## warping into hades and then flattening is binding.
 let warp_flat
   : [@σ: *, @α: *, @β: *, m: σ hade α, f: [α, σ hade β],
-    ((m tweak_outcome f) flatten) = (m follow f)]
+    ((m warp f) flat) = (m bind f)]
   ≔ wrap leibnitz
     ({
       s ^ >{throughgo,
@@ -157,10 +153,10 @@ let warp_flat
       }
     } fall_umfang)
 
-## following twice is following once by the followed continuation.
+## binding twice is binding once by the bound continuation.
 let helpsetting_bind_bind
   : [@σ: *, @α: *, @β: *, @γ: *, m: σ hade α, f: [α, σ hade β],
-    g: [β, σ hade γ], <{follow, m, f, g} = (m follow {a ^ (a f) follow g})]
+    g: [β, σ hade γ], <{bind, m, f, g} = (m bind {a ^ (a f) bind g})]
   ≔ wrap leibnitz
     ({
       s ^
@@ -170,64 +166,59 @@ let helpsetting_bind_bind
     } fall_umfang)
 
 bizen: [@σ: *, (σ hade) functor] {
-  let warp ≔ tweak_outcome
+  let warp ≔ warp
 
-  let warp_sameness ≔ tweak_outcome_sameness
+  let warp_sameness ≔ warp_sameness
 }
 
 bizen: [@σ: *, (σ hade) onwendsome] {
-  let sheer ≔ give
+  let sheer ≔ sheer
 
-  let onwend: [m:, f…:] ≔ (f… tweak_outcome (m tweak_outcome)) flatten
+  let onwend: [m:, f…:] ≔ (f… warp (m warp)) flat
 
   let onwend_sameness_sheer: [m:] ≔ >{throughgo,
-    flatten leibnitz (sameness give_tweak_outcome (m tweak_outcome)),
-    (m tweak_outcome sameness) give_flatten,
-    m tweak_outcome_sameness
+    flat leibnitz (sameness sheer_warp (m warp)),
+    (m warp sameness) sheer_flat,
+    m warp_sameness
   }
 
   let sheer_onwend_sheer: [a:, f:] ≔ >{throughgo,
-    flatten leibnitz (f give_tweak_outcome {g ^ (a give) tweak_outcome g}),
-    ((a give) tweak_outcome f) give_flatten,
-    a give_tweak_outcome f
+    flat leibnitz (f sheer_warp {g ^ (a sheer) warp g}),
+    ((a sheer) warp f) sheer_flat,
+    a sheer_warp f
   }
 
   let onwend_onwend: [m:, f:, g:] ≔ >{throughgo,
-    flatten leibnitz
-      (g give_tweak_outcome {
-        h ^ (((f give) tweak_outcome (m tweak_outcome)) flatten) tweak_outcome h
-      }),
-    ((((f give) tweak_outcome (m tweak_outcome)) flatten) tweak_outcome g)
-      give_flatten,
-    {a ^ a tweak_outcome g} leibnitz
-      ((flatten leibnitz (f give_tweak_outcome (m tweak_outcome))) throughgo
-        ((m tweak_outcome f) give_flatten)),
-    m tweak_outcome_tweak_outcome f g,
-    ((flatten leibnitz ((f ▷ g) give_tweak_outcome (m tweak_outcome))) throughgo
-      ((m tweak_outcome (f ▷ g)) give_flatten)) evenmete
+    flat leibnitz (g sheer_warp {h ^ (((f sheer) warp (m warp)) flat) warp h}),
+    ((((f sheer) warp (m warp)) flat) warp g) sheer_flat,
+    {a ^ a warp g} leibnitz
+      ((flat leibnitz (f sheer_warp (m warp))) throughgo
+        ((m warp f) sheer_flat)),
+    m warp_warp f g,
+    ((flat leibnitz ((f ▷ g) sheer_warp (m warp))) throughgo
+      ((m warp (f ▷ g)) sheer_flat)) evenmete
   }
 
   let sheer_onwend: [a:, f…:] ≔ >{throughgo,
-    {k ^ (f… tweak_outcome k) flatten} leibnitz
-      ((a give_tweak_outcome) fall_umfang),
-    flatten leibnitz ((f… tweak_outcome_tweak_outcome (a ▶) give) evenmete),
-    (f… tweak_outcome (a ▶)) tweak_outcome_give_flatten
+    {k ^ (f… warp k) flat} leibnitz ((a sheer_warp) fall_umfang),
+    flat leibnitz ((f… warp_warp (a ▶) sheer) evenmete),
+    (f… warp (a ▶)) warp_sheer_flat
   }
 }
 
 bizen: [@σ: *, (σ hade) monad] {
-  let flat ≔ flatten
+  let flat ≔ flat
 
   let sheer_bind: [a:, f:]
-    ≔ (flatten leibnitz (a give_tweak_outcome f)) throughgo ((a f) give_flatten)
+    ≔ (flat leibnitz (a sheer_warp f)) throughgo ((a f) sheer_flat)
 
-  let warp_sheer_flat ≔ tweak_outcome_give_flatten
+  let warp_sheer_flat ≔ warp_sheer_flat
 
   let bind_bind: [m:, f:, g:] ≔ >{throughgo,
     (m warp f $ flat) warp_flat g,
-    {d ^ d follow g} leibnitz (m warp_flat f),
+    {d ^ d bind g} leibnitz (m warp_flat f),
     m helpsetting_bind_bind f g,
-    (m follow) leibnitz ({a ^ ((a f) warp_flat g) evenmete} fall_umfang),
+    (m bind) leibnitz ({a ^ ((a f) warp_flat g) evenmete} fall_umfang),
     (m warp_flat {a ^ (a f) warp g $ flat}) evenmete
   }
 }

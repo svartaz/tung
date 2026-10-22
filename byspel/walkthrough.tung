@@ -101,12 +101,12 @@ let both: [𝟚, 𝟚, 𝟚] ≔ {
 }
 
 # 7. recursion
-# a function may call itself on a smaller part of its input. `n heir`
+# a function may call itself on a smaller part of its input. `n next`
 # matcheth a natural above naught and nameth the one below it, so each call
 # getteth closer to naught and the function always endeth.
 let factorial: [ℕ, ℕ] ≔ {
   0      ^ 1,
-  n heir ^ (n heir) · (n factorial)
+  n next ^ (n next) · (n factorial)
 }
 
 # 8. new types
@@ -131,10 +131,10 @@ ilk pair: [α: *, *] { pair_of: [α, α, α pair] }
 # `row` is part of its type, so `first` needeth no case for an empty row.
 ilk row: [α: *, ℕ, *] {
   stop: α row 0,
-  more: [@n: ℕ, α, α row n, α row (n heir)]
+  more: [@n: ℕ, α, α row n, α row (n next)]
 }
 
-let first: [@α: *, @n: ℕ, a more _: α row (n heir), α] ≔ a
+let first: [@α: *, @n: ℕ, a more _: α row (n next), α] ≔ a
 
 # 9. fields
 # an ilk with one constructor whose inputs have names hath fields, read
@@ -183,26 +183,26 @@ let two_and_two: (+2 + +2) = +4 ≔ eftbend
 
 # a flock may also state laws: members whose types are equations. every
 # bizen must prove them.
-flock hath_flip: [α: *, *] {
-  let flip: [α, α]
+flock hath_gainsay: [α: *, *] {
+  let gainsay: [α, α]
 
-  let flip_flip: [x: α, (x flip $ flip) = x]
+  let gainsay_gainsay: [x: α, (x gainsay $ gainsay) = x]
 }
 
-bizen: 𝟚 hath_flip {
-  let flip ≔ ¬′
+bizen: 𝟚 hath_gainsay {
+  let gainsay ≔ ¬′
 
-  let flip_flip ≔ {
+  let gainsay_gainsay ≔ {
     yea ^ eftbend,
     nay ^ eftbend
   }
 }
 
 # a proof about every natural useth recursion: the call on `n` proveth the
-# smaller case, and `leibnitz` applieth `heir` to both of its sides.
-let naught_+: [n: ℕ, (0 + n) = n] ≔ match n {
+# smaller case, and `leibnitz` applieth `next` to both of its sides.
+let naught_+: [m: ℕ, (0 + m) = m] ≔ match m {
   0      ^ eftbend,
-  m heir ^ {x: ℕ ^ x heir} leibnitz (m naught_+)
+  n next ^ next leibnitz (n naught_+)
 }
 
 # `sorry` standeth in for any value or proof not yet written, and
@@ -248,7 +248,11 @@ let elds_report: 𝟙 deed
     }
 
 # `σ hade α` is a deed that readeth and changeth a state `σ`.
-let rimed: ℕ hade ℕ ≔ >{then, {n ^ n + 1} tweak, {n ^ n + 1} tweak, get}
+let rimed: ℕ hade ℕ ≔ >{then,
+  {n ^ n + 1} hade~tweak,
+  {n ^ n + 1} hade~tweak,
+  get
+}
 
 let rime_report: 𝟙 deed
   ≔ (rimed hade~unwrap 10) bind {p ^ p forthcast₀ $ to_string $ write_line}

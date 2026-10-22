@@ -9,7 +9,7 @@ ilk tag: [ℕ, *] {
 
 let depth: [1 tag, ℕ] ≔ {
   one_case   ^ 0,
-  child grow ^ (child depth) heir
+  child grow ^ (child depth) next
 }
 
 ## the recursive result may depend on the matched value.
@@ -21,11 +21,11 @@ let copy: [x: 1 tag, x = x] ≔ match x {
 ## other inputs are quantified, so a recursive call may change them.
 let hoard: [1 tag, ℕ, ℕ] ≔ {
   one_case,   total ^ total,
-  child grow, total ^ child hoard (total heir)
+  child grow, total ^ child hoard (total next)
 }
 
 ## a constructor-shaped index rebindeth its leaf in each branch.
-let shifted: [k: ℕ, x: (k heir) tag, ℕ] ≔ match x {
+let shifted: [k: ℕ, x: (k next) tag, ℕ] ≔ match x {
   one_case   ^ k,
-  child grow ^ (0 shifted child) heir
+  child grow ^ (0 shifted child) next
 }

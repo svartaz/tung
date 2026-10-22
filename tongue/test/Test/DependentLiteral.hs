@@ -38,17 +38,17 @@ numericIndexTests =
     compiled = compileAs "dependent_numeric_index.tung" . (source ++)
     source =
       """
-      ilk kindful_index:[ℕ, *] { kindful_case:[@n:ℕ, (n heir) kindful_index] }
+      ilk kindful_index:[ℕ, *] { kindful_case:[@n:ℕ, (n next) kindful_index] }
       ilk wholetale_index:[ℤ, *] {
         positive_case:[@n:ℕ, (n overnaught) wholetale_index],
-        negative_case:[@n:ℕ, (n heir_undernaught) wholetale_index]
+        negative_case:[@n:ℕ, (n next_undernaught) wholetale_index]
       }
       let kindful_value:2 kindful_index ≔ kindful_case
       let positive_value:+2 wholetale_index ≔ positive_case
       let negative_value:-3 wholetale_index ≔ negative_case
-      let kindful_read:[@n:ℕ, (n heir) kindful_index, ℕ] ≔ {_ ^ n}
+      let kindful_read:[@n:ℕ, (n next) kindful_index, ℕ] ≔ {_ ^ n}
       let positive_read:[@n:ℕ, (n overnaught) wholetale_index, ℕ] ≔ {_ ^ n}
-      let negative_read:[@n:ℕ, (n heir_undernaught) wholetale_index, ℕ] ≔ {_ ^ n}
+      let negative_read:[@n:ℕ, (n next_undernaught) wholetale_index, ℕ] ≔ {_ ^ n}
 
       """
 
@@ -77,11 +77,11 @@ tests compiled example =
     computes "a undernaught integer is no natural" "-1 to_kindful" "(none : ℕ maybe)",
     computes "an operation on a variable stayeth neutral" "{n:ℤ ^ n + +0}" "{n:ℤ ^ n + +0}",
     expectEq "a natural is 0 or succeedeth another, and selfcalling on it computeth" (Right True) do
-      program <- compiled (example ++ "let double:[n: ℕ, ℕ] ≔ match n { 0 ^ 0, m heir ^ ((m double) heir) heir }\nlet small:[ℕ, string] ≔ { 2 ^ 'two', _ ^ 'other' }\n")
+      program <- compiled (example ++ "let double:[n: ℕ, ℕ] ≔ match n { 0 ^ 0, m next ^ ((m double) next) next }\nlet small:[ℕ, string] ≔ { 2 ^ 'two', _ ^ 'other' }\n")
       results <- traverse (\(expression, expected) -> sameNormalIn program expression expected) [("3 double", "6"), ("2 small", "'two'"), ("3 small", "'other'")]
       pure (and results),
     expectEq "the runner readeth a literal as its constructors" (Right (Right 0, "two")) $
-      compiled (example ++ "let small:[ℕ, string] ≔ { 2 ^ 'two', _ ^ 'other' }\nlet write:[string, 𝟙 deed] ≔ 'write' fremmed\nlet main:𝟙 deed ≔ (1 heir) small $ write\n")
+      compiled (example ++ "let small:[ℕ, string] ≔ { 2 ^ 'two', _ ^ 'other' }\nlet write:[string, 𝟙 deed] ≔ 'write' fremmed\nlet main:𝟙 deed ≔ (1 next) small $ write\n")
         >>= (`runSimulated` []),
     expectEq "a type may be chosen by an integer comparison" (Right True) $
       True <$ compiled (example ++ "let six:(+0 by_manyhood) ≔ 'six'\n"),

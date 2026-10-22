@@ -24,9 +24,9 @@ tracked `.tung` file and stage test input against an exact oracle.
 - port the parser with well-founded recursion from `ilk/grounded.tung`.
   recursive descent over a token list is not structural; fuel is a
   stopgap, not the design.
-- port the neatener after them, since it readeth tokens, comments, and the
-  parse. `tung --neaten-stdin` is its oracle: a differential test runneth the
-  port on all tracked `.tung` files and the neaten test inputs and compareth
+- port the tidier after them, since it readeth tokens, comments, and the
+  parse. `tung --tidy-stdin` is its oracle: a differential test runneth the
+  port on all tracked `.tung` files and the tidy test inputs and compareth
   bytes.
 
 ## tooling and maintainability

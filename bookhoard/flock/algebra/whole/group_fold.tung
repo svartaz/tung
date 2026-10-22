@@ -4,7 +4,7 @@ bring flock/algebra/whole/monoid_fold.tung
 bring flock/algebra/whole/semigroup_fold.tung
 bring is.tung
 
-## a group: a monoid whose every worth hath a withwend on both sides.
+## a group: a monoid whose every worth hath a witherwend on both sides.
 show flock group_·: [α: *, @: α monoid_·, *] {
   let /: [α, α]
 
@@ -13,7 +13,7 @@ show flock group_·: [α: *, @: α monoid_·, *] {
   let /_·: [a: α, ((a /) · a) = one]
 }
 
-## `a /· b` withwendeth `a`, then foldeth by `b`.
+## `a /· b` witherwendeth `a`, then foldeth by `b`.
 show let /·: [@α: *, @: α group_·, a: α, b: α, α] ≔ (a /) · b
 
 show let /·_strike: [@α: *, @: α group_·, a: α, (a /· a) = one] ≔ a /_·
@@ -23,7 +23,7 @@ show let one_alone
   : [@α: *, @: α group_·, e: α, leaving: [a: α, (e · a) = a], e = one]
   ≔ ((e ·_one) evenmete) throughgo (one leaving)
 
-## a worth that undoeth `a` from the left is its withwend.
+## a worth that undoeth `a` from the left is its witherwend.
 show let /_alone
   : [@α: *, @: α group_·, a: α, b: α, undoing: (b · a) = one, b = (a /)]
   ≔ >{throughgo,
@@ -60,15 +60,15 @@ show let strike_·
     c ·_one
   }
 
-## the withwend of a withwend is the worth.
+## the witherwend of a witherwend is the worth.
 show let /_/: [@α: *, @: α group_·, a: α, ((a /) /) = a]
   ≔ ((a /) /_alone a (a ·_/)) evenmete
 
-## `one` is its own withwend.
+## `one` is its own witherwend.
 show let one_/: [@α: *, @: α group_·, (one /) = one]
   ≔ (one /_alone one (one one_·)) evenmete
 
-## the withwend of a product is the product of the withwends, spun around.
+## the witherwend of a product is the product of the witherwends, spun around.
 show let /_over_·
   : [@α: *, @: α group_·, a: α, b: α, ((a · b) /) = ((b /) · (a /))]
   ≔ ((a · b) /_alone ((b /) · (a /)) >{throughgo,

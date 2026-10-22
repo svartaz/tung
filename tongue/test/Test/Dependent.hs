@@ -98,7 +98,7 @@ kernelTests =
 
 universeTests :: [Test]
 universeTests =
-  [ expect "strict heir constraints have no solution" (not (universeSatisfiable [LevelBelow (LSucc (LParam 0)) (LParam 0)])),
+  [ expect "strict successor constraints have no solution" (not (universeSatisfiable [LevelBelow (LSucc (LParam 0)) (LParam 0)])),
     expect "universe maxima preserve each lower bound" (universeEntails [] (LevelBelow (LParam 0) (LMax (LParam 0) (LParam 1)))),
     expect "unrelated universe parameters are not same" (not (universeEntails [] (LevelEqual (LParam 0) (LParam 1)))),
     expectEq "universe entailment preserveth disjunctions, offsets, and both equality directions" [True, False, False, False, True] $

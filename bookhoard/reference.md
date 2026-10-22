@@ -23,6 +23,18 @@ spelling of its flock name.
   invariants, while the public `knot` constructor may break them. `entries`
   and `keys` follow stored order.
 - `bifunctor` mappeth both sides of products and sums.
+- `topology` openeth deals of a type. a deal is an ilk-valued umbsay
+  `[α, *]`, not a `mightset`, because a yoke of a whole family of deals, stated
+  by `among`, cannot always be computed. `underset`, `meet`, and `foreshadow`
+  work on deals: lying under goeth through, a meet is the greatest deal under
+  both, and a foreshadow keepeth meets and lying under. `either_open` yoketh
+  two open deals as a family over `𝟚`. a fall is `steady` when the foreshadow
+  of every open deal is open; `sameness` is steady, and a steady fall after a
+  steady fall is steady by `▷_steady`.
+- openness is an ilk, not a proof-irrelevant claim, so two soothings that a
+  deal is open may differ. the inner of a deal, the yoke of every open deal
+  under it, is not stated: that family is indexed by deals, one universe above
+  the deals that `yoke_open` yoketh, and universes are predicative.
 - functions from `ρ` are the reader `(ρ →)`, a functor, applicative, and
   monad; functions into `ρ` are `(ρ ←)`, a `contravariant` functor whose
   `witherwarp` precomposeth. a function ilk is no application, so search
@@ -97,7 +109,7 @@ proved theorems:
 | `module.tung`           | `naught_∘`, `∘_naught`, `-_∘`, `∘_-`, `one_-_∘`                                               |
 | `category.tung`         | `sameness_alone`                                                                              |
 | `groupoid.tung`         | `witherwend_alone`, `witherwend_witherwend`, `sameness_witherwend`, `witherwend_over_▷`       |
-| `ilk/kindful.tung`      | `heir_incast`, `heir_+`, `strike_+`, `+_∸`, `·_swap`                                          |
+| `ilk/kindful.tung`      | `next_incast`, `next_+`, `strike_+`, `+_∸`, `·_swap`                                          |
 | `ilk/list_setting.tung` | `warp_manyhood`, `manyhood_·`, `eftwend_manyhood`                                             |
 
 `group_likeshaper.tung` defineth `likeshaped`, `kernel`, and `shadow` for
@@ -159,7 +171,7 @@ or a declaration applying a chosen bizen's law.
   [`ilk/wholetale.tung`](ilk/wholetale.tung) proveth the ℤ order, ring, and
   euclidean laws from sign cases and ℕ laws. ℕ dealing is modelled by
   selfcalling on the dealt tale and ℤ dealing by sign cases of ℕ dealing; the
-  leftover of a dealt `m heir_undernaught` is turned to `e ∸ r`, so it is never
+  leftover of a dealt `m next_undernaught` is turned to `e ∸ r`, so it is never
   undernaught. tests compare every model with its native operation and reject
   false and ill-founded list proofs.
 - [`ilk/list_order.tung`](ilk/list_order.tung) ordereth lists
@@ -168,17 +180,25 @@ or a declaration applying a chosen bizen's law.
 - product, option, and lower/upper laws use the requirement's own laws,
   carried by its dictionary; function-carrier laws hold pointwise from the
   result carrier's. no native equation is assumed.
-- `order_whole` requireth `≤_=`, antisymmetry in identity, not only boolean
-  sameness, so the generic total-order bizens of `⋏` and `⋎` need only
-  `order_whole` and prove commutativity, associativity, swallowing, and both
-  distributive laws by cases on comparisons. a separate `≍_to_=` requirement
-  would fail: a parent is a dictionary field, so two requirements reaching `≍`
-  by different paths cannot be shown to share it. `𝟚` and `𝟛` prove `≤_=` by
-  cases and `ℕ` and `ℤ` from sound sameness.
+- `order_half` requireth `≤_=`, witherevenmete in identity, beside the boolean
+  `≤_witherevenmete`. the boolean law alone would let any preorder pass with a
+  `≍` that holdeth everywhere. a separate `≍_to_=` requirement would not mend
+  it: a parent is a dictionary field, so two requirements reaching `≍` by
+  different paths cannot be shown to share it. `order_whole` addeth only
+  `≤_whole`, and the generic total-order bizens of `⋏` and `⋎` prove
+  commutativity, associativity, swallowing, and both distributive laws by
+  cases on comparisons. `𝟚` and `𝟛` prove `≤_=` by cases, `ℕ`, `ℤ`, lists,
+  `unicode`, and `string` from sound sameness, and sets from their `≍_to_=`.
+- `field` stateth that folding swappeth, that `one` is not `naught`, and that
+  `÷` undoeth folding by every dealer but `naught`; a law for dealing by
+  `naught` would make `naught` and `one` the same. `euclidean` stateth by
+  `%_some` that dealing by every dealer but `naught` yieldeth an outcome, so
+  a `%` that always yieldeth none is not euclidean.
 - [`flock/same_to_is.tung`](flock/same_to_is.tung) stateth that boolean
   sameness agreeth with identity, as lean's `LawfulBEq`: `≍_=` turneth
   `(a ≍ b) = yea` into `a = b`, and `≍_eftbend` giveth `(a ≍ a) = yea`. `𝟙`,
-  `𝟚`, `𝟛`, `ℕ`, and `ℤ` prove it by cases or induction; `maybe`, lists,
+  `𝟚`, `𝟛`, `ℕ`, and `ℤ` prove it by cases or induction, and `unicode` and
+  `string` through their code points and scalar lists; `maybe`, lists,
   non-empty lists, products, and sums gain a structural `≍` proved from their
   components' `≍_to_=`, which they require alone, so its parent `≍` is the one
   their `≍` useth. a law needing sound sameness requireth it.

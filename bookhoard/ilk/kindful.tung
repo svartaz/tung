@@ -25,60 +25,60 @@ bring is.tung
 ## a binding with a body after `fremmed` computeth natively on literals and,
 ## on other inputs, unfoldeth that structural model, so soothings can reason
 ## about it.
-let is_same: [ℕ, ℕ, 𝟚] ≔ 'same_kindful' fremmed {
+let same: [ℕ, ℕ, 𝟚] ≔ 'same_kindful' fremmed {
   0,      0      ^ yea,
-  0,      _ heir ^ nay,
-  _ heir, 0      ^ nay,
-  a heir, b heir ^ a is_same b
+  0,      _ next ^ nay,
+  _ next, 0      ^ nay,
+  a next, b next ^ a same b
 }
 
-let is_at_most: [ℕ, ℕ, 𝟚] ≔ 'at_most_kindful' fremmed {
+let at_most: [ℕ, ℕ, 𝟚] ≔ 'at_most_kindful' fremmed {
   0,      _      ^ yea,
-  _ heir, 0      ^ nay,
-  a heir, b heir ^ a is_at_most b
+  _ next, 0      ^ nay,
+  a next, b next ^ a at_most b
 }
 
 let eke: [ℕ, ℕ, ℕ] ≔ 'eke_kindful' fremmed {
   m, 0      ^ m,
-  m, k heir ^ (m eke k) heir
+  m, k next ^ (m eke k) next
 }
 
 ## offdrawing stoppeth at naught.
 let offdraw: [ℕ, ℕ, ℕ] ≔ 'offdraw_kindful' fremmed {
   m,      0      ^ m,
-  0,      _ heir ^ 0,
-  j heir, k heir ^ j offdraw k
+  0,      _ next ^ 0,
+  j next, k next ^ j offdraw k
 }
 
 let fold: [ℕ, ℕ, ℕ] ≔ 'fold_kindful' fremmed {
   _, 0      ^ 0,
-  m, k heir ^ (m fold k) eke m
+  m, k next ^ (m fold k) eke m
 }
 
-## one step of dealing by `e heir`: the leftover groweth until it reacheth
+## one step of dealing by `e next`: the leftover groweth until it reacheth
 ## `e`, and then the quotient groweth instead.
 let deal_step: [e: ℕ, q ⸴ r: ℕ ∧ ℕ, ℕ ∧ ℕ]
-  ≔ (r ≍ e) if ((q heir) ⸴ 0) (q ⸴ (r heir))
+  ≔ (r ≍ e) if ((q next) ⸴ 0) (q ⸴ (r next))
 
-## the quotient and leftover of dealing a tale by `e heir`.
+## the quotient and leftover of dealing a tale by `e next`.
 let deal: [ℕ, ℕ, ℕ ∧ ℕ] ≔ {
   0,      _ ^ 0 ⸴ 0,
-  n heir, e ^ e deal_step (n deal e)
+  n next, e ^ e deal_step (n deal e)
 }
 
 let deal_leftover: [ℕ, ℕ, (ℕ ∧ ℕ) maybe] ≔ 'deal_leftover_kindful' fremmed {
   _, 0      ^ none,
-  n, e heir ^ (n deal e) some
+  n, e next ^ (n deal e) some
 }
 
-let spell: [ℕ, string] ≔ 'kindful_to_string' fremmed
+let to_string: [ℕ, string] ≔ 'kindful_to_string' fremmed
 
 bizen: ℕ hath_≍ {
-  let ≍ ≔ is_same
+  let ≍ ≔ same
 }
 
 bizen: ℕ hath_≤ {
-  let ≤ ≔ is_at_most
+  let ≤ ≔ at_most
 }
 
 bizen: ℕ hath_+ {
@@ -106,21 +106,21 @@ bizen: ℕ hath_% {
 }
 
 bizen: ℕ hath_to_string {
-  let to_string ≔ spell
+  let to_string ≔ to_string
 }
 
 ## the laws below are soothed by inleading on the structural models.
 let helpsetting_≤_eftbend: [a: ℕ, (a ≤ a) = yea] ≔ match a {
   0       ^ eftbend,
-  a′ heir ^ a′ helpsetting_≤_eftbend
+  a′ next ^ a′ helpsetting_≤_eftbend
 }
 
-let helpsetting_≤_withevenmete: [a: ℕ, b: ℕ, >{≤, a ≤ b, b ≤ a, a ≍ b} = yea]
+let helpsetting_≤_witherevenmete: [a: ℕ, b: ℕ, >{≤, a ≤ b, b ≤ a, a ≍ b} = yea]
   ≔ match a, b {
     0,       0       ^ eftbend,
-    0,       _ heir  ^ eftbend,
-    _ heir,  0       ^ eftbend,
-    a′ heir, b′ heir ^ a′ helpsetting_≤_withevenmete b′
+    0,       _ next  ^ eftbend,
+    _ next,  0       ^ eftbend,
+    a′ next, b′ next ^ a′ helpsetting_≤_witherevenmete b′
   }
 
 let helpsetting_≤_throughgo: [a: ℕ, b: ℕ, c: ℕ, >{≤, a ≤ b, b ≤ c, a ≤ c} = yea]
@@ -129,43 +129,43 @@ let helpsetting_≤_throughgo: [a: ℕ, b: ℕ, c: ℕ, >{≤, a ≤ b, b ≤ c,
       yea;
       nay ^ eftbend
     },
-    _ heir,  0,       _ ^ eftbend,
-    a′ heir, b′ heir, 0 ^ match a′ ≤ b′ {
+    _ next,  0,       _ ^ eftbend,
+    a′ next, b′ next, 0 ^ match a′ ≤ b′ {
       yea;
       nay ^ eftbend
     },
-    a′ heir, b′ heir, c′ heir ^ a′ helpsetting_≤_throughgo b′ c′
+    a′ next, b′ next, c′ next ^ a′ helpsetting_≤_throughgo b′ c′
   }
 
 let helpsetting_≤_whole: [a: ℕ, b: ℕ, (((a ≤ b) ≍ nay) ≤ (b ≤ a)) = yea]
   ≔ match a, b {
     0,       _       ^ eftbend,
-    _ heir,  0       ^ eftbend,
-    a′ heir, b′ heir ^ a′ helpsetting_≤_whole b′
+    _ next,  0       ^ eftbend,
+    a′ next, b′ next ^ a′ helpsetting_≤_whole b′
   }
 
 let helpsetting_naught_+: [a: ℕ, (0 + a) = a] ≔ match a {
   0       ^ eftbend,
-  a′ heir ^ {b: ℕ ^ b heir} leibnitz (a′ helpsetting_naught_+)
+  a′ next ^ next leibnitz (a′ helpsetting_naught_+)
 }
 
-let helpsetting_heir_+: [a: ℕ, b: ℕ, ((a heir) + b) = ((a + b) heir)]
+let helpsetting_next_+: [a: ℕ, b: ℕ, ((a next) + b) = ((a + b) next)]
   ≔ match b {
     0       ^ eftbend,
-    b′ heir ^ {c: ℕ ^ c heir} leibnitz (a helpsetting_heir_+ b′)
+    b′ next ^ next leibnitz (a helpsetting_next_+ b′)
   }
 
 let helpsetting_+_+: [a: ℕ, b: ℕ, c: ℕ, (a + (b + c)) = ((a + b) + c)]
   ≔ match c {
     0       ^ eftbend,
-    c′ heir ^ {d: ℕ ^ d heir} leibnitz (a helpsetting_+_+ b c′)
+    c′ next ^ next leibnitz (a helpsetting_+_+ b c′)
   }
 
 let helpsetting_+_swap: [a: ℕ, b: ℕ, (a + b) = (b + a)] ≔ match b {
   0       ^ (a helpsetting_naught_+) evenmete,
-  b′ heir ^
-    ({c: ℕ ^ c heir} leibnitz (a helpsetting_+_swap b′)) throughgo
-      ((b′ helpsetting_heir_+ a) evenmete)
+  b′ next ^
+    (next leibnitz (a helpsetting_+_swap b′)) throughgo
+      ((b′ helpsetting_next_+ a) evenmete)
 }
 
 ## (p + q) + (r + s) regroupeth as (p + r) + (q + s).
@@ -174,62 +174,62 @@ let helpsetting_+_trade
   ≔ (
     let inner: [(b + (c + d)) = (c + (b + d))] ≔ >{throughgo,
       b helpsetting_+_+ c d,
-      {e: ℕ ^ e + d} leibnitz (b helpsetting_+_swap c),
+      {e ^ e + d} leibnitz (b helpsetting_+_swap c),
       (c helpsetting_+_+ b d) evenmete
     }
     yield >{throughgo,
       (a helpsetting_+_+ b (c + d)) evenmete,
-      {e: ℕ ^ a + e} leibnitz inner,
+      (a +) leibnitz inner,
       a helpsetting_+_+ c (b + d)
     }
   )
 
 let helpsetting_naught_·: [a: ℕ, (0 · a) = 0] ≔ match a {
   0       ^ eftbend,
-  a′ heir ^ a′ helpsetting_naught_·
+  a′ next ^ a′ helpsetting_naught_·
 }
 
 let helpsetting_one_·: [a: ℕ, (1 · a) = a] ≔ match a {
   0       ^ eftbend,
-  a′ heir ^ {b: ℕ ^ b heir} leibnitz (a′ helpsetting_one_·)
+  a′ next ^ next leibnitz (a′ helpsetting_one_·)
 }
 
 let helpsetting_·_+: [a: ℕ, b: ℕ, c: ℕ, (a · (b + c)) = ((a · b) + (a · c))]
   ≔ match c {
     0       ^ eftbend,
-    c′ heir ^
-      ({d: ℕ ^ d + a} leibnitz (a helpsetting_·_+ b c′)) throughgo
+    c′ next ^
+      ({d ^ d + a} leibnitz (a helpsetting_·_+ b c′)) throughgo
         (((a · b) helpsetting_+_+ (a · c′) a) evenmete)
   }
 
 let helpsetting_+_·: [a: ℕ, b: ℕ, c: ℕ, ((a + b) · c) = ((a · c) + (b · c))]
   ≔ match c {
     0       ^ eftbend,
-    c′ heir ^
-      ({d: ℕ ^ d + (a + b)} leibnitz (a helpsetting_+_· b c′)) throughgo
+    c′ next ^
+      ({d ^ d + (a + b)} leibnitz (a helpsetting_+_· b c′)) throughgo
         ((a · c′) helpsetting_+_trade (b · c′) a b)
   }
 
 let helpsetting_·_·: [a: ℕ, b: ℕ, c: ℕ, (a · (b · c)) = ((a · b) · c)]
   ≔ match c {
     0       ^ eftbend,
-    c′ heir ^
+    c′ next ^
       (a helpsetting_·_+ (b · c′) b) throughgo
-        ({d: ℕ ^ d + (a · b)} leibnitz (a helpsetting_·_· b c′))
+        ({d ^ d + (a · b)} leibnitz (a helpsetting_·_· b c′))
   }
 
 bizen: ℕ order_half {
   let ≤_eftbend ≔ helpsetting_≤_eftbend
 
-  let ≤_withevenmete ≔ helpsetting_≤_withevenmete
+  let ≤_witherevenmete ≔ helpsetting_≤_witherevenmete
 
   let ≤_throughgo ≔ helpsetting_≤_throughgo
+
+  let ≤_= ≔ helpsetting_≤_=
 }
 
 bizen: ℕ order_whole {
   let ≤_whole ≔ helpsetting_≤_whole
-
-  let ≤_= ≔ helpsetting_≤_=
 }
 
 bizen: ℕ monoid_+ {
@@ -263,23 +263,23 @@ bizen: ℕ semiring {
 ## boolean sameness of kindfuls agreeth with `=`.
 let helpsetting_≍_=: [a: ℕ, b: ℕ, same: (a ≍ b) = yea, a = b] ≔ match a, b {
   0,       0       ^ eftbend,
-  0,       _ heir  ^ match same {},
-  _ heir,  0       ^ match same {},
-  a′ heir, b′ heir ^ heir leibnitz (a′ helpsetting_≍_= b′ same)
+  0,       _ next  ^ match same {},
+  _ next,  0       ^ match same {},
+  a′ next, b′ next ^ next leibnitz (a′ helpsetting_≍_= b′ same)
 }
 
 let helpsetting_≍_eftbend: [a: ℕ, (a ≍ a) = yea] ≔ match a {
   0       ^ eftbend,
-  a′ heir ^ a′ helpsetting_≍_eftbend
+  a′ next ^ a′ helpsetting_≍_eftbend
 }
 
-## withevenmete holdeth in `=`, by sound sameness.
+## witherevenmete holdeth in `=`, by sound sameness.
 let helpsetting_≤_=
   : [a: ℕ, b: ℕ, below: (a ≤ b) = yea, above: (b ≤ a) = yea, a = b]
   ≔ a helpsetting_≍_= b
-    ({c: 𝟚 ^ c ≤ (a ≍ b)} yea_throughbear above
-      ({c: 𝟚 ^ >{≤, c, b ≤ a, a ≍ b}} yea_throughbear below
-        (a helpsetting_≤_withevenmete b)))
+    ({c ^ c ≤ (a ≍ b)} yea_throughbear above
+      ({c ^ >{≤, c, b ≤ a, a ≍ b}} yea_throughbear below
+        (a helpsetting_≤_witherevenmete b)))
 
 bizen: ℕ ≍_to_= {
   let ≍_= ≔ helpsetting_≍_=
@@ -293,68 +293,68 @@ bizen: ℕ semilattice_upper_hemmed {
   let ⟂_⋎: [_:] ≔ eftbend
 }
 
-## `heir` is injective.
-show let heir_incast: [@a: ℕ, @b: ℕ, eftbend: (a heir) = (b heir), a = b]
+## `next` is injective.
+show let next_incast: [@a: ℕ, @b: ℕ, eftbend: (a next) = (b next), a = b]
   ≔ eftbend
 
-## eking to an heir is the heir of the sum.
-show let heir_+: [a: ℕ, b: ℕ, ((a heir) + b) = ((a + b) heir)]
-  ≔ a helpsetting_heir_+ b
+## eking to a tale's next is the next of the sum.
+show let next_+: [a: ℕ, b: ℕ, ((a next) + b) = ((a + b) next)]
+  ≔ a helpsetting_next_+ b
 
 ## the same sums with one right term have the same left terms.
 show let +_strike: [a: ℕ, b: ℕ, c: ℕ, same: (b + a) = (c + a), b = c]
   ≔ match a {
     0       ^ same,
-    a′ heir ^ a′ +_strike b c (same heir_incast)
+    a′ next ^ a′ +_strike b c (same next_incast)
   }
 
 ## eking and then taking away the same tale giveth the tale back.
 show let +_∸: [a: ℕ, b: ℕ, ((a + b) ∸ b) = a] ≔ match b {
   0       ^ eftbend,
-  b′ heir ^ a +_∸ b′
+  b′ next ^ a +_∸ b′
 }
 
 ## the last two of three summands may swap places.
 let helpsetting_+_spin: [a: ℕ, b: ℕ, c: ℕ, ((a + b) + c) = ((a + c) + b)]
   ≔ >{throughgo,
     (a helpsetting_+_+ b c) evenmete,
-    {d: ℕ ^ a + d} leibnitz (b helpsetting_+_swap c),
+    (a +) leibnitz (b helpsetting_+_swap c),
     a helpsetting_+_+ c b
   }
 
-## folding by an heir eketh one more copy.
-show let heir_·: [a: ℕ, b: ℕ, ((a heir) · b) = ((a · b) + b)] ≔ match b {
+## folding by a tale's next eketh one more copy.
+show let next_·: [a: ℕ, b: ℕ, ((a next) · b) = ((a · b) + b)] ≔ match b {
   0       ^ eftbend,
-  b′ heir ^
-    ({c: ℕ ^ c + (a heir)} leibnitz (a heir_· b′)) throughgo
-      ({c: ℕ ^ c heir} leibnitz ((a · b′) helpsetting_+_spin b′ a))
+  b′ next ^
+    ({c ^ c + (a next)} leibnitz (a next_· b′)) throughgo
+      (next leibnitz ((a · b′) helpsetting_+_spin b′ a))
 }
 
 ## folding is commutative.
 show let ·_swap: [a: ℕ, b: ℕ, (a · b) = (b · a)] ≔ match b {
   0       ^ (a helpsetting_naught_·) evenmete,
-  b′ heir ^
-    ({c: ℕ ^ c + a} leibnitz (a ·_swap b′)) throughgo ((b′ heir_· a) evenmete)
+  b′ next ^
+    ({c ^ c + a} leibnitz (a ·_swap b′)) throughgo ((b′ next_· a) evenmete)
 }
 
-## `a` is under `b` when `a` is smaller: `(a heir) ≤ b`. as a relation it is
+## `a` is under `b` when `a` is smaller: `(a next) ≤ b`. as a relation it is
 ## wellgrounded, so it may ground selfcalling on a mete in `ℕ`.
-show let under: [a: ℕ, b: ℕ, *] ≔ ((a heir) ≤ b) = yea
+show let under: [a: ℕ, b: ℕ, *] ≔ ((a next) ≤ b) = yea
 
-let helpsetting_≤_heir: [a: ℕ, (a ≤ (a heir)) = yea] ≔ match a {
+let helpsetting_≤_next: [a: ℕ, (a ≤ (a next)) = yea] ≔ match a {
   0       ^ eftbend,
-  a′ heir ^ a′ helpsetting_≤_heir
+  a′ next ^ a′ helpsetting_≤_next
 }
 
-## every tale is under its heir.
-show let under_heir: [a: ℕ, a under (a heir)] ≔ a helpsetting_≤_eftbend
+## every tale is under its next.
+show let under_next: [a: ℕ, a under (a next)] ≔ a helpsetting_≤_eftbend
 
 ## being under goeth through.
 show let under_throughgo: [a: ℕ, b: ℕ, c: ℕ, a under b, b under c, a under c]
   ≔ {
     d₀, d₁ ^
-      (a heir) ≤_yea_throughgo b c d₀
-        (b ≤_yea_throughgo (b heir) c (b helpsetting_≤_heir) d₁)
+      (a next) ≤_yea_throughgo b c d₀
+        (b ≤_yea_throughgo (b next) c (b helpsetting_≤_next) d₁)
   }
 
 ## everything under `n` is grounded, by inleading on `n`.
@@ -362,50 +362,50 @@ let helpsetting_under_grounded
   : [a: ℕ, b: ℕ, below: b under a, ℕ grounded under b]
   ≔ match a {
     0       ^ match below {},
-    a′ heir ^ {
+    a′ next ^ {
       c: ℕ, q: c under b ^
-        a′ helpsetting_under_grounded c ((c heir) ≤_yea_throughgo b a′ q below)
+        a′ helpsetting_under_grounded c ((c next) ≤_yea_throughgo b a′ q below)
     } ground
   }
 
 show let under_wellgrounded: ℕ wellgrounded under ≔ {
-  n ^ {m: ℕ, below: m under n ^ n helpsetting_under_grounded m below} ground
+  n ^ (n helpsetting_under_grounded) ground
 }
 
 ## `p` holdeth a quotient and leftover that eftbuild `n` when dealing by `e
-## heir`.
-let eftbuild: [n: ℕ, e: ℕ, q ⸴ r: ℕ ∧ ℕ, *] ≔ ((q · (e heir)) + r) = n
+## next`.
+let eftbuild: [n: ℕ, e: ℕ, q ⸴ r: ℕ ∧ ℕ, *] ≔ ((q · (e next)) + r) = n
 
 ## `p` holdeth a leftover at most `e`.
 let hem: [e: ℕ, _ ⸴ r: ℕ ∧ ℕ, *] ≔ (r ≤ e) = yea
 
-## a tale at most `e` that is not `e` hath its heir at most `e`.
+## a tale at most `e` that is not `e` hath its next at most `e`.
 let helpsetting_≤_≭
   : [a: ℕ, b: ℕ, below: (a ≤ b) = yea, apart: (a ≍ b) = nay,
-    ((a heir) ≤ b) = yea]
+    ((a next) ≤ b) = yea]
   ≔ match a, b {
     0,       0       ^ match apart {},
-    0,       _ heir  ^ eftbend,
-    _ heir,  0       ^ match below {},
-    a′ heir, b′ heir ^ a′ helpsetting_≤_≭ b′ below apart
+    0,       _ next  ^ eftbend,
+    _ next,  0       ^ match below {},
+    a′ next, b′ next ^ a′ helpsetting_≤_≭ b′ below apart
   }
 
 let helpsetting_deal_step_eftbuild
   : [n: ℕ, e: ℕ, p: ℕ ∧ ℕ, held: n eftbuild e p,
-    (n heir) eftbuild e (e deal_step p)]
+    (n next) eftbuild e (e deal_step p)]
   ≔ match p {
     q ⸴ r ^
       (r ≍ e) inlook @𝟚 @{
-        c: 𝟚 ^ (n heir) eftbuild e (c if ((q heir) ⸴ 0) (q ⸴ (r heir)))
+        c: 𝟚 ^ (n next) eftbuild e (c if ((q next) ⸴ 0) (q ⸴ (r next)))
       } {
         yea, known ^ >{throughgo,
-          {a: ℕ ^ a + (q heir)} leibnitz (q heir_· e),
-          {a: ℕ ^ a heir} leibnitz ((q · e) helpsetting_+_spin e q),
-          {a: ℕ ^ <{+, q · e, q, a} heir} leibnitz
+          {a ^ a + (q next)} leibnitz (q next_· e),
+          next leibnitz ((q · e) helpsetting_+_spin e q),
+          {a ^ <{+, q · e, q, a} next} leibnitz
             ((r helpsetting_≍_= e known) evenmete),
-          heir leibnitz held
+          next leibnitz held
         },
-        nay, _ ^ heir leibnitz held
+        nay, _ ^ next leibnitz held
       }
   }
 
@@ -413,78 +413,78 @@ let helpsetting_deal_step_hem
   : [e: ℕ, p: ℕ ∧ ℕ, held: e hem p, e hem (e deal_step p)]
   ≔ match p {
     q ⸴ r ^
-      (r ≍ e) inlook @𝟚 @{c: 𝟚 ^ e hem (c if ((q heir) ⸴ 0) (q ⸴ (r heir)))} {
+      (r ≍ e) inlook @𝟚 @{c ^ e hem (c if ((q next) ⸴ 0) (q ⸴ (r next)))} {
         yea, _     ^ eftbend,
         nay, known ^ r helpsetting_≤_≭ e held known
       }
   }
 
 let helpsetting_deal_eftbuild: [a: ℕ, b: ℕ, a eftbuild b (a deal b)] ≔ match a {
-  0       ^ (b heir) helpsetting_naught_·,
-  a′ heir ^
+  0       ^ (b next) helpsetting_naught_·,
+  a′ next ^
     a′ helpsetting_deal_step_eftbuild b (a′ deal b)
       (a′ helpsetting_deal_eftbuild b)
 }
 
 let helpsetting_deal_hem: [a: ℕ, b: ℕ, b hem (a deal b)] ≔ match a {
   0       ^ eftbend,
-  a′ heir ^ b helpsetting_deal_step_hem (a′ deal b) (a′ helpsetting_deal_hem b)
+  a′ next ^ b helpsetting_deal_step_hem (a′ deal b) (a′ helpsetting_deal_hem b)
 }
 
-## the dealt pair of `n % (e heir)` as a bare pair.
+## the dealt pair of `n % (e next)` as a bare pair.
 let helpsetting_%_pair
-  : [a: ℕ, b: ℕ, c: ℕ, d: ℕ, dealt: (a % (b heir)) = ((c ⸴ d) some),
+  : [a: ℕ, b: ℕ, c: ℕ, d: ℕ, dealt: (a % (b next)) = ((c ⸴ d) some),
     (a deal b) = (c ⸴ d)]
   ≔ {m: (ℕ ∧ ℕ) maybe ^ match m {
     none    ^ a deal b,
     e′ some ^ e′
   }} leibnitz dealt
 
-## the quotient and leftover of dealing by `e heir` eftbuild the dealt tale.
+## the quotient and leftover of dealing by `e next` eftbuild the dealt tale.
 show let %_eftbuild
-  : [n: ℕ, e: ℕ, q: ℕ, r: ℕ, dealt: (n % (e heir)) = ((q ⸴ r) some),
-    ((q · (e heir)) + r) = n]
+  : [n: ℕ, e: ℕ, q: ℕ, r: ℕ, dealt: (n % (e next)) = ((q ⸴ r) some),
+    ((q · (e next)) + r) = n]
   ≔ (n helpsetting_%_pair e q r dealt) throughbear @(ℕ ∧ ℕ) @(n deal e) @(q ⸴ r)
-    @{a: ℕ ∧ ℕ ^ n eftbuild e a} (n helpsetting_deal_eftbuild e)
+    @(n eftbuild e) (n helpsetting_deal_eftbuild e)
 
-## the leftover of dealing by `e heir` is at most `e`.
+## the leftover of dealing by `e next` is at most `e`.
 show let %_leftover
-  : [n: ℕ, e: ℕ, q: ℕ, r: ℕ, dealt: (n % (e heir)) = ((q ⸴ r) some),
+  : [n: ℕ, e: ℕ, q: ℕ, r: ℕ, dealt: (n % (e next)) = ((q ⸴ r) some),
     (r ≤ e) = yea]
   ≔ (n helpsetting_%_pair e q r dealt) throughbear @(ℕ ∧ ℕ) @(n deal e) @(q ⸴ r)
-    @{a: ℕ ∧ ℕ ^ e hem a} (n helpsetting_deal_hem e)
+    @(e hem) (n helpsetting_deal_hem e)
 
 ## taking away at most `e` and eking it back giveth `e`.
 show let ∸_+: [a: ℕ, b: ℕ, below: (b ≤ a) = yea, ((a ∸ b) + b) = a]
   ≔ match a, b {
     _,       0       ^ eftbend,
-    0,       _ heir  ^ match below {},
-    a′ heir, b′ heir ^ heir leibnitz (a′ ∸_+ b′ below)
+    0,       _ next  ^ match below {},
+    a′ next, b′ next ^ next leibnitz (a′ ∸_+ b′ below)
   }
 
 ## taking away never groweth a tale.
 show let ∸_≤: [a: ℕ, b: ℕ, ((a ∸ b) ≤ a) = yea] ≔ match a, b {
   _,       0       ^ a helpsetting_≤_eftbend,
-  0,       _ heir  ^ eftbend,
-  a′ heir, b′ heir ^
-    (a′ ∸ b′) ≤_yea_throughgo a′ (a′ heir) (a′ ∸_≤ b′) (a′ helpsetting_≤_heir)
+  0,       _ next  ^ eftbend,
+  a′ next, b′ next ^
+    (a′ ∸ b′) ≤_yea_throughgo a′ (a′ next) (a′ ∸_≤ b′) (a′ helpsetting_≤_next)
 }
 
 ## nothing is left when taking from naught.
 show let naught_∸: [a: ℕ, (0 ∸ a) = 0] ≔ match a {
   0      ^ eftbend,
-  _ heir ^ eftbend
+  _ next ^ eftbend
 }
 
 ## a tale taken from itself leaveth naught.
 show let ∸_strike: [a: ℕ, (a ∸ a) = 0] ≔ match a {
   0       ^ eftbend,
-  a′ heir ^ a′ ∸_strike
+  a′ next ^ a′ ∸_strike
 }
 
 ## taking away twice is taking away the sum.
 show let ∸_∸: [a: ℕ, b: ℕ, c: ℕ, ((a ∸ b) ∸ c) = (a ∸ (c + b))] ≔ match a, b {
   _,       0       ^ eftbend,
-  0,       _ heir  ^ c naught_∸,
-  a′ heir, b′ heir ^ a′ ∸_∸ b′ c
+  0,       _ next  ^ c naught_∸,
+  a′ next, b′ next ^ a′ ∸_∸ b′ c
 }

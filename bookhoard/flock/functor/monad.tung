@@ -15,7 +15,7 @@ show flock monad: [φ: [*, *], @: φ onwendsome, *] {
   let bind_bind
     : [@α: *, @β: *, @γ: *, m: α φ, f: [α, β φ], g: [β, γ φ],
       ((m warp f $ flat) warp g $ flat) =
-        (m warp {a: α ^ flat @γ ((a f) warp g)} $ flat)]
+        (m warp {a ^ flat @γ ((a f) warp g)} $ flat)]
 }
 
 ## the reader flatteneth by reading the same input twice.

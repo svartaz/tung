@@ -5,9 +5,9 @@ pre-commit:
       run: ormolu --mode inplace {staged_files}
       stage_fixed: true
 
-    - name: neaten tung
+    - name: tidy tung
       glob: "**/*.tung"
-      run: cabal run --project-dir=tongue exe:tung -- --neaten {staged_files}
+      run: cabal run --project-dir=tongue exe:tung -- --tidy {staged_files}
       stage_fixed: true
 
     - name: format markdown

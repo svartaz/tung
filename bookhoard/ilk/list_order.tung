@@ -37,7 +37,7 @@ let helpsetting_step_eftbend
     nay ^ match held {}
   }
 
-let helpsetting_step_withevenmete
+let helpsetting_step_witherevenmete
   : [a: 𝟚, b: 𝟚, s: 𝟚, l: 𝟚, m: 𝟚, t: 𝟚, held: >{≤, a, b, s} = yea,
     tails: >{≤, l, m, t} = yea, >{≤, a step b l, b step a m, s if t nay} = yea]
   ≔ match a, b, s {
@@ -111,7 +111,7 @@ let helpsetting_≤_eftbend
         (k helpsetting_≤_eftbend)
   }
 
-let helpsetting_≤_withevenmete
+let helpsetting_≤_witherevenmete
   : [@α: *, @: α order_whole, a…: α list, b…: α list,
     >{≤, a… at_most b…, b… at_most a…, a… ≍ b…} = yea]
   ≔ match a…, b… {
@@ -119,9 +119,9 @@ let helpsetting_≤_withevenmete
     empty, _ ‥ _ ^ eftbend,
     _ ‥ _, empty ^ eftbend,
     a ‥ k, b ‥ o ^
-      (a ≤ b) helpsetting_step_withevenmete (b ≤ a) (a ≍ b) (k at_most o)
-        (o at_most k) (k ≍ o) (a ≤_withevenmete b)
-        (k helpsetting_≤_withevenmete o)
+      (a ≤ b) helpsetting_step_witherevenmete (b ≤ a) (a ≍ b) (k at_most o)
+        (o at_most k) (k ≍ o) (a ≤_witherevenmete b)
+        (k helpsetting_≤_witherevenmete o)
   }
 
 let helpsetting_≤_throughgo
@@ -167,20 +167,20 @@ let helpsetting_≤_=
             below above)
           ((b ≤ a) helpsetting_step_tail (a ≤ b) (o at_most k) (k at_most o)
             above below)
-      yield ({c: α ^ c ‥ k} leibnitz head) throughgo ((b ‥) leibnitz leftover)
+      yield ({c ^ c ‥ k} leibnitz head) throughgo ((b ‥) leibnitz leftover)
     )
   }
 
 bizen: [@α: *, @: α order_whole, (α list) order_half] {
   let ≤_eftbend ≔ helpsetting_≤_eftbend
 
-  let ≤_withevenmete ≔ helpsetting_≤_withevenmete
+  let ≤_witherevenmete ≔ helpsetting_≤_witherevenmete
 
   let ≤_throughgo ≔ helpsetting_≤_throughgo
+
+  let ≤_= ≔ helpsetting_≤_=
 }
 
 bizen: [@α: *, @: α order_whole, (α list) order_whole] {
   let ≤_whole ≔ helpsetting_≤_whole
-
-  let ≤_= ≔ helpsetting_≤_=
 }

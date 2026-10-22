@@ -118,11 +118,11 @@ accepted =
     ("local alias constraineth its captured parameter", "bring often.tung let eke_one: [x:] ≔ (let y ≔ x let tale:ℤ ≔ y yield tale + +1) let outcome:ℤ ≔ +2 eke_one"),
     ("inlocal function remaineth polymorphic", "let keep: [x: ℤ] ≔ (let sameness:[@α:*, y:α, α] ≔ y let tale:ℤ ≔ +1 sameness let word:string ≔ 'x' sameness yield x)"),
     ("constructor variables remain linked through composition", "ilk _box: [a:*, *] { box: [a, a _box] } let lift:[@a:*, @f:[*, *], x: a f, a f] ≔ x let twice: [x: ℤ _box, ℤ _box] ≔ (x lift) lift let good:ℤ _box ≔ (+1 box) twice"),
-    ("annotated global function may call itself", "bring often.tung let factorial:[ℕ, ℕ] ≔ { 0 ^ 1, n heir ^ (n heir) · (n factorial) } let answer:ℕ ≔ 5 factorial"),
+    ("annotated global function may call itself", "bring often.tung let factorial:[ℕ, ℕ] ≔ { 0 ^ 1, n next ^ (n next) · (n factorial) } let answer:ℕ ≔ 5 factorial"),
     ("annotated local initializer seeth its preceding binding", "let answer:string ≔ (let worth ≔ +1 let worth:string ≔ match worth { +0 ^ 'naught', _ ^ 'other' } yield worth)"),
     ("arbitrary term type ascription", "bring often.tung let answer ≔ (+1 + +2: ℤ)"),
     ("polymorphic term type ascription is reusable", "let sameness ≔ ({ x ^ x }: [@a:*, a, a]) let tale:ℤ ≔ +1 sameness let word:string ≔ 'x' sameness"),
-    ("ascribed anonymous function remaineth recursive", "bring often.tung let factorial ≔ ({ 0 ^ 1, n heir ^ (n heir) · (n factorial) }: [ℕ, ℕ]) let answer:ℕ ≔ 5 factorial"),
+    ("ascribed anonymous function remaineth recursive", "bring often.tung let factorial ≔ ({ 0 ^ 1, n next ^ (n next) · (n factorial) }: [ℕ, ℕ]) let answer:ℕ ≔ 5 factorial"),
     ("type ascription preserveth a constraint", equalPrelude ++ "let alike:[@a:*, @:a hath_≍, x: a, y: a, 𝟚] ≔ (x ≍ y: 𝟚)"),
     ("declared type parameters remain inferred at calls", "let constant:[@a:*, @b:*, x:a, _:b, a] ≔ x let tale:ℤ ≔ +1 constant 'x' let word:string ≔ 'x' constant +1"),
     ("explicit type arguments select declaration order around worth arguments", "ilk list: [a:*, *] { empty: a list } let f:[@a:*, @b:*, x:a, _:b, a] ≔ x let explicit:string ≔ 'a' f @string @(string list) empty"),
@@ -213,7 +213,7 @@ rejected =
     ("function cases share arity", "let bad ≔ { x ^ x, x, y ^ x }"),
     ("inhabited empty function", "let bad:[ℤ, ℤ] ≔ {}"),
     ("unannotated empty function", "let bad ≔ {}"),
-    ("a natural match needeth a heir row", "let bad:[n: ℕ, ℕ] ≔ match n { 0 ^ 0, 1 ^ 1 }"),
+    ("a natural match needeth a successor row", "let bad:[n: ℕ, ℕ] ≔ match n { 0 ^ 0, 1 ^ 1 }"),
     ("overlapping wildcards can miss a product", boolData ++ "let bad:ℤ ≔ match yea, nay { yea, _ ^ +1, _, yea ^ +2 }"),
     ("nested match misses constructor", boolData ++ optionData ++ "let bad:ℤ ≔ match yea some { yea some ^ +1, none ^ +0 }"),
     ("constructor pattern arity", optionData ++ "let bad ≔ match +1 some { some ^ +1, none ^ +0 }"),
@@ -359,7 +359,7 @@ orderCases imports =
     typeErrWith "half order doth not supply compare" (partialPrefix ++ "let bad ≔ lesser compare greater") imports,
     typeOkWith "whole order inherits half operations" (totalPrefix ++ "let before ≔ lesser < greater let compared ≔ lesser compare greater let hemmed ≔ lesser clamp greater greater") imports,
     typeErrWith "whole order bizen requireth its half parent" (rankPrefix ++ "bizen:rank order_whole {}") imports,
-    typeOkWith "a bizen member seeth its parent compute in an impossible case" (partialPrefix ++ "bizen:rank order_whole { let ≤_whole ≔ sorry let ≤_=: [a:, b:, below:, above:] ≔ match a, b, below, above { lesser, lesser, _, _ ^ eftbend, greater, greater, _, _ ^ eftbend, greater, lesser, k, _ ^ match k {}, lesser, greater, _, k ^ match k {} } }") imports,
+    typeOkWith "a bizen member seeth its parent compute in an impossible case" (rankPrefix ++ "bizen:rank order_half { let ≤ ≔ { lesser, _ ^ yea, greater, greater ^ yea, greater, lesser ^ nay } let ≤_eftbend ≔ sorry let ≤_witherevenmete ≔ sorry let ≤_throughgo ≔ sorry let ≤_=: [a:, b:, below:, above:] ≔ match a, b, below, above { lesser, lesser, _, _ ^ eftbend, greater, greater, _, _ ^ eftbend, greater, lesser, k, _ ^ match k {}, lesser, greater, _, k ^ match k {} } }") imports,
     typeOkWith "finite set supplieth half order" (setPrefix ++ "let beneath ≔ smaller ≤ larger") imports,
     typeErrWith "finite set doth not claim whole order" (setPrefix ++ "let bad ≔ smaller compare larger") imports
   ]
@@ -370,8 +370,8 @@ orderCases imports =
         ++ "bizen:rank hath_≍ { let ≍ ≔ { lesser, lesser ^ yea, greater, greater ^ yea, _, _ ^ nay } } "
     partialPrefix =
       rankPrefix
-        ++ "bizen:rank order_half { let ≤ ≔ { lesser, _ ^ yea, greater, greater ^ yea, greater, lesser ^ nay } let ≤_eftbend ≔ sorry let ≤_withevenmete ≔ sorry let ≤_throughgo ≔ sorry } "
-    totalPrefix = partialPrefix ++ "bizen:rank order_whole { let ≤_whole ≔ sorry let ≤_= ≔ sorry } "
+        ++ "bizen:rank order_half { let ≤ ≔ { lesser, _ ^ yea, greater, greater ^ yea, greater, lesser ^ nay } let ≤_eftbend ≔ sorry let ≤_witherevenmete ≔ sorry let ≤_throughgo ≔ sorry let ≤_= ≔ sorry } "
+    totalPrefix = partialPrefix ++ "bizen:rank order_whole { let ≤_whole ≔ sorry } "
     setPrefix =
       "bring often.tung bring ilk/set.tung "
         ++ "let smaller:ℤ set ≔ empty put +1 "

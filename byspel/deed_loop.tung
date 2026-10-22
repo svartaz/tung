@@ -4,16 +4,16 @@ bring ilk/maybe.tung
 bring ilk/one.tung
 
 ## sequencing discardeth the first result.
-let then: [@α: *, @β: *, first: α deed, next: β deed, β deed]
-  ≔ first deed_bind {_ ^ next}
+let then: [@α: *, @β: *, first: α deed, after: β deed, β deed]
+  ≔ first deed_bind {_ ^ after}
 
 ilk nat: * {
   naught: nat,
-  heir: [nat, nat]
+  next: [nat, nat]
 }
 
 ## bounded repetition is ordinary structural induction producing a deed.
-let times: [doing: 𝟙 deed, rime: nat, 𝟙 deed] ≔ {_: nat ^ 𝟙 deed} unbuild nat
+let times: [doing: 𝟙 deed, rime: nat, 𝟙 deed] ≔ {_ ^ 𝟙 deed} unbuild nat
   (only deed_sheer) {_, leftover ^ doing then leftover} rime
 
 ## an unbounded loop is a fast declaration, which nameth itself. it endeth
@@ -24,7 +24,7 @@ fast echo: 𝟙 deed ≔ read deed_bind {
 }
 
 let main: 𝟙 deed ≔ >{then,
-  ('tung ' write) times ((naught heir) heir),
+  ('tung ' write) times ((naught next) next),
   '\nwhat is thy name? ' write,
   read deed_bind {
     none      ^ 'nobody\n' write,

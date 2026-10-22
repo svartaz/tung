@@ -21,13 +21,13 @@ set `PREFIX` or `BIN_DIR` to choose another place.
 
 ## run
 
-| command                                  | purpose                                        |
-| ---------------------------------------- | ---------------------------------------------- |
-| `tung file.tung [arguments...]`          | runneth `main` with the arguments              |
-| `tung --check file.tung`                 | checketh a module, or a program and its `main` |
-| `tung --check --no-sorry file.tung`      | also faileth when a proof assumeth `sorry`     |
-| `tung --name name file.tung`             | printeth a name's ilk and its assumptions      |
-| `tung --neaten file.tung [more.tung...]` | neateneth files in place                       |
+| command                                | purpose                                        |
+| -------------------------------------- | ---------------------------------------------- |
+| `tung file.tung [arguments...]`        | runneth `main` with the arguments              |
+| `tung --check file.tung`               | checketh a module, or a program and its `main` |
+| `tung --check --no-sorry file.tung`    | also faileth when a proof assumeth `sorry`     |
+| `tung --name name file.tung`           | printeth a name's ilk and its assumptions      |
+| `tung --tidy file.tung [more.tung...]` | tidieth files in place                         |
 
 `--no-sorry` before any command turneth reachable `sorry` into failure. to
 check a proof, add `--no-sorry` and, to refuse orsettings, `--no-orset`. the

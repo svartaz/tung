@@ -187,9 +187,9 @@ selectionTests =
     -- a member that nameth itself useth the flock, as any visible name doth; as
     -- in lean, a recursive member is an ordinary recursive let.
     rejectContaining "a member naming itself refereth to the flock" "no bizen of flock 'rime'" $
-      compiled (countClass ++ "bizen:ℕ rime { let length:[ℕ, ℕ] ≔ { 0 ^ 0, n heir ^ (n length) heir } }"),
+      compiled (countClass ++ "bizen:ℕ rime { let length:[ℕ, ℕ] ≔ { 0 ^ 0, n next ^ (n length) next } }"),
     expectEq "a recursive member is a recursive let" (Right True) do
-      program <- compiled (countClass ++ "let kindful_length:[ℕ, ℕ] ≔ { 0 ^ 0, n heir ^ (n kindful_length) heir } bizen:ℕ rime { let length ≔ kindful_length }")
+      program <- compiled (countClass ++ "let kindful_length:[ℕ, ℕ] ≔ { 0 ^ 0, n next ^ (n kindful_length) next } bizen:ℕ rime { let length ≔ kindful_length }")
       sameNormalIn program "2 length" "2",
     -- `* out` letth search find a parameter, as lean's `outParam` doth; an
     -- unknown input parameter leaveth the goal waiting.

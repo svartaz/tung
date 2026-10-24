@@ -11,10 +11,10 @@ show let sameness_twice_removed
   ≔ a f b
 
 # another name for the identity bird.
-show let idiot: [@α: *, [α, α]] ≔ sameness
+show let idiot: [@α: *, α, α] ≔ sameness
 
 # A f x = f x
-show let applicator: [@α: *, @β: *, [[α, β], α, β]] ≔ sameness_once_removed
+show let applicator: [@α: *, @β: *, [α, β], α, β] ≔ sameness_once_removed
 
 # K x y = x
 show let kestrel: [@α: *, @β: *, a: α, b: β, α] ≔ a
@@ -23,7 +23,7 @@ show let kestrel: [@α: *, @β: *, a: α, b: β, α] ≔ a
 show let kite: [@α: *, @β: *, a: α, b: β, β] ≔ b
 
 # the earlier name for the kite remaineth available.
-show let klubertanz: [@α: *, @β: *, [α, β, β]] ≔ kite
+show let klubertanz: [@α: *, @β: *, α, β, β] ≔ kite
 
 # B f g x = f (g x)
 show let bluebird: [@α: *, @β: *, @γ: *, f: [β, γ], g: [α, β], a: α, γ]
@@ -70,7 +70,7 @@ show let dove
   ≔ a f (b g)
 
 # B' f x g y = f x (g y)
-show let bluebird′: [@α: *, @β: *, @γ: *, @δ: *, [[α, γ, δ], α, [β, γ], β, δ]]
+show let bluebird′: [@α: *, @β: *, @γ: *, @δ: *, [α, γ, δ], α, [β, γ], β, δ]
   ≔ dove
 
 # D1 f x y g z = f x y (g z)
@@ -187,7 +187,7 @@ show let warbler: [@α: *, @β: *, f: [α, α, β], a: α, β] ≔ a f a
 show let converse_warbler: [@α: *, @β: *, a: α, b: [α, α, β], β] ≔ a b a
 
 # another name for the converse warbler.
-show let worbler: [@α: *, @β: *, [α, [α, α, β], β]] ≔ converse_warbler
+show let worbler: [@α: *, @β: *, α, [α, α, β], β] ≔ converse_warbler
 
 # W* f x y = f x y y
 show let warbler_once_removed
@@ -206,7 +206,7 @@ show let phoenix
 
 # S' f g h x = f (g x) (h x)
 show let starling′
-  : [@α: *, @β: *, @γ: *, @δ: *, [[β, γ, δ], [α, β], [α, γ], α, δ]]
+  : [@α: *, @β: *, @γ: *, @δ: *, [β, γ, δ], [α, β], [α, γ], α, δ]
   ≔ phoenix
 
 # Ψ f g x y = f (g x) (g y)

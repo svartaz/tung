@@ -42,6 +42,7 @@ where
 
 import Data.Char (ord)
 import Data.List (find)
+import Data.Map.Strict qualified as Map
 import GHC.TypeLits (Natural)
 import Text.Read (readMaybe)
 import Tung.Identity (ModuleId (..), SymbolId (..))
@@ -273,8 +274,13 @@ data HostValue
 -- the total pure operations of the catalogue. a partial result is an option:
 -- division by zero, a negative natural, a non-scalar code point, an infinite
 -- floor, or unreadable text yieldeth none. integer division is euclidean.
+-- normalisation asketh for each host head it meeteth, so the catalogue is
+-- looked up by key rather than searched.
 pureOperation :: String -> Maybe ([HostValue] -> Maybe HostValue)
-pureOperation key = snd <$> find ((== key) . hostName . fst) pureBindings
+pureOperation key = Map.lookup key pureOperations
+
+pureOperations :: Map.Map String ([HostValue] -> Maybe HostValue)
+pureOperations = Map.fromList [(hostName binding, operation) | (binding, operation) <- pureBindings]
 
 -- the bookhoard file whose model of a pure operation is trusted. bookhoard
 -- tests compare each such model with its native operation; a model written

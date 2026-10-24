@@ -141,7 +141,9 @@ searchGoal environment names mode E.InstanceGoal {..} = do
   hole <- E.force goalHole
   when (isJust (E.metaSpine hole)) do
     term <- searchInstance environment names mode [] goalContext goalType
-    value <- E.evaluate goalContext term
+    -- a found dictionary stayeth folded, so the hole nameth its bizen; forced,
+    -- it would be the bizen's whole record, laws and all, rechecked in full.
+    value <- E.evaluateGlued goalContext term
     E.unify goalContext goalHole value
 
 -- the flock's fallback bizens, by priority, for a goal with unknown inputs.
@@ -151,7 +153,7 @@ searchFallback environment names E.InstanceGoal {..} = do
   let fallbacks = maybe [] classFallbacks (Map.lookup family (nameClasses names))
   when (null fallbacks) (E.failure "no fallback bizen")
   term <- searchInstanceAmong (Just fallbacks) environment names AllInstances [] goalContext goalType
-  value <- E.evaluate goalContext term
+  value <- E.evaluateGlued goalContext term
   E.unify goalContext goalHole value
 
 partitionM :: (Monad m) => (a -> m Bool) -> [a] -> m ([a], [a])
@@ -316,7 +318,7 @@ searchInstanceAmong restriction environment names mode ancestors context goal = 
         determined names domain >>= \case
           True -> do
             sub <- searchInstance environment names mode path context domain
-            value <- E.evaluate context sub
+            value <- E.evaluateGlued context sub
             E.unify context holeValue value
           -- a requirement whose inputs are still unknown is fixed by the one
           -- local requirement that fitteth, as `module`'s parent `μ group_+`
@@ -325,7 +327,7 @@ searchInstanceAmong restriction environment names mode ancestors context goal = 
           -- a path it can never check, so that candidate faileth.
           False ->
             uniqueLocalInstance names context domain >>= \case
-              Just sub -> E.evaluate context sub >>= E.unify context holeValue
+              Just sub -> E.evaluateGlued context sub >>= E.unify context holeValue
               Nothing
                 | null ancestors -> E.addInstanceGoal (E.InstanceGoal holeValue context domain)
                 | otherwise -> E.failure "a nested requirement's inputs are unknown"

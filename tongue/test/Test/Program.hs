@@ -12,7 +12,7 @@ import Test.Harness qualified as Harness
 
 group :: IO Group
 group = do
-  library <- loadLibrary ["often.tung", "deed/misfaresome.tung", "deed/hade.tung"]
+  library <- loadLibrary ["often.tung", "deed/misfaresome.tung", "ilk/hade.tung"]
   Harness.group
     "program"
     ( map integerCase integerTerms
@@ -217,12 +217,12 @@ layeredCase library (name, performed, expected) =
     prelude =
       """
       bring deed/misfaresome.tung
-      bring deed/hade.tung
+      bring ilk/hade.tung
       bring flock/functor/monad.tung
       bring often.tung
       bring ilk/and.tung
       bring ilk/or.tung
-      let tick: ℕ hade 𝟙 ≔ {n ^ n + 1} tweak
+      let tick: ℕ hade deed 𝟙 ≔ {n ^ n + 1} tweak
       let eftbare: [string ∨ 𝟙, 𝟙 deed] ≔ {e incast₀ ^ e write, _ incast₁ ^ '!' write}
 
       """

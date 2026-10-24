@@ -49,11 +49,28 @@ spelling of its flock name.
   combinators such as `bind`, `then`, `throughwend`, and `each` sequence
   actions. fallible operations return `maybe` or `string ∨ α`; nothing
   throweth.
-- `deed/misfaresome.tung` and `deed/hade.tung` layer failure and state over
-  `deed` as one-constructor wrappers with their own functor, applicative, and
-  monad bizens. they are specialised to `deed`: a transformer over any monad
-  would need laws for an arbitrary inner monad, while these prove theirs from
-  the [deed assumptions](#assumptions).
+- `ilk/hade.tung` layereth state over any monad `φ` as a one-constructor
+  wrapper with its own functor, applicative, and monad bizens, whose laws
+  follow from `φ`'s. `ilk/bare.tung` is the monad that doth nothing, so
+  `σ hade bare` is pure state and `σ hade deed` may perform deeds. a bizen
+  requiring `φ monad` dependeth on every monad bizen of its own module, so the
+  operations and laws live in `ilk/hade/building.tung`, the functor and
+  applicative bizens in `ilk/hade/onwendsome_bizen.tung`, and the monad bizen
+  in `ilk/hade.tung`, which re-showeth the public names.
+- `ilk/metelist.tung`: `α metelist n` is a list of exactly `n` worths, so
+  `head` and `tail` need no `maybe`, `at` taketh an `n kindful_below` from
+  `ilk/kindful_below.tung` (the tales below `n`), and `zip` paireth two lists of one
+  manyhood. the manyhood is an index after the worth ilk, so `metelist n` is
+  no `[*, *]` application and hath no functor bizen; `warp` is a plain fall.
+- `ilk/kindful_dealing.tung`: `a ∣ b` when some `k` hath `a · k = b`, and
+  `greatest_dealer` by euclid's dealing, with `greatest_dealer_∣` and
+  `∣_greatest_dealer` as its defining laws. it counteth down `b` steps rather
+  than selfcalling on a wellgrounded relation, whose unfolding would carry a
+  groundedness soothing other than the recursive call's own. conversion seeth
+  that dealing by `b next` yieldeth an outcome but matching cannot, so its
+  lemmas take that outcome and its equation as inputs.
+- `deed/misfaresome.tung` layereth failure over `deed` alone and proveth its
+  laws from the [deed assumptions](#assumptions).
 - `yoneda.tung` stateth the yoneda lemma for a functor on types: `lift` and
   `unlift` convert between `α φ` and `φ yoneda α`, the transformations from
   functions out of `α`. `unlift_lift` followeth from `warp_sameness`;

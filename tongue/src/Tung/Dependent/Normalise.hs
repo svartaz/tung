@@ -121,8 +121,15 @@ evaluateGlued normaliser environment = \case
   Let _ value body -> do
     valueValue <- evaluateGlued normaliser environment value
     evaluateGlued normaliser (valueValue : environment) body
-  Meta identity arguments ->
-    traverse (evaluateGlued normaliser environment) arguments >>= forceWith normaliser . VNeutral . NMeta identity
+  -- a solved hole evaluateth to its solution folded, as a written term would;
+  -- forced, a dictionary would become its bizen's whole record.
+  Meta identity arguments -> do
+    argumentValues <- traverse (evaluateGlued normaliser environment) arguments
+    resolveMeta normaliser identity >>= \case
+      Nothing -> Right (VNeutral (NMeta identity argumentValues))
+      Just solution -> do
+        function <- evaluateGlued normaliser [] solution
+        foldM (applyGlued normaliser Explicit) function argumentValues
   Literal name value -> Right (VLiteral name value)
   RecordType fields -> VRecordType <$> traverse (traverse (evaluateGlued normaliser environment)) fields
   Record fields -> VRecord <$> traverse (traverse (evaluateGlued normaliser environment)) fields

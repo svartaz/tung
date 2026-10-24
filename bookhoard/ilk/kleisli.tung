@@ -14,8 +14,7 @@ show ilk kleisli: [φ: [*, *], α: *, β: *, *] {
 }
 
 ## the fall an arrow wrappeth.
-show let unwrap: [@φ: [*, *], @α: *, @β: *, f wrap: α (φ kleisli) β, [α, β φ]]
-  ≔ f
+show let unwrap: [@φ: [*, *], @α: *, @β: *, f wrap: α (φ kleisli) β, α, β φ] ≔ f
 
 ## arrows compose by binding the first outcome to the second.
 bizen: [@φ: [*, *], @: φ monad, (φ kleisli) semigroupoid] {

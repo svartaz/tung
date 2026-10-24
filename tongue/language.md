@@ -541,9 +541,11 @@ this sequencing:
 
 - `deed/misfaresome.tung`: `ε misfaresome α` wrappeth `(ε ∨ α) deed`;
   `misfare` faileth, `handle` handleth a fault, and `bind` stoppeth at it.
-- `deed/hade.tung`: `σ hade α` wrappeth `[σ, (α ∧ σ) deed]`; `get`, `put`,
-  and `tweak` read and change the state.
-- both provide `lift` and `unwrap`, which giveth the deed beneath; qualify
+- `ilk/hade.tung`: `σ hade φ α` wrappeth `[σ, (α ∧ σ) φ]` for any monad `φ`;
+  `get`, `put`, and `tweak` read and change the state. `σ hade deed α` may
+  perform deeds, and `σ hade bare α`, with `bare` from `ilk/bare.tung`, is
+  pure.
+- both provide `lift` and `unwrap`, which giveth the step beneath; qualify
   them when both are imported.
 
 tasks are opaque: `fork`, `wait`, `wait_for`, and `strike` control them.

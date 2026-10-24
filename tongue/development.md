@@ -307,8 +307,8 @@ and name, with no shape matching or built-in bizen.
 
 `Tung.Format` is the canonical two-space tidier for the cli and editor. it
 parseth first and refuseth unparseable source, reporting the error and
-changing nothing. it then shorteneth each redundant η-expansion and droppeth
-redundant parentheses; layout
+changing nothing. it then shorteneth each redundant η-expansion, droppeth
+redundant parentheses, and flatteneth nested products; layout
 followeth only the tokens, their brackets, and the comments between them, so
 sources with one concrete syntax tree share one tidy form: whitespace never
 changeth it and tidying is idempotent. a final check refuseth output whose
@@ -326,8 +326,15 @@ tokens differ from the shortened source's.
   one atom (a name, literal, `*`, `sorry`, or bracketed group), unless `@(…)`
   writeth an implicit argument or a `:` or `.` followeth; and around a run of
   atoms that is a whole expression, as a let's body, a row's, or an item. a
-  pair holding `:`, `$`, a keyword, a projection, or a comment is kept. the two
-  shortenings repeat until neither applieth.
+  pair holding `:`, `$`, a keyword, a projection, or a comment is kept.
+- a product whose last item is a product of bare slots is that product's
+  rest: `[a: α, [β, γ]]` becometh `[a: α, β, γ]`, and `[[ℕ, *]]` becometh
+  `[ℕ, *]`. an inner slot that is named or implicit keepeth the brackets: in a
+  let's annotation it would bind its name in the body, and in an ilk's header
+  a named slot may be a parameter where a nested one is an index. a product
+  in any earlier position, as `[[ℤ, ℤ], ℤ]`, is a function input and is kept,
+  as is one holding a comment. the three shortenings repeat until none
+  applieth.
 - an annotated or implicit binder keepeth its expansion, which may guide
   elaboration, as when `f`'s implicit inputs follow an explicit one; annotate
   a binder to keep an expansion.

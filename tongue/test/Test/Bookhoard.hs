@@ -330,6 +330,8 @@ lawCases library =
           bring is.tung
           let dealt: ((+7 % -2) is_some) = yea ≔ +7 %_some -2 {k ^ match k {}}
           """,
+    rejectContaining "an empty metelist hath no head" "cannot unify" $
+      compileWith library "metelist_test.tung" "bring ilk/metelist.tung m\nlet bad: ℤ ≔ m~empty m~head",
     rejectContaining "a lax sameness maketh no half order" "cannot unify" $
       compileWith
         library

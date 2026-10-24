@@ -1,0 +1,46 @@
+bring flock/order/hath_at_most.tung
+bring ilk/kindful.tung
+bring ilk/two.tung
+bring is.tung
+
+## the tales below `n`: `least` is `0`, and `after` steppeth up while the
+## bound steppeth with it, so `0 kindful_below` hath no worth.
+show ilk kindful_below: [ℕ, *] {
+  least: [@n: ℕ, (n next) kindful_below],
+  after: [@n: ℕ, n kindful_below, (n next) kindful_below]
+}
+
+## the tale a worth below a bound nameth.
+show let to_kindful: [@n: ℕ, n kindful_below, ℕ] ≔ {
+  least   ^ 0,
+  i after ^ (i to_kindful) next
+}
+
+## a worth below a bound lieth under it.
+show let to_kindful_under: [@n: ℕ, i: n kindful_below, (i to_kindful) under n]
+  ≔ match i {
+    least   ^ eftbend,
+    j after ^ j to_kindful_under
+  }
+
+## the tale `k`, hemmed below a bound it lieth under.
+show let hem: [n: ℕ, k: ℕ, below: k under n, n kindful_below] ≔ match n, k {
+  0,      _      ^ match below {},
+  _ next, 0      ^ least,
+  m next, j next ^ (m hem j below) after
+}
+
+## hemming a tale and naming it again giveth the tale back.
+show let hem_to_kindful
+  : [n: ℕ, k: ℕ, below: k under n, ((n hem k below) to_kindful) = k]
+  ≔ match n, k {
+    0,      _      ^ match below {},
+    _ next, 0      ^ eftbend,
+    m next, j next ^ next leibnitz (m hem_to_kindful j below)
+  }
+
+## the greatest tale below `n next`.
+show let last: [n: ℕ, (n next) kindful_below] ≔ match n {
+  0      ^ least,
+  m next ^ (m last) after
+}

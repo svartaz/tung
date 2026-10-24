@@ -7,12 +7,12 @@ bring is.tung
 bring mockingbird.tung
 
 ## `a` lieth in some deal of the family `u`.
-show ilk among: [@ι: *, @α: *, u: [ι, [α, *]], a: α, *] {
+show ilk among: [@ι: *, @α: *, u: [ι, α, *], a: α, *] {
   within: [i: ι, held: a (i u), u among a]
 }
 
 ## the worths in both `u` and `v`.
-show let meet: [@α: *, u: [α, *], v: [α, *], [α, *]] ≔ {a ^ (a u) ∧ (a v)}
+show let meet: [@α: *, u: [α, *], v: [α, *], α, *] ≔ {a ^ (a u) ∧ (a v)}
 
 ## a topology on `α`: which deals of `α` are open. the whole and the empty
 ## deal are open, two open deals meet in an open deal, and any family of open
@@ -28,7 +28,7 @@ show flock topology: [α: *, *] {
   let meet_open: [u: [α, *], v: [α, *], u open, v open, (u meet v) open]
 
   let yoke_open
-    : [@ι: *, u: [ι, [α, *]], each_open: [i: ι, (i u) open], (u among) open]
+    : [@ι: *, u: [ι, α, *], each_open: [i: ι, (i u) open], (u among) open]
 }
 
 ## every worth of `u` is a worth of `v`.
@@ -60,7 +60,7 @@ show let underset_meet
   ≔ {a, held ^ (a below_u held) ⸴ (a below_v held)}
 
 ## the worths that `f` sendeth into `v`.
-show let foreshadow: [@α: *, @β: *, f: [α, β], v: [β, *], [α, *]] ≔ {
+show let foreshadow: [@α: *, @β: *, f: [α, β], v: [β, *], α, *] ≔ {
   a: α ^ (a f) v
 }
 

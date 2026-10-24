@@ -1,4 +1,3 @@
-bring deed/hade.tung
 # a tour of tung. each section addeth one idea. run it with
 # `tung byspel/walkthrough.tung`; check it with `tung --check
 # byspel/walkthrough.tung`.
@@ -9,6 +8,7 @@ bring deed/hade.tung
 # path chooseth another qualifier, as `hashmap` here.
 bring deed/misfaresome.tung
 bring ilk/and.tung
+bring ilk/hade.tung
 bring ilk/list.tung
 bring ilk/maybe.tung
 bring ilk/or.tung
@@ -250,8 +250,9 @@ let elds_report: 𝟙 deed
       n incast₁   ^ n to_string $ write_line
     }
 
-# `σ hade α` is a deed that readeth and changeth a state `σ`.
-let rimed: ℕ hade ℕ ≔ >{then,
+# `σ hade φ α` readeth and changeth a state `σ` as it runneth in `φ`; over
+# `deed` it may also perform deeds.
+let rimed: ℕ hade deed ℕ ≔ >{then,
   {n ^ n + 1} hade~tweak,
   {n ^ n + 1} hade~tweak,
   get

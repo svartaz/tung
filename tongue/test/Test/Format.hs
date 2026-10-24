@@ -69,6 +69,26 @@ cases =
 
       """
     ),
+    ( "a product's last item of bare slots is flattened into it; named, implicit, and earlier inner products keep their brackets",
+      "ilk count: [[ℕ, *]] {}\nilk row: [α: *, [ℕ, *]] {}\nlet f: [x: ℤ, [[ℤ, ℤ]]] ≔ sorry\nlet g: [x: ℤ, [y: ℤ, ℤ]] ≔ sorry\nlet h: [[ℤ, ℤ], ℤ] ≔ sorry\nlet i: [@a: *, [@b: *, b]] ≔ sorry\nlet j: [x: ℤ, [/* kept */ ℤ, ℤ]] ≔ sorry\n",
+      """
+      ilk count: [ℕ, *] {}
+
+      ilk row: [α: *, ℕ, *] {}
+
+      let f: [x: ℤ, ℤ, ℤ] ≔ sorry
+
+      let g: [x: ℤ, [y: ℤ, ℤ]] ≔ sorry
+
+      let h: [[ℤ, ℤ], ℤ] ≔ sorry
+
+      let i: [@a: *, [@b: *, b]] ≔ sorry
+
+      let j: [x: ℤ, [ /* kept */
+          ℤ, ℤ]] ≔ sorry
+
+      """
+    ),
     ( "a redundant η-expansion is shortened, to a parenthesised partial application when arguments remain; rows, annotations, and comments keep theirs",
       "let a ≔ g {x, y ^ x f y} {x ^ x {y ^ y h}}\nlet t ≔ g {b ^ m tweak b} ({b ^ m tweak b}) {b ^ b tweak m}\nlet b ≔ match q { x ^ x f, y ^ {x ^ x f} }\nlet c ≔ {x: ℕ ^ x f} {@x ^ x f} {x ^ x x} {x, x ^ x f x}\nlet d ≔ {x ^ /* kept */ x f}\n",
       """

@@ -687,6 +687,13 @@ syntax; [`flocks.tung`](../byspel/flocks.tung) showeth these rules.
   other may each register one; bring order never chooseth between them.
   failure reporteth the goal, local requirements, and a rejected candidate's
   reason when known.
+- a found dictionary, for a goal or a candidate's requirement, is evaluated
+  folded, so its hole is solved with the bizen's application, such as
+  `#instance σ φ d`, not with the bizen's record. glued evaluation likewise
+  yieldeth a solved hole's solution folded, so a later term that nameth the
+  hole keepeth it as written. forced, the record would carry every law's
+  proof, and the kernel would recheck them all with the solution: over
+  `deed`, a `hade` record ran to over a million nodes.
 - a candidate's requirements are solved recursively to depth 16, and a goal
   repeating an ancestor faileth. a requirement with unknown inputs is first
   fixed by the one unifying local requirement of its flock, as a parent

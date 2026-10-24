@@ -1,6 +1,7 @@
 -- | the canonical two-space tidier for the cli and editor. it parseth the
 -- source first and refuseth what doth not parse. it shorteneth each redundant
--- η-expansion, `{a ^ a f}` to `f`, and droppeth redundant parentheses. layout
+-- η-expansion, `{a ^ a f}` to `f`, droppeth redundant parentheses, and
+-- flatteneth a product's last item of bare slots into it. layout
 -- then followeth only the tokens, their brackets, and the comments between
 -- them: whitespace in the source never changeth the output, so each concrete
 -- syntax tree hath one tidy form, and tidying is idempotent.
@@ -35,10 +36,11 @@ formatSource written = do
     then Right output
     else Left "the tidier changed the tokens; this is a compiler fault"
 
--- shortening rewriteth tokens before layout: η-expansions and redundant
--- parentheses, until neither applieth, as dropping one may expose the other.
+-- shortening rewriteth tokens before layout: η-expansions, redundant
+-- parentheses, and nested products, until none applieth, as one may expose
+-- another.
 shorten :: String -> String
-shorten written = let once = shortenParens (shortenEta written) in if once == written then written else shorten once
+shorten written = let once = shortenBrackets (shortenParens (shortenEta written)) in if once == written then written else shorten once
 
 -- a lambda whose binders are its body's last arguments is η-expanded:
 -- `{a₁, …, aₙ ^ a₁ f a₂ … aₙ}` is `f`, and `{b ^ m tweak b}` is `m tweak`,
@@ -127,19 +129,6 @@ shortenParens source = maybe source (shortenParens . concatMap T.pieceText) (str
       [_] -> listToMaybe (concatMap lexemes after) `notElem` [Just TColon, Just TDot]
       _ : _ : _ -> wholeExpression before after
       [] -> False
-    -- the pieces before the bracket that closeth this depth, and the rest.
-    matching :: Int -> [T.Piece] -> ([T.Piece], [T.Piece])
-    matching depth pieces = case pieces of
-      [] -> ([], [])
-      piece : rest
-        | depth == 0, closes piece -> ([], pieces)
-        | otherwise ->
-            let (inner, outer) = matching (depth + fromEnum (opens piece) - fromEnum (closes piece)) rest
-             in (piece : inner, outer)
-    opens = any opener . lexemes
-    closes = any closer . lexemes
-    opener token = token `elem` [TLParen, TLBracket, TLBrace] || isBraceKeyword token
-    closer token = token `elem` [TRParen, TRBracket, TRBrace]
     -- the top-level items of a run, each an atom or a bracketed group.
     atoms tokens = case tokens of
       [] -> Just []
@@ -153,6 +142,50 @@ shortenParens source = maybe source (shortenParens . concatMap T.pieceText) (str
         | closer token -> if depth == 0 then Just rest else afterGroup (depth - 1) rest
         | opener token -> afterGroup (depth + 1) rest
         | otherwise -> afterGroup depth rest
+
+-- a product whose last item is a product of bare slots is that product's
+-- rest: `[a: α, [β, γ]]` is `[a: α, β, γ]`, and `[[ℕ, *]]` is `[ℕ, *]`. an
+-- inner slot that is named or implicit keepeth the brackets, as flattening
+-- would bind its name in a let's body or make an ilk's index a parameter. a
+-- comment inside keepeth them, and each becometh a space.
+shortenBrackets :: String -> String
+shortenBrackets source = maybe source (shortenBrackets . concatMap T.pieceText) (flatten [] (T.lexPieces source))
+  where
+    flatten before pieces = case pieces of
+      [] -> Nothing
+      opening@T.Piece {T.pieceKind = T.Lexeme TLBracket} : rest
+        | listToMaybe before `elem` [Just TLBracket, Just TComma],
+          (inside@(_ : _), closer : after) <- matching 0 rest,
+          all spaceOrLexeme inside,
+          bare (0 :: Int) (concatMap lexemes inside),
+          listToMaybe (concatMap lexemes after) == Just TRBracket ->
+            let space piece = piece {T.pieceText = " ", T.pieceKind = T.Space}
+             in Just (space opening : inside ++ space closer : after)
+      first : rest -> (first :) <$> flatten (lexemes first ++ before) rest
+    bare depth = \case
+      [] -> True
+      token : rest
+        | depth == 0, token `elem` [TColon, TAt] -> False
+        | opener token -> bare (depth + 1) rest
+        | closer token -> bare (depth - 1) rest
+        | otherwise -> bare depth rest
+
+-- the pieces before the bracket that closeth this depth, and the rest.
+matching :: Int -> [T.Piece] -> ([T.Piece], [T.Piece])
+matching depth pieces = case pieces of
+  [] -> ([], [])
+  piece : rest
+    | depth == 0, closes piece -> ([], pieces)
+    | otherwise ->
+        let (inner, outer) = matching (depth + fromEnum (opens piece) - fromEnum (closes piece)) rest
+         in (piece : inner, outer)
+  where
+    opens = any opener . lexemes
+    closes = any closer . lexemes
+
+opener, closer :: Token -> Bool
+opener token = token `elem` [TLParen, TLBracket, TLBrace] || isBraceKeyword token
+closer token = token `elem` [TRParen, TRBracket, TRBrace]
 
 -- a whole expression followeth one of these, or `yield`, and precedeth a
 -- closing bracket, a separator, the next declaration, or the end.

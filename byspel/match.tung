@@ -73,7 +73,7 @@ let pairs: [@α: *, l: α list, rime: nat, nat] ≔ match l {
   _              ^ rime
 }
 
-ilk vec: [α: *, [nat, *]] {
+ilk vec: [α: *, nat, *] {
   nil: α vec naught,
   ‥′: [n: nat, head: α, tail: α vec n, α vec (n next)]
 }

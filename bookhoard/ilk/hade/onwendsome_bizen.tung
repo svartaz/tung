@@ -1,0 +1,54 @@
+bring combinator.tung
+bring flock/algebra/half/category.tung
+bring flock/algebra/half/semigroupoid.tung
+bring flock/functor.tung
+bring flock/functor/monad.tung
+bring flock/functor/onwendsome.tung
+bring ilk/hade/building.tung
+bring is.tung
+
+bizen: [@σ: *, @φ: [*, *], @: φ monad, (σ hade φ) functor] {
+  let warp ≔ building~warp
+
+  let warp_sameness ≔ building~warp_sameness
+}
+
+bizen: [@σ: *, @φ: [*, *], @: φ monad, (σ hade φ) onwendsome] {
+  let sheer ≔ building~sheer
+
+  let onwend: [m:, f…:] ≔ (f… building~warp (m building~warp)) building~flat
+
+  let onwend_sameness_sheer: [m:] ≔ >{throughgo,
+    building~flat leibnitz (sameness sheer_warp (m building~warp)),
+    (m building~warp sameness) sheer_flat,
+    m building~warp_sameness
+  }
+
+  let sheer_onwend_sheer: [a:, f:] ≔ >{throughgo,
+    building~flat leibnitz (f sheer_warp ((a building~sheer) building~warp _)),
+    ((a building~sheer) building~warp f) sheer_flat,
+    a sheer_warp f
+  }
+
+  let onwend_onwend: [m:, f:, g:] ≔ >{throughgo,
+    building~flat leibnitz
+      (g sheer_warp
+        ((((f building~sheer) building~warp (m building~warp)) building~flat)
+          building~warp _)),
+    ((((f building~sheer) building~warp (m building~warp)) building~flat)
+      building~warp g) sheer_flat,
+    (_ building~warp g) leibnitz
+      ((building~flat leibnitz (f sheer_warp (m building~warp))) throughgo
+        ((m building~warp f) sheer_flat)),
+    m warp_warp f g,
+    ((building~flat leibnitz ((f ▷ g) sheer_warp (m building~warp))) throughgo
+      ((m building~warp (f ▷ g)) sheer_flat)) evenmete
+  }
+
+  let sheer_onwend: [a:, f…:] ≔ >{throughgo,
+    {k ^ (f… building~warp k) building~flat} leibnitz
+      ((a sheer_warp) fall_umfang),
+    building~flat leibnitz ((f… warp_warp (a ▶) building~sheer) evenmete),
+    (f… building~warp (a ▶)) building~warp_sheer_flat
+  }
+}

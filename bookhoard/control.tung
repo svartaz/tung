@@ -13,7 +13,7 @@ show let when: [𝟚, 𝟙 deed, 𝟙 deed] ≔ {
 show let when_not: [two: 𝟚, doing: 𝟙 deed, 𝟙 deed] ≔ (two ¬) when doing
 
 ## pick and run one delayed branch.
-show let branch: [@α: *, [𝟚, [𝟙, α], [𝟙, α], α]] ≔ {
+show let branch: [@α: *, 𝟚, [𝟙, α], [𝟙, α], α] ≔ {
   yea, f, _ ^ only f,
   nay, _, g ^ only g
 }

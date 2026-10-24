@@ -1,0 +1,85 @@
+bring flock/hath_manyhood.tung
+bring ilk/and.tung
+bring ilk/kindful.tung
+bring ilk/kindful_below.tung
+bring ilk/list.tung
+bring ilk/list_setting.tung
+bring is.tung
+bring mockingbird.tung
+
+## a list of exactly `n` worths. its manyhood is in its ilk, so `head` needeth
+## no `maybe` and `zip` taketh lists of one manyhood.
+show ilk metelist: [α: *, ℕ, *] {
+  empty: α metelist 0,
+  ‥: [@n: ℕ, α, α metelist n, α metelist (n next)]
+}
+
+## the first worth.
+show let head: [@α: *, @n: ℕ, a…: α metelist (n next), α] ≔ match a… {
+  a ‥ _ ^ a
+}
+
+## the worths after the first.
+show let tail: [@α: *, @n: ℕ, a…: α metelist (n next), α metelist n]
+  ≔ match a… { _ ‥ leftover ^ leftover }
+
+## the worth at a place below the manyhood.
+show let at: [@α: *, @n: ℕ, a…: α metelist n, i: n kindful_below, α]
+  ≔ match a…, i {
+    a ‥ _,        least   ^ a,
+    _ ‥ leftover, j after ^ leftover at j
+  }
+
+## the worths as an ordinary list.
+show let to_list: [@α: *, @n: ℕ, α metelist n, α list] ≔ {
+  empty        ^ list~empty,
+  a ‥ leftover ^ a list~‥ (leftover to_list)
+}
+
+## the list keepeth the manyhood.
+show let to_list_manyhood
+  : [@α: *, @n: ℕ, a…: α metelist n, ((a… to_list) manyhood) = n]
+  ≔ match a… {
+    empty        ^ eftbend,
+    a ‥ leftover ^
+      (a ‥_manyhood (leftover to_list)) throughgo
+        (next leibnitz (leftover to_list_manyhood))
+  }
+
+## an ordinary list, measured by its manyhood.
+show let from_list: [@α: *, a…: α list, α metelist (a… manyhood)] ≔ match a… {
+  list~empty        ^ empty,
+  a list~‥ leftover ^
+    ((a ‥_manyhood leftover) evenmete) throughbear (a ‥ (leftover from_list))
+}
+
+## each worth sent through `f`.
+show let warp: [@α: *, @β: *, @n: ℕ, α metelist n, [α, β], β metelist n] ≔ {
+  empty,        _ ^ empty,
+  a ‥ leftover, f ^ (a f) ‥ (leftover warp f)
+}
+
+## warping by `sameness` tweaketh nothing.
+show let warp_sameness
+  : [@α: *, @n: ℕ, a…: α metelist n, (a… warp sameness) = a…]
+  ≔ match a… {
+    empty        ^ eftbend,
+    a ‥ leftover ^ (a ‥ _) leibnitz (leftover warp_sameness)
+  }
+
+## pair the worths of two lists of one manyhood.
+show let zip
+  : [@α: *, @β: *, @n: ℕ, α metelist n, β metelist n, (α ∧ β) metelist n]
+  ≔ {
+    empty,  empty  ^ empty,
+    a ‥ a…, b ‥ b… ^ (a ⸴ b) ‥ (a… zip b…)
+  }
+
+## the worth at each place of a zip is the pair of the worths there.
+show let zip_at
+  : [@α: *, @β: *, @n: ℕ, a…: α metelist n, b…: β metelist n,
+    i: n kindful_below, ((a… zip b…) at i) = ((a… at i) ⸴ (b… at i))]
+  ≔ match a…, b…, i {
+    _ ‥ _,  _ ‥ _,  least   ^ eftbend,
+    _ ‥ a…, _ ‥ b…, j after ^ a… zip_at b… j
+  }

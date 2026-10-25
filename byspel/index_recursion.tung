@@ -12,8 +12,8 @@ let depth: [1 tag, ℕ] ≔ {
   child grow ^ (child depth) next
 }
 
-## the recursive result may depend on the matched value.
-let copy: [x: 1 tag, x = x] ≔ match x {
+## the recursive outcome may depend on the matched value.
+let copy: [a: 1 tag, a = a] ≔ match a {
   one_case   ^ reflect,
   child grow ^ (let known: child = child ≔ child copy yield reflect)
 }
@@ -25,7 +25,7 @@ let accumulate: [1 tag, ℕ, ℕ] ≔ {
 }
 
 ## a constructor-shaped index rebindeth its leaf in each branch.
-let shifted: [k: ℕ, x: (k next) tag, ℕ] ≔ match x {
+let shifted: [k: ℕ, (k next) tag, ℕ] ≔ {
   one_case   ^ k,
   child grow ^ (0 shifted child) next
 }

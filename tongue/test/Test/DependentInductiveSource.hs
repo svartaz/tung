@@ -207,12 +207,12 @@ nestedTests example =
        ]
     ++ [ rejectContaining label "direct child of the matched input" (compile (example ++ source))
        | (label, source) <-
-           [ ("nested evidence cannot justify the whole input", "let bad:[v:rose,ℕ] ≔ match v { empty knot ^ 0, (_ ‥ _) knot ^ v bad }"),
-             ("nested evidence cannot justify the reconstructed root", "let bad:[rose,ℕ] ≔ { empty knot ^ 0, (x ‥ leftover) knot ^ ((x ‥ @rose leftover) knot) bad }"),
-             ("nested evidence cannot justify an unrelated input", "let bad:[v:rose,other:rose,ℕ] ≔ match v { empty knot ^ 0, (_ ‥ _) knot ^ other bad other }"),
+           [ ("nested evidence cannot justify the whole input", "let bad:[v:rose,ℕ] ≔ match v { empty node ^ 0, (_ ‥ _) node ^ v bad }"),
+             ("nested evidence cannot justify the reconstructed root", "let bad:[rose,ℕ] ≔ { empty node ^ 0, (x ‥ leftover) node ^ ((x ‥ @rose leftover) node) bad }"),
+             ("nested evidence cannot justify an unrelated input", "let bad:[v:rose,other:rose,ℕ] ≔ match v { empty node ^ 0, (_ ‥ _) node ^ other bad other }"),
              ( "a generic list helper cannot inherit outer descendant evidence",
                """
-               let bad:[rose,ℕ] ≔ { xs knot ^
+               let bad:[rose,ℕ] ≔ { xs node ^
                  (let sum:[rose list,ℕ] ≔ {
                    empty ^ 0,
                    first ‥ leftover ^ (first bad) add (leftover sum)

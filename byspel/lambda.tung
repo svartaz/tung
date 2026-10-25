@@ -6,11 +6,11 @@ type lambda: [v: *, *] {
   app: [v lambda, v lambda, v lambda]
 }
 
-let subst: [@v: *, @: v hath_≍, target: v lambda, x: v, s: v lambda, v lambda]
+let subst: [@v: *, @: v hath_≍, target: v lambda, a: v, s: v lambda, v lambda]
   ≔ match target {
-    y var     ^ (x ≍ y) if s (y var),
-    y abs t   ^ (x ≍ y) if (y abs t) (y abs (t subst x s)),
-    t0 app t1 ^ (t0 subst x s) app (t1 subst x s)
+    b var     ^ (a ≍ b) if s (b var),
+    b abs t   ^ (a ≍ b) if (b abs t) (b abs (t subst a s)),
+    t0 app t1 ^ (t0 subst a s) app (t1 subst a s)
   }
 
 let main: 𝟙 effect ≔ '!' write_line

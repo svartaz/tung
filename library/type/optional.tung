@@ -59,26 +59,26 @@ bizen: optional functor {
 }
 
 bizen: optional applicative {
-  let sheer ≔ some
+  let pure ≔ some
 
   let apply ≔ {
     a some, f some ^ a f $ some,
     _,      _      ^ none
   }
 
-  let apply_identity_sheer ≔ {
+  let apply_identity_pure ≔ {
     none   ^ reflect,
     _ some ^ reflect
   }
 
-  let sheer_apply_sheer: [a:, f:] ≔ reflect
+  let pure_apply_pure: [a:, f:] ≔ reflect
 
   let apply_apply ≔ {
     none,   _, _ ^ reflect,
     _ some, _, _ ^ reflect
   }
 
-  let sheer_apply ≔ {
+  let pure_apply ≔ {
     _, none   ^ reflect,
     _, _ some ^ reflect
   }
@@ -90,9 +90,9 @@ bizen: optional monad {
     a some ^ a
   }
 
-  let sheer_bind: [a:, f:] ≔ reflect
+  let pure_bind: [a:, f:] ≔ reflect
 
-  let map_sheer_flat ≔ {
+  let map_pure_flat ≔ {
     none   ^ reflect,
     _ some ^ reflect
   }
@@ -124,7 +124,7 @@ bizen: optional catamorphism {
 
 bizen: optional hath_traverse {
   let traverse ≔ {
-    none,   _ ^ none sheer,
+    none,   _ ^ none pure,
     a some, f ^ (a f) map some
   }
 }

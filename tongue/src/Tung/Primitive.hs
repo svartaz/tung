@@ -223,7 +223,7 @@ hostBindings =
   map fst pureBindings
     ++ [
          -- effects: actions that only the runner performeth.
-         effect "effect_sheer" ["a"] [variable "a"] (action (variable "a")),
+         effect "effect_pure" ["a"] [variable "a"] (action (variable "a")),
          effect "effect_bind" ["a", "b"] [action (variable "a"), HostArrow [variable "a"] (action (variable "b"))] (action (variable "b")),
          effect "write" [] [text] (action one),
          effect "read" [] [] (action (option text)),

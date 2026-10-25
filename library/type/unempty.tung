@@ -64,18 +64,18 @@ bizen: [@α: *, (α unempty) semigroup_·] {
 }
 
 bizen: unempty applicative {
-  let sheer ≔ onesome
+  let pure ≔ onesome
 
   let apply: [first ‥′ leftover:, f ‥′ f…:]
     ≔ (first f) ‥′ ((leftover map f) · ((first ‥ leftover) apply f…))
 
-  let apply_identity_sheer: [@α:, first ‥′ leftover:]
+  let apply_identity_pure: [@α:, first ‥′ leftover:]
     ≔ (first ‥′) leibnitz
       ({l: α list ^ ((l map identity) · empty) = l} unbuild list reflect {
         head, _, proof ^ (head ‥) leibnitz proof
       } leftover)
 
-  let sheer_apply_sheer: [_:, _:] ≔ reflect
+  let pure_apply_pure: [_:, _:] ≔ reflect
 
   let apply_apply: [@α:, @β:, @γ:, first ‥′ leftover:, f:, g:]
     ≔ ((first f $ g) ‥′) leibnitz
@@ -85,7 +85,7 @@ bizen: unempty applicative {
       } unbuild list reflect {head, _, proof ^ ((head f $ g) ‥) leibnitz proof}
         leftover)
 
-  let sheer_apply: [@α:, @β:, a:, f ‥′ f…:]
+  let pure_apply: [@α:, @β:, a:, f ‥′ f…:]
     ≔ ((a f) ‥′) leibnitz
       ({
         a…: [α, β] list ^
@@ -100,9 +100,9 @@ let flat: [@α: *, first ‥′ leftover: (α unempty) unempty, α unempty]
 bizen: unempty monad {
   let flat ≔ flat
 
-  let sheer_bind: [_:, _:] ≔ reflect
+  let pure_bind: [_:, _:] ≔ reflect
 
-  let map_sheer_flat: [first ‥′ leftover:]
+  let map_pure_flat: [first ‥′ leftover:]
     ≔ leftover gather_onesomes (first onesome)
 
   let bind_bind ≔ lemma_bind_bind

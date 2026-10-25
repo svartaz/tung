@@ -12,24 +12,24 @@ let then: [@α: *, @β: *, first: α effect, after: β effect, β effect]
 
 let line: [a: string, 𝟙 effect] ≔ (a join_string '\n') _foreign~write
 
-## a fallible effect returneth `string ∨ α`: a message or a result.
+## a fallible effect returneth `string ∨ α`: a message or an outcome.
 let eftbare: [doing: (string ∨ string) effect, 𝟙 effect] ≔ doing effect_bind {
   message inject₀  ^ message line,
   contents inject₁ ^ contents line
 }
 
-## a cancelled or failed task hath no result.
+## a cancelled or failed task hath no outcome.
 let await: [started: (string task) effect, 𝟙 effect]
   ≔ started effect_bind {task ^ (task wait) effect_bind {
-    none         ^ 'no result' line,
+    none         ^ 'no outcome' line,
     message some ^ message line
   }}
 
 let main: 𝟙 effect ≔ >{then,
-  ('note.txt' file~write 'saved') effect_bind {_ ^ only effect_sheer},
+  ('note.txt' file~write 'saved') effect_bind {_ ^ only effect_pure},
   'note.txt' file~read $ eftbare,
   'absent.txt' file~read $ eftbare,
-  ('from a task' effect_sheer) fork $ await,
+  ('from a task' effect_pure) fork $ await,
   match 'tung' behead_string {
     none                ^ 'empty' line,
     (_ ⸴ leftover) some ^ leftover line

@@ -3,7 +3,7 @@ bring natural.tung tale
 
 ## bare names come from an unambiguous import; qualified names always work.
 let repeat: [nat, 𝟙 effect, 𝟙 effect] ≔ {
-  zero,   _     ^ only effect_sheer,
+  zero,   _     ^ only effect_pure,
   n next, doing ^ doing then (n repeat doing)
 }
 

@@ -55,7 +55,7 @@ bizen: [@α: *, (α ∨) functor] {
 }
 
 bizen: [@α: *, (α ∨) applicative] {
-  let sheer ≔ inject₁
+  let pure ≔ inject₁
 
   let apply ≔ {
     a inject₀, _         ^ a inject₀,
@@ -63,19 +63,19 @@ bizen: [@α: *, (α ∨) applicative] {
     b inject₁, f inject₁ ^ (b f) inject₁
   }
 
-  let apply_identity_sheer ≔ {
+  let apply_identity_pure ≔ {
     _ inject₀;
     _ inject₁ ^ reflect
   }
 
-  let sheer_apply_sheer: [_:, _:] ≔ reflect
+  let pure_apply_pure: [_:, _:] ≔ reflect
 
   let apply_apply ≔ {
     _ inject₀, _, _;
     _ inject₁, _, _ ^ reflect
   }
 
-  let sheer_apply ≔ {
+  let pure_apply ≔ {
     _, _ inject₀;
     _, _ inject₁ ^ reflect
   }
@@ -87,9 +87,9 @@ bizen: [@α: *, (α ∨) monad] {
     b inject₁ ^ b
   }
 
-  let sheer_bind: [_:, _:] ≔ reflect
+  let pure_bind: [_:, _:] ≔ reflect
 
-  let map_sheer_flat ≔ {
+  let map_pure_flat ≔ {
     _ inject₀;
     _ inject₁ ^ reflect
   }
@@ -114,7 +114,7 @@ bizen: [@α: *, (α ∨) catamorphism] {
 
 bizen: [@α: *, (α ∨) hath_traverse] {
   let traverse ≔ {
-    a inject₀, _ ^ (a inject₀) sheer,
+    a inject₀, _ ^ (a inject₀) pure,
     b inject₁, f ^ (b f) map inject₁
   }
 }

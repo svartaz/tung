@@ -35,21 +35,21 @@ show let drop_string: [t: string, count: ℕ, string]
 show let eftwend_string: [t: string, string]
   ≔ t string_to_list $ eftwend $ list_to_string
 
-show let forehang_string: [staff: unicode, t: string, string]
-  ≔ staff ‥ (t string_to_list) $ list_to_string
+show let forehang_string: [character: unicode, t: string, string]
+  ≔ character ‥ (t string_to_list) $ list_to_string
 
-show let append_string: [t: string, staff: unicode, string]
-  ≔ t string_to_list $ · (staff onesome) $ list_to_string
+show let append_string: [t: string, character: unicode, string]
+  ≔ t string_to_list $ · (character onesome) $ list_to_string
 
 let split_unicode_by
   : [l: unicode list, sheds: [unicode, 𝟚], (unicode list) list]
   ≔ match l {
-    empty            ^ empty ‥ empty,
-    staff ‥ leftover ^ match leftover split_unicode_by sheds {
-      empty              ^ (staff ‥ empty) ‥ empty,
-      current ‥ previous ^ match staff sheds {
+    empty                ^ empty ‥ empty,
+    character ‥ leftover ^ match leftover split_unicode_by sheds {
+      empty              ^ (character ‥ empty) ‥ empty,
+      current ‥ previous ^ match character sheds {
         yea ^ empty ‥ (current ‥ previous),
-        nay ^ (staff ‥ current) ‥ previous
+        nay ^ (character ‥ current) ‥ previous
       }
     }
   }

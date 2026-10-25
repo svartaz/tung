@@ -9,14 +9,14 @@ bring is.tung
 bring type/one.tung
 
 ## the host's effects form a monad. effects are opaque to conversion, so these
-## three laws of `effect_sheer` and `effect_bind` are listed assumptions; every
+## three laws of `effect_pure` and `effect_bind` are listed assumptions; every
 ## effect law below is proved from them.
-show axiom effect_sheer_bind
+show axiom effect_pure_bind
   : [@α: *, @β: *, a: α, f: [α, β effect],
-    ((a effect_sheer) effect_bind f) = (a f)]
+    ((a effect_pure) effect_bind f) = (a f)]
 
-show axiom effect_bind_sheer
-  : [@α: *, m: α effect, (m effect_bind effect_sheer) = m]
+show axiom effect_bind_pure
+  : [@α: *, m: α effect, (m effect_bind effect_pure) = m]
 
 show axiom effect_bind_bind
   : [@α: *, @β: *, @γ: *, m: α effect, f: [α, β effect], g: [β, γ effect],
@@ -32,61 +32,61 @@ show let bind_equal
 ## mapping twice is mapping once with the composite.
 let map_map
   : [@α: *, @β: *, @γ: *, m: α effect, f: [α, β], g: [β, γ],
-    <{effect_bind, m, f ▷ effect_sheer, g ▷ effect_sheer} =
-      (m effect_bind ((f ▷ g) ▷ effect_sheer))]
-  ≔ (m effect_bind_bind (f ▷ effect_sheer) (g ▷ effect_sheer)) transit
-    (m bind_equal {a ^ (a f) effect_sheer_bind {b ^ (b g) effect_sheer}})
+    <{effect_bind, m, f ▷ effect_pure, g ▷ effect_pure} =
+      (m effect_bind ((f ▷ g) ▷ effect_pure))]
+  ≔ (m effect_bind_bind (f ▷ effect_pure) (g ▷ effect_pure)) transit
+    (m bind_equal {a ^ (a f) effect_pure_bind {b ^ (b g) effect_pure}})
 
 ## mapping and then flattening is binding.
 let map_flat
   : [@α: *, @β: *, m: α effect, f: [α, β effect],
-    <{effect_bind, m, f ▷ effect_sheer, identity} = (m effect_bind f)]
-  ≔ (m effect_bind_bind (f ▷ effect_sheer) identity) transit
-    (m bind_equal {a ^ (a f) effect_sheer_bind {d ^ d}})
+    <{effect_bind, m, f ▷ effect_pure, identity} = (m effect_bind f)]
+  ≔ (m effect_bind_bind (f ▷ effect_pure) identity) transit
+    (m bind_equal {a ^ (a f) effect_pure_bind {d ^ d}})
 
 ## effects compose as a monad: `map` tweaketh an outcome, and `bind` or `then`
 ## sequenceth effects.
 bizen: effect functor {
-  let map: [doing:, tweak:] ≔ doing effect_bind (tweak ▷ effect_sheer)
+  let map: [doing:, tweak:] ≔ doing effect_bind (tweak ▷ effect_pure)
 
-  let map_identity: [m:] ≔ m effect_bind_sheer
+  let map_identity: [m:] ≔ m effect_bind_pure
 }
 
 bizen: effect applicative {
-  let sheer ≔ effect_sheer
+  let pure ≔ effect_pure
 
   let apply: [doing:, tweaks:] ≔ tweaks effect_bind (doing map)
 
-  let apply_identity_sheer: [m:]
-    ≔ (identity effect_sheer_bind (m map)) transit (m effect_bind_sheer)
+  let apply_identity_pure: [m:]
+    ≔ (identity effect_pure_bind (m map)) transit (m effect_bind_pure)
 
-  let sheer_apply_sheer: [a:, f:]
-    ≔ (f effect_sheer_bind ((a effect_sheer) map _)) transit
-      (a effect_sheer_bind (f ▷ effect_sheer))
+  let pure_apply_pure: [a:, f:]
+    ≔ (f effect_pure_bind ((a effect_pure) map _)) transit
+      (a effect_pure_bind (f ▷ effect_pure))
 
   let apply_apply: [m:, f:, g:] ≔ >{transit,
-    g effect_sheer_bind (((f effect_sheer) effect_bind (m map)) map _),
-    (_ map g) leibnitz (f effect_sheer_bind (m map)),
+    g effect_pure_bind (((f effect_pure) effect_bind (m map)) map _),
+    (_ map g) leibnitz (f effect_pure_bind (m map)),
     m map_map f g,
-    ((f ▷ g) effect_sheer_bind (m map)) symmetry
+    ((f ▷ g) effect_pure_bind (m map)) symmetry
   }
 
-  let sheer_apply: [@α:, @β:, a:, f…:]
-    ≔ f… bind_equal {tweak ^ a effect_sheer_bind (tweak ▷ effect_sheer)}
+  let pure_apply: [@α:, @β:, a:, f…:]
+    ≔ f… bind_equal {tweak ^ a effect_pure_bind (tweak ▷ effect_pure)}
 }
 
 bizen: effect monad {
   let flat: [@α: *, doings: (α effect) effect, α effect]
     ≔ doings effect_bind identity
 
-  let sheer_bind: [a:, f:]
-    ≔ (flat leibnitz (a effect_sheer_bind (f ▷ effect_sheer))) transit
-      ((a f) effect_sheer_bind {b ^ b})
+  let pure_bind: [a:, f:]
+    ≔ (flat leibnitz (a effect_pure_bind (f ▷ effect_pure))) transit
+      ((a f) effect_pure_bind {b ^ b})
 
-  let map_sheer_flat: [m:] ≔ >{transit,
-    m effect_bind_bind (effect_sheer ▷ effect_sheer) identity,
-    m bind_equal {a ^ (a effect_sheer) effect_sheer_bind {b ^ b}},
-    m effect_bind_sheer
+  let map_pure_flat: [m:] ≔ >{transit,
+    m effect_bind_bind (effect_pure ▷ effect_pure) identity,
+    m bind_equal {a ^ (a effect_pure) effect_pure_bind {b ^ b}},
+    m effect_bind_pure
   }
 
   let bind_bind: [m:, f:, g:] ≔ >{transit,

@@ -5,54 +5,53 @@ bring combinator.tung
 bring is.tung
 
 show class applicative: [φ: [*, *], @: φ functor, *] {
-  let sheer: [@α: *, α, α φ]
+  let pure: [@α: *, α, α φ]
 
   let apply: [@α: *, @β: *, α φ, [α, β] φ, β φ]
 
-  let apply_identity_sheer
-    : [@α: *, a: α φ, (a apply ((identity @→ @α) sheer)) = a]
+  let apply_identity_pure
+    : [@α: *, a: α φ, (a apply ((identity @→ @α) pure)) = a]
 
-  let sheer_apply_sheer
-    : [@α: *, @β: *, a: α, f: [α, β],
-      ((a sheer) apply (f sheer)) = ((a f) sheer)]
+  let pure_apply_pure
+    : [@α: *, @β: *, a: α, f: [α, β], ((a pure) apply (f pure)) = ((a f) pure)]
 
   let apply_apply
     : [@α: *, @β: *, @γ: *, a: α φ, f: [α, β], g: [β, γ],
-      <{apply, a, f sheer, g sheer} = (a apply (f ▷ g $ sheer))]
+      <{apply, a, f pure, g pure} = (a apply (f ▷ g $ pure))]
 
-  let sheer_apply
-    : [@α: *, @β: *, a: α, fs: [α, β] φ, ((a sheer) apply fs) = (fs map (a ▶))]
+  let pure_apply
+    : [@α: *, @β: *, a: α, fs: [α, β] φ, ((a pure) apply fs) = (fs map (a ▶))]
 }
 
-## the reader sheereth a constant and applieth pointwise.
+## the reader's `pure` is a constant function, and it applieth pointwise.
 bizen: [@ρ: *, (ρ →) applicative] {
-  let sheer: [a:, _:] ≔ a
+  let pure: [a:, _:] ≔ a
 
   let apply: [a:, fs:, r:] ≔ (r a) (r fs)
 
-  let apply_identity_sheer: [_:] ≔ reflect
+  let apply_identity_pure: [_:] ≔ reflect
 
-  let sheer_apply_sheer: [_:, _:] ≔ reflect
+  let pure_apply_pure: [_:, _:] ≔ reflect
 
   let apply_apply: [_:, _:, _:] ≔ reflect
 
-  let sheer_apply: [_:, _:] ≔ reflect
+  let pure_apply: [_:, _:] ≔ reflect
 }
 
 show let lift₂
   : [@φ: [*, *], @: φ applicative, @α₀: *, @α₁: *, @β: *, a₀: α₀ φ, a₁: α₁ φ,
     f: [α₀, α₁, β], β φ]
-  ≔ >{apply, a₁, a₀, f sheer}
+  ≔ >{apply, a₁, a₀, f pure}
 
 show let lift₃
   : [@φ: [*, *], @: φ applicative, @α₀: *, @α₁: *, @α₂: *, @β: *, a₀: α₀ φ,
     a₁: α₁ φ, a₂: α₂ φ, f: [α₀, α₁, α₂, β], β φ]
-  ≔ >{apply, a₂, a₁, a₀, f sheer}
+  ≔ >{apply, a₂, a₁, a₀, f pure}
 
 show let lift₄
   : [@φ: [*, *], @: φ applicative, @α₀: *, @α₁: *, @α₂: *, @α₃: *, @β: *,
     a₀: α₀ φ, a₁: α₁ φ, a₂: α₂ φ, a₃: α₃ φ, f: [α₀, α₁, α₂, α₃, β], β φ]
-  ≔ >{apply, a₃, a₂, a₁, a₀, f sheer}
+  ≔ >{apply, a₃, a₂, a₁, a₀, f pure}
 
 show let keep_first
   : [@φ: [*, *], @: φ applicative, @α: *, @β: *, a: α φ, b: β φ, α φ]

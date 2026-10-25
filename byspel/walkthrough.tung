@@ -39,7 +39,7 @@ let five: ℤ ≔ +2 + +3
 # brackets group as usual.
 let nine: ℤ ≔ (+2 + +1) · +3
 
-# `$` passeth the result on to the next function: `a f $ g` is `g (f a)`.
+# `$` passeth the outcome on to the next function: `a f $ g` is `g (f a)`.
 let shown: string ≔ +2 + +3 $ to_string
 
 # `<{f, a, b, c}` foldeth from the left: `(a f b) f c`.
@@ -48,24 +48,24 @@ let ten: ℤ ≔ <{+, +1, +2, +3, +4}
 
 # 3. functions
 # a function type is written in brackets: `[ℤ, ℤ]` taketh an ℤ and giveth an
-# ℤ. a slot with a name, `x:`, bindeth that input in the body.
-let twofold: [x: ℤ, ℤ] ≔ x + x
+# ℤ. a slot with a name, `a:`, bindeth that input in the body.
+let twofold: [a: ℤ, ℤ] ≔ a + a
 
 # a slot without a name is supplied by a lambda `{input ^ outcome}`.
-let triple: [ℤ, ℤ] ≔ {x ^ (x + x) + x}
+let triple: [ℤ, ℤ] ≔ {a ^ (a + a) + a}
 
-# `_` as an input maketh a function of it: `_ + +1` is `{x ^ x + +1}`.
+# `_` as an input maketh a function of it: `_ + +1` is `{a ^ a + +1}`.
 let one_more: [ℤ, ℤ] ≔ _ + +1
 
-# a slot's type or the result may be left out when it can be inferred.
-let quadruple: [x: ℤ] ≔ x twofold $ twofold
+# a slot's type or the outcome may be left out when it can be inferred.
+let quadruple: [a: ℤ] ≔ a twofold $ twofold
 
 # functions take their inputs one at a time, so giving fewer inputs maketh a
 # new function.
 let add_two: [ℤ, ℤ] ≔ +2 +
 
 # `function` writeth a whole function, with its type, as one expression.
-let add_three ≔ function x: ℤ, ℤ ^ x + +3
+let add_three ≔ function a: ℤ, ℤ ^ a + +3
 
 # 4. type inputs
 # `@α: *` is a type input: `*` is the type of types. the function below
@@ -80,12 +80,12 @@ let greeting: string ≔ 'hello' singal +42
 let explicit_greeting: string ≔ 'hello' singal @string @ℤ +42
 
 # 5. local definitions
-# `( let … yield outcome )` defineth names that only the result seeth.
+# `( let … yield outcome )` defineth names that only the outcome seeth.
 let seven: ℤ ≔ (let six ≔ +2 · +3 yield six + +1)
 
 # 6. matching
 # `match value { pattern ^ outcome, … }` chooseth the first row that fitteth.
-let mark: [x: ℤ, string] ≔ match x {
+let mark: [a: ℤ, string] ≔ match a {
   +0 ^ 'zero',
   _  ^ 'other' # `_` fitteth anything
 }
@@ -96,7 +96,7 @@ let ¬′: [𝟚, 𝟚] ≔ {
   nay ^ yea
 }
 
-# `;` joineth rows that share one result.
+# `;` joineth rows that share one outcome.
 let both: [𝟚, 𝟚, 𝟚] ≔ {
   yea, yea ^ yea,
   yea, nay;
@@ -180,7 +180,7 @@ let describe_twice: [@α: *, @: α hath_describe, a: α, string]
   ≔ (a describe) · (a describe)
 
 # 12. proofs
-# `x = y` is the type of proofs that x and y are the same. `reflect` proveth
+# `a = b` is the type of proofs that a and b are the same. `reflect` proveth
 # an equation that holdeth by computing both sides.
 let two_and_two: (+2 + +2) = +4 ≔ reflect
 
@@ -189,7 +189,7 @@ let two_and_two: (+2 + +2) = +4 ≔ reflect
 class hath_gainsay: [α: *, *] {
   let gainsay: [α, α]
 
-  let gainsay_gainsay: [x: α, (x gainsay $ gainsay) = x]
+  let gainsay_gainsay: [a: α, (a gainsay $ gainsay) = a]
 }
 
 bizen: 𝟚 hath_gainsay {
@@ -219,13 +219,14 @@ let zero_+: [m: ℕ, (0 + m) = m] ≔ match m {
 # `then` doth two effects in order.
 let greet: [name: string, 𝟙 effect] ≔ ('hello, ' write) then (name write_line)
 
-# `bind` passeth an effect's result to a function that chooseth the next effect.
+# `bind` passeth an effect's outcome to a function that chooseth the next
+# effect.
 let roll: 𝟙 effect ≔ random bind {luck ^ luck to_string $ write_line}
 
 # `fast` declareth an effect that may call itself without bound. this one
 # writeth back each line it readeth until input endeth.
 fast echo: 𝟙 effect ≔ read bind {
-  none      ^ only sheer,
+  none      ^ only pure,
   line some ^ (line write_line) then echo
 }
 
@@ -240,12 +241,12 @@ let eftbare: 𝟙 effect ≔ >{then,
 # `ε fallible α` is an effect that may stop with a failure `ε`; `bind` skippeth
 # the rest after a failure, and `handle` recovereth.
 let checked_eld: [n: ℕ, string fallible ℕ] ≔ match n ≤ 150 {
-  yea ^ n sheer,
+  yea ^ n pure,
   nay ^ 'too old' fail
 }
 
 let elds_report: 𝟙 effect
-  ≔ (200 checked_eld $ fallible~handle {_ ^ 0 sheer} $ fallible~unwrap) bind {
+  ≔ (200 checked_eld $ fallible~handle {_ ^ 0 pure} $ fallible~unwrap) bind {
     why inject₀ ^ why write_line,
     n inject₁   ^ n to_string $ write_line
   }
@@ -262,8 +263,8 @@ let count_report: 𝟙 effect
   ≔ (counted hade~unwrap 10) bind {p ^ p project₀ $ to_string $ write_line}
 
 # 15. tasks
-# `fork` startetth an effect alongside; `wait` taketh its result as `optional`.
-let background: 𝟙 effect ≔ (seven sheer) fork $ bind wait $ bind {
+# `fork` startetth an effect alongside; `wait` taketh its outcome as `optional`.
+let background: 𝟙 effect ≔ (seven pure) fork $ bind wait $ bind {
   n some ^ n to_string $ write_line,
   none   ^ 'cancelled' write_line
 }

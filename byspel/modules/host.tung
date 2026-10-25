@@ -2,7 +2,7 @@
 bring _foreign.tung
 bring type/one.tung
 
-show 𝟙, only, write, effect_sheer, effect_bind
+show 𝟙, only, write, effect_pure, effect_bind
 
 show let then: [@α: *, @β: *, first: α effect, after: β effect, β effect]
   ≔ first effect_bind {_ ^ after}

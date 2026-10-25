@@ -8,9 +8,9 @@ let whole: [left: ℤ optional, right: ℤ optional, ℤ] ≔ match left, right 
 
 let answer: ℤ effect
   ≔ (1000 sleep) then
-    ((+20 sheer) fork $ bind {
+    ((+20 pure) fork $ bind {
       left ^
-        (+22 sheer) fork $ bind {right ^ (left wait) lift₂ (right wait) whole}
+        (+22 pure) fork $ bind {right ^ (left wait) lift₂ (right wait) whole}
     })
 
 let main: 𝟙 effect

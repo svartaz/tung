@@ -48,12 +48,12 @@ the prose in the owning document.
   then qualifiers: `≤_reflect` is `≤`'s `reflect`, `effect_bind` is
   `effect`'s `bind`, and a helper proof is `lemma_≍_=`. a name that
   spelleth an expression keepeth the expression's term order, as
-  `sheer_bind` or `zero_+`, and a conversion stayeth `x_to_y`.
+  `pure_bind` or `zero_+`, and a conversion stayeth `a_to_b`.
 - a compound declared name keepeth each term's own spelling, including symbols:
   `≍_to_=`, `≍_reflect`, and `≤_=`. ordinary word-named terms such as
   `identity` keep their spelling too, as in `map_identity`.
 - a name doth not repeat its module's file name: a shown name is read
-  qualified, so `x.tung` showeth `to_y`, read `x~to_y`, not `x_to_y`. the
+  qualified, so `a.tung` showeth `to_b`, read `a~to_b`, not `a_to_b`. the
   same name may be used in different files.
 - documents for people use short, simple sentences and examples. they omit
   internal detail and link to the agent documents.
@@ -82,8 +82,8 @@ the prose in the owning document.
 
 three syntax facts cause frequent mistakes:
 
-- in an unmarked sequence the second term is the function: `x f y` is `f x y`,
-  so `f {x ^ x}` applieth the lambda to `f`. write `{x ^ x} f`.
+- in an unmarked sequence the second term is the function: `a f b` is `f a b`,
+  so `f {a ^ a}` applieth the lambda to `f`. write `{a ^ a} f`.
 - declarations are `let name ≔ body` or `let name:annotation ≔ body`.
   arguments are annotation slots: `let f: [a:, b:] ≔ ...`, not `let a f b`.
 - a named slot bindeth its name, so the body after `[l: α list, r]` hath type

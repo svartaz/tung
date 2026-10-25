@@ -47,29 +47,29 @@ bizen: [@α: *, (α ∧) functor] {
 }
 
 bizen: [@α: *, @: α monoid_·, (α ∧) applicative] {
-  let sheer: [b:] ≔ one ⸴ b
+  let pure: [b:] ≔ one ⸴ b
 
   let apply: [a₀ ⸴ b:, a₁ ⸴ f:] ≔ (a₀ · a₁) ⸴ (b f)
 
-  let apply_identity_sheer: [a ⸴ b:] ≔ (_ ⸴ b) leibnitz (a ·_one)
+  let apply_identity_pure: [a ⸴ b:] ≔ (_ ⸴ b) leibnitz (a ·_one)
 
-  let sheer_apply_sheer: [a:, f:] ≔ (_ ⸴ (a f)) leibnitz (one ·_one)
+  let pure_apply_pure: [a:, f:] ≔ (_ ⸴ (a f)) leibnitz (one ·_one)
 
   let apply_apply: [a ⸴ b:, f:, g:] ≔ (_ ⸴ (b f $ g)) leibnitz ((a · one) ·_one)
 
-  let sheer_apply: [a:, b ⸴ f:] ≔ (_ ⸴ (a f)) leibnitz (b one_·)
+  let pure_apply: [a:, b ⸴ f:] ≔ (_ ⸴ (a f)) leibnitz (b one_·)
 }
 
 bizen: [@α: *, @: α monoid_·, (α ∧) monad] {
   let flat: [a ⸴ (b ⸴ c):] ≔ (a · b) ⸴ c
 
-  let sheer_bind: [a:, f:]
+  let pure_bind: [a:, f:]
     ≔ (a f) inspect {c ⸴ b, _ ^ (_ ⸴ b) leibnitz (c one_·)}
 
-  let map_sheer_flat: [a ⸴ b:] ≔ (_ ⸴ b) leibnitz (a ·_one)
+  let map_pure_flat: [a ⸴ b:] ≔ (_ ⸴ b) leibnitz (a ·_one)
 
   let bind_bind: [a ⸴ b:, f:, g:] ≔ match b f {
-    c ⸴ d ^ match d g { e ⸴ x ^ (_ ⸴ x) leibnitz ((a ·_· c e) symmetry) }
+    c ⸴ d ^ match d g { e ⸴ h ^ (_ ⸴ h) leibnitz ((a ·_· c e) symmetry) }
   }
 }
 

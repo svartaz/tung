@@ -20,7 +20,7 @@ spelling of its class name.
 - `tree` is a finite table kept as a weight-balanced search tree, needing only
   a total order on keys. logarithmic paths require ordered, balanced trees
   with correct stored weights: `empty`, `onesome`, `put`, and `rid` keep these
-  invariants, while the public `knot` constructor may break them. `entries`
+  invariants, while the public `node` constructor may break them. `entries`
   and `keys` follow stored order.
 - `bifunctor` mappeth both sides of products and sums.
 - `topology` openeth parts of a type. a part is a type-valued predicate
@@ -28,9 +28,10 @@ spelling of its class name.
   by `among`, cannot always be computed. `subset`, `meet`, and `preimage`
   work on parts: lying under goeth through, a meet is the greatest part under
   both, and a preimage keepeth meets and lying under. `either_open` joineth
-  two open parts as a family over `𝟚`. a function is `steady` when the preimage
-  of every open part is open; `identity` is steady, and a steady function after a
-  steady function is steady by `▷_steady`.
+  two open parts as a family over `𝟚`. a function is `continuous` when the
+  preimage of every open part is open; `identity` is continuous, and a
+  continuous function after a continuous function is continuous by
+  `▷_continuous`.
 - openness is a type, not a proof-irrelevant claim, so two proofs that a
   part is open may differ. the inner of a part, the join of every open part
   under it, is not stated: that family is indexed by parts, one universe above
@@ -41,7 +42,7 @@ spelling of its class name.
   cannot find `φ` from it: write `map @(ρ →)`.
 - `monad` stateth `bind_bind`, binding's associativity, beside its unit laws.
   `type/kleisli.tung` wrappeth `[α, β φ]` as `α (φ kleisli) β`, a category for
-  any monad: `▷` bindeth and `sheer` is `identity`.
+  any monad: `▷` bindeth and `pure` is `identity`.
 - `type/freer.tung` provideth `freer`, `bind`, `lift`, mapping, flattening, and
   folding. a request `ξ φ` nameth its answer type `ξ` and the program keepeth
   the continuation, so any `φ` serveth and every function stayeth total.
@@ -52,11 +53,9 @@ spelling of its class name.
 - `type/hade.tung` layereth state over any monad `φ` as a one-constructor
   wrapper with its own functor, applicative, and monad bizens, whose laws
   follow from `φ`'s. `type/bare.tung` is the monad that doth nothing, so
-  `σ hade bare` is pure state and `σ hade effect` may perform effects. a bizen
-  requiring `φ monad` dependeth on every monad bizen of its own module, so the
-  operations and laws live in `type/hade/building.tung`, the functor and
-  applicative bizens in `type/hade/applicative_bizen.tung`, and the monad bizen
-  in `type/hade.tung`, which re-showeth the public names.
+  `σ hade bare` is pure state and `σ hade effect` may perform effects. it
+  showeth `hade`, `wrap`, `unwrap`, `get`, `put`, `tweak`, and `lift`; its
+  `map`, `flat`, and `bind` are reached through the class bizens.
 - `type/vector.tung`: `α vector n` is a list of exactly `n` values, so
   `head` and `tail` need no `optional`, `at` taketh an `n natural_below` from
   `type/natural_below.tung` (the tales below `n`), and `zip` paireth two lists of one
@@ -228,8 +227,8 @@ every assumption is a listed `axiom`:
   function-carrier laws, the freer and powerset laws, which compare
   continuations and characteristic functions, the kleisli laws, and effect proofs
   comparing bound continuations.
-- [`effect.tung`](effect.tung) assumeth the monad laws of the host's `effect_sheer`
-  and `effect_bind`: `effect_sheer_bind`, `effect_bind_sheer`, and `effect_bind_bind`,
+- [`effect.tung`](effect.tung) assumeth the monad laws of the host's `effect_pure`
+  and `effect_bind`: `effect_pure_bind`, `effect_bind_pure`, and `effect_bind_bind`,
   from which the functor, applicative, and monad laws of `effect` follow. effects
   are opaque to conversion, so these are axioms, as lean's `IO` satisfieth
   them by its model. a free inductive `effect` cannot replace them while `fast`

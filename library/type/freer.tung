@@ -103,25 +103,25 @@ bizen: [@φ: [*, *], (φ freer) functor] {
 }
 
 bizen: [@φ: [*, *], (φ freer) applicative] {
-  let sheer ≔ done
+  let pure ≔ done
 
   let apply: [program:, tweaks:] ≔ tweaks bind (program map)
 
-  let apply_identity_sheer ≔ lemma_map_identity
+  let apply_identity_pure ≔ lemma_map_identity
 
-  let sheer_apply_sheer: [_:, _:] ≔ reflect
+  let pure_apply_pure: [_:, _:] ≔ reflect
 
   let apply_apply: [a:, f:, g:] ≔ a map_map f g
 
-  let sheer_apply: [_:, _:] ≔ reflect
+  let pure_apply: [_:, _:] ≔ reflect
 }
 
 bizen: [@φ: [*, *], (φ freer) monad] {
   let flat: [program:] ≔ program flat
 
-  let sheer_bind: [_:, _:] ≔ reflect
+  let pure_bind: [_:, _:] ≔ reflect
 
-  let map_sheer_flat ≔ map_done_flat
+  let map_pure_flat ≔ map_done_flat
 
   let bind_bind: [m:, f:, g:] ≔ >{transit,
     (m map f $ flat) map_flat g,

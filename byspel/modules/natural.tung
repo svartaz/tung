@@ -3,12 +3,12 @@ show type nat: * {
   next: [nat, nat]
 }
 
-show let plus: [x: nat, y: nat, nat] ≔ match x {
-  zero   ^ y,
-  n next ^ (n plus y) next
+show let plus: [nat, nat, nat] ≔ {
+  zero,   b ^ b,
+  a next, b ^ (a plus b) next
 }
 
 ## private: not visible to importers.
-let twofold: [x: nat, nat] ≔ x plus x
+let twofold: [a: nat, nat] ≔ a plus a
 
 show let four: nat ≔ ((zero next) next) twofold

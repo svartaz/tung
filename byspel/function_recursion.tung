@@ -3,14 +3,14 @@ bring is.tung
 ## function fields retain descendant records at each argument.
 type tree: * {
   tip: tree,
-  knot: [tree, [ℕ, tree], tree]
+  node: [tree, [ℕ, tree], tree]
 }
 
-let depth: [x: tree, ℕ] ≔ match x {
+let depth: [tree, ℕ] ≔ {
   tip             ^ 0,
-  _ knot children ^ match 0 children {
+  _ node children ^ match 0 children {
     tip            ^ 1,
-    _ knot smaller ^ (((0 smaller) depth) next) next
+    _ node smaller ^ (((0 smaller) depth) next) next
   }
 }
 
@@ -20,30 +20,30 @@ let accumulate: [ℕ, ℕ, ℕ] ≔ {
   n next, whole ^ (let leftover ≔ n accumulate yield (whole next) leftover)
 }
 
-let deep_accumulate: [x: tree, whole: ℕ, ℕ] ≔ match x {
+let deep_accumulate: [a: tree, whole: ℕ, ℕ] ≔ match a {
   tip             ^ whole,
-  _ knot children ^ match 0 children {
+  _ node children ^ match 0 children {
     tip            ^ whole next,
-    _ knot smaller ^ (
+    _ node smaller ^ (
       let leftover ≔ (0 smaller) deep_accumulate
       yield ((whole next) next) leftover
     )
   }
 }
 
-let leaf: tree ≔ tip knot {_ ^ tip}
+let leaf: tree ≔ tip node {_ ^ tip}
 
-let sample: tree ≔ tip knot {_ ^ leaf}
+let sample: tree ≔ tip node {_ ^ leaf}
 
 ## dependent matches carry the record with the computed child and its aliases.
-let proof: [x: tree, x = x] ≔ match x {
+let proof: [a: tree, a = a] ≔ match a {
   tip             ^ reflect,
-  _ knot children ^ (
+  _ node children ^ (
     let call ≔ children
     let child ≔ 0 call
     let known: child = child ≔ match child {
       tip            ^ reflect,
-      _ knot smaller ^ (let child_known ≔ (0 smaller) proof yield reflect)
+      _ node smaller ^ (let child_known ≔ (0 smaller) proof yield reflect)
     }
     yield reflect
   )

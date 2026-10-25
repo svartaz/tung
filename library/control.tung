@@ -6,7 +6,7 @@ bring type/two.tung
 ## an effect that performeth the doing only when the kilter is true.
 show let when: [𝟚, 𝟙 effect, 𝟙 effect] ≔ {
   yea, doing ^ doing,
-  nay, _     ^ only effect_sheer
+  nay, _     ^ only effect_pure
 }
 
 ## an effect that performeth the doing only when the kilter is false.

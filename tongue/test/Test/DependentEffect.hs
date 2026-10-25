@@ -47,7 +47,7 @@ tests library example =
     expectEq "a fast effect loopeth until input endeth" (Right (Right 0, "a\nb\n")) $
       run (withoutMain example ++ "let main:𝟙 effect ≔ echo\n") ["a", "b"],
     expectEq "building an effect performeth nothing; only main is executed" (Right (Right 0, "")) $
-      run (prelude ++ "let unused:𝟙 effect ≔ 'never' write\nlet main:𝟙 effect ≔ only effect_sheer\n") [],
+      run (prelude ++ "let unused:𝟙 effect ≔ 'never' write\nlet main:𝟙 effect ≔ only effect_pure\n") [],
     expectEq "a bind continuation is inspected after the preceding host action" (Right (Left "reached sorry", "before")) $
       run (prelude ++ "let main:𝟙 effect ≔ ('before' write) effect_bind (sorry:[𝟙, 𝟙 effect])\n") [],
     expectEq "a performed effect computeth every result field before its continuation" (Right (Left "reached sorry", "")) $
@@ -56,7 +56,7 @@ tests library example =
             ++ """
                type box: * { box_of: [nested: ℤ optional, box] }
                let main:𝟙 effect ≔
-                 ((((sorry:ℤ) some) box_of) effect_sheer) effect_bind {_ ^ 'never' write}
+                 ((((sorry:ℤ) some) box_of) effect_pure) effect_bind {_ ^ 'never' write}
 
                """
         )
@@ -78,7 +78,7 @@ tests library example =
         )
         (replicate 20000 ""),
     expectEq "a fast main may name itself" (Right (Right 0, "a\n")) $
-      run (prelude ++ "fast main:𝟙 effect ≔ read effect_bind {none ^ only effect_sheer, line some ^ (line write) effect_bind {_ ^ ('\\n' write) effect_bind {_ ^ main}}}\n") ["a"],
+      run (prelude ++ "fast main:𝟙 effect ≔ read effect_bind {none ^ only effect_pure, line some ^ (line write) effect_bind {_ ^ ('\\n' write) effect_bind {_ ^ main}}}\n") ["a"],
     expectEq "a fast declaration may be universe-polymorphic" (Right (Right 0, "xx")) $
       run
         ( prelude
@@ -93,18 +93,18 @@ tests library example =
         )
         [],
     expectEq "a fast call doth not unfold during checking" (Right False) $ do
-      program <- compile (prelude ++ "fast turn:𝟙 effect ≔ (only effect_sheer) effect_bind {_ ^ turn}\n")
+      program <- compile (prelude ++ "fast turn:𝟙 effect ≔ (only effect_pure) effect_bind {_ ^ turn}\n")
       left <- normaliseSourceExpression program "turn"
-      right <- normaliseSourceExpression program "(only effect_sheer) effect_bind {_ ^ turn}"
+      right <- normaliseSourceExpression program "(only effect_pure) effect_bind {_ ^ turn}"
       pure (eraseLevels left == eraseLevels right),
     rejectContaining "a fast type endeth in an effect, so it cannot inhabit an empty type" "must end in an effect" $
       compile (prelude ++ "type none_at_all:* {}\nfast absurd:none_at_all ≔ absurd\n"),
     rejectContaining "a fast function's result is an effect" "must end in an effect" $
       compile (prelude ++ "fast forever:[𝟙, 𝟙] ≔ {x ^ x forever}\n"),
     rejectContaining "a looping effect let is pointed to fast" "'echo' needs a structurally decreasing input; an effect that loopeth without bound is a fast declaration" $
-      compile (prelude ++ "let echo:𝟙 effect ≔ read effect_bind {none ^ only effect_sheer, _ some ^ echo}\n"),
+      compile (prelude ++ "let echo:𝟙 effect ≔ read effect_bind {none ^ only effect_pure, _ some ^ echo}\n"),
     rejectContaining "a fast declaration nameth itself" "one that doth not is a let" $
-      compile (prelude ++ "fast still:𝟙 effect ≔ only effect_sheer\n"),
+      compile (prelude ++ "fast still:𝟙 effect ≔ only effect_pure\n"),
     rejectContaining "a fast declaration requireth an annotation" "requireth a type annotation" $
       parseSource "fast echo ≔ echo\n",
     rejectContaining "a fast declaration cannot bind a host key" "a foreign binding is a let, not fast" $
@@ -113,10 +113,10 @@ tests library example =
       parseSource "let value ≔ (fast again:𝟙 effect ≔ again yield *)\n",
     rejectContaining "a bizen member is not fast" "a bizen member is a let, not fast" $
       compile (prelude ++ "class looping:[α:*, *] { let go:α }\nbizen:𝟙 effect looping { fast go:𝟙 effect ≔ go }\n"),
-    expectEq "binding a sheer effect doth not reduce during checking" (Right False) $ do
+    expectEq "binding a pure effect doth not reduce during checking" (Right False) $ do
       program <- compile prelude
-      left <- normaliseSourceExpression program "(only effect_sheer) effect_bind {x ^ x effect_sheer}"
-      right <- normaliseSourceExpression program "only effect_sheer"
+      left <- normaliseSourceExpression program "(only effect_pure) effect_bind {x ^ x effect_pure}"
+      right <- normaliseSourceExpression program "only effect_pure"
       pure (eraseLevels left == eraseLevels right),
     expectEq "same string literals convert and different ones do not" (Right [True, False]) $ do
       program <- compile (prelude ++ "type same:[@α:*, x:α, [α, *]] { refl:(x same @α x) }\n")
@@ -129,9 +129,9 @@ tests library example =
     rejectContaining "an unknown host key is rejected" "unknown host key 'launch'" $
       compile "let launch:* ≔ 'launch' foreign\n",
     rejectContaining "a host type must match its catalogue signature" "requireth a different type" $
-      compile "let sheer:[@α:*, α, α] ≔ 'effect_sheer' foreign\n",
+      compile "let pure:[@α:*, α, α] ≔ 'effect_pure' foreign\n",
     rejectContaining "an effect operation cannot use a different effect type" "requireth a different type" $
-      compile "type _box:[α:*, *] { box:[α, α _box] }\nlet sheer:[@α:*, α, α _box] ≔ 'effect_sheer' foreign\n",
+      compile "type _box:[α:*, *] { box:[α, α _box] }\nlet pure:[@α:*, α, α _box] ≔ 'effect_pure' foreign\n",
     rejectContaining "host data is identified by its declaration" "requireth a different type" $
       compile "type 𝟙:* { only:𝟙 }\nlet write:[string, 𝟙 effect] ≔ 'write' foreign\n",
     rejectContaining "one host key cannot be bound twice" "already bound" $
@@ -150,8 +150,8 @@ tests library example =
       compile (prelude ++ "let plus:[ℕ, ℕ, ℕ] ≔ 'add_natural' foreign {a, _ ^ a}\n"),
     expectEq "a catalogued file checked by its full path may give its model" (Right ()) $
       () <$ compileWith library "/checked/library/type/natural.tung" (prelude ++ "let plus:[ℕ, ℕ, ℕ] ≔ 'add_natural' foreign {a, _ ^ a}\n"),
-    rejectContaining "only a sheer operation hath a model" "cannot have a model" $
-      compile "let wrap:[@α:*, a: α, α effect] ≔ 'effect_sheer' foreign sorry\n",
+    rejectContaining "only a pure operation hath a model" "cannot have a model" $
+      compile "let wrap:[@α:*, a: α, α effect] ≔ 'effect_pure' foreign sorry\n",
     rejectContaining "without a model, a foreign annotation cannot bind inputs" "cannot bind inputs" $
       parseSource "let plus:[m: ℕ, n: ℕ, ℕ] ≔ 'add_natural' foreign\n",
     rejectContaining "a foreign binding requireth an annotation" "requireth a type annotation" $

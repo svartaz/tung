@@ -1,11 +1,11 @@
 ## birds from smullyan's "to mock a mockingbird" and named variants.
-# I x = x
+# I a = a
 show let identity: [@α: *, a: α, α] ≔ a
 
-# I* f x = f x
+# I* f a = f a
 show let identity_once_removed: [@α: *, @β: *, f: [α, β], a: α, β] ≔ a f
 
-# I** f x y = f x y
+# I** f a b = f a b
 show let identity_twice_removed
   : [@α: *, @β: *, @γ: *, f: [α, β, γ], a: α, b: β, γ]
   ≔ a f b
@@ -13,204 +13,204 @@ show let identity_twice_removed
 # another name for the identity bird.
 show let idiot: [@α: *, α, α] ≔ identity
 
-# A f x = f x
+# A f a = f a
 show let applicator: [@α: *, @β: *, [α, β], α, β] ≔ identity_once_removed
 
-# K x y = x
+# K a b = a
 show let kestrel: [@α: *, @β: *, a: α, b: β, α] ≔ a
 
-# ki x y = y
+# ki a b = b
 show let kite: [@α: *, @β: *, a: α, b: β, β] ≔ b
 
 # the earlier name for the kite remaineth available.
 show let klubertanz: [@α: *, @β: *, α, β, β] ≔ kite
 
-# B f g x = f (g x)
+# B f g a = f (g a)
 show let bluebird: [@α: *, @β: *, @γ: *, f: [β, γ], g: [α, β], a: α, γ]
   ≔ (a g) f
 
-# B1 f g x y = f (g x y)
+# B1 f g a b = f (g a b)
 show let blackbird
   : [@α: *, @β: *, @γ: *, @δ: *, g: [γ, δ], f: [α, β, γ], a: α, b: β, δ]
   ≔ (a f b) g
 
-# B2 f g x y z = f (g x y z)
+# B2 f g a b c = f (g a b c)
 show let bunting
   : [@α: *, @β: *, @γ: *, @δ: *, @ε: *, g: [δ, ε], f: [α, β, γ, δ], a: α, b: β,
     c: γ, d: δ, ε]
   ≔ (a f b c) g
 
-# B3 f g h x = f (g (h x))
+# B3 f g h a = f (g (h a))
 show let becard
   : [@α: *, @β: *, @γ: *, @δ: *, h: [δ, γ], g: [β, δ], f: [α, β], a: α, γ]
   ≔ ((a f) g) h
 
-# C f x y = f y x
+# C f a b = f b a
 show let cardinal: [@α: *, @β: *, @γ: *, f: [β, α, γ], a: α, b: β, γ] ≔ b f a
 
-# C' f g x y = f (g y) x
+# C' f g a b = f (g b) a
 show let cardinal′
   : [@α: *, @β: *, @γ: *, @δ: *, f: [γ, α, δ], g: [β, γ], a: α, b: β, δ]
   ≔ (b g) f a
 
-# C* f x y z = f x z y
+# C* f a b c = f a c b
 show let cardinal_once_removed
   : [@α: *, @β: *, @γ: *, @δ: *, f: [α, γ, β, δ], a: α, b: β, c: γ, δ]
   ≔ a f c b
 
-# C** f x y z w = f x y w z
+# C** f a b c d = f a b d c
 show let cardinal_twice_removed
   : [@α: *, @β: *, @γ: *, @δ: *, @ε: *, f: [α, β, δ, γ, ε], a: α, b: β, c: γ,
     d: δ, ε]
   ≔ a f b d c
 
-# D f x g y = f x (g y)
+# D f a g b = f a (g b)
 show let dove
   : [@α: *, @β: *, @γ: *, @δ: *, f: [α, γ, δ], a: α, g: [β, γ], b: β, δ]
   ≔ a f (b g)
 
-# B' f x g y = f x (g y)
+# B' f a g b = f a (g b)
 show let bluebird′: [@α: *, @β: *, @γ: *, @δ: *, [α, γ, δ], α, [β, γ], β, δ]
   ≔ dove
 
-# D1 f x y g z = f x y (g z)
+# D1 f a b g c = f a b (g c)
 show let dickcissel
   : [@α: *, @β: *, @γ: *, @δ: *, @ε: *, f: [α, β, δ, ε], a: α, b: β, g: [γ, δ],
     c: γ, ε]
   ≔ a f b (c g)
 
-# D2 f g x h y = f (g x) (h y)
+# D2 f g a h b = f (g a) (h b)
 show let dovekie
   : [@α: *, @β: *, @γ: *, @δ: *, @ε: *, h: [γ, δ, ε], g: [α, γ], a: α,
     f: [β, δ], b: β, ε]
   ≔ (a g) h (b f)
 
-# E f x g y z = f x (g y z)
+# E f a g b c = f a (g b c)
 show let eagle
   : [@α: *, @β: *, @γ: *, @δ: *, @ε: *, f: [α, δ, ε], a: α, g: [β, γ, δ], b: β,
     c: γ, ε]
   ≔ a f (b g c)
 
-# Ê f g x y h z w = f (g x y) (h z w)
+# Ê f g a b h c d = f (g a b) (h c d)
 show let bald_eagle
   : [@α: *, @β: *, @γ: *, @δ: *, @ρ: *, @σ: *, @τ: *, f: [ρ, σ, τ],
     g: [α, β, ρ], a: α, b: β, h: [γ, δ, σ], c: γ, d: δ, τ]
   ≔ (a g b) f (c h d)
 
-# F x y f = f y x
+# F a b f = f b a
 show let finch: [@α: *, @β: *, @γ: *, a: α, b: β, f: [β, α, γ], γ] ≔ b f a
 
-# F* f x y z = f z y x
+# F* f a b c = f c b a
 show let finch_once_removed
   : [@α: *, @β: *, @γ: *, @δ: *, f: [γ, β, α, δ], a: α, b: β, c: γ, δ]
   ≔ c f b a
 
-# G f g x y = f y (g x)
+# G f g a b = f b (g a)
 show let goldfinch
   : [@α: *, @β: *, @γ: *, @δ: *, f: [β, γ, δ], g: [α, γ], a: α, b: β, δ]
   ≔ b f (a g)
 
-# H f x y = f x y x
+# H f a b = f a b a
 show let hummingbird: [@α: *, @β: *, @γ: *, f: [α, β, α, γ], a: α, b: β, γ]
   ≔ a f b a
 
-# J f x y z = f x (f z y)
-# x and z share a type.
+# J f a b c = f a (f c b)
+# a and c share a type.
 show let jay: [@α: *, @β: *, f: [α, β, β], a: α, b: β, c: α, β] ≔ a f (c f b)
 
-# joy f x y = f x
+# joy f a b = f a
 show let joy: [@α: *, @β: *, @γ: *, f: [α, γ], a: α, b: β, γ] ≔ a f
 
-# joy' f x y z = f x y
+# joy' f a b c = f a b
 show let joy′: [@α: *, @β: *, @γ: *, @δ: *, f: [α, β, δ], a: α, b: β, c: γ, δ]
   ≔ a f b
 
-# O x y = y (x y)
+# O a b = b (a b)
 show let owl: [@α: *, @β: *, f: [[α, β], α], b: [α, β], β] ≔ (b f) b
 
-# Q x y z = y (x z)
+# Q a b c = b (a c)
 show let queer: [@α: *, @β: *, @γ: *, g: [γ, α], f: [α, β], c: γ, β] ≔ (c g) f
 
-# Q1 x y z = x (z y)
+# Q1 a b c = a (c b)
 show let quixotic: [@α: *, @β: *, @γ: *, f: [α, γ], b: β, g: [β, α], γ]
   ≔ (b g) f
 
-# Q2 x y z = y (z x)
+# Q2 a b c = b (c a)
 show let quizzical: [@α: *, @β: *, @γ: *, a: α, g: [β, γ], f: [α, β], γ]
   ≔ (a f) g
 
-# Q3 x y z = z (x y)
+# Q3 a b c = c (a b)
 show let quirky: [@α: *, @β: *, @γ: *, g: [β, α], b: β, f: [α, γ], γ] ≔ (b g) f
 
-# Q4 x y z = z (y x)
+# Q4 a b c = c (b a)
 show let quacky: [@α: *, @β: *, @γ: *, a: α, f: [α, β], g: [β, γ], γ] ≔ (a f) g
 
-# R x y z = y z x
+# R a b c = b c a
 show let robin: [@α: *, @β: *, @γ: *, a: α, f: [γ, α, β], c: γ, β] ≔ c f a
 
-# R* f x y z = f y z x
+# R* f a b c = f b c a
 show let robin_once_removed
   : [@α: *, @β: *, @γ: *, @δ: *, f: [β, γ, α, δ], a: α, b: β, c: γ, δ]
   ≔ b f c a
 
-# R** f x y z w = f x z w y
+# R** f a b c d = f a c d b
 show let robin_twice_removed
   : [@α: *, @β: *, @γ: *, @δ: *, @ε: *, f: [α, γ, δ, β, ε], a: α, b: β, c: γ,
     d: δ, ε]
   ≔ a f c d b
 
-# S f g x = f x (g x)
+# S f g a = f a (g a)
 show let starling: [@α: *, @β: *, @γ: *, f: [α, β, γ], g: [α, β], a: α, γ]
   ≔ a f (a g)
 
-# T x y = y x
+# T a b = b a
 show let thrush: [@α: *, @β: *, a: α, f: [α, β], β] ≔ a f
 
-# V x y z = z x y
+# V a b c = c a b
 show let vireo: [@α: *, @β: *, @γ: *, a: α, b: β, f: [α, β, γ], γ] ≔ a f b
 
-# V* f x y z = f y x z
+# V* f a b c = f b a c
 show let vireo_once_removed
   : [@α: *, @β: *, @γ: *, @δ: *, f: [β, α, γ, δ], a: α, b: β, c: γ, δ]
   ≔ b f a c
 
-# V** f x y z w = f x w y z
+# V** f a b c d = f a d b c
 show let vireo_twice_removed
   : [@α: *, @β: *, @γ: *, @δ: *, @ε: *, f: [α, δ, β, γ, ε], a: α, b: β, c: γ,
     d: δ, ε]
   ≔ a f d b c
 
-# W f x = f x x
+# W f a = f a a
 show let warbler: [@α: *, @β: *, f: [α, α, β], a: α, β] ≔ a f a
 
-# W1 x y = y x x
+# W1 a b = b a a
 show let converse_warbler: [@α: *, @β: *, a: α, b: [α, α, β], β] ≔ a b a
 
 # another name for the converse warbler.
 show let worbler: [@α: *, @β: *, α, [α, α, β], β] ≔ converse_warbler
 
-# W* f x y = f x y y
+# W* f a b = f a b b
 show let warbler_once_removed
   : [@α: *, @β: *, @γ: *, f: [α, β, β, γ], a: α, b: β, γ]
   ≔ a f b b
 
-# W** f x y z = f x y z z
+# W** f a b c = f a b c c
 show let warbler_twice_removed
   : [@α: *, @β: *, @γ: *, @δ: *, f: [α, β, γ, γ, δ], a: α, b: β, c: γ, δ]
   ≔ a f b c c
 
-# Φ f g h x = f (g x) (h x)
+# Φ f g h a = f (g a) (h a)
 show let phoenix
   : [@α: *, @β: *, @γ: *, @δ: *, f: [β, γ, δ], g: [α, β], h: [α, γ], a: α, δ]
   ≔ (a g) f (a h)
 
-# S' f g h x = f (g x) (h x)
+# S' f g h a = f (g a) (h a)
 show let starling′
   : [@α: *, @β: *, @γ: *, @δ: *, [β, γ, δ], [α, β], [α, γ], α, δ]
   ≔ phoenix
 
-# Ψ f g x y = f (g x) (g y)
-# x and y share a type.
+# Ψ f g a b = f (g a) (g b)
+# a and b share a type.
 show let psi: [@α: *, @β: *, @γ: *, f: [β, β, γ], g: [α, β], a: α, b: α, γ]
   ≔ (a g) f (b g)
 
@@ -218,11 +218,11 @@ show let psi: [@α: *, @β: *, @γ: *, f: [β, β, γ], g: [α, β], a: α, b: �
 # unbounded pure recursion is not total. a `fast` declaration, whose type endeth
 # in an effect, is the fixed point for effects.
 # show let sage: [@α: *, f: [α, α], α] ≔ (f sage) f
-# L f x = f (x x)
-# show let f lark x [] (x x) f
-# M x = x x
-# show let x mockingbird [] x x
-# M2 x y = (x y) (x y)
-# show let x double-mockingbird y [] (y x) (y x)
-# U x y = y (x x y)
-# show let x turing y [] (y (x x)) y
+# L f a = f (a a)
+# show let f lark a [] (a a) f
+# M a = a a
+# show let a mockingbird [] a a
+# M2 a b = (a b) (a b)
+# show let a double-mockingbird b [] (b a) (b a)
+# U a b = b (a a b)
+# show let a turing b [] (b (a a)) b

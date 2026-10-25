@@ -70,8 +70,8 @@ deterministic =
     ("reaching an axiom is a runtime error", boolData ++ "axiom missing: 𝟚 yield missing", "eval error: reached axiom 'missing'"),
     ("a yielded value is computed in full", "type keep: * { keep_of: [kept: ℤ, missing: ℤ, keep] } yield +1 keep_of (sorry: ℤ)", "eval error: reached sorry"),
     ("a yielded effect is performed", "bring type/one.tung " ++ sleepBinding ++ "yield 0 sleep", "eval ok: only"),
-    ("effect_bind passeth a result on", effectPrelude ++ "let plus:[ℤ, ℤ, ℤ] ≔ 'add_integer' foreign yield (+2 sheer) bind { x ^ (x plus +1) sheer }", "eval ok: +3"),
-    ("an effect is a value until performed", effectPrelude ++ "let action:ℤ effect ≔ +1 sheer yield (let unused ≔ action yield +2)", "eval ok: +2"),
+    ("effect_bind passeth a result on", effectPrelude ++ "let plus:[ℤ, ℤ, ℤ] ≔ 'add_integer' foreign yield (+2 pure) bind { x ^ (x plus +1) pure }", "eval ok: +3"),
+    ("an effect is a value until performed", effectPrelude ++ "let action:ℤ effect ≔ +1 pure yield (let unused ≔ action yield +2)", "eval ok: +2"),
     ("class laws are erased", "bring is.tung class hath_identity:[a:*, *] { let identity:[a, a] let rule:[x: a, (x identity) = x] } bizen:ℤ hath_identity { let identity: [x:] ≔ x let rule ≔ sorry } yield +2 identity", "eval ok: +2"),
     ("result-only member useth expected type", "class hath_origin:[a:*, *] { let origin:a } bizen:ℤ hath_origin { let origin ≔ +7 } let value:ℤ ≔ origin yield value", "eval ok: +7"),
     ("different instances dispatch by inferred type", "class hath_label:[a:*, *] { let label:[a, string] } bizen:ℤ hath_label { let label: [_:] ≔ 'ℤ' } bizen:string hath_label { let label: [_:] ≔ 'string' } yield 'x' label", "eval ok: 'string'"),
@@ -255,7 +255,7 @@ importedCases imports =
     evalOkWith "tree keepeth its keys in order" "bring often.tung bring type/tree.tung let t ≔ ((empty put 'c' +3) put 'a' +1) put 'b' +2 yield t keys" imports "eval ok: ('a' ('b' ('c' empty ‥) ‥) ‥)",
     evalOkWith "tree put replaceth a key" "bring often.tung bring type/tree.tung let t ≔ (empty put 'a' +1) put 'a' +2 yield t lookup 'a'" imports "eval ok: (+2 some)",
     evalOkWith "tree rid droppeth a key and keepeth the rest" "bring often.tung bring type/tree.tung let t ≔ ((empty put 2 'b') put 1 'a') put 3 'c' yield (t rid 2) keys" imports "eval ok: (1 (3 empty ‥) ‥)",
-    evalOkWith "tree stayeth shallow under sorted puts" "bring often.tung bring class/functor/catamorphism.tung bring class/hath_manyhood.tung bring type/list.tung bring type/and.tung bring type/tree.tung let depth: [@α: *, @β: *, α tree β, ℕ] ≔ { leaf ^ 0, _ knot _ _ l r ^ ((l depth) ⋎ (r depth)) + 1 } let t: ℕ tree ℕ ≔ (0 eftfold 64) gather₁ (tree~empty ⸴ 0) {pair, _ ^ match pair { t ⸴ n ^ (t put n n) ⸴ (n + 1) }} $ project₀ yield (t depth) ⸴ (t manyhood)" imports "eval ok: (7 64 ⸴)",
+    evalOkWith "tree stayeth shallow under sorted puts" "bring often.tung bring class/functor/catamorphism.tung bring class/hath_manyhood.tung bring type/list.tung bring type/and.tung bring type/tree.tung let depth: [@α: *, @β: *, α tree β, ℕ] ≔ { leaf ^ 0, _ node _ _ l r ^ ((l depth) ⋎ (r depth)) + 1 } let t: ℕ tree ℕ ≔ (0 eftfold 64) gather₁ (tree~empty ⸴ 0) {pair, _ ^ match pair { t ⸴ n ^ (t put n n) ⸴ (n + 1) }} $ project₀ yield (t depth) ⸴ (t manyhood)" imports "eval ok: (7 64 ⸴)",
     evalOkWith "wordbook rid droppeth a key" "bring often.tung bring type/wordbook.tung let wordbook ≔ empty put 'a' +1 yield (wordbook rid 'a') lookup 'a'" imports "eval ok: none",
     evalOkWith "set put keepeth values unique" "bring often.tung bring type/set.tung yield ((empty put +1) put +1) to_list" imports "eval ok: (+1 empty ‥)",
     evalOkWith "set from_list sorteth and removeth duplicates" "bring often.tung bring type/list.tung bring type/set.tung yield (+2 ‥ (+1 ‥ (+2 ‥ list~empty))) set~from_list $ to_list" imports "eval ok: (+1 (+2 empty ‥) ‥)",
@@ -292,12 +292,12 @@ importedCases imports =
     evalOkWith "time spans drive async sleep" "bring often.tung bring type/milliseconds.tung yield (0 milliseconds) sleep_for" imports "eval ok: only",
     evalOkWith "process captureth standard output" "bring often.tung bring effect/process.tung bring process/outcome.tung bring type/list.tung bring type/or.tung yield 'printf' process~run ('hello' ‥ empty) $ map { outcome ^ outcome map output }" imports "eval ok: ('hello' inject₁)",
     evalOkWith "arctan range is nonnegative" "bring _foreign.tung yield 0.0 arctan_float -1.0" imports "eval ok: 4.71238898038469",
-    evalOkWith "fork and wait" "bring often.tung let work:ℤ effect ≔ +42 sheer yield work fork $ bind wait" imports "eval ok: (+42 some)",
-    evalOkWith "task result may be awaited repeatedly" "bring often.tung let work:ℤ effect ≔ +21 sheer yield work fork $ bind { task ^ (task wait) lift₂ (task wait) { a, b ^ a lift₂ b + } }" imports "eval ok: (+42 some)",
-    evalOkWith "task wait may time out" "bring often.tung let work:ℤ effect ≔ (200 sleep) then (+42 sheer) yield work fork $ bind { task ^ task wait_for 0 }" imports "eval ok: none",
-    evalOkWith "task wait_for returneth a finished value" "bring often.tung let work:ℤ effect ≔ +42 sheer yield work fork $ bind { task ^ task wait_for 1000 }" imports "eval ok: (+42 some)",
-    evalOkWith "a cancelled task yieldeth none" "bring often.tung let work:ℤ effect ≔ (1000 sleep) then (+42 sheer) yield work fork $ bind { task ^ (task strike) then (task wait) }" imports "eval ok: none",
-    evalOkWith "cpu-bound task remaineth cancellable" "bring often.tung fast turn:ℤ effect ≔ (only sheer) bind { _ ^ turn } yield turn fork $ bind { task ^ (task strike) then (task wait) }" imports "eval ok: none",
+    evalOkWith "fork and wait" "bring often.tung let work:ℤ effect ≔ +42 pure yield work fork $ bind wait" imports "eval ok: (+42 some)",
+    evalOkWith "task result may be awaited repeatedly" "bring often.tung let work:ℤ effect ≔ +21 pure yield work fork $ bind { task ^ (task wait) lift₂ (task wait) { a, b ^ a lift₂ b + } }" imports "eval ok: (+42 some)",
+    evalOkWith "task wait may time out" "bring often.tung let work:ℤ effect ≔ (200 sleep) then (+42 pure) yield work fork $ bind { task ^ task wait_for 0 }" imports "eval ok: none",
+    evalOkWith "task wait_for returneth a finished value" "bring often.tung let work:ℤ effect ≔ +42 pure yield work fork $ bind { task ^ task wait_for 1000 }" imports "eval ok: (+42 some)",
+    evalOkWith "a cancelled task yieldeth none" "bring often.tung let work:ℤ effect ≔ (1000 sleep) then (+42 pure) yield work fork $ bind { task ^ (task strike) then (task wait) }" imports "eval ok: none",
+    evalOkWith "cpu-bound task remaineth cancellable" "bring often.tung fast turn:ℤ effect ≔ (only pure) bind { _ ^ turn } yield turn fork $ bind { task ^ (task strike) then (task wait) }" imports "eval ok: none",
     evalTypeErrWith "an opaque task cannot be eliminated as an empty family" "bring often.tung let unwrap:[value:ℤ task, ℤ] ≔ match value {} yield +0" imports,
     concurrentForks imports,
     randomRange imports,
@@ -384,7 +384,7 @@ concurrentForks imports =
     -- already-available result testeth overlap without timing the whole compiler.
     source =
       "bring often.tung "
-        ++ "let work:ℤ effect ≔ (600 sleep) then (+21 sheer) "
+        ++ "let work:ℤ effect ≔ (600 sleep) then (+21 pure) "
         ++ "yield work fork $ bind { left ^ work fork $ bind { right ^ (left wait) then (right wait_for 100) } }"
 
 systemArguments :: Map.Map String String -> Test
@@ -421,5 +421,5 @@ boolData, optionData, rowData, effectPrelude, sleepBinding :: String
 boolData = "type 𝟚: * { yea: 𝟚, nay: 𝟚 } "
 optionData = "type optional: [a:*, *] { none: a optional, some: [a, a optional] } "
 rowData = boolData ++ "type row: * { stop: row, more: [𝟚, row, row] } let ones: [n: ℕ, row] ≔ match n { 0 ^ stop, k next ^ yea more (k ones) } "
-effectPrelude = "let sheer:[@a:*, a, a effect] ≔ 'effect_sheer' foreign let bind:[@a:*, @b:*, a effect, [a, b effect], b effect] ≔ 'effect_bind' foreign "
+effectPrelude = "let pure:[@a:*, a, a effect] ≔ 'effect_pure' foreign let bind:[@a:*, @b:*, a effect, [a, b effect], b effect] ≔ 'effect_bind' foreign "
 sleepBinding = "let sleep:[ℕ, 𝟙 effect] ≔ 'sleep' foreign "

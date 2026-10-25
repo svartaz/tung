@@ -20,25 +20,25 @@ bizen: bare functor {
 }
 
 bizen: bare applicative {
-  let sheer ≔ wrap
+  let pure ≔ wrap
 
   let apply: [a wrap:, f wrap:] ≔ (a f) wrap
 
-  let apply_identity_sheer: [_ wrap:] ≔ reflect
+  let apply_identity_pure: [_ wrap:] ≔ reflect
 
-  let sheer_apply_sheer: [_:, _:] ≔ reflect
+  let pure_apply_pure: [_:, _:] ≔ reflect
 
   let apply_apply: [_ wrap:, _:, _:] ≔ reflect
 
-  let sheer_apply: [_:, _ wrap:] ≔ reflect
+  let pure_apply: [_:, _ wrap:] ≔ reflect
 }
 
 bizen: bare monad {
   let flat: [a wrap:] ≔ a
 
-  let sheer_bind: [_:, _:] ≔ reflect
+  let pure_bind: [_:, _:] ≔ reflect
 
-  let map_sheer_flat: [_ wrap:] ≔ reflect
+  let map_pure_flat: [_ wrap:] ≔ reflect
 
   let bind_bind: [_ wrap:, _:, _:] ≔ reflect
 }

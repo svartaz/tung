@@ -93,7 +93,7 @@ tests compiled example =
       compiled (example ++ "let wrong:ℤ ≔ 1\n"),
     rejectContaining "a comparison yieldeth library's 𝟚" "requireth a different type" $
       compiled (example ++ "type three:* { a: three, b: three, c: three }\nlet bad:[float, float, three] ≔ 'equal_float' foreign\n"),
-    expectEq "the runner computeth sheer host functions" (Right (Right 0, "5")) $
+    expectEq "the runner computeth pure host functions" (Right (Right 0, "5")) $
       compiled (example ++ "let write:[string, 𝟙 effect] ≔ 'write' foreign\nlet main:𝟙 effect ≔ (+2 + +3) to_string $ write\n")
         >>= (`runSimulated` [])
   ]

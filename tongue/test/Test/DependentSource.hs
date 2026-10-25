@@ -338,7 +338,7 @@ rejectionTests =
           let applied:[f:[ℤ, person], x:ℤ, (x f).age = (x f).age] ≔ sorry
           let called:[h:holder, x:ℤ, y:ℤ, (x h.run y) = (x h.run y)] ≔ sorry
           """,
-    expectEq "dependent field types and goal contexts retain their names" (Right ("[x: packed, x.value is~= x.value]", "[x: packed, x.value is~= x.value]", [("p.value = p.value", [("p", "packed"), ("q", "p.value = p.value")])])) do
+    expectEq "dependent field types and goal contexts retain their names" (Right ("[a: packed, a.value is~= a.value]", "[a: packed, a.value is~= a.value]", [("p.value = p.value", [("p", "packed"), ("q", "p.value = p.value")])])) do
       program <-
         compile
           """
@@ -358,9 +358,9 @@ rejectionTests =
     expectEq "a sorry recordeth its goal and named context" (Right [("α", [("α", "*"), ("b", "α box"), ("a", "α")])]) $
       map (\Hole {holeGoal, holeContext} -> (holeGoal, holeContext)) . sourceHoles
         <$> compile "type box:[α:*, *] {boxed:[α, α box]}\nlet unbox:[@α:*, b:α box, α] ≔ match b { a boxed ^ sorry }",
-    expectEq "matching a proof rewriteth its index" (Right "[@α: *, @x: α, @y: α, x is~= y, y is~= x]") $
+    expectEq "matching a proof rewriteth its index" (Right "[@α: *, @a: α, @b: α, a is~= b, b is~= a]") $
       compile ("let symmetry: [@α: *, @x: α, @y: α, p: x = y, y = x] ≔ match p { reflect ^ reflect }") >>= (`typeOfName` "symmetry"),
-    expectEq "a constructor slot after implicit slots matcheth its input" (Right "[@α: *, @x: α, @y: α, x is~= y, y is~= x]") $
+    expectEq "a constructor slot after implicit slots matcheth its input" (Right "[@α: *, @a: α, @b: α, a is~= b, b is~= a]") $
       compile ("let symmetry: [@α: *, @x: α, @y: α, reflect: x = y, y = x] ≔ reflect") >>= (`typeOfName` "symmetry")
   ]
 

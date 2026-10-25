@@ -16,7 +16,7 @@ let copy: [@n: ℕ, n chain, n chain] ≔ {
   _ link (m link child) ^ (m next) link (m link (child copy))
 }
 
-let accumulate: [n: ℕ, x: n chain, whole: ℕ, ℕ] ≔ match x {
+let accumulate: [n: ℕ, a: n chain, whole: ℕ, ℕ] ≔ match a {
   empty                 ^ whole,
   _ link empty          ^ whole next,
   _ link (m link child) ^ m accumulate child ((whole next) next)
@@ -34,7 +34,7 @@ let laps: [0 cycle, ℕ] ≔ {
   (child up) down ^ (child laps) next
 }
 
-let turns: [k: ℕ, x: (k next) cycle, ℕ] ≔ match x {
+let turns: [k: ℕ, (k next) cycle, ℕ] ≔ {
   stop up         ^ 0,
   (child down) up ^ (0 turns child) next
 }

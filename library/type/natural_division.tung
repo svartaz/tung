@@ -47,8 +47,8 @@ show let ∣_·: [a: ℕ, b: ℕ, c: ℕ, first: a ∣ b, a ∣ (b · c)] ≔ ma
 }
 
 ## dividing a tale is dividing any tale the same as it.
-let lemma_∣_=: [d: ℕ, @x: ℕ, @y: ℕ, equal: x = y, held: d ∣ x, d ∣ y]
-  ≔ equal throughbear @ℕ @x @y @(d ∣) held
+let lemma_∣_=: [d: ℕ, @a: ℕ, @b: ℕ, equal: a = b, held: d ∣ a, d ∣ b]
+  ≔ equal throughbear @ℕ @a @b @(d ∣) held
 
 ## adding one tale to both sides keepeth the difference.
 let lemma_+_∸_+: [a: ℕ, b: ℕ, c: ℕ, ((a + c) ∸ (b + c)) = (a ∸ b)] ≔ match c {

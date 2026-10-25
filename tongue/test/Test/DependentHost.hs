@@ -32,7 +32,7 @@ tests compiled example =
         world {worldEnvironment = [("GREETING", "hello")]},
     expectEq "exit endeth the run with its status" (Right (Right 3, "before\n")) $
       fmap worldOutput <$> run (host ++ "let exit:[@a:*, ℕ, a effect] ≔ 'exit' foreign\nlet main:𝟙 effect ≔ ('before' line) then (3 exit)\n") world,
-    expectEq "a failed task hath no result" (Right (Right 0, "no result\n")) $
+    expectEq "a failed task hath no outcome" (Right (Right 0, "no outcome\n")) $
       output (host ++ "let exit:[@a:*, ℕ, a effect] ≔ 'exit' foreign\nlet main:𝟙 effect ≔ (3 exit) fork $ await\n") world
   ]
   where

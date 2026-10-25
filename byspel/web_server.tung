@@ -9,7 +9,7 @@ let respond: [r: _request, _response] ≔ match (r request~target) ≍ '/' {
 }
 
 let route: [r: _request, _response effect]
-  ≔ ('request:' · (r request~target) $ write_line) then (r respond $ sheer)
+  ≔ ('request:' · (r request~target) $ write_line) then (r respond $ pure)
 
 let main: 𝟙 effect
   ≔ 8080 serve route $ bind {message ^ 'web server:' · message $ write_line}

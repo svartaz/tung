@@ -126,7 +126,21 @@ mutualModuleTests =
     expectEq "declaration cycle diagnostics retain the first name's span" (Right expected) $
       case compileProjectDetailed Map.empty (SourceModule "cycle.tung") "let a:* ≔ b\nlet b:* ≔ a" Map.empty of
         Left failure -> Right failure
-        Right _ -> Left "accepted a declaration cycle"
+        Right _ -> Left "accepted a declaration cycle",
+    -- `helper` meeteth its use of `other` with its own requirement, so its
+    -- wait for the module's `child` bizen giveth way to the cycle it closeth.
+    expectEq "a member use met by its own requirement doth not wait in a cycle" (Right ()) $
+      ()
+        <$ compile
+          """
+          class parent:[α:*, *] { let tag:α }
+          class child:[α:*, @:α parent, *] { let other:α }
+          type box:[α:*, *] { wrap:[α, α box] }
+          let helper:[@α:*, @:α child, α box] ≔ (other @α) wrap
+          bizen:[@α:*, @:α child, (α box) parent] { let tag ≔ helper }
+          bizen:[@α:*, @:α child, (α box) child] { let other ≔ (tag @α) wrap }
+          """
+          []
   ]
     ++ [ rejectContaining label "declaration cycle" (compile source [])
        | (label, source) <-

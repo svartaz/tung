@@ -182,9 +182,9 @@ when types are compared.
 ```tung
 let count ≔ 42
 let answer: ℤ ≔ +42
-let identity: [@α: *, x: α, α] ≔ x
-let call: [@α: *, @β: *, f: [α, β], x: α, β] ≔ x f
-let add_after: [x:, y: ℤ, ℤ] ≔ x + y
+let identity: [@α: *, a: α, α] ≔ a
+let call: [@α: *, @β: *, f: [α, β], a: α, β] ≔ a f
+let add_after: [a:, b: ℤ, ℤ] ≔ a + b
 ```
 
 `let name ≔ body` inferreth a type; `let name: annotation ≔ body` checketh
@@ -198,7 +198,7 @@ against one. the header is one name; inputs belong in the annotation:
 - bare input types bind no names; the body supplieth their function.
 - named and implicit slots precede bare slots. after a named last slot the
   result may be omitted for inference.
-- the tidier writeth `x: α`: no space before `:`, one after.
+- the tidier writeth `a: α`: no space before `:`, one after.
 
 a let's type must be determined: unknown types are never implicitly
 quantified, so write polymorphic parameters. every name in an annotation is
@@ -210,7 +210,7 @@ ordinary transparent type function; it may take value inputs or requirements
 and be partially applied:
 
 ```tung
-let identity ≔ function @α: *, x: α, α ^ x
+let identity ≔ function @α: *, a: α, α ^ a
 let powerset: [α: *, *] ≔ [α, 𝟚]
 let integer_type: * ≔ ℤ
 ```
@@ -234,7 +234,7 @@ without one rejecteth `@`. omitted inputs are inferred or found by
 declared type, even when unused.
 
 ```tung
-let f: [@α: *, @β: *, x: α, _: β, α] ≔ x
+let f: [@α: *, @β: *, a: α, _: β, α] ≔ a
 'x' f empty
 'x' f @string empty
 'x' f @string @(string list) empty
@@ -249,7 +249,7 @@ quantifiers may occur at any rank; higher rank needeth annotations:
 ```tung
 type pair: * { pair_of: [ℤ, string, pair] }
 let both: [f: [@α: *, α, α], pair] ≔ (+1 f) pair_of ('x' f)
-let make: [_: ℤ, [@α: *, α, α]] ≔ {x ^ x}
+let make: [_: ℤ, [@α: *, α, α]] ≔ {a ^ a}
 ```
 
 `both` requireth one function for every `α`, instantiated at each call;
@@ -286,7 +286,7 @@ partly applied, or passed on, with no structural check:
 
 ```tung
 fast gather: [seen: string list, (string list) effect] ≔ read bind {
-  none      ^ seen sheer,
+  none      ^ seen pure,
   line some ^ (line ‥ seen) gather
 }
 ```
@@ -334,7 +334,7 @@ type tag: [α: *, *] {
   integer: [ℤ, ℤ tag],
   textual: [string, string tag]
 }
-let unpack: [@α: *, x: α tag, α] ≔ match x {
+let unpack: [@α: *, a: α tag, α] ≔ match a {
   n integer ^ n,
   s textual ^ s
 }
@@ -365,7 +365,7 @@ let classify: [string, ℤ] ≔ {'yes' ^ +1, _ ^ +0}
 - `^` separateth patterns from the result; `;` joineth complete alternative
   rows that share one result.
 - a variable bindeth once per row; `_` discardeth.
-- constructors follow second-is-function order, as `x ‥ leftover`.
+- constructors follow second-is-function order, as `a ‥ leftover`.
 - natural, integer, and string literals match exactly; integer and string
   literal rows need a catch-all. `0` and `n next` cover the naturals.
 - rows must be exhaustive and non-redundant; impossible constructors need no
@@ -401,7 +401,7 @@ parameters, a motive, one method per constructor, indices, and the value:
 
 ```tung
 let doubled: [l: ℕ list, ℕ list] ≔
-  {_: ℕ list ^ ℕ list} unbuild list empty {x, _, leftover ^ x ‥ (x ‥ leftover)} l
+  {_: ℕ list ^ ℕ list} unbuild list empty {a, _, leftover ^ a ‥ (a ‥ leftover)} l
 ```
 
 mutual induction taketh one motive per family, then methods in family and
@@ -433,7 +433,7 @@ with named parameters and optional `@: parent` requirements:
 ```tung
 class hath_≍: [α: *, *] {
   let ≍: [α, α, 𝟚]
-  let ≍_reflect: [x: α, (x ≍ x) = yea]
+  let ≍_reflect: [a: α, (a ≍ a) = yea]
 }
 
 bizen: 𝟚 hath_≍ {
@@ -482,7 +482,7 @@ make the branch impossible. `≍` is boolean equality; `≔` defineth a name.
 bring is.tung
 let one: ℕ ≔ 1
 let checked: one = 1 ≔ reflect
-let symmetry: [@α: *, @x: α, @y: α, p: x = y, y = x] ≔
+let symmetry: [@α: *, @a: α, @b: α, p: a = b, b = a] ≔
   match p {reflect ^ reflect}
 ```
 
@@ -516,7 +516,7 @@ constructor fields; contained functions and effects stay unperformed.
 
 `effect.tung` provideth the monad operations:
 
-- `sheer` wrappeth a value; `map` changeth the result; `bind` chooseth the
+- `pure` wrappeth a value; `map` changeth the result; `bind` chooseth the
   next effect from it; `then` performeth two and keepeth the latter result, and
   `>{then, a, b, c}` performeth several in order.
 - `lift₂`, `apply`, and `each` perform effects left to right.

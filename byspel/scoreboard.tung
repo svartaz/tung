@@ -81,7 +81,7 @@ let delay_of: [luck: float, ℕ] ≔ match (luck · 30.0) ⌊ $ bind to_ℕ {
 }
 
 let start: [g: game, (match_outcome task) effect]
-  ≔ random bind {luck ^ ((luck delay_of) sleep) then (g settle $ sheer) $ fork}
+  ≔ random bind {luck ^ ((luck delay_of) sleep) then (g settle $ pure) $ fork}
 
 let add_outcome: [standing, match_outcome, standing] ≔ {
   s, _ outstruck ^ s,
@@ -144,7 +144,7 @@ let initial_standings: standing list ≔ >{‥,
   empty
 }
 
-## a cancelled or crashed task leaveth no results.
+## a cancelled or crashed task leaveth no outcomes.
 let finished_outcomes
   : [waited: (match_outcome optional) list, match_outcome list]
   ≔ match waited sequence {
@@ -154,7 +154,7 @@ let finished_outcomes
 
 let eftbare: [outcomes: match_outcome list, 𝟙 effect] ≔ >{then,
   '' write_line,
-  'results' write_line,
+  'outcomes' write_line,
   outcomes each print_outcome,
   '' write_line,
   'standings' write_line,

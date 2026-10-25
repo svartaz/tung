@@ -120,7 +120,7 @@ show map
 
 show bimap
 
-show sheer, apply, lift₂, lift₃, keep_first, keep_other
+show pure, apply, lift₂, lift₃, keep_first, keep_other
 
 show flat, bind, then, void
 

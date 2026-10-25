@@ -2,27 +2,247 @@ bring class/algebra/partial/category.tung
 bring class/algebra/partial/semigroupoid.tung
 bring class/functor.tung
 bring class/functor/applicative.tung
+bring class/functor/bifunctor.tung
 bring class/functor/monad.tung
 bring combinator.tung
 bring is.tung
-bring type/hade/applicative_bizen.tung
-bring type/hade/building.tung
+bring type/and.tung
+bring type/one.tung
 
-show hade, wrap, unwrap, get, put, tweak, lift
+## a step that readeth and replaceth a hade `σ` as it runneth in a monad
+## `φ`. it wrappeth `[σ, (α ∧ σ) φ]`, so that it hath its own monad: `bind`
+## handeth the hade left by one step to the next. `σ hade effect α` may perform
+## effects, and `σ hade bare α` is pure. its laws follow from `φ`'s.
+show type hade: [σ: *, φ: [*, *], α: *, *] {
+  wrap: [[σ, (α ∧ σ) φ], σ hade φ α]
+}
+
+## the step a hade wrappeth, run from a starting hade; it yieldeth the outcome
+## and the last hade.
+show let unwrap
+  : [@σ: *, @φ: [*, *], @α: *, step wrap: σ hade φ α, s: σ, (α ∧ σ) φ]
+  ≔ s step
+
+## the current hade.
+show let get: [@σ: *, @φ: [*, *], @: φ monad, σ hade φ σ] ≔ {
+  s ^ (s ⸴ s) applicative~pure
+} wrap
+
+## replace the hade.
+show let put: [@σ: *, @φ: [*, *], @: φ monad, t: σ, σ hade φ 𝟙] ≔ {
+  _ ^ (only ⸴ t) applicative~pure
+} wrap
+
+## tweak the hade.
+show let tweak: [@σ: *, @φ: [*, *], @: φ monad, f: [σ, σ], σ hade φ 𝟙] ≔ {
+  s ^ (only ⸴ (s f)) applicative~pure
+} wrap
+
+## run a step of `φ` that leaveth the hade alone.
+show let lift: [@σ: *, @φ: [*, *], @: φ monad, @α: *, doing: α φ, σ hade φ α]
+  ≔ {s ^ doing monad~bind {a ^ (a ⸴ s) applicative~pure}} wrap
+
+## binding to a function is binding to any function that agreeth with it at
+## every outcome.
+let lemma_bind_equal
+  : [@φ: [*, *], @: φ monad, @α: *, @β: *, m: α φ, @f: [α, β φ], @g: [α, β φ],
+    pointwise: [a: α, (a f) = (a g)], (m monad~bind f) = (m monad~bind g)]
+  ≔ (m monad~bind) leibnitz (pointwise extend)
+
+let pure: [@σ: *, @φ: [*, *], @: φ monad, @α: *, a: α, σ hade φ α] ≔ {
+  s ^ (a ⸴ s) applicative~pure
+} wrap
+
+let map
+  : [@σ: *, @φ: [*, *], @: φ monad, @α: *, @β: *, m: σ hade φ α, f: [α, β],
+    σ hade φ β]
+  ≔ {s ^ (m unwrap s) monad~bind {p ^ (p bimap f identity) applicative~pure}}
+  wrap
+
+## the continuation of `flat`: run the inner step from the hade left.
+let unfold: [@σ: *, @φ: [*, *], @α: *, inner ⸴ t: (σ hade φ α) ∧ σ, (α ∧ σ) φ]
+  ≔ inner unwrap t
+
+let flat
+  : [@σ: *, @φ: [*, *], @: φ monad, @α: *, m: σ hade φ (σ hade φ α), σ hade φ α]
+  ≔ {s ^ (m unwrap s) monad~bind unfold} wrap
+
+## a hade is the wrap of its step.
+let wrap_unwrap
+  : [@σ: *, @φ: [*, *], @α: *, m: σ hade φ α, ((m unwrap) wrap) = m]
+  ≔ match m { _ wrap ^ reflect }
+
+let lemma_bimap_identity
+  : [@σ: *, @φ: [*, *], @: φ monad, @α: *, p: α ∧ σ,
+    ((p bimap identity identity) applicative~pure @φ) = (p applicative~pure @φ)]
+  ≔ match p { _ ⸴ _ ^ reflect }
+
+let lemma_bimap_bimap
+  : [@σ: *, @φ: [*, *], @: φ monad, @α: *, @β: *, @γ: *, p: α ∧ σ, f: [α, β],
+    g: [β, γ],
+    (((p bimap f identity) bimap g identity) applicative~pure @φ) =
+      ((p bimap (f ▷ g) identity) applicative~pure @φ)]
+  ≔ match p { _ ⸴ _ ^ reflect }
+
+let lemma_map_map
+  : [@σ: *, @φ: [*, *], @: φ monad, @α: *, @β: *, @γ: *, p: α ∧ σ, f: [α, β],
+    g: [β, γ],
+    (((p bimap f identity) applicative~pure @φ) monad~bind {
+      q ^ (q bimap g identity) applicative~pure
+    }) = ((p bimap (f ▷ g) identity) applicative~pure)]
+  ≔ ((p bimap f identity) pure_bind {q ^ (q bimap g identity) applicative~pure})
+    transit (p lemma_bimap_bimap f g)
+
+let map_identity
+  : [@σ: *, @φ: [*, *], @: φ monad, @α: *, m: σ hade φ α, (m map identity) = m]
+  ≔ match m {
+    step wrap ^
+      wrap leibnitz
+        ({
+          s ^
+            ((s step) lemma_bind_equal lemma_bimap_identity) transit
+              ((s step) monad~map_pure_flat)
+        } extend)
+  }
+
+let map_map
+  : [@σ: *, @φ: [*, *], @: φ monad, @α: *, @β: *, @γ: *, m: σ hade φ α,
+    f: [α, β], g: [β, γ], <{map, m, f, g} = (m map (f ▷ g))]
+  ≔ match m {
+    step wrap ^
+      wrap leibnitz
+        ({
+          s ^ >{transit,
+            (s step) bind_bind {p ^ (p bimap f identity) applicative~pure} {
+              p ^ (p bimap g identity) applicative~pure
+            },
+            (s step) lemma_bind_equal (_ lemma_map_map f g)
+          }
+        } extend)
+  }
+
+let pure_map
+  : [@σ: *, @φ: [*, *], @: φ monad, @α: *, @β: *, a: α, f: [α, β],
+    ((a pure @σ @φ) map f) = ((a f) pure)]
+  ≔ wrap leibnitz
+    ({s ^ (a ⸴ s) pure_bind {p ^ (p bimap f identity) applicative~pure}} extend)
+
+let pure_flat
+  : [@σ: *, @φ: [*, *], @: φ monad, @α: *, m: σ hade φ α,
+    ((m pure @σ @φ) flat) = m]
+  ≔ (wrap leibnitz ({s ^ (m ⸴ s) pure_bind unfold} extend)) transit
+    (m wrap_unwrap)
+
+## wrapping an outcome with `pure` and unfolding it yieldeth it again.
+let lemma_pure_unfold
+  : [@σ: *, @φ: [*, *], @: φ monad, @α: *, p: α ∧ σ,
+    (((p bimap pure identity) applicative~pure @φ) monad~bind unfold) =
+      (p applicative~pure)]
+  ≔ match p { a ⸴ t ^ ((a pure) ⸴ t) pure_bind unfold }
+
+let map_pure_flat
+  : [@σ: *, @φ: [*, *], @: φ monad, @α: *, m: σ hade φ α,
+    ((m map pure) flat) = m]
+  ≔ match m {
+    step wrap ^
+      wrap leibnitz
+        ({
+          s ^ >{transit,
+            (s step) bind_bind {p ^ (p bimap pure identity) applicative~pure}
+              unfold,
+            (s step) lemma_bind_equal lemma_pure_unfold,
+            (s step) monad~map_pure_flat
+          }
+        } extend)
+  }
+
+## run a step, then the hade its outcome chooseth, from the hade left.
+let bind
+  : [@σ: *, @φ: [*, *], @: φ monad, @α: *, @β: *, m: σ hade φ α,
+    f: [α, σ hade φ β], σ hade φ β]
+  ≔ {s ^ (m unwrap s) monad~bind {p ^ (p bimap f identity) unfold}} wrap
+
+## mapping into hades and then flattening is binding.
+let map_flat
+  : [@σ: *, @φ: [*, *], @: φ monad, @α: *, @β: *, m: σ hade φ α,
+    f: [α, σ hade φ β], ((m map f) flat) = (m bind f)]
+  ≔ wrap leibnitz
+    ({
+      s ^ >{transit,
+        (m unwrap s) bind_bind {p ^ (p bimap f identity) applicative~pure}
+          unfold,
+        (m unwrap s) lemma_bind_equal {
+          p ^ (p bimap f identity) pure_bind unfold
+        }
+      }
+    } extend)
+
+## binding twice is binding once by the bound continuation.
+let lemma_bind_bind
+  : [@σ: *, @φ: [*, *], @: φ monad, @α: *, @β: *, @γ: *, m: σ hade φ α,
+    f: [α, σ hade φ β], g: [β, σ hade φ γ],
+    <{bind, m, f, g} = (m bind {a ^ (a f) bind g})]
+  ≔ wrap leibnitz
+    ({
+      s ^
+        (m unwrap s) bind_bind {p ^ (p bimap f identity) unfold} {
+          p ^ (p bimap g identity) unfold
+        }
+    } extend)
+
+bizen: [@σ: *, @φ: [*, *], @: φ monad, (σ hade φ) functor] {
+  let map ≔ map
+
+  let map_identity ≔ map_identity
+}
+
+bizen: [@σ: *, @φ: [*, *], @: φ monad, (σ hade φ) applicative] {
+  let pure ≔ pure
+
+  let apply: [m:, f…:] ≔ (f… map (m map)) flat
+
+  let apply_identity_pure: [m:] ≔ >{transit,
+    flat leibnitz (identity pure_map (m map)),
+    (m map identity) pure_flat,
+    m map_identity
+  }
+
+  let pure_apply_pure: [a:, f:] ≔ >{transit,
+    flat leibnitz (f pure_map ((a pure) map _)),
+    ((a pure) map f) pure_flat,
+    a pure_map f
+  }
+
+  let apply_apply: [m:, f:, g:] ≔ >{transit,
+    flat leibnitz (g pure_map ((((f pure) map (m map)) flat) map _)),
+    ((((f pure) map (m map)) flat) map g) pure_flat,
+    (_ map g) leibnitz
+      ((flat leibnitz (f pure_map (m map))) transit ((m map f) pure_flat)),
+    m map_map f g,
+    ((flat leibnitz ((f ▷ g) pure_map (m map))) transit
+      ((m map (f ▷ g)) pure_flat)) symmetry
+  }
+
+  let pure_apply: [a:, f…:] ≔ >{transit,
+    {k ^ (f… map k) flat} leibnitz ((a pure_map) extend),
+    flat leibnitz ((f… map_map (a ▶) pure) symmetry),
+    (f… map (a ▶)) map_pure_flat
+  }
+}
 
 bizen: [@σ: *, @φ: [*, *], @: φ monad, (σ hade φ) monad] {
-  let flat ≔ building~flat
+  let flat ≔ flat
 
-  let sheer_bind: [a:, f:]
-    ≔ (building~flat leibnitz (a sheer_map f)) transit ((a f) sheer_flat)
+  let pure_bind: [a:, f:]
+    ≔ (flat leibnitz (a pure_map f)) transit ((a f) pure_flat)
 
-  let map_sheer_flat ≔ building~map_sheer_flat
+  let map_pure_flat ≔ map_pure_flat
 
   let bind_bind: [m:, f:, g:] ≔ >{transit,
-    (m building~map f $ building~flat) map_flat g,
-    (_ building~bind g) leibnitz (m map_flat f),
+    (m map f $ flat) map_flat g,
+    (_ bind g) leibnitz (m map_flat f),
     m lemma_bind_bind f g,
-    (m building~bind) leibnitz ({a ^ ((a f) map_flat g) symmetry} extend),
-    (m map_flat {a ^ (a f) building~map g $ building~flat}) symmetry
+    (m bind) leibnitz ({a ^ ((a f) map_flat g) symmetry} extend),
+    (m map_flat {a ^ (a f) map g $ flat}) symmetry
   }
 }

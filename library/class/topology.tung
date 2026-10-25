@@ -91,18 +91,17 @@ show let either_open
     nay ^ v_open
   }}
 
-## a function is steady when the preimage of every open part is open.
-show let steady: [@α: *, @: α topology, @β: *, @: β topology, f: [α, β], *]
+## a function is continuous when the preimage of every open part is open.
+show let continuous: [@α: *, @: α topology, @β: *, @: β topology, f: [α, β], *]
   ≔ [v: [β, *], v open, (f preimage v) open]
 
-## `identity` is steady.
-show let identity_steady: [@α: *, @: α topology, (identity @α) steady] ≔ {
-  _, v_open ^ v_open
-}
+## `identity` is continuous.
+show let identity_continuous: [@α: *, @: α topology, (identity @α) continuous]
+  ≔ {_, v_open ^ v_open}
 
-## a steady function after a steady function is steady.
-show let ▷_steady
+## a continuous function after a continuous function is continuous.
+show let ▷_continuous
   : [@α: *, @: α topology, @β: *, @: β topology, @γ: *, @: γ topology,
-    f: [α, β], g: [β, γ], f_steady: f steady, g_steady: g steady,
-    (f ▷ g) steady]
-  ≔ {w, w_open ^ (g preimage w) f_steady (w g_steady w_open)}
+    f: [α, β], g: [β, γ], f_continuous: f continuous,
+    g_continuous: g continuous, (f ▷ g) continuous]
+  ≔ {w, w_open ^ (g preimage w) f_continuous (w g_continuous w_open)}

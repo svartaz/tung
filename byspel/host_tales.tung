@@ -2,7 +2,7 @@ bring type/and.tung
 bring type/one.tung
 ## pure host functions compute during checking when every input is a literal.
 ## a comparison returneth the library's `𝟚`; a partial operation returneth an
-## option, which is none when no result existeth.
+## option, which is none when no outcome existeth.
 bring type/optional.tung
 bring type/two.tung
 

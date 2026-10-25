@@ -76,7 +76,7 @@ tests example =
     rejectContaining "an ascribed sorry law must still have its declared type" "cannot unify string with" $
       compiled (example ++ "type unit:* { only:unit } bizen:unit hath_≍ { let ≍ ≔ {_, _ ^ yea} let ≍_reflect:string ≔ sorry }"),
     expectEq "a bizen may define a parent that hath no bizen" (Right True) do
-      program <- compiled (example ++ "type _box:[α:*, *] { box:[α, α _box] }\nbizen:_box applicative {\nlet map ≔ {a box, f ^ (a f) box}\nlet sheer ≔ {a ^ a box}\n}\nlet boxed:𝟚 _box ≔ (yea box) map {x ^ x}\n")
+      program <- compiled (example ++ "type _box:[α:*, *] { box:[α, α _box] }\nbizen:_box applicative {\nlet map ≔ {a box, f ^ (a f) box}\nlet pure ≔ {a ^ a box}\n}\nlet boxed:𝟚 _box ≔ (yea box) map {x ^ x}\n")
       sameNormalIn program "boxed" "yea box",
     expectEq "a law proof may match in its proposition" (Right ()) $
       ()

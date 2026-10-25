@@ -24,11 +24,11 @@ bizen: [@φ: [*, *], @: φ monad, (φ kleisli) semigroupoid] {
     ≔ wrap leibnitz ({a ^ ((a f) bind_bind g h) symmetry} extend)
 }
 
-## `sheer` is the identity arrow.
+## `pure` is the identity arrow.
 bizen: [@φ: [*, *], @: φ monad, (φ kleisli) category] {
-  let identity ≔ sheer wrap
+  let identity ≔ pure wrap
 
-  let identity_▷: [f wrap:] ≔ wrap leibnitz ((_ sheer_bind f) extend)
+  let identity_▷: [f wrap:] ≔ wrap leibnitz ((_ pure_bind f) extend)
 
-  let ▷_identity: [f wrap:] ≔ wrap leibnitz ({a ^ (a f) map_sheer_flat} extend)
+  let ▷_identity: [f wrap:] ≔ wrap leibnitz ({a ^ (a f) map_pure_flat} extend)
 }

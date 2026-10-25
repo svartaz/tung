@@ -140,22 +140,22 @@ lawPrograms = twoLaws ++ concatMap carrierLaws carriers
       ]
     pairs items = [(a, b) | a <- items, b <- items]
     triples items = [(a, b, c) | a <- items, b <- items, c <- items]
-    -- a carrier's name, its small bracketed, its `sheer` type, and a function
+    -- a carrier's name, its small bracketed, its `pure` type, and a function
     -- into it.
     carriers =
       [ ("list", ["empty", "+0 ‥ empty", "+1 ‥ (-2 ‥ empty)", "+1 ‥ (+1 ‥ (+0 ‥ empty))"], "ℤ list", "{x: ℤ ^ x ‥ ((x + +1) ‥ empty)}", "f ‥ (g ‥ empty)"),
         ("optional", ["none", "+0 some", "-2 some"], "ℤ optional", "{x: ℤ ^ (x ≍ +0) if none ((x + +1) some)}", "f some")
       ]
-    carrierLaws (carrier, written, sheerType, k, fs) =
+    carrierLaws (carrier, written, pureType, k, fs) =
       [ law (carrier ++ " map keepeth identity") bracketed (\l -> l ++ " map identity") id,
         law (carrier ++ " map composeth") bracketed (\l -> "(" ++ l ++ " map f) map g") (\l -> l ++ " map (f ▷ g)"),
-        law (carrier ++ " apply keepeth sheer identity") bracketed (\l -> l ++ " apply ((identity: [ℤ, ℤ]) sheer)") id,
-        law (carrier ++ " sheer apply sheer") values (\a -> "((" ++ a ++ " sheer): " ++ sheerType ++ ") apply (f sheer)") (\a -> "((" ++ a ++ " f) sheer: " ++ sheerType ++ ")"),
-        law (carrier ++ " sheer apply") values (\a -> "((" ++ a ++ " sheer): " ++ sheerType ++ ") apply (" ++ fs ++ ")") (\a -> "(" ++ fs ++ ") map (" ++ a ++ " ▶)"),
-        law (carrier ++ " sheer bind") values (\a -> "((" ++ a ++ " sheer): " ++ sheerType ++ ") bind " ++ k) (\a -> a ++ " " ++ k),
-        law (carrier ++ " bind sheer") bracketed (\l -> l ++ " bind sheer") id,
+        law (carrier ++ " apply keepeth pure identity") bracketed (\l -> l ++ " apply ((identity: [ℤ, ℤ]) pure)") id,
+        law (carrier ++ " pure apply pure") values (\a -> "((" ++ a ++ " pure): " ++ pureType ++ ") apply (f pure)") (\a -> "((" ++ a ++ " f) pure: " ++ pureType ++ ")"),
+        law (carrier ++ " pure apply") values (\a -> "((" ++ a ++ " pure): " ++ pureType ++ ") apply (" ++ fs ++ ")") (\a -> "(" ++ fs ++ ") map (" ++ a ++ " ▶)"),
+        law (carrier ++ " pure bind") values (\a -> "((" ++ a ++ " pure): " ++ pureType ++ ") bind " ++ k) (\a -> a ++ " " ++ k),
+        law (carrier ++ " bind pure") bracketed (\l -> l ++ " bind pure") id,
         law (carrier ++ " bind associateth") bracketed (\l -> "(" ++ l ++ " bind " ++ k ++ ") bind " ++ k) (\l -> l ++ " bind {y: ℤ ^ (y " ++ k ++ ") bind " ++ k ++ "}"),
-        law (carrier ++ " map sheer flat") bracketed (\l -> "(" ++ l ++ " map sheer) flat") id
+        law (carrier ++ " map pure flat") bracketed (\l -> "(" ++ l ++ " map pure) flat") id
       ]
       where
         bracketed = ["(" ++ item ++ ")" | item <- written]

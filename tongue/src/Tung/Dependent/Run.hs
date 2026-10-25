@@ -468,7 +468,7 @@ runtimeGlobals globals = table
           (Just operation, _, _) -> do
             values <- traverse settled arguments
             maybe (Left ("invalid runtime host call '" ++ key ++ "'")) (pure . fromHostValue) (traverse toHostValue values >>= operation)
-          (_, "effect_sheer", [value]) -> pure (REffect (DPure value))
+          (_, "effect_pure", [value]) -> pure (REffect (DPure value))
           (_, "effect_bind", [action, continuation]) -> pure (REffect (DBind action continuation))
           _ -> pure (REffect (DHost key arguments))
 

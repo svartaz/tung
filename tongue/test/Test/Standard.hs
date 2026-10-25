@@ -136,7 +136,7 @@ numberCases :: Library -> [Test]
 numberCases library =
   [ agreement "ℕ" (libraryModule library "type/natural.tung") ["equal", "at_most", "add", "subtract", "multiply", "divide_leftover"] (0, 12) (show :: Int -> String),
     agreement "ℤ" (libraryModule library "type/integer.tung") ["equal", "at_most", "add", "subtract", "multiply", "divide_leftover"] (-12, 12) signed,
-    agreement "unicode" (libraryModule library "type/unicode.tung") ["equal", "at_most"] (0, 3) (\index -> ['`', staffs !! index]),
+    agreement "unicode" (libraryModule library "type/unicode.tung") ["equal", "at_most"] (0, 3) (\index -> ['`', characters !! index]),
     agreement "string" (libraryModule library "type/string/building.tung") ["equal_string", "at_most_string", "join_string"] (0, 40) (\index -> "'" ++ spelled index ++ "'"),
     expectEq "a modelled operation is proved by computation and by induction" (Right ()) $
       () <$ compileWith library "natural_proof.tung" proofs
@@ -150,9 +150,9 @@ numberCases library =
     signed :: Int -> String
     signed value = (if value < 0 then "" else "+") ++ show value
     -- scalars from several planes, so code-point order is exercised.
-    staffs = "zλ😀a"
+    characters = "zλ😀a"
     spelled 0 = ""
-    spelled index = staffs !! ((index - 1) `mod` 4) : spelled ((index - 1) `div` 4)
+    spelled index = characters !! ((index - 1) `mod` 4) : spelled ((index - 1) `div` 4)
     -- on literals, source checking computeth natively, so the hidden model is
     -- applied in the kernel.
     agrees program operation left right native = do
@@ -259,11 +259,11 @@ moduleCases library =
 -- a relation with nothing smaller is well-founded, and recursion on it runneth
 -- the step once.
 -- the discrete topology satisfieth every law, so every function out of it is
--- steady, also after another; a bizen whose whole part is not open is rejected.
+-- continuous, also after another; a bizen whose whole part is not open is rejected.
 -- lying under goeth through meets, but a part lieth not under its meet.
 topologyCases :: Library -> [Test]
 topologyCases library =
-  [ expectEq "the discrete topology maketh every function steady" (Right ()) $
+  [ expectEq "the discrete topology maketh every function continuous" (Right ()) $
       () <$ compile discrete,
     rejectContaining "a topology must open the whole part" "cannot unify one~𝟙 with zero~𝟘" $
       compile
@@ -306,9 +306,9 @@ topologyCases library =
         let meet_open: [_:, _:, _:, _:] ≔ only
         let join_open: [_:, _:] ≔ only
       }
-      let discrete_steady: [@α: *, @β: *, @: β topology, f: [α discrete, β], f steady] ≔ {_, _ ^ only}
-      let both: [@α: *, @β: *, @γ: *, @: γ topology, f: [α discrete, β discrete], g: [β discrete, γ], (f ▷ g) steady]
-        ≔ f ▷_steady g (f discrete_steady) (g discrete_steady)
+      let discrete_continuous: [@α: *, @β: *, @: β topology, f: [α discrete, β], f continuous] ≔ {_, _ ^ only}
+      let both: [@α: *, @β: *, @γ: *, @: γ topology, f: [α discrete, β discrete], g: [β discrete, γ], (f ▷ g) continuous]
+        ≔ f ▷_continuous g (f discrete_continuous) (g discrete_continuous)
       """
 
 -- class laws must rule out lax bizens: euclidean division yieldeth an outcome
@@ -491,8 +491,8 @@ groundEffectExportsCase imports =
   where
     source =
       "bring often.tung "
-        ++ "let echo:𝟙 effect ≔ read bind { _ ^ >{then, 'a' write_line, random, 0 sleep, only sheer} } "
-        ++ "let task:(ℤ task) effect ≔ (+1 sheer) fork"
+        ++ "let echo:𝟙 effect ≔ read bind { _ ^ >{then, 'a' write_line, random, 0 sleep, only pure} } "
+        ++ "let task:(ℤ task) effect ≔ (+1 pure) fork"
 
 systemExplicitCase :: Map.Map String String -> Test
 systemExplicitCase imports =
@@ -508,7 +508,7 @@ runnerEffectsCase imports =
   where
     source =
       "bring often.tung bring effect/clock.tung bring effect/process.tung bring effect/system.tung bring web/server.tung bring type/list.tung bring type/optional.tung "
-        ++ "let route:[_: _request, _response effect] ≔ 'ok' ok $ sheer "
+        ++ "let route:[_: _request, _response effect] ≔ 'ok' ok $ pure "
         ++ "let main:𝟙 effect ≔ >{then, arguments, 'TUNG_SETTING' environment, unix_time, 'true' process~run empty, 8080 serve route $ void}"
 
 primitiveCatalogueCase :: Map.Map String String -> Test

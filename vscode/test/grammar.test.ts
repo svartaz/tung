@@ -44,7 +44,7 @@ test("textmate immediately scopeth lexical syntax", async () => {
     ["show let identity:[x:ℤ, ℤ] ≔ x", "let", "keyword.declaration.tung"],
     ["show fast echo: 𝟙 effect ≔ echo", "fast", "keyword.declaration.tung"],
     ["match value {x ^ x}", "match", "keyword.control.tung"],
-    ["let main: 𝟙 effect ≔ only sheer", "effect", "keyword.control.tung"],
+    ["let main: 𝟙 effect ≔ only pure", "effect", "keyword.control.tung"],
     ["let proof ≔ sorry", "sorry", "keyword.control.tung"],
     ["let gather ≔ unbuild list", "unbuild", "keyword.control.tung"],
     ["@a:*", "*", "keyword.other.tung"],

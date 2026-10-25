@@ -14,7 +14,7 @@ type optional: [α: *, *] {
 class hath_≍: [α: *, *] {
   let ≍: [α, α, 𝟚]
 
-  let ≍_reflect: [x: α, (x ≍ x) = yea]
+  let ≍_reflect: [a: α, (a ≍ a) = yea]
 }
 
 ## an anonymous requirement `@:` is found by instance search.
@@ -58,7 +58,7 @@ class functor: [φ: [*, *], *] {
 
 ## a parent requirement maketh every applicative a functor.
 class applicative: [φ: [*, *], @: φ functor, *] {
-  let sheer: [@α: *, α, α φ]
+  let pure: [@α: *, α, α φ]
 }
 
 bizen: optional functor {
@@ -69,9 +69,9 @@ bizen: optional functor {
 }
 
 bizen: optional applicative {
-  let sheer: [a:] ≔ a some
+  let pure: [a:] ≔ a some
 }
 
 ## the functor cometh from the applicative requirement.
 let lift: [@φ: [*, *], @: φ applicative, @α: *, @β: *, a: α, f: [α, β], β φ]
-  ≔ (a sheer) map f
+  ≔ (a pure) map f

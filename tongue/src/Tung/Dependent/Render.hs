@@ -112,13 +112,13 @@ sorted = \case
 -- type binders take greek letters, others latin ones; a name in scope is
 -- never reused.
 fresh :: [String] -> Maybe Term -> String
-fresh names domain = fromMaybe "x" (find (`notElem` names) candidates)
+fresh names domain = fromMaybe "a" (find (`notElem` names) candidates)
   where
     candidates
       | maybe False sorted domain = greek ++ [letter ++ show index | index <- [1 :: Int ..], letter <- greek]
       | otherwise = latin ++ [letter ++ show index | index <- [1 :: Int ..], letter <- latin]
-    greek = map pure "αβγδεζηθ"
-    latin = map pure "xyzwuv"
+    greek = map pure "αβγδεϝζηθικλμνξοπϙρστυφχψω"
+    latin = map pure "abcde"
 
 mentions :: Int -> Term -> Bool
 mentions index = \case

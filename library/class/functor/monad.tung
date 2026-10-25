@@ -7,10 +7,10 @@ bring type/one.tung
 show class monad: [φ: [*, *], @: φ applicative, *] {
   let flat: [@α: *, (α φ) φ, α φ]
 
-  let sheer_bind
-    : [@α: *, @β: *, a: α, f: [α, β φ], ((a sheer) map f $ flat) = (a f)]
+  let pure_bind
+    : [@α: *, @β: *, a: α, f: [α, β φ], ((a pure) map f $ flat) = (a f)]
 
-  let map_sheer_flat: [@α: *, a: α φ, (a map sheer $ flat) = a]
+  let map_pure_flat: [@α: *, a: α φ, (a map pure $ flat) = a]
 
   let bind_bind
     : [@α: *, @β: *, @γ: *, m: α φ, f: [α, β φ], g: [β, γ φ],
@@ -22,9 +22,9 @@ show class monad: [φ: [*, *], @: φ applicative, *] {
 bizen: [@ρ: *, (ρ →) monad] {
   let flat: [a:, r:] ≔ r (r a)
 
-  let sheer_bind: [_:, _:] ≔ reflect
+  let pure_bind: [_:, _:] ≔ reflect
 
-  let map_sheer_flat: [_:] ≔ reflect
+  let map_pure_flat: [_:] ≔ reflect
 
   let bind_bind: [_:, _:, _:] ≔ reflect
 }

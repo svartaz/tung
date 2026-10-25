@@ -173,15 +173,30 @@ declarationGroups program located = go (sortOn (Set.findMin . groupIndices) (map
     importedMembers = Map.fromList [(member, symbolName family) | (family, ClassInfo {classMembers}) <- Map.toList instances, member <- classMembers]
     importedParents = Map.fromList [(symbolName family, map symbolName classParents) | (family, ClassInfo {classParents}) <- Map.toList instances]
     declarations = map snd located
-    -- each declaration's dependencies are computed once and carried with it.
-    scheduled = [(index, entry, Set.delete index (Set.fromList (dependencies index declaration))) | (index, entry@(_, declaration)) <- zip [0 :: Int ..] located]
-    components = stronglyConnComp [(entry, index, Set.toList required) | entry@(index, _, required) <- scheduled]
+    -- each declaration's hard and soft dependencies are computed once and
+    -- carried with it.
+    scheduled = [(index, entry, without index hard, without index soft) | (index, entry@(_, declaration)) <- zip [0 :: Int ..] located, let (hard, soft) = dependencies index declaration]
+    without index = Set.delete index . Set.fromList
+    components = concatMap relax (strongly scheduled)
+    strongly nodes = stronglyConnComp [(node, index, Set.toList (hard <> soft)) | node@(index, _, hard, soft) <- nodes]
+    -- a cycle that a soft wait closeth is ordered again by its hard edges and
+    -- the soft edges that leave it: its members meet each such use with their
+    -- own requirements, so they need not wait for the module's bizens.
+    relax component = case component of
+      CyclicSCC nodes
+        | not (all (inductive . entryOf) nodes),
+          let inside = Set.fromList [index | (index, _, _, _) <- nodes],
+          relaxed <- strongly [(index, entry, hard, soft `Set.difference` inside) | (index, entry, hard, soft) <- nodes],
+          length relaxed > 1 ->
+            relaxed
+      _ -> [component]
+    entryOf (_, entry, _, _) = entry
+    inductive (_, declaration) = case unshown declaration of InductiveDeclaration {} -> True; _ -> False
     group component =
-      let nodes = sortOn (\(index, _, _) -> index) (flattenSCC component)
-          indices = Set.fromList [index | (index, _, _) <- nodes]
-          entries = [entry | (_, entry, _) <- nodes]
-          required = Set.unions [dependencies | (_, _, dependencies) <- nodes] `Set.difference` indices
-          inductive (_, declaration) = case unshown declaration of InductiveDeclaration {} -> True; _ -> False
+      let nodes = sortOn (\(index, _, _, _) -> index) (flattenSCC component)
+          indices = Set.fromList [index | (index, _, _, _) <- nodes]
+          entries = map entryOf nodes
+          required = Set.unions [hard <> soft | (_, _, hard, soft) <- nodes] `Set.difference` indices
           failure = case component of
             CyclicSCC _ | not (all inductive entries) -> Just (cycleError entries)
             _ -> Nothing
@@ -210,14 +225,16 @@ declarationGroups program located = go (sortOn (Set.findMin . groupIndices) (map
     -- the module's bizens of that class, except a bizen that itself needeth
     -- this declaration by name, as a helper proof used by its own class's
     -- bizen; that bizen cannot be the one it useth.
+    -- waiting for bizens is soft: it giveth way inside a cycle it closeth.
     dependencies index declaration =
       let usesInstances = case unshown declaration of
             Declaration {} -> True
             BizenDeclaration {} -> True
             _ -> False
-       in nameDependencies Map.! index
-            ++ [instanceIndex | usesInstances, name <- mentioned declaration, className <- classesUsedBy name, instanceIndex <- Map.findWithDefault [] className instancesOf, not (reaches instanceIndex index)]
-            ++ [instanceIndex | Just className <- [instanceClass declaration], ancestor <- ancestors className, instanceIndex <- Map.findWithDefault [] ancestor instancesOf]
+       in ( nameDependencies Map.! index
+              ++ [instanceIndex | Just className <- [instanceClass declaration], ancestor <- ancestors className, instanceIndex <- Map.findWithDefault [] ancestor instancesOf],
+            [instanceIndex | usesInstances, name <- mentioned declaration, className <- classesUsedBy name, instanceIndex <- Map.findWithDefault [] className instancesOf, not (reaches instanceIndex index)]
+          )
     classesUsedBy name =
       [className | Set.notMember name shadowed, Just className <- [Map.lookup name members]] ++ requiredClasses name
     -- the classes of an imported global's anonymous implicit slots, from its

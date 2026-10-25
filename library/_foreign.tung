@@ -8,7 +8,7 @@ show task
 
 ## `α effect` is an effect that produceth an α when the runner performeth it.
 ## building or combining effects performeth nothing.
-show let effect_sheer: [@α: *, α, α effect] ≔ 'effect_sheer' foreign
+show let effect_pure: [@α: *, α, α effect] ≔ 'effect_pure' foreign
 
 show let effect_bind: [@α: *, @β: *, α effect, [α, β effect], β effect]
   ≔ 'effect_bind' foreign

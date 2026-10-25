@@ -4,19 +4,19 @@ type list: [α: *, *] {
   ‥: [α, α list, α list]
 }
 
-type rose: * { knot: [rose list, rose] }
+type rose: * { node: [rose list, rose] }
 
 ## the field retaineth its ordinary list type and list patterns.
-let children: [rose, rose list] ≔ {xs knot ^ xs}
+let children: [rose, rose list] ≔ {xs node ^ xs}
 
 let first: [rose, rose] ≔ {
-  empty knot   ^ (empty @rose) knot,
-  (x ‥ _) knot ^ x
+  empty node   ^ (empty @rose) node,
+  (a ‥ _) node ^ a
 }
 
 let add: [n: ℕ, m: ℕ, ℕ] ≔ {_ ^ ℕ} unbuild ℕ m {_: ℕ ^ next} n
 
-## joint induction taketh the rose motive, the list motive, then the knot,
+## joint induction taketh the rose motive, the list motive, then the node,
 ## empty, and ‥ methods. each method receiveth its child hypotheses.
 let count: [rose, ℕ] ≔ {_ ^ ℕ} unbuild rose {_ ^ ℕ} {xs: rose list ^ next} 0 {
   head: rose ^ {head_below: ℕ ^ {tail: rose list ^ head_below add}}
@@ -24,10 +24,10 @@ let count: [rose, ℕ] ≔ {_ ^ ℕ} unbuild rose {_ ^ ℕ} {xs: rose list ^ nex
 
 ## recursion may follow a child through its ordinary inholder.
 let height: [rose, ℕ] ≔ {
-  empty knot   ^ 1,
-  (x ‥ _) knot ^ (x height) next
+  empty node   ^ 1,
+  (a ‥ _) node ^ (a height) next
 }
 
-let leaf: rose ≔ (empty @rose) knot
+let leaf: rose ≔ (empty @rose) node
 
-let fork: rose ≔ (leaf ‥ @rose (leaf ‥ @rose (empty @rose))) knot
+let fork: rose ≔ (leaf ‥ @rose (leaf ‥ @rose (empty @rose))) node

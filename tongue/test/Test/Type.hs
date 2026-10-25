@@ -171,7 +171,7 @@ accepted =
     ("bizen context dischargeth inner need", equalPrelude ++ boxData ++ "bizen:[@a:*, @:a hath_≍, (a _box) hath_≍] { let ≍: [x box:, y box:] ≔ x ≍ y }"),
     ("class law useth its own methods", "bring is.tung class hath_identity:[a:*, *] { let identity:[a, a] let rule:[x: a, (x identity) = x] } bizen:ℤ hath_identity { let identity: [x:] ≔ x let rule ≔ sorry }"),
     ("a class may require a proposition that its instances must prove", "bring is.tung class claimed:[a:*, *] { let rule:[x: ℤ, x = +0] }"),
-    ("class member carrieth its own constraint", memberConstraint ++ "bizen:optional functor { let map: [value:, f:] ≔ match value { none ^ none, x some ^ x f $ some } } bizen:optional applicative { let sheer ≔ some let apply ≔ { x some, f some ^ x f $ some, _, _ ^ none } } bizen:optional hath_traverse { let traverse: [value:, f:] ≔ match value { none ^ none sheer, x some ^ (x f) map some } } let lifted:(ℤ optional) optional ≔ (+1 some) traverse some"),
+    ("class member carrieth its own constraint", memberConstraint ++ "bizen:optional functor { let map: [value:, f:] ≔ match value { none ^ none, x some ^ x f $ some } } bizen:optional applicative { let pure ≔ some let apply ≔ { x some, f some ^ x f $ some, _, _ ^ none } } bizen:optional hath_traverse { let traverse: [value:, f:] ≔ match value { none ^ none pure, x some ^ (x f) map some } } let lifted:(ℤ optional) optional ≔ (+1 some) traverse some"),
     ("existing parent bizen satisfieth child", classHierarchy ++ "bizen:ℤ hath_parent { let parent: [x:] ≔ x } bizen:ℤ hath_child { let child: [x:] ≔ x }"),
     ("child bizen may supply parent member", classHierarchy ++ "bizen:ℤ hath_child { let parent: [x:] ≔ x let child: [x:] ≔ x } let ok:ℤ ≔ +1 parent"),
     ("parametric child bizen useth its parent method", inheritedMethodHierarchy),
@@ -186,7 +186,7 @@ rejected =
     ("a lone hole is no term", "type nat: * { zero: nat } let bad:nat ≔ _"),
     ("a bizen oweth the laws of a parent it witnesseth", "bring is.tung class parent:[a:*, *] { let tag:[a, ℤ] let tagged:[x: a, (x tag) = (x tag)] } class child:[a:*, @:a parent, *] {} bizen:ℤ child { let tag: [_:] ≔ +1 }"),
     ("effect taketh a type argument", "let bad:[effect, effect] ≔ { x ^ x }"),
-    ("an effect is not its result", effectPrelude ++ "let bad:ℤ ≔ +1 sheer"),
+    ("an effect is not its result", effectPrelude ++ "let bad:ℤ ≔ +1 pure"),
     ("instance annotation must satisfy its interface", "class copy:[a:*, *] { let copy:[a, a] } bizen:ℤ copy { let copy:[x:string, string] ≔ x }"),
     ("instance annotation cannot claim false polymorphism", "class copy:[a:*, *] { let copy:[a, a] } bizen:ℤ copy { let copy:[@a:*, x:a, a] ≔ x + +1 }"),
     ("explicit type argument cannot contradict a value argument", "let id:[@a:*, x:a, a] ≔ x let bad ≔ +1 id @string"),
@@ -279,11 +279,11 @@ importCases =
     expectPrefix "bad imported source is rejected" "parse error:" (checkSource False "bring bad.tung" (Map.singleton "bad.tung" "let []")),
     typeErrWith "self use cycle is rejected" "bring self.tung" (Map.singleton "self.tung" "bring self.tung"),
     typeErrWith "mutual use cycle is rejected" "bring left.tung" cyclic,
-    expectEq "a unit effect main is runnable" "type ok" (checkSource True (effectPrelude ++ "let main:𝟙 effect ≔ only sheer") unitModule),
-    expectEq "main's effect type may be inferred" "type ok" (checkSource True (effectPrelude ++ "let main ≔ only sheer") unitModule),
-    runnableErr "main is not a function" (effectPrelude ++ "let main:[_: 𝟙, 𝟙 effect] ≔ { _ ^ only sheer }"),
+    expectEq "a unit effect main is runnable" "type ok" (checkSource True (effectPrelude ++ "let main:𝟙 effect ≔ only pure") unitModule),
+    expectEq "main's effect type may be inferred" "type ok" (checkSource True (effectPrelude ++ "let main ≔ only pure") unitModule),
+    runnableErr "main is not a function" (effectPrelude ++ "let main:[_: 𝟙, 𝟙 effect] ≔ { _ ^ only pure }"),
     expectEq "reporteth a source type" (Right "[@α: *, α, α]") (inspectType "show let identity: [@α: *, x: α, α] ≔ x" Map.empty "identity"),
-    expectEq "type display showeth an effect result" (Right "[@α: *, α, α effect]") (inspectType (effectPrelude ++ "let wrap: [@α: *, x: α, α effect] ≔ x sheer") unitModule "wrap"),
+    expectEq "type display showeth an effect result" (Right "[@α: *, α, α effect]") (inspectType (effectPrelude ++ "let wrap: [@α: *, x: α, α effect] ≔ x pure") unitModule "wrap"),
     expectEq "reporteth an unknown inspected name" (Left "unknown name 'missing'") (inspectType "let answer ≔ +42" Map.empty "missing")
   ]
   where
@@ -420,7 +420,7 @@ memberConstraint :: String
 memberConstraint =
   "type optional: [a:*, *] { none: a optional, some: [a, a optional] } type _box: [a:*, *] { box: [a, a _box] } "
     ++ "class functor:[f:[*, *], *] { let map:[@a:*, @b:*, a f, [a, b], b f] } "
-    ++ "class applicative:[f:[*, *], @:f functor, *] { let sheer:[@a:*, a, a f] let apply:[@a:*, @b:*, a f, [a, b] f, b f] } "
+    ++ "class applicative:[f:[*, *], @:f functor, *] { let pure:[@a:*, a, a f] let apply:[@a:*, @b:*, a f, [a, b] f, b f] } "
     ++ "class hath_traverse:[f:[*, *], *] { let traverse:[@m:[*, *], @:m applicative, @a:*, @b:*, a f, [a, b m], (b f) m] } "
 
 matchSource :: Int -> Maybe [String] -> String
@@ -535,4 +535,4 @@ parentDictionaryConstraint =
     ++ boxData
     ++ "bizen:[@a:*, @:a hath_parent, (a _box) hath_parent] { let parent: [x box:] ≔ (x parent) box } "
     ++ "bizen:[@a:*, @:a hath_parent, (a _box) child] {}"
-effectPrelude = "bring type/one.tung let sheer:[@a:*, a, a effect] ≔ 'effect_sheer' foreign "
+effectPrelude = "bring type/one.tung let pure:[@a:*, a, a effect] ≔ 'effect_pure' foreign "

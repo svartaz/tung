@@ -19,7 +19,7 @@ let not: [bool, bool] ≔ {
   yes ^ no
 }
 
-## `;` joineth rows that share a result.
+## `;` joineth rows that share an outcome.
 let both: [bool, bool, bool] ≔ {
   yes, yes ^ yes,
   yes, no;
@@ -28,8 +28,8 @@ let both: [bool, bool, bool] ≔ {
 
 ## recursion passeth a direct child of the matched input.
 let plus: [nat, nat, nat] ≔ {
-  zero,   y ^ y,
-  n next, y ^ (n plus y) next
+  zero,   b ^ b,
+  a next, b ^ (a plus b) next
 }
 
 let length: [@α: *, α list, nat] ≔ {

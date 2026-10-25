@@ -3,7 +3,7 @@ bring _foreign.tung
 bring type/one.tung
 bring type/optional.tung
 
-## sequencing discardeth the first result.
+## sequencing discardeth the first outcome.
 let then: [@α: *, @β: *, first: α effect, after: β effect, β effect]
   ≔ first effect_bind {_ ^ after}
 
@@ -14,12 +14,12 @@ type nat: * {
 
 ## bounded repetition is ordinary structural induction producing an effect.
 let times: [doing: 𝟙 effect, count: nat, 𝟙 effect] ≔ {_ ^ 𝟙 effect} unbuild nat
-  (only effect_sheer) {_, leftover ^ doing then leftover} count
+  (only effect_pure) {_, leftover ^ doing then leftover} count
 
 ## an unbounded loop is a fast declaration, which nameth itself. it endeth
 ## when input endeth.
 fast echo: 𝟙 effect ≔ read effect_bind {
-  none      ^ only effect_sheer,
+  none      ^ only effect_pure,
   line some ^ >{then, line write, '\n' write, echo}
 }
 

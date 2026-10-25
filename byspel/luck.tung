@@ -2,11 +2,11 @@ bring often.tung
 bring type/optional.tung
 
 let fallback: float effect
-  ≔ ('could not read a float; using 0.0' write_line) then (0.0 sheer)
+  ≔ ('could not read a float; using 0.0' write_line) then (0.0 pure)
 
 let read_user: float effect ≔ read bind {
   line some ^ match line from_string {
-    value some ^ value sheer,
+    value some ^ value pure,
     none       ^ fallback
   },
   none ^ fallback

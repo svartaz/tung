@@ -151,7 +151,12 @@ normalisation.
   type requireth a class through an `@:` slot, waiteth for the module's bizens
   of that class, unless such a bizen needeth the declaration by name. a local
   name's requirement is not counted: each use is ordered by name, and the
-  caller's own requirement often meeteth it.
+  caller's own requirement often meeteth it. such waiting is soft: when it
+  closeth a cycle, its declarations are ordered again by names and by each
+  bizen's need for its parents' bizens alone, since each declaration meeteth
+  such a use with its own `@:` requirement, as a monad transformer's
+  operations use the inner monad beside the transformer's own bizens. a cycle
+  of names or parents is still rejected.
 - types, classes, constructors, members, and lets share one namespace; a module
   declaring a top-level name twice, as a class and its member, is rejected with
   `top-level name repeateth`.
@@ -173,15 +178,15 @@ normalisation.
   binder depth without a name. named header slots and `@:` requirements lower
   to lambdas and precede bare slots. a header slot may bind a pattern,
   `a ⸴ b: α ∧ β`: the lambda bindeth a hidden local the body matcheth. a
-  bracket whose last slot bindeth, as `let f: [x:] ≔ x`, leaveth its result
+  bracket whose last slot bindeth, as `let f: [a:] ≔ a`, leaveth its result
   to inference.
 - `function slots, result ^ body` elaborateth as `({binders ^ body} : [slots, result])`.
-- `{}` is the case function on an empty family and `match x {}` matcheth one.
+- `{}` is the case function on an empty family and `match a {}` matcheth one.
   before a match decideth that no constructor fiteth, instance goals with known
   class arguments are solved, so an impossible case seeth the selected
   dictionary compute.
-- `{x ^ body}` needeth constraints or a function annotation; a typed binder,
-  `{x:* ^ x}`, can infer its function type. unannotated domains are inferred
+- `{a ^ body}` needeth constraints or a function annotation; a typed binder,
+  `{a:* ^ a}`, can infer its function type. unannotated domains are inferred
   only when constraints determine them and never introduce unwritten
   parameters.
 - applications, `(expression:type)`, and `(let … yield expression)` use one
@@ -226,7 +231,7 @@ substituted; occurs and scope checks reject cyclic or escaping solutions.
   only after a blocking hole is solved; a failure with no unsolved hole is
   reported.
 - a solution may mention another hole applied to locals the solved hole cannot
-  see, as `?t = ?f x` where `?t` lacketh `x`. if that hole is applied only to
+  see, as `?t = ?f a` where `?t` lacketh `a`. if that hole is applied only to
   locals and its type doth not depend on the hidden ones, it is pruned to a
   fresh hole over the inputs it may keep and the solution is quoted again,
   giving `?t = ?f′`.
@@ -262,16 +267,16 @@ type ℕ: * {
   next: [ℕ, ℕ]
 }
 
-let eftbuild: [x: ℕ, ℕ] ≔
-  {_: ℕ ^ ℕ} unbuild ℕ zero {n, ih ^ ih next} x
+let eftbuild: [a: ℕ, ℕ] ≔
+  {_: ℕ ^ ℕ} unbuild ℕ zero {n, ih ^ ih next} a
 
-type identity: [α: *, x: α, α, *] {
-  refl: α identity x x
+type identity: [α: *, a: α, α, *] {
+  refl: α identity a a
 }
 
-let throughbear: [@α: *, @x: α, @y: α, proof: α identity x y,
-  family: [α, *], value: x family, y family] ≔
-  {z, _ ^ z family} unbuild identity @α @x value y proof
+let throughbear: [@α: *, @a: α, @b: α, proof: α identity a b,
+  family: [α, *], value: a family, b family] ≔
+  {c, _ ^ c family} unbuild identity @α @a value b proof
 ```
 
 ### families
@@ -399,7 +404,7 @@ patterns, and structural recursion.
   `next_negative: [ℕ, ℤ]`, `n next_negative` being `-(n + 1)`, so `+3`
   is `3 nonnegative` and `-4` is `3 next_negative`. integer, string,
   unicode, and float literal patterns compile to the primitive `literal_case:
-[@α: *, @β, x: α, k: α, yes: β, no: β, β]`, which chooseth once `x` and `k`
+[@α: *, @β, a: α, k: α, yes: β, no: β, β]`, which chooseth once `a` and `k`
   are literals.
 
 ### scrutinees
@@ -415,7 +420,7 @@ patterns, and structural recursion.
   the scrutinee doth not restore the expected type, and for constructor and
   literal scrutinees, the scrutinee is bound first as a transparent local.
 - abstracting a known descendant computation also abstracteth each applicable
-  enclosing recursion's record: the fresh value `z` and records of types `R z`
+  enclosing recursion's record: the fresh value `c` and records of types `R c`
   form a checked telescope applied to the original computation and records,
   so row goals and descendant evidence name the same value. a fresh neutral
   gaineth no evidence by its type alone.
@@ -442,8 +447,8 @@ patterns, and structural recursion.
   methods for peers. peer hypotheses cannot justify a direct recursive call;
   course-of-values recursion supplieth joint record motives instead.
 - an unindexed family reverteth the inputs whose types mention the matched
-  value, so in `{yea, known ^ …}` against `[b: 𝟚, (x p) = b, …]` the yea
-  branch seeth `known: (x p) = yea`.
+  value, so in `{yea, known ^ …}` against `[b: 𝟚, (a p) = b, …]` the yea
+  branch seeth `known: (a p) = yea`.
 
 ### indexed matching
 
@@ -493,8 +498,8 @@ matches do. the compiler first trieth direct induction on each explicit input
 of an inductive family, then course-of-values recursion on the same inputs,
 indexed families and groups included. inputs the first row matcheth against a
 constructor or literal come first, then the rest in order, so the case tree
-splitteth where the first row sayeth: `{m, 0 ^ m, …}` maketh `x ∸ 0` reduce
-to `x`. the first candidate whose branches and calls check is selected;
+splitteth where the first row sayeth: `{m, 0 ^ m, …}` maketh `a ∸ 0` reduce
+to `a`. the first candidate whose branches and calls check is selected;
 failed candidates restore inference state. calls resolve lexically and compare
 normalised argument values with induction evidence, so aliases of descendants
 are accepted and a shadowing variable is judged by its own value.
@@ -508,8 +513,8 @@ are accepted and a shadowing variable is judged by its own value.
   index leaf inputs, and may leave a trailing suffix of quantified inputs
   unapplied, yielding the checked hypothesis function at that descendant.
 - `child f others` becometh the eliminator's hypothesis for `child` applied to
-  `others`; a function child may be applied first, so `(x k) f others` useth
-  the hypothesis of `k` at `x`. no fixpoint entereth the kernel.
+  `others`; a function child may be applied first, so `(a k) f others` useth
+  the hypothesis of `k` at `a`. no fixpoint entereth the kernel.
 - the runner useth call-by-need for arguments and fields, eliminator methods
   and hypotheses included: only the chosen method computeth, and a hypothesis
   computeth when first inspected.
@@ -620,7 +625,7 @@ syntax; [`classes.tung`](../byspel/classes.tung) showeth these rules.
 - each parent becometh an inherited instance `name_parent_i` projecting the
   parent dictionary.
 - member types use the ordinary elaborator; a law is a member whose type
-  requireth an equality proof, as `[x:α, (x keep) = x]`, with no separate
+  requireth an equality proof, as `[a:α, (a keep) = a]`, with no separate
   syntax tree. earlier members in its type refer to earlier fields, and
   patterns use an ordinary `match`. laws trigger no rewriting; their
   accessors supply proofs through a requirement.
@@ -673,7 +678,7 @@ syntax; [`classes.tung`](../byspel/classes.tung) showeth these rules.
   a waiting goal may still be solved by local requirements and their parents.
   when nothing else progresseth, a stuck equation is split (see the
   [inference boundary](#inference-boundary)), its parts at once again, so
-  `?φ ?a x = ∧ α x` reacheth `?φ = ∧`. last come the class's fallback bizens,
+  `?φ ?a b = ∧ α b` reacheth `?φ = ∧`. last come the class's fallback bizens,
   as lean's default instances; a goal still unknown asketh for an annotation.
 - search trieth local dictionaries, innermost first, then registered bizens,
   then inherited instances; a later tier runneth only when no earlier candidate
@@ -759,7 +764,7 @@ every name.
   a list of literals, so `+2 + +2` converteth with `+4`. otherwise a binding
   with a model unfoldeth it, glued so goals show the name, and one without
   stayeth neutral. results are built at the catalogued type, so a comparison
-  yieldeth `yea` or `nay` and a partial operation `none` or `x some`.
+  yieldeth `yea` or `nay` and a partial operation `none` or `a some`.
   `pureOperation` in `Tung.Primitive` defineth these once for kernel and
   runner, and normalisation keepeth the actual result family's universe and
   type arguments, nested ones included.
@@ -780,8 +785,8 @@ every name.
   project file at that path, which shadoweth the library's, replaceth the
   trusted model too, as it would a host data type; the proof audit still
   listeth the operation as a host dependency.
-- effect constants never reduce in checking: `x effect_sheer effect_bind f` doth not
-  convert with `x f`.
+- effect constants never reduce in checking: `a effect_pure effect_bind f` doth not
+  convert with `a f`.
 - a `fast` declaration is a kernel `Fixpoint`, which conversion never
   unfoldeth, so normalisation terminateth. its signature is elaborated and
   generalised first; the body is checked against it with the declaration's

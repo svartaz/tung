@@ -53,7 +53,7 @@ runnableFileCase imports path = do
 
 mainEntry :: Imports -> Test
 mainEntry imports = do
-  actual <- runMainSource "bring often.tung let main:𝟙 effect ≔ only sheer" imports
+  actual <- runMainSource "bring often.tung let main:𝟙 effect ≔ only pure" imports
   pure $ if actual == "ok 0" then Nothing else Just ("main entry: " ++ actual)
 
 rejectedMain :: Imports -> Test

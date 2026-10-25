@@ -31,7 +31,7 @@ const outputs = {
   lambda: "!\n",
   scoreboard: `launching match jobs
 
-results
+outcomes
 north 3 - 1 south
 east 2 - 2 west
 south - east:cancelled:a score cannot be negative

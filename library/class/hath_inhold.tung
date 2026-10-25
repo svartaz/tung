@@ -1,0 +1,6 @@
+bring type/two.tung
+
+## an inholder whose membership can be decided.
+show class hath_∋: [α: *, β: *, *] {
+  let ∋: [α, β, 𝟚]
+}

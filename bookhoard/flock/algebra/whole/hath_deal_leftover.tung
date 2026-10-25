@@ -1,7 +1,0 @@
-bring ilk/and.tung
-bring ilk/maybe.tung
-
-## euclidean quotient and leftover computed together.
-show flock hath_%: [α: *, *] {
-  let %: [α, α, (α ∧ α) maybe]
-}

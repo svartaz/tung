@@ -123,7 +123,7 @@ snapshotVisible compiled source modules = own ++ imported
       HostDeclaration {hostName} -> [(hostName, False)]
       AssumptionDeclaration {assumptionName} -> [(assumptionName, False)]
       InductiveDeclaration {inductiveName, inductiveConstructors} -> (inductiveName, False) : [(constructorName constructor, True) | constructor <- inductiveConstructors]
-      FlockDeclaration {flockName, flockMembers} -> (flockName, False) : [(member, False) | FlockMember member _ <- flockMembers]
+      ClassDeclaration {classDeclarationName, classDeclarationMembers} -> (classDeclarationName, False) : [(member, False) | ClassMember member _ <- classDeclarationMembers]
       _ -> []
     imported = case Modules.moduleEnvironment available reached of
       Left _ -> []

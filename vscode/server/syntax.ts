@@ -45,7 +45,7 @@ const sourceTokens = (text: string, syntax: SourceSyntax) => {
 type SourceToken = ReturnType<typeof sourceTokens>[number];
 
 // one scan findeth depths and matching delimiters; an unmatched close
-// neither pairth nor goeth below depth naught.
+// neither pairth nor goeth below depth zero.
 const structureCache = new WeakMap();
 const tokenStructure = (tokens: SourceToken[]) => {
   const cached = structureCache.get(tokens);

@@ -1,0 +1,17 @@
+## a cycle of types formeth one mutually inductive group.
+type even: * {
+  zero_even: even,
+  from_odd: [odd, even]
+}
+
+type odd: * { from_even: [even, odd] }
+
+## ordinary matching still selecteth only this family's constructors.
+let parent: [odd, even] ≔ {e from_even ^ e}
+
+let step: [@α: *, _: α, n: ℕ, ℕ] ≔ n next
+
+## both eliminators take both motives and all three constructor methods.
+let count_even: [even, ℕ] ≔ {_ ^ ℕ} unbuild even {_ ^ ℕ} 0 step step
+
+let count_odd: [odd, ℕ] ≔ {_ ^ ℕ} unbuild odd {_ ^ ℕ} 0 step step

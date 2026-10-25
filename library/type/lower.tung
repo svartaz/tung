@@ -1,0 +1,1 @@
+show type _lower: [α: *, *] { lower: [α, α _lower] }

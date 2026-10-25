@@ -96,7 +96,7 @@ hostTypeSymbol name
   | name `elem` primitiveTypeNames = Just (SymbolId PrimitiveModule name)
   | otherwise = hostTypeId name
 
--- the ordinary checker qualifieth a constructor with its type, as `maybe@some`;
+-- the ordinary checker qualifieth a constructor with its type, as `optional@some`;
 -- the core nameth it alone. names never contain `@`.
 coreConstructor :: SymbolId -> SymbolId
 coreConstructor (SymbolId owner name) = SymbolId owner (drop 1 (dropWhile (/= '@') name))

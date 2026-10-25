@@ -1,0 +1,33 @@
+## host effects come from library. the catalogue checketh each binding's type.
+bring _foreign.tung
+bring type/one.tung
+bring type/optional.tung
+
+## sequencing discardeth the first result.
+let then: [@α: *, @β: *, first: α effect, after: β effect, β effect]
+  ≔ first effect_bind {_ ^ after}
+
+type nat: * {
+  zero: nat,
+  next: [nat, nat]
+}
+
+## bounded repetition is ordinary structural induction producing an effect.
+let times: [doing: 𝟙 effect, count: nat, 𝟙 effect] ≔ {_ ^ 𝟙 effect} unbuild nat
+  (only effect_sheer) {_, leftover ^ doing then leftover} count
+
+## an unbounded loop is a fast declaration, which nameth itself. it endeth
+## when input endeth.
+fast echo: 𝟙 effect ≔ read effect_bind {
+  none      ^ only effect_sheer,
+  line some ^ >{then, line write, '\n' write, echo}
+}
+
+let main: 𝟙 effect ≔ >{then,
+  ('tung ' write) times ((zero next) next),
+  '\nwhat is thy name? ' write,
+  read effect_bind {
+    none      ^ 'nobody\n' write,
+    name some ^ >{then, 'hail, ' write, name write, '!\n' write}
+  }
+}

@@ -70,14 +70,14 @@ data Recursion = Recursion
     recursionHypotheses :: [(Int, Int)],
     -- present when a call reacheth past a direct child.
     recursionMemo :: Maybe Memo,
-    -- the result is a deed, so a refused call nameth `fast`.
+    -- the result is an effect, so a refused call nameth `fast`.
     recursionLoops :: Bool
   }
 
--- a structural refusal. a let whose result is a deed may mean to loop without
+-- a structural refusal. a let whose result is an effect may mean to loop without
 -- bound, which a fast declaration doth.
 recursionFailure :: Bool -> String -> Elaboration a
-recursionFailure loops message = E.failure (message ++ if loops then "; a deed that loopeth without bound is a fast declaration" else "")
+recursionFailure loops message = E.failure (message ++ if loops then "; an effect that loopeth without bound is a fast declaration" else "")
 
 -- course-of-values recursion, as lean's `brecOn`: the motive is
 -- `r{below: Below x, now: P x}`, where `Below x` holdeth the records of every
@@ -124,7 +124,7 @@ quoteFolded scope = E.quoteFolded (depth scope)
 eval :: Scope -> Term -> Elaboration N.Value
 eval Scope {scopeContext} = E.evaluate scopeContext
 
--- an argument's worth, folded until forced.
+-- an argument's value, folded until forced.
 evalArgument :: Scope -> Term -> Elaboration N.Value
 evalArgument Scope {scopeContext} = E.evaluateGlued scopeContext
 
@@ -139,7 +139,7 @@ requireUniverse Scope {scopeContext} value =
       level <- E.freshLevel
       E.unify scopeContext value (N.VSort level)
       pure level
-    _ -> E.failure "annotation is not an ilk"
+    _ -> E.failure "annotation is not a type"
 
 -- a let-bound local carrieth its value, so conversion seeth through it.
 define :: Scope -> Maybe String -> N.Value -> N.Value -> Scope

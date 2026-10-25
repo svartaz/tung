@@ -1,0 +1,210 @@
+bring _foreign.tung
+bring class/algebra/partial/category.tung
+bring class/algebra/partial/semigroupoid.tung
+bring class/functor.tung
+bring class/functor/applicative.tung
+bring class/functor/monad.tung
+bring combinator.tung
+bring effect.tung
+bring is.tung
+bring type/or.tung
+
+## an effect that may fail with a fault `ε` instead of yielding an `α`. it
+## wrappeth `(ε ∨ α) effect`, so that it hath its own monad: `bind` stoppeth at
+## the first fault.
+show type fallible: [ε: *, α: *, *] { wrap: [(ε ∨ α) effect, ε fallible α] }
+
+## the effect beneath, which yieldeth the fault or the outcome.
+show let unwrap: [@ε: *, @α: *, m wrap: ε fallible α, (ε ∨ α) effect] ≔ m
+
+## fail with a fault.
+show let fail: [@ε: *, @α: *, e: ε, ε fallible α]
+  ≔ ((e inject₀) effect_sheer) wrap
+
+## run an effect that cannot fail.
+show let lift: [@ε: *, @α: *, doing: α effect, ε fallible α]
+  ≔ (doing effect_bind (inject₁ ▷ effect_sheer)) wrap
+
+## run `m`; on a fault, run `handler` on it instead.
+show let handle
+  : [@ε: *, @ε′: *, @α: *, m: ε fallible α, handler: [ε, ε′ fallible α],
+    ε′ fallible α]
+  ≔ ((m unwrap) effect_bind {
+    e inject₀ ^ (e handler) unwrap,
+    a inject₁ ^ (a inject₁) effect_sheer
+  }) wrap
+
+## an effect that yieldeth a sum misseth on its left side.
+show let from_sum: [@ε: *, @α: *, doing: (ε ∨ α) effect, ε fallible α]
+  ≔ doing wrap
+
+let sheer: [@ε: *, @α: *, a: α, ε fallible α] ≔ ((a inject₁) effect_sheer) wrap
+
+let map: [@ε: *, @α: *, @β: *, m: ε fallible α, f: [α, β], ε fallible β]
+  ≔ ((m unwrap) effect_bind {s ^ (s functor~map f) effect_sheer}) wrap
+
+## the continuation of `flat`: a fault stayeth, an inner effect runneth.
+let unfold: [@ε: *, @α: *, ε ∨ (ε fallible α), (ε ∨ α) effect] ≔ {
+  e inject₀     ^ (e inject₀) effect_sheer,
+  inner inject₁ ^ inner unwrap
+}
+
+let flat: [@ε: *, @α: *, m: ε fallible (ε fallible α), ε fallible α]
+  ≔ ((m unwrap) effect_bind unfold) wrap
+
+## a fallible effect is the wrap of the effect beneath.
+let wrap_unwrap: [@ε: *, @α: *, m: ε fallible α, ((m unwrap) wrap) = m]
+  ≔ match m { _ wrap ^ reflect }
+
+## changing a sum twice is changing it once with the composite.
+let lemma_map_map
+  : [@ε: *, @α: *, @β: *, @γ: *, s: ε ∨ α, f: [α, β], g: [β, γ],
+    <{functor~map, s, f, g} = (s functor~map (f ▷ g))]
+  ≔ match s {
+    _ inject₀ ^ reflect,
+    _ inject₁ ^ reflect
+  }
+
+let map_identity: [@ε: *, @α: *, m: ε fallible α, (m map identity) = m]
+  ≔ match m {
+    d wrap ^
+      wrap leibnitz
+        ((d bind_equal {s ^ effect_sheer leibnitz (s functor~map_identity)})
+          transit (d effect_bind_sheer))
+  }
+
+let map_map
+  : [@ε: *, @α: *, @β: *, @γ: *, m: ε fallible α, f: [α, β], g: [β, γ],
+    <{map, m, f, g} = (m map (f ▷ g))]
+  ≔ match m {
+    d wrap ^
+      wrap leibnitz >{transit,
+        d effect_bind_bind {s ^ (s functor~map f) effect_sheer} {
+          s ^ (s functor~map g) effect_sheer
+        },
+        d bind_equal {
+          s ^
+            ((s functor~map f) effect_sheer_bind {
+              t ^ (t functor~map g) effect_sheer
+            }) transit (effect_sheer leibnitz (s lemma_map_map f g))
+        }
+      }
+  }
+
+let sheer_map
+  : [@ε: *, @α: *, @β: *, a: α, f: [α, β], ((a sheer @ε) map f) = ((a f) sheer)]
+  ≔ wrap leibnitz
+    ((a inject₁) effect_sheer_bind {s ^ (s functor~map f) effect_sheer})
+
+let sheer_flat: [@ε: *, @α: *, m: ε fallible α, ((m sheer @ε) flat) = m]
+  ≔ (wrap leibnitz ((m inject₁) effect_sheer_bind unfold)) transit
+    (m wrap_unwrap)
+
+## sheering an outcome and unfolding it yieldeth it again.
+let lemma_sheer_unfold
+  : [@ε: *, @α: *, s: ε ∨ α,
+    (((s functor~map sheer) effect_sheer) effect_bind unfold) =
+      (s effect_sheer)]
+  ≔ match s {
+    e inject₀ ^ (e inject₀) effect_sheer_bind unfold,
+    a inject₁ ^ ((a sheer) inject₁) effect_sheer_bind unfold
+  }
+
+let map_sheer_flat: [@ε: *, @α: *, m: ε fallible α, ((m map sheer) flat) = m]
+  ≔ match m {
+    d wrap ^
+      wrap leibnitz >{transit,
+        d effect_bind_bind {s ^ (s functor~map sheer) effect_sheer} unfold,
+        d bind_equal lemma_sheer_unfold,
+        d effect_bind_sheer
+      }
+  }
+
+## run an effect, then the fallible effect its outcome chooseth; a fault
+## stayeth.
+let bind
+  : [@ε: *, @α: *, @β: *, m: ε fallible α, f: [α, ε fallible β], ε fallible β]
+  ≔ ((m unwrap) effect_bind {s ^ (s functor~map f) unfold}) wrap
+
+## mapping into fallible effects and then flattening is binding.
+let map_flat
+  : [@ε: *, @α: *, @β: *, m: ε fallible α, f: [α, ε fallible β],
+    ((m map f) flat) = (m bind f)]
+  ≔ wrap leibnitz >{transit,
+    (m unwrap) effect_bind_bind {s ^ (s functor~map f) effect_sheer} unfold,
+    (m unwrap) bind_equal {s ^ (s functor~map f) effect_sheer_bind unfold}
+  }
+
+## binding twice is binding once by the bound continuation.
+let lemma_bind_bind
+  : [@ε: *, @α: *, @β: *, @γ: *, m: ε fallible α, f: [α, ε fallible β],
+    g: [β, ε fallible γ], <{bind, m, f, g} = (m bind {a ^ (a f) bind g})]
+  ≔ wrap leibnitz >{transit,
+    (m unwrap) effect_bind_bind {s ^ (s functor~map f) unfold} {
+      s ^ (s functor~map g) unfold
+    },
+    (m unwrap) bind_equal @(ε ∨ α) @(ε ∨ γ) @{
+      s: ε ∨ α ^
+        ((s functor~map f) unfold) effect_bind {t ^ (t functor~map g) unfold}
+    } @{s ^ (s functor~map {a ^ (a f) bind g}) unfold} {
+      e inject₀ ^ (e inject₀) effect_sheer_bind {t ^ (t functor~map g) unfold},
+      _ inject₁ ^ reflect
+    }
+  }
+
+bizen: [@ε: *, (ε fallible) functor] {
+  let map ≔ map
+
+  let map_identity ≔ map_identity
+}
+
+bizen: [@ε: *, (ε fallible) applicative] {
+  let sheer ≔ sheer
+
+  let apply: [m:, f…:] ≔ (f… map (m map)) flat
+
+  let apply_identity_sheer: [m:] ≔ >{transit,
+    flat leibnitz (identity sheer_map (m map)),
+    (m map identity) sheer_flat,
+    m map_identity
+  }
+
+  let sheer_apply_sheer: [a:, f:] ≔ >{transit,
+    flat leibnitz (f sheer_map ((a sheer) map _)),
+    ((a sheer) map f) sheer_flat,
+    a sheer_map f
+  }
+
+  let apply_apply: [m:, f:, g:] ≔ >{transit,
+    flat leibnitz (g sheer_map ((((f sheer) map (m map)) flat) map _)),
+    ((((f sheer) map (m map)) flat) map g) sheer_flat,
+    (_ map g) leibnitz
+      ((flat leibnitz (f sheer_map (m map))) transit ((m map f) sheer_flat)),
+    m map_map f g,
+    ((flat leibnitz ((f ▷ g) sheer_map (m map))) transit
+      ((m map (f ▷ g)) sheer_flat)) symmetry
+  }
+
+  let sheer_apply: [a:, f…:] ≔ >{transit,
+    {k ^ (f… map k) flat} leibnitz ((a sheer_map) extend),
+    flat leibnitz ((f… map_map (a ▶) sheer) symmetry),
+    (f… map (a ▶)) map_sheer_flat
+  }
+}
+
+bizen: [@ε: *, (ε fallible) monad] {
+  let flat ≔ flat
+
+  let sheer_bind: [a:, f:]
+    ≔ (flat leibnitz (a sheer_map f)) transit ((a f) sheer_flat)
+
+  let map_sheer_flat ≔ map_sheer_flat
+
+  let bind_bind: [m:, f:, g:] ≔ >{transit,
+    (m map f $ flat) map_flat g,
+    (_ bind g) leibnitz (m map_flat f),
+    m lemma_bind_bind f g,
+    (m bind) leibnitz ({a ^ ((a f) map_flat g) symmetry} extend),
+    (m map_flat {a ^ (a f) map g $ flat}) symmetry
+  }
+}

@@ -86,7 +86,7 @@ classFamily names ty =
 
 -- goals are solved after the declaration's ordinary unification, so their
 -- types are as specific as the program maketh them.
--- a goal waiteth while the head of an input parameter of its flock is still
+-- a goal waiteth while the head of an input parameter of its class is still
 -- unknown, as rocq's `!` mode doth; output parameters (`* out`) are found by
 -- the search. a waiting goal may still be fixed by a local requirement or by
 -- splitting a stuck equation; no candidate bizen fixeth an unknown input.
@@ -99,7 +99,7 @@ solveInstances environment names = E.repeatProgress do
   if progressed then True <$ mapM_ E.addInstanceGoal still else fallback still
   where
     search = searchGoal environment names
-    -- a goal still stuck on an unknown input trieth its flock's fallback
+    -- a goal still stuck on an unknown input trieth its class's fallback
     -- bizens; the first that fiteth fixeth the input.
     fallback = \case
       [] -> pure False
@@ -123,7 +123,7 @@ solveDeterminedInstances environment names = E.repeatProgress do
 -- a declaration's annotation is closed, so its dictionaries are chosen before
 -- its body is checked. known goals are solved, and a stuck equation of the
 -- annotation is split by first-order approximation, first against a rigid
--- application and then between two applied holes, as nested flock calls
+-- application and then between two applied holes, as nested class calls
 -- such as `(l sift p) sift p` need. the unique-instance fallback still
 -- waiteth for the whole declaration.
 settleAnnotation :: K.Environment -> Names -> Elaboration ()
@@ -146,10 +146,10 @@ searchGoal environment names mode E.InstanceGoal {..} = do
     value <- E.evaluateGlued goalContext term
     E.unify goalContext goalHole value
 
--- the flock's fallback bizens, by priority, for a goal with unknown inputs.
+-- the class's fallback bizens, by priority, for a goal with unknown inputs.
 searchFallback :: K.Environment -> Names -> E.InstanceGoal -> Elaboration ()
 searchFallback environment names E.InstanceGoal {..} = do
-  family <- classFamily names goalType >>= maybe (E.failure "instance goal is not a flock") pure
+  family <- classFamily names goalType >>= maybe (E.failure "instance goal is not a class") pure
   let fallbacks = maybe [] classFallbacks (Map.lookup family (nameClasses names))
   when (null fallbacks) (E.failure "no fallback bizen")
   term <- searchInstanceAmong (Just fallbacks) environment names AllInstances [] goalContext goalType
@@ -159,7 +159,7 @@ searchFallback environment names E.InstanceGoal {..} = do
 partitionM :: (Monad m) => (a -> m Bool) -> [a] -> m ([a], [a])
 partitionM predicate = foldr (\goal rest -> do (yes, no) <- rest; keep <- predicate goal; pure (if keep then (goal : yes, no) else (yes, goal : no))) (pure ([], []))
 
--- a goal is ready when every input parameter of its flock hath a known head.
+-- a goal is ready when every input parameter of its class hath a known head.
 determined :: Names -> N.Value -> Elaboration Bool
 determined names goal =
   E.force goal >>= \case
@@ -178,11 +178,11 @@ localInstance names context family goal = do
   locals <- requirementsOf names context family
   firstJust [E.attempt (E.unify context ty goal >> pure (Local index)) | (index, ty) <- locals]
 
--- the local requirements of a flock, with their indices.
+-- the local requirements of a class, with their indices.
 requirementsOf :: Names -> K.Context -> SymbolId -> Elaboration [(Int, N.Value)]
 requirementsOf names context family = filterM (\(_, ty) -> (== Just family) <$> classFamily names ty) (zip [0 ..] (K.contextTypes context))
 
--- the one local requirement of the goal's flock that unifieth with it; none,
+-- the one local requirement of the goal's class that unifieth with it; none,
 -- or several, leaveth the goal waiting.
 uniqueLocalInstance :: Names -> K.Context -> N.Value -> Elaboration (Maybe Term)
 uniqueLocalInstance names context goal =
@@ -208,7 +208,7 @@ resolveInstance environment names = searchInstance environment names AllInstance
 searchInstance :: K.Environment -> Names -> SearchMode -> [Term] -> K.Context -> N.Value -> Elaboration Term
 searchInstance = searchInstanceAmong Nothing
 
--- a search restricted to the given bizens, such as a flock's fallbacks.
+-- a search restricted to the given bizens, such as a class's fallbacks.
 searchInstanceAmong :: Maybe [SymbolId] -> K.Environment -> Names -> SearchMode -> [Term] -> K.Context -> N.Value -> Elaboration Term
 searchInstanceAmong restriction environment names mode ancestors context goal = do
   when (length ancestors > 16) (E.failure "instance search is too deep")
@@ -217,7 +217,7 @@ searchInstanceAmong restriction environment names mode ancestors context goal = 
   -- sort arguments remain significant to the kernel's constraints.
   let key = eraseGlobalLevels current
   when (key `elem` ancestors) (E.failure "cyclic instance search")
-  family <- classFamily names goal >>= maybe (E.failure "instance goal is not a flock") pure
+  family <- classFamily names goal >>= maybe (E.failure "instance goal is not a class") pure
   localMatch <- localInstance names context family goal
   case localMatch of
     Just term -> pure term
@@ -246,7 +246,7 @@ searchInstanceAmong restriction environment names mode ancestors context goal = 
           available <- traverse (E.quote (K.contextDepth context)) localRequirements
           let rendered = renderTermWith (displayName names) []
               detail = ["available requirement '" ++ rendered requirement ++ "'" | requirement <- available] ++ take 1 failures
-          E.failure ("no bizen of flock '" ++ displayName names family ++ "' matcheth goal '" ++ rendered current ++ "'" ++ concatMap ("; " ++) detail)
+          E.failure ("no bizen of class '" ++ displayName names family ++ "' matcheth goal '" ++ rendered current ++ "'" ++ concatMap ("; " ++) detail)
   where
     ordered ClassInfo {classInstances, classPriorities} =
       map snd (sortOn fst [((Down (Map.findWithDefault defaultPriority symbol classPriorities), Down age), symbol) | (age, symbol) <- zip [0 :: Int ..] classInstances])

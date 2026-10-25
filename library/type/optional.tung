@@ -1,0 +1,182 @@
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/monoid_multiply.tung
+bring class/algebra/total/semigroup_multiply.tung
+bring class/equal_to_is.tung
+bring class/functor.tung
+bring class/functor/applicative.tung
+bring class/functor/catamorphism.tung
+bring class/functor/hath_sift.tung
+bring class/functor/hath_traverse.tung
+bring class/functor/monad.tung
+bring class/hath_equal.tung
+bring class/order/complement.tung
+bring is.tung
+bring type/one.tung
+bring type/two.tung
+
+## an optional value.
+show type optional: [α: *, *] {
+  none: α optional,
+  some: [α, α optional]
+}
+
+bizen: [@α: *, @: α semigroup_·, (α optional) semigroup_·] {
+  let · ≔ {
+    none,   b      ^ b,
+    a,      none   ^ a,
+    a some, b some ^ a · b $ some
+  }
+
+  let ·_· ≔ {
+    none,   _,      _      ^ reflect,
+    _ some, none,   _      ^ reflect,
+    _ some, _ some, none   ^ reflect,
+    a some, b some, c some ^ some leibnitz (a ·_· b c)
+  }
+}
+
+bizen: [@α: *, @: α semigroup_·, (α optional) monoid_·] {
+  let one ≔ none
+
+  let one_·: [_:] ≔ reflect
+
+  let ·_one ≔ {
+    none   ^ reflect,
+    _ some ^ reflect
+  }
+}
+
+bizen: optional functor {
+  let map ≔ {
+    none,   _ ^ none,
+    a some, f ^ a f $ some
+  }
+
+  let map_identity ≔ {
+    none   ^ reflect,
+    _ some ^ reflect
+  }
+}
+
+bizen: optional applicative {
+  let sheer ≔ some
+
+  let apply ≔ {
+    a some, f some ^ a f $ some,
+    _,      _      ^ none
+  }
+
+  let apply_identity_sheer ≔ {
+    none   ^ reflect,
+    _ some ^ reflect
+  }
+
+  let sheer_apply_sheer: [a:, f:] ≔ reflect
+
+  let apply_apply ≔ {
+    none,   _, _ ^ reflect,
+    _ some, _, _ ^ reflect
+  }
+
+  let sheer_apply ≔ {
+    _, none   ^ reflect,
+    _, _ some ^ reflect
+  }
+}
+
+bizen: optional monad {
+  let flat ≔ {
+    none   ^ none,
+    a some ^ a
+  }
+
+  let sheer_bind: [a:, f:] ≔ reflect
+
+  let map_sheer_flat ≔ {
+    none   ^ reflect,
+    _ some ^ reflect
+  }
+
+  let bind_bind ≔ {
+    none,   _, _;
+    _ some, _, _ ^ reflect
+  }
+}
+
+bizen: optional hath_sift {
+  let sift ≔ {
+    none,   _ ^ none,
+    a some, f ^ a f $ if (a some) none
+  }
+}
+
+bizen: optional catamorphism {
+  let gather₀ ≔ {
+    none,   b, _ ^ b,
+    a some, b, f ^ a f b
+  }
+
+  let gather₁ ≔ {
+    none,   b, _ ^ b,
+    a some, b, f ^ b f a
+  }
+}
+
+bizen: optional hath_traverse {
+  let traverse ≔ {
+    none,   _ ^ none sheer,
+    a some, f ^ (a f) map some
+  }
+}
+
+## extract an option with a fallback value.
+show let fallback: [@α: *, α optional, α, α] ≔ {
+  none,   b ^ b,
+  a some, _ ^ a
+}
+
+## consume an option with a fallback and a present-value branch.
+show let handle: [@α: *, @β: *, α optional, β, [α, β], β] ≔ {
+  none,   b, _ ^ b,
+  a some, _, f ^ a f
+}
+
+## true when an option inholdeth a value.
+show let is_some: [@α: *, α optional, 𝟚] ≔ {
+  none   ^ nay,
+  _ some ^ yea
+}
+
+## true when an option is empty.
+show let is_none: [@α: *, o: α optional, 𝟚] ≔ o is_some $ ¬
+
+## extract an option or run a fallback computation.
+show let or_else: [@α: *, α optional, [𝟙, α], α] ≔ {
+  none,   fallback ^ only fallback,
+  a some, _        ^ a
+}
+
+## options are the same when both are absent or hold the same value.
+show let equal: [@α: *, @: α hath_≍, α optional, α optional, 𝟚] ≔ {
+  none,   none   ^ yea,
+  a some, b some ^ a ≍ b,
+  _,      _      ^ nay
+}
+
+bizen: [@α: *, @: α hath_≍, (α optional) hath_≍] {
+  let ≍ ≔ equal
+}
+
+bizen: [@α: *, @: α ≍_to_=, (α optional) ≍_to_=] {
+  let ≍_= ≔ {
+    none,   none,   _     ^ reflect,
+    a some, b some, equal ^ some leibnitz (a ≍_= b equal),
+    none,   _ some, equal ^ match equal {},
+    _ some, none,   equal ^ match equal {}
+  }
+
+  let ≍_reflect ≔ {
+    none   ^ reflect,
+    a some ^ a ≍_reflect
+  }
+}

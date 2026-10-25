@@ -1,0 +1,83 @@
+bring class/algebra/total/group_add.tung
+bring class/algebra/total/hath_add.tung
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/hath_one.tung
+bring class/algebra/total/hath_subtract.tung
+bring class/algebra/total/hath_zero.tung
+bring class/algebra/total/monoid_add.tung
+bring class/algebra/total/monoid_multiply.tung
+bring class/algebra/total/ring.tung
+bring class/algebra/total/semigroup_multiply.tung
+bring class/algebra/total/semiring.tung
+bring is.tung
+
+## a module over a ring: an additive group `μ` that the ring `ρ` acteth on by
+## `∘`. the acting distributeth over both additions, composeth with the
+## ring's multiplication, and leaveth values alone at `one`. the laws imply
+## that `+` on `μ` is commutative, so no law stateth it.
+show class module: [ρ: *, μ: *, @: ρ ring, @: μ group_+, *] {
+  let ∘: [ρ, μ, μ]
+
+  let ∘_+: [r: ρ, a: μ, b: μ, (r ∘ (a + b)) = ((r ∘ a) + (r ∘ b))]
+
+  let +_∘: [r: ρ, s: ρ, a: μ, ((r + s) ∘ a) = ((r ∘ a) + (s ∘ a))]
+
+  let ·_∘: [r: ρ, s: ρ, a: μ, ((r · s) ∘ a) = (r ∘ (s ∘ a))]
+
+  let one_∘: [a: μ, (one ∘ a) = a]
+}
+
+## every ring is a module over itself, acting by its own multiplication.
+bizen: [@ρ: *, @: ρ ring, ρ module ρ] {
+  let ∘ ≔ ·
+
+  let ∘_+: [r:, a:, b:] ≔ r ·_+ a b
+
+  let +_∘: [r:, s:, a:] ≔ r +_· s a
+
+  let ·_∘: [r:, s:, a:] ≔ (r ·_· s a) symmetry
+
+  let one_∘: [a:] ≔ a one_·
+}
+
+## the zero scalar sendeth every value to `zero`: `b + b = b` forceth
+## `b = zero` by outstriking.
+show let zero_∘: [@ρ: *, @μ: *, @: ρ module μ, a: μ, ((zero @ρ) ∘ a) = zero] ≔ (
+  let twofolded: ((((zero @ρ) ∘ a) + ((zero @ρ) ∘ a)) = ((zero @ρ) ∘ a))
+    ≔ ((+_∘ @ρ @μ zero zero a) symmetry) transit
+      ((_ ∘ a) leibnitz (zero_+ @ρ zero))
+  yield ((zero @ρ) ∘ a) +_strike ((zero @ρ) ∘ a) zero
+    (twofolded transit ((zero_+ @μ ((zero @ρ) ∘ a)) symmetry))
+)
+
+## every scalar sendeth `zero` to `zero`.
+show let ∘_zero: [@ρ: *, @μ: *, @: ρ module μ, r: ρ, (r ∘ (zero @μ)) = zero] ≔ (
+  let twofolded: (((r ∘ (zero @μ)) + (r ∘ (zero @μ))) = (r ∘ (zero @μ)))
+    ≔ ((∘_+ @ρ @μ r zero zero) symmetry) transit
+      ((r ∘) leibnitz (zero_+ @μ zero))
+  yield (r ∘ (zero @μ)) +_strike (r ∘ (zero @μ)) zero
+    (twofolded transit ((zero_+ @μ (r ∘ (zero @μ))) symmetry))
+)
+
+## a flipped scalar flippeth the outcome.
+show let -_∘
+  : [@ρ: *, @μ: *, @: ρ module μ, r: ρ, a: μ, ((r -) ∘ a) = ((r ∘ a) -)]
+  ≔ (r ∘ a) -_alone ((r -) ∘ a) >{transit,
+    ((r -) +_∘ r a) symmetry,
+    (_ ∘ a) leibnitz (r group_add~-_+),
+    a zero_∘
+  }
+
+## scaling a flipped value flippeth the outcome.
+show let ∘_-
+  : [@ρ: *, @μ: *, @: ρ module μ, r: ρ, a: μ, (r ∘ (a -)) = ((r ∘ a) -)]
+  ≔ (r ∘ a) -_alone (r ∘ (a -)) >{transit,
+    (r ∘_+ (a -) a) symmetry,
+    (r ∘) leibnitz (a group_add~-_+),
+    r ∘_zero
+  }
+
+## the flipped unit scalar flippeth.
+show let one_-_∘
+  : [@ρ: *, @μ: *, @: ρ module μ, a: μ, (((one @ρ) -) ∘ a) = (a -)]
+  ≔ (one -_∘ a) transit (- leibnitz (a one_∘))

@@ -1,0 +1,12 @@
+bring type/two.tung
+
+show class hath_to_string: [α: *, *] {
+  let to_string: [α, string]
+}
+
+bizen: 𝟚 hath_to_string {
+  let to_string ≔ {
+    yea ^ 'yea',
+    nay ^ 'nay'
+  }
+}

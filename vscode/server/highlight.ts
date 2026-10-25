@@ -24,14 +24,14 @@ const tokenModifiers = [
   "typeFunction",
 ];
 // parser roles identify syntax. checking telleth whether a resolved global
-// nameth an ilk, which syntax cannot: a value written in an annotation, as
-// `naught` in `(naught · a) = naught`, is no ilk. workspace resolution only
+// nameth a type, which syntax cannot: a value written in an annotation, as
+// `zero` in `(zero · a) = zero`, is no type. workspace resolution only
 // refineth names whose constructor identity syntax cannot decide.
 const buildHighlightRanges = (
   source: string,
   roles: SourceRole[],
   resolveDefinition,
-  checkedIlk: (start: number) => boolean | undefined = () => undefined,
+  checkedType: (start: number) => boolean | undefined = () => undefined,
 ) => {
   // plain terms need no lookup when the file cannot contain visible
   // constructors. these compiler hints avoid eager navigation analysis.
@@ -56,11 +56,11 @@ const buildHighlightRanges = (
       char: start - lineStarts[line],
     };
     if (token.text === "_" || role === "plain") continue;
-    const ilk = checkedIlk(start);
+    const namesType = checkedType(start);
     let type =
-      role === "type" && ilk === false
+      role === "type" && namesType === false
         ? "term"
-        : ["term", "call"].includes(role) && ilk === true
+        : ["term", "call"].includes(role) && namesType === true
           ? "type"
           : role;
     const modifiers = originalModifiers.filter((modifier) =>

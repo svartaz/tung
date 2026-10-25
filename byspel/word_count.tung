@@ -1,0 +1,36 @@
+bring class/algebra/total/hath_multiply.tung
+bring class/functor/catamorphism.tung
+bring effect/file.tung
+bring effect/system.tung
+bring often.tung
+bring type/and.tung
+bring type/list.tung
+bring type/optional.tung
+bring type/or.tung
+bring type/string/operation.tung
+bring type/wordbook.tung
+
+let count_word: [counts: string wordbook ℤ, word: string, string wordbook ℤ]
+  ≔ match counts lookup word {
+    none       ^ counts put word +1,
+    count some ^ counts put word (count + +1)
+  }
+
+let count_words: [content: string, string wordbook ℤ] ≔ (
+  let words ≔ content words_string
+  yield words gather₁ wordbook~empty count_word
+)
+
+let write_count: [entry: string ∧ ℤ, 𝟙 effect] ≔ >{then,
+  (entry project₀) often~write,
+  ':' often~write,
+  (entry project₁) to_string $ write_line
+}
+
+let main: 𝟙 effect ≔ arguments bind {
+  list~empty ^ 'usage: tung word_count.tung <file>' write_line,
+  path ‥ _   ^ path file~read $ bind {
+    message inject₀ ^ 'error:' · message $ write_line,
+    content inject₁ ^ content count_words $ entries $ each write_count
+  }
+}

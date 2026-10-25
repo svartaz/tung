@@ -10,37 +10,38 @@ import {
   useNamespace,
   type SourceToken,
 } from "./syntax.ts";
-const ownedKinds = new Set(["ilk", "flock"]);
+const ownedKinds = new Set(["type", "class"]);
 const localRoles = new Set(["parameter", "typeParameter"]);
 // lsp role names stay in the protocol; people read them in tung's terms.
 const roleNames = {
-  type: "ilk",
-  typeParameter: "ilk input",
-  class: "flock",
+  type: "type",
+  typeParameter: "type input",
+  class: "class",
   enumMember: "constructor",
-  method: "limb",
+  method: "member",
 };
 const roleLabel = (role: string) => roleNames[role] ?? role;
 const keywordHelp = {
   bring:
     "import a tung file; its last path segment is the default namespace, and an optional alias overrideth it.",
-  show: "publish a declaration, or re-export every visible term, ilk, and flock with a name.",
+  show: "publish a declaration, or re-export every visible term, type, and class with a name.",
   yield: "introduce a block result.",
   sorry:
-    "stand for an omitted proof or definition of any ilk; performing it is a runtime error.",
-  orsetting:
-    "assume a named constant of an ilk without a proof; `--check` lists it, `--no-sorry` alloweth it, and `--no-orset` refuseth it in a proof check.",
+    "stand for an omitted proof or definition of any type; performing it is a runtime error.",
+  axiom:
+    "assume a named constant of a type without a proof; `--check` lists it, `--no-sorry` alloweth it, and `--no-axiom` refuseth it in a proof check.",
   unbuild:
-    "name the eliminator of an ilk or flock: `drive unbuild name methods target` performeth structural induction.",
-  flock: "declare a flock and its members.",
-  fremmed:
+    "name the eliminator of a type or class: `drive unbuild name methods target` performeth structural induction.",
+  class: "declare a class and its members.",
+  foreign:
     "bind an annotated file-level let to the host function named by a preceding string key.",
-  bizen: "provide evidence and member definitions for a flock.",
+  bizen: "provide evidence and member definitions for a class.",
   match:
     "match one or more values against exhaustive pattern rows; `;` joineth rows that share a result.",
-  fall: "write an annotated function: inputs, a final result ilk, `^`, and the body.",
-  let: "bind a value, curried function, or ilk alias.",
-  ilk: "declare an inductive ilk and its constructors.",
+  function:
+    "write an annotated function: inputs, a final result type, `^`, and the body.",
+  let: "bind a value, curried function, or type alias.",
+  type: "declare an inductive type and its constructors.",
 };
 const analyzeDocument = (
   text: string,
@@ -103,7 +104,7 @@ const analyzeDocument = (
 // compiler roles become the model's token roles. a header binder arriveth as
 // `headerPattern`, since only name resolution can tell a binder from a
 // constructor: it is a parameter here, and resolution prefereth a visible
-// constructor of the same name. a direct declaration in a flock or bizen
+// constructor of the same name. a direct declaration in a class or bizen
 // body is a method; nested declarations retain their own roles.
 const compilerSemantic = (
   tokens,
@@ -140,7 +141,7 @@ const compilerSemantic = (
       (type === "variable" || type === "function") &&
       regions.some(
         (region) =>
-          (region.kind === "flock" || region.kind === "bizen") &&
+          (region.kind === "class" || region.kind === "bizen") &&
           depths[token.index] === region.depth + 1 &&
           token.index > region.headerEnd &&
           token.offset <= region.endOffset &&

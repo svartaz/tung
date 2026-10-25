@@ -1,0 +1,77 @@
+bring is.tung
+
+type 𝟚: * {
+  yea: 𝟚,
+  nay: 𝟚
+}
+
+type optional: [α: *, *] {
+  none: α optional,
+  some: [α, α optional]
+}
+
+## a class nameth the members that each bizen supplieth.
+class hath_≍: [α: *, *] {
+  let ≍: [α, α, 𝟚]
+
+  let ≍_reflect: [x: α, (x ≍ x) = yea]
+}
+
+## an anonymous requirement `@:` is found by instance search.
+let ≭: [@α: *, @: α hath_≍, a: α, b: α, 𝟚] ≔ match a ≍ b {
+  yea ^ nay,
+  nay ^ yea
+}
+
+## a bizen proveth each law of its class. `reflect` proveth a law that holdeth
+## by computation.
+bizen: 𝟚 hath_≍ {
+  let ≍ ≔ {
+    yea, yea;
+    nay, nay ^ yea,
+    _,   _   ^ nay
+  }
+
+  let ≍_reflect ≔ {
+    yea ^ reflect,
+    nay ^ reflect
+  }
+}
+
+## a bizen may require other bizens.
+bizen: [@α: *, @: α hath_≍, (α optional) hath_≍] {
+  let ≍ ≔ {
+    none,   none   ^ yea,
+    a some, b some ^ a ≍ b,
+    _,      _      ^ nay
+  }
+
+  let ≍_reflect ≔ {
+    none   ^ reflect,
+    a some ^ a ≍_reflect
+  }
+}
+
+class functor: [φ: [*, *], *] {
+  let map: [@α: *, @β: *, α φ, [α, β], β φ]
+}
+
+## a parent requirement maketh every applicative a functor.
+class applicative: [φ: [*, *], @: φ functor, *] {
+  let sheer: [@α: *, α, α φ]
+}
+
+bizen: optional functor {
+  let map ≔ {
+    none,   _ ^ none,
+    a some, f ^ (a f) some
+  }
+}
+
+bizen: optional applicative {
+  let sheer: [a:] ≔ a some
+}
+
+## the functor cometh from the applicative requirement.
+let lift: [@φ: [*, *], @: φ applicative, @α: *, @β: *, a: α, f: [α, β], β φ]
+  ≔ (a sheer) map f

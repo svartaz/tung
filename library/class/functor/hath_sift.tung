@@ -1,0 +1,6 @@
+bring class/functor.tung
+bring type/two.tung
+
+show class hath_sift: [φ: [*, *], @: φ functor, *] {
+  let sift: [@α: *, α φ, [α, 𝟚], α φ]
+}

@@ -1,0 +1,39 @@
+# the equality type `=`, whose only constructor is `reflect`.
+# matching on `reflect` replaceth one side of an equation with the other.
+show type =: [@α: *, a: α, α, *] { reflect: a = @α a }
+
+## equality is kept by applying a function.
+show let leibnitz
+  : [@α: *, @β: *, @a: α, @b: α, f: [α, β], reflect: a = b, (a f) = (b f)]
+  ≔ reflect
+
+## eftwend an equality proof.
+show let symmetry: [@α: *, @a: α, @b: α, reflect: a = b, b = a] ≔ reflect
+
+## join two equality proofs.
+show let transit: [@α: *, @a: α, @b: α, @c: α, reflect: a = b, q: b = c, a = c]
+  ≔ q
+
+## a predicate of one side holdeth for the other. the predicate is found by
+## abstracting each occurrence of `b` in the expected type, or without one,
+## each occurrence of `a` in the type of the other input.
+show let throughbear
+  : [@α: *, @a: α, @b: α, @predicate: [α, *], reflect: a = b, a predicate,
+    b predicate]
+  ≔ {c ^ c}
+
+## a computed value with the proof of what it is, so that a case function can
+## match the value and still know it: in
+## `e inspect { yea, known ^ …, nay, known ^ … }` each case seeth `known`
+## as `e = yea` or `e = nay`. the predicate is found as for `throughbear`.
+show let inspect
+  : [@α: *, @predicate: [α, *], a: α, f: [b: α, a = b, b predicate],
+    a predicate]
+  ≔ a f reflect
+
+## function extensionality: a function that agreeth with another at every
+## input is the same as it.
+## it is a listed assumption, as in agda and lean, where it is not provable
+## from equality unbuilding alone.
+show axiom extend
+  : [@α: *, @β: *, @f: [α, β], @g: [α, β], [a: α, (a f) = (a g)], f = g]

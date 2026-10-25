@@ -1,0 +1,34 @@
+bring class/algebra/partial/category.tung
+bring class/algebra/partial/semigroupoid.tung
+bring class/functor.tung
+bring class/functor/applicative.tung
+bring class/functor/monad.tung
+bring combinator.tung
+bring is.tung
+
+## an arrow of a monad's kleisli category: a function from `α` to `β φ`. the
+## wrap letteth `φ kleisli` stand as an arrow type maker, as for
+## `semigroupoid`.
+show type kleisli: [φ: [*, *], α: *, β: *, *] {
+  wrap: [[α, β φ], α (φ kleisli) β]
+}
+
+## the function an arrow wrappeth.
+show let unwrap: [@φ: [*, *], @α: *, @β: *, f wrap: α (φ kleisli) β, α, β φ] ≔ f
+
+## arrows compose by binding the first outcome to the second.
+bizen: [@φ: [*, *], @: φ monad, (φ kleisli) semigroupoid] {
+  let ▷: [f wrap:, g wrap:] ≔ {a ^ (a f) bind g} wrap
+
+  let ▷_▷: [f wrap:, g wrap:, h wrap:]
+    ≔ wrap leibnitz ({a ^ ((a f) bind_bind g h) symmetry} extend)
+}
+
+## `sheer` is the identity arrow.
+bizen: [@φ: [*, *], @: φ monad, (φ kleisli) category] {
+  let identity ≔ sheer wrap
+
+  let identity_▷: [f wrap:] ≔ wrap leibnitz ((_ sheer_bind f) extend)
+
+  let ▷_identity: [f wrap:] ≔ wrap leibnitz ({a ^ (a f) map_sheer_flat} extend)
+}

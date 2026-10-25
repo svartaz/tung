@@ -17,12 +17,12 @@ typingTests =
     expectEq "a universe annotation hole is inferred" (Right (0, sort 1, [])) $ do
       result <- check emptyEnvironment (sort 0) (Sort (LMeta 0))
       pure (inferredUniverses result, inferredType result, inferredConstraints result),
-    expectEq "sameness retaineth its bound type" (Right identityType) (inferredType <$> infer emptyEnvironment identity),
+    expectEq "identity retaineth its bound type" (Right identityType) (inferredType <$> infer emptyEnvironment identity),
     expectEq "application substituteth its result type" (Right (Pi Explicit (sort 0) (sort 0))) (inferredType <$> infer emptyEnvironment (Apply Explicit identity (sort 0))),
     reject "a universe cannot inhold itself" (check emptyEnvironment (sort 0) (sort 0)),
     reject "inferred universes cannot inhold themselves" (check emptyEnvironment (Sort (LMeta 0)) (Sort (LMeta 0))),
     reject "closed terms have no local variable" (infer emptyEnvironment (Local 0)),
-    reject "undernaught local indices are invalid" (infer emptyEnvironment (Local (-1))),
+    reject "negative local indices are invalid" (infer emptyEnvironment (Local (-1))),
     reject "a function domain must be a type" (infer emptyEnvironment (Lambda Explicit identity (Local 0))),
     reject "a product result must be a type" (infer emptyEnvironment (Pi Explicit (sort 0) (Lambda Explicit (Local 0) (Local 0)))),
     reject "application respecteth argument visibility" (infer emptyEnvironment (Apply Implicit identity (sort 0))),
@@ -56,8 +56,8 @@ globalTests =
       normalise second (Global (name "second") []),
     expectEq "one polymorphic definition supporteth different universes" (Right (Lambda Explicit (sort 0) (Local 0), sort 0)) $ do
       environment <- polymorphicEnvironment
-      lower <- normalise environment (Apply Implicit (Global (name "sameness") [level 1]) (sort 0))
-      higher <- normalise environment (Apply Explicit (Apply Implicit (Global (name "sameness") [level 2]) (sort 1)) (sort 0))
+      lower <- normalise environment (Apply Implicit (Global (name "identity") [level 1]) (sort 0))
+      higher <- normalise environment (Apply Explicit (Apply Implicit (Global (name "identity") [level 2]) (sort 1)) (sort 0))
       pure (lower, higher),
     expectEq "products retain the maximum of inuniverses" (Right (sort 3)) $ do
       environment <- define emptyEnvironment (name "arrow") Nothing (Pi Explicit (Sort (LMeta 0)) (Sort (LMeta 1)))
@@ -70,12 +70,12 @@ globalTests =
       inferredUniverses <$> infer environment (Global (name "maximum") [LMeta 0, LMeta 1, LMeta 2]),
     reject "unknown definitions are rejected" (infer emptyEnvironment (Global (name "unknown") [])),
     reject "self-reference cannot define a recursive global" (define emptyEnvironment (name "loop") Nothing (Global (name "loop") [])),
-    reject "definitions cannot replace an existing sameness" $ do
+    reject "definitions cannot replace an existing identity" $ do
       environment <- define emptyEnvironment (name "fixed") Nothing (sort 0)
       define environment (name "fixed") Nothing (Global (name "fixed") []),
     reject "global universe arity is checked" $ do
       environment <- polymorphicEnvironment
-      infer environment (Global (name "sameness") [])
+      infer environment (Global (name "identity") [])
   ]
 
 kernelTests :: [Test]
@@ -156,7 +156,7 @@ maximumAnnotation :: Term
 maximumAnnotation = Sort (LMax (LSucc (LMeta 1)) (LSucc (LMeta 2)))
 
 polymorphicEnvironment :: Either String Environment
-polymorphicEnvironment = define emptyEnvironment (name "sameness") Nothing (Lambda Implicit (Sort (LMeta 0)) (Lambda Explicit (Local 0) (Local 0)))
+polymorphicEnvironment = define emptyEnvironment (name "identity") Nothing (Lambda Implicit (Sort (LMeta 0)) (Lambda Explicit (Local 0) (Local 0)))
 
 name :: String -> SymbolId
 name = SymbolId RootModule

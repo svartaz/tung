@@ -1,0 +1,183 @@
+bring class/hath_equal.tung
+bring class/order/hath_at_most.tung
+bring class/order/order_partial.tung
+bring class/order/order_total.tung
+bring is.tung
+bring type/list.tung
+bring type/two.tung
+
+## the lexicographic step: `a` and `b` compare the heads both ways, as `≤`
+## and its reverse; unless both hold they decide, and then the tails decide
+## by `t`.
+let step: [a: 𝟚, b: 𝟚, t: 𝟚, 𝟚] ≔ a if (b if t yea) nay
+
+## lists compared lexicographically: the first values that differ decide, and
+## a list goeth before its longer continuations. it useth `≤` alone, so the
+## values' equality never reacheth `=` by a second path.
+show let at_most: [@α: *, @: α hath_≤, α list, α list, 𝟚] ≔ {
+  empty,  _      ^ yea,
+  _ ‥ _,  empty  ^ nay,
+  a ‥ a…, b ‥ b… ^ (a ≤ b) step (b ≤ a) (a… at_most b…)
+}
+
+bizen: [@α: *, @: α order_total, (α list) hath_≤] {
+  let ≤ ≔ at_most
+}
+
+# the laws below reduce each list case to `step` on boolean inputs.
+let lemma_≤_yea: [a: 𝟚, (a ≤ yea) = yea] ≔ match a {
+  yea;
+  nay ^ reflect
+}
+
+let lemma_step_reflect
+  : [a: 𝟚, t: 𝟚, held: a = yea, tails: t = yea, (a step a t) = yea]
+  ≔ match a {
+    yea ^ tails,
+    nay ^ match held {}
+  }
+
+let lemma_step_antisymmetry
+  : [a: 𝟚, b: 𝟚, s: 𝟚, l: 𝟚, m: 𝟚, t: 𝟚, held: >{≤, a, b, s} = yea,
+    tails: >{≤, l, m, t} = yea, >{≤, a step b l, b step a m, s if t nay} = yea]
+  ≔ match a, b, s {
+    nay, _,   _   ^ reflect,
+    yea, nay, _   ^ reflect,
+    yea, yea, nay ^ match held {},
+    yea, yea, yea ^ tails
+  }
+
+let lemma_step_transit
+  : [ab: 𝟚, ba: 𝟚, bc: 𝟚, cb: 𝟚, ac: 𝟚, ca: 𝟚, l: 𝟚, m: 𝟚, n: 𝟚,
+    abc: >{≤, ab, bc, ac} = yea, cba: >{≤, cb, ba, ca} = yea,
+    bca: >{≤, bc, ca, ba} = yea, cab: >{≤, ca, ab, cb} = yea,
+    tails: >{≤, l, m, n} = yea,
+    >{≤, ab step ba l, bc step cb m, ac step ca n} = yea]
+  ≔ match ab, ba, bc, cb, ac, ca {
+    nay, _,   _,   _,   _,   _   ^ reflect,
+    yea, nay, nay, _,   _,   _   ^ reflect,
+    yea, yea, nay, _,   _,   _   ^ l lemma_≤_yea,
+    yea, _,   yea, _,   nay, _   ^ match abc {},
+    yea, nay, yea, _,   yea, yea ^ match bca {},
+    yea, nay, yea, nay, yea, nay ^ reflect,
+    yea, nay, yea, yea, yea, nay ^ m lemma_≤_yea,
+    yea, yea, yea, nay, yea, yea ^ match cab {},
+    yea, yea, yea, nay, yea, nay ^ l lemma_≤_yea,
+    yea, yea, yea, yea, yea, nay ^ match cba {},
+    yea, yea, yea, yea, yea, yea ^ tails
+  }
+
+let lemma_step_total
+  : [a: 𝟚, b: 𝟚, l: 𝟚, m: 𝟚, held: ((a ≍ nay) ≤ b) = yea,
+    tails: ((l ≍ nay) ≤ m) = yea, (((a step b l) ≍ nay) ≤ (b step a m)) = yea]
+  ≔ match a, b {
+    nay, nay ^ match held {},
+    nay, yea ^ reflect,
+    yea, nay ^ reflect,
+    yea, yea ^ tails
+  }
+
+let lemma_step_former: [a: 𝟚, b: 𝟚, t: 𝟚, held: (a step b t) = yea, a = yea]
+  ≔ match a {
+    yea ^ reflect,
+    nay ^ match held {}
+  }
+
+let lemma_step_latter
+  : [a: 𝟚, b: 𝟚, t: 𝟚, c: 𝟚, held: (a step b t) = yea,
+    other: (b step a c) = yea, b = yea]
+  ≔ match a, b {
+    nay, _   ^ match held {},
+    yea, nay ^ match other {},
+    yea, yea ^ reflect
+  }
+
+let lemma_step_tail
+  : [a: 𝟚, b: 𝟚, t: 𝟚, c: 𝟚, held: (a step b t) = yea,
+    other: (b step a c) = yea, t = yea]
+  ≔ match a, b {
+    nay, _   ^ match held {},
+    yea, nay ^ match other {},
+    yea, yea ^ held
+  }
+
+let lemma_≤_reflect
+  : [@α: *, @: α order_total, a…: α list, (a… at_most a…) = yea]
+  ≔ match a… {
+    empty ^ reflect,
+    a ‥ k ^
+      (a ≤ a) lemma_step_reflect (k at_most k) (a ≤_reflect) (k lemma_≤_reflect)
+  }
+
+let lemma_≤_antisymmetry
+  : [@α: *, @: α order_total, a…: α list, b…: α list,
+    >{≤, a… at_most b…, b… at_most a…, a… ≍ b…} = yea]
+  ≔ match a…, b… {
+    empty, empty ^ reflect,
+    empty, _ ‥ _ ^ reflect,
+    _ ‥ _, empty ^ reflect,
+    a ‥ k, b ‥ o ^
+      (a ≤ b) lemma_step_antisymmetry (b ≤ a) (a ≍ b) (k at_most o)
+        (o at_most k) (k ≍ o) (a ≤_antisymmetry b) (k lemma_≤_antisymmetry o)
+  }
+
+let lemma_≤_transit
+  : [@α: *, @: α order_total, a…: α list, b…: α list, n: α list,
+    >{≤, a… at_most b…, b… at_most n, a… at_most n} = yea]
+  ≔ match a…, b…, n {
+    empty, _,     _     ^ (b… at_most n) lemma_≤_yea,
+    _ ‥ _, empty, _     ^ reflect,
+    a ‥ k, b ‥ o, empty ^ ((a ‥ k) at_most (b ‥ o)) lemma_≤_yea,
+    a ‥ k, b ‥ o, c ‥ p ^
+      (a ≤ b) lemma_step_transit (b ≤ a) (b ≤ c) (c ≤ b) (a ≤ c) (c ≤ a)
+        (k at_most o) (o at_most p) (k at_most p) (a ≤_transit b c)
+        (c ≤_transit b a) (b ≤_transit c a) (c ≤_transit a b)
+        (k lemma_≤_transit o p)
+  }
+
+let lemma_≤_total
+  : [@α: *, @: α order_total, a…: α list, b…: α list,
+    (((a… at_most b…) ≍ nay) ≤ (b… at_most a…)) = yea]
+  ≔ match a…, b… {
+    empty, _     ^ reflect,
+    _ ‥ _, empty ^ reflect,
+    a ‥ k, b ‥ o ^
+      (a ≤ b) lemma_step_total (b ≤ a) (k at_most o) (o at_most k) (a ≤_total b)
+        (k lemma_≤_total o)
+  }
+
+let lemma_≤_=
+  : [@α: *, @: α order_total, a…: α list, b…: α list,
+    below: (a… at_most b…) = yea, above: (b… at_most a…) = yea, a… = b…]
+  ≔ match a…, b… {
+    empty, empty ^ reflect,
+    empty, _ ‥ _ ^ match above {},
+    _ ‥ _, empty ^ match below {},
+    a ‥ k, b ‥ o ^ (
+      let head: a = b
+        ≔ a ≤_= b ((a ≤ b) lemma_step_former (b ≤ a) (k at_most o) below)
+          ((a ≤ b) lemma_step_latter (b ≤ a) (k at_most o) (o at_most k) below
+            above)
+      let leftover: k = o
+        ≔ k lemma_≤_= o
+          ((a ≤ b) lemma_step_tail (b ≤ a) (k at_most o) (o at_most k) below
+            above)
+          ((b ≤ a) lemma_step_tail (a ≤ b) (o at_most k) (k at_most o) above
+            below)
+      yield ((_ ‥ k) leibnitz head) transit ((b ‥) leibnitz leftover)
+    )
+  }
+
+bizen: [@α: *, @: α order_total, (α list) order_partial] {
+  let ≤_reflect ≔ lemma_≤_reflect
+
+  let ≤_antisymmetry ≔ lemma_≤_antisymmetry
+
+  let ≤_transit ≔ lemma_≤_transit
+
+  let ≤_= ≔ lemma_≤_=
+}
+
+bizen: [@α: *, @: α order_total, (α list) order_total] {
+  let ≤_total ≔ lemma_≤_total
+}

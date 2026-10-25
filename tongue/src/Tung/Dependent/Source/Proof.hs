@@ -99,7 +99,7 @@ verifyProof program strict allowed audited = do
   let problems =
         [ case dependencyKind of
             SorryDependency -> "unfinished proof: " ++ dependencyName
-            _ -> "orsetting is not allowed: " ++ dependencyName
+            _ -> "axiom is not allowed: " ++ dependencyName
         | ProofDependency {..} <- auditDependencies audited,
           case dependencyKind of
             SorryDependency -> strict
@@ -112,7 +112,7 @@ verifyProof program strict allowed audited = do
       symbol <- resolve program name
       case Map.lookup symbol (globals (sourceEnvironment program)) of
         Just Definition {definitionBody = Assumption} -> Right symbol
-        _ -> Left ("allowed name '" ++ name ++ "' is not an orsetting")
+        _ -> Left ("allowed name '" ++ name ++ "' is not an axiom")
 
 resolve :: SourceProgram -> String -> Either String SymbolId
 resolve SourceProgram {globalNames} name = case lookupName name globalNames of

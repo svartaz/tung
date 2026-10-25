@@ -76,7 +76,7 @@ constructorIndices environment Split {..} constructor fieldValues = do
       ( \current value ->
           E.force current >>= \case
             N.VPi _ _ codomain -> E.instantiate codomain value
-            _ -> E.failure "invalid constructor ilk"
+            _ -> E.failure "invalid constructor type"
       )
       ty
       (splitParameters ++ fieldValues)
@@ -202,7 +202,7 @@ unifiedMotive environment scope level Split {..} levels parameterTerms indexPatt
               caseTerm <- unify reverted current (zip (reverse indexLevels) indexPatterns) [] generalised
               pure (Core.Lambda Explicit domainTerm (Apply Explicit (shiftTerm 1 caseTerm) (Local 0)))
         _ -> E.failure "invalid eliminator motive"
-    -- `result` is `[worth type, *]` at the current targets.
+    -- `result` is `[value type, *]` at the current targets.
     unify reverted current [] substitution result =
       E.force result >>= \case
         N.VPi Explicit valueDomain _ -> do

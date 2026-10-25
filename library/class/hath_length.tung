@@ -1,0 +1,17 @@
+bring class/algebra/total/hath_subtract.tung
+bring class/order/hath_at_most.tung
+bring type/float.tung
+bring type/integer.tung
+bring type/two.tung
+
+show class hath_‖: [α: *, β: *, *] {
+  let ‖: [α, β]
+}
+
+bizen: ℤ hath_‖ ℤ {
+  let ‖: [integer:] ≔ (+0 ≤ integer) if integer (integer -)
+}
+
+bizen: float hath_‖ float {
+  let ‖: [a:] ≔ (0.0 ≤ a) if a (a -)
+}

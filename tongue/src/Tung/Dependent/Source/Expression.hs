@@ -72,7 +72,7 @@ inferExpression environment names scope@Scope {scopeContext = context, scopeName
     term <- case Map.lookup (inductionSymbol family) (globals environment) of
       Just Definition {definitionUniverses, definitionBody = Eliminator _} ->
         Global (inductionSymbol family) <$> E.freshLevels definitionUniverses
-      _ -> E.failure ("'" ++ name ++ "' is not an ilk or flock, so it cannot be unbuilt")
+      _ -> E.failure ("'" ++ name ++ "' is not a type or class, so it cannot be unbuilt")
     (term,) <$> inferCore scope term
   Universe -> do
     level <- E.freshLevel
@@ -89,7 +89,7 @@ inferExpression environment names scope@Scope {scopeContext = context, scopeName
         pure (Pi parameterPlicity domain codomain, N.VSort (K.universeNormalise (LMax domainLevel codomainLevel)))
   Lambda binders _
     | any (Patterns.constructorBinder environment names) binders ->
-        E.failure "a function matching constructors needs an ilk annotation"
+        E.failure "a function matching constructors needs a type annotation"
   Lambda [] body -> inferExpression environment names scope body
   Lambda (Binder {..} : remaining) body -> do
     (domain, domainValue) <- case binderAnnotation of
@@ -119,7 +119,7 @@ inferExpression environment names scope@Scope {scopeContext = context, scopeName
     level <- E.freshLevel
     (ty, tyValue) <- E.newMeta context (N.VSort level)
     pure (Apply Implicit (Global H.sorrySymbol [level]) ty, tyValue)
-  -- `value.field` applieth the accessor its ilk declared, found by the
+  -- `value.field` applieth the accessor its type declared, found by the
   -- value's type.
   Projection record name -> do
     (term, ty) <- inferExpression environment names scope record
@@ -151,7 +151,7 @@ inferExpression environment names scope@Scope {scopeContext = context, scopeName
     level <- E.freshLevel
     (term, _) <- E.newMeta (scopeContext scope) (N.VSort level)
     pure (term, N.VSort level)
-  Cases _ -> E.failure "a case function needs an ilk annotation"
+  Cases _ -> E.failure "a case function needs a type annotation"
   -- without an expected type, every row shareth one inferred result type.
   Match scrutinees rows -> do
     level <- E.freshLevel
@@ -266,7 +266,7 @@ applyTo environment names scope@Scope {scopeContext = context} goal function fun
           _ -> pure False
       _ -> pure False
 
--- an implicit input whose type applieth a flock, filled by instance search.
+-- an implicit input whose type applieth a class, filled by instance search.
 isRequirement :: Names -> Plicity -> N.Value -> Elaboration Bool
 isRequirement names plicity domain
   | plicity == Implicit = isJust <$> classFamily names domain
@@ -277,7 +277,7 @@ isRequirement names plicity domain
 -- `elab_as_elim` nameth it. the explicit inputs whose types mention the family
 -- are checked after the result meeteth the expected type, so occurrence
 -- abstraction findeth the family in the goal rather than in an input. a family
--- that a requirement mentioneth is a flock carrier, found by instance search.
+-- that a requirement mentioneth is a class carrier, found by instance search.
 -- the result holdeth the family's position in the telescope and the positions
 -- of those inputs.
 motiveInputs :: Names -> Scope -> N.Value -> Int -> Elaboration (Maybe (Int, [Int]))
@@ -455,14 +455,14 @@ specialise names scope = go
 
 localDefinitions :: K.Environment -> Names -> Scope -> [Declaration] -> (Scope -> Elaboration (Term, N.Value)) -> Elaboration (Term, N.Value)
 localDefinitions _ _ scope [] body = body scope
-localDefinitions _ _ _ (InductiveDeclaration {} : _) _ = E.failure "ilk declarations must be top-level"
-localDefinitions _ _ _ (HostDeclaration {} : _) _ = E.failure "fremmed bindings must be top-level"
-localDefinitions _ _ _ (AssumptionDeclaration {} : _) _ = E.failure "orsetting assumptions must be top-level"
+localDefinitions _ _ _ (InductiveDeclaration {} : _) _ = E.failure "type declarations must be top-level"
+localDefinitions _ _ _ (HostDeclaration {} : _) _ = E.failure "foreign bindings must be top-level"
+localDefinitions _ _ _ (AssumptionDeclaration {} : _) _ = E.failure "axiom assumptions must be top-level"
 localDefinitions _ _ _ (ImportDeclaration {} : _) _ = E.failure "bring and show must be top-level"
 localDefinitions _ _ _ (ShownDeclaration {} : _) _ = E.failure "bring and show must be top-level"
 localDefinitions _ _ _ (ReExportDeclaration {} : _) _ = E.failure "bring and show must be top-level"
-localDefinitions _ _ _ (FlockDeclaration {} : _) _ = E.failure "flock and bizen must be top-level"
-localDefinitions _ _ _ (BizenDeclaration {} : _) _ = E.failure "flock and bizen must be top-level"
+localDefinitions _ _ _ (ClassDeclaration {} : _) _ = E.failure "class and bizen must be top-level"
+localDefinitions _ _ _ (BizenDeclaration {} : _) _ = E.failure "class and bizen must be top-level"
 localDefinitions environment names scope (Declaration {..} : remaining) body = do
   (value, ty) <- inferDefinition environment names scope declarationName declarationAnnotation declarationBody
   annotation <- quote scope ty
@@ -479,7 +479,7 @@ inferDefinition environment names scope name written body =
         _ -> (written, body)
    in case annotated of
         Nothing
-          | recursiveDefinition environment names scope name source -> E.failure "a recursive definition needs an ilk annotation"
+          | recursiveDefinition environment names scope name source -> E.failure "a recursive definition needs a type annotation"
           | otherwise -> inferExpression environment names scope source
         Just annotation -> do
           (_, expected) <- inferAnnotation environment names scope annotation

@@ -49,7 +49,7 @@ shorten written = let once = shortenBrackets (shortenParens (shortenEta written)
 -- name a binder, and no comment standeth inside. an annotated binder keepeth
 -- its expansion, as elaboration may need it. the tidier readeth no names,
 -- so a binder may be a constructor; a one-row match on one then checketh only
--- when that constructor is its ilk's sole, nullary one, and the shortened
+-- when that constructor is its type's sole, nullary one, and the shortened
 -- function agreeth with it on every input. a shortening may complete an
 -- outer one, so it is repeated.
 shortenEta :: String -> String
@@ -146,7 +146,7 @@ shortenParens source = maybe source (shortenParens . concatMap T.pieceText) (str
 -- a product whose last item is a product of bare slots is that product's
 -- rest: `[a: α, [β, γ]]` is `[a: α, β, γ]`, and `[[ℕ, *]]` is `[ℕ, *]`. an
 -- inner slot that is named or implicit keepeth the brackets, as flattening
--- would bind its name in a let's body or make an ilk's index a parameter. a
+-- would bind its name in a let's body or make a type's index a parameter. a
 -- comment inside keepeth them, and each becometh a space.
 shortenBrackets :: String -> String
 shortenBrackets source = maybe source (shortenBrackets . concatMap T.pieceText) (flatten [] (T.lexPieces source))
@@ -248,7 +248,7 @@ data Node = Atom Piece | Bracket Piece Inside Piece
 
 data Inside = Inside
   { insideItems :: [[Node]],
-    -- the inside holdeth declarations, as a block or a flock's members.
+    -- the inside holdeth declarations, as a block or a class's members.
     insideDeclares :: Bool,
     -- the inside holdeth case rows.
     insideRows :: Bool
@@ -368,10 +368,10 @@ declarationDoc written =
       node : rest -> if atomIn [TExport] node then declaresBody rest else atomIn [TType, TClass, TInstance] node
       _ -> False
 
--- a brace that holdeth an ilk's constructors, a flock's members, or a
+-- a brace that holdeth a type's constructors, a class's members, or a
 -- bizen's members is a declaration body, and one after `match …` is a match
 -- body: both are padded. a declaration body and a case block of more than one
--- row always break, and a blank line standeth between a flock's or a bizen's
+-- row always break, and a blank line standeth between a class's or a bizen's
 -- members.
 data Context = Ordinary | DeclarationBody | MemberBody | MatchBody
   deriving (Eq)
@@ -396,7 +396,7 @@ itemBody nodes
   | Just binding <- bindingDoc nodes = binding
   | otherwise = arrowBody nodes
 
--- a `let`, `fast`, or `orsetting` that doth not fit on one line putteth its `≔ body`
+-- a `let`, `fast`, or `axiom` that doth not fit on one line putteth its `≔ body`
 -- on a line of its own, two columns in, and its `: annotation` too when the
 -- name and annotation do not fit together; a block after `≔` openeth on that
 -- line.

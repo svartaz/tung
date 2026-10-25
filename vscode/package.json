@@ -26,7 +26,7 @@
     "vscode:prepublish": "npm run build"
   },
   "engines": {
-    "vscode": "^1.90.0"
+    "vscode": "^1.140.0"
   },
   "categories": [
     "Programming Languages"
@@ -96,11 +96,11 @@
     "semanticTokenModifiers": [
       {
         "id": "applied",
-        "description": "term or ilk used in function position"
+        "description": "term or type used in function position"
       },
       {
         "id": "typeFunction",
-        "description": "parameterised ilk or flock declaration"
+        "description": "parameterised type or class declaration"
       }
     ],
     "semanticTokenScopes": [
@@ -218,17 +218,17 @@
     }
   },
   "dependencies": {
-    "vscode-languageclient": "^9.0.1",
-    "vscode-languageserver": "^9.0.1",
     "vscode-languageserver-textdocument": "^1.0.12"
   },
   "devDependencies": {
-    "@types/node": "^26.2.0",
-    "@types/vscode": "^1.90.0",
-    "@vscode/vsce": "3.9.2",
+    "@types/node": "^26.6.5",
+    "@types/vscode": "^1.140.0",
+    "@vscode/vsce": "^4.0.0",
     "esbuild": "0.28.2",
     "typescript": "^7.0.2",
-    "vscode-jsonrpc": "8.2.0",
+    "vscode-jsonrpc": "^10.0.0",
+    "vscode-languageclient": "^11.0.0",
+    "vscode-languageserver": "^11.0.0",
     "vscode-oniguruma": "^2.0.1",
     "vscode-textmate": "^9.3.2"
   }

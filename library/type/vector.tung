@@ -1,0 +1,82 @@
+bring class/hath_manyhood.tung
+bring is.tung
+bring mockingbird.tung
+bring type/and.tung
+bring type/list.tung
+bring type/list_theorem.tung
+bring type/natural.tung
+bring type/natural_below.tung
+
+## a list of exactly `n` values. its manyhood is in its type, so `head` needeth
+## no `optional` and `zip` taketh lists of one manyhood.
+show type vector: [α: *, ℕ, *] {
+  empty: α vector 0,
+  ‥: [@n: ℕ, α, α vector n, α vector (n next)]
+}
+
+## the first value.
+show let head: [@α: *, @n: ℕ, a…: α vector (n next), α] ≔ match a… { a ‥ _ ^ a }
+
+## the values after the first.
+show let tail: [@α: *, @n: ℕ, a…: α vector (n next), α vector n] ≔ match a… {
+  _ ‥ leftover ^ leftover
+}
+
+## the value at a place below the manyhood.
+show let at: [@α: *, @n: ℕ, a…: α vector n, i: n natural_below, α]
+  ≔ match a…, i {
+    a ‥ _,        least   ^ a,
+    _ ‥ leftover, j after ^ leftover at j
+  }
+
+## the values as an ordinary list.
+show let to_list: [@α: *, @n: ℕ, α vector n, α list] ≔ {
+  empty        ^ list~empty,
+  a ‥ leftover ^ a list~‥ (leftover to_list)
+}
+
+## the list keepeth the manyhood.
+show let to_list_manyhood
+  : [@α: *, @n: ℕ, a…: α vector n, ((a… to_list) manyhood) = n]
+  ≔ match a… {
+    empty        ^ reflect,
+    a ‥ leftover ^
+      (a ‥_manyhood (leftover to_list)) transit
+        (next leibnitz (leftover to_list_manyhood))
+  }
+
+## an ordinary list, measured by its manyhood.
+show let from_list: [@α: *, a…: α list, α vector (a… manyhood)] ≔ match a… {
+  list~empty        ^ empty,
+  a list~‥ leftover ^
+    ((a ‥_manyhood leftover) symmetry) throughbear (a ‥ (leftover from_list))
+}
+
+## each value sent through `f`.
+show let map: [@α: *, @β: *, @n: ℕ, α vector n, [α, β], β vector n] ≔ {
+  empty,        _ ^ empty,
+  a ‥ leftover, f ^ (a f) ‥ (leftover map f)
+}
+
+## mapping by `identity` tweaketh nothing.
+show let map_identity: [@α: *, @n: ℕ, a…: α vector n, (a… map identity) = a…]
+  ≔ match a… {
+    empty        ^ reflect,
+    a ‥ leftover ^ (a ‥ _) leibnitz (leftover map_identity)
+  }
+
+## pair the values of two lists of one manyhood.
+show let zip: [@α: *, @β: *, @n: ℕ, α vector n, β vector n, (α ∧ β) vector n]
+  ≔ {
+    empty,  empty  ^ empty,
+    a ‥ a…, b ‥ b… ^ (a ⸴ b) ‥ (a… zip b…)
+  }
+
+## the value at each place of a zip is the pair of the values there.
+show let zip_at
+  : [@α: *, @β: *, @n: ℕ, a…: α vector n, b…: β vector n, i: n natural_below,
+    ((a… zip b…) at i) = ((a… at i) ⸴ (b… at i))]
+  ≔ match a…, b…, i {
+    _ ‥ _,  _ ‥ _,  least   ^ reflect,
+    _ ‥ a…, _ ‥ b…, j after ^ a… zip_at b… j
+  }

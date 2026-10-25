@@ -1,0 +1,46 @@
+bring class/order/hath_at_most.tung
+bring is.tung
+bring type/natural.tung
+bring type/two.tung
+
+## the tales below `n`: `least` is `0`, and `after` steppeth up while the
+## bound steppeth with it, so `0 natural_below` hath no value.
+show type natural_below: [ℕ, *] {
+  least: [@n: ℕ, (n next) natural_below],
+  after: [@n: ℕ, n natural_below, (n next) natural_below]
+}
+
+## the tale a value below a bound nameth.
+show let to_natural: [@n: ℕ, n natural_below, ℕ] ≔ {
+  least   ^ 0,
+  i after ^ (i to_natural) next
+}
+
+## a value below a bound lieth under it.
+show let to_natural_under: [@n: ℕ, i: n natural_below, (i to_natural) under n]
+  ≔ match i {
+    least   ^ reflect,
+    j after ^ j to_natural_under
+  }
+
+## the tale `k`, bounded below a bound it lieth under.
+show let bound: [n: ℕ, k: ℕ, below: k under n, n natural_below] ≔ match n, k {
+  0,      _      ^ match below {},
+  _ next, 0      ^ least,
+  m next, j next ^ (m bound j below) after
+}
+
+## bounding a tale and naming it again giveth the tale back.
+show let bound_to_natural
+  : [n: ℕ, k: ℕ, below: k under n, ((n bound k below) to_natural) = k]
+  ≔ match n, k {
+    0,      _      ^ match below {},
+    _ next, 0      ^ reflect,
+    m next, j next ^ next leibnitz (m bound_to_natural j below)
+  }
+
+## the greatest tale below `n next`.
+show let last: [n: ℕ, (n next) natural_below] ≔ match n {
+  0      ^ least,
+  m next ^ (m last) after
+}

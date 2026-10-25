@@ -1,5 +1,5 @@
 ## indexed course-of-values recursion retaineth each descendant's own indices.
-ilk chain: [ℕ, *] {
+type chain: [ℕ, *] {
   empty: 0 chain,
   link: [n: ℕ, n chain, (n next) chain]
 }
@@ -16,14 +16,14 @@ let copy: [@n: ℕ, n chain, n chain] ≔ {
   _ link (m link child) ^ (m next) link (m link (child copy))
 }
 
-let hoard: [n: ℕ, x: n chain, whole: ℕ, ℕ] ≔ match x {
+let accumulate: [n: ℕ, x: n chain, whole: ℕ, ℕ] ≔ match x {
   empty                 ^ whole,
   _ link empty          ^ whole next,
-  _ link (m link child) ^ m hoard child ((whole next) next)
+  _ link (m link child) ^ m accumulate child ((whole next) next)
 }
 
 ## an intermediate descendant may lie outside the declaration's domain.
-ilk cycle: [ℕ, *] {
+type cycle: [ℕ, *] {
   stop: 0 cycle,
   up: [0 cycle, 1 cycle],
   down: [1 cycle, 0 cycle]
@@ -34,7 +34,7 @@ let laps: [0 cycle, ℕ] ≔ {
   (child up) down ^ (child laps) next
 }
 
-let spins: [k: ℕ, x: (k next) cycle, ℕ] ≔ match x {
+let turns: [k: ℕ, x: (k next) cycle, ℕ] ≔ match x {
   stop up         ^ 0,
-  (child down) up ^ (0 spins child) next
+  (child down) up ^ (0 turns child) next
 }

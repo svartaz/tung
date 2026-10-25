@@ -131,7 +131,7 @@ moduleEnvironment declarations compiled = do
   -- those from different modules are compared again here.
   forM_ (Map.toList instances) \(family, ClassInfo {classInstances}) ->
     forM_ (take 1 [(left, right) | (index, left) <- zip [0 :: Int ..] classInstances, right <- drop (index + 1) classInstances, symbolModule left /= symbolModule right, sameInstance (K.Environment definitions) left right]) \(left, right) ->
-      Left (CompileFailure CheckFailure Nothing Nothing ("bizens of flock '" ++ symbolName family ++ "' from " ++ owner left ++ " and " ++ owner right ++ " have the same ilk"))
+      Left (CompileFailure CheckFailure Nothing Nothing ("bizens of class '" ++ symbolName family ++ "' from " ++ owner left ++ " and " ++ owner right ++ " have the same type"))
   pure (SourceProgram (K.Environment definitions) [] (Names (Map.unions [qualified, Map.map resolve alternatives, primitives]) instances) Set.empty (Names Map.empty instances) [] references [])
   where
     owner symbol = case symbolModule symbol of
@@ -152,8 +152,8 @@ moduleEnvironment declarations compiled = do
 
 -- declarations are checked in dependency order, so source order doth not
 -- matter. a declaration followeth the declarations whose names it useth, and a
--- let or bizen that useth a flock member, or an imported name whose type
--- requireth the flock, followeth the module's bizens of that flock. a cycle of ilks is
+-- let or bizen that useth a class member, or an imported name whose type
+-- requireth the class, followeth the module's bizens of that class. a cycle of types is
 -- checked together; every other cycle is rejected.
 -- among ready groups, source order winneth, as it doth within each group.
 data DeclarationGroup = DeclarationGroup
@@ -202,13 +202,13 @@ declarationGroups program located = go (sortOn (Set.findMin . groupIndices) (map
     -- a module's own let of a member's name shadoweth the member.
     shadowed = Set.fromList [declarationName | Declaration {declarationName} <- map unshown declarations]
     definers = Map.fromList [(name, index) | (index, declaration) <- indexed, name <- defines declaration]
-    members = Map.union (Map.fromList [(member, className) | FlockDeclaration className _ flockMembers <- map unshown declarations, FlockMember member _ <- flockMembers]) importedMembers
+    members = Map.union (Map.fromList [(member, classDeclarationName) | ClassDeclaration classDeclarationName _ classDeclarationMembers <- map unshown declarations, ClassMember member _ <- classDeclarationMembers]) importedMembers
     instancesOf = Map.fromListWith (++) [(className, [index]) | (index, declaration@BizenDeclaration {}) <- indexed, Just className <- [instanceClass declaration]]
-    -- flock laws and member types use the flock's own dictionary, and data
+    -- class laws and member types use the class's own dictionary, and data
     -- declarations use no dictionary, so only lets and bizens wait for bizens.
-    -- a member's use, or a use of an imported name that requireth a flock, waiteth for
-    -- the module's bizens of that flock, except a bizen that itself needeth
-    -- this declaration by name, as a helper proof used by its own flock's
+    -- a member's use, or a use of an imported name that requireth a class, waiteth for
+    -- the module's bizens of that class, except a bizen that itself needeth
+    -- this declaration by name, as a helper proof used by its own class's
     -- bizen; that bizen cannot be the one it useth.
     dependencies index declaration =
       let usesInstances = case unshown declaration of
@@ -216,14 +216,14 @@ declarationGroups program located = go (sortOn (Set.findMin . groupIndices) (map
             BizenDeclaration {} -> True
             _ -> False
        in nameDependencies Map.! index
-            ++ [instanceIndex | usesInstances, name <- mentioned declaration, className <- flocksUsedBy name, instanceIndex <- Map.findWithDefault [] className instancesOf, not (reaches instanceIndex index)]
+            ++ [instanceIndex | usesInstances, name <- mentioned declaration, className <- classesUsedBy name, instanceIndex <- Map.findWithDefault [] className instancesOf, not (reaches instanceIndex index)]
             ++ [instanceIndex | Just className <- [instanceClass declaration], ancestor <- ancestors className, instanceIndex <- Map.findWithDefault [] ancestor instancesOf]
-    flocksUsedBy name =
-      [className | Set.notMember name shadowed, Just className <- [Map.lookup name members]] ++ requiredFlocks name
-    -- the flocks of an imported global's anonymous implicit slots, from its
+    classesUsedBy name =
+      [className | Set.notMember name shadowed, Just className <- [Map.lookup name members]] ++ requiredClasses name
+    -- the classes of an imported global's anonymous implicit slots, from its
     -- checked type. a local name is already ordered by each use, and its
     -- requirements are often met by the caller's own requirements.
-    requiredFlocks name
+    requiredClasses name
       | Map.member name definers = []
       | otherwise = case bindingSymbol =<< lookupName name (globalNames program) of
           Just symbol | Just Definition {definitionType} <- Map.lookup symbol (globals (programEnvironment program)) -> checkedRequirements definitionType
@@ -245,8 +245,8 @@ declarationGroups program located = go (sortOn (Set.findMin . groupIndices) (map
           | current == target = True
           | current `Set.member` seen = go' seen rest
           | otherwise = go' (Set.insert current seen) (Map.findWithDefault [] current nameDependencies ++ rest)
-    -- a bizen's dictionary needeth bizens of every ancestor flock.
-    parentsOf = Map.union (Map.fromList [(className, [name | Parameter {parameterName = Nothing, parameterType} <- flockParameters, Just name <- [lastSegment <$> headName parameterType]]) | FlockDeclaration className flockParameters _ <- map unshown declarations]) importedParents
+    -- a bizen's dictionary needeth bizens of every ancestor class.
+    parentsOf = Map.union (Map.fromList [(classDeclarationName, [name | Parameter {parameterName = Nothing, parameterType} <- classDeclarationParameters, Just name <- [lastSegment <$> headName parameterType]]) | ClassDeclaration classDeclarationName classDeclarationParameters _ <- map unshown declarations]) importedParents
     ancestors className = go' Set.empty (Map.findWithDefault [] className parentsOf)
       where
         go' _ [] = []
@@ -263,7 +263,7 @@ declarationGroups program located = go (sortOn (Set.findMin . groupIndices) (map
       HostDeclaration {hostAnnotation, hostModel} -> hostAnnotation : maybe [] pure hostModel
       AssumptionDeclaration {assumptionAnnotation} -> [assumptionAnnotation]
       InductiveDeclaration {..} -> inductiveSignature : map constructorAnnotation inductiveConstructors
-      FlockDeclaration {..} -> map parameterType flockParameters ++ [ty | FlockMember _ ty <- flockMembers]
+      ClassDeclaration {..} -> map parameterType classDeclarationParameters ++ [ty | ClassMember _ ty <- classDeclarationMembers]
       BizenDeclaration {..} -> bizenType : concat [maybe [] pure declarationAnnotation ++ [declarationBody] | Declaration {..} <- bizenMembers]
       _ -> []
     instanceClass BizenDeclaration {bizenType} = lastSegment <$> written bizenType
@@ -280,5 +280,5 @@ defines declaration = case unshown declaration of
   HostDeclaration {hostName} -> [hostName]
   AssumptionDeclaration {assumptionName} -> [assumptionName]
   InductiveDeclaration {inductiveName, inductiveConstructors} -> inductiveName : map constructorName inductiveConstructors
-  FlockDeclaration {flockName, flockMembers} -> flockName : (flockName ++ "_make") : [member | FlockMember member _ <- flockMembers]
+  ClassDeclaration {classDeclarationName, classDeclarationMembers} -> classDeclarationName : (classDeclarationName ++ "_make") : [member | ClassMember member _ <- classDeclarationMembers]
   _ -> []

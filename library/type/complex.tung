@@ -1,0 +1,76 @@
+bring _foreign.tung
+bring class/algebra/total/hath_add.tung
+bring class/algebra/total/hath_divide.tung
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/hath_one.tung
+bring class/algebra/total/hath_subtract.tung
+bring class/algebra/total/hath_zero.tung
+bring class/elementary.tung
+bring class/hath_length.tung
+
+show type complex: [α: *, *] { +i: [α, α, α complex] }
+
+show let real: [@α: *, (a +i _): α complex, α] ≔ a
+
+show let imaginary: [@α: *, (_ +i b): α complex, α] ≔ b
+
+show let unit: [@α: *, @: α hath_zero, @: α hath_one, α complex] ≔ zero +i one
+
+bizen: [@α: *, @: α hath_+, (α complex) hath_+] {
+  let +: [a +i b:, c +i d:] ≔ (a + c) +i (b + d)
+}
+
+bizen: [@α: *, @: α hath_zero, (α complex) hath_zero] {
+  let zero ≔ zero +i zero
+}
+
+bizen: [@α: *, @: α hath_-, (α complex) hath_-] {
+  let -: [a +i b:] ≔ (a -) +i (b -)
+
+  let -+: [a +i b:, c +i d:] ≔ (a -+ c) +i (b -+ d)
+}
+
+bizen: [@α: *, @: α hath_+, @: α hath_-, @: α hath_·, (α complex) hath_·] {
+  let ·: [a +i b:, c +i d:] ≔ ((b · d) -+ (a · c)) +i ((a · d) + (b · c))
+}
+
+bizen: [@α: *, @: α hath_one, @: α hath_zero, (α complex) hath_one] {
+  let one ≔ one +i zero
+}
+
+bizen: [@α: *, @: α hath_+, @: α hath_-, @: α hath_·, @: α hath_÷,
+  (α complex) hath_÷] {
+    let ÷: [a +i b:, c +i d:] ≔ (
+      let e ≔ c · c $ + (d · d)
+      yield ((a · c) + (b · d) $ ÷ e) +i ((a · d) -+ (b · c) $ ÷ e)
+    )
+  }
+
+bizen: [@α: *, @: α hath_+, @: α hath_·, (α complex) hath_‖ α] {
+  let ‖: [a +i b:] ≔ (a · a) + (b · b)
+}
+
+## the complex exponential is shared directly by each trigonometric function.
+bizen: (float complex) elementary {
+  let exponent: [a +i b: float complex, float complex] ≔ (
+    let c ≔ a elementary~exponent
+    yield (c · (b cosine)) +i (c · (b sine))
+  )
+
+  let logarithm: [a +i b:]
+    ≔ ((a · a) + (b · b) $ logarithm) +i (a arctan_float b)
+
+  let sine: [a +i b:] ≔ (
+    let nonnegative ≔ ((b -+ zero) +i a) exponent
+    let negative ≔ (b +i (a -+ zero)) exponent
+    yield (((negative imaginary) -+ (nonnegative imaginary)) · 0.5) +i
+      (((nonnegative real) -+ (negative real)) · 0.5)
+  )
+
+  let cosine: [a +i b:] ≔ (
+    let nonnegative ≔ ((b -+ zero) +i a) exponent
+    let negative ≔ (b +i (a -+ zero)) exponent
+    yield (((nonnegative real) + (negative real)) · 0.5) +i
+      (((nonnegative imaginary) + (negative imaginary)) · 0.5)
+  )
+}

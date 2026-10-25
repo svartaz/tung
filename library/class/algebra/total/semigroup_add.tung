@@ -1,0 +1,20 @@
+bring class/algebra/total/hath_add.tung
+bring is.tung
+bring type/two.tung
+
+show class semigroup_+: [α: *, @: α hath_+, *] {
+  let +_+: [a: α, b: α, c: α, (a + (b + c)) = ((a + b) + c)]
+}
+
+bizen: 𝟚 semigroup_+ {
+  let +_+ ≔ {
+    nay, nay, nay;
+    nay, nay, yea;
+    nay, yea, nay;
+    nay, yea, yea;
+    yea, nay, nay;
+    yea, nay, yea;
+    yea, yea, nay;
+    yea, yea, yea ^ reflect
+  }
+}

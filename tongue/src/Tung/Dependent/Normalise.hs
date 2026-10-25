@@ -223,7 +223,7 @@ field normaliser index value =
     _ -> Left "field of a non-constructor value"
 
 -- a family with one constructor, no indices, and no field that nameth a
--- family of its group hath η, as lean's structures: each of its worths
+-- family of its group hath η, as lean's structures: each of its values
 -- equaleth its constructor applied to its fields. a recursive family is
 -- excluded, since eliminating a neutral child would unfold without end.
 etaFamily :: Globals -> SymbolId -> Maybe (SymbolId, Int, Int)
@@ -336,7 +336,7 @@ reduceSpine normaliser headDefinition neutral = case neutralSpine neutral of
       | Just literal <- valueLiteral value =
           forceWith normaliser ty >>= \case
             VNeutral (NGlobal name []) | name == literalType literal -> Right (VLiteral name literal)
-            _ -> Left "invalid checked host literal result ilk"
+            _ -> Left "invalid checked host literal result type"
       | Just (constructor, writtenFields) <- hostConstructor value =
           forceWith normaliser ty >>= \case
             VNeutral neutral
@@ -405,7 +405,7 @@ reduceSpine normaliser headDefinition neutral = case neutralSpine neutral of
               _ -> stuck
             _ -> stuck
     -- a neutral headed by a hole waiteth for the hole, and a constructor
-    -- of another family is no worth of this one.
+    -- of another family is no value of this one.
     unblocked = \case
       NMeta {} -> False
       NGlobal name _ | Just Definition {definitionBody = DataConstructor {}} <- Map.lookup name (normalGlobals normaliser) -> False

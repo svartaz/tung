@@ -1,0 +1,5 @@
+bring type/natural.tung
+
+show class hath_manyhood: [α: *, *] {
+  let manyhood: [α, ℕ]
+}

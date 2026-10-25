@@ -3,15 +3,15 @@
 -- that matcheth its catalogued signature.
 --
 -- consistency: the standard model readeth each primitive type as its runtime
--- set, each pure host function as its total definition, and each deed type as
+-- set, each pure host function as its total definition, and each effect type as
 -- a one-element set. host constants therefore cannot inhabit an empty type;
--- `sorry` is the one reported exception. no constant extracteth the result of a
--- deed, and a `fast` fixpoint stayeth opaque. pure host functions compute
+-- `sorry` is the one reported exception. no constant extracteth the result of an
+-- effect, and a `fast` fixpoint stayeth opaque. pure host functions compute
 -- only on literal arguments.
 module Tung.Dependent.Host
   ( defineHost,
     defineFixpoint,
-    deedInputs,
+    effectInputs,
     primitiveDefinitions,
     sorrySymbol,
     literalCaseSymbol,
@@ -52,7 +52,7 @@ primitiveDefinitions =
         Pi Explicit (Local 1) (Pi Explicit (Local 2) (Pi Explicit (Local 2) (Pi Explicit (Local 3) (Local 4))))
 
 -- `ℕ` is an inductive family with `0` and `next`, and `ℤ` one with
--- `overnaught` and `next_undernaught` over `ℕ`. each is checked like any
+-- `nonnegative` and `next_negative` over `ℕ`. each is checked like any
 -- other and eliminated by `unbuild`. literals represent their values; the
 -- normaliser and the runner read a literal as its constructors.
 numberDefinitions :: Globals
@@ -82,10 +82,10 @@ defineHost environment@(K.Environment globals) name key model signature@K.Inferr
   sort <- N.normalise globals 0 inferredType
   case sort of
     Sort _ -> pure ()
-    _ -> Left "host annotation is not an ilk"
+    _ -> Left "host annotation is not a type"
   -- validation checked the annotation; raw normalisation is now safe.
   ty <- N.normalise globals 0 inferredTerm
-  unless (matches hostSignature ty) (Left ("host key '" ++ key ++ "' requireth a different ilk"))
+  unless (matches hostSignature ty) (Left ("host key '" ++ key ++ "' requireth a different type"))
   validateHostData globals hostSignature
   forM_ model \symbol -> do
     when (isNothing (pureOperation key)) (Left ("host key '" ++ key ++ "' is not a pure operation, so it cannot have a model"))
@@ -97,12 +97,12 @@ defineHost environment@(K.Environment globals) name key model signature@K.Inferr
       _ -> Left "a model must be a let definition"
     unless (definitionUniverses == inferredUniverses) (Left "a model must have the binding's universe parameters")
     modelType <- N.normalise globals 0 definitionType
-    unless (modelType == ty) (Left "a model must have the binding's ilk")
+    unless (modelType == ty) (Left "a model must have the binding's type")
   pure (K.Environment (Map.insert name (Definition inferredUniverses inferredConstraints ty (Host key model)) globals))
   where
     isHost wanted (Host actual _) = wanted == actual
     isHost _ _ = False
-    -- a bookhoard file checked by itself, as in an editor, is named by its
+    -- a library file checked by itself, as in an editor, is named by its
     -- full path.
     catalogued (SourceModule path) source = splitDirectories source `isSuffixOf` splitDirectories path
     catalogued _ _ = False
@@ -152,31 +152,31 @@ validateHostData globals HostSignature {..} = void (types Set.empty (hostArgumen
     parameterKinds count (Pi Explicit (Sort _) result) | count > 0 = parameterKinds (count - 1) result
     parameterKinds _ _ = False
 
--- a fixpoint may name itself without bound, so its ilk must end in a deed
--- after its inputs. the standard model readeth every deed type, and so every
+-- a fixpoint may name itself without bound, so its type must end in an effect
+-- after its inputs. the standard model readeth every effect type, and so every
 -- function into one, as a one-element set, so a fixpoint inhabiteth no empty
--- ilk. conversion never unfoldeth it, so normalisation terminateth.
+-- type. conversion never unfoldeth it, so normalisation terminateth.
 defineFixpoint :: K.Environment -> SymbolId -> K.Inferred -> Either String K.Environment
 defineFixpoint (K.Environment globals) name result@K.Inferred {..} = do
   when (Map.member name globals) (Left "duplicate definition")
-  -- validation readeth no arity; the inputs are counted once the ilk is checked.
+  -- validation readeth no arity; the inputs are counted once the type is checked.
   let environment arity = K.Environment (Map.insert name (Definition inferredUniverses inferredConstraints inferredType (Fixpoint arity inferredTerm)) globals)
   K.validate (environment 0) result
-  arity <- N.normalise globals 0 inferredType >>= maybe (Left "a fast declaration's ilk must end in a deed") Right . deedInputs
+  arity <- N.normalise globals 0 inferredType >>= maybe (Left "a fast declaration's type must end in an effect") Right . effectInputs
   pure (environment arity)
 
--- the inputs of a normal ilk before the deed it endeth in.
-deedInputs :: Term -> Maybe Int
-deedInputs = \case
-  Pi _ _ codomain -> (+ 1) <$> deedInputs codomain
-  Apply Explicit (Global symbol _) _ | symbol == SymbolId PrimitiveModule "deed" -> Just 0
+-- the inputs of a normal type before the effect it endeth in.
+effectInputs :: Term -> Maybe Int
+effectInputs = \case
+  Pi _ _ codomain -> (+ 1) <$> effectInputs codomain
+  Apply Explicit (Global symbol _) _ | symbol == SymbolId PrimitiveModule "effect" -> Just 0
   _ -> Nothing
 
--- main must be a deed of the bookhoard unit type.
+-- main must be an effect of the library unit type.
 matchMain :: Globals -> Term -> Either String ()
 matchMain globals ty = do
   normal <- N.normalise globals 0 ty
-  unless (matches (HostSignature [] [] (HostApp "deed" [HostCon oneName])) normal) (Left "main requireth a unit deed ilk")
+  unless (matches (HostSignature [] [] (HostApp "effect" [HostCon oneName])) normal) (Left "main requireth a unit effect type")
 
 -- a normal type matcheth a signature when its implicit type inputs, explicit
 -- inputs, and result agree. data types match by declaration; universe levels

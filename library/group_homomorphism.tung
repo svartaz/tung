@@ -1,0 +1,123 @@
+bring class/algebra/total/group_multiply.tung
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/hath_one.tung
+bring class/algebra/total/monoid_multiply.tung
+bring class/algebra/total/semigroup_multiply.tung
+bring is.tung
+
+## a function between groups that keepeth products.
+show let homomorphic: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], *]
+  ≔ [a: α, b: α, ((a · b) f) = ((a f) · (b f))]
+
+## the values that `f` sendeth to `one`.
+show let kernel: [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], a: α, *]
+  ≔ (a f) = one
+
+## `b` is reached by `f`: some `a` hath `a f = b`.
+show type image: [@α: *, @β: *, f: [α, β], b: β, *] {
+  reach: [a: α, reached: (a f) = b, f image b]
+}
+
+## a homomorphism sendeth `one` to `one`: `(one f) · (one f) = one f`, and
+## outstriking one `one f` leaveth `one`.
+show let one_f
+  : [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f homomorphic,
+    ((one @α) f) = one]
+  ≔ ((one @α) f) strike_· ((one @α) f) one >{transit,
+    ((one @α) hom one) symmetry,
+    f leibnitz ((one @α) ·_one),
+    (((one @α) f) one_·) symmetry
+  }
+
+## a homomorphism sendeth an inverse to the inverse.
+show let /_f
+  : [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f homomorphic,
+    a: α, ((a /) f) = ((a f) /)]
+  ≔ (a f) /_alone ((a /) f) >{transit,
+    ((a /) hom a) symmetry,
+    f leibnitz (a /_·),
+    f one_f hom
+  }
+
+## the kernel holdeth `one`.
+show let kernel_one
+  : [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f homomorphic,
+    f kernel (one @α)]
+  ≔ f one_f hom
+
+## the kernel is closed under products.
+show let kernel_·
+  : [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f homomorphic,
+    a: α, b: α, in_a: f kernel a, in_b: f kernel b, f kernel (a · b)]
+  ≔ >{transit,
+    a hom b,
+    (_ · (b f)) leibnitz in_a,
+    (one ·) leibnitz in_b,
+    one one_·
+  }
+
+## the kernel is closed under inverses.
+show let kernel_/
+  : [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f homomorphic,
+    a: α, in_a: f kernel a, f kernel (a /)]
+  ≔ >{transit, f /_f hom a, / leibnitz in_a, one_/}
+
+## the kernel is normal: it is closed under turning by any value.
+show let kernel_turn
+  : [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f homomorphic,
+    a: α, b: α, in_a: f kernel a, f kernel <{·, b, a, b /}]
+  ≔ >{transit,
+    (b · a) hom (b /),
+    (_ · ((b /) f)) leibnitz (b hom a),
+    {c ^ <{·, b f, c, (b /) f}} leibnitz in_a,
+    (_ · ((b /) f)) leibnitz ((b f) ·_one),
+    ((b f) · _) leibnitz (f /_f hom b),
+    (b f) ·_/
+  }
+
+## the image holdeth `one`.
+show let image_one
+  : [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f homomorphic,
+    f image (one @β)]
+  ≔ one reach (f one_f hom)
+
+## the image is closed under products.
+show let image_·
+  : [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f homomorphic,
+    c: β, d: β, a reach p: f image c, b reach q: f image d, f image (c · d)]
+  ≔ (a · b) reach >{transit, a hom b, (_ · (b f)) leibnitz p, (c ·) leibnitz q}
+
+## the image is closed under inverses.
+show let image_/
+  : [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f homomorphic,
+    b: β, a reach p: f image b, f image (b /)]
+  ≔ (a /) reach ((f /_f hom a) transit (/ leibnitz p))
+
+## the first isomorphism theorem, without quotient types: two values have
+## one image exactly when they lie in one coset of the kernel. so the map from
+## the kernel's cosets to the image, sending a coset to the image of any
+## member, is well defined (`fibre_kernel`) and injective (`kernel_fibre`);
+## it is a homomorphism onto the image, a subgroup, by `homomorphic` and
+## `image_·`.
+show let fibre_kernel
+  : [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f homomorphic,
+    a: α, b: α, equal: (a f) = (b f), f kernel (a /· b)]
+  ≔ >{transit,
+    (a /) hom b,
+    (_ · (b f)) leibnitz (f /_f hom a),
+    {c ^ (c /) · (b f)} leibnitz equal,
+    (b f) /_·
+  }
+
+show let kernel_fibre
+  : [@α: *, @: α group_·, @β: *, @: β group_·, f: [α, β], hom: f homomorphic,
+    a: α, b: α, in_kernel: f kernel (a /· b), (a f) = (b f)]
+  ≔ (
+    let undone: ((((a f) /) · (b f)) = one) ≔ <{transit,
+      ((_ · (b f)) leibnitz (f /_f hom a)) symmetry,
+      ((a /) hom b) symmetry,
+      in_kernel
+    }
+    let inverts: (((a f) /) = ((b f) /)) ≔ (b f) /_alone ((a f) /) undone
+    yield >{transit, ((a f) /_/) symmetry, / leibnitz inverts, (b f) /_/}
+  )

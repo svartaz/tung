@@ -1,10 +1,10 @@
 ## a recursive field may use an ordinary, already checked inholder.
-ilk list: [α: *, *] {
+type list: [α: *, *] {
   empty: α list,
   ‥: [α, α list, α list]
 }
 
-ilk rose: * { knot: [rose list, rose] }
+type rose: * { knot: [rose list, rose] }
 
 ## the field retaineth its ordinary list type and list patterns.
 let children: [rose, rose list] ≔ {xs knot ^ xs}
@@ -14,15 +14,15 @@ let first: [rose, rose] ≔ {
   (x ‥ _) knot ^ x
 }
 
-let eke: [n: ℕ, m: ℕ, ℕ] ≔ {_ ^ ℕ} unbuild ℕ m {_: ℕ ^ next} n
+let add: [n: ℕ, m: ℕ, ℕ] ≔ {_ ^ ℕ} unbuild ℕ m {_: ℕ ^ next} n
 
 ## joint induction taketh the rose motive, the list motive, then the knot,
 ## empty, and ‥ methods. each method receiveth its child hypotheses.
-let rime: [rose, ℕ] ≔ {_ ^ ℕ} unbuild rose {_ ^ ℕ} {xs: rose list ^ next} 0 {
-  head: rose ^ {head_below: ℕ ^ {tail: rose list ^ head_below eke}}
+let count: [rose, ℕ] ≔ {_ ^ ℕ} unbuild rose {_ ^ ℕ} {xs: rose list ^ next} 0 {
+  head: rose ^ {head_below: ℕ ^ {tail: rose list ^ head_below add}}
 }
 
-## selfcalling may follow a child through its ordinary inholder.
+## recursion may follow a child through its ordinary inholder.
 let height: [rose, ℕ] ≔ {
   empty knot   ^ 1,
   (x ‥ _) knot ^ (x height) next

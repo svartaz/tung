@@ -1,0 +1,72 @@
+bring type/and.tung
+bring type/one.tung
+bring type/optional.tung
+bring type/task.tung
+bring type/two.tung
+
+show task
+
+## `α effect` is an effect that produceth an α when the runner performeth it.
+## building or combining effects performeth nothing.
+show let effect_sheer: [@α: *, α, α effect] ≔ 'effect_sheer' foreign
+
+show let effect_bind: [@α: *, @β: *, α effect, [α, β effect], β effect]
+  ≔ 'effect_bind' foreign
+
+show let write: [string, 𝟙 effect] ≔ 'write' foreign
+
+## none once input endeth.
+show let read: (string optional) effect ≔ 'read' foreign
+
+## a float in [0, 1).
+show let random: float effect ≔ 'random' foreign
+
+## milliseconds.
+show let sleep: [ℕ, 𝟙 effect] ≔ 'sleep' foreign
+
+## a task runneth its effect concurrently. waiting yieldeth none for an
+## outstruck task, and `wait_for` yieldeth none after its timeout in
+## milliseconds.
+show let fork: [@α: *, α effect, (α task) effect] ≔ 'fork' foreign
+
+show let wait: [@α: *, α task, (α optional) effect] ≔ 'wait' foreign
+
+show let wait_for: [@α: *, α task, ℕ, (α optional) effect] ≔ 'wait_for' foreign
+
+show let strike: [@α: *, α task, 𝟙 effect] ≔ 'strike' foreign
+
+show let add_float: [float, float, float] ≔ 'add_float' foreign
+
+show let subtract_float: [float, float, float] ≔ 'subtract_float' foreign
+
+show let multiply_float: [float, float, float] ≔ 'multiply_float' foreign
+
+show let divide_float: [float, float, float] ≔ 'divide_float' foreign
+
+show let sine_float: [float, float] ≔ 'sine_float' foreign
+
+show let arctan_float: [float, float, float] ≔ 'arctan_float' foreign
+
+show let exponent_float: [float, float] ≔ 'exponent_float' foreign
+
+show let logarithm_float: [float, float] ≔ 'logarithm_float' foreign
+
+show let ⌊: [float, ℤ optional] ≔ '⌊' foreign
+
+show let equal_float: [float, float, 𝟚] ≔ 'equal_float' foreign
+
+show let at_most_float: [float, float, 𝟚] ≔ 'at_most_float' foreign
+
+show let string_to_float: [string, float optional] ≔ 'string_to_float' foreign
+
+show let integer_to_string: [ℤ, string] ≔ 'integer_to_string' foreign
+
+show let float_to_string: [float, string] ≔ 'float_to_string' foreign
+
+show let unicode_to_natural: [unicode, ℕ] ≔ 'unicode_to_natural' foreign
+
+show let natural_to_unicode: [ℕ, unicode optional]
+  ≔ 'natural_to_unicode' foreign
+
+show let behead_string: [string, (unicode ∧ string) optional]
+  ≔ 'behead_string' foreign

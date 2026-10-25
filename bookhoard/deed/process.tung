@@ -1,8 +1,0 @@
-bring ilk/list.tung
-bring ilk/or.tung
-bring process/outcome.tung
-
-## run a child process and capture its status, standard output, and standard
-## error. a process that cannot start yieldeth its error message.
-show let run: [string, string list, (string ∨ _process_outcome) deed]
-  ≔ 'run_process' fremmed

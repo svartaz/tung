@@ -1,0 +1,73 @@
+bring _foreign.tung
+bring class/equal_to_is.tung
+bring class/hath_equal.tung
+bring class/order/hath_at_most.tung
+bring class/order/order_partial.tung
+bring class/order/order_total.tung
+bring is.tung
+bring type/natural.tung
+bring type/optional.tung
+bring type/two.tung
+
+## a unicode scalar is named by its code point. the host's `unicode` is
+## opaque, so this round trip is a listed assumption; the laws below are
+## proved from it and the `ℕ` laws.
+show axiom natural_unicode
+  : [a: unicode, ((a unicode_to_natural) natural_to_unicode) = (a some)]
+
+show let equal: [unicode, unicode, 𝟚]
+  ≔ 'equal_unicode' foreign {
+    a, b ^ (a unicode_to_natural) ≍ (b unicode_to_natural)
+  }
+
+show let at_most: [unicode, unicode, 𝟚]
+  ≔ 'at_most_unicode' foreign {
+    a, b ^ (a unicode_to_natural) ≤ (b unicode_to_natural)
+  }
+
+bizen: unicode hath_≍ {
+  let ≍ ≔ equal
+}
+
+bizen: unicode hath_≤ {
+  let ≤ ≔ at_most
+}
+
+## scalars with one code point are one scalar.
+let lemma_=
+  : [a: unicode, b: unicode,
+    equal: (a unicode_to_natural) = (b unicode_to_natural), a = b]
+  ≔ {
+    none   ^ a,
+    m some ^ m
+  } leibnitz >{transit,
+    (a natural_unicode) symmetry,
+    natural_to_unicode leibnitz equal,
+    b natural_unicode
+  }
+
+bizen: unicode ≍_to_= {
+  let ≍_=: [a:, b:, equal:]
+    ≔ a lemma_= b ((a unicode_to_natural) ≍_= (b unicode_to_natural) equal)
+
+  let ≍_reflect: [a:] ≔ (a unicode_to_natural) ≍_reflect
+}
+
+bizen: unicode order_partial {
+  let ≤_reflect: [a:] ≔ (a unicode_to_natural) ≤_reflect
+
+  let ≤_antisymmetry: [a:, b:]
+    ≔ (a unicode_to_natural) ≤_antisymmetry (b unicode_to_natural)
+
+  let ≤_transit: [a:, b:, c:]
+    ≔ (a unicode_to_natural) ≤_transit (b unicode_to_natural)
+      (c unicode_to_natural)
+
+  let ≤_=: [a:, b:, below:, above:]
+    ≔ a lemma_= b
+      ((a unicode_to_natural) ≤_= (b unicode_to_natural) below above)
+}
+
+bizen: unicode order_total {
+  let ≤_total: [a:, b:] ≔ (a unicode_to_natural) ≤_total (b unicode_to_natural)
+}

@@ -123,7 +123,7 @@ assume environment@(Environment globals) name signature@Inferred {..} = do
   validate environment signature
   N.normalise globals 0 inferredType >>= \case
     Sort _ -> pure ()
-    _ -> Left "an orsetting annotation is not an ilk"
+    _ -> Left "an axiom annotation is not a type"
   pure (Environment (Map.insert name (Definition inferredUniverses inferredConstraints inferredTerm Assumption) globals))
 
 defineInferred :: Environment -> SymbolId -> Inferred -> Either String Environment
@@ -202,7 +202,7 @@ data Checking m = Checking
   { failCheck :: forall a. String -> m a,
     liftCheck :: forall a. Either String a -> m a,
     evaluateCheck :: Context -> Term -> m N.Value,
-    -- an argument's worth only instantiateth a codomain, so its definitions
+    -- an argument's value only instantiateth a codomain, so its definitions
     -- stay folded until something forceth them.
     argumentCheck :: Context -> Term -> m N.Value,
     quoteCheck :: Int -> N.Value -> m Term,
@@ -302,13 +302,13 @@ inferTermWith operations@Checking {..} context@Context {..} = \case
                         let parameter ty argument =
                               forceCheck ty >>= \case
                                 N.VPi _ _ codomain -> instantiateCheck codomain argument
-                                _ -> failCheck "invalid constructor ilk"
+                                _ -> failCheck "invalid constructor type"
                             walk ty position =
                               forceCheck ty >>= \case
                                 N.VPi _ domain codomain
                                   | position == index -> pure domain
                                   | otherwise -> evaluateCheck context (Field position value) >>= instantiateCheck codomain >>= (`walk` (position + 1))
-                                _ -> failCheck "invalid constructor ilk"
+                                _ -> failCheck "invalid constructor type"
                         afterParameters <- foldlM parameter constructorType (map snd arguments)
                         walk afterParameters 0
                       _ -> failCheck "missing constructor"
@@ -316,7 +316,7 @@ inferTermWith operations@Checking {..} context@Context {..} = \case
       _ -> failCheck "a field projection needeth a one-constructor family without indices"
   Literal name value
     | name == literalType value -> evaluateCheck context (Global name [])
-    | otherwise -> failCheck ("a literal requireth the primitive " ++ symbolName (literalType value) ++ " ilk")
+    | otherwise -> failCheck ("a literal requireth the primitive " ++ symbolName (literalType value) ++ " type")
 
 checkType :: Globals -> Context -> Term -> Typing Level
 checkType globals = checkTypeWith (kernelChecking globals)
@@ -325,7 +325,7 @@ checkTypeWith :: (Monad m) => Checking m -> Context -> Term -> m Level
 checkTypeWith operations@Checking {..} context term =
   inferTermWith operations context term >>= forceCheck >>= \case
     N.VSort level -> pure level
-    _ -> failCheck "annotation is not an ilk"
+    _ -> failCheck "annotation is not a type"
 
 checkTerm :: Globals -> Context -> Term -> Term -> Typing ()
 checkTerm globals = checkTermWith (kernelChecking globals)
@@ -353,7 +353,7 @@ convert globals context@Context {contextTypes} actual expected = do
     compareTerms context left right
   where
     depth = length contextTypes
-    -- the context groweth under each binder, so a worth's type is known
+    -- the context groweth under each binder, so a value's type is known
     -- where only its type can decide.
     compareTerms _ (Sort left) (Sort right) = oblige (LevelEqual left right)
     compareTerms _ (Local left) (Local right) | left == right = pure ()
@@ -361,7 +361,7 @@ convert globals context@Context {contextTypes} actual expected = do
     compareTerms current (Pi lp ld lc) (Pi rp rd rc) | lp == rp = compareTerms current ld rd >> under current ld \inner -> compareTerms inner lc rc
     compareTerms current (Lambda lp ld lb) (Lambda rp rd rb) | lp == rp = compareTerms current ld rd >> under current ld \inner -> compareTerms inner lb rb
     compareTerms current left@(Apply lp lf la) right@(Apply rp rf ra) | lp == rp = do
-      -- applications of different worths may still be equal by their type.
+      -- applications of different values may still be equal by their type.
       universes <- get
       case runStateT (compareTerms current lf rf >> compareTerms current la ra) universes of
         Right ((), after) -> put after
@@ -377,10 +377,10 @@ convert globals context@Context {contextTypes} actual expected = do
     compareTerms current (Lambda lp ld lb) right = under current ld \inner -> compareTerms inner lb (Apply lp (shiftTerm 1 right) (Local 0))
     compareTerms current left (Lambda rp rd rb) = under current rd \inner -> compareTerms inner (Apply rp (shiftTerm 1 left) (Local 0)) rb
     -- η for a family with one constructor and no indices: its constructor
-    -- applied to fields equaleth any worth whose fields are those.
+    -- applied to fields equaleth any value whose fields are those.
     compareTerms current left right | Just fields <- etaTerm left = zipWithM_ (\index value -> compareTerms current value (Field index right)) [0 ..] fields
     compareTerms current left right | Just fields <- etaTerm right = zipWithM_ (\index value -> compareTerms current (Field index left) value) [0 ..] fields
-    -- when the family hath no fields, any two of its worths are equal, which
+    -- when the family hath no fields, any two of its values are equal, which
     -- only their types can tell.
     compareTerms current a b = do
       unit <- (&&) <$> unitTyped current a <*> unitTyped current b

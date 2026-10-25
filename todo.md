@@ -21,7 +21,7 @@ tracked `.tung` file and stage test input against an exact oracle.
 
 - port the active lexer first, with a token dump command as its oracle. token
   spans must match exactly in utf-16 units.
-- port the parser with well-founded recursion from `ilk/grounded.tung`.
+- port the parser with well-founded recursion from `type/grounded.tung`.
   recursive descent over a token list is not structural; fuel is a
   stopgap, not the design.
 - port the tidier after them, since it readeth tokens, comments, and the
@@ -42,10 +42,10 @@ tracked `.tung` file and stage test input against an exact oracle.
 - add windows ci jobs beside ubuntu and macos. handle executable suffixes,
   temporary paths, path separators, and the makefile's shell commands.
 - build and test runner and extension artefacts from a clean checkout. check
-  that the installed runner resolveth a git-pinned Bookhoard through `tung.yaml`
+  that the installed runner resolveth a git-pinned library through `tung.yaml`
   and that the packaged extension connecteth to the installed compiler.
 - after publishing the monorepo, update `Formula/tung.rb` to that commit and
-  test the installed formula with an external Bookhoard pin.
+  test the installed formula with an external library pin.
 - define a release-version policy shared by `tongue/` and `vscode/`. then add
   changelogs and signed runner artefacts.
 
@@ -58,23 +58,23 @@ tracked `.tung` file and stage test input against an exact oracle.
 - define how same-named shown items from different packages affect
   qualify-if-needed lookup.
 
-## bookhoard
+## library
 
-these tasks belong to [`bookhoard/`](bookhoard/).
+these tasks belong to [`library/`](library/).
 
 - add first, last, and reversed monoid carriers without burdening the core monoid
   class.
 - implement the order-insensitive bag as an opaque, ordered list of distinct
   positive-count pairs, sorted by value. keep its constructor private and
-  publish only the type. require `order_whole` smart constructors to preserve
-  strict order and omit naught counts. equality and rendering must be
+  publish only the type. require `order_total` smart constructors to preserve
+  strict order and omit zero counts. equality and rendering must be
   independent of the order in which values were added. quotient types are not required.
 
 ## deferred gates
 
-- a free inductive `deed`, whose laws would follow by induction, needeth
+- a free inductive `effect`, whose laws would follow by induction, needeth
   coinduction while `fast` existeth, since an unbounded self-call could build
-  an ill-founded inductive deed. until then the three deed axioms stay.
+  an ill-founded inductive effect. until then the three effect axioms stay.
 - add a packed immutable array only if benchmarks show a material bottleneck in
   list-backed algorithms or host boundaries. design the representation and host
   abi first.

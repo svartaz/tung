@@ -3,7 +3,6 @@
 tung is a functional programming with
 
 - infix notation,
-- anglish keywords,
 - lazy evaluation,
 - inductive type family
 - inductive types, and
@@ -26,43 +25,42 @@ set `PREFIX` or `BIN_DIR` to choose another place.
 | `tung file.tung [arguments...]`        | runneth `main` with the arguments              |
 | `tung --check file.tung`               | checketh a module, or a program and its `main` |
 | `tung --check --no-sorry file.tung`    | also faileth when a proof assumeth `sorry`     |
-| `tung --name name file.tung`           | printeth a name's ilk and its assumptions      |
+| `tung --name name file.tung`           | printeth a name's type and its assumptions     |
 | `tung --tidy file.tung [more.tung...]` | tidieth files in place                         |
 
 `--no-sorry` before any command turneth reachable `sorry` into failure. to
-check a proof, add `--no-sorry` and, to refuse orsettings, `--no-orset`. the
-[proof checking guide](tongue/language.md#proof-checking) describeth orsetting
+check a proof, add `--no-sorry` and, to refuse axioms, `--no-axiom`. the
+[proof checking guide](tongue/language.md#proof-checking) describeth axiom
 allowlists and editor support. try it on a proof in the
 [walkthrough](byspel/walkthrough.tung):
 
 ```sh
-tung --no-sorry --no-orset --name naught_+ byspel/walkthrough.tung
+tung --no-sorry --no-axiom --name zero_+ byspel/walkthrough.tung
 ```
 
 ## libraries
 
-the standard library, bookhoard, liveth in [`bookhoard/`](bookhoard/). a
+the standard library liveth in [`library/`](library/). a
 `tung.yaml` file nameth the libraries a project useth:
 
 ```yaml
 dependencies:
-  bookhoard:
-    path: bookhoard
+  library:
+    path: library
 ```
 
 ## next steps
 
 - read and run the [walkthrough](byspel/walkthrough.tung): `tung byspel/walkthrough.tung`.
 - set up the [editor extension](vscode/readme.md).
-- some keywords are anglish words:
+- a few keywords differ from other languages:
 
-  | tung    | meaning    | tung        | meaning          |
-  | ------- | ---------- | ----------- | ---------------- |
-  | `ilk`   | data type  | `fremmed`   | foreign binding  |
-  | `flock` | type class | `orsetting` | axiom            |
-  | `bizen` | instance   | `fallback`  | default instance |
-  | `deed`  | io action  | `fall`      | function         |
-  | `fast`  | io loop    |             |                  |
+  | tung      | meaning      | tung       | meaning             |
+  | --------- | ------------ | ---------- | ------------------- |
+  | `bring`   | import       | `bizen`    | instance            |
+  | `show`    | export       | `fallback` | default instance    |
+  | `yield`   | local result | `fast`     | self-calling effect |
+  | `unbuild` | eliminator   | `foreign`  | host binding        |
 
   the [keyword table](tongue/language.md#keywords) listeth all
   of them.

@@ -9,9 +9,9 @@ interface PendingRequest {
   version: number;
 }
 type CompilerCommand =
-  "check" | "ilk" | "proof" | "format" | "highlight" | "names" | "cancel";
+  "check" | "type" | "proof" | "format" | "highlight" | "names" | "cancel";
 interface CompilerDiagnostic {
-  kind: "parse" | "ilk" | "goal";
+  kind: "parse" | "type" | "goal";
   path?: string;
   start: number;
   end: number;
@@ -20,20 +20,20 @@ interface CompilerDiagnostic {
 interface ProofDependency {
   symbol: { module: string; name: string };
   name: string;
-  ilk: string;
-  kind: "sorry" | "orsetting" | "host";
+  type: string;
+  kind: "sorry" | "axiom" | "host";
   host?: string;
 }
 interface ProofResult {
   kind: "proof";
-  audit: { name: string; ilk: string; dependencies: ProofDependency[] };
+  audit: { name: string; type: string; dependencies: ProofDependency[] };
   verified: boolean;
   message: string;
   report: string;
 }
 type CompilerResult =
   | { kind: "check"; diagnostics: CompilerDiagnostic[] }
-  | { kind: "ilk"; ilk: string }
+  | { kind: "type"; type: string }
   | ProofResult
   | { kind: "format"; source: string }
   | ({ kind: "highlight" } & SourceSyntax)
@@ -69,7 +69,7 @@ interface SourceSyntax {
   scopes: [start: number, end: number, scopeStart: number, scopeEnd: number][];
 }
 // the compiler's names for a document: each written name checking resolved
-// to a global and whether that global nameth an ilk, the names it may write
+// to a global and whether that global nameth a type, the names it may write
 // at top level, and the file each bring path it reacheth resolved to. a module
 // is `<root>` for the document itself, `<primitive>`, or a bring path.
 interface SourceNames {
@@ -79,7 +79,7 @@ interface SourceNames {
     end: number,
     module: string,
     name: string,
-    ilk: boolean,
+    type: boolean,
   ][];
   visible: [
     written: string,
@@ -148,9 +148,9 @@ class CompilerBridge {
       ),
     };
   }
-  ilkOf(model, texts, name, version = 0) {
+  typeOf(model, texts, name, version = 0) {
     return this.request(
-      "ilk",
+      "type",
       model.text,
       texts,
       name,
@@ -158,7 +158,7 @@ class CompilerBridge {
       documentPath(model.uri),
     );
   }
-  proof(model, texts, name, version = 0, allowedOrsettings?: string[]) {
+  proof(model, texts, name, version = 0, allowedAxioms?: string[]) {
     return this.request(
       "proof",
       model.text,
@@ -166,7 +166,7 @@ class CompilerBridge {
       name,
       version,
       documentPath(model.uri),
-      allowedOrsettings,
+      allowedAxioms,
     );
   }
   format(source, version = 0) {
@@ -194,7 +194,7 @@ class CompilerBridge {
     name,
     version,
     path?: string,
-    allowedOrsettings?: string[],
+    allowedAxioms?: string[],
   ) {
     const executable = this.findExecutable();
     if (!executable) {
@@ -225,7 +225,7 @@ class CompilerBridge {
         source,
         texts,
         path,
-        allowedOrsettings,
+        allowedAxioms,
       ),
     );
     return {
@@ -425,7 +425,7 @@ const isRange = (start: unknown, end: unknown) =>
   (end as number) >= (start as number);
 const isDiagnostic = (value: unknown): value is CompilerDiagnostic =>
   isObject(value) &&
-  ["parse", "ilk", "goal"].includes(value.kind as string) &&
+  ["parse", "type", "goal"].includes(value.kind as string) &&
   (value.path === undefined || typeof value.path === "string") &&
   isRange(value.start, value.end) &&
   typeof value.message === "string";
@@ -441,8 +441,8 @@ const isProofDependency = (value: unknown): value is ProofDependency =>
   typeof value.symbol.module === "string" &&
   typeof value.symbol.name === "string" &&
   typeof value.name === "string" &&
-  typeof value.ilk === "string" &&
-  ["sorry", "orsetting", "host"].includes(value.kind as string) &&
+  typeof value.type === "string" &&
+  ["sorry", "axiom", "host"].includes(value.kind as string) &&
   (value.kind === "host"
     ? typeof value.host === "string"
     : value.host === undefined);
@@ -454,13 +454,13 @@ const isResult = (value: unknown): value is CompilerResult => {
         Array.isArray(value.diagnostics) &&
         value.diagnostics.every(isDiagnostic)
       );
-    case "ilk":
-      return typeof value.ilk === "string";
+    case "type":
+      return typeof value.type === "string";
     case "proof":
       return (
         isObject(value.audit) &&
         typeof value.audit.name === "string" &&
-        typeof value.audit.ilk === "string" &&
+        typeof value.audit.type === "string" &&
         Array.isArray(value.audit.dependencies) &&
         value.audit.dependencies.every(isProofDependency) &&
         typeof value.verified === "boolean" &&
@@ -560,7 +560,7 @@ const sessionRequest = (
   source,
   texts: [string, string][],
   path?: string,
-  allowedOrsettings?: string[],
+  allowedAxioms?: string[],
 ) =>
   JSON.stringify({
     protocol: 1,
@@ -571,7 +571,7 @@ const sessionRequest = (
     source,
     texts: Object.fromEntries(texts),
     ...(path === undefined ? {} : { path }),
-    ...(allowedOrsettings === undefined ? {} : { allowedOrsettings }),
+    ...(allowedAxioms === undefined ? {} : { allowedAxioms }),
   }) + "\n";
 export {
   CompilerBridge,

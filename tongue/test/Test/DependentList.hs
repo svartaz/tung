@@ -26,32 +26,32 @@ tests source =
         ++ "let constructors:[*, *] list ≔ "
         ++ constructors
         ++ "\n",
-    same "supplied and inferred implicit list elements agree" "" values "naught ‥ @nat ((naught next) ‥ @nat (∅ @nat))",
-    expectEq "onhang computeth at worth and type levels" (Right [True, True]) $
+    same "supplied and inferred implicit list elements agree" "" values "zero ‥ @nat ((zero next) ‥ @nat (∅ @nat))",
+    expectEq "append computeth at value and type levels" (Right [True, True]) $
       traverse
         (uncurry (equalIn (extended "")))
-        [ ("(>{‥, naught, ∅}) · (>{‥, naught next, ∅})", values),
+        [ ("(>{‥, zero, ∅}) · (>{‥, zero next, ∅})", values),
           ("(>{‥, nat, ∅}) · (>{‥, bool, ∅})", types)
         ],
-    same "warp computeth from the ordinary list eliminator" "" (values ++ " warp next") ">{‥, naught next, (naught next) next, ∅}",
-    same "warp can turn type constructors into types" "" (constructors ++ " warp {F:[*, *] ^ nat F}") ">{‥, nat list, nat, ∅}",
-    same "fold replaceth constructors by its supplied methods" "" (values ++ " gather naught {_, rest ^ rest next}") "(naught next) next",
-    expectEq "open onhang retaineth an induction neutral and a checked type" (Right True) $ do
+    same "map computeth from the ordinary list eliminator" "" (values ++ " map next") ">{‥, zero next, (zero next) next, ∅}",
+    same "map can turn type constructors into types" "" (constructors ++ " map {F:[*, *] ^ nat F}") ">{‥, nat list, nat, ∅}",
+    same "fold replaceth constructors by its supplied methods" "" (values ++ " gather zero {_, rest ^ rest next}") "(zero next) next",
+    expectEq "open append retaineth an induction neutral and a checked type" (Right True) $ do
       program <- extended openAppend
-      result <- normaliseSourceExpression program "onhang_empty"
+      result <- normaliseSourceExpression program "append_empty"
       infer (sourceEnvironment program) result >>= validate (sourceEnvironment program)
       identity <- normaliseSourceExpression program "{xs:nat list ^ xs}"
       pure (eraseLevels result /= eraseLevels identity),
-    same "open onhang computeth after its list is substituted" openAppend (values ++ " onhang_empty") values,
-    checked "onhang and warp aliases convert inside family indices" $
+    same "open append computeth after its list is substituted" openAppend (values ++ " append_empty") values,
+    checked "append and map aliases convert inside family indices" $
       indexed
-        ++ "let onhanged ≔ (>{‥, nat, ∅}) · (>{‥, bool, ∅})\n"
-        ++ "let mapped ≔ row warp {α:* ^ α}\n"
-        ++ "let first:onhanged tag ≔ witness\n"
+        ++ "let appended ≔ (>{‥, nat, ∅}) · (>{‥, bool, ∅})\n"
+        ++ "let mapped ≔ row map {α:* ^ α}\n"
+        ++ "let first:appended tag ≔ witness\n"
         ++ "let second:mapped tag ≔ witness\n",
     rejected "list indices preserve element order" (indexed ++ "let bad:(>{‥, bool, nat, ∅}) tag ≔ witness\n"),
     rejected "list indices preserve duplicate elements" (indexed ++ "let bad:(>{‥, nat, nat, bool, ∅}) tag ≔ witness\n"),
-    rejected "a list cannot mix incompatible element types" "let bad ≔ >{‥, naught, nat, ∅}\n",
+    rejected "a list cannot mix incompatible element types" "let bad ≔ >{‥, zero, nat, ∅}\n",
     rejected "a list cannot put its universe inside itself" "let bad ≔ (let U ≔ * yield U ‥ @U (∅ @U))\n"
   ]
   where
@@ -66,18 +66,18 @@ tests source =
 naturalSource, openAppend, indexed, values, types, constructors :: String
 naturalSource =
   """
-  ilk nat:* { naught: nat, next:[nat, nat] }
-  ilk bool:* { no: bool, yes: bool }
+  type nat:* { zero: nat, next:[nat, nat] }
+  type bool:* { no: bool, yes: bool }
 
   """
-openAppend = "let onhang_empty:[xs:nat list, nat list] ≔ xs · (∅ @nat)\n"
+openAppend = "let append_empty:[xs:nat list, nat list] ≔ xs · (∅ @nat)\n"
 indexed =
   """
   let row:* list ≔ >{‥, nat, bool, ∅}
-  ilk tag:[* list, *] { witness:row tag }
+  type tag:[* list, *] { witness:row tag }
 
   """
-values = ">{‥, naught, naught next, ∅}"
+values = ">{‥, zero, zero next, ∅}"
 types = ">{‥, nat, bool, ∅}"
 constructors = ">{‥, list, {α:* ^ α}, ∅ @([*, *])}"
 

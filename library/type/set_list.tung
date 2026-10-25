@@ -1,0 +1,439 @@
+bring class/equal_to_is.tung
+bring class/functor/hath_sift.tung
+bring class/order/hath_at_most.tung
+bring class/order/order_partial.tung
+bring class/order/order_total.tung
+bring class/order/semilattice_lower.tung
+bring class/order/semilattice_upper.tung
+bring is.tung
+bring type/list.tung
+bring type/two.tung
+
+# the order dictionary alone decideth equality and the canonical list order.
+show let equal: [@α: *, @: α order_total, a: α, b: α, 𝟚]
+  ≔ (a ≤ b) if (b ≤ a) nay
+
+show let tight: [@α: *, @: α order_total, a: α, b: α, 𝟚]
+  ≔ (a ≤ b) if ((b ≤ a) if nay yea) nay
+
+show let above: [@α: *, @: α order_total, a: α, α list, 𝟚] ≔ {
+  empty  ^ yea,
+  b ‥ b… ^ (a tight b) if (a above b…) nay
+}
+
+show let sorted: [@α: *, @: α order_total, α list, 𝟚] ≔ {
+  empty  ^ yea,
+  a ‥ a… ^ (a above a…) if (a… sorted) nay
+}
+
+show let inhold: [@α: *, @: α order_total, α list, α, 𝟚] ≔ {
+  empty,  _ ^ nay,
+  a ‥ a…, b ^ (b ≤ a) if (a ≤ b) (a… inhold b)
+}
+
+show let put: [@α: *, @: α order_total, α list, α, α list] ≔ {
+  empty,  a ^ a ‥ empty,
+  a ‥ a…, b ^ (b ≤ a) if ((a ≤ b) if (a ‥ a…) (b ‥ (a ‥ a…))) (a ‥ (a… put b))
+}
+
+show let join: [@α: *, @: α order_total, α list, α list, α list] ≔ {
+  l, empty ^ l,
+  l, a ‥ r ^ (l put a) join r
+}
+
+show let both_yea
+  : [p: 𝟚, q: 𝟚, first: p = yea, other: q = yea, (p if q nay) = yea]
+  ≔ ((_ if q nay) leibnitz first) transit other
+
+show let tight_left
+  : [@α: *, @: α order_total, a: α, b: α, held: (a tight b) = yea,
+    (a ≤ b) = yea]
+  ≔ (a ≤ b) yea_if_former ((b ≤ a) if nay yea) held
+
+show let tight_right
+  : [@α: *, @: α order_total, a: α, b: α, held: (a tight b) = yea,
+    (b ≤ a) = nay]
+  ≔ (
+    let flipped ≔ (a ≤ b) yea_if_latter ((b ≤ a) if nay yea) held
+    yield (b ≤ a) inspect {
+      yea, known ^ match (((_ if nay yea) leibnitz known)
+        symmetry) transit flipped {},
+      nay, _ ^ reflect
+    }
+  )
+
+show let tight_make
+  : [@α: *, @: α order_total, a: α, b: α, below: (a ≤ b) = yea,
+    eftwend: (b ≤ a) = nay, (a tight b) = yea]
+  ≔ ((_ if ((b ≤ a) if nay yea) nay) leibnitz below) transit
+    ((_ if nay yea) leibnitz eftwend)
+
+show let tight_transit
+  : [@α: *, @: α order_total, a: α, b: α, c: α, first: (a tight b) = yea,
+    other: (b tight c) = yea, (a tight c) = yea]
+  ≔ (
+    let below
+      ≔ a ≤_yea_transit b c (a tight_left b first) (b tight_left c other)
+    let eftwend: (c ≤ a) = nay ≔ (c ≤ a) inspect {
+      yea, held ^ match ((b ≤_yea_transit c a (b tight_left c other) held)
+        symmetry) transit (a tight_right b first) {},
+      nay, _ ^ reflect
+    }
+    yield a tight_make c below eftwend
+  )
+
+show let above_transit
+  : [@α: *, @: α order_total, a: α, b: α, a…: α list, first: (a tight b) = yea,
+    leftover: (b above a…) = yea, (a above a…) = yea]
+  ≔ match a… {
+    empty    ^ reflect,
+    c ‥ tail ^
+      (a tight c) both_yea (a above tail)
+        (a tight_transit b c first
+          ((b tight c) yea_if_former (b above tail) leftover))
+        (a above_transit b tail first
+          ((b tight c) yea_if_latter (b above tail) leftover))
+  }
+
+show let above_put
+  : [@α: *, @: α order_total, a: α, a…: α list, c: α, tail: (a above a…) = yea,
+    fresh: (a tight c) = yea, (a above (a… put c)) = yea]
+  ≔ match a… {
+    empty        ^ (a tight c) both_yea yea fresh reflect,
+    b ‥ leftover ^ match c ≤ b {
+      yea ^ match b ≤ c {
+        yea ^ tail,
+        nay ^ (a tight c) both_yea (a above (b ‥ leftover)) fresh tail
+      },
+      nay ^
+        (a tight b) both_yea (a above (leftover put c))
+          ((a tight b) yea_if_former (a above leftover) tail)
+          (a above_put leftover c
+            ((a tight b) yea_if_latter (a above leftover) tail) fresh)
+    }
+  }
+
+show let empty_sorted: [@α: *, @: α order_total, (empty sorted @α) = yea]
+  ≔ reflect
+
+show let put_sorted
+  : [@α: *, @: α order_total, a…: α list, b: α, held: (a… sorted) = yea,
+    ((a… put b) sorted) = yea]
+  ≔ match a… {
+    empty        ^ reflect,
+    a ‥ leftover ^ (
+      let above_a ≔ (a above leftover) yea_if_former (leftover sorted) held
+      let sorted_leftover
+        ≔ (a above leftover) yea_if_latter (leftover sorted) held
+      yield (b ≤ a) inspect @𝟚 @{
+        c: 𝟚 ^
+          ((c if ((a ≤ b) if (a ‥ leftover) (b ‥ (a ‥ leftover)))
+            (a ‥ (leftover put b))) sorted) = yea
+      } {
+        yea, before ^
+          (a ≤ b) inspect @𝟚 @{
+            c: 𝟚 ^ ((c if (a ‥ leftover) (b ‥ (a ‥ leftover))) sorted) = yea
+          } {
+            yea, _       ^ held,
+            nay, eftwend ^ (
+              let less ≔ b tight_make a before eftwend
+              let above_b
+                ≔ (b tight a) both_yea (b above leftover) less
+                  (b above_transit a leftover less above_a)
+              yield (b above (a ‥ leftover)) both_yea ((a ‥ leftover) sorted)
+                above_b held
+            )
+          },
+        nay, after ^ (
+          let less ≔ a tight_make b (b ≤_flip a after) after
+          yield (a above (leftover put b)) both_yea ((leftover put b) sorted)
+            (a above_put leftover b above_a less)
+            (leftover put_sorted b sorted_leftover)
+        )
+      }
+    )
+  }
+
+show let above_sift
+  : [@α: *, @: α order_total, a: α, a…: α list, f: [α, 𝟚],
+    held: (a above a…) = yea, (a above (a… sift f)) = yea]
+  ≔ match a… {
+    empty        ^ reflect,
+    b ‥ leftover ^ (
+      let tail
+        ≔ a above_sift leftover f
+          ((a tight b) yea_if_latter (a above leftover) held)
+      yield match b f {
+        yea ^
+          (a tight b) both_yea (a above (leftover sift f))
+            ((a tight b) yea_if_former (a above leftover) held) tail,
+        nay ^ tail
+      }
+    )
+  }
+
+show let sift_sorted
+  : [@α: *, @: α order_total, a…: α list, f: [α, 𝟚], held: (a… sorted) = yea,
+    ((a… sift f) sorted) = yea]
+  ≔ match a… {
+    empty        ^ reflect,
+    a ‥ leftover ^ (
+      let tail
+        ≔ leftover sift_sorted f
+          ((a above leftover) yea_if_latter (leftover sorted) held)
+      yield match a f {
+        yea ^
+          (a above (leftover sift f)) both_yea ((leftover sift f) sorted)
+            (a above_sift leftover f
+              ((a above leftover) yea_if_former (leftover sorted) held)) tail,
+        nay ^ tail
+      }
+    )
+  }
+
+show let join_sorted
+  : [@α: *, @: α order_total, a…: α list, r: α list, held: (a… sorted) = yea,
+    ((a… join r) sorted) = yea]
+  ≔ match r {
+    empty        ^ held,
+    a ‥ leftover ^ (a… put a) join_sorted leftover (a… put_sorted a held)
+  }
+
+show let above_absent
+  : [@α: *, @: α order_total, a: α, a…: α list, d: α, tail: (a above a…) = yea,
+    before: (d ≤ a) = yea, (a… inhold d) = nay]
+  ≔ match a… {
+    empty        ^ reflect,
+    b ‥ leftover ^
+      (d ≤ b) inspect @𝟚 @{c ^ (c if (b ≤ d) (leftover inhold d)) = nay} {
+        yea, _ ^ (b ≤ d) inspect @𝟚 @(_ = nay) {
+          yea, held ^ match ((b ≤_yea_transit d a held before)
+            symmetry) transit (a tight_right b
+            ((a tight b) yea_if_former (a above leftover) tail)) {},
+          nay, _ ^ reflect
+        },
+        nay, _ ^
+          a above_absent leftover d
+            ((a tight b) yea_if_latter (a above leftover) tail) before
+      }
+  }
+
+show let inhold_‥
+  : [@α: *, @: α order_total, a: α, a…: α list, b: α, held: (a above a…) = yea,
+    ((a ‥ a…) inhold b) = ((b equal a) if yea (a… inhold b))]
+  ≔ (b ≤ a) inspect @𝟚 @{
+    c: 𝟚 ^
+      (c if (a ≤ b) (a… inhold b)) = ((c if (a ≤ b) nay) if yea (a… inhold b))
+  } {
+    yea, before ^ (
+      let absent ≔ a above_absent a… b held before
+      yield match a ≤ b {
+        yea ^ reflect,
+        nay ^ absent symmetry
+      }
+    ),
+    nay, _ ^ reflect
+  }
+
+let either_swap: [p: 𝟚, q: 𝟚, (p if yea q) = (q if yea p)] ≔ match p, q {
+  yea, yea;
+  yea, nay;
+  nay, yea;
+  nay, nay ^ reflect
+}
+
+let either_transit
+  : [p: 𝟚, q: 𝟚, r: 𝟚, (p if yea (q if yea r)) = ((p if yea q) if yea r)]
+  ≔ match p, q, r {
+    yea, _,   _;
+    nay, yea, _;
+    nay, nay, _ ^ reflect
+  }
+
+let either_swallow: [p: 𝟚, q: 𝟚, (p if yea q) = ((p if yea q) if yea p)]
+  ≔ match p, q {
+    yea, _;
+    nay, yea;
+    nay, nay ^ reflect
+  }
+
+show let equal_is
+  : [@α: *, @: α order_total, a: α, b: α, held: (a equal b) = yea, a = b]
+  ≔ a ≤_= b ((a ≤ b) yea_if_former (b ≤ a) held)
+    ((a ≤ b) yea_if_latter (b ≤ a) held)
+
+show let put_inhold_if
+  : [@α: *, @: α order_total, a…: α list, b: α, d: α, held: (a… sorted) = yea,
+    ((a… put b) inhold d) = ((a… inhold d) if yea (d equal b))]
+  ≔ match a… {
+    empty        ^ reflect,
+    a ‥ leftover ^ (
+      let above_a ≔ (a above leftover) yea_if_former (leftover sorted) held
+      let sorted_leftover
+        ≔ (a above leftover) yea_if_latter (leftover sorted) held
+      let original ≔ a inhold_‥ leftover d above_a
+      yield (b ≤ a) inspect @𝟚 @{
+        c: 𝟚 ^
+          ((c if ((a ≤ b) if (a ‥ leftover) (b ‥ (a ‥ leftover)))
+            (a ‥ (leftover put b))) inhold d) =
+            (((a ‥ leftover) inhold d) if yea (d equal b))
+      } {
+        yea, before ^
+          (a ≤ b) inspect @𝟚 @{
+            c: 𝟚 ^
+              ((c if (a ‥ leftover) (b ‥ (a ‥ leftover))) inhold d) =
+                (((a ‥ leftover) inhold d) if yea (d equal b))
+          } {
+            yea, eftwend ^ >{transit,
+              original,
+              (d equal a) either_swallow (leftover inhold d),
+              (_ if yea (d equal a)) leibnitz (original symmetry),
+              {c ^ ((a ‥ leftover) inhold d) if yea (d equal c)} leibnitz
+                ((b ≤_= a before eftwend) symmetry)
+            },
+            nay, eftwend ^ (
+              let less ≔ b tight_make a before eftwend
+              let above_b
+                ≔ (b tight a) both_yea (b above leftover) less
+                  (b above_transit a leftover less above_a)
+              yield (b inhold_‥ (a ‥ leftover) d above_b) transit
+                ((d equal b) either_swap ((a ‥ leftover) inhold d))
+            )
+          },
+        nay, after ^ (
+          let less ≔ a tight_make b (b ≤_flip a after) after
+          yield >{transit,
+            a inhold_‥ (leftover put b) d (a above_put leftover b above_a less),
+            ((d equal a) if yea _) leibnitz
+              (leftover put_inhold_if b d sorted_leftover),
+            (d equal a) either_transit (leftover inhold d) (d equal b),
+            (_ if yea (d equal b)) leibnitz (original symmetry)
+          }
+        )
+      }
+    )
+  }
+
+let sift_equal
+  : [q: 𝟚, tail: 𝟚,
+    ((q if yea nay) if yea (tail if q nay)) = ((yea if yea tail) if q nay)]
+  ≔ match q, tail {
+    yea, _;
+    nay, yea;
+    nay, nay ^ reflect
+  }
+
+let sift_other
+  : [p: 𝟚, q: 𝟚, tail: 𝟚,
+    ((p if nay nay) if yea (tail if q nay)) = ((nay if yea tail) if q nay)]
+  ≔ match p {
+    yea ^ reflect,
+    nay ^ reflect
+  }
+
+show let sift_inhold_if
+  : [@α: *, @: α order_total, a…: α list, f: [α, 𝟚], b: α,
+    held: (a… sorted) = yea,
+    ((a… sift f) inhold b) = ((a… inhold b) if (b f) nay)]
+  ≔ match a… {
+    empty        ^ reflect,
+    a ‥ leftover ^ (
+      let above_a ≔ (a above leftover) yea_if_former (leftover sorted) held
+      let sorted_leftover
+        ≔ (a above leftover) yea_if_latter (leftover sorted) held
+      let sifted
+        : (((a ‥ leftover) sift f) inhold b) =
+          (((a f) if (b equal a) nay) if yea ((leftover sift f) inhold b))
+        ≔ match a f {
+          yea ^
+            a inhold_‥ (leftover sift f) b (a above_sift leftover f above_a),
+          nay ^ reflect
+        }
+      let transformed
+        ≔ sifted transit
+          ((((a f) if (b equal a) nay) if yea _) leibnitz
+            (leftover sift_inhold_if f b sorted_leftover))
+      let original ≔ a inhold_‥ leftover b above_a
+      let distribution
+        : (((a f) if (b equal a) nay) if yea ((leftover inhold b) if (b f) nay))
+          = (((b equal a) if yea (leftover inhold b)) if (b f) nay)
+        ≔ (b equal a) inspect @𝟚 @{
+          c: 𝟚 ^
+            (((a f) if c nay) if yea ((leftover inhold b) if (b f) nay)) =
+              ((c if yea (leftover inhold b)) if (b f) nay)
+        } {
+          yea, alike ^ (
+            let predicate_alike ≔ f leibnitz (b equal_is a alike)
+            yield >{transit,
+              {c ^ ((a f) if yea nay) if yea ((leftover inhold b) if c nay)}
+                leibnitz predicate_alike,
+              (a f) sift_equal (leftover inhold b),
+              ((yea if yea (leftover inhold b)) if _ nay) leibnitz
+                (predicate_alike symmetry)
+            }
+          ),
+          nay, _ ^ (a f) sift_other (b f) (leftover inhold b)
+        }
+      yield >{transit,
+        transformed,
+        distribution,
+        (_ if (b f) nay) leibnitz (original symmetry)
+      }
+    )
+  }
+
+show let join_inhold_if
+  : [@α: *, @: α order_total, a…: α list, r: α list, b: α,
+    left: (a… sorted) = yea, right: (r sorted) = yea,
+    ((a… join r) inhold b) = ((a… inhold b) if yea (r inhold b))]
+  ≔ match r {
+    empty ^ match a… inhold b {
+      yea ^ reflect,
+      nay ^ reflect
+    },
+    a ‥ leftover ^ (
+      let above_a ≔ (a above leftover) yea_if_former (leftover sorted) right
+      let sorted_leftover
+        ≔ (a above leftover) yea_if_latter (leftover sorted) right
+      yield >{transit,
+        (a… put a) join_inhold_if leftover b (a… put_sorted a left)
+          sorted_leftover,
+        (_ if yea (leftover inhold b)) leibnitz (a… put_inhold_if a b left),
+        ((a… inhold b) either_transit (b equal a) (leftover inhold b)) symmetry,
+        ((a… inhold b) if yea _) leibnitz
+          ((a inhold_‥ leftover b above_a) symmetry)
+      }
+    )
+  }
+
+let ⋏_if: [p: 𝟚, q: 𝟚, (p ⋏ q) = (p if q nay)] ≔ match p, q {
+  yea, yea;
+  yea, nay;
+  nay, yea;
+  nay, nay ^ reflect
+}
+
+let ⋎_if: [p: 𝟚, q: 𝟚, (p ⋎ q) = (p if yea q)] ≔ match p, q {
+  yea, yea;
+  yea, nay;
+  nay, yea;
+  nay, nay ^ reflect
+}
+
+show let put_inhold
+  : [@α: *, @: α order_total, a…: α list, a: α, b: α, held: (a… sorted) = yea,
+    ((a… put a) inhold b) = ((a… inhold b) ⋎ (b equal a))]
+  ≔ (a… put_inhold_if a b held) transit
+    (((a… inhold b) ⋎_if (b equal a)) symmetry)
+
+show let sift_inhold
+  : [@α: *, @: α order_total, a…: α list, f: [α, 𝟚], a: α,
+    held: (a… sorted) = yea, ((a… sift f) inhold a) = ((a… inhold a) ⋏ (a f))]
+  ≔ (a… sift_inhold_if f a held) transit (((a… inhold a) ⋏_if (a f)) symmetry)
+
+show let join_inhold
+  : [@α: *, @: α order_total, a…: α list, r: α list, a: α,
+    left: (a… sorted) = yea, right: (r sorted) = yea,
+    ((a… join r) inhold a) = ((a… inhold a) ⋎ (r inhold a))]
+  ≔ (a… join_inhold_if r a left right) transit
+    (((a… inhold a) ⋎_if (r inhold a)) symmetry)

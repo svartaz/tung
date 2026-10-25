@@ -1,0 +1,15 @@
+bring class/order/lattice.tung
+bring class/order/semilattice_bounded_upper.tung
+bring class/order/semilattice_upper_bounded.tung
+bring type/three.tung
+bring type/two.tung
+
+## a lattice with greatest and least values.
+show class lattice_bounded: [α: *, @: α lattice, @: α semilattice_bounded_upper,
+  @: α semilattice_upper_bounded, *] {}
+
+bizen: [@β: *, @: β lattice_bounded, @α: *, [α, β] lattice_bounded] {}
+
+bizen: 𝟚 lattice_bounded {}
+
+bizen: 𝟛 lattice_bounded {}

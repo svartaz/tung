@@ -6,4 +6,4 @@ let fibonacci: [ℕ, ℕ] ≔ {
   (n next) next ^ (n fibonacci) + ((n next) fibonacci)
 }
 
-let main: 𝟙 deed ≔ 40 fibonacci $ to_string $ write_line
+let main: 𝟙 effect ≔ 40 fibonacci $ to_string $ write_line

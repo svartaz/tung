@@ -26,9 +26,9 @@ data SourceSyntax = SourceSyntax
     syntaxScopes :: [(Int, Int, Int, Int)]
   }
 
--- a `let`, `ilk`, `flock`, `bizen`, or `orsetting` from its keyword. the
--- header endeth where the body beginneth: after `≔`, or at the brace of an
--- ilk, flock, or bizen; a declaration without a body is all header.
+-- a `let`, `type`, `class`, `bizen`, or `axiom` from its keyword. the
+-- header endeth where the body beginneth: after `≔`, or at the brace of a
+-- type, class, or bizen; a declaration without a body is all header.
 data DeclarationSummary = DeclarationSummary
   { declarationKind :: String,
     declarationStart :: Int,
@@ -69,7 +69,7 @@ sourceSyntaxSummary source =
       TNatural _ -> "number"
       TInteger _ -> "number"
       TFloat _ -> "number"
-      token | token `elem` [TLet, TFix, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TOrsend, TInduce, TFall] -> "keyword"
+      token | token `elem` [TLet, TFix, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TOrsend, TInduce, TFunction] -> "keyword"
       _ -> "punctuation"
 
 universe :: Tree -> [Tree]

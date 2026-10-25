@@ -62,7 +62,7 @@ nestedImports = withProject files "main.tung" \result ->
     projectContents project = (projectSource project, projectImports project)
 
 preparedProject :: Test
-preparedProject = withProject [("main.tung", "bring dep.tung let answer ≔ worth"), ("dep.tung", "show let worth ≔ +41")] "main.tung" \case
+preparedProject = withProject [("main.tung", "bring dep.tung let answer ≔ value"), ("dep.tung", "show let value ≔ +41")] "main.tung" \case
   Left message -> pure (Just message)
   Right Project {projectPath, projectSource, projectImports} ->
     expectEq "prepared project checketh and inspecteth a type" (Right "ℤ") (compileProject (SourceModule projectPath) projectSource projectImports >>= (`typeOfName` "answer"))
@@ -71,7 +71,7 @@ localImportPaths :: Test
 localImportPaths = withDirectory \root -> do
   let mainPath = root </> "main.tung"
       depPath = root </> "dep.tung"
-  writeProject root [("main.tung", "bring dep.tung"), ("dep.tung", "show let worth ≔ +1")]
+  writeProject root [("main.tung", "bring dep.tung"), ("dep.tung", "show let value ≔ +1")]
   canonicalMain <- canonicalizePath mainPath
   canonicalDep <- canonicalizePath depPath
   result <- loadProjectFile [] mainPath
@@ -86,22 +86,22 @@ localImportPaths = withDirectory \root -> do
 
 moduleRootImport :: Test
 moduleRootImport = withDirectory \root -> do
-  let project = root </> "forthcast"
+  let project = root </> "project"
       modules = root </> "modules"
       source = "show let shared ≔ +7"
-  writeProject root [("forthcast/main.tung", "bring shared.tung"), ("modules/shared.tung", source)]
+  writeProject root [("project/main.tung", "bring shared.tung"), ("modules/shared.tung", source)]
   result <- loadProjectFile [modules] (project </> "main.tung")
   expectEq "loadeth an import from a module root" (Just source) (either (const Nothing) (Map.lookup "shared.tung" . projectImports) result)
 
 localShadowsModuleRoot :: Test
 localShadowsModuleRoot = withDirectory \root -> do
-  let project = root </> "forthcast"
+  let project = root </> "project"
       modules = root </> "modules"
       localSource = "show let shared ≔ +2"
   writeProject
     root
-    [ ("forthcast/main.tung", "bring shared.tung"),
-      ("forthcast/shared.tung", localSource),
+    [ ("project/main.tung", "bring shared.tung"),
+      ("project/shared.tung", localSource),
       ("modules/shared.tung", "show let shared ≔ +1")
     ]
   result <- loadProjectFile [modules] (project </> "main.tung")
@@ -109,12 +109,12 @@ localShadowsModuleRoot = withDirectory \root -> do
 
 ambiguousModuleRoots :: Test
 ambiguousModuleRoots = withDirectory \root -> do
-  let project = root </> "forthcast"
+  let project = root </> "project"
       left = root </> "left"
       right = root </> "right"
   writeProject
     root
-    [ ("forthcast/main.tung", "bring shared.tung"),
+    [ ("project/main.tung", "bring shared.tung"),
       ("left/shared.tung", "show let left ≔ +1"),
       ("right/shared.tung", "show let right ≔ +2")
     ]
@@ -145,7 +145,7 @@ canonicalAlias = withDirectory \root -> do
   writeProject
     root
     [ ("main.tung", "bring source.tung bring alias.tung"),
-      ("source.tung", "show let worth ≔ +1")
+      ("source.tung", "show let value ≔ +1")
     ]
   createFileLink sourcePath aliasPath
   result <- loadProjectFile [] mainPath
@@ -226,20 +226,20 @@ interfaceRoundTrip = withDirectory \root -> do
           show base~rose_sample
           show base~depth
           show base~keeps
-          show let a:base~two ≔ base~worth base~keep
+          show let a:base~two ≔ base~value base~keep
           show let number ≔ base~number
           """
         ),
         ( "b.tung",
           """
-          show ilk two:* { one:two, other:two }
-          show flock keeps:[α:*, *] { let keep:[α, α] }
+          show type two:* { one:two, other:two }
+          show class keeps:[α:*, *] { let keep:[α, α] }
           bizen:two keeps { let keep:[x:] ≔ x }
           let secret:two ≔ one
-          show let worth:two ≔ secret keep
+          show let value:two ≔ secret keep
           show let number ≔ +7
-          ilk box:[α:*, *] { pack:[α, α box] }
-          ilk rose:* { leaf:rose, node:[rose box, rose] }
+          type box:[α:*, *] { pack:[α, α box] }
+          type rose:* { leaf:rose, node:[rose box, rose] }
           show let rose_sample:rose ≔ (leaf pack @rose) node
           show let depth:[rose, ℕ] ≔
             {_:rose ^ ℕ} unbuild rose {_:rose box ^ ℕ}
@@ -247,7 +247,7 @@ interfaceRoundTrip = withDirectory \root -> do
               {child:rose ^ {below:ℕ ^ below}}
           """
         ),
-        ("c.tung", "show ilk two:* { one:two }")
+        ("c.tung", "show type two:* { one:two }")
       ]
     checked compiled = do
       program <- rootProgram compiled
@@ -296,13 +296,13 @@ interfaceProofAudit = withDirectory \root -> do
         ( "b.tung",
           equalitySource
             ++ """
-               show orsetting visible:ℕ
-               orsetting hidden:ℕ
+               show axiom visible:ℕ
+               axiom hidden:ℕ
                let ignore:[ℕ,*] ≔ {_ ^ ℕ}
                let annotation:* ≔ hidden ignore
                show let secret:annotation ≔ 0
-               let add:[ℕ,ℕ,ℕ] ≔ 'eke_kindful' fremmed
-               show let computed:(0 add 0) = 0 ≔ eftbend
+               let add:[ℕ,ℕ,ℕ] ≔ 'add_natural' foreign
+               show let computed:(0 add 0) = 0 ≔ reflect
                """
         )
       ]
@@ -318,7 +318,7 @@ interfaceProofAudit = withDirectory \root -> do
           verifyProof program True (Just ["shared~visible"]) allowed
         )
     expected =
-      ( [[(SymbolId (SourceModule "b.tung") "hidden", AxiomDependency)], [(SymbolId (SourceModule "b.tung") "visible", AxiomDependency)], [(SymbolId (SourceModule "b.tung") "add", HostDependency "eke_kindful")]],
+      ( [[(SymbolId (SourceModule "b.tung") "hidden", AxiomDependency)], [(SymbolId (SourceModule "b.tung") "visible", AxiomDependency)], [(SymbolId (SourceModule "b.tung") "add", HostDependency "add_natural")]],
         Right (),
         Right ()
       )

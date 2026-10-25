@@ -106,7 +106,7 @@ data Inference = Inference
     unsettled :: Map.Map Int (Term, Set.Set Int),
     retryingEquations :: Bool,
     instanceGoals :: [InstanceGoal],
-    -- holes that an instance goal mentioned, such as a flock carrier `?φ`.
+    -- holes that an instance goal mentioned, such as a class carrier `?φ`.
     -- instance search and approximation solve them, not abstraction.
     carriers :: Set.Set Int,
     -- each `sorry` checked so far, newest first, for goal display.
@@ -115,7 +115,7 @@ data Inference = Inference
     -- local bindings. speculative trials roll them back with their solutions.
     checkedReferences :: Set.Set SymbolId,
     -- each written name resolved to a global, by its span, and whether that
-    -- global nameth an ilk, newest first. speculative trials roll them back
+    -- global nameth a type, newest first. speculative trials roll them back
     -- with their solutions.
     resolvedNames :: [(SourceSpan, SymbolId, Bool)]
   }
@@ -129,7 +129,7 @@ data HoleSite = HoleSite
     holeGoal :: N.Value
   }
 
--- an implicit input whose type is a flock is solved by instance search. the
+-- an implicit input whose type is a class is solved by instance search. the
 -- hole stayeth open until the caller's search assigneth it.
 data InstanceGoal = InstanceGoal
   { goalHole :: N.Value,
@@ -162,13 +162,13 @@ put = lift . State.put
 modify' :: (Inference -> Inference) -> Elaboration ()
 modify' = lift . State.modify'
 
--- a global nameth an ilk when its type, after its inputs, is a sort; the
+-- a global nameth a type when its type, after its inputs, is a sort; the
 -- editor coloureth a name by it, which syntax alone cannot tell.
 recordName :: SourceSpan -> SymbolId -> Elaboration ()
 recordName span symbol = do
   globals <- currentGlobals
-  let ilk = maybe False (sorted . definitionType) (Map.lookup symbol globals)
-  modify' (\state -> state {resolvedNames = (span, symbol, ilk) : resolvedNames state})
+  let namesType = maybe False (sorted . definitionType) (Map.lookup symbol globals)
+  modify' (\state -> state {resolvedNames = (span, symbol, namesType) : resolvedNames state})
   where
     sorted = \case
       Pi _ _ result -> sorted result
@@ -304,7 +304,7 @@ evaluate K.Context {contextValues} term = do
   recordReferences term
   normalised \normal -> N.evaluateWith normal contextValues term
 
--- a worth whose definitions stay folded until forced, for an argument that
+-- a value whose definitions stay folded until forced, for an argument that
 -- only instantiateth a codomain.
 evaluateGlued :: K.Context -> Term -> Elaboration N.Value
 evaluateGlued K.Context {contextValues} term = do
@@ -368,7 +368,7 @@ newMetaWithout K.Context {..} excluded expected = do
   kind <- infer K.emptyContext (foldr (Pi Explicit) annotation domains) >>= force
   case kind of
     N.VSort _ -> pure ()
-    _ -> failure "term inference hole requireth an ilk"
+    _ -> failure "term inference hole requireth a type"
   identity <- nextMeta <$> get
   modify' (\state -> state {nextMeta = identity + 1, metaEntries = Map.insert identity (MetaEntry domains annotation Nothing) (metaEntries state)})
   arguments <- traverse (quote originalDepth) values
@@ -402,12 +402,12 @@ ensurePi plicity value =
       meta@MetaEntry {..} <- entry identity
       unless (length arguments == metaArity meta) (failure "wrong term inference telescope arity")
       pattern <- rigidLevels arguments
-      when (isNothing pattern) (failure "nonpattern function ilk inference requireth an annotation")
+      when (isNothing pattern) (failure "nonpattern function type inference requireth an annotation")
       (context, domains) <- mapAccumM telescope K.emptyContext metaDomains
       kind <- evaluate context metaTarget
       force kind >>= \case
         N.VSort _ -> pure ()
-        _ -> failure "unknown function ilk is not an ilk"
+        _ -> failure "unknown function type is not a type"
       domainLevel <- freshLevel
       (domain, domainValue) <- newMeta context (N.VSort domainLevel)
       codomainLevel <- freshLevel
@@ -520,7 +520,7 @@ unifyForced context left right = do
         blocked <- (||) <$> blockedComputation context actual <*> blockedComputation context expected
         if blocked then quotedEqual actual expected else structure actual expected
     -- η for a family with one constructor and no indices: its constructor
-    -- applied to fields equaleth a rigid worth by those fields; two
+    -- applied to fields equaleth a rigid value by those fields; two
     -- applications of the constructor are compared by congruence.
     structure actual expected = do
       globals <- currentGlobals
@@ -544,7 +544,7 @@ unifyForced context left right = do
       when solved (unify context actual expected)
       pure solved
     congruent (N.VNeutral (N.NLocal left)) (N.VNeutral (N.NLocal right)) | left == right = pure True
-    -- applications of different worths may still be equal by their type.
+    -- applications of different values may still be equal by their type.
     congruent left@(N.VNeutral (N.NApply p function argument)) right@(N.VNeutral (N.NApply q otherFunction otherArgument)) | p == q = do
       trial (unify context (N.VNeutral function) (N.VNeutral otherFunction) >> unify context argument otherArgument) >>= \case
         Right ((), keep) -> True <$ keep
@@ -577,7 +577,7 @@ unifyForced context left right = do
       | N.VNeutral constructor <- N.constructorForm literal =
           congruent neutral (N.VNeutral constructor)
     -- when a family with one constructor hath no fields, any two of its
-    -- worths are equal, which only their types can tell.
+    -- values are equal, which only their types can tell.
     congruent left right = do
       a <- quote depth left
       b <- quote depth right
@@ -870,7 +870,7 @@ patternDomains depth mapping = go 0
               result <- instantiate codomain argument
               remaining <- go (position + 1) result rest
               pure (((plicity, renamed) :) <$> remaining)
-        _ -> failure "term inference pattern differeth from its ilk"
+        _ -> failure "term inference pattern differeth from its type"
 
 -- indirect solutions are followed as well; an inference hole cannot conceal
 -- a cycle behind another assigned hole or one of its contextual arguments.
@@ -960,7 +960,7 @@ approximateWith both = do
               -- a spine, so this endeth. a split that only postponeth its parts
               -- is no progress, so a caller that retrieth on progress stopeth.
               -- a split whose parts contradict, as `?f x = g (h y)` with `x`
-              -- and `h y` of different ilks, is no solution: the equation is
+              -- and `h y` of different types, is no solution: the equation is
               -- kept for a later one, such as a fallback bizen fixing a hole
               -- in `g`.
               let parts = do

@@ -1,5 +1,5 @@
 -- shared assertions preserve the boundary between static evaluator rejection and
--- deliberate runtime failure from an unhandled deed.
+-- deliberate runtime failure from an unhandled effect.
 module Test.Harness
   ( Group,
     Test,
@@ -42,7 +42,7 @@ import System.Exit (ExitCode (..), exitFailure, exitWith)
 import System.IO (hFlush, stdout)
 import System.IO.Unsafe (unsafePerformIO)
 import System.Process (env, proc, readCreateProcessWithExitCode)
-import Test.Compile (bookhoardSources, compileProjectDetailed, compileYieldWith, loadBookhoard, shareBookhoard)
+import Test.Compile (compileProjectDetailed, compileYieldWith, loadStandard, shareStandard, standardSources)
 import Test.QuickCheck qualified as QuickCheck
 import Test.QuickCheck.Random qualified as QuickCheck
 import Text.Read (readMaybe)
@@ -64,9 +64,9 @@ runGroups groups = do
   case selected of
     -- each group runneth in its own process, so caches stay per group. groups
     -- run in parallel, slowest first, and print whole when they finish. they
-    -- begin with bookhoard's interfaces, checked once here.
+    -- begin with the library's interfaces, checked once here.
     Nothing -> do
-      shared <- shareBookhoard
+      shared <- shareStandard
       executable <- Environment.getExecutablePath
       environment <- Environment.getEnvironment
       processors <- getNumProcessors
@@ -111,7 +111,7 @@ runGroups groups = do
 
 -- groups that take longest start first, so parallel runs finish together.
 slowGroups :: [String]
-slowGroups = ["type", "evaluate", "bookhoard", "program", "dependent-module", "dependent-recursion", "dependent-source"]
+slowGroups = ["type", "evaluate", "standard", "program", "dependent-module", "dependent-recursion", "dependent-source"]
 
 -- an explicit selection must name existing groups; a typo cannot pass zero tests.
 selectGroups :: [(String, a)] -> String -> Either String [a]
@@ -152,27 +152,27 @@ propertyTest name property = do
 parseOk, parseErr, typeOk, typeErr, runnableErr :: String -> String -> Test
 parseOk name = expectEither name True . parseProgram
 parseErr name = expectEither name False . parseProgram
-typeOk name source = expectEq name "ilk ok" (checkSource False source Map.empty)
-typeErr name source = expectPrefix name "ilk error:" (checkSource False source Map.empty)
+typeOk name source = expectEq name "type ok" (checkSource False source Map.empty)
+typeErr name source = expectPrefix name "type error:" (checkSource False source Map.empty)
 
 typeErrContaining :: String -> String -> String -> Test
 typeErrContaining name expected source =
   let actual = checkSource False source Map.empty
-   in expectMessage name ("ilk error:" `isPrefixOf` actual && expected `isInfixOf` actual) ("expected error containing " ++ show expected ++ ", got " ++ show actual)
+   in expectMessage name ("type error:" `isPrefixOf` actual && expected `isInfixOf` actual) ("expected error containing " ++ show expected ++ ", got " ++ show actual)
 
-runnableErr name source = expectPrefix name "ilk error:" (checkSource True source Map.empty)
+runnableErr name source = expectPrefix name "type error:" (checkSource True source Map.empty)
 
 typeOkWith, typeErrWith :: String -> String -> Map.Map String String -> Test
-typeOkWith name source imports = expectEq name "ilk ok" (checkSource False source imports)
-typeErrWith name source imports = expectPrefix name "ilk error:" (checkSource False source imports)
+typeOkWith name source imports = expectEq name "type ok" (checkSource False source imports)
+typeErrWith name source imports = expectPrefix name "type error:" (checkSource False source imports)
 
 evalOkWith :: String -> String -> Map.Map String String -> String -> Test
 evalOkWith name source imports expected = evaluateSource source imports >>= expectEq name expected
 
 evalTypeErrWith :: String -> String -> Map.Map String String -> Test
-evalTypeErrWith name source imports = evaluateSource source imports >>= expectPrefix name "eval error: ilk error:"
+evalTypeErrWith name source imports = evaluateSource source imports >>= expectPrefix name "eval error: type error:"
 
--- `ilk ok`, or the parse or type error. a runnable source must also define
+-- `type ok`, or the parse or type error. a runnable source must also define
 -- `main`. a test's own modules join the compiled library.
 checkSource :: Bool -> String -> Map.Map String String -> String
 checkSource runnable = checkWith (if runnable then requireMain else const (Right ()))
@@ -185,11 +185,11 @@ checkWith :: (SourceProgram -> Either String ()) -> String -> Map.Map String Str
 checkWith entry source imports = case compiled >>= \modules -> either (Left . failureText) Right (compileProjectDetailed modules (SourceModule "main.tung") source (Map.union imports librarySources)) of
   Left message -> message
   Right program
-    | Left message <- entry program -> "ilk error: " ++ message
-    | otherwise -> "ilk ok"
+    | Left message <- entry program -> "type error: " ++ message
+    | otherwise -> "type ok"
   where
     (librarySources, compiled) = libraryFor source imports
-    failureText CompileFailure {failureKind, failureText = text} = (if failureKind == ParseFailure then "parse error: " else "ilk error: ") ++ text
+    failureText CompileFailure {failureKind, failureText = text} = (if failureKind == ParseFailure then "parse error: " else "type error: ") ++ text
 
 -- the yielded value, printed, or `eval error:` and the failure.
 evaluateSource :: String -> Map.Map String String -> IO String
@@ -199,7 +199,7 @@ evaluateSourceWithArgs :: [String] -> String -> Map.Map String String -> IO Stri
 evaluateSourceWithArgs arguments source imports = do
   let (librarySources, compiled) = libraryFor source imports
   case compiled >>= \modules -> compileYieldWith modules (SourceModule "main.tung") source (Map.union imports librarySources) of
-    Left message -> pure ("eval error: ilk error: " ++ message)
+    Left message -> pure ("eval error: type error: " ++ message)
     Right (_, Nothing) -> pure "eval error: nothing is yielded"
     Right (program, Just inferred) -> do
       host <- ioHost arguments
@@ -210,24 +210,24 @@ runMainSource :: String -> Map.Map String String -> IO String
 runMainSource source imports = do
   let (librarySources, compiled) = libraryFor source imports
   case compiled >>= \modules -> compileYieldWith modules (SourceModule "main.tung") source (Map.union imports librarySources) of
-    Left message -> pure ("ilk error: " ++ message)
+    Left message -> pure ("type error: " ++ message)
     Right (program, _) -> do
       host <- ioHost []
       case runMain host program of
-        Left message -> pure ("ilk error: " ++ message)
+        Left message -> pure ("type error: " ++ message)
         Right action -> action <&> either ("runtime error: " ++) (\status -> "ok " ++ show status)
 
 -- fixture overrides invalidate all checked interfaces; unchanged tests load
--- only their direct bookhoard imports, whose transitive imports are shared.
+-- only their direct library imports, whose transitive imports are shared.
 libraryFor :: String -> Map.Map String String -> (Map.Map String String, Either String (Map.Map String SourceProgram))
-libraryFor source imports = (bookhoardSources, compiled)
+libraryFor source imports = (standardSources, compiled)
   where
-    changed = any (\(path, text) -> maybe False (/= text) (Map.lookup path bookhoardSources)) (Map.toList imports)
-    paths = filter (`Map.member` bookhoardSources) (snapshotImportPaths (sourceSnapshot source))
+    changed = any (\(path, text) -> maybe False (/= text) (Map.lookup path standardSources)) (Map.toList imports)
+    paths = filter (`Map.member` standardSources) (snapshotImportPaths (sourceSnapshot source))
     compiled
       | changed = Right Map.empty
       | otherwise = unsafePerformIO do
-          cached <- loadBookhoard paths
+          cached <- loadStandard paths
           -- the root compiler owneth diagnostic order, including parse failures.
           pure (either (const (Right Map.empty)) Right cached)
 {-# NOINLINE libraryFor #-}

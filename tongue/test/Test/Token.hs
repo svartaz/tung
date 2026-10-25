@@ -50,7 +50,7 @@ lexCases =
 
 lexErrors :: [(String, String)]
 lexErrors =
-  [ ("path-qualified namespace", "ilk/list~empty"),
+  [ ("path-qualified namespace", "type/list~empty"),
     ("unterminated string", "'no"),
     ("unknown string escape", "'\\q'"),
     ("empty unicode escape", "`\\;"),
@@ -87,17 +87,17 @@ keywordToken = \case
   "fast" -> TFix
   "show" -> TExport
   "bring" -> TImport
-  "ilk" -> TType
-  "deed" -> TIdent "deed"
+  "type" -> TType
+  "effect" -> TIdent "effect"
   "yield" -> TYield
-  "fremmed" -> TForeign
-  "flock" -> TClass
+  "foreign" -> TForeign
+  "class" -> TClass
   "bizen" -> TInstance
   "match" -> TMatch
   "sorry" -> TSorry
-  "orsetting" -> TOrsend
+  "axiom" -> TOrsend
   "unbuild" -> TInduce
-  "fall" -> TFall
+  "function" -> TFunction
   name -> error ("missing keyword token in test: " ++ name)
 
 -- pieces cover the source exactly; a comment traileth the token on its line.

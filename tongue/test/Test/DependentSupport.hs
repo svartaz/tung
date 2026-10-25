@@ -28,7 +28,7 @@ import Data.List (isInfixOf)
 import Data.Map.Strict qualified as Map
 import System.Directory (doesFileExist, getCurrentDirectory)
 import System.FilePath (takeDirectory, (</>))
-import Test.Compile (bookhoardSources, checkBookhoardModule, compileProjectWith, compileSource, loadBookhoard)
+import Test.Compile (checkStandardModule, compileProjectWith, compileSource, loadStandard, standardSources)
 import Test.Harness (Test, expect)
 import Tung.Dependent
 import Tung.Dependent.Run (HostIO (..), Request, Response, Runtime, runMain)
@@ -59,27 +59,27 @@ compileAs :: FilePath -> String -> Either String SourceProgram
 compileAs = compileSource . SourceModule
 
 -- isolated source tests may supply this ordinary family as an explicit fixture.
--- bookhoard tests check the real declaration and its dependent lemmas.
+-- library tests check the real declaration and its dependent lemmas.
 equalitySource :: String
-equalitySource = "show ilk =:[@α:*, x:α, α,*] { eftbend:x = @α x }\n"
+equalitySource = "show type =:[@α:*, x:α, α,*] { reflect:x = @α x }\n"
 
--- bookhoard sources and the modules a group useth, compiled once.
+-- library sources and the modules a group useth, compiled once.
 data Library = Library (Map.Map String String) (Map.Map String SourceProgram)
 
 loadLibrary :: [String] -> IO Library
 loadLibrary paths = do
-  compiled <- loadBookhoard paths >>= either fail pure
-  pure (Library bookhoardSources compiled)
+  compiled <- loadStandard paths >>= either fail pure
+  pure (Library standardSources compiled)
 
 -- a checked owning module retaineth private helpers for model and proof tests.
 -- a loaded interface keepeth only shown names, so the module is checked again
 -- from its source against its loaded imports.
 libraryModule :: Library -> String -> Either String SourceProgram
 libraryModule (Library _ compiled) path
-  | Map.member path compiled = checkBookhoardModule (Map.delete path compiled) path
+  | Map.member path compiled = checkStandardModule (Map.delete path compiled) path
   | otherwise = Left ("library module was not loaded: " ++ path)
 
--- further sources beside bookhoard, keyed by use path. a changed source
+-- further sources beside the library, keyed by use path. a changed source
 -- invalidateth every cached module, including its transitive dependants.
 withModules :: [(String, String)] -> Library -> Library
 withModules modules (Library sources compiled) =
@@ -87,7 +87,7 @@ withModules modules (Library sources compiled) =
       changed = any (\(path, source) -> maybe False (/= source) (Map.lookup path sources)) (Map.toList added)
    in Library (Map.union added sources) (if changed then Map.empty else compiled)
 
--- a source may use any bookhoard module; loaded ones are not checked again.
+-- a source may use any library module; loaded ones are not checked again.
 compileWith :: Library -> FilePath -> String -> Either String SourceProgram
 compileWith (Library sources compiled) name source = compileProjectWith compiled (SourceModule name) source sources
 
@@ -154,7 +154,7 @@ simulated =
       hostEnvironment = \name -> lookup name <$> gets worldEnvironment,
       hostRunProcess = \command inputs -> pure case command of
         "echo" -> Right (0, unwords inputs ++ "\n", "")
-        _ -> Left ("no forewrit " ++ command),
+        _ -> Left ("no program " ++ command),
       hostFork = \action -> do
         result <- action
         state \current -> let handle = Map.size (worldTasks current) in (handle, current {worldTasks = Map.insert handle result (worldTasks current)}),

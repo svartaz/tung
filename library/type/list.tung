@@ -1,0 +1,315 @@
+bring class/algebra/partial/category.tung
+bring class/algebra/partial/semigroupoid.tung
+bring class/algebra/total/hath_add.tung
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/hath_subtract.tung
+bring class/algebra/total/monoid_multiply.tung
+bring class/algebra/total/semigroup_multiply.tung
+bring class/equal_to_is.tung
+bring class/functor.tung
+bring class/functor/applicative.tung
+bring class/functor/catamorphism.tung
+bring class/functor/hath_sift.tung
+bring class/functor/hath_traverse.tung
+bring class/functor/monad.tung
+bring class/hath_equal.tung
+bring class/hath_inhold.tung
+bring class/hath_manyhood.tung
+bring class/order/hath_at_most.tung
+bring combinator.tung
+bring is.tung
+bring type/and.tung
+bring type/integer.tung
+bring type/natural.tung
+bring type/one.tung
+bring type/optional.tung
+bring type/two.tung
+
+## finite linked lists.
+show type list: [α: *, *] {
+  empty: α list,
+  ‥: [α, α list, α list]
+}
+
+let inhold: [@α: *, @: α hath_≍, α list, α, 𝟚] ≔ {
+  empty,            _ ^ nay,
+  first ‥ leftover, a ^ (a ≍ first) if yea (leftover inhold a)
+}
+
+bizen: [@α: *, @: α hath_≍, (α list) hath_∋ α] {
+  let ∋ ≔ inhold
+}
+
+## `count` integers from start.
+let count_up: [ℤ, ℕ, ℤ list] ≔ {
+  _,     0      ^ empty,
+  start, n next ^ start ‥ (start + +1 $ count_up n)
+}
+
+## integer range from start up to stop, excluding stop.
+show let till: [start: ℤ, stop: ℤ, ℤ list] ≔ match (start -+ stop) to_ℕ {
+  none       ^ empty,
+  count some ^ start count_up count
+}
+
+## build a one-member list.
+show let onesome: [@α: *, a: α, α list] ≔ a ‥ empty
+
+let append: [@α: *, α list, α list, α list] ≔ {
+  empty,            m ^ m,
+  first ‥ leftover, m ^ first ‥ (leftover append m)
+}
+
+bizen: [@α: *, (α list) semigroup_·] {
+  let · ≔ append
+
+  let ·_·: [a:, b:, c:] ≔ {a… ^ (a… · (b · c)) = ((a… · b) · c)} unbuild list
+    reflect {first, _, proof ^ (first ‥) leibnitz proof} a
+}
+
+bizen: [@α: *, (α list) monoid_·] {
+  let one ≔ empty
+
+  let one_·: [_:] ≔ reflect
+
+  let ·_one: [a:] ≔ {a… ^ (a… · empty) = a…} unbuild list reflect {
+    first, _, proof ^ (first ‥) leibnitz proof
+  } a
+}
+
+let map: [@α: *, @β: *, α list, [α, β], β list] ≔ {
+  empty,            _ ^ empty,
+  first ‥ leftover, f ^ (first f) ‥ (leftover map f)
+}
+
+bizen: list functor {
+  let map ≔ map
+
+  let map_identity: [@α:, a:] ≔ {a…: α list ^ (a… map identity) = a…} unbuild
+    list reflect {first, _, proof ^ (first ‥) leibnitz proof} a
+}
+
+let apply: [@α: *, @β: *, α list, [α, β] list, β list] ≔ {
+  _,  empty            ^ empty,
+  a…, first ‥ leftover ^ (a… map first) append (a… apply leftover)
+}
+
+let flat: [@α: *, (α list) list, α list] ≔ {
+  empty            ^ empty,
+  first ‥ leftover ^ first append (leftover flat)
+}
+
+## binding a joined list is joining the bound parts.
+let lemma_bind_·
+  : [@α: *, @β: *, a…: α list, b…: α list, f: [α, β list],
+    (((a… · b…) map f) flat) = (((a… map f) flat) · ((b… map f) flat))]
+  ≔ match a… {
+    empty   ^ reflect,
+    a ‥ a…′ ^
+      (((a f) ·) leibnitz (a…′ lemma_bind_· b… f)) transit
+        ((a f) ·_· ((a…′ map f) flat) ((b… map f) flat))
+  }
+
+## binding twice is binding once to the bound continuation.
+let lemma_bind_bind
+  : [@α: *, @β: *, @γ: *, a…: α list, f: [α, β list], g: [β, γ list],
+    ((((a… map f) flat) map g) flat) = ((a… map {a ^ ((a f) map g) flat}) flat)]
+  ≔ match a… {
+    empty   ^ reflect,
+    a ‥ a…′ ^
+      ((a f) lemma_bind_· ((a…′ map f) flat) g) transit
+        (((((a f) map g) flat) ·) leibnitz (a…′ lemma_bind_bind f g))
+  }
+
+bizen: list monad {
+  let sheer: [@α: *, a: α, α list] ≔ a ‥ empty
+
+  let apply ≔ apply
+
+  let flat ≔ flat
+
+  let sheer_bind: [@α:, @β:, a:, f:] ≔ {a… ^ (a… · empty) = a…} unbuild list
+    reflect {first, _, proof ^ (first ‥) leibnitz proof} (a f)
+
+  let map_sheer_flat: [@α:, a:] ≔ {a… ^ (a… map sheer $ flat) = a…} unbuild list
+    reflect {first, _, proof ^ (first ‥) leibnitz proof} a
+
+  let apply_identity_sheer: [@α:, a:] ≔ {
+    a…: α list ^ (a… apply (identity sheer)) = a…
+  } unbuild list reflect {first, _, proof ^ (first ‥) leibnitz proof} a
+
+  let sheer_apply_sheer: [_:, _:] ≔ reflect
+
+  let apply_apply: [@α:, @β:, @γ:, a:, f:, g:] ≔ {
+    a…: α list ^ <{apply, a…, f sheer, g sheer} = (a… apply (f ▷ g $ sheer))
+  } unbuild list reflect {first, _, proof ^ ((first f $ g) ‥) leibnitz proof} a
+
+  let sheer_apply: [@α:, @β:, a:, f…:] ≔ {
+    a…: [α, β] list ^ ((a sheer) apply a…) = (a… map (a ▶))
+  } unbuild list reflect {first, _, proof ^ ((a first) ‥) leibnitz proof} f…
+
+  let bind_bind ≔ lemma_bind_bind
+}
+
+let sift: [@α: *, α list, [α, 𝟚], α list] ≔ {
+  empty,            _ ^ empty,
+  first ‥ leftover, f ^ match first f {
+    yea ^ first ‥ (leftover sift f),
+    nay ^ leftover sift f
+  }
+}
+
+bizen: list hath_sift {
+  let sift ≔ sift
+}
+
+## perform an effect for each member, in order.
+show let each
+  : [@α: *, @φ: [*, *], @: φ applicative, a…: α list, doing: [α, 𝟙 φ], 𝟙 φ]
+  ≔ a… gather₁ (only sheer) {done, a ^ done keep_other (a doing)}
+
+## first list member, if present.
+show let head: [@α: *, α list, α optional] ≔ {
+  empty     ^ none,
+  first ‥ _ ^ first some
+}
+
+## list without its first member, if present.
+show let tail: [@α: *, α list, (α list) optional] ≔ {
+  empty        ^ none,
+  _ ‥ leftover ^ leftover some
+}
+
+show let behead: [@α: *, α list, (α ∧ (α list)) optional] ≔ {
+  empty            ^ none,
+  first ‥ leftover ^ (first ⸴ leftover) some
+}
+
+## first count members.
+show let take: [@α: *, α list, ℕ, α list] ≔ {
+  _,                0;
+  empty,            _ ^ empty,
+  first ‥ leftover, n ^ first ‥ (leftover take (n ∸ 1))
+}
+
+## list after ridding count members.
+show let drop: [@α: *, α list, ℕ, α list] ≔ {
+  a…,           0 ^ a…,
+  empty,        _ ^ empty,
+  _ ‥ leftover, n ^ leftover drop (n ∸ 1)
+}
+
+## first member accepted by a predicate.
+show let find: [@α: *, α list, [α, 𝟚], α optional] ≔ {
+  empty,            _ ^ none,
+  first ‥ leftover, f ^ match first f {
+    yea ^ first some,
+    nay ^ leftover find f
+  }
+}
+
+let gather₀: [@α: *, @β: *, α list, β, [α, β, β], β] ≔ {
+  empty,            b, _ ^ b,
+  first ‥ leftover, b, f ^ first f (leftover gather₀ b f)
+}
+
+let gather₁: [@α: *, @β: *, α list, β, [β, α, β], β] ≔ {
+  empty,            b, _ ^ b,
+  first ‥ leftover, b, f ^ leftover gather₁ (b f first) f
+}
+
+bizen: list catamorphism {
+  let gather₀ ≔ gather₀
+
+  let gather₁ ≔ gather₁
+}
+
+let traverse
+  : [@μ: [*, *], @: μ applicative, @α: *, @β: *, α list, [α, β μ], (β list) μ]
+  ≔ {
+    empty,            _ ^ empty sheer,
+    first ‥ leftover, f ^ (first f) lift₂ (leftover traverse f) ‥
+  }
+
+bizen: list hath_traverse {
+  let traverse ≔ traverse
+}
+
+bizen: [@α: *, (α list) hath_manyhood] {
+  let manyhood: [a…:] ≔ a… gather₁ 0 {n, _ ^ n + 1}
+}
+
+show let eftwend: [@α: *, a…: α list, α list]
+  ≔ a… gather₁ empty {outcome, a ^ a ‥ outcome}
+
+show let zip: [@α: *, @β: *, α list, β list, (α ∧ β) list] ≔ {
+  empty,  _;
+  _,      empty  ^ empty,
+  a ‥ a…, b ‥ b… ^ (a ⸴ b) ‥ (a… zip b…)
+}
+
+## member at a zero-based index, if present.
+show let at: [@α: *, a…: α list, index: ℕ, α optional] ≔ match a… drop index {
+  empty     ^ none,
+  first ‥ _ ^ first some
+}
+
+## final member, if present.
+show let last: [@α: *, a…: α list, α optional] ≔ a… gather₁ none {_, a ^ a some}
+
+## repeat a value count times.
+show let eftfold: [@α: *, α, ℕ, α list] ≔ {
+  _, 0      ^ empty,
+  a, n next ^ a ‥ (a eftfold n)
+}
+
+## split values accepted and forsaken by a predicate.
+show let shed: [@α: *, a…: α list, f: [α, 𝟚], (α list) ∧ (α list)]
+  ≔ a… gather₀ (empty ⸴ empty) {
+    a, accepted ⸴ forsaken ^
+      (a f) if ((a ‥ accepted) ⸴ forsaken) (accepted ⸴ (a ‥ forsaken))
+  }
+
+## split a list of products into two lists.
+show let unzip: [@α: *, @β: *, pairs: (α ∧ β) list, (α list) ∧ (β list)]
+  ≔ pairs gather₀ (empty ⸴ empty) {a ⸴ b, a… ⸴ b… ^ (a ‥ a…) ⸴ (b ‥ b…)}
+
+## lists are the same when they have the same length and the same values in
+## order.
+show let equal: [@α: *, @: α hath_≍, α list, α list, 𝟚] ≔ {
+  empty,  empty  ^ yea,
+  a ‥ a…, b ‥ b… ^ (a ≍ b) if (a… equal b…) nay,
+  _,      _      ^ nay
+}
+
+bizen: [@α: *, @: α hath_≍, (α list) hath_≍] {
+  let ≍ ≔ equal
+}
+
+let lemma_≍_=
+  : [@α: *, @: α ≍_to_=, a…: α list, b…: α list, held: (a… equal b…) = yea,
+    a… = b…]
+  ≔ match a…, b… {
+    empty,   empty   ^ reflect,
+    a ‥ a…′, b ‥ b…′ ^
+      ((_ ‥ a…′) leibnitz
+        (a ≍_= b ((a ≍ b) yea_if_former (a…′ equal b…′) held))) transit
+        ((b ‥) leibnitz
+          (a…′ lemma_≍_= b…′ ((a ≍ b) yea_if_latter (a…′ equal b…′) held))),
+    empty, _ ‥ _ ^ match held {},
+    _ ‥ _, empty ^ match held {}
+  }
+
+let lemma_≍_reflect: [@α: *, @: α ≍_to_=, a…: α list, (a… equal a…) = yea]
+  ≔ match a… {
+    empty   ^ reflect,
+    a ‥ a…′ ^
+      (_ if (a…′ equal a…′) nay) yea_throughbear ((a ≍_reflect) symmetry)
+        (a…′ lemma_≍_reflect)
+  }
+
+bizen: [@α: *, @: α ≍_to_=, (α list) ≍_to_=] {
+  let ≍_= ≔ lemma_≍_=
+
+  let ≍_reflect ≔ lemma_≍_reflect
+}

@@ -4,12 +4,12 @@ import { findMatching, findOpening, tokenDepths } from "../server/syntax.ts";
 import { analyzed } from "./compiler.ts";
 
 test("token depths recover from an unmatched close", async () => {
-  const { tokens } = await analyzed("} { (worth) }");
+  const { tokens } = await analyzed("} { (value) }");
   assert.deepEqual(tokenDepths(tokens), [0, 0, 1, 2, 2, 1]);
 });
 
 test("right composition participateth in delimiter navigation", async () => {
-  const { tokens } = await analyzed(">{cons, >{cons, worth, empty}, empty}");
+  const { tokens } = await analyzed(">{cons, >{cons, value, empty}, empty}");
   const opening = tokens.filter(({ text }) => text === ">{");
   const closing = tokens.filter(({ text }) => text === "}");
   assert.deepEqual(
@@ -23,7 +23,7 @@ test("right composition participateth in delimiter navigation", async () => {
 });
 
 test("bracket lookups agree for nested and unmatched delimiters", async () => {
-  const { tokens } = await analyzed("(<{worth} { unmatched ) } )");
+  const { tokens } = await analyzed("(<{value} { unmatched ) } )");
   const opening = tokens.filter(({ text }) => ["(", "<{", "{"].includes(text));
   const closing = tokens.filter(({ text }) => [")", "}"].includes(text));
 

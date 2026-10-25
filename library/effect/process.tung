@@ -1,0 +1,8 @@
+bring process/outcome.tung
+bring type/list.tung
+bring type/or.tung
+
+## run a child process and capture its status, standard output, and standard
+## error. a process that cannot start yieldeth its error message.
+show let run: [string, string list, (string ∨ _process_outcome) effect]
+  ≔ 'run_process' foreign

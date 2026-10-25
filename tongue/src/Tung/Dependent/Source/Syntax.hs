@@ -30,7 +30,7 @@ module Tung.Dependent.Source.Syntax
     Declaration (..),
     ConstructorDeclaration (..),
     Row (..),
-    FlockMember (..),
+    ClassMember (..),
     unshown,
     repeatedNames,
     freeNames,
@@ -63,11 +63,11 @@ data Expression
   | -- `{rows}` with more than one row or a non-variable pattern.
     RawCases [Row]
   | RawMatch [Expression] [Row]
-  | -- `value.field` readeth a named field of a one-constructor ilk.
+  | -- `value.field` readeth a named field of a one-constructor type.
     RawProjection Expression String
   | -- `sorry` standeth for an omitted term of any type.
     RawSorry
-  | -- `unbuild name` is the eliminator of the ilk or flock `name`.
+  | -- `unbuild name` is the eliminator of the type or class `name`.
     RawInduce String
   | -- `a:` leaveth a slot type to inference, as doth an omitted result.
     RawInferred
@@ -169,7 +169,7 @@ pattern Inferred <- (unlocated -> RawInferred)
     Inferred = RawInferred
 
 -- a law is an ordinary member whose type requireth an equality proof.
-data FlockMember = FlockMember String Expression
+data ClassMember = ClassMember String Expression
   deriving stock (Eq, Show)
 
 -- one explicit pattern per column. `;` alternatives become separate rows.
@@ -179,7 +179,7 @@ data Row = Row
   }
   deriving stock (Eq, Show)
 
--- an unnamed implicit parameter, written `@:flock`, is a requirement.
+-- an unnamed implicit parameter, written `@:class`, is a requirement.
 data Parameter = Parameter
   { parameterPlicity :: Plicity,
     parameterName :: Maybe String,
@@ -206,7 +206,7 @@ data Declaration
         declarationAnnotation :: Maybe Expression,
         declarationBody :: Expression,
         -- `fast name: type ≔ body` may name itself without bound; its type
-        -- endeth in a deed.
+        -- endeth in an effect.
         declarationFixpoint :: Bool
       }
   | InductiveDeclaration
@@ -214,14 +214,14 @@ data Declaration
         inductiveSignature :: Expression,
         inductiveConstructors :: [ConstructorDeclaration]
       }
-  | -- `flock name:[parameters, @:parent, *] { let member:type; law:[...] }`.
-    FlockDeclaration
-      { flockName :: String,
-        flockParameters :: [Parameter],
-        flockMembers :: [FlockMember]
+  | -- `class name:[parameters, @:parent, *] { let member:type; law:[...] }`.
+    ClassDeclaration
+      { classDeclarationName :: String,
+        classDeclarationParameters :: [Parameter],
+        classDeclarationMembers :: [ClassMember]
       }
   | -- `bizen:type { let member ≔ body }` constructeth an ordinary dictionary.
-    -- the type's implicit slots are parameters and requirements; it endeth in a flock.
+    -- the type's implicit slots are parameters and requirements; it endeth in a class.
     BizenDeclaration
       { -- `bizen 10: …` writeth a priority; higher is tried first.
         bizenPriority :: Maybe Integer,
@@ -239,12 +239,12 @@ data Declaration
     ShownDeclaration Declaration
   | -- `show a, b` publisheth visible names, including imported ones.
     ReExportDeclaration [String]
-  | -- `orsetting name:type` assumeth a constant of a type without a proof.
+  | -- `axiom name:type` assumeth a constant of a type without a proof.
     AssumptionDeclaration
       { assumptionName :: String,
         assumptionAnnotation :: Expression
       }
-  | -- a top-level host binding: `let name:type ≔ 'key' fremmed`, optionally
+  | -- a top-level host binding: `let name:type ≔ 'key' foreign`, optionally
     -- followed by its model, a definition that may call the binding itself.
     HostDeclaration
       { hostName :: String,

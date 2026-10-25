@@ -1,0 +1,5 @@
+bring type/optional.tung
+
+show class hath_from_string: [α: *, *] {
+  let from_string: [string, α optional]
+}

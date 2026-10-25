@@ -1,0 +1,156 @@
+bring class/algebra/total/hath_add.tung
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/semigroup_multiply.tung
+bring class/functor.tung
+bring class/hath_equal.tung
+bring class/hath_manyhood.tung
+bring class/order/hath_at_most.tung
+bring class/order/order_partial.tung
+bring class/order/order_total.tung
+bring type/and.tung
+bring type/list.tung
+bring type/natural.tung
+bring type/optional.tung
+bring type/three.tung
+bring type/two.tung
+
+## a finite wordbook kept as a weight-balanced search tree, ordered by its keys.
+## each knot holdeth its weight, the tale of its entries.
+show type tree: [α: *, β: *, *] {
+  leaf: α tree β,
+  knot: [ℕ, α, β, α tree β, α tree β, α tree β]
+}
+
+show let empty: [@α: *, @β: *, α tree β] ≔ leaf
+
+show let onesome: [@α: *, @β: *, key: α, value: β, α tree β]
+  ≔ 1 knot key value leaf leaf
+
+let weight: [@α: *, @β: *, α tree β, ℕ] ≔ {
+  leaf           ^ 0,
+  n knot _ _ _ _ ^ n
+}
+
+bizen: [@α: *, @β: *, (α tree β) hath_manyhood] {
+  let manyhood ≔ weight
+}
+
+let make
+  : [@α: *, @β: *, key: α, value: β, left: α tree β, right: α tree β, α tree β]
+  ≔ <{+, left weight, right weight, 1} knot key value left right
+
+# rotations keep the order of keys; a absent child leaveth the knot as is.
+let onefold_left
+  : [@α: *, @β: *, key: α, value: β, left: α tree β, right: α tree β, α tree β]
+  ≔ match right {
+    leaf                   ^ key make value left right,
+    _ knot k v inner outer ^ k make v (key make value left inner) outer
+  }
+
+let twofold_left
+  : [@α: *, @β: *, key: α, value: β, left: α tree β, right: α tree β, α tree β]
+  ≔ match right {
+    _ knot k v (_ knot ik iv il ir) outer ^
+      ik make iv (key make value left il) (k make v ir outer),
+    _ ^ key onefold_left value left right
+  }
+
+let onefold_right
+  : [@α: *, @β: *, key: α, value: β, left: α tree β, right: α tree β, α tree β]
+  ≔ match left {
+    leaf                   ^ key make value left right,
+    _ knot k v outer inner ^ k make v outer (key make value inner right)
+  }
+
+let twofold_right
+  : [@α: *, @β: *, key: α, value: β, left: α tree β, right: α tree β, α tree β]
+  ≔ match left {
+    _ knot k v outer (_ knot ik iv il ir) ^
+      ik make iv (k make v outer il) (key make value ir right),
+    _ ^ key onefold_right value left right
+  }
+
+# one side may outweigh the other by at most three times; a heavier side is
+# rotated, singly when its outer child is heavier, and doubly otherwise.
+let balance
+  : [@α: *, @β: *, key: α, value: β, left: α tree β, right: α tree β, α tree β]
+  ≔ (
+    let l ≔ left weight
+    let r ≔ right weight
+    yield ((l + r) ≤ 1) if (key make value left right)
+      (((3 · l) < r) if (match right {
+        _ knot _ _ inner outer ^
+          ((inner weight) < (2 · (outer weight))) if
+            (key onefold_left value left right)
+            (key twofold_left value left right),
+        leaf ^ key make value left right
+      }) (((3 · r) < l) if (match left {
+        _ knot _ _ outer inner ^
+          ((inner weight) < (2 · (outer weight))) if
+            (key onefold_right value left right)
+            (key twofold_right value left right),
+        leaf ^ key make value left right
+      }) (key make value left right)))
+  )
+
+## the value at a key, if present.
+show let lookup
+  : [@α: *, @: α order_total, @β: *, t: α tree β, key: α, β optional]
+  ≔ match t {
+    leaf           ^ none,
+    _ knot k v l r ^ match key compare k {
+      fore ^ l lookup key,
+      mid  ^ v some,
+      aft  ^ r lookup key
+    }
+  }
+
+## the tree with a value at a key, replacing any value there.
+show let put
+  : [@α: *, @: α order_total, @β: *, t: α tree β, key: α, value: β, α tree β]
+  ≔ match t {
+    leaf           ^ key onesome value,
+    n knot k v l r ^ match key compare k {
+      fore ^ k balance v (l put key value) r,
+      mid  ^ n knot key value l r,
+      aft  ^ k balance v l (r put key value)
+    }
+  }
+
+# the least entry and the leftover of the tree, if any.
+let behead: [@α: *, @β: *, t: α tree β, <{∧, α, β, α tree β} optional]
+  ≔ match t {
+    leaf           ^ none,
+    _ knot k v l r ^ match l behead {
+      none                    ^ ((k ⸴ v) ⸴ r) some,
+      (least ⸴ leftover) some ^ (least ⸴ (k balance v leftover r)) some
+    }
+  }
+
+# two trees whose keys are ordered one before the other, joined.
+let glue: [@α: *, @β: *, left: α tree β, right: α tree β, α tree β]
+  ≔ match right behead {
+    none                      ^ left,
+    ((k ⸴ v) ⸴ leftover) some ^ k balance v left leftover
+  }
+
+## the tree without a key.
+show let rid: [@α: *, @: α order_total, @β: *, t: α tree β, key: α, α tree β]
+  ≔ match t {
+    leaf           ^ leaf,
+    _ knot k v l r ^ match key compare k {
+      fore ^ k balance v (l rid key) r,
+      mid  ^ l glue r,
+      aft  ^ k balance v l (r rid key)
+    }
+  }
+
+## the entries in key order.
+show let entries: [@α: *, @β: *, t: α tree β, (α ∧ β) list] ≔ match t {
+  leaf           ^ list~empty,
+  _ knot k v l r ^ (l entries) · ((k ⸴ v) ‥ (r entries))
+}
+
+## the keys in order.
+show let keys: [@α: *, @β: *, t: α tree β, α list] ≔ t entries $ map project₀

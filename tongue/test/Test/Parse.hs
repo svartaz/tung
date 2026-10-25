@@ -25,45 +25,45 @@ group =
 
 accepted :: [(String, String)]
 accepted =
-  [ ("inferred worth", "let answer ≔ +42"),
-    ("worth annotation", "let answer:ℤ ≔ +42"),
+  [ ("inferred value", "let answer ≔ +42"),
+    ("value annotation", "let answer:ℤ ≔ +42"),
     ("declaration endeth at the next declaration", "let answer:ℤ ≔ +42 let other ≔ +1"),
-    ("worth annotation may be a quantified function type", "let sameness:[@a:*, [a, a]] ≔ { x ^ x }"),
-    ("an inferred slot type", "let sameness: [x:] ≔ x"),
-    ("bare slots describe a function worth", "let sameness:[@a:*, a, a] ≔ { x ^ x }"),
-    ("named slot with inferred result", "let sameness:[@a:*, x: a] ≔ x"),
-    ("type parameters before worth arguments", "let constant:[@a:*, @b:*, x:a, _:b, a] ≔ x"),
+    ("value annotation may be a quantified function type", "let identity:[@a:*, [a, a]] ≔ { x ^ x }"),
+    ("an inferred slot type", "let identity: [x:] ≔ x"),
+    ("bare slots describe a function value", "let identity:[@a:*, a, a] ≔ { x ^ x }"),
+    ("named slot with inferred result", "let identity:[@a:*, x: a] ≔ x"),
+    ("type parameters before value arguments", "let constant:[@a:*, @b:*, x:a, _:b, a] ≔ x"),
     ("constraints, then type parameters, then values", "let keep:[@a:*, @:a hath_≍, @b:*, x:a, y:b, a] ≔ x"),
     ("quantified parameter kind may be a type constructor", "let choose:[f:[@a:[*, *], ℤ a, ℤ], ℤ] ≔ +1"),
     ("named prefix and nested bare argument", "let f: [@b:*, @c:*, @d:*, x:, y: b, [c, d], d] ≔ { z ^ z }"),
-    ("infix slot pattern with or without grouping", "ilk ∧: [a:*, b:*, *] { both: [a, b, a ∧ b] } let f:[(a both b): a ∧ b, ℤ] ≔ +1 let g:[a both b: a ∧ b, ℤ] ≔ +1"),
+    ("infix slot pattern with or without grouping", "type ∧: [a:*, b:*, *] { both: [a, b, a ∧ b] } let f:[(a both b): a ∧ b, ℤ] ≔ +1 let g:[a both b: a ∧ b, ℤ] ≔ +1"),
     ("sorry is an expression", "let answer:ℤ ≔ sorry"),
-    ("string-keyed fremmed let", "let plus:[ℤ, ℤ, ℤ] ≔ 'eke_wholetale' fremmed"),
+    ("string-keyed foreign let", "let plus:[ℤ, ℤ, ℤ] ≔ 'add_integer' foreign"),
     ("adjacent declarations and final yield", "let x ≔ +1 let y ≔ +2 yield x + y"),
-    ("type aliases", "let rime:* ≔ ℤ let answer:rime ≔ +42 let powerset:[a:*, *] ≔ a → 𝟚"),
+    ("type aliases", "let count:* ≔ ℤ let answer:count ≔ +42 let powerset:[a:*, *] ≔ a → 𝟚"),
     ("type composition aliases", "let paired:* ≔ >{pair, ℤ, string, unicode} let nested:* ≔ >{pair, >{pair, ℤ, string}, string}"),
-    ("algebraic data", "ilk maybe: [a:*, *] { none: a maybe, some: [a, a maybe] }"),
-    ("adjacent constructor signatures", "ilk list: [a:*, *] { empty: a list, ‥: [a, a list, a list] }"),
-    ("higher-kinded data parameter", "ilk free: [f:[*, *], a:*, *] { done: [a, f free a], more: [(f free a) f, f free a] }"),
-    ("nullary signatures and empty data", "ilk ℕ: * { naught: ℕ, suc: [ℕ, ℕ] } ilk 𝟘: * {}"),
-    ("a function type may start a constructor header", "ilk _request: [a:*, *] { ask: [[ℤ, a], a _request], stop: a _request }"),
-    ("deed is an ordinary type constructor", "let echo:[string, 𝟙 deed] ≔ write let main:𝟙 deed ≔ 'x' echo"),
-    ("fast declarations take a let header and may be shown", "fast echo:𝟙 deed ≔ echo show fast count:[n:ℕ, 𝟙 deed] ≔ (n next) count"),
-    ("flock members and laws need no separators", "flock sameness:[a:*, *] { let sameness:[a, a] let hath_≍:[a, a] let rule:[x: a, (x sameness) = x] }"),
-    ("flock member with local type parameters", "flock owner:[a:*, *] { let member:[@b:*, b, a] }"),
-    ("higher-order flock members", "flock downshaper:[f:[*, *], *] { let gather₀:[@a:*, @b:*, a f, b, [a, b, b], b] }"),
-    ("flock constraints precede parameters", "flock convert:[a:*, @:a hath_≍, b:*, *] { let convert:[a, b] }"),
-    ("flock member requirement", "flock hath_throughwend:[f:[*, *], *] { let throughwend:[@m:[*, *], @:m onwendsome, @a:*, @b:*, a f, [a, b m], (b f) m] }"),
-    ("flock without parameters", "flock marker:* { let mark:ℤ }"),
-    ("flock with a binary type constructor", "flock category:[⇨:[*, *, *], *] { let hath_≍:[@a:*, a ⇨ a] }"),
-    ("law sides may inhold local blocks", "flock sameness:[a:*, *] { let rule:[x: a, (let y ≔ x yield y) = (let z ≔ x yield z)] }"),
-    ("law parameters use ordinary bracket parsing", "flock sameness:[a:*, *] { let rule:[x:, x = x] }"),
+    ("algebraic data", "type optional: [a:*, *] { none: a optional, some: [a, a optional] }"),
+    ("adjacent constructor signatures", "type list: [a:*, *] { empty: a list, ‥: [a, a list, a list] }"),
+    ("higher-kinded data parameter", "type free: [f:[*, *], a:*, *] { done: [a, f free a], more: [(f free a) f, f free a] }"),
+    ("nullary signatures and empty data", "type ℕ: * { zero: ℕ, suc: [ℕ, ℕ] } type 𝟘: * {}"),
+    ("a function type may start a constructor header", "type _request: [a:*, *] { ask: [[ℤ, a], a _request], stop: a _request }"),
+    ("effect is an ordinary type constructor", "let echo:[string, 𝟙 effect] ≔ write let main:𝟙 effect ≔ 'x' echo"),
+    ("fast declarations take a let header and may be shown", "fast echo:𝟙 effect ≔ echo show fast count:[n:ℕ, 𝟙 effect] ≔ (n next) count"),
+    ("class members and laws need no separators", "class identity:[a:*, *] { let identity:[a, a] let hath_≍:[a, a] let rule:[x: a, (x identity) = x] }"),
+    ("class member with local type parameters", "class owner:[a:*, *] { let member:[@b:*, b, a] }"),
+    ("higher-order class members", "class catamorphism:[f:[*, *], *] { let gather₀:[@a:*, @b:*, a f, b, [a, b, b], b] }"),
+    ("class constraints precede parameters", "class convert:[a:*, @:a hath_≍, b:*, *] { let convert:[a, b] }"),
+    ("class member requirement", "class hath_traverse:[f:[*, *], *] { let traverse:[@m:[*, *], @:m applicative, @a:*, @b:*, a f, [a, b m], (b f) m] }"),
+    ("class without parameters", "class marker:* { let mark:ℤ }"),
+    ("class with a binary type constructor", "class category:[⇨:[*, *, *], *] { let hath_≍:[@a:*, a ⇨ a] }"),
+    ("law sides may inhold local blocks", "class identity:[a:*, *] { let rule:[x: a, (let y ≔ x yield y) = (let z ≔ x yield z)] }"),
+    ("law parameters use ordinary bracket parsing", "class identity:[a:*, *] { let rule:[x:, x = x] }"),
     ("bizen methods use let", "bizen:[@a:*, @:a hath_≍, (a box) hath_≍] { let ≍: [x box:, y box:] ≔ x ≍ y }"),
-    ("bizen uses second-is-function order", "flock convert:[a:*, b:*, *] { let convert:[a, b] } bizen:ℤ convert string { let convert: [x:] ≔ 'x' }"),
+    ("bizen uses second-is-function order", "class convert:[a:*, b:*, *] { let convert:[a, b] } bizen:ℤ convert string { let convert: [x:] ≔ 'x' }"),
     ("bizen heads may be function types", "bizen:[@a:*, a, a] marker {} bizen:ℤ marker [@a:*, a, a] (ℤ list) {}"),
     ("adjacent bizen members", "bizen:ℤ linked { let first: [@a:*, @:a hath_≍, x:] ≔ x let second: [x:] ≔ x first }"),
-    ("show prefixeth declarations", "show let answer ≔ +42 show let rime:* ≔ ℤ show ilk maybe: [a:*, *] { none: a maybe, some: [a, a maybe] } show flock hath_≍:[a:*, *] { let ≍:[a, a, 𝟚] }"),
-    ("re-exports", "bring file.tung show file~worth show file~first, file~second"),
+    ("show prefixeth declarations", "show let answer ≔ +42 show let count:* ≔ ℤ show type optional: [a:*, *] { none: a optional, some: [a, a optional] } show class hath_≍:[a:*, *] { let ≍:[a, a, 𝟚] }"),
+    ("re-exports", "bring file.tung show file~value show file~first, file~second"),
     ("matches", "yield match +1, 'yes' { +0, 'yes' ^ +1, _, _ ^ +0 }"),
     ("anonymous curried function", "yield {x, y, z ^ z}"),
     ("empty consuming match", "yield match x {}"),
@@ -73,38 +73,38 @@ accepted =
 rejected :: [(String, String)]
 rejected =
   [ ("bare final expression requireth yield", "42"),
-    ("orsetting requireth a type annotation", "orsetting bad"),
+    ("axiom requireth a type annotation", "axiom bad"),
     ("type composition requireth a closing brace", "let bad:* ≔ >{pair, ℤ, string"),
     ("declaration requireth a body", "let answer ≔"),
-    ("fast requireth a name", "fast : 𝟙 deed ≔ x"),
-    ("worth annotation requireth equals", "let answer:ℤ +42"),
-    ("function annotation requireth equals", "let sameness:[x:ℤ, ℤ] x"),
-    ("worth annotation requireth a type", "let answer: ≔ +42"),
+    ("fast requireth a name", "fast : 𝟙 effect ≔ x"),
+    ("value annotation requireth equals", "let answer:ℤ +42"),
+    ("function annotation requireth equals", "let identity:[x:ℤ, ℤ] x"),
+    ("value annotation requireth a type", "let answer: ≔ +42"),
     ("omitted argument types require positional binders", "let bad:[x:[], ℤ] ≔ x"),
     ("duplicate type parameters", "let bad:[@a:*, @a:*, x:a, a] ≔ x"),
     ("nested quantifiers have distinct names", "let bad:[f:[@a:*, @a:*, a, a], ℤ] ≔ +1"),
     ("polymorphic type parameter requireth a kind", "let bad:[@a, x:a, a] ≔ x"),
     ("type parameter requireth a name", "let bad:[@a:*, @, x:a, a] ≔ x"),
     ("named slots precede bare slots", "let bad: [@a:*, @b:*, @c:*, x:, a, y: b, c] ≔ x"),
-    ("flock member requireth a bracketed type", "flock bad:[a:*, *] { let member a }"),
-    ("a flock signature endeth in a kind", "flock bad:[a:*] {}"),
-    ("member brackets require a final result expression", "flock bad:[a:*, *] { let rule:[x:a] }"),
+    ("class member requireth a bracketed type", "class bad:[a:*, *] { let member a }"),
+    ("a class signature endeth in a kind", "class bad:[a:*] {}"),
+    ("member brackets require a final result expression", "class bad:[a:*, *] { let rule:[x:a] }"),
     ("bring requireth a path", "bring"),
     ("bizen evidence cannot be shown", "show bizen:ℤ missing {}"),
-    ("fremmed let requireth an annotation", "let plus ≔ 'eke_wholetale' fremmed"),
-    ("fremmed marker cannot be nested", "let bad:ℤ ≔ ('eke_wholetale' fremmed)"),
-    ("fremmed let must be file-level", "let outer: [_:] ≔ (let plus:[ℤ, ℤ, ℤ] ≔ 'eke_wholetale' fremmed yield +1)"),
-    ("use alias must be unqualified", "bring ilk/list.tung list~short"),
-    ("use alias must be slash-free", "bring ilk/list.tung sequence/list"),
-    ("qualified namespace must be slash-free", "bring ilk/list.tung yield ilk/list~empty"),
+    ("foreign let requireth an annotation", "let plus ≔ 'add_integer' foreign"),
+    ("foreign marker cannot be nested", "let bad:ℤ ≔ ('add_integer' foreign)"),
+    ("foreign let must be file-level", "let outer: [_:] ≔ (let plus:[ℤ, ℤ, ℤ] ≔ 'add_integer' foreign yield +1)"),
+    ("use alias must be unqualified", "bring type/list.tung list~short"),
+    ("use alias must be slash-free", "bring type/list.tung sequence/list"),
+    ("qualified namespace must be slash-free", "bring type/list.tung yield type/list~empty"),
     ("show requireth a name", "show"),
     ("show cannot prefix use", "show bring often.tung"),
     ("show cannot prefix an expression", "show +42"),
     ("local block requireth yield", "yield (let x ≔ +1 x)"),
-    ("ilk requireth a body", "ilk maybe"),
-    ("data header requireth a result kind", "ilk box: [a:*] { box: [a, a box] }"),
-    ("constructor signature requireth a result", "ilk box: [a:*, *] { box: [] }"),
-    ("required flock member needeth let", "flock bad:[a:*, *] { a bad: a }"),
+    ("type requireth a body", "type optional"),
+    ("data header requireth a result kind", "type box: [a:*] { box: [a, a box] }"),
+    ("constructor signature requireth a result", "type box: [a:*, *] { box: [] }"),
+    ("required class member needeth let", "class bad:[a:*, *] { a bad: a }"),
     ("match arm requireth ^", "yield match +1 { _ +1 }"),
     ("dollar requireth a left expression", "yield $ + +1 +2"),
     ("dollar requireth a function", "yield a f $"),
@@ -119,7 +119,7 @@ rejected =
 importCases :: [Test]
 importCases =
   [ expectEq ("complete use " ++ source) (Right [ImportDeclaration path alias]) (parseSource source)
-  | path <- ["often.tung", "ilk/list.tung", "a.extra.tung", "pkg.one/query.tung"],
+  | path <- ["often.tung", "type/list.tung", "a.extra.tung", "pkg.one/query.tung"],
     alias <- [Nothing, Just "chosen"],
     let source = "bring " ++ path ++ maybe "" (" " ++) alias
   ]
@@ -136,12 +136,12 @@ expressions =
     ("separated right marker remaineth an ordinary name", "+1 > (+2)", "(> +1 +2)"),
     ("ℤ match pattern", "match +1 { +0 ^ +2, _ ^ +3 }", "match +1 {+0 ^ +2, _ ^ +3}"),
     ("'for' is an ordinary name in a scrutinee", "match b for known { _ ^ b }", "match (for b known) {_ ^ b}"),
-    ("';' yoketh rows sharing a result", "match +1 { +0; +1 ^ +2, _ ^ +3 }", "match +1 {+0 ^ +2, +1 ^ +2, _ ^ +3}"),
+    ("';' joineth rows sharing a result", "match +1 { +0; +1 ^ +2, _ ^ +3 }", "match +1 {+0 ^ +2, +1 ^ +2, _ ^ +3}"),
     ("multi-pattern match preserves order", "match +1, +2, +3 { +0, +1, +2 ^ +4 }", "match +1, +2, +3 {+0, +1, +2 ^ +4}"),
     ("string match pattern", "match 'yes' { 'yes' ^ +1, _ ^ +0 }", "match 'yes' {'yes' ^ +1, _ ^ +0}"),
     ("second term is function", "+1 + +2", "(+ +1 +2)"),
     ("an unsigned literal is a natural", "match 1 { 0 ^ 2 }", "match 1 {0 ^ 2}"),
-    ("explicit types are separate from worth argument order", "a f @string @(string list) b", "(f a @string @(list string) b)"),
+    ("explicit types are separate from value argument order", "a f @string @(string list) b", "(f a @string @(list string) b)"),
     ("explicit type application alone", "f @ℤ", "(f @ℤ)"),
     ("dollar application accepteth type inputs", "a $f @string b", "(f a @string b)"),
     ("unmarked sequence sendeth every argument", "a f b g", "(f a b g)"),
@@ -151,7 +151,7 @@ expressions =
     ("dollar bare tail is function first", "a f $g b c $h d", "(h (g (f a) b c) d)"),
     ("dollar parens are function first", "a f $(g b c) $h d", "(h (g (f a) b c) d)"),
     ("dollar keepeth multiple parenthesised arguments separate", "a f $ if (a some) none", "(if (f a) (some a) none)"),
-    ("anonymous function argument", "l gather₁ natural~naught {n, _ ^ n suc}", "(gather₁ l natural~naught {n, _ ^ (suc n)})")
+    ("anonymous function argument", "l gather₁ natural~zero {n, _ ^ n suc}", "(gather₁ l natural~zero {n, _ ^ (suc n)})")
   ]
 
 expressionCase :: (String, String, String) -> Test
@@ -201,8 +201,8 @@ recoveryCases =
   ]
     ++ [ expectEq label (expected, Nothing, 1) (summary source)
        | (label, source, expected) <-
-           [ ("recovery doth not promote members from a malformed flock", "flock broken:* {\nlet nested:ℤ ≔ sorry\n}\nlet after:ℤ ≔ sorry", ["after"]),
-             ("an unclosed delimiter preventeth suffix recovery", "let before:ℤ ≔ sorry\nflock broken:* {\nlet nested:ℤ ≔ sorry\nlet after:ℤ ≔ sorry", ["before"]),
+           [ ("recovery doth not promote members from a malformed class", "class broken:* {\nlet nested:ℤ ≔ sorry\n}\nlet after:ℤ ≔ sorry", ["after"]),
+             ("an unclosed delimiter preventeth suffix recovery", "let before:ℤ ≔ sorry\nclass broken:* {\nlet nested:ℤ ≔ sorry\nlet after:ℤ ≔ sorry", ["before"]),
              ("a lexical error retaineth only complete prefix declarations", "let before:ℤ ≔ sorry\nlet broken ≔ '\nlet after:ℤ ≔ sorry", ["before"])
            ]
        ]
@@ -219,7 +219,7 @@ recoveryCases =
 -- separators.
 treeCorpus :: Test
 treeCorpus = do
-  files <- concat <$> traverse tungFiles ["../bookhoard", "../byspel"]
+  files <- concat <$> traverse tungFiles ["../library", "../byspel"]
   problems <- concat <$> traverse check files
   pure (if null problems then Nothing else Just (unlines (take 8 problems)))
   where
@@ -278,7 +278,7 @@ brokenTree =
 
 -- each local binder is seen from itself to the end of what bindeth it: a
 -- slot by the later slots and the body, a block's let by the rest of the
--- block, a row's pattern by its row, and a flock's parameter by its members.
+-- block, a row's pattern by its row, and a class's parameter by its members.
 localScopes :: Test
 localScopes =
   expectEq
@@ -298,5 +298,5 @@ localScopes =
   where
     -- an inner bracket or lambda of a header keepeth its own scope, and a
     -- typed or implicit binder is scoped like a bare one.
-    source = "let f: [n: ℕ, x: n fan, ℕ] ≔ (let k ≔ n yield {0 ^ k, m next ^ m} x)\nflock got: [α: *, *] { let get: α }\nlet g: [p: [y: ℕ, ({z: ℕ ^ z} y) = y], ℕ] ≔ {@c ^ c}\n"
+    source = "let f: [n: ℕ, x: n fan, ℕ] ≔ (let k ≔ n yield {0 ^ k, m next ^ m} x)\nclass got: [α: *, *] { let get: α }\nlet g: [p: [y: ℕ, ({z: ℕ ^ z} y) = y], ℕ] ≔ {@c ^ c}\n"
     slice (start, end) = take (end - start) (drop start source)

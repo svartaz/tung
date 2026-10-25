@@ -1,17 +1,18 @@
-bring flock/algebra/half/semigroupoid.tung
-bring ilk/and.tung
-bring ilk/list.tung
-bring ilk/maybe.tung
+bring class/algebra/partial/semigroupoid.tung
 bring often.tung
+bring type/and.tung
+bring type/list.tung
+bring type/optional.tung
 
-let can_deal
-  : [@α: *, @: α hath_%, @: α hath_naught, @: α hath_≍, dealer: α, dealt: α, 𝟚]
-  ≔ match dealt % dealer {
+let can_divide
+  : [@α: *, @: α hath_%, @: α hath_zero, @: α hath_≍, divisor: α, dividend: α,
+    𝟚]
+  ≔ match dividend % divisor {
     none                ^ nay,
-    (_ ⸴ leftover) some ^ leftover ≍ naught
+    (_ ⸴ leftover) some ^ leftover ≍ zero
   }
 
-ilk _fizzbuzz: * {
+type _fizzbuzz: * {
   fizz: _fizzbuzz,
   buzz: _fizzbuzz,
   fizzbuzz: _fizzbuzz,
@@ -27,13 +28,13 @@ bizen: _fizzbuzz hath_to_string {
   }
 }
 
-let to_fizzbuzz: [wholetale: ℤ, _fizzbuzz]
-  ≔ match +3 can_deal wholetale, +5 can_deal wholetale {
+let to_fizzbuzz: [integer: ℤ, _fizzbuzz]
+  ≔ match +3 can_divide integer, +5 can_divide integer {
     yea, yea ^ fizzbuzz,
     yea, nay ^ fizz,
     nay, yea ^ buzz,
-    nay, nay ^ wholetale raw
+    nay, nay ^ integer raw
   }
 
-let main: 𝟙 deed
-  ≔ +0 till +32 $ warp (to_fizzbuzz ▷ to_string) $ each write_line
+let main: 𝟙 effect
+  ≔ +0 till +32 $ map (to_fizzbuzz ▷ to_string) $ each write_line

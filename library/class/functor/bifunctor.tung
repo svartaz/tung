@@ -1,0 +1,18 @@
+bring class/algebra/partial/category.tung
+bring class/algebra/partial/semigroupoid.tung
+bring combinator.tung
+bring is.tung
+
+## a binary type maker covariant in both arguments.
+show class bifunctor: [φ: [*, *, *], *] {
+  let bimap: [@α: *, @β: *, @γ: *, @δ: *, α φ β, [α, γ], [β, δ], γ φ δ]
+
+  let bimap_identity_identity
+    : [@α: *, @β: *, thing: α φ β,
+      (thing bimap (identity @→ @α) (identity @→ @β)) = thing]
+
+  let bimap_bimap
+    : [@α₀: *, @α₁: *, @β₀: *, @β₁: *, @γ₀: *, @γ₁: *, thing: α₀ φ α₁,
+      f₀: [α₀, β₀], f₁: [α₁, β₁], g₀: [β₀, γ₀], g₁: [β₁, γ₁],
+      ((thing bimap f₀ f₁) bimap g₀ g₁) = (thing bimap (f₀ ▷ g₀) (f₁ ▷ g₁))]
+}

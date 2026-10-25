@@ -1,14 +1,14 @@
-ilk bool: * {
+type bool: * {
   no: bool,
   yes: bool
 }
 
-ilk nat: * {
-  naught: nat,
+type nat: * {
+  zero: nat,
   next: [nat, nat]
 }
 
-ilk list: [α: *, *] {
+type list: [α: *, *] {
   ∅: α list,
   ‥: [head: α, tail: α list, α list]
 }
@@ -19,7 +19,7 @@ let not: [bool, bool] ≔ {
   yes ^ no
 }
 
-## `;` yoketh rows that share a result.
+## `;` joineth rows that share a result.
 let both: [bool, bool, bool] ≔ {
   yes, yes ^ yes,
   yes, no;
@@ -28,12 +28,12 @@ let both: [bool, bool, bool] ≔ {
 
 ## recursion passeth a direct child of the matched input.
 let plus: [nat, nat, nat] ≔ {
-  naught, y ^ y,
+  zero,   y ^ y,
   n next, y ^ (n plus y) next
 }
 
 let length: [@α: *, α list, nat] ≔ {
-  ∅        ^ naught,
+  ∅        ^ zero,
   _ ‥ tail ^ (tail length) next
 }
 
@@ -43,17 +43,17 @@ let eftwend_onto: [@α: *, α list, α list, α list] ≔ {
   head ‥ tail, done ^ tail eftwend_onto (head ‥ done)
 }
 
-let warp: [@α: *, @β: *, α list, [α, β], β list] ≔ {
+let map: [@α: *, @β: *, α list, [α, β], β list] ≔ {
   ∅,           _ ^ ∅,
-  head ‥ tail, f ^ (head f) ‥ (tail warp f)
+  head ‥ tail, f ^ (head f) ‥ (tail map f)
 }
 
 ## several columns and nested patterns.
-let same: [nat, nat, bool] ≔ {
-  naught, naught ^ yes,
-  naught, _ next;
-  _ next, naught ^ no,
-  m next, n next ^ m same n
+let equal: [nat, nat, bool] ≔ {
+  zero,   zero   ^ yes,
+  zero,   _ next;
+  _ next, zero   ^ no,
+  m next, n next ^ m equal n
 }
 
 let at_least_two: [nat, bool] ≔ {
@@ -63,24 +63,24 @@ let at_least_two: [nat, bool] ≔ {
 
 ## a call may pass any descendant of the matched input, as in agda.
 let fibonacci: [nat, nat] ≔ {
-  naught        ^ naught,
-  naught next   ^ naught next,
+  zero          ^ zero,
+  zero next     ^ zero next,
   (n next) next ^ ((n next) fibonacci) plus (n fibonacci)
 }
 
-let pairs: [@α: *, l: α list, rime: nat, nat] ≔ match l {
-  _ ‥ (_ ‥ tail) ^ tail pairs (rime next),
-  _              ^ rime
+let pairs: [@α: *, l: α list, count: nat, nat] ≔ match l {
+  _ ‥ (_ ‥ tail) ^ tail pairs (count next),
+  _              ^ count
 }
 
-ilk vec: [α: *, nat, *] {
-  nil: α vec naught,
+type vec: [α: *, nat, *] {
+  nil: α vec zero,
   ‥′: [n: nat, head: α, tail: α vec n, α vec (n next)]
 }
 
 ## a fixed length determineth the constructor's predecessor and tail length.
-let predecessor_two: [@α: *, α vec ((naught next) next), nat] ≔ {n ‥′ _ _ ^ n}
+let predecessor_two: [@α: *, α vec ((zero next) next), nat] ≔ {n ‥′ _ _ ^ n}
 
-let tail_two: [@α: *, α vec ((naught next) next), α vec (naught next)] ≔ {
+let tail_two: [@α: *, α vec ((zero next) next), α vec (zero next)] ≔ {
   _ ‥′ _ tail ^ tail
 }

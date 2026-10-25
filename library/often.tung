@@ -1,0 +1,127 @@
+bring _foreign.tung
+bring class/algebra/total/euclidean.tung
+bring class/algebra/total/field.tung
+bring class/algebra/total/hath_add.tung
+bring class/algebra/total/hath_divide.tung
+bring class/algebra/total/hath_divide_leftover.tung
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/hath_one.tung one_class
+bring class/algebra/total/hath_subtract.tung
+bring class/algebra/total/hath_zero.tung zero_class
+bring class/algebra/total/monoid_add.tung
+bring class/algebra/total/monoid_multiply.tung
+bring class/algebra/total/ring.tung
+bring class/algebra/total/semiring.tung
+bring class/elementary.tung
+bring class/functor.tung
+bring class/functor/applicative.tung
+bring class/functor/bifunctor.tung
+bring class/functor/monad.tung
+bring class/hath_equal.tung
+bring class/hath_from_string.tung
+bring class/hath_inhold.tung
+bring class/hath_to_string.tung
+bring class/order/complement.tung
+bring class/order/hath_at_most.tung
+bring class/order/lattice.tung
+bring class/order/lattice_bounded.tung
+bring class/order/lattice_distributive.tung
+bring class/order/order_partial.tung
+bring class/order/order_total.tung
+bring class/order/semilattice_bounded_upper.tung
+bring class/order/semilattice_lower.tung
+bring class/order/semilattice_upper.tung
+bring class/order/semilattice_upper_bounded.tung
+bring combinator.tung
+bring control.tung
+bring effect.tung
+bring is.tung
+bring type/float.tung
+bring type/integer.tung
+bring type/natural.tung
+bring type/one.tung
+bring type/string/building.tung
+bring type/three.tung
+bring type/two.tung
+bring type/zero.tung
+
+show 𝟘
+
+show initial
+
+show 𝟙
+
+show only
+
+show terminal
+
+show 𝟚
+
+show yea, nay
+
+show 𝟛
+
+show fore, mid, aft
+
+show task
+
+show hath_≍
+
+show hath_≤, order_partial, order_total
+
+show semilattice_lower, semilattice_upper, lattice, lattice_distributive
+
+show semilattice_bounded_upper, semilattice_upper_bounded, lattice_bounded,
+  complement
+
+show hath_to_string, hath_from_string
+
+show hath_+, hath_zero, monoid_+, hath_·, hath_one, monoid_·, semiring
+
+show hath_-, -+, ∸, ring, hath_÷, field, hath_%, euclidean
+
+show functor, bifunctor, applicative, monad, hath_∋
+
+show elementary
+
+show →
+
+show ¬, if
+
+show when, when_not, branch
+
+show write, write_line, read
+
+show random
+
+show fork, wait, strike, wait_for, sleep
+
+show ≍, ≭
+
+show ≤, <, compare, clamp, ⋏, ⋎, ⟂, ⊤
+
+show ∋
+
+show +, zero, ·, one, -, ÷, %
+
+show sine, cosine, tangent, exponent, logarithm, ⌊
+
+show to_ℕ, to_ℤ
+
+show to_string
+
+show from_string
+
+show unicode_to_natural, natural_to_unicode
+
+show behead_string, string_to_list, list_to_string
+
+show map
+
+show bimap
+
+show sheer, apply, lift₂, lift₃, keep_first, keep_other
+
+show flat, bind, then, void
+
+show =, reflect

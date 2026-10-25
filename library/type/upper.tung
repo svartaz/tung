@@ -1,0 +1,1 @@
+show type _upper: [α: *, *] { upper: [α, α _upper] }

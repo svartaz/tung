@@ -1,8 +1,8 @@
 bring is.tung
 
 ## a fixed index may retain a recursive child at the same index.
-ilk tag: [ℕ, *] {
-  naught_case: 0 tag,
+type tag: [ℕ, *] {
+  zero_case: 0 tag,
   one_case: 1 tag,
   grow: [1 tag, 1 tag]
 }
@@ -14,14 +14,14 @@ let depth: [1 tag, ℕ] ≔ {
 
 ## the recursive result may depend on the matched value.
 let copy: [x: 1 tag, x = x] ≔ match x {
-  one_case   ^ eftbend,
-  child grow ^ (let known: child = child ≔ child copy yield eftbend)
+  one_case   ^ reflect,
+  child grow ^ (let known: child = child ≔ child copy yield reflect)
 }
 
 ## other inputs are quantified, so a recursive call may change them.
-let hoard: [1 tag, ℕ, ℕ] ≔ {
+let accumulate: [1 tag, ℕ, ℕ] ≔ {
   one_case,   total ^ total,
-  child grow, total ^ child hoard (total next)
+  child grow, total ^ child accumulate (total next)
 }
 
 ## a constructor-shaped index rebindeth its leaf in each branch.

@@ -5,7 +5,7 @@
 module Tung.Token
   ( utf16Width,
     utf16Length,
-    Token (TIdent, TNatural, TInteger, TFloat, TUnicode, TText, TBraceKeyword, TLet, TFix, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TOrsend, TInduce, TFall, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TEquals, TKindStar, TDollar, TAt),
+    Token (TIdent, TNatural, TInteger, TFloat, TUnicode, TText, TBraceKeyword, TLet, TFix, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TOrsend, TInduce, TFunction, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TEquals, TKindStar, TDollar, TAt),
     SourceSpan (..),
     LocatedToken (..),
     Piece (..),
@@ -78,7 +78,7 @@ data TokenKind
   | KTSorry
   | KTOrsend
   | KTInduce
-  | KTFall
+  | KTFunction
   | KTBraceKeyword String
   | KTLParen
   | KTRParen
@@ -138,7 +138,7 @@ pattern TBraceKeyword name <- Token _ (KTBraceKeyword name)
   where
     TBraceKeyword name = Token Nothing (KTBraceKeyword name)
 
-pattern TLet, TFix, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TOrsend, TInduce, TFall, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TEquals, TKindStar, TDollar, TAt :: Token
+pattern TLet, TFix, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TOrsend, TInduce, TFunction, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TEquals, TKindStar, TDollar, TAt :: Token
 pattern TLet <- Token _ KTLet where TLet = Token Nothing KTLet
 pattern TFix <- Token _ KTFix where TFix = Token Nothing KTFix
 pattern TExport <- Token _ KTExport where TExport = Token Nothing KTExport
@@ -152,7 +152,7 @@ pattern TMatch <- Token _ KTMatch where TMatch = Token Nothing KTMatch
 pattern TSorry <- Token _ KTSorry where TSorry = Token Nothing KTSorry
 pattern TOrsend <- Token _ KTOrsend where TOrsend = Token Nothing KTOrsend
 pattern TInduce <- Token _ KTInduce where TInduce = Token Nothing KTInduce
-pattern TFall <- Token _ KTFall where TFall = Token Nothing KTFall
+pattern TFunction <- Token _ KTFunction where TFunction = Token Nothing KTFunction
 pattern TLParen <- Token _ KTLParen where TLParen = Token Nothing KTLParen
 pattern TRParen <- Token _ KTRParen where TRParen = Token Nothing KTRParen
 pattern TLBracket <- Token _ KTLBracket where TLBracket = Token Nothing KTLBracket
@@ -169,7 +169,7 @@ pattern TKindStar <- Token _ KTKindStar where TKindStar = Token Nothing KTKindSt
 pattern TDollar <- Token _ KTDollar where TDollar = Token Nothing KTDollar
 pattern TAt <- Token _ KTAt where TAt = Token Nothing KTAt
 
-{-# COMPLETE TIdent, TNatural, TInteger, TFloat, TUnicode, TText, TBraceKeyword, TLet, TFix, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TOrsend, TInduce, TFall, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TEquals, TKindStar, TDollar, TAt #-}
+{-# COMPLETE TIdent, TNatural, TInteger, TFloat, TUnicode, TText, TBraceKeyword, TLet, TFix, TExport, TImport, TType, TYield, TForeign, TClass, TInstance, TMatch, TSorry, TOrsend, TInduce, TFunction, TLParen, TRParen, TLBracket, TRBracket, TLBrace, TRBrace, TColon, TComma, TSemicolon, TDot, TMapsTo, TEquals, TKindStar, TDollar, TAt #-}
 
 tokenSpan :: Token -> Maybe SourceSpan
 tokenSpan (Token cursor _) = (\(TokenCursor span _ _) -> span) <$> cursor
@@ -419,9 +419,9 @@ blockComment = C.string "/*" *> M.manyTill M.anySingle (C.string "*/")
 lexeme :: Lexer a -> Lexer a
 lexeme = L.lexeme spaceConsumer
 
--- `deed`, the type of actions, is lexed as a name but presented as a keyword.
+-- `effect`, the type of actions, is lexed as a name but presented as a keyword.
 keywordNames :: [String]
-keywordNames = map fst keywordTokens ++ ["deed"]
+keywordNames = map fst keywordTokens ++ ["effect"]
 
 keywordOrIdent :: String -> Token
 -- only a standalone star is kind syntax; names such as ‥ remain whole.
@@ -434,16 +434,16 @@ keywordTokens =
     ("fast", TFix),
     ("show", TExport),
     ("bring", TImport),
-    ("ilk", TType),
+    ("type", TType),
     ("yield", TYield),
-    ("fremmed", TForeign),
-    ("flock", TClass),
+    ("foreign", TForeign),
+    ("class", TClass),
     ("bizen", TInstance),
     ("match", TMatch),
     ("sorry", TSorry),
-    ("orsetting", TOrsend),
+    ("axiom", TOrsend),
     ("unbuild", TInduce),
-    ("fall", TFall)
+    ("function", TFunction)
   ]
 
 isNameChar :: Char -> Bool

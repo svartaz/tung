@@ -1,0 +1,25 @@
+bring _foreign.tung
+bring type/one.tung
+bring web/request.tung
+bring web/response.tung
+
+show _request
+
+show request
+
+show _response
+
+show response
+
+show respond
+
+show ok
+
+show not_found
+
+show with_header
+
+## serve http/1.1 over ipv4 with one request per connection. the effect endeth
+## only when serving stoppeth, with a message saying why.
+show let serve: [ℕ, [_request, _response effect], string effect]
+  ≔ 'serve' foreign

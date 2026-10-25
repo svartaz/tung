@@ -3,7 +3,7 @@
 {-# LANGUAGE ViewPatterns #-}
 
 -- | the dependent runner. checked core terms are evaluated with types and
--- universe levels erased; deeds are inert values until 'runMain' executeth them
+-- universe levels erased; effects are inert values until 'runMain' executeth them
 -- through a replaceable host interface.
 module Tung.Dependent.Run
   ( HostIO (..),
@@ -76,7 +76,7 @@ import Tung.Primitive
 import Tung.Primitive qualified as Primitive
 import Tung.Web qualified as Web
 
--- the trusted operations a deed may perform. a failed console operation endeth
+-- the trusted operations an effect may perform. a failed console operation endeth
 -- the run; other failures reach the program's failure continuation. tests
 -- supply a simulated host.
 data HostIO m = HostIO
@@ -157,16 +157,16 @@ data Runtime
   | -- a failed computation, such as `sorry`, standeth
     -- unused until something inspecteth it.
     RFailure String
-  | RDeed Deed
+  | REffect Effect
   | RTask Int
 
--- a deed describeth an action. building or composing one performeth nothing.
-data Deed
+-- an effect describeth an action. building or composing one performeth nothing.
+data Effect
   = DPure Runtime
   | DBind Runtime Runtime
   | -- a `fast` call, unfolded only when performed.
     DFast (Either String Runtime)
-  | -- a catalogue deed with its explicit inputs.
+  | -- a catalogue effect with its explicit inputs.
     DHost String [Runtime]
 
 -- execution stopth on a failure or an `exit`.
@@ -174,7 +174,7 @@ data Stop = Failure String | Exit Integer
 
 type Execution m = ExceptT Stop m
 
--- a runnable program defineth `main: 𝟙 deed`.
+-- a runnable program defineth `main: 𝟙 effect`.
 requireMain :: SourceProgram -> Either String ()
 requireMain = void . checkedMain "a runnable file"
 
@@ -196,7 +196,7 @@ checkedMain caller program = do
   matchMain globals definitionType
   pure (globals, name)
 
--- main must have a unit deed type. a normal end hath exit status 0.
+-- main must have a unit effect type. a normal end hath exit status 0.
 runMain :: (Monad m) => HostIO m -> SourceProgram -> Either String (m (Either String Integer))
 runMain host program = do
   (globals, name) <- checkedMain "program" program
@@ -208,14 +208,14 @@ runMain host program = do
       Left (Exit status) -> Right status
       Left (Failure message) -> Left message
 
--- a yielded judgement is validated before erasure. a yielded deed is
+-- a yielded judgement is validated before erasure. a yielded effect is
 -- performed, as at a repl prompt.
 runYield :: (Monad m) => HostIO m -> SourceProgram -> K.Inferred -> m (Either String Runtime)
 runYield host program inferred = do
   let environment@(K.Environment globals) = sourceEnvironment program
   case K.validate environment inferred >> evaluate (runtimeGlobals globals) [] (K.inferredTerm inferred) of
     Left message -> pure (Left message)
-    Right value@(RDeed _) ->
+    Right value@(REffect _) ->
       runExceptT (execute host value) <&> \case
         Right result -> Right result
         Left (Failure message) -> Left message
@@ -232,7 +232,7 @@ inspected = \case
   RFailure message -> Left message
   value -> Right value
 
--- observations compute data fully; closures and inert deeds stay opaque.
+-- observations compute data fully; closures and inert effects stay opaque.
 settled :: Runtime -> Either String Runtime
 settled =
   inspected >=> \case
@@ -253,7 +253,7 @@ renderRuntime = \case
   RFunction _ -> "<function>"
   RErased -> "<erased>"
   RFailure _ -> "<failure>"
-  RDeed _ -> "<deed>"
+  REffect _ -> "<effect>"
   RTask _ -> "<task>"
   where
     erased = \case
@@ -263,7 +263,7 @@ renderRuntime = \case
 
 execute :: (Monad m) => HostIO m -> Runtime -> Execution m Runtime
 execute host = \case
-  RDeed deed -> case deed of
+  REffect effect -> case effect of
     -- producers compute data fully, including literal payloads, before a
     -- continuation receiveth it. bind stayeth in tail position, so a
     -- loop retaineth neither pending arithmetic nor return frames.
@@ -274,9 +274,9 @@ execute host = \case
       inputs <- runtime (traverse settled arguments)
       perform host key inputs >>= runtime . settled
   RFailure message -> throwE (Failure message)
-  _ -> throwE (Failure "runtime value is not a deed")
+  _ -> throwE (Failure "runtime value is not an effect")
 
--- each case followeth the catalogue type of its key. a fallible deed returneth
+-- each case followeth the catalogue type of its key. a fallible effect returneth
 -- an option or `string ∨ α`, as in the ordinary runner.
 perform :: (Monad m) => HostIO m -> String -> [Runtime] -> Execution m Runtime
 perform host key arguments = case (key, arguments) of
@@ -292,7 +292,7 @@ perform host key arguments = case (key, arguments) of
   ("strike", [RTask handle]) -> lift (hostCancel host handle) >> pure only
   ("read_file", [text -> Just path]) -> outcome textValue <$> lift (hostReadFile host path)
   ("write_file", [text -> Just path, text -> Just value]) -> outcome (const only) <$> lift (hostWriteFile host path value)
-  ("onhang_file", [text -> Just path, text -> Just value]) -> outcome (const only) <$> lift (hostAppendFile host path value)
+  ("append_file", [text -> Just path, text -> Just value]) -> outcome (const only) <$> lift (hostAppendFile host path value)
   ("arguments", []) -> list . map textValue <$> lift (hostArguments host)
   ("environment", [text -> Just name]) -> option . fmap textValue <$> lift (hostEnvironment host name)
   ("exit", [natural -> Just status]) -> throwE (Exit status)
@@ -393,7 +393,7 @@ fromHostValue = \case
   value -> maybe RErased RLiteral (valueLiteral value)
 
 -- this lazy table evaluateth each global at most once. a fixpoint's body
--- may name its own entry, so a call of it is a deed that unfoldeth the body
+-- may name its own entry, so a call of it is an effect that unfoldeth the body
 -- when performed. its inputs are then evaluated to their outer form, so a
 -- loop's accumulator holdeth no chain of pending computations, and a
 -- self-call outside any bind loopeth only when performed.
@@ -405,7 +405,7 @@ runtimeGlobals globals = table
       Transparent term -> evaluate table [] term
       Fixpoint arity term ->
         let body = evaluate table [] term
-         in curried arity \inputs -> pure (RDeed (DFast (body >>= \function -> traverse inspected inputs >>= foldM apply function)))
+         in curried arity \inputs -> pure (REffect (DFast (body >>= \function -> traverse inspected inputs >>= foldM apply function)))
       EliminationTarget _ term -> evaluate table [] term
       TypeConstructor _ -> pure RErased
       -- number constructors work on literals.
@@ -417,7 +417,7 @@ runtimeGlobals globals = table
       Eliminator family -> eliminator name family
       Host key _ | key `elem` Primitive.opaqueTypeFamilyNames ++ literalTypeNames -> pure RErased
       Host "sorry" _ -> pure (RFunction \_ -> pure (RFailure "reached sorry"))
-      Assumption -> pure (RFailure ("reached orsetting '" ++ symbolName name ++ "'"))
+      Assumption -> pure (RFailure ("reached axiom '" ++ symbolName name ++ "'"))
       Host "literal_case" _ -> curried 6 \case
         [_, _, actual, expected, yes, no] ->
           traverse inspected [actual, expected] >>= \case
@@ -468,9 +468,9 @@ runtimeGlobals globals = table
           (Just operation, _, _) -> do
             values <- traverse settled arguments
             maybe (Left ("invalid runtime host call '" ++ key ++ "'")) (pure . fromHostValue) (traverse toHostValue values >>= operation)
-          (_, "deed_sheer", [value]) -> pure (RDeed (DPure value))
-          (_, "deed_bind", [action, continuation]) -> pure (RDeed (DBind action continuation))
-          _ -> pure (RDeed (DHost key arguments))
+          (_, "effect_sheer", [value]) -> pure (REffect (DPure value))
+          (_, "effect_bind", [action, continuation]) -> pure (REffect (DBind action continuation))
+          _ -> pure (REffect (DHost key arguments))
 
 -- inputs arrive in order; the body receiveth them once all are present.
 curried :: Int -> ([Runtime] -> Either String Runtime) -> Either String Runtime

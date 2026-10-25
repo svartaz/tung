@@ -60,7 +60,7 @@ instance FromJSON LibrarySource where
 
 data Manifest = Manifest
   { manifestLibraries :: [Library],
-    manifestProofOrsettings :: Maybe [String]
+    manifestProofAxioms :: Maybe [String]
   }
 
 instance FromJSON Manifest where
@@ -68,19 +68,19 @@ instance FromJSON Manifest where
     rejectUnknown "manifest" ["dependencies", "proof"] fields
     dependencies <- fields .: "dependencies" :: Parser Aeson.Value
     libraries <- withObject "dependencies" (traverse parseEntry . KeyMap.toAscList) dependencies
-    orsettings <- maybe (pure Nothing) parseProofPolicy (KeyMap.lookup "proof" fields)
-    pure (Manifest libraries orsettings)
+    axioms <- maybe (pure Nothing) parseProofPolicy (KeyMap.lookup "proof" fields)
+    pure (Manifest libraries axioms)
     where
       parseEntry (name, source) = Library (Key.toString name) <$> parseJSON source
 
 parseProofPolicy :: Aeson.Value -> Parser (Maybe [String])
 parseProofPolicy = withObject "proof" \fields -> do
-  rejectUnknown "proof" ["orsettings"] fields
-  traverse parseOrsettings (KeyMap.lookup "orsettings" fields)
+  rejectUnknown "proof" ["axioms"] fields
+  traverse parseAxioms (KeyMap.lookup "axioms" fields)
   where
-    parseOrsettings value = do
+    parseAxioms value = do
       names <- parseJSON value
-      if names == nub names then pure names else fail "duplicate proof orsetting names"
+      if names == nub names then pure names else fail "duplicate proof axiom names"
 
 rejectUnknown :: String -> [String] -> Aeson.Object -> Parser ()
 rejectUnknown context allowed fields =
@@ -125,7 +125,7 @@ resolveLibraryRoots owner = runExceptT do
 
 -- the nearest project's policy governeth its audit; dependency policies do not.
 proofAxiomPolicy :: FilePath -> IO (Either String (Maybe [String]))
-proofAxiomPolicy owner = runExceptT (findManifestStep owner >>= maybe (pure Nothing) (fmap manifestProofOrsettings . readManifest))
+proofAxiomPolicy owner = runExceptT (findManifestStep owner >>= maybe (pure Nothing) (fmap manifestProofAxioms . readManifest))
 
 -- checked interfaces live in `.tung/cache` beside the nearest `tung.yaml`,
 -- or beside the file when no manifest encloseth it; git ignoreth `.tung`.
@@ -254,9 +254,9 @@ readManifest path =
   attempt ("cannot read '" ++ path ++ "'") (Yaml.decodeFileWithWarnings path)
     >>= except . \case
       Left failure -> Left (path ++ ": " ++ Yaml.prettyPrintParseException failure)
-      Right (warnings, Manifest libraries orsettings)
+      Right (warnings, Manifest libraries axioms)
         | not (null warnings) -> Left (path ++ ": " ++ intercalate "; " (map show warnings))
-        | otherwise -> (`Manifest` orsettings) <$> traverse validateEntry libraries
+        | otherwise -> (`Manifest` axioms) <$> traverse validateEntry libraries
   where
     validateEntry (Library name source)
       | not (validName name) = Left (path ++ ": invalid library name '" ++ name ++ "'")

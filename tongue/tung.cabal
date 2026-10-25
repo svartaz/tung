@@ -84,7 +84,7 @@ library
     , network >=3.1 && <4
     , process
     , stm
-    -- text 2 compareth utf-8 bytes, which is code-point order; bookhoard's
+    -- text 2 compareth utf-8 bytes, which is code-point order; library's
     -- string order model assumeth it.
     , text >=2 && <3
     , time
@@ -132,8 +132,8 @@ test-suite tung-test
     , Test.Dependent
     , Test.DependentInductive
     , Test.DependentInductiveSource
-    , Test.DependentDeed
-    , Test.DependentFlock
+    , Test.DependentEffect
+    , Test.DependentClass
     , Test.DependentHost
     , Test.DependentList
     , Test.DependentLiteral
@@ -151,7 +151,7 @@ test-suite tung-test
     , Test.HarnessTests
     , Test.Integration
     , Test.Library
-    , Test.Bookhoard
+    , Test.Standard
     , Test.Name
     , Test.Parse
     , Test.Project

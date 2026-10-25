@@ -1,0 +1,14 @@
+show type nat: * {
+  zero: nat,
+  next: [nat, nat]
+}
+
+show let plus: [x: nat, y: nat, nat] ≔ match x {
+  zero   ^ y,
+  n next ^ (n plus y) next
+}
+
+## private: not visible to importers.
+let twofold: [x: nat, nat] ≔ x plus x
+
+show let four: nat ≔ ((zero next) next) twofold

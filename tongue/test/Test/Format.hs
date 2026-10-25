@@ -12,7 +12,7 @@ tidyCase :: (String, String, String) -> Test
 tidyCase (name, source, expected) = expectEq name (Right expected) (formatSource source)
 
 refusal :: Test
-refusal = expectEq "source that doth not parse is refused" (Left "expected an expression") (formatSource "let worth ≔ (\n")
+refusal = expectEq "source that doth not parse is refused" (Left "expected an expression") (formatSource "let value ≔ (\n")
 
 idempotence :: Test
 idempotence = expect "tidying is idempotent" (all (\(_, source, _) -> formatSource source == (formatSource source >>= formatSource)) cases)
@@ -52,9 +52,9 @@ respace split = go False
 cases :: [(String, String, String)]
 cases =
   [ ( "redundant parentheses are dropped where the parse cannot change",
-      "let a ≔ (m warp)\nlet b ≔ g ((x)) (h) f(x)y [(q r), (c)]\nlet c ≔ g (m tweak) @([α, β]) @({a ^ a}) @(α) @(ℕ list) (p).left (x: ℕ) ((a b) c)\nlet d ≔ ({a ^ (a f)})\nlet e ≔ (a /* kept */ b)\nyield (a b)\n",
+      "let a ≔ (m map)\nlet b ≔ g ((x)) (h) f(x)y [(q r), (c)]\nlet c ≔ g (m tweak) @([α, β]) @({a ^ a}) @(α) @(ℕ list) (p).left (x: ℕ) ((a b) c)\nlet d ≔ ({a ^ (a f)})\nlet e ≔ (a /* kept */ b)\nyield (a b)\n",
       """
-      let a ≔ m warp
+      let a ≔ m map
 
       let b ≔ g x h f x y [q r, c]
 
@@ -70,11 +70,11 @@ cases =
       """
     ),
     ( "a product's last item of bare slots is flattened into it; named, implicit, and earlier inner products keep their brackets",
-      "ilk count: [[ℕ, *]] {}\nilk row: [α: *, [ℕ, *]] {}\nlet f: [x: ℤ, [[ℤ, ℤ]]] ≔ sorry\nlet g: [x: ℤ, [y: ℤ, ℤ]] ≔ sorry\nlet h: [[ℤ, ℤ], ℤ] ≔ sorry\nlet i: [@a: *, [@b: *, b]] ≔ sorry\nlet j: [x: ℤ, [/* kept */ ℤ, ℤ]] ≔ sorry\n",
+      "type count: [[ℕ, *]] {}\ntype row: [α: *, [ℕ, *]] {}\nlet f: [x: ℤ, [[ℤ, ℤ]]] ≔ sorry\nlet g: [x: ℤ, [y: ℤ, ℤ]] ≔ sorry\nlet h: [[ℤ, ℤ], ℤ] ≔ sorry\nlet i: [@a: *, [@b: *, b]] ≔ sorry\nlet j: [x: ℤ, [/* kept */ ℤ, ℤ]] ≔ sorry\n",
       """
-      ilk count: [ℕ, *] {}
+      type count: [ℕ, *] {}
 
-      ilk row: [α: *, ℕ, *] {}
+      type row: [α: *, ℕ, *] {}
 
       let f: [x: ℤ, ℤ, ℤ] ≔ sorry
 
@@ -109,10 +109,10 @@ cases =
       """
     ),
     ( "spacing is fixed and brings are sorted together",
-      "bring ilk/two.tung\n\n\nbring ilk/list.tung\nlet   a:ℕ≔1\nlet b\n  :ℕ ≔\n   2\n",
+      "bring type/two.tung\n\n\nbring type/list.tung\nlet   a:ℕ≔1\nlet b\n  :ℕ ≔\n   2\n",
       """
-      bring ilk/list.tung
-      bring ilk/two.tung
+      bring type/list.tung
+      bring type/two.tung
 
       let a: ℕ ≔ 1
 
@@ -138,7 +138,7 @@ cases =
       """
     ),
     ( "a wide binding putteth its body, and its annotation when wide, on lines of their own",
-      "let exchange: [a: ℕ, b: ℕ, c: ℕ, d: ℕ, ((a + b) + (c + d)) = ((a + c) + (b + d))] ≔ sorry\nlet total: ℕ ≔ first_long_name + second_long_name + third_long_name + fourth_name\nlet chain: [a = d] ≔ >{throughgo, first_long_proof_step, second_long_proof_step, third_long_proof_step}\n",
+      "let exchange: [a: ℕ, b: ℕ, c: ℕ, d: ℕ, ((a + b) + (c + d)) = ((a + c) + (b + d))] ≔ sorry\nlet total: ℕ ≔ first_long_name + second_long_name + third_long_name + fourth_name\nlet chain: [a = d] ≔ >{transit, first_long_proof_step, second_long_proof_step, third_long_proof_step}\n",
       """
       let exchange
         : [a: ℕ, b: ℕ, c: ℕ, d: ℕ, ((a + b) + (c + d)) = ((a + c) + (b + d))]
@@ -147,7 +147,7 @@ cases =
       let total: ℕ
         ≔ first_long_name + second_long_name + third_long_name + fourth_name
 
-      let chain: [a = d] ≔ >{throughgo,
+      let chain: [a = d] ≔ >{transit,
         first_long_proof_step,
         second_long_proof_step,
         third_long_proof_step
@@ -169,10 +169,10 @@ cases =
 
       """
     ),
-    ( "a flock body breaketh with a blank line between members and a short lambda stayeth whole",
-      "flock hath_flip: [α: *, *] { let flip: [α, α] let flip_flip: [x: α, (x flip $ flip) = x] }\nlet twice: [ℕ, ℕ] ≔ {x ^ (x + x)}\n",
+    ( "a class body breaketh with a blank line between members and a short lambda stayeth whole",
+      "class hath_flip: [α: *, *] { let flip: [α, α] let flip_flip: [x: α, (x flip $ flip) = x] }\nlet twice: [ℕ, ℕ] ≔ {x ^ (x + x)}\n",
       """
-      flock hath_flip: [α: *, *] {
+      class hath_flip: [α: *, *] {
         let flip: [α, α]
 
         let flip_flip: [x: α, (x flip $ flip) = x]

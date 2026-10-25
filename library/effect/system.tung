@@ -1,0 +1,9 @@
+bring type/list.tung
+bring type/optional.tung
+
+## host arguments, settings, and process ending.
+show let arguments: (string list) effect ≔ 'arguments' foreign
+
+show let environment: [string, (string optional) effect] ≔ 'environment' foreign
+
+show let exit: [@α: *, ℕ, α effect] ≔ 'exit' foreign

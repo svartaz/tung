@@ -25,31 +25,31 @@ test("textmate immediately scopeth lexical syntax", async () => {
   const loaded = await loadGrammar();
   for (const [source, name, scope] of [
     [
-      "bring flock/functor.tung functor",
-      "flock/functor.tung",
+      "bring class/functor.tung functor",
+      "class/functor.tung",
       "string.unquoted.import-path.tung",
     ],
     [
-      "bring flock/functor.tung functor",
+      "bring class/functor.tung functor",
       "functor",
       "entity.name.namespace.tung",
     ],
-    ["let worth ≔ '𝟙\\128512;'", "'𝟙", "string.quoted.single.tung"],
-    ["let worth ≔ `\\128512;", "`\\128512;", "constant.character.tung"],
-    ["let worth ≔ 12.5", "12.5", "constant.numeric.float.tung"],
-    ["let worth ≔ +12", "+12", "constant.numeric.integer.tung"],
-    ["let worth ≔ 12", "12", "constant.numeric.natural.tung"],
+    ["let value ≔ '𝟙\\128512;'", "'𝟙", "string.quoted.single.tung"],
+    ["let value ≔ `\\128512;", "`\\128512;", "constant.character.tung"],
+    ["let value ≔ 12.5", "12.5", "constant.numeric.float.tung"],
+    ["let value ≔ +12", "+12", "constant.numeric.integer.tung"],
+    ["let value ≔ 12", "12", "constant.numeric.natural.tung"],
     ["# a comment", "#", "comment.line.number-sign.tung"],
     ["/* a comment */", "a comment", "comment.block.tung"],
-    ["show let sameness:[x:ℤ, ℤ] ≔ x", "let", "keyword.declaration.tung"],
-    ["show fast echo: 𝟙 deed ≔ echo", "fast", "keyword.declaration.tung"],
-    ["match worth {x ^ x}", "match", "keyword.control.tung"],
-    ["let main: 𝟙 deed ≔ only sheer", "deed", "keyword.control.tung"],
-    ["let soothing ≔ sorry", "sorry", "keyword.control.tung"],
+    ["show let identity:[x:ℤ, ℤ] ≔ x", "let", "keyword.declaration.tung"],
+    ["show fast echo: 𝟙 effect ≔ echo", "fast", "keyword.declaration.tung"],
+    ["match value {x ^ x}", "match", "keyword.control.tung"],
+    ["let main: 𝟙 effect ≔ only sheer", "effect", "keyword.control.tung"],
+    ["let proof ≔ sorry", "sorry", "keyword.control.tung"],
     ["let gather ≔ unbuild list", "unbuild", "keyword.control.tung"],
     ["@a:*", "*", "keyword.other.tung"],
     ["@a:*", "@", "keyword.other.tung"],
-    [">{cons, worth, empty}", ">{", "punctuation.section.braces.begin.tung"],
+    [">{cons, value, empty}", ">{", "punctuation.section.braces.begin.tung"],
   ]) {
     const position = source.lastIndexOf(name);
     const token = loaded
@@ -65,16 +65,16 @@ test("textmate leaveth name roles to the compiler", async () => {
   const loaded = await loadGrammar();
   let state = textmate.INITIAL;
   for (const source of [
-    "show flock functor:[f:[*, *], *] {",
-    "  let warp:[@a:*, @b:*, a f, [a, b], b f] ≔",
+    "show class functor:[f:[*, *], *] {",
+    "  let map:[@a:*, @b:*, a f, [a, b], b f] ≔",
     "}",
     "show let void:[@a:*, @f:[*, *], af:a f, 𝟙 f] ≔",
-    "  af warp {_ ^ only}",
-    "show let read:[string path:_path, (string ∨ string) deed] ≔",
-    "show let yoke:[string₀ path:_path, string₁ path:_path, _path] ≔",
+    "  af map {_ ^ only}",
+    "show let read:[string path:_path, (string ∨ string) effect] ≔",
+    "show let join:[string₀ path:_path, string₁ path:_path, _path] ≔",
     "x ‥ xs · list~‥",
-    "let rime:* ≔ ℤ",
-    "let sameness:[@α:*, x:α, α] ≔ x",
+    "let count:* ≔ ℤ",
+    "let identity:[@α:*, x:α, α] ≔ x",
   ]) {
     const result = loaded.tokenizeLine(source, state);
     state = result.ruleStack;
@@ -142,7 +142,7 @@ test("manifest mapeth semantic roles to theme scopes", () => {
   assert.deepEqual(
     scopes.class,
     scopes.type,
-    "flock names use the theme's type colour",
+    "class names use the theme's type colour",
   );
   assert.deepEqual(
     scopes.call,

@@ -1,0 +1,44 @@
+bring class/algebra/total/hath_multiply.tung
+bring class/order/semilattice_lower.tung
+bring class/order/semilattice_upper.tung
+bring is.tung
+bring type/lower.tung
+bring type/two.tung
+bring type/upper.tung
+
+show class semigroup_·: [α: *, @: α hath_·, *] {
+  let ·_·: [a: α, b: α, c: α, (a · (b · c)) = ((a · b) · c)]
+}
+
+show _lower, _upper
+
+show lower, upper
+
+bizen: [@β: *, @: β semigroup_·, @α: *, [α, β] semigroup_·] {
+  let ·: [f:, g:, a:] ≔ (a f) · (a g)
+
+  let ·_·: [f:, g:, h:] ≔ {a ^ (a f) ·_· (a g) (a h)} extend
+}
+
+bizen: [@α: *, @: α semilattice_lower, (α _lower) semigroup_·] {
+  let ·: [a lower:, b lower:] ≔ (a ⋏ b) lower
+
+  let ·_·: [a lower:, b lower:, c lower:]
+    ≔ lower leibnitz ((a ⋏_⋏ b c) symmetry)
+}
+
+bizen: [@α: *, @: α semilattice_upper, (α _upper) semigroup_·] {
+  let ·: [a upper:, b upper:] ≔ (a ⋎ b) upper
+
+  let ·_·: [a upper:, b upper:, c upper:]
+    ≔ upper leibnitz ((a ⋎_⋎ b c) symmetry)
+}
+
+bizen: 𝟚 semigroup_· {
+  let ·_· ≔ {
+    nay, _,   _;
+    yea, nay, _;
+    yea, yea, nay;
+    yea, yea, yea ^ reflect
+  }
+}

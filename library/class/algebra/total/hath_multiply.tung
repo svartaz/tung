@@ -1,0 +1,12 @@
+bring type/two.tung
+
+show class hath_·: [α: *, *] {
+  let ·: [α, α, α]
+}
+
+bizen: 𝟚 hath_· {
+  let · ≔ {
+    yea, yea ^ yea,
+    _,   _   ^ nay
+  }
+}

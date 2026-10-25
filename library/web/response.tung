@@ -1,0 +1,26 @@
+bring type/string/building.tung
+bring type/wordbook.tung
+
+## an http response with its status, headers, and utf-8 body.
+show type _response: * {
+  response: [ℕ, string wordbook string, string, _response]
+}
+
+show let status: [status response _ _: _response, ℕ] ≔ status
+
+show let headers: [_ response headers _: _response, string wordbook string]
+  ≔ headers
+
+show let body: [_ response _ body: _response, string] ≔ body
+
+show let respond: [status: ℕ, body: string, _response]
+  ≔ status response empty body
+
+show let ok: [body: string, _response] ≔ 200 respond body
+
+show let not_found: [body: string, _response] ≔ 404 respond body
+
+show let with_header
+  : [status response headers body: _response, name: string, value: string,
+    _response]
+  ≔ status response (headers put name value) body

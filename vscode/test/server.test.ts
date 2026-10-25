@@ -20,9 +20,9 @@ test("server implementeth the editor workflow over stdio", async (context) => {
   const depPath = path.join(root, "dep.tung");
   const mainPath = path.join(root, "main.tung");
   const depText =
-    "show ilk tally: * { naught: tally }\nshow ilk truth: * { yea: truth, nay: truth }\nshow ilk parcel: [a:*, *] { wrap: [a, a parcel] }\nshow let sameness:[x: ℤ, ℤ] ≔ x\nshow let answer:ℤ ≔ +42\nshow flock hath_convert:[a:*, *] { let convert:[a, a] }\n";
+    "show type tally: * { zero: tally }\nshow type truth: * { yea: truth, nay: truth }\nshow type parcel: [a:*, *] { wrap: [a, a parcel] }\nshow let identity:[x: ℤ, ℤ] ≔ x\nshow let answer:ℤ ≔ +42\nshow class hath_convert:[a:*, *] { let convert:[a, a] }\n";
   const mainText =
-    "bring dep.tung\nlet worth:ℤ ≔ answer\nlet rime:tally ≔ naught\nlet ratio:float ≔ 1.5\nlet truth_to_string:[truth, string] ≔ { yea ^ 'yea', nay ^ 'nay' }\nlet shipment:ℤ parcel ≔ +1 wrap\nlet hath_≍:ℤ ≔ +1 sameness # \"unicode 𝟙\\n\"\nlet select:[left: ℤ, middle: ℤ, right: ℤ, ℤ] ≔ middle\nlet picker: [ℤ, ℤ, ℤ, ℤ] ≔ { first, second, third ^ second }\nbizen:ℤ hath_convert { let convert:[x:] ≔ x }\nshow ilk _box: [a:*, *] {\n  box: [a, a _box]\n}\n";
+    "bring dep.tung\nlet value:ℤ ≔ answer\nlet count:tally ≔ zero\nlet ratio:float ≔ 1.5\nlet truth_to_string:[truth, string] ≔ { yea ^ 'yea', nay ^ 'nay' }\nlet shipment:ℤ parcel ≔ +1 wrap\nlet hath_≍:ℤ ≔ +1 identity # \"unicode 𝟙\\n\"\nlet select:[left: ℤ, middle: ℤ, right: ℤ, ℤ] ≔ middle\nlet picker: [ℤ, ℤ, ℤ, ℤ] ≔ { first, second, third ^ second }\nbizen:ℤ hath_convert { let convert:[x:] ≔ x }\nshow type _box: [a:*, *] {\n  box: [a, a _box]\n}\n";
   fs.writeFileSync(depPath, depText);
   fs.writeFileSync(mainPath, mainText);
   const depUri = pathToFileURL(depPath).href;
@@ -97,16 +97,16 @@ test("server implementeth the editor workflow over stdio", async (context) => {
   const proof = await request("tung/checkProof", {
     textDocument: { uri: mainUri },
     position: positionOf(mainText, "answer"),
-    allowedOrsettings: [],
+    allowedAxioms: [],
   });
   assert.equal(proof.kind, "proof");
-  assert.equal(proof.audit.name, "worth");
+  assert.equal(proof.audit.name, "value");
   assert.equal(proof.verified, true);
-  assert.match(proof.report, /name: worth\nilk: ℤ/);
+  assert.match(proof.report, /name: value\ntype: ℤ/);
   const selectedProof = await request("tung/checkProof", {
     textDocument: { uri: mainUri },
     name: "answer",
-    allowedOrsettings: [],
+    allowedAxioms: [],
   });
   assert.equal(selectedProof.audit.name, "answer");
   assert.equal(selectedProof.verified, true);
@@ -125,7 +125,7 @@ test("server implementeth the editor workflow over stdio", async (context) => {
     ],
   });
   await changedHighlight;
-  assert.match((await staleDiskGuard).diagnostics[0].message, /^ilk error:/);
+  assert.match((await staleDiskGuard).diagnostics[0].message, /^type error:/);
   const restoredImport = nextDiagnostics(
     connection,
     mainUri,
@@ -158,7 +158,7 @@ test("server implementeth the editor workflow over stdio", async (context) => {
     );
   }
   assert.equal(
-    semanticAt.get(positionKey(positionOf(mainText, "sameness"))),
+    semanticAt.get(positionKey(positionOf(mainText, "identity"))),
     "call",
   );
   assert.equal(
@@ -174,7 +174,7 @@ test("server implementeth the editor workflow over stdio", async (context) => {
   }
   assert.notEqual(
     semanticAt.get(positionKey(positionOf(mainText, "tally"))),
-    semanticAt.get(positionKey(positionOf(mainText, "sameness"))),
+    semanticAt.get(positionKey(positionOf(mainText, "identity"))),
   );
   assert.equal(
     semanticAt.get(positionKey(positionOf(mainText, "convert", 1))),
@@ -220,7 +220,7 @@ test("server implementeth the editor workflow over stdio", async (context) => {
   });
   assert(moduleCompletion.some(({ label }) => label === "dep.tung"));
   const answerPosition = positionOf(mainText, "answer");
-  const identityPosition = positionOf(mainText, "sameness");
+  const identityPosition = positionOf(mainText, "identity");
   const completion = await request("textDocument/completion", {
     textDocument: { uri: mainUri },
     position: answerPosition,
@@ -237,7 +237,7 @@ test("server implementeth the editor workflow over stdio", async (context) => {
     position: answerPosition,
   });
   assert.match(hover.contents.value, /let answer:ℤ/);
-  assert.match(hover.contents.value, /inferred ilk/);
+  assert.match(hover.contents.value, /inferred type/);
   const references = await request("textDocument/references", {
     textDocument: { uri: mainUri },
     position: answerPosition,
@@ -272,7 +272,7 @@ test("server implementeth the editor workflow over stdio", async (context) => {
   const symbols = await request("textDocument/documentSymbol", {
     textDocument: { uri: mainUri },
   });
-  assert(symbols.some(({ name }) => name === "worth"));
+  assert(symbols.some(({ name }) => name === "value"));
   assert(symbols.some(({ name }) => name === "_box"));
   const workspaceSymbols = await request("workspace/symbol", {
     query: "answer",
@@ -308,17 +308,17 @@ test("server implementeth the editor workflow over stdio", async (context) => {
     textDocument: { uri: mainUri },
     position: {
       line: identityPosition.line,
-      character: identityPosition.character + "sameness".length,
+      character: identityPosition.character + "identity".length,
     },
   });
-  assert.match(signature.signatures[0].label, /sameness/);
+  assert.match(signature.signatures[0].label, /identity/);
   const formatted = await request("textDocument/formatting", {
     textDocument: { uri: mainUri },
     options: { tabSize: 2, insertSpaces: true },
   });
   assert.match(
     formatted[0].newText,
-    /show ilk _box: \[a: \*, \*\] \{ box: \[a, a _box\] \}/,
+    /show type _box: \[a: \*, \*\] \{ box: \[a, a _box\] \}/,
   );
   assert.equal(
     capabilities.documentRangeFormattingProvider,
@@ -342,7 +342,7 @@ test("server implementeth the editor workflow over stdio", async (context) => {
     changes: [{ uri: depUri, type: 2 }],
   });
   const importedResult = await importedDiagnostics;
-  assert.match(importedResult.diagnostics[0].message, /^ilk error:/);
+  assert.match(importedResult.diagnostics[0].message, /^type error:/);
   assert.deepEqual(
     importedResult.diagnostics[0].range.start,
     positionOf(importedSource, "'wrong'"),
@@ -363,15 +363,15 @@ test("server implementeth the editor workflow over stdio", async (context) => {
     ({ diagnostics }) => diagnostics.length > 0,
   );
   const badText = mainText.replace(
-    "let worth:ℤ ≔ answer",
-    "let worth:string ≔ answer",
+    "let value:ℤ ≔ answer",
+    "let value:string ≔ answer",
   );
   connection.sendNotification("textDocument/didChange", {
     textDocument: { uri: mainUri, version: 2 },
     contentChanges: [{ text: badText }],
   });
   const badResult = await badDiagnostics;
-  assert.match(badResult.diagnostics[0].message, /^ilk error:/);
+  assert.match(badResult.diagnostics[0].message, /^type error:/);
   assert.deepEqual(
     badResult.diagnostics[0].range.start,
     positionOf(badText, "answer"),
@@ -416,7 +416,7 @@ test("server implementeth the editor workflow over stdio", async (context) => {
   assert.match(unfinishedProof.report, /unfinished proof: sorry/);
   let version = 4;
   for (const [kind, text] of [
-    ["ilk", `let broken:ℤ ≔ 'wrong'\n${holeText}`],
+    ["type", `let broken:ℤ ≔ 'wrong'\n${holeText}`],
     ["parse", `${holeText}\nlet broken:ℤ ≔`],
   ]) {
     const recoveredDiagnostics = nextDiagnostics(
@@ -527,7 +527,7 @@ require("node:readline").createInterface({input:process.stdin}).on("line", line 
     const timer = setInterval(() => {
       if (!fs.existsSync(${JSON.stringify(release)})) return;
       clearInterval(timer);
-      reply({kind:"proof",audit:{name:"proved",ilk:"ℤ",dependencies:[]},verified:true,message:"name ok",report:"name ok\\n"});
+      reply({kind:"proof",audit:{name:"proved",type:"ℤ",dependencies:[]},verified:true,message:"name ok",report:"name ok\\n"});
     }, 5);
   }
 });
@@ -596,16 +596,16 @@ require("node:readline").createInterface({input:process.stdin}).on("line", line 
   },
 );
 
-test("server resolveth a nested forthcast's git-pinned library", async (context) => {
+test("server resolveth a nested project's git-pinned library", async (context) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-lsp-library-"));
   context.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const repository = path.join(root, "library");
-  const project = path.join(root, "forthcast");
+  const project = path.join(root, "project");
   fs.mkdirSync(repository);
   fs.mkdirSync(project);
   fs.writeFileSync(
-    path.join(repository, "worth.tung"),
-    "show let worth:ℤ ≔ +42",
+    path.join(repository, "value.tung"),
+    "show let value:ℤ ≔ +42",
   );
   const git = (...args: string[]) =>
     childProcess.execFileSync("git", args, { encoding: "utf8" }).trim();
@@ -629,7 +629,7 @@ test("server resolveth a nested forthcast's git-pinned library", async (context)
     `dependencies:\n  sample:\n    repo: ../library\n    hash: "${commit}"\n`,
   );
   const mainPath = path.join(project, "main.tung");
-  const source = "bring worth.tung let answer:ℤ ≔ worth";
+  const source = "bring value.tung let answer:ℤ ≔ value";
   fs.writeFileSync(mainPath, source);
   const uri = pathToFileURL(mainPath).href;
   const server = childProcess.spawn(
@@ -659,7 +659,7 @@ test("server resolveth a nested forthcast's git-pinned library", async (context)
   assert.equal(await connection.sendRequest("tung/libraryPath"), "");
   const definition = await connection.sendRequest<LspTestResult>(
     "textDocument/definition",
-    { textDocument: { uri }, position: positionOf(source, "worth", 1) },
+    { textDocument: { uri }, position: positionOf(source, "value", 1) },
   );
   assert.equal(
     definition.uri,
@@ -671,7 +671,7 @@ test("server resolveth a nested forthcast's git-pinned library", async (context)
           "libraries",
           "sample",
           commit,
-          "worth.tung",
+          "value.tung",
         ),
       ),
     ).href,

@@ -1,0 +1,44 @@
+bring class/algebra/partial/category.tung
+bring class/algebra/partial/semigroupoid.tung
+bring class/functor.tung
+bring class/functor/applicative.tung
+bring class/functor/monad.tung
+bring combinator.tung
+bring is.tung
+
+## a value with no effect: the monad that doth nothing, so that a transformer
+## over it, as `σ hade bare`, is pure.
+show type bare: [α: *, *] { wrap: [α, α bare] }
+
+## the value a bare wrappeth.
+show let unwrap: [@α: *, a wrap: α bare, α] ≔ a
+
+bizen: bare functor {
+  let map: [a wrap:, f:] ≔ (a f) wrap
+
+  let map_identity: [_ wrap:] ≔ reflect
+}
+
+bizen: bare applicative {
+  let sheer ≔ wrap
+
+  let apply: [a wrap:, f wrap:] ≔ (a f) wrap
+
+  let apply_identity_sheer: [_ wrap:] ≔ reflect
+
+  let sheer_apply_sheer: [_:, _:] ≔ reflect
+
+  let apply_apply: [_ wrap:, _:, _:] ≔ reflect
+
+  let sheer_apply: [_:, _ wrap:] ≔ reflect
+}
+
+bizen: bare monad {
+  let flat: [a wrap:] ≔ a
+
+  let sheer_bind: [_:, _:] ≔ reflect
+
+  let map_sheer_flat: [_ wrap:] ≔ reflect
+
+  let bind_bind: [_ wrap:, _:, _:] ≔ reflect
+}

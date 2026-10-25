@@ -1,0 +1,145 @@
+bring class/algebra/partial/category.tung
+bring class/equal_to_is.tung
+bring class/functor.tung
+bring class/functor/applicative.tung
+bring class/functor/bifunctor.tung
+bring class/functor/catamorphism.tung
+bring class/functor/hath_traverse.tung
+bring class/functor/monad.tung
+bring class/hath_equal.tung
+bring class/order/complement.tung
+bring is.tung
+bring type/two.tung
+
+show type ∨: [α: *, β: *, *] {
+  inject₀: [α, α ∨ β],
+  inject₁: [β, α ∨ β]
+}
+
+show let either: [@α: *, @β: *, @γ: *, α ∨ β, [α, γ], [β, γ], γ] ≔ {
+  a inject₀, f₀, _  ^ a f₀,
+  b inject₁, _,  f₁ ^ b f₁
+}
+
+bizen: ∨ bifunctor {
+  let bimap ≔ {
+    a inject₀, f, _ ^ (a f) inject₀,
+    b inject₁, _, g ^ (b g) inject₁
+  }
+
+  let bimap_identity_identity ≔ {
+    _ inject₀;
+    _ inject₁ ^ reflect
+  }
+
+  let bimap_bimap ≔ {
+    _ inject₀, _, _, _, _;
+    _ inject₁, _, _, _, _ ^ reflect
+  }
+}
+
+show let is_inject₀: [@α: *, @β: *, α ∨ β, 𝟚] ≔ {
+  _ inject₀ ^ yea,
+  _ inject₁ ^ nay
+}
+
+show let is_inject₁: [@α: *, @β: *, sum: α ∨ β, 𝟚] ≔ sum is_inject₀ $ ¬
+
+bizen: [@α: *, (α ∨) functor] {
+  let map: [sum:, f:] ≔ sum bimap identity f
+
+  let map_identity ≔ {
+    _ inject₀;
+    _ inject₁ ^ reflect
+  }
+}
+
+bizen: [@α: *, (α ∨) applicative] {
+  let sheer ≔ inject₁
+
+  let apply ≔ {
+    a inject₀, _         ^ a inject₀,
+    _,         a inject₀ ^ a inject₀,
+    b inject₁, f inject₁ ^ (b f) inject₁
+  }
+
+  let apply_identity_sheer ≔ {
+    _ inject₀;
+    _ inject₁ ^ reflect
+  }
+
+  let sheer_apply_sheer: [_:, _:] ≔ reflect
+
+  let apply_apply ≔ {
+    _ inject₀, _, _;
+    _ inject₁, _, _ ^ reflect
+  }
+
+  let sheer_apply ≔ {
+    _, _ inject₀;
+    _, _ inject₁ ^ reflect
+  }
+}
+
+bizen: [@α: *, (α ∨) monad] {
+  let flat ≔ {
+    a inject₀ ^ a inject₀,
+    b inject₁ ^ b
+  }
+
+  let sheer_bind: [_:, _:] ≔ reflect
+
+  let map_sheer_flat ≔ {
+    _ inject₀;
+    _ inject₁ ^ reflect
+  }
+
+  let bind_bind ≔ {
+    _ inject₀, _, _;
+    _ inject₁, _, _ ^ reflect
+  }
+}
+
+bizen: [@α: *, (α ∨) catamorphism] {
+  let gather₀ ≔ {
+    _ inject₀, b, _ ^ b,
+    a inject₁, b, f ^ a f b
+  }
+
+  let gather₁ ≔ {
+    _ inject₀, b, _ ^ b,
+    a inject₁, b, f ^ b f a
+  }
+}
+
+bizen: [@α: *, (α ∨) hath_traverse] {
+  let traverse ≔ {
+    a inject₀, _ ^ (a inject₀) sheer,
+    b inject₁, f ^ (b f) map inject₁
+  }
+}
+
+## sums are the same when both take one side with the same value.
+show let equal: [@α: *, @: α hath_≍, @β: *, @: β hath_≍, α ∨ β, α ∨ β, 𝟚] ≔ {
+  a inject₀, b inject₀ ^ a ≍ b,
+  a inject₁, b inject₁ ^ a ≍ b,
+  _,         _         ^ nay
+}
+
+bizen: [@α: *, @: α hath_≍, @β: *, @: β hath_≍, (α ∨ β) hath_≍] {
+  let ≍ ≔ equal
+}
+
+bizen: [@α: *, @: α ≍_to_=, @β: *, @: β ≍_to_=, (α ∨ β) ≍_to_=] {
+  let ≍_=: [c:, d:, held:] ≔ match c, d {
+    a inject₀, b inject₀ ^ inject₀ leibnitz (a ≍_= b held),
+    a inject₁, b inject₁ ^ inject₁ leibnitz (a ≍_= b held),
+    _ inject₀, _ inject₁ ^ match held {},
+    _ inject₁, _ inject₀ ^ match held {}
+  }
+
+  let ≍_reflect: [b:] ≔ match b {
+    a inject₀ ^ a ≍_reflect,
+    a inject₁ ^ a ≍_reflect
+  }
+}

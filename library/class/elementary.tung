@@ -1,0 +1,29 @@
+bring _foreign.tung
+bring class/algebra/total/hath_divide.tung
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/hath_subtract.tung
+bring singal.tung
+bring type/float.tung
+
+show class elementary: [α: *, @: α hath_÷, *] {
+  let exponent: [α, α]
+
+  let logarithm: [α, α]
+
+  let sine: [α, α]
+
+  let cosine: [α, α]
+}
+
+show let tangent: [@α: *, @: α elementary, @: α hath_÷, a: α, α]
+  ≔ (a sine) ÷ (a cosine)
+
+bizen: float elementary {
+  let exponent ≔ exponent_float
+
+  let logarithm ≔ logarithm_float
+
+  let sine ≔ sine_float
+
+  let cosine: [a:] ≔ a -+ (turn · 0.25) $ sine_float
+}

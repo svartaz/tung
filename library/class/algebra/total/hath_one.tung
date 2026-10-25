@@ -1,0 +1,9 @@
+bring type/two.tung
+
+show class hath_one: [α: *, *] {
+  let one: α
+}
+
+bizen: 𝟚 hath_one {
+  let one ≔ yea
+}

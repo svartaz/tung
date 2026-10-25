@@ -101,9 +101,9 @@ data DefinitionBody
     -- checked tung definition of the same type, when it hath one; any other
     -- host constant is opaque.
     Host String (Maybe SymbolId)
-  | -- an `orsetting` assumption: a constant with a checked type and no body.
+  | -- an `axiom` assumption: a constant with a checked type and no body.
     Assumption
-  | -- a `fast` declaration with its inputs before the deed, whose body may
+  | -- a `fast` declaration with its inputs before the effect, whose body may
     -- name it. conversion never unfoldeth it; the runner doth.
     Fixpoint Int Term
   deriving stock (Eq, Show)

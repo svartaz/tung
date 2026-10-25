@@ -13,14 +13,14 @@ const root = fileURLToPath(new URL("../../", import.meta.url));
 const compiler = new CompilerBridge();
 compiler.configure(`${root}/tongue`, [], process.env.TUNG_EXECUTABLE);
 const samples = [
-  ["path", readFileSync(`${root}/bookhoard/ilk/path.tung`, "utf8")],
-  ["mockingbird", readFileSync(`${root}/bookhoard/mockingbird.tung`, "utf8")],
+  ["path", readFileSync(`${root}/library/type/path.tung`, "utf8")],
+  ["mockingbird", readFileSync(`${root}/library/mockingbird.tung`, "utf8")],
   ...[1000, 5000].flatMap((size) =>
     [false, true].map((broken) => [
       `${size} ${broken ? "incomplete" : "complete"}`,
       Array.from(
         { length: size },
-        (_, i) => `let worth${i}${broken ? ":[ℤ" : ":ℤ ≔ +1"}`,
+        (_, i) => `let value${i}${broken ? ":[ℤ" : ":ℤ ≔ +1"}`,
       ).join("\n"),
     ]),
   ),
@@ -39,7 +39,7 @@ try {
     `compiler discovery and startup: ${(performance.now() - started).toFixed(1)} ms`,
   );
   for (const [name, source] of samples) {
-    const uri = `file://${root}/bookhoard/ilk/benchmark.tung`;
+    const uri = `file://${root}/library/type/benchmark.tung`;
     const document = { uri, version: 0, getText: () => source };
     const workspace = new WorkspaceIndex(
       {
@@ -48,7 +48,7 @@ try {
       },
       compiler,
     );
-    workspace.configure([root], [`${root}/bookhoard`]);
+    workspace.configure([root], [`${root}/library`]);
     await workspace.ready();
     const elapsed = [],
       cached = [];

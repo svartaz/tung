@@ -1,0 +1,44 @@
+bring class/algebra/total/hath_add.tung
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/hath_one.tung
+bring class/algebra/total/hath_zero.tung
+bring class/algebra/total/monoid_add.tung
+bring class/algebra/total/monoid_multiply.tung
+bring class/algebra/total/monoid_multiply.tung
+bring class/algebra/total/semigroup_multiply.tung
+bring class/order/semilattice_bounded_upper.tung
+bring class/order/semilattice_lower.tung
+bring class/order/semilattice_upper.tung
+bring class/order/semilattice_upper_bounded.tung
+
+show class catamorphism: [φ: [*, *], *] {
+  let gather₀: [@α: *, @β: *, α φ, β, [α, β, β], β]
+
+  let gather₁: [@α: *, @β: *, α φ, β, [β, α, β], β]
+}
+
+show let …·: [@α: *, @: α monoid_·, @φ: [*, *], @: φ catamorphism, l: α φ, α]
+  ≔ l gather₀ one ·
+
+## map values into a monoid and combine them.
+show let gather_map
+  : [@β: *, @: β monoid_·, @φ: [*, *], @: φ catamorphism, @α: *, af: α φ,
+    f: [α, β], β]
+  ≔ af gather₁ one {folded, a ^ folded · (a f)}
+
+## combine every value with ⋏; an empty collection yieldeth ⊤.
+show let …⋏
+  : [@φ: [*, *], @: φ catamorphism, @α: *, @: α semilattice_bounded_upper,
+    af: α φ, α]
+  ≔ af gather₁ ⊤ ⋏
+
+## combine every value with ⋎; an empty collection yieldeth ⟂.
+show let …⋎
+  : [@φ: [*, *], @: φ catamorphism, @α: *, @: α semilattice_upper_bounded,
+    af: α φ, α]
+  ≔ af gather₁ ⟂ ⋎
+
+## add every value in a gatherable collection.
+show let …+: [@φ: [*, *], @: φ catamorphism, @α: *, @: α monoid_+, af: α φ, α]
+  ≔ af gather₁ zero +

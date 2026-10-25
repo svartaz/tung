@@ -1,0 +1,19 @@
+bring class/algebra/partial/category.tung
+bring combinator.tung
+bring is.tung
+
+## a type maker that taketh arrows backwards: a function from `β` to `α`
+## contramappeth an `α φ` into a `β φ`.
+show class contravariant: [φ: [*, *], *] {
+  let contramap: [@α: *, @β: *, α φ, [β, α], β φ]
+
+  let contramap_identity: [@α: *, a: α φ, (a contramap identity) = a]
+}
+
+## a function into `ρ` contramappeth its input: `(ρ ←)` taketh `α` to
+## `[α, ρ]`.
+bizen: [@ρ: *, (ρ ←) contravariant] {
+  let contramap: [a:, f:, b:] ≔ (b f) a
+
+  let contramap_identity: [_:] ≔ reflect
+}

@@ -12,13 +12,13 @@ import Test.Harness qualified as Harness
 
 group :: IO Group
 group = do
-  library <- loadLibrary ["often.tung", "deed/misfaresome.tung", "ilk/hade.tung"]
+  library <- loadLibrary ["often.tung", "effect/fallible.tung", "type/hade.tung"]
   Harness.group
     "program"
     ( map integerCase integerTerms
         ++ map languageCase (languagePrograms ++ booleanProductPrograms ++ dictionaryPrograms)
         ++ map importCase importPrograms
-        ++ map (deedCase library) deedPrograms
+        ++ map (effectCase library) effectPrograms
         ++ map (layeredCase library) layeredPrograms
         ++ map lawCase lawPrograms
     )
@@ -56,35 +56,35 @@ integerTerms = binary ++ nested
 
 languagePrograms :: [(String, String, String)]
 languagePrograms =
-  [ ("checked declaration annotations and inferred functions", "bring often.tung let rime:* ≔ ℤ let sameness: [@α: *, x: α, α] ≔ x let choose:[@α:*, @β:*, x:α, _:β, α] ≔ x let hath_+: [x:, y:rime, rime] ≔ x + y let tale:rime ≔ (let worth ≔ +3 yield worth sameness) let outcome ≔ tale hath_+ (+4 choose @ℤ @string 'ignored') yield outcome", "eval ok: +7"),
-    ("checked field access", "ilk pair: * { pair_of: [left: ℤ, right: ℤ, pair] } let worth ≔ +1 pair_of +2 yield worth.right", "eval ok: +2"),
-    ("checked exhaustive match", "ilk 𝟚: * { yea: 𝟚, nay: 𝟚 } yield match nay { yea ^ +1, nay ^ +2 }", "eval ok: +2"),
+  [ ("checked declaration annotations and inferred functions", "bring often.tung let count:* ≔ ℤ let identity: [@α: *, x: α, α] ≔ x let choose:[@α:*, @β:*, x:α, _:β, α] ≔ x let hath_+: [x:, y:count, count] ≔ x + y let tale:count ≔ (let value ≔ +3 yield value identity) let outcome ≔ tale hath_+ (+4 choose @ℤ @string 'ignored') yield outcome", "eval ok: +7"),
+    ("checked field access", "type pair: * { pair_of: [left: ℤ, right: ℤ, pair] } let value ≔ +1 pair_of +2 yield value.right", "eval ok: +2"),
+    ("checked exhaustive match", "type 𝟚: * { yea: 𝟚, nay: 𝟚 } yield match nay { yea ^ +1, nay ^ +2 }", "eval ok: +2"),
     ("checked ℤ match", "yield match +1 { +0 ^ +10, +1 ^ +20, _ ^ +30 }", "eval ok: +20"),
-    ("checked class evidence", "flock hath_sameness:[a:*, *] { let sameness:[a, a] } bizen:ℤ hath_sameness { let sameness: [x:] ≔ x } yield +7 sameness", "eval ok: +7"),
-    ("checked value retaineth unused required evidence", "ilk unit: * { only: unit } flock capability:[a:*, *] {} bizen:ℤ capability {} let empty:[@a:*, @:a capability, unit] ≔ only yield empty @ℤ", "eval ok: only"),
-    ("checked annotated local selfcalling", "bring often.tung yield (let rime:[ℕ, ℕ] ≔ { 0 ^ 0, n next ^ n rime } yield 2 rime)", "eval ok: 0"),
-    ( "checked nested deep selfcalling with repeated scrutinees",
+    ("checked class evidence", "class hath_identity:[a:*, *] { let identity:[a, a] } bizen:ℤ hath_identity { let identity: [x:] ≔ x } yield +7 identity", "eval ok: +7"),
+    ("checked value retaineth unused required evidence", "type unit: * { only: unit } class capability:[a:*, *] {} bizen:ℤ capability {} let empty:[@a:*, @:a capability, unit] ≔ only yield empty @ℤ", "eval ok: only"),
+    ("checked annotated local recursion", "bring often.tung yield (let count:[ℕ, ℕ] ≔ { 0 ^ 0, n next ^ n count } yield 2 count)", "eval ok: 0"),
+    ( "checked nested deep recursion with repeated scrutinees",
       """
-      ilk nat:* { naught:nat, next:[nat,nat] }
-      let +:[ℤ,ℤ,ℤ] ≔ 'eke_wholetale' fremmed
-      let tale:[nat,ℤ] ≔ { naught ^ +0, n next ^ (n tale) + +1 }
+      type nat:* { zero:nat, next:[nat,nat] }
+      let +:[ℤ,ℤ,ℤ] ≔ 'add_integer' foreign
+      let tale:[nat,ℤ] ≔ { zero ^ +0, n next ^ (n tale) + +1 }
       let deep:[x:nat,nat] ≔ match x,x {
-        naught,_ ^ naught,
-        naught next,_ ^ naught next,
+        zero,_ ^ zero,
+        zero next,_ ^ zero next,
         (n next) next,(m next) next ^ (let local:[nat,nat] ≔ {
-          naught ^ (m next) deep,
-          naught next ^ (m next) deep,
+          zero ^ (m next) deep,
+          zero next ^ (m next) deep,
           (k next) next ^ (k next) local
         } yield m local) next
       }
-      yield (((((naught next) next) next) next) deep) tale
+      yield (((((zero next) next) next) next) deep) tale
       """,
       "eval ok: +4"
     ),
-    ("checked annotated initializer seeth its preceding binding", "bring often.tung yield (let worth:ℤ ≔ +1 let worth:ℤ ≔ worth + +1 yield worth)", "eval ok: +2"),
-    ("checked binders sharing a declaration's name", "let +:[ℤ, ℤ, ℤ] ≔ 'eke_wholetale' fremmed let keep:[keep:ℤ, ℤ] ≔ keep let outer:[ℤ, ℤ] ≔ {x ^ (let inner ≔ {inner ^ inner} yield x inner)} let worth ≔ (let worth ≔ +1 yield worth) yield (+1 keep) + (worth outer)", "eval ok: +2"),
-    ("checked bizen member calleth sibling", "flock linked:[a:*, *] { let first:[a, a] let second:[a, a] } bizen:ℤ linked { let first: [x:] ≔ x let second: [x:] ≔ x first } yield +7 second", "eval ok: +7"),
-    ("checked non-finite floor yieldeth none", "bring often.tung bring ilk/maybe.tung let parsed:float maybe ≔ 'Infinity' from_string yield match parsed bind ⌊ { n some ^ n, none ^ +0 }", "eval ok: +0")
+    ("checked annotated initializer seeth its preceding binding", "bring often.tung yield (let value:ℤ ≔ +1 let value:ℤ ≔ value + +1 yield value)", "eval ok: +2"),
+    ("checked binders sharing a declaration's name", "let +:[ℤ, ℤ, ℤ] ≔ 'add_integer' foreign let keep:[keep:ℤ, ℤ] ≔ keep let outer:[ℤ, ℤ] ≔ {x ^ (let inner ≔ {inner ^ inner} yield x inner)} let value ≔ (let value ≔ +1 yield value) yield (+1 keep) + (value outer)", "eval ok: +2"),
+    ("checked bizen member calleth sibling", "class linked:[a:*, *] { let first:[a, a] let second:[a, a] } bizen:ℤ linked { let first: [x:] ≔ x let second: [x:] ≔ x first } yield +7 second", "eval ok: +7"),
+    ("checked non-finite floor yieldeth none", "bring often.tung bring type/optional.tung let parsed:float optional ≔ 'Infinity' from_string yield match parsed bind ⌊ { n some ^ n, none ^ +0 }", "eval ok: +0")
   ]
 
 booleanProductPrograms :: [(String, String, String)]
@@ -99,7 +99,7 @@ booleanProductPrograms =
         cases = intercalate ", " [intercalate ", " row ++ " ^ " ++ integerSource result | (row, result) <- zip rows [0 :: Int ..]]
   ]
   where
-    boolData = "ilk 𝟚: * { yea: 𝟚, nay: 𝟚 } "
+    boolData = "type 𝟚: * { yea: 𝟚, nay: 𝟚 } "
     booleanRows arity = replicateM arity ["yea", "nay"]
 
 -- each law's two sides are evaluated over every small input, and the printed
@@ -119,11 +119,11 @@ lawPrograms = twoLaws ++ concatMap carrierLaws carriers
     prelude =
       unlines
         [ "bring combinator.tung",
-          "bring flock/algebra/half/category.tung",
-          "bring flock/algebra/half/semigroupoid.tung",
+          "bring class/algebra/partial/category.tung",
+          "bring class/algebra/partial/semigroupoid.tung",
           "bring often.tung",
-          "bring ilk/list.tung",
-          "bring ilk/maybe.tung",
+          "bring type/list.tung",
+          "bring type/optional.tung",
           "let f: [ℤ, ℤ] ≔ {x ^ x + +1}",
           "let g: [ℤ, ℤ] ≔ {x ^ x · +2}"
         ]
@@ -140,32 +140,32 @@ lawPrograms = twoLaws ++ concatMap carrierLaws carriers
       ]
     pairs items = [(a, b) | a <- items, b <- items]
     triples items = [(a, b, c) | a <- items, b <- items, c <- items]
-    -- a carrier's name, its small worths, its `sheer` type, and a function
+    -- a carrier's name, its small bracketed, its `sheer` type, and a function
     -- into it.
     carriers =
       [ ("list", ["empty", "+0 ‥ empty", "+1 ‥ (-2 ‥ empty)", "+1 ‥ (+1 ‥ (+0 ‥ empty))"], "ℤ list", "{x: ℤ ^ x ‥ ((x + +1) ‥ empty)}", "f ‥ (g ‥ empty)"),
-        ("maybe", ["none", "+0 some", "-2 some"], "ℤ maybe", "{x: ℤ ^ (x ≍ +0) if none ((x + +1) some)}", "f some")
+        ("optional", ["none", "+0 some", "-2 some"], "ℤ optional", "{x: ℤ ^ (x ≍ +0) if none ((x + +1) some)}", "f some")
       ]
     carrierLaws (carrier, written, sheerType, k, fs) =
-      [ law (carrier ++ " warp keepeth sameness") worths (\l -> l ++ " warp sameness") id,
-        law (carrier ++ " warp composeth") worths (\l -> "(" ++ l ++ " warp f) warp g") (\l -> l ++ " warp (f ▷ g)"),
-        law (carrier ++ " onwend keepeth sheer sameness") worths (\l -> l ++ " onwend ((sameness: [ℤ, ℤ]) sheer)") id,
-        law (carrier ++ " sheer onwend sheer") values (\a -> "((" ++ a ++ " sheer): " ++ sheerType ++ ") onwend (f sheer)") (\a -> "((" ++ a ++ " f) sheer: " ++ sheerType ++ ")"),
-        law (carrier ++ " sheer onwend") values (\a -> "((" ++ a ++ " sheer): " ++ sheerType ++ ") onwend (" ++ fs ++ ")") (\a -> "(" ++ fs ++ ") warp (" ++ a ++ " ▶)"),
+      [ law (carrier ++ " map keepeth identity") bracketed (\l -> l ++ " map identity") id,
+        law (carrier ++ " map composeth") bracketed (\l -> "(" ++ l ++ " map f) map g") (\l -> l ++ " map (f ▷ g)"),
+        law (carrier ++ " apply keepeth sheer identity") bracketed (\l -> l ++ " apply ((identity: [ℤ, ℤ]) sheer)") id,
+        law (carrier ++ " sheer apply sheer") values (\a -> "((" ++ a ++ " sheer): " ++ sheerType ++ ") apply (f sheer)") (\a -> "((" ++ a ++ " f) sheer: " ++ sheerType ++ ")"),
+        law (carrier ++ " sheer apply") values (\a -> "((" ++ a ++ " sheer): " ++ sheerType ++ ") apply (" ++ fs ++ ")") (\a -> "(" ++ fs ++ ") map (" ++ a ++ " ▶)"),
         law (carrier ++ " sheer bind") values (\a -> "((" ++ a ++ " sheer): " ++ sheerType ++ ") bind " ++ k) (\a -> a ++ " " ++ k),
-        law (carrier ++ " bind sheer") worths (\l -> l ++ " bind sheer") id,
-        law (carrier ++ " bind associateth") worths (\l -> "(" ++ l ++ " bind " ++ k ++ ") bind " ++ k) (\l -> l ++ " bind {y: ℤ ^ (y " ++ k ++ ") bind " ++ k ++ "}"),
-        law (carrier ++ " warp sheer flat") worths (\l -> "(" ++ l ++ " warp sheer) flat") id
+        law (carrier ++ " bind sheer") bracketed (\l -> l ++ " bind sheer") id,
+        law (carrier ++ " bind associateth") bracketed (\l -> "(" ++ l ++ " bind " ++ k ++ ") bind " ++ k) (\l -> l ++ " bind {y: ℤ ^ (y " ++ k ++ ") bind " ++ k ++ "}"),
+        law (carrier ++ " map sheer flat") bracketed (\l -> "(" ++ l ++ " map sheer) flat") id
       ]
       where
-        worths = ["(" ++ worth ++ ")" | worth <- written]
+        bracketed = ["(" ++ item ++ ")" | item <- written]
 
--- generated flocks, each with a bizen for ℤ, used through a generic
--- requirement; the worth is the start plus twice each step.
+-- generated classes, each with a bizen for ℤ, used through a generic
+-- requirement; the value is the start plus twice each step.
 dictionaryPrograms :: [(String, String, String)]
 dictionaryPrograms =
   [ ( "generated dictionary " ++ show step ++ " from " ++ show start,
-      "bring often.tung flock hath_bump:[α: *, *] { let bump:[α, α] } bizen:ℤ hath_bump { let bump: [x:] ≔ x + "
+      "bring often.tung class hath_bump:[α: *, *] { let bump:[α, α] } bizen:ℤ hath_bump { let bump: [x:] ≔ x + "
         ++ integerSource step
         ++ " } let twice:[@α: *, @: α hath_bump, x: α, α] ≔ (x bump) bump yield "
         ++ integerSource start
@@ -175,7 +175,7 @@ dictionaryPrograms =
   | (step, start) <- [(-2, 4), (0, -1), (3, -1)]
   ]
 
--- a chain of modules, each adding its index to the worth it importeth.
+-- a chain of modules, each adding its index to the value it importeth.
 importPrograms :: [(String, Integer, Map.Map String String)]
 importPrograms =
   [ ("generated import chain of " ++ show count, sum [1 .. count], Map.fromList [module' index | index <- [1 .. count]])
@@ -185,7 +185,7 @@ importPrograms =
     module' index =
       ( "chain" ++ show index ++ ".tung",
         "bring often.tung\n"
-          ++ (if index > 1 then "bring chain" ++ show (index - 1) ++ ".tung\nshow let worth: ℤ ≔ chain" ++ show (index - 1) ++ "~worth + " else "show let worth: ℤ ≔ +0 + ")
+          ++ (if index > 1 then "bring chain" ++ show (index - 1) ++ ".tung\nshow let value: ℤ ≔ chain" ++ show (index - 1) ++ "~value + " else "show let value: ℤ ≔ +0 + ")
           ++ integerSource index
           ++ "\n"
       )
@@ -193,49 +193,49 @@ importPrograms =
 importCase :: (String, Integer, Map.Map String String) -> Test
 importCase (name, expected, modules) = do
   let count = Map.size modules
-  actual <- evaluateSource ("bring chain" ++ show count ++ ".tung\nyield chain" ++ show count ++ "~worth") modules
+  actual <- evaluateSource ("bring chain" ++ show count ++ ".tung\nyield chain" ++ show count ++ "~value") modules
   pure (if actual == "eval ok: " ++ integerSource expected then Nothing else Just (name ++ ": expected " ++ integerSource expected ++ ", got " ++ actual))
 
--- a single deed and a sequence preserve the exact writing order.
--- state and failure are library monads over `deed`; each program writeth its
+-- a single effect and a sequence preserve the exact writing order.
+-- state and failure are library monads over `effect`; each program writeth its
 -- exact output.
 layeredPrograms :: [(String, String, String)]
 layeredPrograms =
-  [ ("hade handeth each step the state left by the last", "(>{then, tick, tick, get} hade~unwrap 10) bind {p ^ p forthcast₀ $ to_string $ write}", "12"),
-    ("put replaceth and lift keepeth the state", "(>{then, 4 put, ('x' write) hade~lift, get} hade~unwrap 0) bind {p ^ p forthcast₀ $ to_string $ write}", "x4"),
-    ("a misfare skippeth every later deed", "(>{then, ('a' write) misfaresome~lift, ('stop' misfare: string misfaresome 𝟙), ('b' write) misfaresome~lift} misfaresome~unwrap) bind eftbare", "astop"),
-    ("handle runneth its handler only on a misfare", "(>{then, ('a' write) misfaresome~lift, 'stop' misfare} handle {e ^ (e write) misfaresome~lift} $ misfaresome~unwrap) bind eftbare", "astop!"),
-    ("handle leaveth a result alone", "((('a' write) misfaresome~lift: 𝟙 misfaresome 𝟙) handle {_ ^ ('never' write) misfaresome~lift} $ misfaresome~unwrap) bind eftbare", "a!")
+  [ ("hade handeth each step the state left by the last", "(>{then, tick, tick, get} hade~unwrap 10) bind {p ^ p project₀ $ to_string $ write}", "12"),
+    ("put replaceth and lift keepeth the state", "(>{then, 4 put, ('x' write) hade~lift, get} hade~unwrap 0) bind {p ^ p project₀ $ to_string $ write}", "x4"),
+    ("a failure skippeth every later effect", "(>{then, ('a' write) fallible~lift, ('stop' fail: string fallible 𝟙), ('b' write) fallible~lift} fallible~unwrap) bind eftbare", "astop"),
+    ("handle runneth its handler only on a failure", "(>{then, ('a' write) fallible~lift, 'stop' fail} handle {e ^ (e write) fallible~lift} $ fallible~unwrap) bind eftbare", "astop!"),
+    ("handle leaveth a result alone", "((('a' write) fallible~lift: 𝟙 fallible 𝟙) handle {_ ^ ('never' write) fallible~lift} $ fallible~unwrap) bind eftbare", "a!")
   ]
 
 layeredCase :: Library -> (String, String, String) -> Test
 layeredCase library (name, performed, expected) =
   expectEq name (Right (Right 0, expected)) do
-    program <- compileWith library "layered.tung" (prelude ++ "show let main: 𝟙 deed ≔ " ++ performed ++ "\n")
+    program <- compileWith library "layered.tung" (prelude ++ "show let main: 𝟙 effect ≔ " ++ performed ++ "\n")
     runSimulated program []
   where
     prelude =
       """
-      bring deed/misfaresome.tung
-      bring ilk/hade.tung
-      bring flock/functor/monad.tung
+      bring effect/fallible.tung
+      bring type/hade.tung
+      bring class/functor/monad.tung
       bring often.tung
-      bring ilk/and.tung
-      bring ilk/or.tung
-      let tick: ℕ hade deed 𝟙 ≔ {n ^ n + 1} tweak
-      let eftbare: [string ∨ 𝟙, 𝟙 deed] ≔ {e incast₀ ^ e write, _ incast₁ ^ '!' write}
+      bring type/and.tung
+      bring type/or.tung
+      let tick: ℕ hade effect 𝟙 ≔ {n ^ n + 1} tweak
+      let eftbare: [string ∨ 𝟙, 𝟙 effect] ≔ {e inject₀ ^ e write, _ inject₁ ^ '!' write}
 
       """
 
-deedPrograms :: [[String]]
-deedPrograms = [["north"], ["north", "south", "north"]]
+effectPrograms :: [[String]]
+effectPrograms = [["north"], ["north", "south", "north"]]
 
-deedCase :: Library -> [String] -> Test
-deedCase library written =
-  expectEq ("generated deed " ++ unwords written) (Right (Right 0, concat written)) do
-    let deeds = ["('" ++ word ++ "' write)" | word <- written]
-        performed = case deeds of
+effectCase :: Library -> [String] -> Test
+effectCase library written =
+  expectEq ("generated effect " ++ unwords written) (Right (Right 0, concat written)) do
+    let effects = ["('" ++ word ++ "' write)" | word <- written]
+        performed = case effects of
           [single] -> single
-          _ -> ">{then, " ++ intercalate ", " deeds ++ "}"
-    program <- compileWith library "deeds.tung" ("bring often.tung\nshow let main: 𝟙 deed ≔ " ++ performed ++ "\n")
+          _ -> ">{then, " ++ intercalate ", " effects ++ "}"
+    program <- compileWith library "effects.tung" ("bring often.tung\nshow let main: 𝟙 effect ≔ " ++ performed ++ "\n")
     runSimulated program []

@@ -1,17 +1,17 @@
-bring ilk/maybe.tung
 bring often.tung
+bring type/optional.tung
 
-let whole: [left: ℤ maybe, right: ℤ maybe, ℤ] ≔ match left, right {
+let whole: [left: ℤ optional, right: ℤ optional, ℤ] ≔ match left, right {
   l some, r some ^ l + r,
   _,      _      ^ +0
 }
 
-let answer: ℤ deed
+let answer: ℤ effect
   ≔ (1000 sleep) then
     ((+20 sheer) fork $ bind {
       left ^
         (+22 sheer) fork $ bind {right ^ (left wait) lift₂ (right wait) whole}
     })
 
-let main: 𝟙 deed
-  ≔ ('async' write_line) then (answer warp to_string $ bind write_line)
+let main: 𝟙 effect
+  ≔ ('async' write_line) then (answer map to_string $ bind write_line)

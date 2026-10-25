@@ -65,7 +65,7 @@ data SourceProgram = SourceProgram
     -- resolved source references survive computation during elaboration.
     programReferences :: Map.Map SymbolId (Set.Set SymbolId),
     -- each written name that checking resolved to a global, by its span,
-    -- and whether the global nameth an ilk.
+    -- and whether the global nameth a type.
     programNames :: [(SourceSpan, SymbolId, Bool)]
   }
   deriving stock (Eq, Show)
@@ -178,7 +178,7 @@ data ClassInfo = ClassInfo
     -- each registered instance's written priority; the default is
     -- 'defaultPriority'. search trieth higher priorities first, as lean doth.
     classPriorities :: Map.Map SymbolId Integer,
-    -- for each flock parameter, whether instance search findeth it (`* out`)
+    -- for each class parameter, whether instance search findeth it (`* out`)
     -- rather than requiring it known, as lean's `outParam` doth.
     classOutputs :: [Bool],
     -- instances written `bizen fallback`, tried only for a goal whose
@@ -323,7 +323,7 @@ sorryAssumptions program@SourceProgram {..} =
       | isInstance symbol = "bizen " ++ maybe "?" (renderClosed program . definitionType) (Map.lookup symbol definitions)
       | otherwise = displayName globalNames symbol
 
--- the module's own `orsetting` assumptions, each with its type.
+-- the module's own `axiom` assumptions, each with its type.
 orsendAssumptions :: SourceProgram -> [String]
 orsendAssumptions program@SourceProgram {..} =
   [ name ++ ": " ++ renderClosed program definitionType

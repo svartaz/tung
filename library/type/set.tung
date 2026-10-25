@@ -1,0 +1,318 @@
+bring class/algebra/total/monoid_multiply.tung
+bring class/algebra/total/semigroup_multiply.tung
+bring class/equal_to_is.tung
+bring class/functor/hath_sift.tung
+bring class/hath_equal.tung
+bring class/hath_inhold.tung
+bring class/hath_manyhood.tung
+bring class/order/hath_at_most.tung
+bring class/order/lattice.tung
+bring class/order/lattice_distributive.tung
+bring class/order/order_partial.tung
+bring class/order/order_total.tung
+bring class/order/semilattice_lower.tung
+bring class/order/semilattice_upper.tung
+bring class/order/semilattice_upper_bounded.tung
+bring is.tung
+bring type/list.tung
+bring type/one.tung
+bring type/powerset.tung
+bring type/set_list.tung
+bring type/set_list_order.tung
+bring type/set_list_theorem.tung
+bring type/two.tung
+bring type/zero.tung
+
+# unit evidence maketh the invariant proof unique, without proof
+# irrelevance.
+let holds: [b: 𝟚, *] ≔ b if 𝟙 𝟘
+
+let holds_from: [b: 𝟚, p: b = yea, b holds] ≔ match b {
+  yea ^ only,
+  nay ^ match p {}
+}
+
+let holds_to: [b: 𝟚, p: b holds, b = yea] ≔ match b {
+  yea ^ reflect,
+  nay ^ match p {}
+}
+
+let holds_unique: [b: 𝟚, p: b holds, q: b holds, p = q] ≔ match b {
+  yea ^ match p, q { only, only ^ reflect },
+  nay ^ match p {}
+}
+
+# the hidden carrier accepteth only lists certified by its fixed invariant.
+type _set: [α: *, valid: [α list, 𝟚], *] {
+  ordered: [l: α list, (l valid) holds, α _set valid]
+}
+
+## a finite set in the canonical order of one lawful total-order dictionary.
+show let set: [α: *, @: α order_total, *] ≔ α _set sorted
+
+## the increasing list of distinct members.
+show let to_list: [@α: *, @: α order_total, a… ordered _: α set, α list] ≔ a…
+
+let members_sorted
+  : [@α: *, @: α order_total, s: α set, ((s to_list) sorted) = yea]
+  ≔ match s { a… ordered proof ^ (a… sorted) holds_to proof }
+
+show let empty: [@α: *, @: α order_total, α set] ≔ list~empty ordered only
+
+## put a member while preserving canonical order and uniqueness.
+show let put: [@α: *, @: α order_total, a… ordered proof: α set, a: α, α set]
+  ≔ (a… set_list~put a) ordered
+    (((a… set_list~put a) sorted) holds_from
+      (a… put_sorted a ((a… sorted) holds_to proof)))
+
+show let onesome: [@α: *, @: α order_total, a: α, α set] ≔ empty put a
+
+## sort and rid duplicates; this is a function, not a raw constructor.
+show let from_list: [@α: *, @: α order_total, α list, α set] ≔ {
+  list~empty       ^ empty,
+  first ‥ leftover ^ (leftover from_list) put first
+}
+
+show let keep
+  : [@α: *, @: α order_total, a… ordered proof: α set, predicate: [α, 𝟚], α set]
+  ≔ (a… sift predicate) ordered
+    (((a… sift predicate) sorted) holds_from
+      (a… sift_sorted predicate ((a… sorted) holds_to proof)))
+
+show let rid: [@α: *, @: α order_total, s: α set, b: α, α set]
+  ≔ s keep {a ^ (a set_list~equal b) if nay yea}
+
+show let ∖: [@α: *, @: α order_total, a: α set, b: α set, α set]
+  ≔ a keep {c ^ ((b to_list) inhold c) if nay yea}
+
+show let to_powerset: [@α: *, @: α order_total, a… ordered _: α set, α powerset]
+  ≔ a… inhold
+
+bizen: [@α: *, @: α order_total, (α set) hath_∋ α] {
+  let ∋: [s:, a:] ≔ (s to_list) inhold a
+}
+
+bizen: [@α: *, @: α order_total, (α set) hath_manyhood] {
+  let manyhood: [s:] ≔ (s to_list) manyhood
+}
+
+let list_identity
+  : [@α: *, @: α order_total, a: α set, b: α set,
+    equal: (a to_list) = (b to_list), a = b]
+  ≔ match a, b {
+    a… ordered left, m ordered right ^ match equal {
+      reflect ^ (a… ordered) leibnitz ((a… sorted) holds_unique left right)
+    }
+  }
+
+## finite sets with the same members are identical.
+show let extensionality
+  : [@α: *, @: α order_total, a: α set, b: α set,
+    equal_members: [c: α, (a ∋ c) = (b ∋ c)], a = b]
+  ≔ a list_identity b
+    ((a to_list) set_list_theorem~extensionality (b to_list) (a members_sorted)
+      (b members_sorted) equal_members)
+
+let join
+  : [@α: *, @: α order_total, a… ordered left: α set, r ordered _: α set, α set]
+  ≔ (a… set_list~join r) ordered
+    (((a… set_list~join r) sorted) holds_from
+      (a… join_sorted r ((a… sorted) holds_to left)))
+
+let meet: [@α: *, @: α order_total, a: α set, b: α set, α set] ≔ a keep (b ∋)
+
+let ∋_join
+  : [@α: *, @: α order_total, a: α set, b: α set, c: α,
+    ((a join b) ∋ c) = ((a ∋ c) ⋎ (b ∋ c))]
+  ≔ match a, b {
+    a… ordered left, r ordered right ^
+      a… join_inhold r c ((a… sorted) holds_to left) ((r sorted) holds_to right)
+  }
+
+let ∋_meet
+  : [@α: *, @: α order_total, a: α set, b: α set, c: α,
+    ((a meet b) ∋ c) = ((a ∋ c) ⋏ (b ∋ c))]
+  ≔ match a {
+    a… ordered proof ^ a… sift_inhold (b ∋) c ((a… sorted) holds_to proof)
+  }
+
+# set equality followeth from the corresponding boolean membership laws.
+let join_join
+  : [@α: *, @: α order_total, a: α set, b: α set, c: α set,
+    <{join, a, b, c} = >{join, a, b, c}]
+  ≔ <{join, a, b, c} extensionality >{join, a, b, c} {
+    d ^ >{transit,
+      (a join b) ∋_join c d,
+      (_ ⋎ (c ∋ d)) leibnitz (a ∋_join b d),
+      (a ∋ d) ⋎_⋎ (b ∋ d) (c ∋ d),
+      ((a ∋ d) ⋎ _) leibnitz ((b ∋_join c d) symmetry),
+      (a ∋_join (b join c) d) symmetry
+    }
+  }
+
+let empty_join: [@α: *, @: α order_total, a: α set, (empty join a) = a]
+  ≔ (empty join a) extensionality a {
+    b ^ (empty ∋_join a b) transit ((a ∋ b) ⟂_⋎)
+  }
+
+let implication_chain
+  : [p: 𝟚, q: 𝟚, r: 𝟚, prove: [p = yea, q = yea, r = yea], (p ≤ (q ≤ r)) = yea]
+  ≔ match p, q {
+    yea, yea ^ reflect prove reflect,
+    yea, nay;
+    nay, _   ^ reflect
+  }
+
+bizen: [@α: *, @: α order_total, (α set) hath_≍] {
+  let ≍: [a:, b:]
+    ≔ ((a to_list) subset (b to_list)) if ((b to_list) subset (a to_list)) nay
+}
+
+bizen: [@α: *, @: α order_total, (α set) hath_≤] {
+  let ≤: [a:, b:] ≔ (a to_list) subset (b to_list)
+}
+
+bizen: [@α: *, @: α order_total, (α set) ≍_to_=] {
+  let ≍_=: [a:, b:, equal:]
+    ≔ a list_identity b
+      ((a to_list) subset_= (b to_list) (a members_sorted) (b members_sorted)
+        ((a ≤ b) yea_if_former (b ≤ a) equal)
+        ((a ≤ b) yea_if_latter (b ≤ a) equal))
+
+  let ≍_reflect: [a:] ≔ (
+    let below ≔ (a to_list) subset_reflect (a members_sorted)
+    yield (a ≤ a) both_yea (a ≤ a) below below
+  )
+}
+
+bizen: [@α: *, @: α order_total, (α set) order_partial] {
+  let ≤_reflect: [a:] ≔ (a to_list) subset_reflect (a members_sorted)
+
+  let ≤_antisymmetry: [a:, b:] ≔ (a to_list) subset_antisymmetry (b to_list)
+
+  let ≤_transit: [a:, b:, c:]
+    ≔ (a ≤ b) implication_chain (b ≤ c) (a ≤ c) {
+      first, latter ^
+        (a to_list) subset_transit (b to_list) (c to_list) first latter
+    }
+
+  let ≤_=: [a:, b:, below:, above:]
+    ≔ a ≍_= b ((a ≤ b) both_yea (b ≤ a) below above)
+}
+
+bizen: [@α: *, @: α order_total, (α set) semilattice_lower] {
+  let ⋏ ≔ meet
+
+  let ⋏_swallow: [a:]
+    ≔ (a meet a) extensionality a {
+      b ^ (a ∋_meet a b) transit ((a ∋ b) ⋏_swallow)
+    }
+
+  let ⋏_swap: [a:, b:]
+    ≔ (a meet b) extensionality (b meet a) {
+      c ^ >{transit,
+        a ∋_meet b c,
+        (a ∋ c) ⋏_swap (b ∋ c),
+        (b ∋_meet a c) symmetry
+      }
+    }
+
+  let ⋏_⋏: [a:, b:, c:] ≔ <{meet, a, b, c} extensionality >{meet, a, b, c} {
+    d ^ >{transit,
+      (a meet b) ∋_meet c d,
+      (_ semilattice_lower~⋏ (c ∋ d)) leibnitz (a ∋_meet b d),
+      (a ∋ d) ⋏_⋏ (b ∋ d) (c ∋ d),
+      ((a ∋ d) semilattice_lower~⋏ _) leibnitz ((b ∋_meet c d) symmetry),
+      (a ∋_meet (b meet c) d) symmetry
+    }
+  }
+}
+
+bizen: [@α: *, @: α order_total, (α set) semilattice_upper] {
+  let ⋎ ≔ join
+
+  let ⋎_swallow: [a:]
+    ≔ (a join a) extensionality a {
+      b ^ (a ∋_join a b) transit ((a ∋ b) ⋎_swallow)
+    }
+
+  let ⋎_swap: [a:, b:]
+    ≔ (a join b) extensionality (b join a) {
+      c ^ >{transit,
+        a ∋_join b c,
+        (a ∋ c) ⋎_swap (b ∋ c),
+        (b ∋_join a c) symmetry
+      }
+    }
+
+  let ⋎_⋎ ≔ join_join
+}
+
+bizen: [@α: *, @: α order_total, (α set) lattice] {
+  let ⋏_⋎_swallow: [a:, b:]
+    ≔ (a meet (a join b)) extensionality a {
+      c ^ >{transit,
+        a ∋_meet (a join b) c,
+        ((a ∋ c) ⋏ _) leibnitz (a ∋_join b c),
+        (a ∋ c) ⋏_⋎_swallow (b ∋ c)
+      }
+    }
+
+  let ⋎_⋏_swallow: [a:, b:]
+    ≔ (a join (a meet b)) extensionality a {
+      c ^ >{transit,
+        a ∋_join (a meet b) c,
+        ((a ∋ c) ⋎ _) leibnitz (a ∋_meet b c),
+        (a ∋ c) ⋎_⋏_swallow (b ∋ c)
+      }
+    }
+}
+
+bizen: [@α: *, @: α order_total, (α set) lattice_distributive] {
+  let ⋏_⋎: [a:, b:, c:]
+    ≔ (a meet (b join c)) extensionality ((a meet b) join (a meet c)) {
+      d ^ >{transit,
+        a ∋_meet (b join c) d,
+        ((a ∋ d) ⋏ _) leibnitz (b ∋_join c d),
+        (a ∋ d) ⋏_⋎ (b ∋ d) (c ∋ d),
+        (((a ∋ d) ⋏ (b ∋ d)) ⋎ _) leibnitz ((a ∋_meet c d) symmetry),
+        (_ ⋎ ((a meet c) ∋ d)) leibnitz ((a ∋_meet b d) symmetry),
+        ((a meet b) ∋_join (a meet c) d) symmetry
+      }
+    }
+
+  let ⋎_⋏: [a:, b:, c:]
+    ≔ (a join (b meet c)) extensionality ((a join b) meet (a join c)) {
+      d ^ >{transit,
+        a ∋_join (b meet c) d,
+        ((a ∋ d) ⋎ _) leibnitz (b ∋_meet c d),
+        (a ∋ d) ⋎_⋏ (b ∋ d) (c ∋ d),
+        (((a ∋ d) ⋎ (b ∋ d)) ⋏ _) leibnitz ((a ∋_join c d) symmetry),
+        (_ ⋏ ((a join c) ∋ d)) leibnitz ((a ∋_join b d) symmetry),
+        ((a join b) ∋_meet (a join c) d) symmetry
+      }
+    }
+}
+
+bizen: [@α: *, @: α order_total, (α set) semilattice_upper_bounded] {
+  let ⟂ ≔ empty
+
+  let ⟂_⋎ ≔ empty_join
+}
+
+bizen: [@α: *, @: α order_total, (α set) semigroup_·] {
+  let · ≔ join
+
+  let ·_·: [a:, b:, c:] ≔ (a join_join b c) symmetry
+}
+
+bizen: [@α: *, @: α order_total, (α set) monoid_·] {
+  let one ≔ empty
+
+  let one_· ≔ empty_join
+
+  let ·_one: [a:]
+    ≔ (a join empty) extensionality a {
+      b ^ >{transit, a ∋_join empty b, (a ∋ b) ⋎_swap nay, (a ∋ b) ⟂_⋎}
+    }
+}

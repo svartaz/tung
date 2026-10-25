@@ -1,0 +1,15 @@
+bring _foreign.tung
+bring class/algebra/total/hath_multiply.tung
+bring type/natural.tung
+bring type/one.tung
+
+## a non-normalised span measured in milliseconds.
+show type _milliseconds: * { milliseconds: [ℕ, _milliseconds] }
+
+show let seconds: [a: ℕ, _milliseconds] ≔ a · 1000 $ milliseconds
+
+show let minutes: [a: ℕ, _milliseconds] ≔ a · 60 $ seconds
+
+show let hours: [a: ℕ, _milliseconds] ≔ a · 60 $ minutes
+
+show let sleep_for: [(t milliseconds): _milliseconds, 𝟙 effect] ≔ t sleep

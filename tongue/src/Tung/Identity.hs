@@ -73,7 +73,7 @@ internSymbols symbols = \symbol -> Map.findWithDefault symbol symbol canonical
   where
     canonical = Map.mapWithKey const symbols
 
--- the eliminator of an ilk or flock, written `unbuild name`. its spelling
+-- the eliminator of a type or class, written `unbuild name`. its spelling
 -- containeth a space, so no source name can collide with it or name it.
 inductionSymbol :: SymbolId -> SymbolId
 inductionSymbol family = family {symbolName = inductionPrefix ++ symbolName family}

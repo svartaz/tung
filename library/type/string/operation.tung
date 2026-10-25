@@ -1,0 +1,81 @@
+bring _foreign.tung
+bring class/algebra/partial/semigroupoid.tung
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/semigroup_multiply.tung
+bring class/functor.tung
+bring class/functor/catamorphism.tung
+bring class/functor/hath_sift.tung
+bring class/hath_equal.tung
+bring class/hath_manyhood.tung
+bring class/order/complement.tung
+bring class/order/semilattice_upper.tung
+bring type/list.tung
+bring type/natural.tung
+bring type/optional.tung
+bring type/string/building.tung
+bring type/two.tung
+
+## true when string hath no unicode code points.
+show let is_empty_string: [t: string, 𝟚] ≔ match t behead_string {
+  none   ^ yea,
+  _ some ^ nay
+}
+
+## count unicode code points, not bytes or utf-16 units.
+bizen: string hath_manyhood {
+  let manyhood: [t:] ≔ t string_to_list $ manyhood
+}
+
+show let take_string: [t: string, count: ℕ, string]
+  ≔ t string_to_list $ take count $ list_to_string
+
+show let drop_string: [t: string, count: ℕ, string]
+  ≔ t string_to_list $ drop count $ list_to_string
+
+show let eftwend_string: [t: string, string]
+  ≔ t string_to_list $ eftwend $ list_to_string
+
+show let forehang_string: [staff: unicode, t: string, string]
+  ≔ staff ‥ (t string_to_list) $ list_to_string
+
+show let append_string: [t: string, staff: unicode, string]
+  ≔ t string_to_list $ · (staff onesome) $ list_to_string
+
+let split_unicode_by
+  : [l: unicode list, sheds: [unicode, 𝟚], (unicode list) list]
+  ≔ match l {
+    empty            ^ empty ‥ empty,
+    staff ‥ leftover ^ match leftover split_unicode_by sheds {
+      empty              ^ (staff ‥ empty) ‥ empty,
+      current ‥ previous ^ match staff sheds {
+        yea ^ empty ‥ (current ‥ previous),
+        nay ^ (staff ‥ current) ‥ previous
+      }
+    }
+  }
+
+let split_unicode: [l: unicode list, shedder: unicode, (unicode list) list]
+  ≔ l split_unicode_by (_ ≍ shedder)
+
+let is_whitespace: [c: unicode, 𝟚] ≔ <{⋎,
+  c ≍ `\32;,
+  c ≍ `\9;,
+  c ≍ `\10;,
+  c ≍ `\13;
+}
+
+## split string at each separator code point.
+show let split_string: [t: string, shedder: unicode, string list]
+  ≔ t string_to_list $ split_unicode shedder $ map list_to_string
+
+## split string on runs of common ascii whitespace.
+show let words_string: [t: string, string list]
+  ≔ t string_to_list $ split_unicode_by is_whitespace $ map list_to_string
+    $ sift (is_empty_string ▷ ¬)
+
+## join string values with a separator between neighbours.
+show let join_with_string: [string list, string, string] ≔ {
+  empty,            _       ^ '',
+  string ‥ strings, shedder ^
+    strings gather₁ string {joined, followand ^ (joined · shedder) · followand}
+}

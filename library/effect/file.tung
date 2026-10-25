@@ -1,0 +1,9 @@
+bring type/one.tung
+bring type/or.tung
+
+## file access. a failure yieldeth its error message on the left.
+show let read: [string, (string ∨ string) effect] ≔ 'read_file' foreign
+
+show let write: [string, string, (string ∨ 𝟙) effect] ≔ 'write_file' foreign
+
+show let append: [string, string, (string ∨ 𝟙) effect] ≔ 'append_file' foreign

@@ -78,13 +78,13 @@ const library = [
     ),
   ),
 ]
-  .filter((module) => fs.existsSync(path.join(root, "bookhoard", module)))
+  .filter((module) => fs.existsSync(path.join(root, "library", module)))
   .sort();
 
 test.before(async () => {
   const brings = library.map((module) => `bring ${module}`).join("\n");
   assert.deepEqual(await run(["--check-stdin"], brings, 600000), {
-    output: "ilk ok\n",
+    output: "type ok\n",
     error: "",
     status: 0,
   });
@@ -104,7 +104,7 @@ describe("byspels", { concurrency: os.availableParallelism() }, () => {
             : ["--no-sorry", file],
         ),
         {
-          output: output ?? "ilk ok\n",
+          output: output ?? "type ok\n",
           error: "",
           status: 0,
         },
@@ -113,12 +113,12 @@ describe("byspels", { concurrency: os.availableParallelism() }, () => {
   }
 });
 
-test("word_rime readeth its file and rimeth repeated words", async (context) => {
-  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "tung-word-rime-"));
+test("word_count readeth its file and counteth repeated words", async (context) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "tung-word-count-"));
   context.after(() => fs.rmSync(directory, { recursive: true, force: true }));
   const file = path.join(directory, "words.txt");
   fs.writeFileSync(file, "a b a\n");
-  assert.deepEqual(await run(["byspel/word_rime.tung", file]), {
+  assert.deepEqual(await run(["byspel/word_count.tung", file]), {
     output: "a:2\nb:1\n",
     error: "",
     status: 0,
@@ -130,7 +130,7 @@ test("checking listeth shown declarations that assume sorry", async () => {
     "show let assumed:ℤ ≔ sorry\nshow let built:ℤ ≔ assumed\nlet hidden:ℤ ≔ sorry\nshow let proved:ℤ ≔ +1";
   assert.deepEqual(await run(["--check-stdin"], source), {
     output:
-      "ilk ok\nsorry: assumed\nsorry: built\n<stdin>:1:22:1:27: goal: ℤ\n<stdin>:3:16:3:21: goal: ℤ\n",
+      "type ok\nsorry: assumed\nsorry: built\n<stdin>:1:22:1:27: goal: ℤ\n<stdin>:3:16:3:21: goal: ℤ\n",
     error: "",
     status: 0,
   });
@@ -143,11 +143,11 @@ test("checking listeth shown declarations that assume sorry", async () => {
 
 test("stdin checking reporteth success and rejection through its exit status", async () => {
   for (const [source, output, status] of [
-    ["let worth:ℤ ≔ +1", "ilk ok\n", 0],
-    ["let worth ≔", "parse error: expected an expression\n", 1],
+    ["let value:ℤ ≔ +1", "type ok\n", 0],
+    ["let value ≔", "parse error: expected an expression\n", 1],
     [
-      "let worth:ℤ ≔ 'text'",
-      "ilk error: in let 'worth': cannot unify string with ℤ\n",
+      "let value:ℤ ≔ 'text'",
+      "type error: in let 'value': cannot unify string with ℤ\n",
       1,
     ],
   ]) {
@@ -173,9 +173,9 @@ test("checking retaineth goals beside errors without accepting the proof", async
     ]) {
       assert.equal(result.status, 1);
       assert.equal(result.error, "");
-      assert.match(result.output, /(?:ilk|parse) error:/);
+      assert.match(result.output, /(?:type|parse) error:/);
       assert.match(result.output, /goal: ℤ\n  x: ℤ/);
-      assert.doesNotMatch(result.output, /ilk ok/);
+      assert.doesNotMatch(result.output, /type ok/);
     }
     const proof = await run(["--name", "unfinished", file]);
     assert.equal(proof.status, 1);
@@ -189,55 +189,55 @@ test("name checking reporteth one name and enforceeth its policies", async (cont
   const file = path.join(directory, "proof.tung");
   fs.writeFileSync(
     file,
-    `ilk =:[@α:*, x:α, α, *] { eftbend:x = @α x }
-ilk one:* { only:one }
-let proved:only = only ≔ eftbend
+    `type =:[@α:*, x:α, α, *] { reflect:x = @α x }
+type one:* { only:one }
+let proved:only = only ≔ reflect
 let unfinished:one ≔ sorry
-orsetting assumed:only = only
-orsetting unused:one
+axiom assumed:only = only
+axiom unused:one
 let dependent:only = only ≔ assumed
 `,
   );
   assert.deepEqual(
-    await run(["--no-sorry", "--no-orset", "--name", "proved", file]),
+    await run(["--no-sorry", "--no-axiom", "--name", "proved", file]),
     {
-      output: "name: proved\nilk: only = only\ndependencies: none\nname ok\n",
+      output: "name: proved\ntype: only = only\ndependencies: none\nname ok\n",
       error: "",
       status: 0,
     },
   );
   for (const [options, status, verdict] of [
     [[], 0, "name ok"],
-    [["--allow-orset", "assumed", "--allow-orset", "unused"], 0, "name ok"],
-    [["--no-orset"], 1, "name error: orsetting is not allowed: assumed"],
+    [["--allow-axiom", "assumed", "--allow-axiom", "unused"], 0, "name ok"],
+    [["--no-axiom"], 1, "name error: axiom is not allowed: assumed"],
     [
-      ["--allow-orset", "proved"],
+      ["--allow-axiom", "proved"],
       1,
-      "name error: allowed name 'proved' is not an orsetting",
+      "name error: allowed name 'proved' is not an axiom",
     ],
   ]) {
     assert.deepEqual(await run([...options, "--name", "dependent", file]), {
-      output: `name: dependent\nilk: only = only\norsetting: assumed: only = only\n${verdict}\n`,
+      output: `name: dependent\ntype: only = only\naxiom: assumed: only = only\n${verdict}\n`,
       error: "",
       status,
     });
   }
   const listed = await run(["--name", "unfinished", file]);
   assert.equal(listed.status, 0);
-  assert.match(listed.output, /name: unfinished\nilk: one\nsorry: sorry:/);
+  assert.match(listed.output, /name: unfinished\ntype: one\nsorry: sorry:/);
   assert.match(listed.output, /name ok\n$/);
   const unfinished = await run(["--no-sorry", "--name", "unfinished", file]);
   assert.equal(unfinished.status, 1);
   assert.equal(unfinished.error, "");
-  assert.match(unfinished.output, /name: unfinished\nilk: one\nsorry: sorry:/);
+  assert.match(unfinished.output, /name: unfinished\ntype: one\nsorry: sorry:/);
   assert.match(unfinished.output, /name error: unfinished proof: sorry\n$/);
   fs.writeFileSync(
     path.join(directory, "tung.yaml"),
-    "dependencies: {}\nproof:\n  orsettings: []\n",
+    "dependencies: {}\nproof:\n  axioms: []\n",
   );
   assert.equal((await run(["--name", "dependent", file])).status, 1);
   assert.equal(
-    (await run(["--allow-orset", "assumed", "--name", "dependent", file]))
+    (await run(["--allow-axiom", "assumed", "--name", "dependent", file]))
       .status,
     0,
   );

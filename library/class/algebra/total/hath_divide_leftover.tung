@@ -1,0 +1,7 @@
+bring type/and.tung
+bring type/optional.tung
+
+## euclidean quotient and leftover computed together.
+show class hath_%: [α: *, *] {
+  let %: [α, α, (α ∧ α) optional]
+}

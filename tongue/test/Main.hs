@@ -1,10 +1,9 @@
 module Main where
 
-import Test.Bookhoard qualified as Bookhoard
 import Test.Dependent qualified as Dependent
-import Test.DependentDeed qualified as DependentDeed
+import Test.DependentClass qualified as DependentClass
+import Test.DependentEffect qualified as DependentEffect
 import Test.DependentField qualified as DependentField
-import Test.DependentFlock qualified as DependentFlock
 import Test.DependentHost qualified as DependentHost
 import Test.DependentInductive qualified as DependentInductive
 import Test.DependentInductiveSource qualified as DependentInductiveSource
@@ -25,6 +24,7 @@ import Test.Name qualified as Name
 import Test.Parse qualified as Parse
 import Test.Program qualified as Program
 import Test.Project qualified as Project
+import Test.Standard qualified as Standard
 import Test.Token qualified as Token
 import Test.Type qualified as Type
 import Test.Validate qualified as Validate
@@ -42,13 +42,13 @@ main =
       ("type", Type.group),
       ("name", Name.group),
       ("evaluate", Evaluate.group),
-      ("bookhoard", Bookhoard.group),
+      ("standard", Standard.group),
       ("program", Program.group),
       ("dependent", Dependent.group),
       ("dependent-inductive", DependentInductive.group),
       ("dependent-inductive-source", DependentInductiveSource.group),
-      ("dependent_deed", DependentDeed.group),
-      ("dependent-flock", DependentFlock.group),
+      ("dependent_effect", DependentEffect.group),
+      ("dependent-class", DependentClass.group),
       ("dependent_host", DependentHost.group),
       ("dependent_list", DependentList.group),
       ("dependent-literal", DependentLiteral.group),

@@ -64,14 +64,14 @@ data HostSignature = HostSignature
   }
   deriving (Eq, Show)
 
--- every host operation is reached through an annotated `fremmed` let.
+-- every host operation is reached through an annotated `foreign` let.
 data HostBinding = HostBinding
   { hostName :: String,
     hostSignature :: HostSignature
   }
   deriving (Eq, Show)
 
--- a host data type is the `ilk` of this name declared in this bookhoard file;
+-- a host data type is the `type` of this name declared in this library file;
 -- the runtime readeth its constructors by identity.
 data HostData = HostData
   { hostDataSource :: FilePath,
@@ -88,14 +88,14 @@ data HostDataSchema = HostDataSchema
   deriving (Eq, Show)
 
 oneData, twoData, listData, optionData, productData, sumData, tableData :: HostData
-oneData = HostData "ilk/one.tung" "𝟙"
-twoData = HostData "ilk/two.tung" "𝟚"
-listData = HostData "ilk/list.tung" "list"
-optionData = HostData "ilk/maybe.tung" "maybe"
-productData = HostData "ilk/and.tung" "∧"
--- a fallible host deed returneth `string ∨ α`: an error message or a result.
-sumData = HostData "ilk/or.tung" "∨"
-tableData = HostData "ilk/wordbook.tung" "wordbook"
+oneData = HostData "type/one.tung" "𝟙"
+twoData = HostData "type/two.tung" "𝟚"
+listData = HostData "type/list.tung" "list"
+optionData = HostData "type/optional.tung" "optional"
+productData = HostData "type/and.tung" "∧"
+-- a fallible host effect returneth `string ∨ α`: an error message or a result.
+sumData = HostData "type/or.tung" "∨"
+tableData = HostData "type/wordbook.tung" "wordbook"
 
 processResultData, requestData, responseData :: HostData
 processResultData = HostData "process/outcome.tung" "_process_outcome"
@@ -123,7 +123,7 @@ hostDataSchemas =
     schema optionData ["a"] [("none", []), ("some", [a])],
     schema listData ["a"] [("empty", []), ("‥", [a, app listData [a]])],
     schema productData ["a", "b"] [("⸴", [a, b])],
-    schema sumData ["a", "b"] [("incast₀", [a]), ("incast₁", [b])],
+    schema sumData ["a", "b"] [("inject₀", [a]), ("inject₁", [b])],
     schema tableData ["a", "b"] [("from_list", [app listData [app productData [a, b]]])],
     schema processResultData [] [("process_outcome", [HostCon "ℤ", text, text])],
     schema requestData [] [("request", [text, text, headers, text])],
@@ -144,7 +144,7 @@ hostDataSchemas =
 -- opaque unary families have no constructors or eliminators. their values
 -- carry runtime resources, so an ordinary data schema cannot represent them.
 opaqueTypeFamilyNames :: [String]
-opaqueTypeFamilyNames = ["deed", "task"]
+opaqueTypeFamilyNames = ["effect", "task"]
 
 primitiveTypeNames :: [String]
 primitiveTypeNames = ["ℕ", "ℤ", "float", "unicode", "string"] ++ opaqueTypeFamilyNames
@@ -160,11 +160,11 @@ naturalZeroId, naturalSuccessorId :: SymbolId
 naturalZeroId = SymbolId PrimitiveModule "0"
 naturalSuccessorId = SymbolId PrimitiveModule "next"
 
--- `ℤ` is structural in the same way: `n overnaught` is `n` and
--- `n next_undernaught` is `-(n + 1)`, so each integer hath one form.
+-- `ℤ` is structural in the same way: `n nonnegative` is `n` and
+-- `n next_negative` is `-(n + 1)`, so each integer hath one form.
 integerPositiveId, integerNegativeId :: SymbolId
-integerPositiveId = SymbolId PrimitiveModule "overnaught"
-integerNegativeId = SymbolId PrimitiveModule "next_undernaught"
+integerPositiveId = SymbolId PrimitiveModule "nonnegative"
+integerNegativeId = SymbolId PrimitiveModule "next_negative"
 
 onlyConstructorId, yeaConstructorId, nayConstructorId :: SymbolId
 onlyConstructorId = constructorId oneData "only"
@@ -183,8 +183,8 @@ productConstructorId :: SymbolId
 productConstructorId = constructorId productData "⸴"
 
 leftConstructorId, rightConstructorId :: SymbolId
-leftConstructorId = constructorId sumData "incast₀"
-rightConstructorId = constructorId sumData "incast₁"
+leftConstructorId = constructorId sumData "inject₀"
+rightConstructorId = constructorId sumData "inject₁"
 
 processResultConstructorId, requestConstructorId, responseConstructorId, tableConstructorId :: SymbolId
 processResultConstructorId = constructorId processResultData "process_outcome"
@@ -222,26 +222,26 @@ hostBindings :: [HostBinding]
 hostBindings =
   map fst pureBindings
     ++ [
-         -- deeds: actions that only the runner performeth.
-         deed "deed_sheer" ["a"] [variable "a"] (action (variable "a")),
-         deed "deed_bind" ["a", "b"] [action (variable "a"), HostArrow [variable "a"] (action (variable "b"))] (action (variable "b")),
-         deed "write" [] [text] (action one),
-         deed "read" [] [] (action (option text)),
-         deed "random" [] [] (action float),
-         deed "unix_time" [] [] (action integer),
-         deed "sleep" [] [natural] (action one),
-         deed "fork" ["a"] [action (variable "a")] (action (task (variable "a"))),
-         deed "wait" ["a"] [task (variable "a")] (action (option (variable "a"))),
-         deed "wait_for" ["a"] [task (variable "a"), natural] (action (option (variable "a"))),
-         deed "strike" ["a"] [task (variable "a")] (action one),
-         deed "read_file" [] [text] (action (outcome text)),
-         deed "write_file" [] [text, text] (action (outcome one)),
-         deed "onhang_file" [] [text, text] (action (outcome one)),
-         deed "arguments" [] [] (action (list text)),
-         deed "environment" [] [text] (action (option text)),
-         deed "exit" ["a"] [natural] (action (variable "a")),
-         deed "run_process" [] [text, list text] (action (outcome (HostCon (canonicalDataTypeName processResultData)))),
-         deed "serve" [] [natural, HostArrow [HostCon (canonicalDataTypeName requestData)] (action (HostCon (canonicalDataTypeName responseData)))] (action text)
+         -- effects: actions that only the runner performeth.
+         effect "effect_sheer" ["a"] [variable "a"] (action (variable "a")),
+         effect "effect_bind" ["a", "b"] [action (variable "a"), HostArrow [variable "a"] (action (variable "b"))] (action (variable "b")),
+         effect "write" [] [text] (action one),
+         effect "read" [] [] (action (option text)),
+         effect "random" [] [] (action float),
+         effect "unix_time" [] [] (action integer),
+         effect "sleep" [] [natural] (action one),
+         effect "fork" ["a"] [action (variable "a")] (action (task (variable "a"))),
+         effect "wait" ["a"] [task (variable "a")] (action (option (variable "a"))),
+         effect "wait_for" ["a"] [task (variable "a"), natural] (action (option (variable "a"))),
+         effect "strike" ["a"] [task (variable "a")] (action one),
+         effect "read_file" [] [text] (action (outcome text)),
+         effect "write_file" [] [text, text] (action (outcome one)),
+         effect "append_file" [] [text, text] (action (outcome one)),
+         effect "arguments" [] [] (action (list text)),
+         effect "environment" [] [text] (action (option text)),
+         effect "exit" ["a"] [natural] (action (variable "a")),
+         effect "run_process" [] [text, list text] (action (outcome (HostCon (canonicalDataTypeName processResultData)))),
+         effect "serve" [] [natural, HostArrow [HostCon (canonicalDataTypeName requestData)] (action (HostCon (canonicalDataTypeName responseData)))] (action text)
        ]
   where
     natural = HostCon "ℕ"
@@ -250,10 +250,10 @@ hostBindings =
     text = HostCon "string"
     one = HostCon (canonicalDataTypeName oneData)
     variable = HostVar
-    action value = HostApp "deed" [value]
+    action value = HostApp "effect" [value]
     task value = HostApp "task" [value]
     outcome value = HostApp (canonicalDataTypeName sumData) [text, value]
-    deed name variables arguments result = HostBinding name (HostSignature variables arguments result)
+    effect name variables arguments result = HostBinding name (HostSignature variables arguments result)
     list value = HostApp (canonicalDataTypeName listData) [value]
     option value = HostApp (canonicalDataTypeName optionData) [value]
 
@@ -282,7 +282,7 @@ pureOperation key = Map.lookup key pureOperations
 pureOperations :: Map.Map String ([HostValue] -> Maybe HostValue)
 pureOperations = Map.fromList [(hostName binding, operation) | (binding, operation) <- pureBindings]
 
--- the bookhoard file whose model of a pure operation is trusted. bookhoard
+-- the library file whose model of a pure operation is trusted. library
 -- tests compare each such model with its native operation; a model written
 -- elsewhere could disagree with it, and a proof by the model could then
 -- contradict a computation.
@@ -290,10 +290,10 @@ modelSource :: String -> Maybe FilePath
 modelSource key = fst <$> find ((key `elem`) . snd) modelSources
   where
     modelSources =
-      [ ("ilk/kindful.tung", ["same_kindful", "at_most_kindful", "eke_kindful", "offdraw_kindful", "fold_kindful", "deal_leftover_kindful"]),
-        ("ilk/wholetale.tung", ["kindful_to_wholetale", "wholetale_to_kindful", "eke_wholetale", "offdraw_wholetale", "fold_wholetale", "same_wholetale", "at_most_wholetale", "flip_wholetale", "deal_leftover_wholetale"]),
-        ("ilk/unicode.tung", ["same_unicode", "at_most_unicode"]),
-        ("ilk/string/building.tung", ["same_string", "at_most_string", "yoke_string"])
+      [ ("type/natural.tung", ["equal_natural", "at_most_natural", "add_natural", "subtract_natural", "multiply_natural", "divide_leftover_natural"]),
+        ("type/integer.tung", ["natural_to_integer", "integer_to_natural", "add_integer", "subtract_integer", "multiply_integer", "equal_integer", "at_most_integer", "flip_integer", "divide_leftover_integer"]),
+        ("type/unicode.tung", ["equal_unicode", "at_most_unicode"]),
+        ("type/string/building.tung", ["equal_string", "at_most_string", "join_string"])
       ]
 
 -- codecs are private trusted ABI mappings. the binding GADT coupleth each
@@ -358,47 +358,47 @@ pureBindings :: [(HostBinding, [HostValue] -> Maybe HostValue)]
 pureBindings =
   map
     eraseBinding
-    [ UnaryBinding "kindful_to_wholetale" natural integer toInteger,
-      UnaryBinding "wholetale_to_kindful" integer (optionCodec natural) \a -> if a >= 0 then Just (fromInteger a) else Nothing,
-      BinaryBinding "eke_wholetale" integer integer integer (+),
-      BinaryBinding "offdraw_wholetale" integer integer integer (-),
-      UnaryBinding "flip_wholetale" integer integer negate,
-      BinaryBinding "offdraw_kindful" natural natural natural \a b -> if b > a then 0 else a - b,
-      BinaryBinding "fold_wholetale" integer integer integer (*),
-      BinaryBinding "deal_leftover_wholetale" integer integer (optionCodec (pairCodec integer integer)) \a b -> if b == 0 then Nothing else Just (euclidean a b),
-      BinaryBinding "eke_float" float float float (+),
-      BinaryBinding "offdraw_float" float float float (-),
-      BinaryBinding "fold_float" float float float (*),
-      BinaryBinding "deal_float" float float float (/),
+    [ UnaryBinding "natural_to_integer" natural integer toInteger,
+      UnaryBinding "integer_to_natural" integer (optionCodec natural) \a -> if a >= 0 then Just (fromInteger a) else Nothing,
+      BinaryBinding "add_integer" integer integer integer (+),
+      BinaryBinding "subtract_integer" integer integer integer (-),
+      UnaryBinding "flip_integer" integer integer negate,
+      BinaryBinding "subtract_natural" natural natural natural \a b -> if b > a then 0 else a - b,
+      BinaryBinding "multiply_integer" integer integer integer (*),
+      BinaryBinding "divide_leftover_integer" integer integer (optionCodec (pairCodec integer integer)) \a b -> if b == 0 then Nothing else Just (euclidean a b),
+      BinaryBinding "add_float" float float float (+),
+      BinaryBinding "subtract_float" float float float (-),
+      BinaryBinding "multiply_float" float float float (*),
+      BinaryBinding "divide_float" float float float (/),
       UnaryBinding "sine_float" float float sin,
       -- the angle of the point (real, imaginary), in [0, 2π).
       BinaryBinding "arctan_float" float float float \real imaginary -> let angle = atan2 imaginary real in if angle < 0 then angle + 2 * pi else angle,
       UnaryBinding "exponent_float" float float exp,
       UnaryBinding "logarithm_float" float float log,
       UnaryBinding "⌊" float (optionCodec integer) \a -> if isNaN a || isInfinite a then Nothing else Just (floor a),
-      BinaryBinding "same_wholetale" integer integer truth (==),
-      UnaryBinding "wholetale_to_string" integer text show,
+      BinaryBinding "equal_integer" integer integer truth (==),
+      UnaryBinding "integer_to_string" integer text show,
       UnaryBinding "float_to_string" float text show,
-      UnaryBinding "unicode_to_kindful" unicode natural (fromIntegral . ord),
-      UnaryBinding "kindful_to_unicode" natural (optionCodec unicode) (unicodeScalar . toInteger),
+      UnaryBinding "unicode_to_natural" unicode natural (fromIntegral . ord),
+      UnaryBinding "natural_to_unicode" natural (optionCodec unicode) (unicodeScalar . toInteger),
       UnaryBinding "behead_string" text (optionCodec (pairCodec unicode text)) \case first : rest -> Just (first, rest); [] -> Nothing,
       UnaryBinding "string_to_list" text (listCodec unicode) id,
       UnaryBinding "list_to_string" (listCodec unicode) text id,
-      BinaryBinding "yoke_string" text text text (++),
-      BinaryBinding "same_string" text text truth (==),
-      BinaryBinding "same_unicode" unicode unicode truth (==),
+      BinaryBinding "join_string" text text text (++),
+      BinaryBinding "equal_string" text text truth (==),
+      BinaryBinding "equal_unicode" unicode unicode truth (==),
       BinaryBinding "at_most_string" text text truth (<=),
       BinaryBinding "at_most_unicode" unicode unicode truth (<=),
-      BinaryBinding "at_most_wholetale" integer integer truth (<=),
-      BinaryBinding "same_float" float float truth (==),
+      BinaryBinding "at_most_integer" integer integer truth (<=),
+      BinaryBinding "equal_float" float float truth (==),
       BinaryBinding "at_most_float" float float truth (<=),
       UnaryBinding "string_to_float" text (optionCodec float) readMaybe,
-      BinaryBinding "same_kindful" natural natural truth (==),
-      BinaryBinding "at_most_kindful" natural natural truth (<=),
-      BinaryBinding "eke_kindful" natural natural natural (+),
-      BinaryBinding "fold_kindful" natural natural natural (*),
-      BinaryBinding "deal_leftover_kindful" natural natural (optionCodec (pairCodec natural natural)) \a b -> if b == 0 then Nothing else Just (a `div` b, a `mod` b),
-      UnaryBinding "kindful_to_string" natural text show
+      BinaryBinding "equal_natural" natural natural truth (==),
+      BinaryBinding "at_most_natural" natural natural truth (<=),
+      BinaryBinding "add_natural" natural natural natural (+),
+      BinaryBinding "multiply_natural" natural natural natural (*),
+      BinaryBinding "divide_leftover_natural" natural natural (optionCodec (pairCodec natural natural)) \a b -> if b == 0 then Nothing else Just (a `div` b, a `mod` b),
+      UnaryBinding "natural_to_string" natural text show
     ]
   where
     -- the remainder is never negative.

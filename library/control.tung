@@ -1,0 +1,19 @@
+bring _foreign.tung
+bring class/order/complement.tung
+bring type/one.tung
+bring type/two.tung
+
+## an effect that performeth the doing only when the kilter is true.
+show let when: [𝟚, 𝟙 effect, 𝟙 effect] ≔ {
+  yea, doing ^ doing,
+  nay, _     ^ only effect_sheer
+}
+
+## an effect that performeth the doing only when the kilter is false.
+show let when_not: [two: 𝟚, doing: 𝟙 effect, 𝟙 effect] ≔ (two ¬) when doing
+
+## pick and run one delayed branch.
+show let branch: [@α: *, 𝟚, [𝟙, α], [𝟙, α], α] ≔ {
+  yea, f, _ ^ only f,
+  nay, _, g ^ only g
+}

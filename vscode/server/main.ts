@@ -149,13 +149,10 @@ connection.onRequest("tung/executable", () => compiler.findExecutable());
 connection.onRequest("tung/libraryPath", () =>
   localLibraryRoots.join(path.delimiter),
 );
-connection.onRequest(
+connection.onRequest<unknown, never>(
   "tung/checkProof",
   navigation(
-    async (
-      { textDocument, position, name, allowedOrsettings },
-      cancellation,
-    ) => {
+    async ({ textDocument, position, name, allowedAxioms }, cancellation) => {
       if (libraryResolutionError)
         return {
           kind: "error",
@@ -202,7 +199,7 @@ connection.onRequest(
         workspace.openTexts(),
         selected,
         version,
-        allowedOrsettings,
+        allowedAxioms,
       );
       const cancelled = cancellation?.onCancellationRequested(() =>
         running.cancel(),
@@ -330,7 +327,7 @@ connection.onHover(
         ? `${definition.documentation}\n\n`
         : "";
       const typeText = inferred
-        ? `\n\n**inferred ilk**\n\n\`\`\`tung\n${definition.bareName}: ${inferred}\n\`\`\``
+        ? `\n\n**inferred type**\n\n\`\`\`tung\n${definition.bareName}: ${inferred}\n\`\`\``
         : "";
       return {
         range: nameRange(resolved.token),
@@ -580,11 +577,11 @@ const semanticTokens = async (uri, requestedRange = undefined) => {
   const resolve = (token) =>
     workspace.resolveAt(uri, { line: token.line, character: token.char })
       .definition;
-  const ilks = new Map(
-    workspace.namesOf(uri).resolved.map(([start, , , , ilk]) => [start, ilk]),
+  const types = new Map(
+    workspace.namesOf(uri).resolved.map(([start, , , , type]) => [start, type]),
   );
   for (const token of buildHighlightRanges(source, roles, resolve, (start) =>
-    ilks.get(start),
+    types.get(start),
   )) {
     if (requestedRange && !rangeContainsLine(requestedRange, token.line)) {
       continue;
@@ -693,7 +690,7 @@ const inspectType = (definition, cancellation = undefined) => {
   const cached = typeCache.get(key);
   if (cached) return cached.promise;
   const version = documents.get(definition.uri)?.version || 0;
-  const running = compiler.ilkOf(
+  const running = compiler.typeOf(
     model,
     workspace.openTexts(),
     definition.bareName,
@@ -702,7 +699,7 @@ const inspectType = (definition, cancellation = undefined) => {
   const entry = {
     cancel: running.cancel,
     promise: running.result.then((output) =>
-      output.kind === "ilk" ? output.ilk : undefined,
+      output.kind === "type" ? output.type : undefined,
     ),
   };
   typeCache.set(key, entry);

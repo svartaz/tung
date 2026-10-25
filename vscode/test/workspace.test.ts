@@ -68,9 +68,9 @@ test("requirements resolve imported types and declared parameters", async (conte
     workspace,
     model: getModel,
   } = await fixture(context, {
-    "dep.tung": "show ilk box: * { boxed: box }",
+    "dep.tung": "show type box: * { boxed: box }",
     "main.tung":
-      "bring dep.tung flock child:[@:box hath_≍, a:*, @:a hath_≍, *] {let f:[a, a]}",
+      "bring dep.tung class child:[@:box hath_≍, a:*, @:a hath_≍, *] {let f:[a, a]}",
   });
   const model = getModel();
   const box = model.tokens.find((token) => token.text === "box");
@@ -89,7 +89,7 @@ test("requirements resolve imported types and declared parameters", async (conte
 });
 test("imports expose shown names under explicit and basename aliases", async (context) => {
   const cases = [
-    ["default.tung", "data/dep.tung", "", "dep", "ilk/dep"],
+    ["default.tung", "data/dep.tung", "", "dep", "type/dep"],
     ["explicit.tung", "data/dep.tung", "d", "d", "dep"],
     ["dotted.tung", "pkg.one/query.tung", "", "query", "pkg"],
   ];
@@ -165,13 +165,13 @@ test("importers bring an open document's unsaved text, and an edit refresheth th
 });
 test("an ambiguous bare import resolveth to nothing; its qualified names do", async (context) => {
   const { root, workspace, model } = await fixture(context, {
-    "left.tung": "show let worth ≔ +1",
-    "right.tung": "show let worth ≔ +2",
-    "main.tung": "bring left.tung bring right.tung let answer ≔ left~worth",
+    "left.tung": "show let value ≔ +1",
+    "right.tung": "show let value ≔ +2",
+    "main.tung": "bring left.tung bring right.tung let answer ≔ left~value",
   });
   const { visible } = workspace.namesOf(model().uri);
-  assert(!visible.some(([written]) => written === "worth"));
-  const qualified = model().tokens.find(({ text }) => text === "left~worth");
+  assert(!visible.some(([written]) => written === "value"));
+  const qualified = model().tokens.find(({ text }) => text === "left~value");
   const resolved = workspace.resolveAt(model().uri, {
     line: qualified.line,
     character: qualified.char,
@@ -208,7 +208,7 @@ test("library module paths keep their exact file names", async (context) => {
   context.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const library = path.join(root, "library");
   fs.mkdirSync(library, { recursive: true });
-  fs.writeFileSync(path.join(library, "_fremmed.tung"), "show let worth ≔ +1");
+  fs.writeFileSync(path.join(library, "_foreign.tung"), "show let value ≔ +1");
   const main = path.join(root, "main.tung");
   fs.writeFileSync(main, "bring foreign.tung");
   const workspace = new WorkspaceIndex(
@@ -218,21 +218,21 @@ test("library module paths keep their exact file names", async (context) => {
   workspace.configure([root], [library]);
   await workspace.ready();
   const model = workspace.model(pathToFileURL(main).href);
-  assert(workspace.modulePaths(model.uri).includes("_fremmed.tung"));
+  assert(workspace.modulePaths(model.uri).includes("_foreign.tung"));
   assert(!workspace.modulePaths(model.uri).includes("foreign.tung"));
   assert.equal(workspace.importModel(model, "foreign.tung"), undefined);
 });
 test("the compiler resolveth brings: exact library paths, ambiguous duplicates, and local files first", async (context) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "tung-library-roots-"));
   context.after(() => fs.rmSync(root, { recursive: true, force: true }));
-  const project = path.join(root, "forthcast");
+  const project = path.join(root, "project");
   const first = path.join(root, "first");
   const second = path.join(root, "second");
   for (const directory of [project, first, second]) fs.mkdirSync(directory);
   const main = path.join(project, "main.tung");
   const module = path.join(first, "extra.tung");
-  fs.writeFileSync(main, "bring extra.tung yield extra~worth");
-  fs.writeFileSync(module, "show let worth ≔ +1");
+  fs.writeFileSync(main, "bring extra.tung yield extra~value");
+  fs.writeFileSync(module, "show let value ≔ +1");
   const rooted = new CompilerBridge();
   rooted.configure(compiler.tongue, [first, second], compiler.executablePath);
   context.after(() => rooted.dispose());
@@ -250,9 +250,9 @@ test("the compiler resolveth brings: exact library paths, ambiguous duplicates, 
   assert.equal(await target(), pathToFileURL(module).href);
   const model = workspace.model(pathToFileURL(main).href);
   assert(workspace.modulePaths(model.uri).includes("extra.tung"));
-  fs.writeFileSync(path.join(second, "extra.tung"), "show let worth ≔ +2");
+  fs.writeFileSync(path.join(second, "extra.tung"), "show let value ≔ +2");
   assert.equal(await target(), undefined);
-  fs.writeFileSync(path.join(project, "extra.tung"), "show let worth ≔ +3");
+  fs.writeFileSync(path.join(project, "extra.tung"), "show let value ≔ +3");
   assert.equal(
     await target(),
     pathToFileURL(path.join(project, "extra.tung")).href,
@@ -261,7 +261,7 @@ test("the compiler resolveth brings: exact library paths, ambiguous duplicates, 
 test("a field resolveth to its constructor's slot", async (context) => {
   const { root, workspace, model } = await fixture(context, {
     "dep.tung":
-      "show ilk pair: * { pair_of: [left: ℕ, right: ℕ, pair] }\nlet sum: [p: pair, ℕ] ≔ p.right",
+      "show type pair: * { pair_of: [left: ℕ, right: ℕ, pair] }\nlet sum: [p: pair, ℕ] ≔ p.right",
     "main.tung": "bring dep.tung\nlet first: [p: pair, ℕ] ≔ p.left",
   });
   const read = model().tokens.find(({ text }) => text === "left");

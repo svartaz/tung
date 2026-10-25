@@ -262,12 +262,12 @@ class WorkspaceIndex {
       target?.definitions.find(
         (definition) => !definition.local && definition.bareName === written,
       );
-    // a field `ilk.field` is the named slot of its ilk's constructor.
+    // a field `type.field` is the named slot of its type's constructor.
     const dot = bare.lastIndexOf(".");
     if (dot > 0) {
       const family = global(bare.slice(0, dot));
       const region =
-        family && smallestRegion(target.regions, family.token.offset, "ilk");
+        family && smallestRegion(target.regions, family.token.offset, "type");
       return (
         region &&
         target.definitions.find(

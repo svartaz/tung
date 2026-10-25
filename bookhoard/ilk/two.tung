@@ -1,9 +1,0 @@
-show ilk 𝟚: * {
-  yea: 𝟚,
-  nay: 𝟚
-}
-
-show let if: [@α: *, 𝟚, α, α, α] ≔ {
-  yea, then, _    ^ then,
-  nay, _,    else ^ else
-}

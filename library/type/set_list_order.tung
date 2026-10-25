@@ -1,0 +1,111 @@
+bring class/equal_to_is.tung
+bring class/order/hath_at_most.tung
+bring class/order/order_partial.tung
+bring class/order/order_total.tung
+bring is.tung
+bring type/list.tung
+bring type/set_list.tung
+bring type/set_list_theorem.tung
+bring type/two.tung
+
+## every member of the first list belongeth to the other.
+show let subset: [@α: *, @: α order_total, α list, α list, 𝟚] ≔ {
+  empty,        _ ^ yea,
+  a ‥ leftover, m ^ (m inhold a) if (leftover subset m) nay
+}
+
+## a subset keepeth successful ordered search, even before sorting.
+show let subset_member
+  : [@α: *, @: α order_total, a…: α list, b…: α list, c: α,
+    beneath: (a… subset b…) = yea, member: (a… inhold c) = yea,
+    (b… inhold c) = yea]
+  ≔ match a… {
+    empty        ^ match member {},
+    a ‥ leftover ^ (c ≤ a) inspect @𝟚 @{_ ^ (b… inhold c) = yea} {
+      yea, below ^ (
+        let head
+          ≔ (((_ if (a ≤ c) (leftover inhold c)) leibnitz below) symmetry)
+            transit member
+        yield (b… inhold) yea_throughbear (a ≤_= c head below)
+          ((b… inhold a) yea_if_former (leftover subset b…) beneath)
+      ),
+      nay, below ^
+        leftover subset_member b… c
+          ((b… inhold a) yea_if_latter (leftover subset b…) beneath)
+          ((((_ if (a ≤ c) (leftover inhold c)) leibnitz below) symmetry)
+            transit member)
+    }
+  }
+
+## a member of a sorted tail remaineth a member after its first member.
+show let inhold_tail
+  : [@α: *, @: α order_total, a: α, a…: α list, c: α,
+    sorted: ((a ‥ a…) sorted) = yea, member: (a… inhold c) = yea,
+    ((a ‥ a…) inhold c) = yea]
+  ≔ ((_ if (a ≤ c) (a… inhold c)) leibnitz
+    (a tight_right c (a sorted_tight_member a… c sorted member))) transit member
+
+## pointwise membership sufficeth for being a subset of a sorted list.
+show let subset_by
+  : [@α: *, @: α order_total, a…: α list, b…: α list, sorted: (a… sorted) = yea,
+    members: [a: α, member: (a… inhold a) = yea, (b… inhold a) = yea],
+    (a… subset b…) = yea]
+  ≔ match a… {
+    empty        ^ reflect,
+    a ‥ leftover ^ >{transit,
+      (_ if (leftover subset b…) nay) leibnitz
+        (a members (a inhold_first leftover)),
+      leftover subset_by b… (a sorted_tail leftover sorted) {
+        b, member ^ b members (a inhold_tail leftover b sorted member)
+      }
+    }
+  }
+
+## a sorted list is a subset of itself.
+show let subset_reflect
+  : [@α: *, @: α order_total, a…: α list, sorted: (a… sorted) = yea,
+    (a… subset a…) = yea]
+  ≔ a… subset_by a… sorted {_, member ^ member}
+
+## being a subset goeth through.
+show let subset_transit
+  : [@α: *, @: α order_total, a…: α list, b…: α list, n: α list,
+    first: (a… subset b…) = yea, latter: (b… subset n) = yea,
+    (a… subset n) = yea]
+  ≔ match a… {
+    empty        ^ reflect,
+    a ‥ leftover ^ >{transit,
+      (_ if (leftover subset n) nay) leibnitz
+        (b… subset_member n a latter
+          ((b… inhold a) yea_if_former (leftover subset b…) first)),
+      leftover subset_transit b… n
+        ((b… inhold a) yea_if_latter (leftover subset b…) first) latter
+    }
+  }
+
+## mutual subsets give boolean set equality.
+show let subset_antisymmetry
+  : [@α: *, @: α order_total, a…: α list, b…: α list,
+    ((a… subset b…) ≤ ((b… subset a…) ≤ ((a… subset b…) if (b… subset a…) nay)))
+      = yea]
+  ≔ match a… subset b…, b… subset a… {
+    yea, yea;
+    yea, nay;
+    nay, _   ^ reflect
+  }
+
+## mutual subsets among canonical lists give equality.
+show let subset_=
+  : [@α: *, @: α order_total, a…: α list, b…: α list, left: (a… sorted) = yea,
+    right: (b… sorted) = yea, forth: (a… subset b…) = yea,
+    back: (b… subset a…) = yea, a… = b…]
+  ≔ a… extensionality b… left right {
+    a ^ (a… inhold a) inspect @𝟚 @(_ = (b… inhold a)) {
+      yea, member ^ (a… subset_member b… a forth member) symmetry,
+      nay, absent ^ (b… inhold a) inspect @𝟚 @(nay =) {
+        yea, member ^ match (absent symmetry) transit (b… subset_member a… a
+          back member) {},
+        nay, _ ^ reflect
+      }
+    }
+  }

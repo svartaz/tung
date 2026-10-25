@@ -1,0 +1,480 @@
+bring class/algebra/total/hath_add.tung
+bring class/algebra/total/hath_divide_leftover.tung
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/hath_one.tung
+bring class/algebra/total/hath_subtract.tung
+bring class/algebra/total/hath_zero.tung
+bring class/algebra/total/monoid_add.tung
+bring class/algebra/total/monoid_multiply.tung
+bring class/algebra/total/semiring.tung
+bring class/equal_to_is.tung
+bring class/hath_equal.tung
+bring class/hath_to_string.tung
+bring class/order/hath_at_most.tung
+bring class/order/order_partial.tung
+bring class/order/order_total.tung
+bring class/order/semilattice_upper_bounded.tung
+bring is.tung
+bring type/and.tung
+bring type/grounded.tung
+bring type/optional.tung
+bring type/two.tung
+
+## ℕ is a primitive type with arbitrary precision. its operations are host
+## bindings; these bizens give it equality, order, and semiring building.
+## a binding with a body after `foreign` computeth natively on literals and,
+## on other inputs, unfoldeth that structural model, so proofs can reason
+## about it.
+let equal: [ℕ, ℕ, 𝟚] ≔ 'equal_natural' foreign {
+  0,      0      ^ yea,
+  0,      _ next ^ nay,
+  _ next, 0      ^ nay,
+  a next, b next ^ a equal b
+}
+
+let at_most: [ℕ, ℕ, 𝟚] ≔ 'at_most_natural' foreign {
+  0,      _      ^ yea,
+  _ next, 0      ^ nay,
+  a next, b next ^ a at_most b
+}
+
+let add: [ℕ, ℕ, ℕ] ≔ 'add_natural' foreign {
+  m, 0      ^ m,
+  m, k next ^ (m add k) next
+}
+
+## subtracting stoppeth at zero.
+let subtract: [ℕ, ℕ, ℕ] ≔ 'subtract_natural' foreign {
+  m,      0      ^ m,
+  0,      _ next ^ 0,
+  j next, k next ^ j subtract k
+}
+
+let multiply: [ℕ, ℕ, ℕ] ≔ 'multiply_natural' foreign {
+  _, 0      ^ 0,
+  m, k next ^ (m multiply k) add m
+}
+
+## one step of dividing by `e next`: the leftover groweth until it reacheth
+## `e`, and then the quotient groweth instead.
+let divide_step: [e: ℕ, q ⸴ r: ℕ ∧ ℕ, ℕ ∧ ℕ]
+  ≔ (r ≍ e) if ((q next) ⸴ 0) (q ⸴ (r next))
+
+## the quotient and leftover of dividing a tale by `e next`.
+let divide: [ℕ, ℕ, ℕ ∧ ℕ] ≔ {
+  0,      _ ^ 0 ⸴ 0,
+  n next, e ^ e divide_step (n divide e)
+}
+
+let divide_leftover: [ℕ, ℕ, (ℕ ∧ ℕ) optional]
+  ≔ 'divide_leftover_natural' foreign {
+    _, 0      ^ none,
+    n, e next ^ (n divide e) some
+  }
+
+let to_string: [ℕ, string] ≔ 'natural_to_string' foreign
+
+bizen: ℕ hath_≍ {
+  let ≍ ≔ equal
+}
+
+bizen: ℕ hath_≤ {
+  let ≤ ≔ at_most
+}
+
+bizen: ℕ hath_+ {
+  let + ≔ add
+}
+
+## subtracting that stoppeth at zero: `2 ∸ 3` is `0`. ℕ hath no flipping,
+## so it hath no `-+`.
+show let ∸: [ℕ, ℕ, ℕ] ≔ subtract
+
+bizen: ℕ hath_zero {
+  let zero ≔ 0
+}
+
+bizen: ℕ hath_· {
+  let · ≔ multiply
+}
+
+bizen: ℕ hath_one {
+  let one ≔ 1
+}
+
+bizen: ℕ hath_% {
+  let % ≔ divide_leftover
+}
+
+bizen: ℕ hath_to_string {
+  let to_string ≔ to_string
+}
+
+## the laws below are proved by induction on the structural models.
+let lemma_≤_reflect: [a: ℕ, (a ≤ a) = yea] ≔ match a {
+  0       ^ reflect,
+  a′ next ^ a′ lemma_≤_reflect
+}
+
+let lemma_≤_antisymmetry: [a: ℕ, b: ℕ, >{≤, a ≤ b, b ≤ a, a ≍ b} = yea]
+  ≔ match a, b {
+    0,       0       ^ reflect,
+    0,       _ next  ^ reflect,
+    _ next,  0       ^ reflect,
+    a′ next, b′ next ^ a′ lemma_≤_antisymmetry b′
+  }
+
+let lemma_≤_transit: [a: ℕ, b: ℕ, c: ℕ, >{≤, a ≤ b, b ≤ c, a ≤ c} = yea]
+  ≔ match a, b, c {
+    0, _, _ ^ match b ≤ c {
+      yea;
+      nay ^ reflect
+    },
+    _ next,  0,       _ ^ reflect,
+    a′ next, b′ next, 0 ^ match a′ ≤ b′ {
+      yea;
+      nay ^ reflect
+    },
+    a′ next, b′ next, c′ next ^ a′ lemma_≤_transit b′ c′
+  }
+
+let lemma_≤_total: [a: ℕ, b: ℕ, (((a ≤ b) ≍ nay) ≤ (b ≤ a)) = yea]
+  ≔ match a, b {
+    0,       _       ^ reflect,
+    _ next,  0       ^ reflect,
+    a′ next, b′ next ^ a′ lemma_≤_total b′
+  }
+
+let lemma_zero_+: [a: ℕ, (0 + a) = a] ≔ match a {
+  0       ^ reflect,
+  a′ next ^ next leibnitz (a′ lemma_zero_+)
+}
+
+let lemma_next_+: [a: ℕ, b: ℕ, ((a next) + b) = ((a + b) next)] ≔ match b {
+  0       ^ reflect,
+  b′ next ^ next leibnitz (a lemma_next_+ b′)
+}
+
+let lemma_+_+: [a: ℕ, b: ℕ, c: ℕ, (a + (b + c)) = ((a + b) + c)] ≔ match c {
+  0       ^ reflect,
+  c′ next ^ next leibnitz (a lemma_+_+ b c′)
+}
+
+let lemma_+_swap: [a: ℕ, b: ℕ, (a + b) = (b + a)] ≔ match b {
+  0       ^ (a lemma_zero_+) symmetry,
+  b′ next ^
+    (next leibnitz (a lemma_+_swap b′)) transit ((b′ lemma_next_+ a) symmetry)
+}
+
+## (p + q) + (r + s) regroupeth as (p + r) + (q + s).
+let lemma_+_trade
+  : [a: ℕ, b: ℕ, c: ℕ, d: ℕ, ((a + b) + (c + d)) = ((a + c) + (b + d))]
+  ≔ (
+    let inner: [(b + (c + d)) = (c + (b + d))] ≔ >{transit,
+      b lemma_+_+ c d,
+      (_ + d) leibnitz (b lemma_+_swap c),
+      (c lemma_+_+ b d) symmetry
+    }
+    yield >{transit,
+      (a lemma_+_+ b (c + d)) symmetry,
+      (a +) leibnitz inner,
+      a lemma_+_+ c (b + d)
+    }
+  )
+
+let lemma_zero_·: [a: ℕ, (0 · a) = 0] ≔ match a {
+  0       ^ reflect,
+  a′ next ^ a′ lemma_zero_·
+}
+
+let lemma_one_·: [a: ℕ, (1 · a) = a] ≔ match a {
+  0       ^ reflect,
+  a′ next ^ next leibnitz (a′ lemma_one_·)
+}
+
+let lemma_·_+: [a: ℕ, b: ℕ, c: ℕ, (a · (b + c)) = ((a · b) + (a · c))]
+  ≔ match c {
+    0       ^ reflect,
+    c′ next ^
+      ((_ + a) leibnitz (a lemma_·_+ b c′)) transit
+        (((a · b) lemma_+_+ (a · c′) a) symmetry)
+  }
+
+let lemma_+_·: [a: ℕ, b: ℕ, c: ℕ, ((a + b) · c) = ((a · c) + (b · c))]
+  ≔ match c {
+    0       ^ reflect,
+    c′ next ^
+      ((_ + (a + b)) leibnitz (a lemma_+_· b c′)) transit
+        ((a · c′) lemma_+_trade (b · c′) a b)
+  }
+
+let lemma_·_·: [a: ℕ, b: ℕ, c: ℕ, (a · (b · c)) = ((a · b) · c)] ≔ match c {
+  0       ^ reflect,
+  c′ next ^
+    (a lemma_·_+ (b · c′) b) transit ((_ + (a · b)) leibnitz (a lemma_·_· b c′))
+}
+
+bizen: ℕ order_partial {
+  let ≤_reflect ≔ lemma_≤_reflect
+
+  let ≤_antisymmetry ≔ lemma_≤_antisymmetry
+
+  let ≤_transit ≔ lemma_≤_transit
+
+  let ≤_= ≔ lemma_≤_=
+}
+
+bizen: ℕ order_total {
+  let ≤_total ≔ lemma_≤_total
+}
+
+bizen: ℕ monoid_+ {
+  let +_+ ≔ lemma_+_+
+
+  let zero_+ ≔ lemma_zero_+
+
+  let +_zero: [_:] ≔ reflect
+}
+
+bizen: ℕ monoid_· {
+  let ·_· ≔ lemma_·_·
+
+  let one_· ≔ lemma_one_·
+
+  let ·_one ≔ lemma_zero_+
+}
+
+bizen: ℕ semiring {
+  let +_swap ≔ lemma_+_swap
+
+  let ·_+ ≔ lemma_·_+
+
+  let +_· ≔ lemma_+_·
+
+  let zero_·: [a:] ≔ a lemma_zero_·
+
+  let ·_zero: [_:] ≔ reflect
+}
+
+## boolean equality of naturals agreeth with `=`.
+let lemma_≍_=: [a: ℕ, b: ℕ, equal: (a ≍ b) = yea, a = b] ≔ match a, b {
+  0,       0       ^ reflect,
+  0,       _ next  ^ match equal {},
+  _ next,  0       ^ match equal {},
+  a′ next, b′ next ^ next leibnitz (a′ lemma_≍_= b′ equal)
+}
+
+let lemma_≍_reflect: [a: ℕ, (a ≍ a) = yea] ≔ match a {
+  0       ^ reflect,
+  a′ next ^ a′ lemma_≍_reflect
+}
+
+## antisymmetry holdeth in `=`, by sound equality.
+let lemma_≤_=: [a: ℕ, b: ℕ, below: (a ≤ b) = yea, above: (b ≤ a) = yea, a = b]
+  ≔ a lemma_≍_= b
+    ((_ ≤ (a ≍ b)) yea_throughbear above
+      ({c ^ >{≤, c, b ≤ a, a ≍ b}} yea_throughbear below
+        (a lemma_≤_antisymmetry b)))
+
+bizen: ℕ ≍_to_= {
+  let ≍_= ≔ lemma_≍_=
+
+  let ≍_reflect ≔ lemma_≍_reflect
+}
+
+bizen: ℕ semilattice_upper_bounded {
+  let ⟂ ≔ 0
+
+  let ⟂_⋎: [_:] ≔ reflect
+}
+
+## `next` is injective.
+show let next_inject: [@a: ℕ, @b: ℕ, reflect: (a next) = (b next), a = b]
+  ≔ reflect
+
+## adding to a tale's next is the next of the sum.
+show let next_+: [a: ℕ, b: ℕ, ((a next) + b) = ((a + b) next)]
+  ≔ a lemma_next_+ b
+
+## the same sums with one right term have the same left terms.
+show let +_strike: [a: ℕ, b: ℕ, c: ℕ, equal: (b + a) = (c + a), b = c]
+  ≔ match a {
+    0       ^ equal,
+    a′ next ^ a′ +_strike b c (equal next_inject)
+  }
+
+## adding and then taking away the same tale giveth the tale back.
+show let +_∸: [a: ℕ, b: ℕ, ((a + b) ∸ b) = a] ≔ match b {
+  0       ^ reflect,
+  b′ next ^ a +_∸ b′
+}
+
+## the last two of three summands may swap places.
+let lemma_+_turn: [a: ℕ, b: ℕ, c: ℕ, ((a + b) + c) = ((a + c) + b)] ≔ >{transit,
+  (a lemma_+_+ b c) symmetry,
+  (a +) leibnitz (b lemma_+_swap c),
+  a lemma_+_+ c b
+}
+
+## multiplying by a tale's next addeth one more copy.
+show let next_·: [a: ℕ, b: ℕ, ((a next) · b) = ((a · b) + b)] ≔ match b {
+  0       ^ reflect,
+  b′ next ^
+    ((_ + (a next)) leibnitz (a next_· b′)) transit
+      (next leibnitz ((a · b′) lemma_+_turn b′ a))
+}
+
+## multiplication is commutative.
+show let ·_swap: [a: ℕ, b: ℕ, (a · b) = (b · a)] ≔ match b {
+  0       ^ (a lemma_zero_·) symmetry,
+  b′ next ^ ((_ + a) leibnitz (a ·_swap b′)) transit ((b′ next_· a) symmetry)
+}
+
+## `a` is under `b` when `a` is smaller: `(a next) ≤ b`. as a relation it is
+## wellfounded, so it may ground recursion on a measure in `ℕ`.
+show let under: [a: ℕ, b: ℕ, *] ≔ ((a next) ≤ b) = yea
+
+let lemma_≤_next: [a: ℕ, (a ≤ (a next)) = yea] ≔ match a {
+  0       ^ reflect,
+  a′ next ^ a′ lemma_≤_next
+}
+
+## every tale is under its next.
+show let under_next: [a: ℕ, a under (a next)] ≔ a lemma_≤_reflect
+
+## being under goeth through.
+show let under_transit: [a: ℕ, b: ℕ, c: ℕ, a under b, b under c, a under c] ≔ {
+  d₀, d₁ ^
+    (a next) ≤_yea_transit b c d₀
+      (b ≤_yea_transit (b next) c (b lemma_≤_next) d₁)
+}
+
+## everything under `n` is grounded, by induction on `n`.
+let lemma_under_grounded: [a: ℕ, b: ℕ, below: b under a, ℕ grounded under b]
+  ≔ match a {
+    0       ^ match below {},
+    a′ next ^ {
+      c: ℕ, q: c under b ^
+        a′ lemma_under_grounded c ((c next) ≤_yea_transit b a′ q below)
+    } ground
+  }
+
+show let under_wellfounded: ℕ wellfounded under ≔ {
+  n ^ (n lemma_under_grounded) ground
+}
+
+## `p` holdeth a quotient and leftover that eftbuild `n` when dividing by `e
+## next`.
+let eftbuild: [n: ℕ, e: ℕ, q ⸴ r: ℕ ∧ ℕ, *] ≔ ((q · (e next)) + r) = n
+
+## `p` holdeth a leftover at most `e`.
+let bound: [e: ℕ, _ ⸴ r: ℕ ∧ ℕ, *] ≔ (r ≤ e) = yea
+
+## a tale at most `e` that is not `e` hath its next at most `e`.
+let lemma_≤_≭
+  : [a: ℕ, b: ℕ, below: (a ≤ b) = yea, apart: (a ≍ b) = nay,
+    ((a next) ≤ b) = yea]
+  ≔ match a, b {
+    0,       0       ^ match apart {},
+    0,       _ next  ^ reflect,
+    _ next,  0       ^ match below {},
+    a′ next, b′ next ^ a′ lemma_≤_≭ b′ below apart
+  }
+
+let lemma_divide_step_eftbuild
+  : [n: ℕ, e: ℕ, p: ℕ ∧ ℕ, held: n eftbuild e p,
+    (n next) eftbuild e (e divide_step p)]
+  ≔ match p {
+    q ⸴ r ^
+      (r ≍ e) inspect @𝟚 @{
+        c: 𝟚 ^ (n next) eftbuild e (c if ((q next) ⸴ 0) (q ⸴ (r next)))
+      } {
+        yea, known ^ >{transit,
+          (_ + (q next)) leibnitz (q next_· e),
+          next leibnitz ((q · e) lemma_+_turn e q),
+          {a ^ <{+, q · e, q, a} next} leibnitz
+            ((r lemma_≍_= e known) symmetry),
+          next leibnitz held
+        },
+        nay, _ ^ next leibnitz held
+      }
+  }
+
+let lemma_divide_step_bound
+  : [e: ℕ, p: ℕ ∧ ℕ, held: e bound p, e bound (e divide_step p)]
+  ≔ match p {
+    q ⸴ r ^
+      (r ≍ e) inspect @𝟚 @{c ^ e bound (c if ((q next) ⸴ 0) (q ⸴ (r next)))} {
+        yea, _     ^ reflect,
+        nay, known ^ r lemma_≤_≭ e held known
+      }
+  }
+
+let lemma_divide_eftbuild: [a: ℕ, b: ℕ, a eftbuild b (a divide b)] ≔ match a {
+  0       ^ (b next) lemma_zero_·,
+  a′ next ^
+    a′ lemma_divide_step_eftbuild b (a′ divide b) (a′ lemma_divide_eftbuild b)
+}
+
+let lemma_divide_bound: [a: ℕ, b: ℕ, b bound (a divide b)] ≔ match a {
+  0       ^ reflect,
+  a′ next ^ b lemma_divide_step_bound (a′ divide b) (a′ lemma_divide_bound b)
+}
+
+## the quotient and leftover of `n % (e next)` as a bare pair.
+let lemma_%_pair
+  : [a: ℕ, b: ℕ, c: ℕ, d: ℕ, divided: (a % (b next)) = ((c ⸴ d) some),
+    (a divide b) = (c ⸴ d)]
+  ≔ {m: (ℕ ∧ ℕ) optional ^ match m {
+    none    ^ a divide b,
+    e′ some ^ e′
+  }} leibnitz divided
+
+## the quotient and leftover of dividing by `e next` eftbuild the dividend tale.
+show let %_eftbuild
+  : [n: ℕ, e: ℕ, q: ℕ, r: ℕ, divided: (n % (e next)) = ((q ⸴ r) some),
+    ((q · (e next)) + r) = n]
+  ≔ (n lemma_%_pair e q r divided) throughbear @(ℕ ∧ ℕ) @(n divide e) @(q ⸴ r)
+    @(n eftbuild e) (n lemma_divide_eftbuild e)
+
+## the leftover of dividing by `e next` is at most `e`.
+show let %_leftover
+  : [n: ℕ, e: ℕ, q: ℕ, r: ℕ, divided: (n % (e next)) = ((q ⸴ r) some),
+    (r ≤ e) = yea]
+  ≔ (n lemma_%_pair e q r divided) throughbear @(ℕ ∧ ℕ) @(n divide e) @(q ⸴ r)
+    @(e bound) (n lemma_divide_bound e)
+
+## taking away at most `e` and adding it back giveth `e`.
+show let ∸_+: [a: ℕ, b: ℕ, below: (b ≤ a) = yea, ((a ∸ b) + b) = a]
+  ≔ match a, b {
+    _,       0       ^ reflect,
+    0,       _ next  ^ match below {},
+    a′ next, b′ next ^ next leibnitz (a′ ∸_+ b′ below)
+  }
+
+## taking away never groweth a tale.
+show let ∸_≤: [a: ℕ, b: ℕ, ((a ∸ b) ≤ a) = yea] ≔ match a, b {
+  _,       0       ^ a lemma_≤_reflect,
+  0,       _ next  ^ reflect,
+  a′ next, b′ next ^
+    (a′ ∸ b′) ≤_yea_transit a′ (a′ next) (a′ ∸_≤ b′) (a′ lemma_≤_next)
+}
+
+## nothing is left when taking from zero.
+show let zero_∸: [a: ℕ, (0 ∸ a) = 0] ≔ match a {
+  0      ^ reflect,
+  _ next ^ reflect
+}
+
+## a tale taken from itself leaveth zero.
+show let ∸_strike: [a: ℕ, (a ∸ a) = 0] ≔ match a {
+  0       ^ reflect,
+  a′ next ^ a′ ∸_strike
+}
+
+## taking away twice is taking away the sum.
+show let ∸_∸: [a: ℕ, b: ℕ, c: ℕ, ((a ∸ b) ∸ c) = (a ∸ (c + b))] ≔ match a, b {
+  _,       0       ^ reflect,
+  0,       _ next  ^ c zero_∸,
+  a′ next, b′ next ^ a′ ∸_∸ b′ c
+}

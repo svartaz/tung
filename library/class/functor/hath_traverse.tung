@@ -1,0 +1,14 @@
+bring class/algebra/partial/category.tung
+bring class/functor.tung
+bring class/functor/applicative.tung
+bring class/functor/catamorphism.tung
+
+show class hath_traverse: [φ: [*, *], @: φ functor, @: φ catamorphism, *] {
+  let traverse
+    : [@μ: [*, *], @: μ applicative, @α: *, @β: *, α φ, [α, β μ], (β φ) μ]
+}
+
+show let sequence
+  : [@φ: [*, *], @: φ hath_traverse, @μ: [*, *], @: μ applicative, @α: *,
+    amf: (α μ) φ, (α φ) μ]
+  ≔ amf traverse identity

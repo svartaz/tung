@@ -1,0 +1,15 @@
+## the binary function type maker: `α → β` is `[α, β]`. it may be
+## passed unapplied, as in `bizen: → semigroupoid`.
+show let →: [α: *, β: *, *] ≔ [α, β]
+
+show let ←: [β: *, α: *, *] ≔ [α, β]
+
+show let ▶: [@α: *, @β: *, a: α, f: [α, β], β] ≔ a f
+
+show let ◀: [@α: *, @β: *, f: [α, β], a: α, β] ≔ a f
+
+show let singal: [@α: *, @β: *, a: α, _: β, α] ≔ a
+
+show let flip: [@α: *, @β: *, @γ: *, f: [α, β, γ], b: β, a: α, γ] ≔ a f b
+
+show let twofold: [@α: *, @β: *, a: α, f: [α, α, β], β] ≔ a f a

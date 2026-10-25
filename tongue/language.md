@@ -9,16 +9,16 @@ checked introduction.
 
 ## keywords
 
-| keyword | meaning                       | keyword     | meaning                       |
-| ------- | ----------------------------- | ----------- | ----------------------------- |
-| `let`   | declaration                   | `match`     | pattern match                 |
-| `fast`  | self-calling deed declaration | `unbuild`   | eliminator of an ilk or flock |
-| `show`  | export                        | `fall`      | annotated function expression |
-| `bring` | import                        | `sorry`     | unfinished assumption         |
-| `yield` | result of a local block       | `orsetting` | named axiom                   |
-| `ilk`   | inductive family (data type)  | `fremmed`   | foreign host binding          |
-| `flock` | type class                    | `deed`      | primitive action type (io)    |
-| `bizen` | instance                      |             |                               |
+| keyword | meaning                         | keyword    | meaning                       |
+| ------- | ------------------------------- | ---------- | ----------------------------- |
+| `let`   | declaration                     | `match`    | pattern match                 |
+| `fast`  | self-calling effect declaration | `unbuild`  | eliminator of a type or class |
+| `show`  | export                          | `function` | annotated function expression |
+| `bring` | import                          | `sorry`    | unfinished assumption         |
+| `yield` | result of a local block         | `axiom`    | named axiom                   |
+| `type`  | inductive family (data type)    | `foreign`  | foreign host binding          |
+| `class` | type class                      | `effect`   | primitive action type (io)    |
+| `bizen` | instance                        |            |                               |
 
 `fallback`, in `bizen fallback:`, marketh a default instance, and `out`, in
 `β: * out`, an output parameter; both are ordinary names elsewhere.
@@ -27,15 +27,15 @@ checked introduction.
 
 a `.tung` file containeth declarations, private unless shown:
 
-- `show let …`, `show ilk …`, and `show flock …` export declarations;
-  `show ilk` also exporteth its constructors and eliminator.
+- `show let …`, `show type …`, and `show class …` export declarations;
+  `show type` also exporteth its constructors and eliminator.
 - `show name` re-exporteth a visible name; `show ns~name` exporteth it as
   `name`. a plain `bring` re-exporteth nothing.
 
-lets, ilks, constructors, flocks, and members share one namespace, and a
+lets, types, constructors, classes, and members share one namespace, and a
 module declareth each top-level name once. declared names are unqualified.
-bookhoard useth `_request` beside constructor `request`, and `hath_naught`
-beside member `naught`, to avoid collisions.
+the library useth `_request` beside constructor `request`, and `hath_zero`
+beside member `zero`, to avoid collisions.
 
 ### libraries and imports
 
@@ -43,8 +43,8 @@ beside member `naught`, to avoid collisions.
 namespace is the last path segment before its first dot.
 
 ```tung
-bring ilk/list.tung
-bring ilk/wordbook.tung hashmap
+bring type/list.tung
+bring type/wordbook.tung hashmap
 
 let xs ≔ list~empty
 let entries ≔ hashmap~empty
@@ -68,8 +68,8 @@ then `TUNG_PATH`. one import path resolving to different files is ambiguous.
 
 ```yaml
 dependencies:
-  bookhoard:
-    path: bookhoard
+  library:
+    path: library
   example:
     repo: https://example.org/example.git
     hash: "0123456789012345678901234567890123456789"
@@ -83,7 +83,7 @@ dependencies:
 - optional `subdir` selecteth a directory within the pinned checkout; it may
   not contain `..` or escape the checkout through symlinks.
 - `bring` paths are relative to the selected library root.
-- an optional `proof` field holdeth the [orsetting policy](#proof-checking).
+- an optional `proof` field holdeth the [axiom policy](#proof-checking).
 
 tung findeth the nearest manifest above the source file; each dependency may
 have its own. git checkouts live in `.tung/libraries/` beside the root
@@ -103,9 +103,9 @@ canonicalised, relative git paths lexically normalised, and remote locators
 compared as written. `TUNG_PATH` is outside conflict checking, but duplicate
 import paths stay ambiguous.
 
-bookhoard is an ordinary library in [`bookhoard/`](../bookhoard/). an external
+the standard library is an ordinary library in [`library/`](../library/). an external
 project may pin `https://github.com/svartaz/tung.git` at a published hash with
-`subdir: bookhoard`.
+`subdir: library`.
 
 ## names, comments, and literals
 
@@ -124,7 +124,7 @@ outside import paths, a name hath at most one `~`, with nonempty, slash-free
 parts. `‥`, `·`, `→`, and `=` are ordinary names; there is no general infix
 escape. names are snake_case, including host keys and paths; `-` remaineth
 legal. generic polymorphic parameters use Greek letters.
-[`anglish.md`](../anglish.md) owneth public terminology.
+[`naming.md`](../naming.md) owneth word choice.
 
 `#` starteth a line comment; `/* … */` is a non-nested block comment. `##` and
 `/** … */` document the next declaration.
@@ -138,7 +138,7 @@ legal. generic polymorphic parameters use Greek letters.
 | single-quoted characters | `string`  | `'hello'`         |
 
 `ℕ` and `ℤ` have arbitrary precision. `+ 1` applieth the name `+` to natural
-`1`. natural subtraction stoppeth at naught. characters and strings accept
+`1`. natural subtraction stoppeth at zero. characters and strings accept
 `\n`, `\r`, `\t`, `\'`, `\\`, and decimal escapes such as `\23383;`. a
 character is one unicode scalar.
 
@@ -168,7 +168,7 @@ delimiteth such a segment. for values and types alike:
 evaluation is call-by-need: inputs, lets, globals, and constructor fields are
 shared and computed when inspected. `match` computeth only its selected branch,
 and unused `sorry` doth not fail. pure native operations compute their inputs
-fully; [deeds](#deeds) compute host inputs and results fully.
+fully; [effects](#effects) compute host inputs and results fully.
 
 ## declarations and types
 
@@ -182,9 +182,9 @@ when types are compared.
 ```tung
 let count ≔ 42
 let answer: ℤ ≔ +42
-let sameness: [@α: *, x: α, α] ≔ x
+let identity: [@α: *, x: α, α] ≔ x
 let call: [@α: *, @β: *, f: [α, β], x: α, β] ≔ x f
-let eke_after: [x:, y: ℤ, ℤ] ≔ x + y
+let add_after: [x:, y: ℤ, ℤ] ≔ x + y
 ```
 
 `let name ≔ body` inferreth a type; `let name: annotation ≔ body` checketh
@@ -204,15 +204,15 @@ a let's type must be determined: unknown types are never implicitly
 quantified, so write polymorphic parameters. every name in an annotation is
 already in scope or bound earlier in it.
 
-`fall inputs, result ^ body` is a function expression with its own
+`function inputs, result ^ body` is a function expression with its own
 annotation, needing at least one input and a result. a let returning `*` is an
 ordinary transparent type function; it may take value inputs or requirements
 and be partially applied:
 
 ```tung
-let sameness ≔ fall @α: *, x: α, α ^ x
-let mightset: [α: *, *] ≔ [α, 𝟚]
-let wholetale_type: * ≔ ℤ
+let identity ≔ function @α: *, x: α, α ^ x
+let powerset: [α: *, *] ≔ [α, 𝟚]
+let integer_type: * ≔ ℤ
 ```
 
 `(term: type)` ascribeth any expression. `α ∧ β` is the product type and
@@ -230,7 +230,7 @@ also range over values.
 calls may supply implicit inputs: written `@` arguments fill implicit
 parameters in declaration order, even after value arguments, and a function
 without one rejecteth `@`. omitted inputs are inferred or found by
-[instance search](#flocks-bizens-and-laws). a supplied input must have its
+[instance search](#classes-bizens-and-laws). a supplied input must have its
 declared type, even when unused.
 
 ```tung
@@ -247,7 +247,7 @@ as `@α`.
 quantifiers may occur at any rank; higher rank needeth annotations:
 
 ```tung
-ilk pair: * { pair_of: [ℤ, string, pair] }
+type pair: * { pair_of: [ℤ, string, pair] }
 let both: [f: [@α: *, α, α], pair] ≔ (+1 f) pair_of ('x' f)
 let make: [_: ℤ, [@α: *, α, α]] ≔ {x ^ x}
 ```
@@ -267,7 +267,7 @@ let seven ≔ (
 )
 ```
 
-imports, exports, ilks, orsettings, foreign bindings, and fast declarations
+imports, exports, types, axioms, foreign bindings, and fast declarations
 are top-level only.
 
 a let whose body nameth itself is recursive and needeth an annotation,
@@ -285,7 +285,7 @@ header, and `show fast` exporteth it. its body may name it anywhere, called,
 partly applied, or passed on, with no structural check:
 
 ```tung
-fast gather: [seen: string list, (string list) deed] ≔ read bind {
+fast gather: [seen: string list, (string list) effect] ≔ read bind {
   none      ^ seen sheer,
   line some ^ (line ‥ seen) gather
 }
@@ -294,29 +294,29 @@ fast gather: [seen: string list, (string list) deed] ≔ read bind {
 a fast declaration is rejected when:
 
 - it hath no annotation;
-- its ilk, after normalisation and its inputs, endeth in anything but a deed,
-  as `nat`, `[nat, nat]`, or an ilk wrapping a deed. only deeds may run
+- its type, after normalisation and its inputs, endeth in anything but an effect,
+  as `nat`, `[nat, nat]`, or a type wrapping an effect. only effects may run
   without bound;
 - its body never nameth it; that is a let;
-- it bindeth `fremmed`, is a bizen member, or standeth in a local block.
+- it bindeth `foreign`, is a bizen member, or standeth in a local block.
 
 there are no mutual fast declarations. checking never unfoldeth one, so
-nothing is proved by its body; [deeds](#deeds) stateth how one runneth.
+nothing is proved by its body; [effects](#effects) stateth how one runneth.
 
-well-founded recursion is library code in `ilk/grounded.tung`:
-`wellgrounded_selfcall_by` taketh a result motive, a measure, a
+well-founded recursion is library code in `type/grounded.tung`:
+`wellfounded_recur_by` taketh a result motive, a measure, a
 well-foundedness proof, a step, and an input, and the step's recursive call
-requireth a smaller-measure proof. `ilk/kindful.tung` provideth
-`under_wellgrounded` and `ilk/list_setting.tung` `‥_manyhood_under` for list
-tails; [`wellgrounded.tung`](../byspel/wellgrounded.tung) is an example.
+requireth a smaller-measure proof. `type/natural.tung` provideth
+`under_wellfounded` and `type/list_theorem.tung` `‥_manyhood_under` for list
+tails; [`wellfounded.tung`](../byspel/wellfounded.tung) is an example.
 
-## ilks
+## types
 
-`ilk name: signature { constructors }` declareth a family whose signature
+`type name: signature { constructors }` declareth a family whose signature
 endeth in `*`. constructors are comma-separated and state full result types:
 
 ```tung
-ilk list: [α: *, *] {
+type list: [α: *, *] {
   empty: α list,
   ‥: [α, α list, α list]
 }
@@ -330,7 +330,7 @@ ilk list: [α: *, *] {
   branch:
 
 ```tung
-ilk tag: [α: *, *] {
+type tag: [α: *, *] {
   integer: [ℤ, ℤ tag],
   textual: [string, string tag]
 }
@@ -340,9 +340,9 @@ let unpack: [@α: *, x: α tag, α] ≔ match x {
 }
 ```
 
-mutually dependent ilks form one group: uniform parameters agree in type and
+mutually dependent types form one group: uniform parameters agree in type and
 visibility, result universes agree, and indices may differ. signatures cannot
-depend on group members. negative occurrences and cycles through non-ilk
+depend on group members. negative occurrences and cycles through non-type
 declarations are rejected.
 
 one list family holdeth values, types, or type constructors;
@@ -362,7 +362,7 @@ let chosen ≔ match yea, nay {
 let classify: [string, ℤ] ≔ {'yes' ^ +1, _ ^ +0}
 ```
 
-- `^` separateth patterns from the result; `;` yoketh complete alternative
+- `^` separateth patterns from the result; `;` joineth complete alternative
   rows that share one result.
 - a variable bindeth once per row; `_` discardeth.
 - constructors follow second-is-function order, as `x ‥ leftover`.
@@ -374,12 +374,12 @@ let classify: [string, ℤ] ≔ {'yes' ^ +1, _ ^ +0}
 
 a named annotation slot may hold a constructor pattern without parentheses,
 `[a ⸴ b: α ∧ β, α]`; literal patterns belong in `match`. matching
-`eftbend: a = b` refineth the result, while `_: a = b` discardeth the proof.
+`reflect: a = b` refineth the result, while `_: a = b` discardeth the proof.
 
 `n next` matcheth a positive natural and bindeth its predecessor; as a term,
 `next` addeth one unless a constructor of that name is in scope.
-`n overnaught` and `n next_undernaught` cover nonnegative and negative
-integers; `3 next_undernaught` is `-4`.
+`n nonnegative` and `n next_negative` cover nonnegative and negative
+integers; `3 next_negative` is `-4`.
 
 matching a computed scrutinee replaceth its occurrences in the expected result
 with the branch constructor. an indexed constructor may determine fields: a
@@ -388,14 +388,14 @@ shapes; stuck computed indices are rejected. the
 [dependent rules](dependent.md#pattern-matching-and-recursion) state the
 precise restrictions.
 
-`inlook` from `is.tung` also passeth the branch equation:
-`e inlook {p, known ^ body, …}` giveth `known: e = p`, matching a fresh input
+`inspect` from `is.tung` also passeth the branch equation:
+`e inspect {p, known ^ body, …}` giveth `known: e = p`, matching a fresh input
 rather than refining `e`. when its result family cannot be inferred, write
-`e inlook @τ @{_ ^ T} {p, known ^ body, …}`.
+`e inspect @τ @{_ ^ T} {p, known ^ body, …}`.
 
 ### induction
 
-`unbuild name` is the eliminator of an ilk or flock; `name` may be qualified,
+`unbuild name` is the eliminator of a type or class; `name` may be qualified,
 and other names are rejected. a single-family eliminator taketh implicit
 parameters, a motive, one method per constructor, indices, and the value:
 
@@ -411,50 +411,50 @@ defineth the method signatures.
 
 ### fields
 
-an unindexed ilk with one constructor hath a field per named explicit
+an unindexed type with one constructor hath a field per named explicit
 constructor input. `value.field` projecteth it; chains read leftward.
 
 ```tung
-ilk wight: * { wight_of: [name: string, eld: ℤ, wight] }
+type wight: * { wight_of: [name: string, eld: ℤ, wight] }
 let someone: wight ≔ 'naoki' wight_of +35
 let older ≔ someone.name wight_of (someone.eld + +1)
 ```
 
-separate ilks may share field names. nested constructor brackets extend the
+separate types may share field names. nested constructor brackets extend the
 fields; a later repeated name shadoweth an earlier one. indexed and
-multi-constructor ilks have no fields. there is no anonymous record or update
+multi-constructor types have no fields. there is no anonymous record or update
 syntax.
 
-## flocks, bizens, and laws
+## classes, bizens, and laws
 
-`flock` declareth a type class and `bizen` an instance. headers end in `*`,
+`class` declareth a type class and `bizen` an instance. headers end in `*`,
 with named parameters and optional `@: parent` requirements:
 
 ```tung
-flock hath_≍: [α: *, *] {
+class hath_≍: [α: *, *] {
   let ≍: [α, α, 𝟚]
-  let ≍_eftbend: [x: α, (x ≍ x) = yea]
+  let ≍_reflect: [x: α, (x ≍ x) = yea]
 }
 
 bizen: 𝟚 hath_≍ {
   let ≍ ≔ {yea, yea ^ yea, nay, nay ^ yea, _, _ ^ nay}
-  let ≍_eftbend ≔ {yea ^ eftbend, nay ^ eftbend}
+  let ≍_reflect ≔ {yea ^ reflect, nay ^ reflect}
 }
 ```
 
-- flock parameters omit `@`; members may add their own implicit parameters.
+- class parameters omit `@`; members may add their own implicit parameters.
 - `@: α hath_≍` requireth a dictionary. requirements may interleave with
   implicit parameters but name only preceding ones.
 - a member is `let name: type` without a body. a law is a member whose type
   requireth a proof; it hath no separate syntax, is no rewrite rule, and is
   never evaluated when unused. laws concern the methods actually supplied.
-- a bizen head is a flock application in second-is-function order, after its
+- a bizen head is a class application in second-is-function order, after its
   parameters and requirements in one bracket:
   `bizen: [@α: *, @: α hath_≍, (α list) hath_≍] { … }`. bizen parameters are
   implicit.
 - bizen members are lets, each required name once; missing, unknown, and
   repeated members, and duplicate instances, are rejected. annotations must
-  agree with the flock, and members are checked in flock order.
+  agree with the class, and members are checked in class order.
 - later members may use earlier ones; a member's own body referreth to its
   global accessor, so recursive methods need ordinary recursive helpers.
 - an available parent dictionary taketh precedence; otherwise supplied parent
@@ -467,83 +467,83 @@ duplicate instance types are rejected. `β: * out` marketh an output parameter
 for search to determine; unknown input heads postpone search. a
 `bizen fallback: …` may resolve an otherwise stuck goal, and a goal still
 unsolved needeth an annotation.
-[flocks and bizens](dependent.md#flocks-and-bizens) stateth cycles, candidate
+[classes and bizens](dependent.md#classes-and-bizens) stateth cycles, candidate
 requirements, and depth limits.
 
 ## equality and assumptions
 
 `is.tung`, re-exported by `often.tung`, defineth the ordinary indexed identity
-type `=` with sole constructor `eftbend`, which proveth an equation that
+type `=` with sole constructor `reflect`, which proveth an equation that
 holdeth by computation. matching it rewriteth one endpoint to the other;
 matching equal constructors equateth their fields, and different constructors
-make the branch impossible. `≍` is boolean sameness; `≔` defineth a name.
+make the branch impossible. `≍` is boolean equality; `≔` defineth a name.
 
 ```tung
 bring is.tung
 let one: ℕ ≔ 1
-let checked: one = 1 ≔ eftbend
-let evenmete: [@α: *, @x: α, @y: α, p: x = y, y = x] ≔
-  match p {eftbend ^ eftbend}
+let checked: one = 1 ≔ reflect
+let symmetry: [@α: *, @x: α, @y: α, p: x = y, y = x] ≔
+  match p {reflect ^ reflect}
 ```
 
-`is.tung` also provideth `leibnitz`, `evenmete`, `throughgo`, `throughbear`,
-`inlook`, and function extensionality as the orsetting `fall_umfang`.
+`is.tung` also provideth `leibnitz`, `symmetry`, `transit`, `throughbear`,
+`inspect`, and function extensionality as the axiom `extend`.
 
-computation includeth η. a fall equaleth the lambda that applieth it, and a
-worth of an ilk with one constructor, no indices, and no field of its own ilk
+computation includeth η. a function equaleth the lambda that applieth it, and a
+value of a type with one constructor, no indices, and no field of its own type
 equaleth that constructor applied to its fields, so a match on an unknown
 pair computeth and every `𝟙` is `only`:
 
 ```tung
 let swap: [@α: *, @β: *, α ∧ β, β ∧ α] ≔ {a ⸴ b ^ b ⸴ a}
-let swap_swap: [@α: *, @β: *, p: α ∧ β, ((p swap) swap) = p] ≔ eftbend
+let swap_swap: [@α: *, @β: *, p: α ∧ β, ((p swap) swap) = p] ≔ reflect
 ```
 
 - `sorry` inhabiteth any expected type as an unfinished assumption. inspecting
   it faileth at runtime; leaving it unused doth nothing.
-- `orsetting name: type` declareth a named axiom without a body. its
+- `axiom name: type` declareth a named axiom without a body. its
   annotation bindeth no inputs; it may be shown. reaching it at runtime faileth
-  with `reached orsetting 'name'`.
+  with `reached axiom 'name'`.
 - checking accepteth both; [`--name`](#proof-checking) auditeth them. the
   [logical boundary](dependent.md#logical-boundary) stateth what this entaileth.
 
-## deeds
+## effects
 
-`α deed` is a runner action returning `α`, like haskell `IO` or purescript
-`Effect`. evaluating, storing, passing, and combining deeds performeth nothing.
-a performed deed's host inputs and results are computed fully, including
-constructor fields; contained functions and deeds stay unperformed.
+`α effect` is a runner action returning `α`, like haskell `IO` or purescript
+`Effect`. evaluating, storing, passing, and combining effects performeth nothing.
+a performed effect's host inputs and results are computed fully, including
+constructor fields; contained functions and effects stay unperformed.
 
-`deed.tung` provideth the monad operations:
+`effect.tung` provideth the monad operations:
 
-- `sheer` wrappeth a value; `warp` changeth the result; `bind` chooseth the
-  next deed from it; `then` performeth two and keepeth the latter result, and
+- `sheer` wrappeth a value; `map` changeth the result; `bind` chooseth the
+  next effect from it; `then` performeth two and keepeth the latter result, and
   `>{then, a, b, c}` performeth several in order.
-- `lift₂`, `onwend`, and `each` perform deeds left to right.
+- `lift₂`, `apply`, and `each` perform effects left to right.
 - a [fast declaration](#local-blocks-and-recursion) loopeth without bound;
-  bounded repetition useth induction. calling a fast function buildeth a deed
+  bounded repetition useth induction. calling a fast function buildeth an effect
   and performeth nothing. performing it evaluateth its inputs to their outer
   form and then unfoldeth its body, so a loop's accumulator holdeth no chain of
   pending computations, and a self-call outside any bind loopeth only when
   performed.
 
 ```tung
-let main: 𝟙 deed ≔ read bind {
+let main: 𝟙 effect ≔ read bind {
   line some ^ line write_line,
   none ^ 'no input' write_line
 }
 ```
 
-fallible operations return values: `maybe` for absence, or `ε ∨ α` with
-`incast₀` for failure and `incast₁` for success. file and process operations
+fallible operations return values: `optional` for absence, or `ε ∨ α` with
+`inject₀` for failure and `inject₁` for success. file and process operations
 use `string ∨ α`; `read` returneth none at end of input. library wrappers keep
 this sequencing:
 
-- `deed/misfaresome.tung`: `ε misfaresome α` wrappeth `(ε ∨ α) deed`;
-  `misfare` faileth, `handle` handleth a fault, and `bind` stoppeth at it.
-- `ilk/hade.tung`: `σ hade φ α` wrappeth `[σ, (α ∧ σ) φ]` for any monad `φ`;
-  `get`, `put`, and `tweak` read and change the state. `σ hade deed α` may
-  perform deeds, and `σ hade bare α`, with `bare` from `ilk/bare.tung`, is
+- `effect/fallible.tung`: `ε fallible α` wrappeth `(ε ∨ α) effect`;
+  `fail` faileth, `handle` handleth a fault, and `bind` stoppeth at it.
+- `type/hade.tung`: `σ hade φ α` wrappeth `[σ, (α ∧ σ) φ]` for any monad `φ`;
+  `get`, `put`, and `tweak` read and change the state. `σ hade effect α` may
+  perform effects, and `σ hade bare α`, with `bare` from `type/bare.tung`, is
   pure.
 - both provide `lift` and `unwrap`, which giveth the step beneath; qualify
   them when both are imported.
@@ -555,41 +555,41 @@ tasks are opaque: `fork`, `wait`, `wait_for`, and `strike` control them.
 an annotated top-level let may bind a foreign operation:
 
 ```tung
-let write: [string, 𝟙 deed] ≔ 'write' fremmed
-let eke_kindful: [ℕ, ℕ, ℕ] ≔ 'eke_kindful' fremmed {
+let write: [string, 𝟙 effect] ≔ 'write' foreign
+let add_natural: [ℕ, ℕ, ℕ] ≔ 'add_natural' foreign {
   m, 0      ^ m,
-  m, k next ^ (m eke_kindful k) next
+  m, k next ^ (m add_natural k) next
 }
 ```
 
 - the string key and complete type must match the host catalogue. a binding
-  without arguments needeth a deed type.
-- a pure operation may give a checked structural model after `fremmed`; deed
+  without arguments needeth an effect type.
+- a pure operation may give a checked structural model after `foreign`; effect
   operations cannot, and named annotation inputs require one. literal inputs
   compute natively during checking and other inputs unfold the model; the
   runner always useth the native operation.
 - `ℕ`, `ℤ`, `float`, `unicode`, and `string` are primitive types whose
   operations and bizens come from library imports, usually `often.tung`.
-  `deed` and `task` are opaque primitive families of kind `[*, *]` without
+  `effect` and `task` are opaque primitive families of kind `[*, *]` without
   constructors or eliminators.
-- host data families such as `list`, `maybe`, `wordbook`, and `𝟙` are the
-  ilks declared at their bookhoard paths; a same-spelled ilk elsewhere is a
+- host data families such as `list`, `optional`, `wordbook`, and `𝟙` are the
+  types declared at their library paths; a same-spelled type elsewhere is a
   different type.
 
-[host binding rules](dependent.md#deeds-and-host-bindings) state the required
-schemas; the [bookhoard guide](../bookhoard/reference.md) owneth library
+[host binding rules](dependent.md#effects-and-host-bindings) state the required
+schemas; the [library guide](../library/reference.md) owneth library
 contracts.
 
 ## command line
 
 ### running
 
-a runnable file declareth a local `main: 𝟙 deed`; functions and other result
+a runnable file declareth a local `main: 𝟙 effect`; functions and other result
 types are rejected. the runner performeth it once, leaving unused definitions
-alone, and printeth nothing beyond the program's output. parse, ilk, and
+alone, and printeth nothing beyond the program's output. parse, type, and
 runtime errors print diagnostics and return status 1. trailing command
 arguments reach `arguments`. `exit` endeth the run, or only its task inside
-one. a final interactive `yield` performeth a deed or fully computeth a value
+one. a final interactive `yield` performeth an effect or fully computeth a value
 before printing it.
 
 ### checking
@@ -598,23 +598,23 @@ before printing it.
 `main` is a module, and a declared `main` must be runnable as above. status is
 0 on success and 1 on rejection. output includeth:
 
-- `ilk ok` after success;
+- `type ok` after success;
 - `sorry: name` for each shown declaration, bizen, or `main` depending on
   `sorry`;
-- `orsetting: name: ilk` for each orsetting declared in the checked file;
+- `axiom: name: type` for each axiom declared in the checked file;
 - the [hole goals](#holes-and-recovery).
 
 `--no-sorry` before any command turneth reachable `sorry` into failure and
-refuseth to run a `main` that dependeth on it. orsettings stay allowed.
+refuseth to run a `main` that dependeth on it. axioms stay allowed.
 
 ### holes and recovery
 
 each `sorry` recordeth its expected type and named local context. `--check`
-printeth `path:line:column:line:column: goal: ilk`, then indented `name: ilk`
+printeth `path:line:column:line:column: goal: type`, then indented `name: type`
 lines, and the editor showeth the same. goals keep useful definition names,
 including recursive calls.
 
-diagnostics may keep independent goals beside a parse or ilk error. failed
+diagnostics may keep independent goals beside a parse or type error. failed
 declarations and their dependants stay unavailable, and broken imports provide
 no partial names. recovery resumeth at unindented declarations outside
 balanced delimiters; unfinished strings, comments, or delimiters may limit it.
@@ -624,10 +624,10 @@ running and `--name` require strict checking.
 
 `tung --name name file.tung` auditeth one named declaration, without needing
 `main`; qualified imports and private names may be selected. the whole file
-must check. its report beginneth `name: …` and `ilk: …`, listeth the reachable
+must check. its report beginneth `name: …` and `type: …`, listeth the reachable
 dependencies, and endeth `name ok` or `name error: …`:
 
-- `orsetting`: named axioms, checked against the orsetting policy;
+- `axiom`: named axioms, checked against the axiom policy;
 - `sorry`: unfinished definitions, a failure under `--no-sorry`;
 - `host`: trusted host constants, reported under neither policy.
 
@@ -638,27 +638,27 @@ inductive family its checked group. private transitive names appear as
 `path::name`. a successful audit certifieth a term under its listed
 assumptions, not their consistency.
 
-the root manifest may restrict orsettings:
+the root manifest may restrict axioms:
 
 ```yaml
 dependencies: {}
 proof:
-  orsettings: [is~fall_umfang]
+  axioms: [is~extend]
 ```
 
-- an absent policy alloweth every orsetting; `orsettings: []` alloweth none.
-- entries resolve to visible orsettings by identity. unknown, ambiguous,
-  duplicate, and non-orsetting entries are errors; a private transitive
-  orsetting must be made visible before it can be allowed.
-- `--allow-orset name`, repeated before `--name`, replaceth the project policy;
-  `--no-orset` selecteth the empty one. they cannot be combined.
+- an absent policy alloweth every axiom; `axioms: []` alloweth none.
+- entries resolve to visible axioms by identity. unknown, ambiguous,
+  duplicate, and non-axiom entries are errors; a private transitive
+  axiom must be made visible before it can be allowed.
+- `--allow-axiom name`, repeated before `--name`, replaceth the project policy;
+  `--no-axiom` selecteth the empty one. they cannot be combined.
 - status 0 meaneth successful checking and audit; anything else returneth 1.
 
 a proof is checked with `--no-sorry`, which faileth only on `sorry` in the
 selected closure:
 
 ```sh
-tung --no-sorry --no-orset --name naught_+ byspel/walkthrough.tung
+tung --no-sorry --no-axiom --name zero_+ byspel/walkthrough.tung
 ```
 
 VS Code's `Tung: Check Proof` auditeth the selected name, or the let at the

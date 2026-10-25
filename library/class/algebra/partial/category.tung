@@ -1,0 +1,25 @@
+bring class/algebra/partial/semigroupoid.tung
+bring combinator.tung
+bring is.tung
+
+show class category: [⇨: [*, *, *], @: ⇨ semigroupoid, *] {
+  let identity: [@α: *, α ⇨ α]
+
+  let identity_▷: [@α: *, @β: *, f: α ⇨ β, (identity ▷ f) = f]
+
+  let ▷_identity: [@α: *, @β: *, f: α ⇨ β, (f ▷ identity) = f]
+}
+
+bizen fallback: → category {
+  let identity: [a:] ≔ a
+
+  let identity_▷: [_:] ≔ reflect
+
+  let ▷_identity: [_:] ≔ reflect
+}
+
+## an arrow that leaveth every following arrow alone is `identity`.
+show let identity_alone
+  : [@⇨: [*, *, *], @: ⇨ category, @α: *, e: α ⇨ α,
+    p: [@β: *, f: α ⇨ β, (e ▷ f) = f], e = identity]
+  ≔ ((e ▷_identity) symmetry) transit (identity p)

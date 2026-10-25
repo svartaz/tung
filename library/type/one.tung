@@ -1,0 +1,23 @@
+bring class/equal_to_is.tung
+bring class/hath_equal.tung
+bring class/hath_to_string.tung
+bring is.tung
+bring type/two.tung
+
+show type 𝟙: * { only: 𝟙 }
+
+show let terminal: [@α: *, _: α, 𝟙] ≔ only
+
+bizen: 𝟙 hath_to_string {
+  let to_string: [_:] ≔ 'only'
+}
+
+bizen: 𝟙 hath_≍ {
+  let ≍: [_:, _:] ≔ yea
+}
+
+bizen: 𝟙 ≍_to_= {
+  let ≍_=: [only:, only:, _:] ≔ reflect
+
+  let ≍_reflect: [_:] ≔ reflect
+}

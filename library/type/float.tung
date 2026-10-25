@@ -1,0 +1,53 @@
+bring _foreign.tung
+bring class/algebra/total/hath_add.tung
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/hath_one.tung
+bring class/algebra/total/hath_subtract.tung
+bring class/algebra/total/hath_zero.tung
+bring class/algebra/total/monoid_add.tung
+bring class/algebra/total/monoid_multiply.tung
+bring class/algebra/total/semiring.tung
+bring class/hath_equal.tung
+bring class/hath_from_string.tung
+bring class/hath_to_string.tung
+bring class/order/hath_at_most.tung
+
+## ieee floats keep their useful operations without claiming exact semiring
+## laws.
+bizen: float hath_+ {
+  let + ≔ add_float
+}
+
+bizen: float hath_- {
+  let -: [a:] ≔ 0.0 subtract_float a
+
+  let -+: [a:, b:] ≔ b subtract_float a
+}
+
+bizen: float hath_zero {
+  let zero ≔ 0.0
+}
+
+bizen: float hath_· {
+  let · ≔ multiply_float
+}
+
+bizen: float hath_one {
+  let one ≔ 1.0
+}
+
+bizen: float hath_≍ {
+  let ≍ ≔ equal_float
+}
+
+bizen: float hath_≤ {
+  let ≤ ≔ at_most_float
+}
+
+bizen: float hath_to_string {
+  let to_string ≔ float_to_string
+}
+
+bizen: float hath_from_string {
+  let from_string ≔ string_to_float
+}

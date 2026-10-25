@@ -1,0 +1,67 @@
+bring class/hath_equal.tung
+bring is.tung
+bring type/three.tung
+bring type/two.tung
+
+## a boolean predicate that holdeth of one side of an equality holdeth of the
+## other.
+show let yea_throughbear
+  : [@α: *, @a: α, @b: α, f: [α, 𝟚], equal: a = b, held: (a f) = yea,
+    (b f) = yea]
+  ≔ ((f leibnitz equal) symmetry) transit held
+
+## both kilters hold when `c if t nay` holdeth: the first,
+show let yea_if_former: [c: 𝟚, t: 𝟚, held: (c if t nay) = yea, c = yea]
+  ≔ match c {
+    yea ^ reflect,
+    nay ^ match held {}
+  }
+
+## and the other.
+show let yea_if_latter: [c: 𝟚, t: 𝟚, held: (c if t nay) = yea, t = yea]
+  ≔ match c {
+    yea ^ held,
+    nay ^ match held {}
+  }
+
+## boolean equality that agreeth with `=`, as lean's `LawfulBEq`: `≍`
+## yieldeth `yea` exactly for identical values.
+show class ≍_to_=: [α: *, @: α hath_≍, *] {
+  let ≍_=: [a: α, b: α, equal: (a ≍ b) = yea, a = b]
+
+  let ≍_reflect: [a: α, (a ≍ a) = yea]
+}
+
+bizen: 𝟚 ≍_to_= {
+  let ≍_=: [a:, b:, equal:] ≔ match a, b {
+    yea, yea ^ reflect,
+    nay, nay ^ reflect,
+    yea, nay ^ match equal {},
+    nay, yea ^ match equal {}
+  }
+
+  let ≍_reflect ≔ {
+    yea ^ reflect,
+    nay ^ reflect
+  }
+}
+
+bizen: 𝟛 ≍_to_= {
+  let ≍_=: [a:, b:, equal:] ≔ match a, b {
+    fore, fore ^ reflect,
+    mid,  mid  ^ reflect,
+    aft,  aft  ^ reflect,
+    fore, mid  ^ match equal {},
+    fore, aft  ^ match equal {},
+    mid,  fore ^ match equal {},
+    mid,  aft  ^ match equal {},
+    aft,  fore ^ match equal {},
+    aft,  mid  ^ match equal {}
+  }
+
+  let ≍_reflect ≔ {
+    fore ^ reflect,
+    mid  ^ reflect,
+    aft  ^ reflect
+  }
+}

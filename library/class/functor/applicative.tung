@@ -1,0 +1,63 @@
+bring class/algebra/partial/category.tung
+bring class/algebra/partial/semigroupoid.tung
+bring class/functor.tung
+bring combinator.tung
+bring is.tung
+
+show class applicative: [φ: [*, *], @: φ functor, *] {
+  let sheer: [@α: *, α, α φ]
+
+  let apply: [@α: *, @β: *, α φ, [α, β] φ, β φ]
+
+  let apply_identity_sheer
+    : [@α: *, a: α φ, (a apply ((identity @→ @α) sheer)) = a]
+
+  let sheer_apply_sheer
+    : [@α: *, @β: *, a: α, f: [α, β],
+      ((a sheer) apply (f sheer)) = ((a f) sheer)]
+
+  let apply_apply
+    : [@α: *, @β: *, @γ: *, a: α φ, f: [α, β], g: [β, γ],
+      <{apply, a, f sheer, g sheer} = (a apply (f ▷ g $ sheer))]
+
+  let sheer_apply
+    : [@α: *, @β: *, a: α, fs: [α, β] φ, ((a sheer) apply fs) = (fs map (a ▶))]
+}
+
+## the reader sheereth a constant and applieth pointwise.
+bizen: [@ρ: *, (ρ →) applicative] {
+  let sheer: [a:, _:] ≔ a
+
+  let apply: [a:, fs:, r:] ≔ (r a) (r fs)
+
+  let apply_identity_sheer: [_:] ≔ reflect
+
+  let sheer_apply_sheer: [_:, _:] ≔ reflect
+
+  let apply_apply: [_:, _:, _:] ≔ reflect
+
+  let sheer_apply: [_:, _:] ≔ reflect
+}
+
+show let lift₂
+  : [@φ: [*, *], @: φ applicative, @α₀: *, @α₁: *, @β: *, a₀: α₀ φ, a₁: α₁ φ,
+    f: [α₀, α₁, β], β φ]
+  ≔ >{apply, a₁, a₀, f sheer}
+
+show let lift₃
+  : [@φ: [*, *], @: φ applicative, @α₀: *, @α₁: *, @α₂: *, @β: *, a₀: α₀ φ,
+    a₁: α₁ φ, a₂: α₂ φ, f: [α₀, α₁, α₂, β], β φ]
+  ≔ >{apply, a₂, a₁, a₀, f sheer}
+
+show let lift₄
+  : [@φ: [*, *], @: φ applicative, @α₀: *, @α₁: *, @α₂: *, @α₃: *, @β: *,
+    a₀: α₀ φ, a₁: α₁ φ, a₂: α₂ φ, a₃: α₃ φ, f: [α₀, α₁, α₂, α₃, β], β φ]
+  ≔ >{apply, a₃, a₂, a₁, a₀, f sheer}
+
+show let keep_first
+  : [@φ: [*, *], @: φ applicative, @α: *, @β: *, a: α φ, b: β φ, α φ]
+  ≔ a lift₂ b singal
+
+show let keep_other
+  : [@φ: [*, *], @: φ applicative, @α: *, @β: *, a: α φ, b: β φ, β φ]
+  ≔ a lift₂ b (singal flip)

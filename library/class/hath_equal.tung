@@ -1,0 +1,25 @@
+bring type/three.tung
+bring type/two.tung
+
+show class hath_≍: [α: *, *] {
+  let ≍: [α, α, 𝟚]
+}
+
+show let ≭: [@α: *, @: α hath_≍, a: α, b: α, 𝟚] ≔ (a ≍ b) if nay yea
+
+bizen: 𝟚 hath_≍ {
+  let ≍ ≔ {
+    yea, yea;
+    nay, nay ^ yea,
+    _,   _   ^ nay
+  }
+}
+
+bizen: 𝟛 hath_≍ {
+  let ≍ ≔ {
+    fore, fore ^ yea,
+    mid,  mid  ^ yea,
+    aft,  aft  ^ yea,
+    _,    _    ^ nay
+  }
+}

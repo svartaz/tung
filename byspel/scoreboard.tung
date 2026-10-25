@@ -1,11 +1,11 @@
-bring flock/functor/downshaper.tung
-bring flock/functor/hath_throughwend.tung
-bring ilk/list.tung
-bring ilk/maybe.tung
-bring ilk/or.tung
+bring class/functor/catamorphism.tung
+bring class/functor/hath_traverse.tung
 bring often.tung
+bring type/list.tung
+bring type/optional.tung
+bring type/or.tung
 
-ilk team: * {
+type team: * {
   north: team,
   south: team,
   east: team,
@@ -22,27 +22,27 @@ bizen: team hath_to_string {
 }
 
 ## each field is read as `g.home`; a value is built from its fields in order.
-ilk game: * {
+type game: * {
   meet: [home: team, home_score: ℤ, away: team, away_score: ℤ, game]
 }
 
-ilk scoreline: * {
+type scoreline: * {
   tally: [home: team, home_score: ℤ, home_points: ℤ, away: team, away_score: ℤ,
     away_points: ℤ, scoreline]
 }
 
-ilk outstruck_game: * {
+type outstruck_game: * {
   call_off: [home: team, away: team, reason: string, outstruck_game]
 }
 
-ilk match_outcome: * {
+type match_outcome: * {
   finished: [scoreline, match_outcome],
   outstruck: [outstruck_game, match_outcome]
 }
 
-ilk standing: * { stand: [team: team, played: ℤ, points: ℤ, standing] }
+type standing: * { stand: [team: team, played: ℤ, points: ℤ, standing] }
 
-let same_team: [left: team, right: team, 𝟚] ≔ match left, right {
+let equal_team: [left: team, right: team, 𝟚] ≔ match left, right {
   north, north ^ yea,
   south, south ^ yea,
   east,  east  ^ yea,
@@ -51,17 +51,17 @@ let same_team: [left: team, right: team, 𝟚] ≔ match left, right {
 }
 
 let checked_score: [score: ℤ, string ∨ ℤ] ≔ match score < +0 {
-  yea ^ 'a score cannot be negative' incast₀,
-  nay ^ score incast₁
+  yea ^ 'a score cannot be negative' inject₀,
+  nay ^ score inject₁
 }
 
 let ordered_scoreline
   : [g: game, home_score: ℤ, away_score: ℤ, string ∨ scoreline]
   ≔ match home_score ≤ away_score, away_score ≤ home_score {
-    yea, yea ^ (g.home tally home_score +1 g.away away_score +1) incast₁,
-    nay, yea ^ (g.home tally home_score +3 g.away away_score +0) incast₁,
-    yea, nay ^ (g.home tally home_score +0 g.away away_score +3) incast₁,
-    nay, nay ^ 'scores are not ordered' incast₀
+    yea, yea ^ (g.home tally home_score +1 g.away away_score +1) inject₁,
+    nay, yea ^ (g.home tally home_score +3 g.away away_score +0) inject₁,
+    yea, nay ^ (g.home tally home_score +0 g.away away_score +3) inject₁,
+    nay, nay ^ 'scores are not ordered' inject₀
   }
 
 let scoreline_of: [g: game, string ∨ scoreline]
@@ -71,8 +71,8 @@ let scoreline_of: [g: game, string ∨ scoreline]
   }
 
 let settle: [g: game, match_outcome] ≔ match g scoreline_of {
-  line incast₁   ^ line finished,
-  reason incast₀ ^ (g.home call_off g.away reason) outstruck
+  line inject₁   ^ line finished,
+  reason inject₀ ^ (g.home call_off g.away reason) outstruck
 }
 
 let delay_of: [luck: float, ℕ] ≔ match (luck · 30.0) ⌊ $ bind to_ℕ {
@@ -80,24 +80,24 @@ let delay_of: [luck: float, ℕ] ≔ match (luck · 30.0) ⌊ $ bind to_ℕ {
   none       ^ 0
 }
 
-let start: [g: game, (match_outcome task) deed]
+let start: [g: game, (match_outcome task) effect]
   ≔ random bind {luck ^ ((luck delay_of) sleep) then (g settle $ sheer) $ fork}
 
-let eke_outcome: [standing, match_outcome, standing] ≔ {
+let add_outcome: [standing, match_outcome, standing] ≔ {
   s, _ outstruck ^ s,
   s, line
-    finished ^ match s.team same_team line.home, s.team same_team line.away {
+    finished ^ match s.team equal_team line.home, s.team equal_team line.away {
       yea, _   ^ s.team stand (s.played + +1) (s.points + line.home_points),
       nay, yea ^ s.team stand (s.played + +1) (s.points + line.away_points),
       nay, nay ^ s
     }
 }
 
-let onwend_outcome
+let apply_outcome
   : [standings: standing list, outcome: match_outcome, standing list]
-  ≔ standings warp {s ^ s eke_outcome outcome}
+  ≔ standings map {s ^ s add_outcome outcome}
 
-let print_outcome: [match_outcome, 𝟙 deed] ≔ {
+let print_outcome: [match_outcome, 𝟙 effect] ≔ {
   line finished ^ >{then,
     line.home to_string $ write,
     ' ' write,
@@ -116,7 +116,7 @@ let print_outcome: [match_outcome, 𝟙 deed] ≔ {
   }
 }
 
-let print_standing: [s: standing, 𝟙 deed] ≔ >{then,
+let print_standing: [s: standing, 𝟙 effect] ≔ >{then,
   s.team to_string $ write,
   ':' write,
   s.points to_string $ write,
@@ -145,23 +145,24 @@ let initial_standings: standing list ≔ >{‥,
 }
 
 ## a cancelled or crashed task leaveth no results.
-let finished_outcomes: [waited: (match_outcome maybe) list, match_outcome list]
+let finished_outcomes
+  : [waited: (match_outcome optional) list, match_outcome list]
   ≔ match waited sequence {
     outcomes some ^ outcomes,
     none          ^ empty
   }
 
-let eftbare: [outcomes: match_outcome list, 𝟙 deed] ≔ >{then,
+let eftbare: [outcomes: match_outcome list, 𝟙 effect] ≔ >{then,
   '' write_line,
   'results' write_line,
   outcomes each print_outcome,
   '' write_line,
   'standings' write_line,
-  outcomes gather₁ initial_standings onwend_outcome $ each print_standing
+  outcomes gather₁ initial_standings apply_outcome $ each print_standing
 }
 
-let main: 𝟙 deed ≔ >{then,
+let main: 𝟙 effect ≔ >{then,
   'launching match jobs' write_line,
-  fixtures throughwend start $ bind {tasks ^ tasks throughwend wait} $ warp
+  fixtures traverse start $ bind {tasks ^ tasks traverse wait} $ map
     finished_outcomes $ bind eftbare
 }

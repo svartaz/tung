@@ -1,4 +1,4 @@
-bring flock/algebra/whole/hath_fold.tung
+bring class/algebra/total/hath_multiply.tung
 bring often.tung
 bring web/request.tung
 bring web/server.tung
@@ -8,8 +8,8 @@ let respond: [r: _request, _response] ≔ match (r request~target) ≍ '/' {
   nay ^ 'not found\n' not_found
 }
 
-let route: [r: _request, _response deed]
+let route: [r: _request, _response effect]
   ≔ ('request:' · (r request~target) $ write_line) then (r respond $ sheer)
 
-let main: 𝟙 deed
+let main: 𝟙 effect
   ≔ 8080 serve route $ bind {message ^ 'web server:' · message $ write_line}

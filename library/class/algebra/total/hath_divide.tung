@@ -1,0 +1,11 @@
+bring _foreign.tung
+
+show class hath_÷: [α: *, *] {
+  let ÷: [α, α, α]
+}
+
+## ieee floats provide division, but rounding, infinities, and nan prevent a
+## lawful field bizen.
+bizen: float hath_÷ {
+  let ÷ ≔ divide_float
+}

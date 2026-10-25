@@ -22,10 +22,10 @@ group =
       ++ map
         (uncurry invalidProofPolicy)
         [ ("null", "expected Object"),
-          ("{ orsetting: [] }", "unknown proof field 'orsetting'"),
-          ("{ orsettings: null }", "expected Array"),
-          ("{ orsettings: [1] }", "expected String"),
-          ("{ orsettings: [trusted, trusted] }", "duplicate proof orsetting names")
+          ("{ axiom: [] }", "unknown proof field 'axiom'"),
+          ("{ axioms: null }", "expected Array"),
+          ("{ axioms: [1] }", "expected String"),
+          ("{ axioms: [trusted, trusted] }", "duplicate proof axiom names")
         ]
 
 proofPolicyForms :: Test
@@ -39,7 +39,7 @@ proofPolicyForms = withDirectory \root -> do
           writeFile (root </> "tung.yaml") ("dependencies: {}\n" ++ policy)
           proofAxiomPolicy owner
       )
-      ["", "proof: {}\n", "proof: { orsettings: [] }\n", "proof: { orsettings: [trusted, 'often~≍_to_='] }\n"]
+      ["", "proof: {}\n", "proof: { axioms: [] }\n", "proof: { axioms: [trusted, 'often~≍_to_='] }\n"]
   expectEq
     "distinguish absent and empty proof axiom policies and preserve names"
     [Right Nothing, Right Nothing, Right Nothing, Right (Just []), Right (Just ["trusted", "often~≍_to_="])]
@@ -48,15 +48,15 @@ proofPolicyForms = withDirectory \root -> do
 proofPolicyNearestProject :: Test
 proofPolicyNearestProject = withDirectory \root -> do
   let library = root </> "library"
-      project = root </> "forthcast"
+      project = root </> "project"
       source = project </> "src"
       owner = source </> "main.tung"
       dependencies = "dependencies: { sample: { path: ../library } }\n"
   mapM_ (createDirectoryIfMissing True) [library, source]
   writeFile owner "let answer ≔ +1"
-  writeFile (root </> "tung.yaml") "dependencies: {}\nproof: { orsettings: [outer] }\n"
-  writeFile (library </> "tung.yaml") "dependencies: {}\nproof: { orsettings: [] }\n"
-  writeFile (project </> "tung.yaml") (dependencies ++ "proof: { orsettings: [trusted] }\n")
+  writeFile (root </> "tung.yaml") "dependencies: {}\nproof: { axioms: [outer] }\n"
+  writeFile (library </> "tung.yaml") "dependencies: {}\nproof: { axioms: [] }\n"
+  writeFile (project </> "tung.yaml") (dependencies ++ "proof: { axioms: [trusted] }\n")
   selected <- proofAxiomPolicy owner
   roots <- resolveLibraryRoots owner
   writeFile (project </> "tung.yaml") dependencies
@@ -80,52 +80,52 @@ invalidProofPolicy policy fragment = withDirectory \root -> do
 pinnedCheckout :: Test
 pinnedCheckout = withDirectory \root -> do
   let repository = root </> "source"
-      project = root </> "forthcast"
+      project = root </> "project"
       owner = project </> "main.tung"
-      libraryFile = repository </> "worth.tung"
+      libraryFile = repository </> "value.tung"
       manifest = project </> "tung.yaml"
   initRepository repository
   createDirectory project
-  writeFile libraryFile "show let worth ≔ +41"
+  writeFile libraryFile "show let value ≔ +41"
   commitAll repository "first"
   commit <- runGit ["-C", repository, "rev-parse", "HEAD"]
   writeFile manifest (yamlManifest [("sample", "file://" ++ repository, map toUpper commit)])
-  writeFile owner "bring worth.tung let answer ≔ worth + +1"
+  writeFile owner "bring value.tung let answer ≔ value + +1"
   first <- resolveLibraryRoots owner
   imported <- case first of
     Left message -> pure (Left message)
     Right roots -> do
       projectResult <- loadProjectFile roots owner
-      pure (Map.lookup "worth.tung" . projectImports <$> projectResult)
-  writeFile libraryFile "show let worth ≔ +99"
+      pure (Map.lookup "value.tung" . projectImports <$> projectResult)
+  writeFile libraryFile "show let value ≔ +99"
   commitAll repository "second"
   renameDirectory repository (root </> "source-moved")
   offline <- resolveLibraryRoots owner
   pure $ case (first, imported, offline) of
-    (Right [firstRoot], Right (Just "show let worth ≔ +41"), Right [offlineRoot]) ->
+    (Right [firstRoot], Right (Just "show let value ≔ +41"), Right [offlineRoot]) ->
       if firstRoot == offlineRoot then Nothing else Just "git library cache changed after its source moved"
     other -> Just ("pinned git library failed: " ++ show other)
 
 gitSubdirectory :: Test
 gitSubdirectory = withDirectory \root -> do
   let repository = root </> "source"
-      library = repository </> "bookhoard"
-      project = root </> "forthcast"
+      library = repository </> "library"
+      project = root </> "project"
       owner = project </> "main.tung"
   initRepository repository
   createDirectory library
   createDirectory project
-  writeFile (library </> "worth.tung") "show let worth ≔ +42"
+  writeFile (library </> "value.tung") "show let value ≔ +42"
   writeFile (repository </> "outside.tung") "show let outside ≔ +0"
-  commitAll repository "bookhoard"
+  commitAll repository "library"
   commit <- runGit ["-C", repository, "rev-parse", "HEAD"]
-  writeFile (project </> "tung.yaml") (yamlSubdirManifest [("bookhoard", repository, commit, "bookhoard")])
-  writeFile owner "bring worth.tung let answer ≔ worth"
+  writeFile (project </> "tung.yaml") (yamlSubdirManifest [("library", repository, commit, "library")])
+  writeFile owner "bring value.tung let answer ≔ value"
   roots <- resolveLibraryRoots owner
-  imported <- importedSource roots owner "worth.tung"
+  imported <- importedSource roots owner "value.tung"
   pure $ case (roots, imported) of
-    (Right [libraryRoot], Right (Just "show let worth ≔ +42"))
-      | takeFileName libraryRoot == "bookhoard" -> Nothing
+    (Right [libraryRoot], Right (Just "show let value ≔ +42"))
+      | takeFileName libraryRoot == "library" -> Nothing
     other -> Just ("git library subdirectory failed: " ++ show other)
 
 distinctGitSubdirectories :: Test
@@ -133,7 +133,7 @@ distinctGitSubdirectories = withDirectory \root -> do
   let repository = root </> "source"
       first = repository </> "first"
       second = repository </> "second"
-      project = root </> "forthcast"
+      project = root </> "project"
       owner = project </> "main.tung"
   initRepository repository
   mapM_ createDirectory [first, second, project]
@@ -153,12 +153,12 @@ distinctGitSubdirectories = withDirectory \root -> do
 conflictingGitSubdirectoryNames :: Test
 conflictingGitSubdirectoryNames = withDirectory \root -> do
   let repository = root </> "source"
-      project = root </> "forthcast"
+      project = root </> "project"
       owner = project </> "main.tung"
   initRepository repository
   createDirectory (repository </> "library")
   createDirectory project
-  writeFile (repository </> "library" </> "worth.tung") "show let worth ≔ +1"
+  writeFile (repository </> "library" </> "value.tung") "show let value ≔ +1"
   commitAll repository "library"
   commit <- runGit ["-C", repository, "rev-parse", "HEAD"]
   writeFile (project </> "tung.yaml") (yamlSubdirManifest [("first", repository, commit, "library"), ("second", repository, commit, "library")])
@@ -171,7 +171,7 @@ escapedGitSubdirectory :: Test
 escapedGitSubdirectory = withDirectory \root -> do
   let repository = root </> "source"
       outside = root </> "outside"
-      project = root </> "forthcast"
+      project = root </> "project"
       owner = project </> "main.tung"
   initRepository repository
   createDirectory outside
@@ -188,12 +188,12 @@ escapedGitSubdirectory = withDirectory \root -> do
 localPathDependency :: Test
 localPathDependency = withDirectory \root -> do
   let library = root </> "source"
-      project = root </> "forthcast"
+      project = root </> "project"
       owner = project </> "main.tung"
-      source = library </> "worth.tung"
+      source = library </> "value.tung"
   createDirectory library
   createDirectory project
-  writeFile source "show let worth ≔ +41"
+  writeFile source "show let value ≔ +41"
   writeFile
     (project </> "tung.yaml")
     """
@@ -202,15 +202,15 @@ localPathDependency = withDirectory \root -> do
         path: ../source
 
     """
-  writeFile owner "bring worth.tung let answer ≔ worth + +1"
+  writeFile owner "bring value.tung let answer ≔ value + +1"
   first <- resolveLibraryRoots owner
-  firstImport <- importedSource first owner "worth.tung"
-  writeFile source "show let worth ≔ +99"
+  firstImport <- importedSource first owner "value.tung"
+  writeFile source "show let value ≔ +99"
   second <- resolveLibraryRoots owner
-  secondImport <- importedSource second owner "worth.tung"
+  secondImport <- importedSource second owner "value.tung"
   expected <- canonicalizePath library
   pure $ case (first, firstImport, second, secondImport) of
-    (Right [firstRoot], Right (Just "show let worth ≔ +41"), Right [secondRoot], Right (Just "show let worth ≔ +99"))
+    (Right [firstRoot], Right (Just "show let value ≔ +41"), Right [secondRoot], Right (Just "show let value ≔ +99"))
       | firstRoot == expected && secondRoot == expected -> Nothing
     other -> Just ("local library path failed: " ++ show other)
 
@@ -218,11 +218,11 @@ transitivePathDependency :: Test
 transitivePathDependency = withDirectory \root -> do
   let dependency = root </> "dependency"
       parent = root </> "parent"
-      project = root </> "forthcast"
+      project = root </> "project"
       owner = project </> "main.tung"
   mapM_ createDirectory [dependency, parent, project]
   writeFile (dependency </> "dep.tung") "show let answer ≔ +42"
-  writeFile (parent </> "parent.tung") "bring dep.tung show let worth ≔ answer"
+  writeFile (parent </> "parent.tung") "bring dep.tung show let value ≔ answer"
   writeFile
     (parent </> "tung.yaml")
     """
@@ -239,12 +239,12 @@ transitivePathDependency = withDirectory \root -> do
         path: ../parent
 
     """
-  writeFile owner "bring parent.tung let outcome ≔ worth"
+  writeFile owner "bring parent.tung let outcome ≔ value"
   roots <- resolveLibraryRoots owner
   imported <- importedSource roots owner "dep.tung"
   pure $ case (roots, imported) of
     (Right [_, _], Right (Just "show let answer ≔ +42")) -> Nothing
-    other -> Just ("throughgo local path failed: " ++ show other)
+    other -> Just ("transit local path failed: " ++ show other)
 
 importedSource :: Either String [FilePath] -> FilePath -> FilePath -> IO (Either String (Maybe String))
 importedSource (Left message) _ _ = pure (Left message)
@@ -309,20 +309,20 @@ transitiveCheckout :: Test
 transitiveCheckout = withDirectory \root -> do
   let dependency = root </> "dependency"
       parent = root </> "parent"
-      project = root </> "forthcast"
+      project = root </> "project"
       owner = project </> "main.tung"
   initRepository dependency
   writeFile (dependency </> "dep.tung") "show let answer ≔ +42"
   commitAll dependency "dependency"
   dependencyCommit <- runGit ["-C", dependency, "rev-parse", "HEAD"]
   initRepository parent
-  writeFile (parent </> "parent.tung") "bring dep.tung show let worth ≔ answer"
+  writeFile (parent </> "parent.tung") "bring dep.tung show let value ≔ answer"
   writeFile (parent </> "tung.yaml") (yamlManifest [("dependency", dependency, dependencyCommit)])
   commitAll parent "parent"
   parentCommit <- runGit ["-C", parent, "rev-parse", "HEAD"]
   createDirectory project
   writeFile (project </> "tung.yaml") (yamlManifest [("parent", "../parent", parentCommit)])
-  writeFile owner "bring parent.tung let outcome ≔ worth"
+  writeFile owner "bring parent.tung let outcome ≔ value"
   resolved <- resolveLibraryRoots owner
   imported <- case resolved of
     Left message -> pure (Left message)
@@ -331,21 +331,21 @@ transitiveCheckout = withDirectory \root -> do
       pure (Map.lookup "dep.tung" . projectImports <$> projectResult)
   pure $ case (resolved, imported) of
     (Right [_, _], Right (Just "show let answer ≔ +42")) -> Nothing
-    other -> Just ("throughgo git library failed: " ++ show other)
+    other -> Just ("transit git library failed: " ++ show other)
 
 sharedTransitivePin :: Test
 sharedTransitivePin = withDirectory \root -> do
   (repository, first, _) <- dependencyVersions root
   owner <- createDiamond root repository first "shared" first
   result <- resolveLibraryRoots owner
-  expect "shareth one checkout for an agreed throughgo pin" (either (const False) ((== 3) . length) result)
+  expect "shareth one checkout for an agreed transit pin" (either (const False) ((== 3) . length) result)
 
 conflictingTransitivePins :: Test
 conflictingTransitivePins = withDirectory \root -> do
   (repository, first, second) <- dependencyVersions root
   owner <- createDiamond root repository first "shared" second
   result <- resolveLibraryRoots owner
-  expect "rejecteth conflicting throughgo pins before import" $
+  expect "rejecteth conflicting transit pins before import" $
     either (\message -> all (`isInfixOf` message) ["library 'shared'", first, second]) (const False) result
 
 conflictingAliasedPins :: Test
@@ -378,7 +378,7 @@ conflictingLibrarySources = withDirectory \root -> do
 conflictingPathNames :: Test
 conflictingPathNames = withDirectory \root -> do
   let source = root </> "source"
-      project = root </> "forthcast"
+      project = root </> "project"
       owner = project </> "main.tung"
   createDirectory source
   createDirectory project
@@ -402,10 +402,10 @@ conflictingPathAndGitSources :: Test
 conflictingPathAndGitSources = withDirectory \root -> do
   let source = root </> "source"
       parent = root </> "parent"
-      project = root </> "forthcast"
+      project = root </> "project"
       owner = project </> "main.tung"
   initRepository source
-  writeFile (source </> "worth.tung") "show let worth ≔ +1"
+  writeFile (source </> "value.tung") "show let value ≔ +1"
   commitAll source "source"
   commit <- runGit ["-C", source, "rev-parse", "HEAD"]
   createDirectory parent
@@ -474,7 +474,7 @@ createDiamond root dependency first secondName second =
 createDiamondWith :: FilePath -> (FilePath, String, String) -> (FilePath, String, String) -> IO FilePath
 createDiamondWith root left right = do
   parents <- traverse createParent [("left", left), ("right", right)]
-  let project = root </> "forthcast"
+  let project = root </> "project"
       owner = project </> "main.tung"
   createDirectory project
   writeFile (project </> "tung.yaml") (yamlManifest [(name, "../" ++ name, commit) | (name, commit) <- parents])

@@ -1,0 +1,32 @@
+bring class/order/hath_at_most.tung
+bring class/order/order_partial.tung
+bring class/order/order_total.tung
+bring class/order/semilattice_lower.tung
+bring class/order/semilattice_upper.tung
+bring is.tung
+bring type/two.tung
+
+## a carrier with compatible infimum and supremum semilattices.
+show class lattice: [α: *, @: α semilattice_lower, @: α semilattice_upper, *] {
+  let ⋏_⋎_swallow: [a: α, b: α, (a ⋏ (a ⋎ b)) = a]
+
+  let ⋎_⋏_swallow: [a: α, b: α, (a ⋎ (a ⋏ b)) = a]
+}
+
+bizen: [@β: *, @: β lattice, @α: *, [α, β] lattice] {
+  let ⋏_⋎_swallow: [f:, g:] ≔ {a ^ (a f) ⋏_⋎_swallow (a g)} extend
+
+  let ⋎_⋏_swallow: [f:, g:] ≔ {a ^ (a f) ⋎_⋏_swallow (a g)} extend
+}
+
+bizen: [@α: *, @: α order_total, α lattice] {
+  let ⋏_⋎_swallow: [a:, b:] ≔ (a ≤ b) inspect {
+    yea, k ^ a ⋏_yea b k,
+    nay, _ ^ a ⋏_yea a (a ≤_reflect)
+  }
+
+  let ⋎_⋏_swallow: [a:, b:] ≔ (a ≤ b) inspect {
+    yea, _ ^ a ⋏_yea a (a ≤_reflect),
+    nay, k ^ a ⋎_nay b k
+  }
+}

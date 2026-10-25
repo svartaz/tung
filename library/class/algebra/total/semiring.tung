@@ -1,0 +1,78 @@
+bring class/algebra/total/hath_add.tung
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/hath_one.tung
+bring class/algebra/total/hath_zero.tung
+bring class/algebra/total/monoid_add.tung
+bring class/algebra/total/monoid_multiply.tung
+bring class/algebra/total/semigroup_add.tung
+bring is.tung
+bring type/two.tung
+
+show class semiring: [α: *, @: α monoid_+, @: α monoid_·, *] {
+  let +_swap: [a: α, b: α, (a + b) = (b + a)]
+
+  let ·_+: [a: α, b: α, c: α, (a · (b + c)) = ((a · b) + (a · c))]
+
+  let +_·: [a: α, b: α, c: α, ((a + b) · c) = ((a · c) + (b · c))]
+
+  let zero_·: [a: α, (zero · a) = zero]
+
+  let ·_zero: [a: α, (a · zero) = zero]
+}
+
+bizen: [@β: *, @: β semiring, @α: *, [α, β] semiring] {
+  let +: [f:, g:, a:] ≔ (a f) + (a g)
+
+  let zero: [_:] ≔ zero
+
+  let +_+: [f:, g:, h:] ≔ {a ^ (a f) +_+ (a g) (a h)} extend
+
+  let zero_+: [f:] ≔ {a ^ (a f) zero_+} extend
+
+  let +_zero: [f:] ≔ {a ^ (a f) +_zero} extend
+
+  let +_swap: [f:, g:] ≔ {a ^ (a f) +_swap (a g)} extend
+
+  let ·_+: [f:, g:, h:] ≔ {a ^ (a f) ·_+ (a g) (a h)} extend
+
+  let +_·: [f:, g:, h:] ≔ {a ^ (a f) +_· (a g) (a h)} extend
+
+  let zero_·: [f:] ≔ {a ^ (a f) zero_·} extend
+
+  let ·_zero: [f:] ≔ {a ^ (a f) ·_zero} extend
+}
+
+bizen: 𝟚 semiring {
+  let +_swap ≔ {
+    nay, nay;
+    nay, yea;
+    yea, nay;
+    yea, yea ^ reflect
+  }
+
+  let ·_+ ≔ {
+    nay, _,   _;
+    yea, nay, nay;
+    yea, nay, yea;
+    yea, yea, nay;
+    yea, yea, yea ^ reflect
+  }
+
+  let +_· ≔ {
+    nay, nay, nay;
+    nay, nay, yea;
+    nay, yea, nay;
+    nay, yea, yea;
+    yea, nay, nay;
+    yea, nay, yea;
+    yea, yea, nay;
+    yea, yea, yea ^ reflect
+  }
+
+  let zero_·: [_:] ≔ reflect
+
+  let ·_zero ≔ {
+    nay;
+    yea ^ reflect
+  }
+}

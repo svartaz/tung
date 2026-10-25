@@ -1,0 +1,38 @@
+bring class/algebra/total/hath_add.tung
+bring class/algebra/total/hath_divide_leftover.tung
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/hath_subtract.tung
+bring class/algebra/total/hath_zero.tung
+bring class/algebra/total/ring.tung
+bring class/order/hath_at_most.tung
+bring class/order/order_total.tung
+bring is.tung
+bring type/and.tung
+bring type/optional.tung
+bring type/two.tung
+bring type/zero.tung
+
+## euclidean division, whose leftover lieth between zero and the divisor's
+## length. dividing by any divisor but zero yieldeth an outcome; dividing by
+## zero may yield none, which the other laws skip.
+show class euclidean: [α: *, @: α ring, @: α hath_%, @: α order_total, *] {
+  let %_some
+    : [dividend: α, divisor: α, nonzero: [divisor = zero, 𝟘],
+      ((dividend % divisor) is_some) = yea]
+
+  let %_·_+: [dividend: α, divisor: α, (match dividend % divisor {
+    none                       ^ dividend,
+    (quotient ⸴ leftover) some ^ (quotient · divisor) + leftover
+  }) = dividend]
+
+  let %_nonnegative: [dividend: α, divisor: α, (match dividend % divisor {
+    none                ^ yea,
+    (_ ⸴ leftover) some ^ zero ≤ leftover
+  }) = yea]
+
+  let %_bounded: [dividend: α, divisor: α, (match dividend % divisor {
+    none                ^ yea,
+    (_ ⸴ leftover) some ^
+      (zero ≤ divisor) if (leftover < divisor) (leftover < (divisor -+ zero))
+  }) = yea]
+}

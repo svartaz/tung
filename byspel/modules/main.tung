@@ -1,10 +1,10 @@
 bring host.tung
-bring kindful.tung tale
+bring natural.tung tale
 
 ## bare names come from an unambiguous import; qualified names always work.
-let repeat: [nat, 𝟙 deed, 𝟙 deed] ≔ {
-  naught, _     ^ only deed_sheer,
+let repeat: [nat, 𝟙 effect, 𝟙 effect] ≔ {
+  zero,   _     ^ only effect_sheer,
   n next, doing ^ doing then (n repeat doing)
 }
 
-let main: 𝟙 deed ≔ >{then, tale~four repeat ('tung ' write), '\n' host~write}
+let main: 𝟙 effect ≔ >{then, tale~four repeat ('tung ' write), '\n' host~write}

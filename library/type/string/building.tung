@@ -1,0 +1,106 @@
+bring _foreign.tung
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/hath_one.tung
+bring class/algebra/total/monoid_multiply.tung
+bring class/algebra/total/semigroup_multiply.tung
+bring class/equal_to_is.tung
+bring class/hath_equal.tung
+bring class/order/hath_at_most.tung
+bring class/order/order_partial.tung
+bring class/order/order_total.tung
+bring is.tung
+bring type/and.tung
+bring type/list.tung
+bring type/list_order.tung
+bring type/optional.tung
+bring type/two.tung
+bring type/unicode.tung
+
+show let string_to_list: [string, unicode list] ≔ 'string_to_list' foreign
+
+show let list_to_string: [unicode list, string] ≔ 'list_to_string' foreign
+
+## a string is its list of unicode scalars. the host's `string` is opaque, so
+## both round trips are listed assumptions; the laws below are proved from
+## them and the list laws.
+show axiom list_string: [s: string, ((s string_to_list) list_to_string) = s]
+
+show axiom string_list
+  : [l: unicode list, ((l list_to_string) string_to_list) = l]
+
+show let equal_string: [string, string, 𝟚]
+  ≔ 'equal_string' foreign {a, b ^ (a string_to_list) ≍ (b string_to_list)}
+
+show let at_most_string: [string, string, 𝟚]
+  ≔ 'at_most_string' foreign {a, b ^ (a string_to_list) ≤ (b string_to_list)}
+
+show let join_string: [string, string, string]
+  ≔ 'join_string' foreign {
+    a, b ^ ((a string_to_list) · (b string_to_list)) list_to_string
+  }
+
+bizen: string hath_≍ {
+  let ≍ ≔ equal_string
+}
+
+bizen: string hath_≤ {
+  let ≤ ≔ at_most_string
+}
+
+## strings with one list of scalars are one string.
+let lemma_=
+  : [a: string, b: string, equal: (a string_to_list) = (b string_to_list),
+    a = b]
+  ≔ >{transit,
+    (a list_string) symmetry,
+    list_to_string leibnitz equal,
+    b list_string
+  }
+
+bizen: string ≍_to_= {
+  let ≍_=: [a:, b:, equal:]
+    ≔ a lemma_= b ((a string_to_list) ≍_= (b string_to_list) equal)
+
+  let ≍_reflect: [a:] ≔ (a string_to_list) ≍_reflect
+}
+
+bizen: string order_partial {
+  let ≤_reflect: [a:] ≔ (a string_to_list) ≤_reflect
+
+  let ≤_antisymmetry: [a:, b:]
+    ≔ (a string_to_list) ≤_antisymmetry (b string_to_list)
+
+  let ≤_transit: [a:, b:, c:]
+    ≔ (a string_to_list) ≤_transit (b string_to_list) (c string_to_list)
+
+  let ≤_=: [a:, b:, below:, above:]
+    ≔ a lemma_= b ((a string_to_list) ≤_= (b string_to_list) below above)
+}
+
+bizen: string order_total {
+  let ≤_total: [a:, b:] ≔ (a string_to_list) ≤_total (b string_to_list)
+}
+
+bizen: string semigroup_· {
+  let · ≔ join_string
+
+  let ·_·: [a:, b:, c:] ≔ >{transit,
+    {l ^ ((a string_to_list) hath_multiply~· l) list_to_string} leibnitz
+      (((b string_to_list) hath_multiply~· (c string_to_list)) string_list),
+    list_to_string leibnitz
+      ((a string_to_list) ·_· (b string_to_list) (c string_to_list)),
+    {l ^ (l hath_multiply~· (c string_to_list)) list_to_string} leibnitz
+      ((((a string_to_list) hath_multiply~· (b string_to_list)) string_list)
+        symmetry)
+  }
+}
+
+bizen: string monoid_· {
+  let one ≔ ''
+
+  let one_·: [a:] ≔ a list_string
+
+  let ·_one: [a:]
+    ≔ (list_to_string leibnitz ((a string_to_list) ·_one)) transit
+      (a list_string)
+}

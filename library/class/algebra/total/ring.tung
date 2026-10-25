@@ -1,0 +1,79 @@
+bring class/algebra/total/group_add.tung
+bring class/algebra/total/hath_add.tung
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/hath_one.tung
+bring class/algebra/total/hath_subtract.tung
+bring class/algebra/total/hath_zero.tung
+bring class/algebra/total/monoid_multiply.tung
+bring class/algebra/total/semiring.tung
+bring is.tung
+bring type/two.tung
+
+## a semiring with flipping. `ring` reacheth `+` only through `semiring`;
+## the bizen below maketh every ring a `group_+` through that same addition,
+## so laws about a ring and its additive group share one dictionary.
+show class ring: [α: *, @: α semiring, @: α hath_-, *] {
+  let +_-: [a: α, (a + (a -)) = zero]
+
+  let -_+: [a: α, ((a -) + a) = zero]
+
+  let -+_+: [a: α, b: α, (a -+ b) = ((a -) + b)]
+}
+
+bizen: [@α: *, @: α ring, α group_+] {
+  let +_-: [a:] ≔ a +_-
+
+  let -_+: [a:] ≔ a -_+
+
+  let -+_+: [a:, b:] ≔ a -+_+ b
+}
+
+bizen: [@β: *, @: β ring, @α: *, [α, β] ring] {
+  let -: [f:, a:] ≔ (a f) -
+
+  let -+: [f:, g:, a:] ≔ (a f) -+ (a g)
+
+  let +_-: [f:] ≔ {a ^ (a f) +_-} extend
+
+  let -_+: [f:] ≔ {a ^ (a f) -_+} extend
+
+  let -+_+: [f:, g:] ≔ {a ^ (a f) -+_+ (a g)} extend
+}
+
+bizen: 𝟚 ring {
+  let +_- ≔ {
+    nay;
+    yea ^ reflect
+  }
+
+  let -_+ ≔ {
+    nay;
+    yea ^ reflect
+  }
+
+  let -+_+: [_:, _:] ≔ reflect
+}
+
+## a flipped left factor flippeth the product.
+show let -_·: [@α: *, @: α ring, a: α, b: α, ((a -) · b) = ((a · b) -)]
+  ≔ (a · b) group_add~-_alone ((a -) · b) >{transit,
+    ((a -) +_· a b) symmetry,
+    (_ · b) leibnitz (a -_+),
+    b zero_·
+  }
+
+## a flipped right factor flippeth the product.
+show let ·_-: [@α: *, @: α ring, a: α, b: α, (a · (b -)) = ((a · b) -)]
+  ≔ (a · b) group_add~-_alone (a · (b -)) >{transit,
+    (a ·_+ (b -) b) symmetry,
+    (a ·) leibnitz (b -_+),
+    a ·_zero
+  }
+
+## two flippings in a product strike each other.
+show let -_·_-: [@α: *, @: α ring, a: α, b: α, ((a -) · (b -)) = (a · b)]
+  ≔ >{transit, (a -) ·_- b, - leibnitz (a -_· b), (a · b) group_add~-_-}
+
+## the flipped unit flippeth.
+show let one_-_·: [@α: *, @: α ring, a: α, ((one -) · a) = (a -)]
+  ≔ (one -_· a) transit (- leibnitz (a one_·))

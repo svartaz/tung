@@ -1,0 +1,80 @@
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/hath_one.tung
+bring class/algebra/total/monoid_multiply.tung
+bring class/algebra/total/semigroup_multiply.tung
+bring is.tung
+
+## a group: a monoid whose every value hath an inverse on both sides.
+show class group_·: [α: *, @: α monoid_·, *] {
+  let /: [α, α]
+
+  let ·_/: [a: α, (a · (a /)) = one]
+
+  let /_·: [a: α, ((a /) · a) = one]
+}
+
+## `a /· b` inverteth `a`, then multiplieth by `b`.
+show let /·: [@α: *, @: α group_·, a: α, b: α, α] ≔ (a /) · b
+
+show let /·_strike: [@α: *, @: α group_·, a: α, (a /· a) = one] ≔ a /_·
+
+## a value that leaveth every value alone is `one`.
+show let one_alone
+  : [@α: *, @: α group_·, e: α, leaving: [a: α, (e · a) = a], e = one]
+  ≔ ((e ·_one) symmetry) transit (one leaving)
+
+## a value that undoeth `a` from the left is its inverse.
+show let /_alone
+  : [@α: *, @: α group_·, a: α, b: α, undoing: (b · a) = one, b = (a /)]
+  ≔ >{transit,
+    (b ·_one) symmetry,
+    (b ·) leibnitz ((a ·_/) symmetry),
+    b ·_· a (a /),
+    (_ · (a /)) leibnitz undoing,
+    (a /) one_·
+  }
+
+## the same products with one left factor have the same right factors.
+show let ·_strike
+  : [@α: *, @: α group_·, a: α, b: α, c: α, equal: (a · b) = (a · c), b = c]
+  ≔ >{transit,
+    (b one_·) symmetry,
+    (_ · b) leibnitz ((a /_·) symmetry),
+    ((a /) ·_· a b) symmetry,
+    ((a /) · _) leibnitz equal,
+    (a /) ·_· a c,
+    (_ · c) leibnitz (a /_·),
+    c one_·
+  }
+
+## the same products with one right factor have the same left factors.
+show let strike_·
+  : [@α: *, @: α group_·, a: α, b: α, c: α, equal: (b · a) = (c · a), b = c]
+  ≔ >{transit,
+    (b ·_one) symmetry,
+    (b ·) leibnitz ((a ·_/) symmetry),
+    b ·_· a (a /),
+    (_ · (a /)) leibnitz equal,
+    (c ·_· a (a /)) symmetry,
+    (c ·) leibnitz (a ·_/),
+    c ·_one
+  }
+
+## the inverse of an inverse is the value.
+show let /_/: [@α: *, @: α group_·, a: α, ((a /) /) = a]
+  ≔ ((a /) /_alone a (a ·_/)) symmetry
+
+## `one` is its own inverse.
+show let one_/: [@α: *, @: α group_·, (one /) = one]
+  ≔ (one /_alone one (one one_·)) symmetry
+
+## the inverse of a product is the product of the inverses, turned around.
+show let /_over_·
+  : [@α: *, @: α group_·, a: α, b: α, ((a · b) /) = ((b /) · (a /))]
+  ≔ ((a · b) /_alone ((b /) · (a /)) >{transit,
+    ((b /) ·_· (a /) (a · b)) symmetry,
+    ((b /) · _) leibnitz ((a /) ·_· a b),
+    {c ^ (b /) · (c · b)} leibnitz (a /_·),
+    ((b /) · _) leibnitz (b one_·),
+    b /_·
+  }) symmetry

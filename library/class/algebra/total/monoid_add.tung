@@ -1,0 +1,23 @@
+bring class/algebra/total/hath_add.tung
+bring class/algebra/total/hath_zero.tung
+bring class/algebra/total/semigroup_add.tung
+bring is.tung
+bring type/two.tung
+
+show class monoid_+: [α: *, @: α semigroup_+, @: α hath_zero, *] {
+  let zero_+: [a: α, (zero + a) = a]
+
+  let +_zero: [a: α, (a + zero) = a]
+}
+
+bizen: 𝟚 monoid_+ {
+  let zero_+ ≔ {
+    nay;
+    yea ^ reflect
+  }
+
+  let +_zero ≔ {
+    nay;
+    yea ^ reflect
+  }
+}

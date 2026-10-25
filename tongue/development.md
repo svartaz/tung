@@ -10,7 +10,7 @@ machinery. [`language.md`](language.md) owneth what programs mean,
 
 compiler development requireth ghc 9.12 or newer (ci useth 9.12.4); editor and
 prose checks require node.js and npm. `tung.yaml` selecteth the local
-[`bookhoard/`](../bookhoard/) for tests. from the repository root:
+[`library/`](../library/) for tests. from the repository root:
 
 ```sh
 mise install
@@ -23,17 +23,17 @@ command, the VS Code extension. the root `package.json` declareth `vscode/` as
 an npm workspace, and `make` coordinateth its scripts with the haskell build
 and formula check.
 
-| command                 | purpose                                                                 |
-| ----------------------- | ----------------------------------------------------------------------- |
-| `make build`            | buildeth the compiler and editor                                        |
-| `make test`             | runneth compiler, byspel, prose, editor, and formula checks             |
-| `make check`            | runneth `make test`, `make tidy-check`, and `git diff --check`          |
-| `make tidy-check`       | checketh ormolu and canonical tung tidying without changing files       |
-| `make compiler-test`    | testeth parsing, typing, evaluation, bookhoard modules, and integration |
-| `make byspel-test`      | runneth the deterministic byspels and checketh their results            |
-| `make editor-test`      | runneth the VS Code extension tests                                     |
-| `make compiler-install` | installeth the runner in `~/.local/bin` by default                      |
-| `make benchmark`        | runneth repeatable compiler and evaluator workloads                     |
+| command                 | purpose                                                               |
+| ----------------------- | --------------------------------------------------------------------- |
+| `make build`            | buildeth the compiler and editor                                      |
+| `make test`             | runneth compiler, byspel, prose, editor, and formula checks           |
+| `make check`            | runneth `make test`, `make tidy-check`, and `git diff --check`        |
+| `make tidy-check`       | checketh ormolu and canonical tung tidying without changing files     |
+| `make compiler-test`    | testeth parsing, typing, evaluation, library modules, and integration |
+| `make byspel-test`      | runneth the deterministic byspels and checketh their results          |
+| `make editor-test`      | runneth the VS Code extension tests                                   |
+| `make compiler-install` | installeth the runner in `~/.local/bin` by default                    |
+| `make benchmark`        | runneth repeatable compiler and evaluator workloads                   |
 
 the `tung-vscode` workspace hath `npm test` (`TUNG_EXECUTABLE` nameth another
 compiler), `npm run update:metadata` and `npm run check:metadata` for the
@@ -47,7 +47,7 @@ requests; the homebrew workflow also testeth formula installation.
 | path         | purpose                                                          |
 | ------------ | ---------------------------------------------------------------- |
 | `tongue/`    | haskell compiler, evaluator, tidier, repl, runner, and tests     |
-| `bookhoard/` | standard library source and design guide                         |
+| `library/`   | standard library source and design guide                         |
 | `vscode/`    | npm workspace for the VS Code extension                          |
 | `Formula/`   | homebrew formula                                                 |
 | `tung.yaml`  | local and git-pinned library dependencies                        |
@@ -69,7 +69,7 @@ source text
 - lexing needeth no parser state, and parsing no type information.
 - elaboration may insert implicit arguments and solve typed contextual holes;
   the kernel rejecteth every term hole and validateth completed definitions.
-- normalisation computeth type equality and never performeth a deed. runtime
+- normalisation computeth type equality and never performeth an effect. runtime
   evaluation consumeth checked programs and never repaireth static errors.
 - editor analysis may approximate incomplete source; compiler results stay
   authoritative.
@@ -82,7 +82,7 @@ source text
 | `Tung.Dependent.Source.Parse`          | declarations, expressions, source roles, node marks, and recovery                                   |
 | `Tung.Dependent.Source.Syntax`         | one source expression syntax and lexical free-name analysis for types and values                    |
 | `Tung.Dependent.Source.Environment`    | checked module state, checking references, name visibility, exports, and class registries           |
-| `Tung.Dependent.Source.Proof`          | dependency closure, assumption auditing, and orsetting policy checking                              |
+| `Tung.Dependent.Source.Proof`          | dependency closure, assumption auditing, and axiom policy checking                                  |
 | `Tung.Dependent.Source.Render`         | type-directed field names in source types, goals, and proof audits                                  |
 | `Tung.Dependent.Source.Module`         | import graphs, namespaces, and declaration scheduling                                               |
 | `Tung.Dependent.Source.Error`          | structured source failures, locations, and diagnostic context                                       |
@@ -94,7 +94,7 @@ source text
 | `Tung.Dependent.Source.Scope`          | lexical contexts, local binding transitions, and a stack of active recursion evidence               |
 | `Tung.Dependent.Source.Expression`     | bidirectional expression checking, application, field access, matches, and local definitions        |
 | `Tung.Dependent.Source.Elaborate`      | one declaration's elaboration run, checking references, goal rendering, and the unsolved-hole check |
-| `Tung.Dependent.Source.Declaration`    | lets, host bindings, ilks, flocks, bizens, and law proofs                                           |
+| `Tung.Dependent.Source.Declaration`    | lets, host bindings, types, classes, bizens, and law proofs                                         |
 | `Tung.Dependent.Source`                | public source facade: snapshot compilation and expression queries                                   |
 | `Tung.Dependent.Syntax`                | core terms, binder-aware traversals, product telescopes, and application spines                     |
 | `Tung.Dependent.Elaboration`           | contextual metavariables, unification, and speculative checking                                     |
@@ -105,7 +105,7 @@ source text
 | `Tung.Dependent.Render`                | source-style core rendering, with visible aliases for diagnostics                                   |
 | `Tung.Dependent.Host`                  | trusted primitive definitions and host signature checking                                           |
 | `Tung.Dependent.Literal`               | literal types and host value conversion                                                             |
-| `Tung.Dependent.Run`                   | erased evaluation and deed execution                                                                |
+| `Tung.Dependent.Run`                   | erased evaluation and effect execution                                                              |
 | `Tung.Primitive`                       | one host catalogue, nominal constructor identities, and pure operations                             |
 | `Tung.Diagnostic`                      | source failures rendered for command-line and editor clients                                        |
 
@@ -142,7 +142,7 @@ declarations, calling `Source.Declaration` to check them; it inferreth no
 types and selecteth no instances. dependencies are computed once per
 declaration, source spans travel with declarations, and cached environments
 merge only after shared definitions agree. strongly connected declarations are
-grouped: all-ilk components are checked atomically, other cycles rejected, and
+grouped: all-type components are checked atomically, other cycles rejected, and
 `Inductive` owneth the joint and nested certificates of
 [inductive declarations](dependent.md#inductive-declarations-and-proofs).
 
@@ -179,7 +179,7 @@ checkout is not verified per request. highlighting needeth no compilation.
 
 ## elaboration and checking
 
-`Source.Declaration` lowereth ilks to inductive families and flocks to
+`Source.Declaration` lowereth types to inductive families and classes to
 one-constructor dictionary families with accessor members; a bizen's members
 become local bindings and a dictionary constructor application. instance
 search resolveth requirements before kernel checking. matches become
@@ -222,7 +222,7 @@ can erase them. `Source.Elaborate` returneth them with each checked result,
 `Source.Declaration` attacheth them to inserted symbols, and `Source.Module`
 and `Source.Cache` preserve them across imports. `Source.Proof.auditProof`
 traverseth them beside checked types and bodies; `verifyProof` applieth the
-orsetting policy and, when strict, refuseth `sorry`. `Main` rendereth one
+axiom policy and, when strict, refuseth `sorry`. `Main` rendereth one
 report for `--name` and the editor, whose `proof` command is always strict.
 auditing addeth no kernel typing or conversion rule.
 
@@ -249,7 +249,7 @@ restore theirs. `Source.Declaration.recoverDeclarations` returneth goals apart
 from its checked result: failed groups and their dependants never enter the
 private recovery environment, and only fully checked imports provide names.
 `Source.recoverSnapshotHoles` provideth these goals after an error, and the
-cli and editor show them beside the original diagnostic. proof auditing, ilk
+cli and editor show them beside the original diagnostic. proof auditing, type
 queries, and execution keep strict compilation.
 `Source.Elaborate.elaborateHoles` rendereth goals after instance selection,
 and `sourceHoles` returneth a checked module's goals.
@@ -263,32 +263,32 @@ eliminator methods, and recursive hypotheses; a failure is an `RFailure` value
 that faileth when inspected. `settled` computeth a value fully where the
 language requireth it, and `execute` keepeth bind and `fast` unfoldings in
 tail position. a fixpoint's global entry nameth itself through the lazy
-table; a full application of it is a `DFast` deed, so its body unfoldeth only
-when performed. deeds reach the host only through `HostIO`: `ioHost` is the
+table; a full application of it is a `DFast` effect, so its body unfoldeth only
+when performed. effects reach the host only through `HostIO`: `ioHost` is the
 process host and useth `Tung.Web` for servers, and tests use the simulated
 host in `Test.DependentSupport`. `runYield` validateth its `Inferred`
 judgement with the kernel before erasure; `runMain` and validation share one
 checked-main lookup.
 
 `Tung.Primitive` owneth every host key, signature, constructor identity, and
-pure operation, and `Host` checketh each `fremmed` binding against it.
+pure operation, and `Host` checketh each `foreign` binding against it.
 normalisation and runtime share `pureOperation` over `HostValue`. a pure
 binding paireth a native function with private typed codecs, so one entry
 deriveth its signature and its erased applicator and GHC checketh native types;
-nominal schemas are still validated when keys are bound. polymorphic deed
-signatures stay separate. a host data type's identity is its bookhoard path
+nominal schemas are still validated when keys are bound. polymorphic effect
+signatures stay separate. a host data type's identity is its library path
 and name, with no shape matching or built-in bizen.
 
 ## test machinery
 
-- a full run checketh bookhoard once in the parent process and saveth its
+- a full run checketh the library once in the parent process and saveth its
   interfaces in `dist-newstyle/test-interfaces`; each group process beginneth
   from them, and a single selected group checketh what it needeth. their keys
   hash the compiler library's sources rather than the test executable, so a
   later run reuseth every interface whose module and library are unchanged,
   and removeth the rest. a module whose private names a test readeth is
   checked again from source.
-- `Test.Harness` compileth further bookhoard imports once per process; a test
+- `Test.Harness` compileth further library imports once per process; a test
   replacing a library source invalidateth that cache and its compiled
   dependants in both shared helpers.
 - the runner forceth each outcome before the next test, so checks keep no
@@ -298,7 +298,7 @@ and name, with no shape matching or built-in bizen.
 - `Test.Program` compareth generated checked programs with independent host
   results; dependent groups test kernel and source rules directly.
 - `TUNG_TEST_GROUP` rejecteth unknown names and an empty explicit selection.
-- executable tests compare byspel output and exit status exactly; `word_rime`
+- executable tests compare byspel output and exit status exactly; `word_count`
   receiveth a real file. one check first fileth the interfaces of every
   library module the byspels bring, then the byspels run side by side, each
   within its own time limit.
@@ -330,7 +330,7 @@ tokens differ from the shortened source's.
 - a product whose last item is a product of bare slots is that product's
   rest: `[a: α, [β, γ]]` becometh `[a: α, β, γ]`, and `[[ℕ, *]]` becometh
   `[ℕ, *]`. an inner slot that is named or implicit keepeth the brackets: in a
-  let's annotation it would bind its name in the body, and in an ilk's header
+  let's annotation it would bind its name in the body, and in a type's header
   a named slot may be a parameter where a nested one is an index. a product
   in any earlier position, as `[[ℤ, ℤ], ℤ]`, is a function input and is kept,
   as is one holding a comment. the three shortenings repeat until none
@@ -339,14 +339,14 @@ tokens differ from the shortened source's.
   elaboration, as when `f`'s implicit inputs follow an explicit one; annotate
   a binder to keep an expansion.
 - the tidier readeth no names, so a binder may be a constructor. a one-row
-  match on a constructor checketh only when it is its ilk's sole, nullary one,
+  match on a constructor checketh only when it is its type's sole, nullary one,
   where `f` agreeth with the match on every input.
 
 - it walketh the concrete tree: declarations and a bracket's items are the
   nodes the parser marked, each with its separator; an unmarked inside is one
   item, and a row's `;` endeth each alternative.
 - a blank line standeth between declarations, except between `bring`s, and
-  between a flock's or a bizen's members; a block's lets stand on consecutive
+  between a class's or a bizen's members; a block's lets stand on consecutive
   lines. no other break leaveth an empty line.
 - a comment keepeth the lexer's attachment, a leading one at its item's
   indentation; this is the only layout read from the source.
@@ -360,7 +360,7 @@ tokens differ from the shortened source's.
 - a declaration body of several items or holding declarations, and a case
   block of several rows, always break. declaration and `match` bodies are
   padded, `{ … }`; other braces are not.
-- a `let` or `orsetting` that fitteth stayeth on one line. otherwise `≔ body`
+- a `let` or `axiom` that fitteth stayeth on one line. otherwise `≔ body`
   taketh its own line two columns in, and `: annotation` stayeth beside the
   name unless they do not fit together. a body opening a brace, a declaration
   block, or a `match` openeth it on the `≔` line, and the binding need fit only
@@ -383,7 +383,7 @@ since a canonical form keepeth no source lines.
 
 ## editor protocol
 
-`tung --editor-session` serveth diagnostics, inferred ilks, highlighting, and
+`tung --editor-session` serveth diagnostics, inferred types, highlighting, and
 tidying over utf-8 json lines, one complete message per line with embedded
 newlines and control characters escaped. compiler and extension must share the
 protocol version.
@@ -398,12 +398,12 @@ protocol version.
   edited import's dependants; a request with `path` also loadeth and saveth
   interfaces in that project's `.tung/cache`.
 - responses carry `protocol: 1`, the request's `id` and `version`, and a
-  `result` whose `kind` is `check`, `ilk`, `proof`, `format`, `highlight`, or
-  `error`: `check` returneth `diagnostics`, `ilk` `ilk`, `format` `source`,
+  `result` whose `kind` is `check`, `type`, `proof`, `format`, `highlight`, or
+  `error`: `check` returneth `diagnostics`, `type` `type`, `format` `source`,
   and infrastructure errors `message`.
 - `highlight` returneth one parse's `roles`, `[start, end, role, modifiers]`;
-  `tokens`, `[start, end, kind]`; `declarations`, each `let`, `fast`, `ilk`, `flock`,
-  `bizen`, or `orsetting` with its keyword's `start`, `end`, `headerEnd` where
+  `tokens`, `[start, end, kind]`; `declarations`, each `let`, `fast`, `type`, `class`,
+  `bizen`, or `axiom` with its keyword's `start`, `end`, `headerEnd` where
   the body beginneth, `shown`, and its last doc comment as `doc`; `imports`
   with `path`, `alias`, and the path's `start` and `end`; and `scopes`,
   `[start, end, scopeStart, scopeEnd]` for each local binder: a slot is seen
@@ -411,26 +411,26 @@ protocol version.
   declaration, a block's let by the rest of its block, and a row's pattern by
   its row. offsets are utf-16 and cover broken regions too.
 - `names` returneth `files`, the canonical file of each bring path the
-  document reacheth; `resolved`, `[start, end, module, name, ilk]` for each
+  document reacheth; `resolved`, `[start, end, module, name, type]` for each
   written name checking resolved to a
   global, from every declaration that checketh, even beside an error; and
   `visible`, `[written, module, name, constructor]` for each name the module
   may write at top level, from its own declarations and its imports'
   interfaces, without checking. `module` is `<root>`, `<primitive>`, or a
-  bring path. `ilk` is whether the global's type, after its inputs, is a
+  bring path. `type` is whether the global's type, after its inputs, is a
   sort. elaboration recordeth a name where it resolveth one, and speculative
   trials roll the record back.
-- `proof` taketh `name` and optional `allowedOrsettings`; without it the
-  nearest manifest decideth. it returneth `audit` (`name`, `ilk`,
+- `proof` taketh `name` and optional `allowedAxioms`; without it the
+  nearest manifest decideth. it returneth `audit` (`name`, `type`,
   `dependencies`), `verified`, `message`, and the cli `report`. a dependency
-  hath a nominal `symbol` (`module`, `name`), display `name`, `ilk`, and
-  `kind` (`sorry`, `orsetting`, or `host`, with its catalogue key in `host`).
+  hath a nominal `symbol` (`module`, `name`), display `name`, `type`, and
+  `kind` (`sorry`, `axiom`, or `host`, with its catalogue key in `host`).
   checking errors return `error`; an audit failing its policy still returneth
   its dependencies with `verified: false`. clients never rebuild dependency
   graphs from source, and the language server discardeth a result if the root
   version or text, or the text of any module its names reached, changeth
   meanwhile.
-- diagnostics carry `kind` (`parse`, `ilk`, or `goal`), optional import
+- diagnostics carry `kind` (`parse`, `type`, or `goal`), optional import
   `path`, utf-16 `start` and `end`, and `message`; an empty array is success.
   goals are informational, with their context in the message, and a failed
   check may return its error beside recoverable root goals.
@@ -459,13 +459,13 @@ ownership; a local the parser could not scope, in broken source, keepeth to
 its declaration. the editor resolveth no global itself: a written name is what
 checking resolved it to, else a local binder in scope, else the module's
 visible name; a pattern binder that nameth a visible constructor is that
-constructor, and a field `ilk.field` is the named slot of its ilk's
+constructor, and a field `type.field` is the named slot of its type's
 constructor. navigation fetcheth names for open documents, and references
 and rename for every document. a bring path's module is the file its
 document's names report, matched to a document by real path; the editor
 resolveth no bring itself. colouring taketh the parser's roles, except that a
-checked name is an ilk exactly when its `ilk` saith so: a value written in an
-annotation, as `naught` in `(naught · a) = naught`, is no ilk, which syntax
+checked name is a type exactly when its `type` saith so: a value written in an
+annotation, as `zero` in `(zero · a) = zero`, is no type, which syntax
 cannot tell. an edit forgetteth the names of documents that
 reached the edited file, and a created or deleted file forgetteth all. lsp role names stay in the protocol;
 `roleLabel` showeth them to people as tung terms.
@@ -483,8 +483,8 @@ defineth manifest syntax and conflict rules.
 the flat `bring` namespace cannot tell two revisions of a library apart, and
 raw hashes have no version order, so the resolver never chooseth a newer pin or
 overrideth an exact one, and a library name resolveth to one local path
-throughout the graph. the compiler buildeth without bookhoard; ci and local
-development resolve `bookhoard/` through the same manifest.
+throughout the graph. the compiler buildeth without the library; ci and local
+development resolve `library/` through the same manifest.
 
 ## structural decisions
 

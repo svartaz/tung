@@ -1,0 +1,22 @@
+bring combinator.tung
+bring is.tung
+
+show class semigroupoid: [⇨: [*, *, *], *] {
+  let ▷: [@α: *, @β: *, @γ: *, α ⇨ β, β ⇨ γ, α ⇨ γ]
+
+  let ▷_▷
+    : [@α: *, @β: *, @γ: *, @δ: *, f: α ⇨ β, g: β ⇨ γ, h: γ ⇨ δ,
+      (f ▷ (g ▷ h)) = ((f ▷ g) ▷ h)]
+}
+
+## composition written from the other side: `g ◁ f` is `f ▷ g`.
+show let ◁
+  : [@⇨: [*, *, *], @: ⇨ semigroupoid, @α: *, @β: *, @γ: *, g: β ⇨ γ, f: α ⇨ β,
+    α ⇨ γ]
+  ≔ f ▷ g
+
+bizen fallback: → semigroupoid {
+  let ▷: [f:, g:, a:] ≔ a f $ g
+
+  let ▷_▷: [_:, _:, _:] ≔ reflect
+}

@@ -1,0 +1,114 @@
+bring class/equal_to_is.tung
+bring class/order/hath_at_most.tung
+bring class/order/order_partial.tung
+bring class/order/order_total.tung
+bring is.tung
+bring type/list.tung
+bring type/set_list.tung
+bring type/two.tung
+
+## the tail of a sorted list is sorted.
+show let sorted_tail
+  : [@α: *, @: α order_total, a: α, a…: α list, held: ((a ‥ a…) sorted) = yea,
+    (a… sorted) = yea]
+  ≔ (a above a…) yea_if_latter (a… sorted) held
+
+## every member of a list above `a` is tightly above `a`.
+let above_inhold
+  : [@α: *, @: α order_total, a: α, a…: α list, c: α,
+    all_above: (a above a…) = yea, member: (a… inhold c) = yea,
+    (a tight c) = yea]
+  ≔ match a… {
+    empty        ^ match member {},
+    b ‥ leftover ^ (c ≤ b) inspect @𝟚 @{_ ^ (a tight c) = yea} {
+      yea, below ^ (
+        let at_head: (b ≤ c) = yea
+          ≔ (_ if (b ≤ c) (leftover inhold c)) yea_throughbear below member
+        yield (a tight) yea_throughbear (b ≤_= c at_head below)
+          ((a tight b) yea_if_former (a above leftover) all_above)
+      ),
+      nay, below ^
+        a above_inhold leftover c
+          ((a tight b) yea_if_latter (a above leftover) all_above)
+          ((_ if (b ≤ c) (leftover inhold c)) yea_throughbear below member)
+    }
+  }
+
+## every tail member is tightly above its first member.
+show let sorted_tight_member
+  : [@α: *, @: α order_total, a: α, a…: α list, b: α,
+    held: ((a ‥ a…) sorted) = yea, member: (a… inhold b) = yea,
+    (a tight b) = yea]
+  ≔ a above_inhold a… b ((a above a…) yea_if_former (a… sorted) held) member
+
+## a member is never below the first member of ordered search.
+show let inhold_first_below
+  : [@α: *, @: α order_total, a: α, a…: α list, b: α,
+    member: ((a ‥ a…) inhold b) = yea, (a ≤ b) = yea]
+  ≔ (b ≤ a) inspect @𝟚 @{_ ^ (a ≤ b) = yea} {
+    yea, below ^ (_ if (a ≤ b) (a… inhold b)) yea_throughbear below member,
+    nay, below ^ b ≤_flip a below
+  }
+
+## the first member belongeth to its list.
+show let inhold_first
+  : [@α: *, @: α order_total, a: α, a…: α list, ((a ‥ a…) inhold a) = yea]
+  ≔ ((_ if (a ≤ a) (a… inhold a)) leibnitz (a ≤_reflect)) transit (a ≤_reflect)
+
+## no tail member lieth at or below the first member.
+let tail_absent_below
+  : [@α: *, @: α order_total, a: α, a…: α list, b: α,
+    held: ((a ‥ a…) sorted) = yea, below: (b ≤ a) = yea, (a… inhold b) = nay]
+  ≔ a above_absent a… b ((a above a…) yea_if_former (a… sorted) held) below
+
+## ridding the same first member preserveth membership equality.
+let tails_equal_first
+  : [@α: *, @: α order_total, a: α, a…: α list, b…: α list,
+    left: ((a ‥ a…) sorted) = yea, right: ((a ‥ b…) sorted) = yea,
+    equal_members: [b: α, ((a ‥ a…) inhold b) = ((a ‥ b…) inhold b)], b: α,
+    (a… inhold b) = (b… inhold b)]
+  ≔ (b ≤ a) inspect @𝟚 @{_ ^ (a… inhold b) = (b… inhold b)} {
+    yea, below ^
+      (a tail_absent_below a… b left below) transit
+        ((a tail_absent_below b… b right below) symmetry),
+    nay, below ^ >{transit,
+      (_ if (a ≤ b) (a… inhold b)) leibnitz (below symmetry),
+      b equal_members,
+      (_ if (a ≤ b) (b… inhold b)) leibnitz below
+    }
+  }
+
+## sorted unique lists with the same members are identical.
+show let extensionality
+  : [@α: *, @: α order_total, left_list: α list, right_list: α list,
+    left: (left_list sorted) = yea, right: (right_list sorted) = yea,
+    equal_members: [a: α, (left_list inhold a) = (right_list inhold a)],
+    left_list = right_list]
+  ≔ match left_list, right_list {
+    empty, empty        ^ reflect,
+    empty, b ‥ leftover ^ match (b equal_members) transit (b inhold_first
+      leftover) {},
+    a ‥ leftover, empty ^ match ((a equal_members) symmetry) transit (a
+      inhold_first leftover) {},
+    a ‥ a…, b ‥ b… ^ (
+      let a_member ≔ ((a equal_members) symmetry) transit (a inhold_first a…)
+      let b_member ≔ (b equal_members) transit (b inhold_first b…)
+      let heads
+        ≔ a ≤_= b (a inhold_first_below a… b b_member)
+          (b inhold_first_below b… a a_member)
+      # the properties align only the right head.
+      let right_aligned: ((a ‥ b…) sorted) = yea
+        ≔ (heads symmetry) throughbear @α @b @a @{
+          head: α ^ ((head ‥ b…) sorted) = yea
+        } right
+      let members_aligned: [c: α, ((a ‥ a…) inhold c) = ((a ‥ b…) inhold c)]
+        ≔ (heads symmetry) throughbear @α @b @a @{
+          head: α ^ ((a ‥ a…) inhold c) = ((head ‥ b…) inhold c)
+        } (c equal_members)
+      let tails
+        ≔ a… extensionality b… (a sorted_tail a… left)
+          (a sorted_tail b… right_aligned)
+          (a tails_equal_first a… b… left right_aligned members_aligned)
+      yield ((a ‥) leibnitz tails) transit ((_ ‥ b…) leibnitz heads)
+    )
+  }

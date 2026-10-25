@@ -1,0 +1,3 @@
+show type 𝟘: * {}
+
+show let initial: [@α: *, 𝟘, α] ≔ {}

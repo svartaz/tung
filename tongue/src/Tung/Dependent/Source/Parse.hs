@@ -256,14 +256,14 @@ oneDeclaration tokens = case tokens of
   TLet : rest -> letDeclaration False rest
   TFix : rest -> letDeclaration True rest
   TType : rest -> inductiveDeclaration rest
-  TClass : rest -> flockDeclaration rest
+  TClass : rest -> classDeclaration rest
   TInstance : rest -> bizenDeclaration rest
   TOrsend : rest -> orsendDeclaration rest
   TImport : rest -> importDeclaration rest
   TExport : rest@(keyword : _) | keyword `elem` [TLet, TFix, TType, TClass, TOrsend] -> shown rest
   TExport : rest@(TIdent _ : _) -> first ReExportDeclaration <$> reexported [] rest
-  TExport : _ -> failAt tokens "show must precede a let, fast, ilk, flock, or orsetting declaration or a name"
-  _ -> failAt tokens "expected a declaration: let, fast, ilk, flock, bizen, orsetting, bring, or show"
+  TExport : _ -> failAt tokens "show must precede a let, fast, type, class, or axiom declaration or a name"
+  _ -> failAt tokens "expected a declaration: let, fast, type, class, bizen, axiom, bring, or show"
 
 -- `show a, b` re-exporteth visible names.
 reexported :: [String] -> Parser [String]
@@ -276,44 +276,44 @@ reexported names tokens = case tokens of
 shown :: Parser Declaration
 shown = fmap (first ShownDeclaration) . oneDeclaration
 
--- `flock name:[parameters, @:parent, *] { members }`. the signature endeth in `*`.
-flockDeclaration :: Parser Declaration
-flockDeclaration = scoped flockDeclarationBody
+-- `class name:[parameters, @:parent, *] { members }`. the signature endeth in `*`.
+classDeclaration :: Parser Declaration
+classDeclaration = scoped classDeclarationBody
 
-flockDeclarationBody :: Parser Declaration
-flockDeclarationBody tokens@(TIdent name : TColon : rest) = localTerms memberNames tokens do
+classDeclarationBody :: Parser Declaration
+classDeclarationBody tokens@(TIdent name : TColon : rest) = localTerms memberNames tokens do
   plainName tokens name
   markFirst "class" (familyModifiers rest) tokens
   (signature, afterSignature) <- unscoped (typeRoles . atom) rest
   parameters <- case signature of
     Product parameters Universe -> pure parameters
     Universe -> pure []
-    _ -> failAt rest "a flock signature endeth in '*'"
+    _ -> failAt rest "a class signature endeth in '*'"
   case afterSignature of
-    TLBrace : afterOpen -> first (FlockDeclaration name parameters) <$> flockMemberList afterOpen
-    _ -> failAt afterSignature "expected '{' after flock signature"
+    TLBrace : afterOpen -> first (ClassDeclaration name parameters) <$> classMemberList afterOpen
+    _ -> failAt afterSignature "expected '{' after class signature"
   where
     -- value parameters and fields stay terms in the member types that use them.
-    memberNames FlockDeclaration {flockParameters, flockMembers} =
-      valueNames flockParameters ++ [name | FlockMember name ty <- flockMembers, not (sorted ty)]
+    memberNames ClassDeclaration {classDeclarationParameters, classDeclarationMembers} =
+      valueNames classDeclarationParameters ++ [name | ClassMember name ty <- classDeclarationMembers, not (sorted ty)]
     memberNames _ = []
-flockDeclarationBody tokens = failAt tokens "expected flock name and ':signature'"
+classDeclarationBody tokens = failAt tokens "expected class name and ':signature'"
 
--- a family or flock with bracketed parameters is a type function.
+-- a family or class with bracketed parameters is a type function.
 familyModifiers :: [Token] -> [String]
 familyModifiers signature = "declaration" : ["typeFunction" | TLBracket : _ <- [signature]]
 
 -- all members use ordinary type expressions, including equality-valued laws.
-flockMemberList :: Parser [FlockMember]
-flockMemberList tokens = case tokens of
+classMemberList :: Parser [ClassMember]
+classMemberList tokens = case tokens of
   TRBrace : rest -> pure ([], rest)
   TLet : named@(TIdent name : TColon : rest) -> do
     plainName named name
     (ty, afterType) <- typeRoles (expression rest)
     markNode DeclarationNode tokens afterType
     markFirst "call" ["declaration", "applied"] named
-    first (FlockMember name ty :) <$> flockMemberList afterType
-  _ -> failAt tokens "expected a flock member or '}'"
+    first (ClassMember name ty :) <$> classMemberList afterType
+  _ -> failAt tokens "expected a class member or '}'"
 
 -- `bizen:type { lets }`. the type endeth before the opening brace, as match
 -- scrutinees do. member bodies are ordinary declarations.
@@ -335,10 +335,10 @@ bizenHeader fallback priority tokens = case tokens of
         case afterMembers of
           TRBrace : remaining -> pure (BizenDeclaration priority fallback ty (map snd located), remaining)
           _ -> failAt afterMembers "expected '}' after bizen members"
-      _ -> failAt afterType "expected '{' after bizen ilk"
+      _ -> failAt afterType "expected '{' after bizen type"
   _ -> failAt tokens "expected ':' after bizen"
 
--- `orsetting name: type` nameth an assumption. the type may not bind inputs.
+-- `axiom name: type` nameth an assumption. the type may not bind inputs.
 orsendDeclaration :: Parser Declaration
 orsendDeclaration tokens = case tokens of
   TIdent name : TColon : rest -> do
@@ -346,7 +346,7 @@ orsendDeclaration tokens = case tokens of
     (ty, remaining) <- typeRoles (expression rest)
     markFirst (if callable ty then "function" else "variable") ["declaration"] tokens
     pure (AssumptionDeclaration name ty, remaining)
-  _ -> failAt tokens "expected 'name:' after orsetting"
+  _ -> failAt tokens "expected 'name:' after axiom"
 
 -- the path is one name with dotted segments; a following name is its alias.
 importDeclaration :: Parser Declaration
@@ -377,13 +377,13 @@ inductiveDeclarationBody tokens@(TIdent name : TColon : rest) = localTerms heade
   (signature, afterSignature) <- unscoped (typeRoles . atom) rest
   case afterSignature of
     TLBrace : afterOpen -> first (InductiveDeclaration name signature) <$> constructorDeclarations afterOpen
-    _ -> failAt afterSignature "expected '{' after ilk signature"
+    _ -> failAt afterSignature "expected '{' after type signature"
   where
     -- header parameters scope over the constructor annotations.
     headerNames = \case
       InductiveDeclaration {inductiveSignature = Product parameters _} -> valueNames parameters
       _ -> []
-inductiveDeclarationBody tokens = failAt tokens "expected ilk name and ':signature'"
+inductiveDeclarationBody tokens = failAt tokens "expected type name and ':signature'"
 
 constructorDeclarations :: Parser [ConstructorDeclaration]
 constructorDeclarations (TRBrace : rest) = pure ([], rest)
@@ -397,7 +397,7 @@ constructorDeclarations named@(TIdent name : TColon : tokens) = do
     TComma : rest -> first (constructor :) <$> constructorDeclarations rest
     TRBrace : rest -> pure ([constructor], rest)
     _ -> failAt afterAnnotation "expected ',' or '}' after constructor"
-constructorDeclarations tokens@(TIdent name : _) = failAt tokens ("constructor '" ++ name ++ "' requireth an ilk, as in '" ++ name ++ ":ilk'")
+constructorDeclarations tokens@(TIdent name : _) = failAt tokens ("constructor '" ++ name ++ "' requireth a type, as in '" ++ name ++ ":type'")
 constructorDeclarations tokens = failAt tokens "expected constructor name"
 
 -- a let header is one name; arguments are annotation slots. a `fast`
@@ -417,7 +417,7 @@ letDeclarationBody fixpoint tokens = do
       case afterType of
         TEquals : body -> pure (Just ty, body)
         _ -> failAt afterType ("expected '≔' after " ++ keyword ++ " annotation")
-    TEquals : _ | fixpoint -> failAt afterHeader "a fast declaration requireth an ilk annotation"
+    TEquals : _ | fixpoint -> failAt afterHeader "a fast declaration requireth a type annotation"
     TEquals : body -> pure (Nothing, body)
     _ -> failAt afterHeader ("expected ':' or '≔' after " ++ keyword ++ " name")
   let ty = fst <$> annotation
@@ -425,16 +425,16 @@ letDeclarationBody fixpoint tokens = do
       modifiers = ["declaration"] ++ [if typeDefinition then "typeFunction" else "applied" | maybe False callable ty]
   markFirst (if typeDefinition then "type" else if maybe False callable ty then "function" else "variable") modifiers tokens
   case (bodyTokens, annotation) of
-    (TText _ : TForeign : _, _) | fixpoint -> failAt bodyTokens "a fremmed binding is a let, not fast"
+    (TText _ : TForeign : _, _) | fixpoint -> failAt bodyTokens "a foreign binding is a let, not fast"
     (TText key : TForeign : remaining, Just (ty, written))
       | next : _ <- remaining,
         not (stopsExpression next) -> do
           (model, afterModel) <- expression remaining
           lowered <- liftAt remaining (lowerHeader annotation model)
           pure (HostDeclaration name ty key (Just lowered), afterModel)
-      | any bindsInput written -> failAt bodyTokens "a fremmed annotation without a model cannot bind inputs"
+      | any bindsInput written -> failAt bodyTokens "a foreign annotation without a model cannot bind inputs"
       | otherwise -> pure (HostDeclaration name ty key Nothing, remaining)
-    (TText _ : TForeign : _, Nothing) -> failAt bodyTokens "a fremmed binding requireth an ilk annotation"
+    (TText _ : TForeign : _, Nothing) -> failAt bodyTokens "a foreign binding requireth a type annotation"
     _ -> do
       (body, remaining) <- (if typeDefinition then typeRoles else id) (expression bodyTokens)
       when (not typeDefinition && not (maybe False callable ty) && callable body) (markFirst "function" ["declaration", "applied"] tokens)
@@ -450,7 +450,7 @@ letAnnotation tokens@(TLBracket : rest) = localTerms (valueNames . map slotParam
     emitRoles events
     let names = [name | Slot {slotParameter = Parameter {parameterName = Just name}} <- parsedSlots, name /= "_"]
         repeated name = length (filter (== name) names) > 1
-        -- a repeated slot name may be a constructor, as in two `eftbend:`
+        -- a repeated slot name may be a constructor, as in two `reflect:`
         -- slots, so it becometh a pattern; matching rejecteth a variable
         -- bound twice once constructors are known.
         patterned = \case
@@ -611,13 +611,13 @@ atomBase tokens = case tokens of
   TIdent "_" : rest -> pure (Wildcard, rest)
   TSorry : rest -> pure (Sorry, rest)
   TInduce : token@(TIdent name) : rest -> markRole "type" [] token >> pure (Induce name, rest)
-  TInduce : rest -> failAt rest "expected an ilk or flock name after 'unbuild'"
+  TInduce : rest -> failAt rest "expected a type or class name after 'unbuild'"
   TMatch : rest -> matchExpression rest
   token@(TIdent name) : rest -> markRole "term" [] token >> pure (Name name, rest)
   TLBracket : rest -> bracket rest
   TBraceKeyword marker : rest | marker `elem` ["<", ">"] -> composition marker rest
   TLBrace : rest -> lambda rest
-  TFall : rest -> fall rest
+  TFunction : rest -> function rest
   TLParen : rest@(keyword : _) | keyword `elem` [TLet, TFix, TImport, TExport] -> block rest
   TLParen : rest -> do
     (value, afterValue) <- expression rest
@@ -633,7 +633,7 @@ atomBase tokens = case tokens of
   TInteger value : rest -> pure (LiteralExpression (IntegerValue value), rest)
   TFloat value : rest -> pure (LiteralExpression (FloatBits (castDoubleToWord64 value)), rest)
   TUnicode value : rest -> pure (LiteralExpression (UnicodeValue value), rest)
-  TText _ : TForeign : _ -> failAt tokens "fremmed bindeth only an annotated top-level let"
+  TText _ : TForeign : _ -> failAt tokens "foreign bindeth only an annotated top-level let"
   TText value : rest -> pure (LiteralExpression (TextValue value), rest)
   _ -> failAt tokens "expected an expression"
 
@@ -679,12 +679,12 @@ bracketItems = closedItems TRBracket "expected ',' or ']' after bracket item" (m
 
 parameter :: Parser Parameter
 parameter (TAt : token@(TIdent name) : TColon : rest) = namedParameter Implicit token name rest
--- `@:flock` is an anonymous requirement: an instance-searched implicit slot.
+-- `@:class` is an anonymous requirement: an instance-searched implicit slot.
 parameter (TAt : TColon : rest) = do
   (ty, remaining) <- typeRoles (expression rest)
   markClass ty
   pure (Parameter Implicit Nothing ty, remaining)
-parameter tokens@(TAt : _) = failAt tokens "implicit parameters require '@name:ilk' or '@:requirement'"
+parameter tokens@(TAt : _) = failAt tokens "implicit parameters require '@name:type' or '@:requirement'"
 parameter (token@(TIdent name) : TColon : rest) = namedParameter Explicit token name rest
 parameter tokens = first (Parameter Explicit Nothing) <$> typeRoles (expression tokens)
 
@@ -718,7 +718,7 @@ lambda :: Parser Expression
 lambda (TRBrace : rest) = pure (Cases [], rest)
 lambda tokens = do
   (groups, remaining) <- caseGroups tokens
-  -- a repeated bare name may be a constructor, as in `{eftbend, eftbend ^ …}`,
+  -- a repeated bare name may be a constructor, as in `{reflect, reflect ^ …}`,
   -- so such a row is a case function; elaboration rejecteth a variable bound
   -- twice once constructors are resolved.
   pure case groups of
@@ -779,24 +779,24 @@ matchExpression tokens = do
       initial <- liftAt ts (application parts)
       dollarsUntil (== TLBrace) initial afterParts
 
--- `fall params, result ^ body` is a lambda checked against its written
+-- `function params, result ^ body` is a lambda checked against its written
 -- product. a bare slot bindeth an input that the body cannot name.
-fall :: Parser Expression
-fall = scoped fallBody
+function :: Parser Expression
+function = scoped functionBody
 
-fallBody :: Parser Expression
-fallBody tokens = do
-  (items, afterItems) <- fallItems tokens
+functionBody :: Parser Expression
+functionBody tokens = do
+  (items, afterItems) <- functionItems tokens
   case reverse items of
     Parameter Explicit Nothing result : reversed@(_ : _) -> do
       let parameters = reverse reversed
           binders = [Binder parameterPlicity (parameterName >>= bindingName) Nothing | Parameter {parameterPlicity, parameterName} <- parameters]
       (body, remaining) <- expression afterItems
       pure (Ascription (Lambda binders body) (Product parameters result), remaining)
-    _ -> failAt tokens "fall requireth at least one input and a final result ilk"
+    _ -> failAt tokens "function requireth at least one input and a final result type"
 
-fallItems :: Parser [Parameter]
-fallItems = closedItems TMapsTo "expected ',' or '^' after fall item" parameter
+functionItems :: Parser [Parameter]
+functionItems = closedItems TMapsTo "expected ',' or '^' after function item" parameter
 
 lambdaBinder :: Parser Binder
 lambdaBinder (TAt : rest) = binder Implicit rest
@@ -815,8 +815,8 @@ block :: Parser Expression
 block tokens = do
   (located, rest) <- locatedDeclarations tokens
   let bindings = map snd located
-  when (any isInductive bindings) (failAt tokens "ilk declarations must be top-level")
-  when (any isHost bindings) (failAt tokens "fremmed bindings must be top-level")
+  when (any isInductive bindings) (failAt tokens "type declarations must be top-level")
+  when (any isHost bindings) (failAt tokens "foreign bindings must be top-level")
   when (any isFixpoint bindings) (failAt tokens "fast declarations must be top-level")
   when (any isModuleLevel bindings) (failAt tokens "bring and show must be top-level")
   case rest of

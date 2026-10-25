@@ -1,0 +1,72 @@
+bring class/order/hath_at_most.tung
+bring class/order/lattice.tung
+bring class/order/order_partial.tung
+bring class/order/order_total.tung
+bring class/order/semilattice_lower.tung
+bring class/order/semilattice_upper.tung
+bring is.tung
+bring type/two.tung
+
+## a lattice whose infimum and supremum distribute over each other.
+show class lattice_distributive: [α: *, @: α lattice, *] {
+  let ⋏_⋎: [a: α, b: α, c: α, (a ⋏ (b ⋎ c)) = ((a ⋏ b) ⋎ (a ⋏ c))]
+
+  let ⋎_⋏: [a: α, b: α, c: α, (a ⋎ (b ⋏ c)) = ((a ⋎ b) ⋏ (a ⋎ c))]
+}
+
+bizen: [@β: *, @: β lattice_distributive, @α: *, [α, β] lattice_distributive] {
+  let ⋏_⋎: [f:, g:, h:] ≔ {a ^ (a f) ⋏_⋎ (a g) (a h)} extend
+
+  let ⋎_⋏: [f:, g:, h:] ≔ {a ^ (a f) ⋎_⋏ (a g) (a h)} extend
+}
+
+bizen: [@α: *, @: α order_total, α lattice_distributive] {
+  let ⋏_⋎: [a:, b:, c:] ≔ (b ≤ c) inspect {
+    yea, k₀ ^ (a ≤ b) inspect {
+      yea, k₁ ^ <{transit,
+        a ⋏_yea c (a ≤_yea_transit b c k₁ k₀),
+        (a ⋏_yea a (a ≤_reflect)) symmetry,
+        {d ^ (a ≤ d) if d a} leibnitz
+          ((a ⋏_yea c (a ≤_yea_transit b c k₁ k₀)) symmetry)
+      },
+      nay, k₁ ^ (a ≤ c) inspect {
+        yea, _ ^ (b ⋎_yea a (a ≤_flip b k₁)) symmetry,
+        nay, _ ^ (b ⋎_yea c k₀) symmetry
+      }
+    },
+    nay, k₀ ^ (a ≤ b) inspect {
+      yea, _ ^ (a ≤ c) inspect {
+        yea, _  ^ (a ⋏_yea a (a ≤_reflect)) symmetry,
+        nay, k₂ ^ (a ⋎_nay c k₂) symmetry
+      },
+      nay, k₁ ^ (a ≤ c) inspect {
+        yea, k₂ ^ match (k₀ symmetry) transit (b ≤_yea_transit a c
+          (a ≤_flip b k₁) k₂) {},
+        nay, _ ^ (b ⋎_nay c k₀) symmetry
+      }
+    }
+  }
+
+  let ⋎_⋏: [a:, b:, c:] ≔ (b ≤ c) inspect {
+    yea, k₀ ^ (a ≤ b) inspect {
+      yea, k₁ ^
+        (({d ^ (b ≤ d) if b d} leibnitz (a ⋎_yea c (a ≤_yea_transit b c k₁ k₀)))
+          transit (b ⋏_yea c k₀)) symmetry,
+      nay, _ ^ (a ≤ c) inspect {
+        yea, k₂ ^ (a ⋏_yea c k₂) symmetry,
+        nay, _  ^ (a ⋏_yea a (a ≤_reflect)) symmetry
+      }
+    },
+    nay, k₀ ^ (a ≤ b) inspect {
+      yea, k₁ ^ (a ≤ c) inspect {
+        yea, _ ^ (b ⋏_nay c k₀) symmetry,
+        nay, _ ^ ((b lemma_⋏_swap a) transit (a ⋏_yea b k₁)) symmetry
+      },
+      nay, k₁ ^ (a ≤ c) inspect {
+        yea, k₂ ^ match (k₀ symmetry) transit (b ≤_yea_transit a c
+          (a ≤_flip b k₁) k₂) {},
+        nay, _ ^ (a ⋏_yea a (a ≤_reflect)) symmetry
+      }
+    }
+  }
+}

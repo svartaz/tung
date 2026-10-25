@@ -21,7 +21,7 @@ import Data.List (elemIndex, nub)
 import Data.Maybe (catMaybes, fromMaybe, isJust)
 import Tung.Dependent.Check qualified as K
 import Tung.Dependent.Elaboration qualified as E
-import Tung.Dependent.Host (deedInputs)
+import Tung.Dependent.Host (effectInputs)
 import Tung.Dependent.Normalise qualified as N
 import Tung.Dependent.Source.Environment (globals)
 import Tung.Dependent.Source.Pattern.Common
@@ -104,7 +104,7 @@ elaborateRecursive checker@ExpressionChecker {checkerEnvironment = environment} 
   let rows = [row {matchPatterns = [maybe pattern (`PNamed` pattern) (lookup position clauseAliases) | (position, pattern) <- zip [0 ..] (matchPatterns row)]} | row <- clauseRows]
   let explicitInputs = [(level, ty) | (level, Explicit, ty) <- clauseInputs]
       scope = clauseScope
-  loops <- isJust . deedInputs <$> quote scope clauseResult
+  loops <- isJust . effectInputs <$> quote scope clauseResult
   families <- traverse (familyOf environment . snd) explicitInputs
   -- index patterns have distinct leaf inputs, bound before the structural
   -- input and unused by parameters. their shape stayeth part of the function's
@@ -240,7 +240,7 @@ memoisedMotive environment scope structuralType resultMotive = do
           E.unify (scopeContext scope) inferred motiveType
           next <- eval scope motive >>= E.instantiate codomain
           pure ((Apply Explicit term motive, next), domains ++ [(target, inductiveIndexPlicities info, motiveType)])
-        _ -> E.failure "invalid inductive motive ilk"
+        _ -> E.failure "invalid inductive motive type"
     -- bind the fields and their type-valued hypotheses, then build the record.
     belowMethod root plicities result current _ [] children = do
       entries <- forM (zip [0 :: Int ..] (reverse children)) \(index, (target, field, hypothesis)) -> do

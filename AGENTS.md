@@ -14,11 +14,11 @@ per audience; other documents link to it.
 | [`byspel/walkthrough.tung`](byspel/walkthrough.tung) | people   | a checked tour of the ordinary language                 |
 | [`vscode/readme.md`](vscode/readme.md)               | people   | editor setup and features                               |
 | [`AGENTS.md`](AGENTS.md)                             | agents   | workflow, writing rules, and test gates                 |
-| [`anglish.md`](anglish.md)                           | agents   | anglish words and the english words they replace        |
+| [`naming.md`](naming.md)                             | agents   | word choice and the words that differ from common terms |
 | [`tongue/language.md`](tongue/language.md)           | agents   | what a program author writeth and observeth             |
 | [`tongue/dependent.md`](tongue/dependent.md)         | agents   | checker algorithms, logic, and design decisions         |
 | [`tongue/development.md`](tongue/development.md)     | agents   | commands, modules, structural decisions, test machinery |
-| [`bookhoard/reference.md`](bookhoard/reference.md)   | agents   | standard library design boundaries                      |
+| [`library/reference.md`](library/reference.md)       | agents   | standard library design boundaries                      |
 | [`todo.md`](todo.md)                                 | agents   | planned work only, in priority order                    |
 
 `CLAUDE.md` importeth this file. module-local invariants live in comments
@@ -40,18 +40,18 @@ the prose in the owning document.
   for plural subject and object. never use `you` as a subject.
 - use `e`, `em`, and `es` for third-person singular personal pronouns:
   subject, object, and possessive respectively.
-- object-language names follow tung's anglish direction and use snake_case,
-  including `.tung` paths and host keys. [`anglish.md`](anglish.md) listeth
-  the anglish words and the english words they replace. haskell and tooling
-  identifiers use conventional compiler terms.
+- object-language names use snake_case, including `.tung` paths and host
+  keys, and choose words as [`naming.md`](naming.md) saith: no coined
+  words, a germanic word where one naturally fitteth, otherwise the common
+  word. haskell and tooling identifiers use conventional compiler terms.
 - a name putteth a namespace-like part first, then the concept it owneth,
-  then qualifiers: `≤_eftbend` is `≤`'s `eftbend`, `deed_bind` is
-  `deed`'s `bind`, and a helper proof is `helpsetting_≍_=`. a name that
+  then qualifiers: `≤_reflect` is `≤`'s `reflect`, `effect_bind` is
+  `effect`'s `bind`, and a helper proof is `lemma_≍_=`. a name that
   spelleth an expression keepeth the expression's term order, as
-  `sheer_bind` or `naught_+`, and a conversion stayeth `x_to_y`.
+  `sheer_bind` or `zero_+`, and a conversion stayeth `x_to_y`.
 - a compound declared name keepeth each term's own spelling, including symbols:
-  `≍_to_=`, `≍_eftbend`, and `≤_=`. ordinary word-named terms such as
-  `sameness` keep their spelling too, as in `warp_sameness`.
+  `≍_to_=`, `≍_reflect`, and `≤_=`. ordinary word-named terms such as
+  `identity` keep their spelling too, as in `map_identity`.
 - a name doth not repeat its module's file name: a shown name is read
   qualified, so `x.tung` showeth `to_y`, read `x~to_y`, not `x_to_y`. the
   same name may be used in different files.
@@ -65,11 +65,11 @@ the prose in the owning document.
 ## workflow
 
 - inspect `git status` and the touched diff first. the maintainer often editeth
-  bookhoard and examples while an agent worketh. reread a file before editing
+  the library and examples while an agent worketh. reread a file before editing
   it, and preserve unrelated changes.
 - read the owning document, source, and positive and adversarial tests.
 - change the owning stage first, then its consumers. never hide a checker
-  weakness by changing bookhoard merely to fit it.
+  weakness by changing the library merely to fit it.
 - prefer simple code over broad abstraction. remove a superseded form instead
   of keeping two spellings for one feature.
 - update stable language behaviour in `tongue/language.md` or
@@ -92,18 +92,18 @@ three syntax facts cause frequent mistakes:
 
 ## change and test boundaries
 
-| change                                | required follow-up                                                                                 |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| syntax or tokens                      | parser marks, tidier, diagnostics, language document, byspels, tests, and `vscode/` grammar        |
-| type, deed, flock, or bizen semantics | type and evaluator regressions, bookhoard checking, and language document                          |
-| dependent core or source              | dependent test groups, their byspels, and `tongue/dependent.md`                                    |
-| runtime or host surface               | primitive or host catalogue, `bookhoard/_fremmed.tung`, exact evaluator tests, and runner boundary |
-| public bookhoard api                  | doc comments, library tests, and a realistic byspel when useful                                    |
-| editor behaviour                      | `vscode/` compiler roles and navigation model, typescript checks, and editor tests                 |
+| change                                  | required follow-up                                                                               |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| syntax or tokens                        | parser marks, tidier, diagnostics, language document, byspels, tests, and `vscode/` grammar      |
+| type, effect, class, or bizen semantics | type and evaluator regressions, library checking, and language document                          |
+| dependent core or source                | dependent test groups, their byspels, and `tongue/dependent.md`                                  |
+| runtime or host surface                 | primitive or host catalogue, `library/_foreign.tung`, exact evaluator tests, and runner boundary |
+| public library api                      | doc comments, library tests, and a realistic byspel when useful                                  |
+| editor behaviour                        | `vscode/` compiler roles and navigation model, typescript checks, and editor tests               |
 
 before handoff:
 
-- run `make compiler-test` for compiler or bookhoard work;
+- run `make compiler-test` for compiler or library work;
 - run `make editor-test` after editor, tidier, or syntax work;
 - run `make byspel-test` after runner or checker changes;
 - run `make prose-test` after prose changes;
@@ -114,8 +114,8 @@ before handoff:
 
 `TUNG_TEST_GROUP="parse type"` selecteth compiler groups; the names are listed in
 `tongue/test/Main.hs`. `TUNG_TEST_PROGRESS=1` printeth each case number. the
-`evaluate` and `bookhoard` groups take several minutes because many cases
-check bookhoard imports; run narrow groups while iterating. editor tests
+`evaluate` and `standard` groups take several minutes because many cases
+check library imports; run narrow groups while iterating. editor tests
 need a built compiler: `TUNG_EXECUTABLE=$(cd tongue && cabal list-bin exe:tung)
 npm test --workspace=tung-vscode`.
 

@@ -1,10 +1,10 @@
 bring is.tung
 
-let +: [ℤ, ℤ, ℤ] ≔ 'eke_wholetale' fremmed
+let +: [ℤ, ℤ, ℤ] ≔ 'add_integer' foreign
 
-## an ilk with one constructor and no indices hath an accessor for each named
-## field; `value.field` findeth it by the value's ilk.
-ilk wight: * { wight_of: [name: string, eld: ℤ, wight] }
+## a type with one constructor and no indices hath an accessor for each named
+## field; `value.field` findeth it by the value's type.
+type wight: * { wight_of: [name: string, eld: ℤ, wight] }
 
 let someone: wight ≔ 'tung' wight_of +1
 
@@ -12,13 +12,13 @@ let someone: wight ≔ 'tung' wight_of +1
 let older: wight ≔ someone.name wight_of (someone.eld + +1)
 
 ## parameters stay implicit in each accessor.
-ilk duo: [α: *, *] { duo_of: [first: α, other: α, α duo] }
+type duo: [α: *, *] { duo_of: [first: α, other: α, α duo] }
 
 let pair: ℤ duo ≔ +1 duo_of +2
 
 ## a field type may name an earlier field.
-ilk tagged: * {
+type tagged: * {
   tagged_of: [who: wight, label: string, sure: label = label, tagged]
 }
 
-let entry: tagged ≔ older tagged_of 'x' eftbend
+let entry: tagged ≔ older tagged_of 'x' reflect

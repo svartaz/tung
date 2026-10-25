@@ -1,0 +1,867 @@
+bring _foreign.tung
+bring class/algebra/total/euclidean.tung
+bring class/algebra/total/group_add.tung
+bring class/algebra/total/hath_add.tung
+bring class/algebra/total/hath_divide_leftover.tung
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/hath_one.tung
+bring class/algebra/total/hath_subtract.tung
+bring class/algebra/total/hath_zero.tung
+bring class/algebra/total/monoid_add.tung
+bring class/algebra/total/monoid_multiply.tung
+bring class/algebra/total/ring.tung
+bring class/algebra/total/semigroup_add.tung
+bring class/algebra/total/semigroup_multiply.tung
+bring class/algebra/total/semiring.tung
+bring class/equal_to_is.tung
+bring class/hath_equal.tung
+bring class/hath_to_string.tung
+bring class/order/hath_at_most.tung
+bring class/order/order_partial.tung
+bring class/order/order_total.tung
+bring is.tung
+bring type/and.tung
+bring type/natural.tung
+bring type/optional.tung
+bring type/two.tung
+
+## `ℤ` is a primitive type with arbitrary precision whose values are
+## `n nonnegative` and `n next_negative`, the latter being `-(n + 1)`. each
+## binding with a body after `foreign` computeth natively on literals and, on
+## other inputs, unfoldeth that structural model.
+## convert a natural to an integer.
+show let to_ℤ: [ℕ, ℤ] ≔ 'natural_to_integer' foreign nonnegative
+
+## convert a nonnegative integer to a natural.
+show let to_ℕ: [ℤ, ℕ optional] ≔ 'integer_to_natural' foreign {
+  n nonnegative   ^ n some,
+  _ next_negative ^ none
+}
+
+## `m - n` for naturals, as an integer.
+## it splitteth on `n` first, so `m difference 0` is `m nonnegative` for any
+## `m`.
+let difference: [ℕ, ℕ, ℤ] ≔ {
+  m, 0      ^ m nonnegative,
+  m, k next ^ match m {
+    0      ^ k next_negative,
+    j next ^ j difference k
+  }
+}
+
+## the flipping of a natural, as an integer.
+let flip_ℕ: [ℕ, ℤ] ≔ {
+  0      ^ 0 nonnegative,
+  k next ^ k next_negative
+}
+
+let add: [ℤ, ℤ, ℤ] ≔ 'add_integer' foreign {
+  m nonnegative,   n nonnegative   ^ (m + n) nonnegative,
+  m nonnegative,   n next_negative ^ m difference (n next),
+  m next_negative, n nonnegative   ^ n difference (m next),
+  m next_negative, n next_negative ^ ((m + n) next) next_negative
+}
+
+let subtract: [ℤ, ℤ, ℤ] ≔ 'subtract_integer' foreign {
+  a, n nonnegative   ^ a add (n flip_ℕ),
+  a, n next_negative ^ a add ((n next) nonnegative)
+}
+
+let multiply: [ℤ, ℤ, ℤ] ≔ 'multiply_integer' foreign {
+  m nonnegative,   n nonnegative   ^ (m · n) nonnegative,
+  m nonnegative,   n next_negative ^ (m · (n next)) flip_ℕ,
+  m next_negative, n nonnegative   ^ ((m next) · n) flip_ℕ,
+  m next_negative, n next_negative ^ ((m next) · (n next)) nonnegative
+}
+
+let equal: [ℤ, ℤ, 𝟚] ≔ 'equal_integer' foreign {
+  m nonnegative,   n nonnegative   ^ m ≍ n,
+  m next_negative, n next_negative ^ m ≍ n,
+  _,               _               ^ nay
+}
+
+let at_most: [ℤ, ℤ, 𝟚] ≔ 'at_most_integer' foreign {
+  m nonnegative,   n nonnegative   ^ m ≤ n,
+  _ nonnegative,   _ next_negative ^ nay,
+  _ next_negative, _ nonnegative   ^ yea,
+  m next_negative, n next_negative ^ n ≤ m
+}
+
+bizen: ℤ hath_≍ {
+  let ≍ ≔ equal
+}
+
+bizen: ℤ hath_≤ {
+  let ≤ ≔ at_most
+}
+
+## the laws below are proved by sign cases, using the `ℕ` laws.
+let lemma_≤_reflect: [a: ℤ, (a ≤ a) = yea] ≔ match a {
+  m nonnegative   ^ m ≤_reflect,
+  m next_negative ^ m ≤_reflect
+}
+
+## antisymmetry with the comparisons of `ℕ` eftwended, as for negative
+## values.
+let antisymmetry_eftwended: [a: ℕ, b: ℕ, >{≤, b ≤ a, a ≤ b, a ≍ b} = yea]
+  ≔ match a, b {
+    0,       0       ^ reflect,
+    0,       _ next  ^ reflect,
+    _ next,  0       ^ reflect,
+    a′ next, b′ next ^ a′ antisymmetry_eftwended b′
+  }
+
+let lemma_≤_antisymmetry: [a: ℤ, b: ℤ, >{≤, a ≤ b, b ≤ a, a ≍ b} = yea]
+  ≔ match a, b {
+    m nonnegative,   n nonnegative   ^ m ≤_antisymmetry n,
+    _ nonnegative,   _ next_negative ^ reflect,
+    _ next_negative, _ nonnegative   ^ reflect,
+    m next_negative, n next_negative ^ m antisymmetry_eftwended n
+  }
+
+## transitivity with the comparisons of `ℕ` eftwended.
+let transit_eftwended: [a: ℕ, b: ℕ, c: ℕ, >{≤, b ≤ a, c ≤ b, c ≤ a} = yea]
+  ≔ match a, b, c {
+    _, _, 0 ^ match b ≤ a {
+      yea;
+      nay ^ reflect
+    },
+    _,       0,       _ next  ^ reflect,
+    0,       _ next,  _ next  ^ reflect,
+    a′ next, b′ next, c′ next ^ a′ transit_eftwended b′ c′
+  }
+
+let lemma_≤_transit: [a: ℤ, b: ℤ, c: ℤ, >{≤, a ≤ b, b ≤ c, a ≤ c} = yea]
+  ≔ match a, b, c {
+    m nonnegative, n nonnegative, o nonnegative   ^ m ≤_transit n o,
+    m nonnegative, n nonnegative, _ next_negative ^ match m ≤ n {
+      yea;
+      nay ^ reflect
+    },
+    _ nonnegative,   _ next_negative, _             ^ reflect,
+    _ next_negative, n nonnegative,   o nonnegative ^ match n ≤ o {
+      yea;
+      nay ^ reflect
+    },
+    _ next_negative, _ nonnegative,   _ next_negative ^ reflect,
+    m next_negative, n next_negative, _ nonnegative   ^ match n ≤ m {
+      yea;
+      nay ^ reflect
+    },
+    m next_negative, n next_negative, o next_negative ^ m transit_eftwended n o
+  }
+
+let lemma_≤_total: [a: ℤ, b: ℤ, (((a ≤ b) ≍ nay) ≤ (b ≤ a)) = yea]
+  ≔ match a, b {
+    m nonnegative,   n nonnegative   ^ m ≤_total n,
+    _ nonnegative,   _ next_negative ^ reflect,
+    _ next_negative, _ nonnegative   ^ reflect,
+    m next_negative, n next_negative ^ n ≤_total m
+  }
+
+let lemma_zero_+: [a: ℤ, (+0 + a) = a] ≔ match a {
+  m nonnegative   ^ nonnegative leibnitz (m zero_+),
+  _ next_negative ^ reflect
+}
+
+let lemma_+_swap: [a: ℤ, b: ℤ, (a + b) = (b + a)] ≔ match a, b {
+  m nonnegative,   n nonnegative   ^ nonnegative leibnitz (m +_swap n),
+  _ nonnegative,   _ next_negative ^ reflect,
+  _ next_negative, _ nonnegative   ^ reflect,
+  m next_negative, n next_negative ^ {o ^ (o next) next_negative} leibnitz
+    (m +_swap n)
+}
+
+let lemma_zero_·: [a: ℤ, (+0 · a) = +0] ≔ match a {
+  m nonnegative   ^ nonnegative leibnitz (m zero_· @ℕ),
+  m next_negative ^ flip_ℕ leibnitz ((m next) zero_· @ℕ)
+}
+
+let lemma_·_zero: [a: ℤ, (a · +0) = +0] ≔ match a {
+  _ nonnegative   ^ reflect,
+  _ next_negative ^ reflect
+}
+
+let lemma_one_·: [a: ℤ, (+1 · a) = a] ≔ match a {
+  m nonnegative   ^ nonnegative leibnitz (m one_·),
+  m next_negative ^ flip_ℕ leibnitz ((m next) one_·)
+}
+
+let difference_self: [a: ℕ, (a difference a) = +0] ≔ match a {
+  0       ^ reflect,
+  a′ next ^ a′ difference_self
+}
+
+## flipping turneth the sign. it computeth natively on literals; the model
+## below is what proofs unfold.
+let flip: [ℤ, ℤ] ≔ 'flip_integer' foreign {
+  n nonnegative   ^ n flip_ℕ,
+  n next_negative ^ (n next) nonnegative
+}
+
+let lemma_+_flip: [a: ℤ, (a add (a flip)) = +0] ≔ match a {
+  0 nonnegative        ^ reflect,
+  (m next) nonnegative ^ (m next) difference_self,
+  n next_negative      ^ (n next) difference_self
+}
+
+let lemma_+_nonnegative
+  : [a: ℕ, b: ℕ, c: ℕ,
+    ((a difference b) + (c nonnegative)) = ((a + c) difference b)]
+  ≔ match b, a {
+    0, _ ^ reflect,
+    b′ next, 0 ^ ((_ difference (b′ next)) leibnitz (c zero_+ @ℕ)) symmetry,
+    b′ next, a′ next ^
+      (a′ lemma_+_nonnegative b′ c) transit
+        (((_ difference (b′ next)) leibnitz (a′ next_+ c)) symmetry)
+  }
+
+let lemma_+_negative
+  : [a: ℕ, b: ℕ, c: ℕ,
+    ((a difference b) + (c next_negative)) = (a difference (b + (c next)))]
+  ≔ match b, a {
+    0, _ ^ ({d ^ a difference (d next)} leibnitz (c zero_+ @ℕ)) symmetry,
+    b′ next, 0 ^ (next_negative leibnitz (b′ next_+ c)) symmetry,
+    b′ next, a′ next ^
+      (a′ lemma_+_negative b′ c) transit
+        (((a′ difference) leibnitz (b′ next_+ c)) symmetry)
+  }
+
+## differences add componentwise.
+let lemma_+_differences
+  : [a: ℕ, b: ℕ, c: ℕ, d: ℕ,
+    ((a difference b) + (c difference d)) = ((a + c) difference (b + d))]
+  ≔ match d, c {
+    0,       _       ^ a lemma_+_nonnegative b c,
+    d′ next, 0       ^ a lemma_+_negative b d′,
+    d′ next, c′ next ^ a lemma_+_differences b c′ d′
+  }
+
+let lemma_+_+_differences
+  : [a₁: ℕ, b₁: ℕ, a₂: ℕ, b₂: ℕ, a₃: ℕ, b₃: ℕ,
+    ((a₁ difference b₁) + ((a₂ difference b₂) + (a₃ difference b₃))) =
+      (((a₁ difference b₁) + (a₂ difference b₂)) + (a₃ difference b₃))]
+  ≔ >{transit,
+    ((a₁ difference b₁) + _) leibnitz (a₂ lemma_+_differences b₂ a₃ b₃),
+    a₁ lemma_+_differences b₁ (a₂ + a₃) (b₂ + b₃),
+    (_ difference (b₁ + (b₂ + b₃))) leibnitz (a₁ +_+ a₂ a₃ @ℕ),
+    (((a₁ + a₂) + a₃) difference _) leibnitz (b₁ +_+ b₂ b₃ @ℕ),
+    (a₁ + a₂) lemma_+_differences (b₁ + b₂) a₃ b₃ $ symmetry,
+    (_ + (a₃ difference b₃)) leibnitz (a₁ lemma_+_differences b₁ a₂ b₂)
+      $ symmetry
+  }
+
+## `ℕ` laws at their `ℕ` statements, so each use needeth no annotation.
+let lemma_ℕ_+_+: [a: ℕ, b: ℕ, c: ℕ, (a + (b + c)) = ((a + b) + c)] ≔ a +_+ b c
+
+let lemma_ℕ_+_swap: [a: ℕ, b: ℕ, (a + b) = (b + a)] ≔ a +_swap b
+
+let lemma_ℕ_zero_+: [a: ℕ, (0 + a) = a] ≔ a zero_+
+
+let lemma_ℕ_zero_·: [a: ℕ, (0 · a) = 0] ≔ a zero_·
+
+let lemma_ℕ_·_·: [a: ℕ, b: ℕ, c: ℕ, (a · (b · c)) = ((a · b) · c)] ≔ a ·_· b c
+
+let lemma_ℕ_·_+: [a: ℕ, b: ℕ, c: ℕ, (a · (b + c)) = ((a · b) + (a · c))]
+  ≔ a ·_+ b c
+
+let lemma_ℕ_+_·: [a: ℕ, b: ℕ, c: ℕ, ((a + b) · c) = ((a · c) + (b · c))]
+  ≔ a +_· b c
+
+## the same summands give the same sums, and the same sides the same
+## differences.
+let lemma_ℕ_+_both
+  : [@a: ℕ, @a′: ℕ, @b: ℕ, @b′: ℕ, p: a = a′, q: b = b′, (a + b) = (a′ + b′)]
+  ≔ ((_ + b) leibnitz p) transit ((a′ +) leibnitz q)
+
+let lemma_+_both
+  : [@a: ℤ, @a′: ℤ, @b: ℤ, @b′: ℤ, p: a = a′, q: b = b′, (a + b) = (a′ + b′)]
+  ≔ ((_ + b) leibnitz p) transit ((a′ +) leibnitz q)
+
+let difference_both
+  : [@a: ℕ, @a′: ℕ, @b: ℕ, @b′: ℕ, p: a = a′, q: b = b′,
+    (a difference b) = (a′ difference b′)]
+  ≔ ((_ difference b) leibnitz p) transit ((a′ difference) leibnitz q)
+
+## (a + b) + (c + d) regroupeth as (a + c) + (b + d).
+let trade: [a: ℕ, b: ℕ, c: ℕ, d: ℕ, ((a + b) + (c + d)) = ((a + c) + (b + d))]
+  ≔ (
+    let inner: [(b + (c + d)) = (c + (b + d))] ≔ >{transit,
+      b lemma_ℕ_+_+ c d,
+      (_ + d) leibnitz (b lemma_ℕ_+_swap c),
+      (c lemma_ℕ_+_+ b d) symmetry
+    }
+    yield >{transit,
+      (a lemma_ℕ_+_+ b (c + d)) symmetry,
+      (a +) leibnitz inner,
+      a lemma_ℕ_+_+ c (b + d)
+    }
+  )
+
+## (a + b) + (c + d) regroupeth as (a + d) + (b + c).
+let trade_outer
+  : [a: ℕ, b: ℕ, c: ℕ, d: ℕ, ((a + b) + (c + d)) = ((a + d) + (b + c))]
+  ≔ (reflect lemma_ℕ_+_both (c lemma_ℕ_+_swap d)) transit (a trade b d c)
+
+## adding the same natural to both sides keepeth a difference.
+let difference_strike
+  : [a: ℕ, b: ℕ, c: ℕ, ((a + c) difference (b + c)) = (a difference b)]
+  ≔ match c {
+    0       ^ reflect,
+    c′ next ^ a difference_strike b c′
+  }
+
+let flip_difference: [a: ℕ, (a flip_ℕ) = (0 difference a)] ≔ match a {
+  0      ^ reflect,
+  _ next ^ reflect
+}
+
+let lemma_·_nonnegative
+  : [a: ℕ, b: ℕ, c: ℕ,
+    ((a difference b) · (c nonnegative)) = ((a · c) difference (b · c))]
+  ≔ match b, a {
+    0,       _ ^ (((a · c) difference _) leibnitz (c lemma_ℕ_zero_·)) symmetry,
+    b′ next, 0 ^
+      (((b′ next) · c) flip_difference) transit
+        (((_ difference ((b′ next) · c)) leibnitz (c lemma_ℕ_zero_·)) symmetry),
+    b′ next, a′ next ^
+      (a′ lemma_·_nonnegative b′ c) transit
+        (((a′ next_· c) difference_both (b′ next_· c)) transit
+          ((a′ · c) difference_strike (b′ · c) c) $ symmetry)
+  }
+
+let lemma_·_negative
+  : [a: ℕ, b: ℕ, c: ℕ,
+    ((a difference b) · (c next_negative)) =
+      ((b · (c next)) difference (a · (c next)))]
+  ≔ match b, a {
+    0, _ ^
+      ((a · (c next)) flip_difference) transit
+        (((_ difference (a · (c next))) leibnitz ((c next) lemma_ℕ_zero_·))
+          symmetry),
+    b′ next, 0 ^
+      ((((b′ next) · (c next)) difference _) leibnitz ((c next) lemma_ℕ_zero_·))
+        symmetry,
+    b′ next, a′ next ^
+      (a′ lemma_·_negative b′ c) transit
+        (((b′ next_· (c next)) difference_both (a′ next_· (c next))) transit
+          ((b′ · (c next)) difference_strike (a′ · (c next)) (c next))
+          $ symmetry)
+  }
+
+## differences multiply as (p - q) × (r - s) = (pr + qs) - (ps + qr).
+let lemma_·_differences
+  : [a: ℕ, b: ℕ, c: ℕ, d: ℕ,
+    ((a difference b) · (c difference d)) =
+      (((a · c) + (b · d)) difference ((a · d) + (b · c)))]
+  ≔ match d, c {
+    0, _ ^
+      (a lemma_·_nonnegative b c) transit
+        ((((a · c) difference _) leibnitz ((b · c) lemma_ℕ_zero_+)) symmetry),
+    d′ next, 0 ^
+      (a lemma_·_negative b d′) transit
+        (((_ difference (a · (d′ next))) leibnitz
+          ((b · (d′ next)) lemma_ℕ_zero_+)) symmetry),
+    d′ next, c′ next ^ >{transit,
+      a lemma_·_differences b c′ d′,
+      (((a · c′) + (b · d′)) difference_strike ((a · d′) + (b · c′)) (a + b))
+        symmetry,
+      (((a · c′) trade a (b · d′) b) difference_both
+        ((a · d′) trade a (b · c′) b)) symmetry
+    }
+  }
+
+let lemma_·_·_differences
+  : [a₁: ℕ, b₁: ℕ, a₂: ℕ, b₂: ℕ, a₃: ℕ, b₃: ℕ,
+    ((a₁ difference b₁) · ((a₂ difference b₂) · (a₃ difference b₃))) =
+      (((a₁ difference b₁) · (a₂ difference b₂)) · (a₃ difference b₃))]
+  ≔ (
+    let nonnegative_part
+      : [((a₁ · ((a₂ · a₃) + (b₂ · b₃))) + (b₁ · ((a₂ · b₃) + (b₂ · a₃)))) =
+          ((((a₁ · a₂) + (b₁ · b₂)) · a₃) + (((a₁ · b₂) + (b₁ · a₂)) · b₃))]
+      ≔ >{transit,
+        (a₁ lemma_ℕ_·_+ (a₂ · a₃) (b₂ · b₃)) lemma_ℕ_+_both
+          (b₁ lemma_ℕ_·_+ (a₂ · b₃) (b₂ · a₃)),
+        ((a₁ lemma_ℕ_·_· a₂ a₃) lemma_ℕ_+_both (a₁ lemma_ℕ_·_· b₂ b₃))
+          lemma_ℕ_+_both
+          ((b₁ lemma_ℕ_·_· a₂ b₃) lemma_ℕ_+_both (b₁ lemma_ℕ_·_· b₂ a₃)),
+        ((a₁ · a₂) · a₃) trade_outer ((a₁ · b₂) · b₃) ((b₁ · a₂) · b₃)
+          ((b₁ · b₂) · a₃),
+        ((a₁ · a₂) lemma_ℕ_+_· (b₁ · b₂) a₃) lemma_ℕ_+_both
+          ((a₁ · b₂) lemma_ℕ_+_· (b₁ · a₂) b₃) $ symmetry
+      }
+    let negative_part
+      : [((a₁ · ((a₂ · b₃) + (b₂ · a₃))) + (b₁ · ((a₂ · a₃) + (b₂ · b₃)))) =
+          ((((a₁ · a₂) + (b₁ · b₂)) · b₃) + (((a₁ · b₂) + (b₁ · a₂)) · a₃))]
+      ≔ >{transit,
+        (a₁ lemma_ℕ_·_+ (a₂ · b₃) (b₂ · a₃)) lemma_ℕ_+_both
+          (b₁ lemma_ℕ_·_+ (a₂ · a₃) (b₂ · b₃)),
+        ((a₁ lemma_ℕ_·_· a₂ b₃) lemma_ℕ_+_both (a₁ lemma_ℕ_·_· b₂ a₃))
+          lemma_ℕ_+_both
+          ((b₁ lemma_ℕ_·_· a₂ a₃) lemma_ℕ_+_both (b₁ lemma_ℕ_·_· b₂ b₃)),
+        ((a₁ · a₂) · b₃) trade_outer ((a₁ · b₂) · a₃) ((b₁ · a₂) · a₃)
+          ((b₁ · b₂) · b₃),
+        ((a₁ · a₂) lemma_ℕ_+_· (b₁ · b₂) b₃) lemma_ℕ_+_both
+          ((a₁ · b₂) lemma_ℕ_+_· (b₁ · a₂) a₃) $ symmetry
+      }
+    yield >{transit,
+      ((a₁ difference b₁) · _) leibnitz (a₂ lemma_·_differences b₂ a₃ b₃),
+      a₁ lemma_·_differences b₁ ((a₂ · a₃) + (b₂ · b₃)) ((a₂ · b₃) + (b₂ · a₃)),
+      nonnegative_part difference_both negative_part,
+      ((a₁ · a₂) + (b₁ · b₂)) lemma_·_differences ((a₁ · b₂) + (b₁ · a₂)) a₃ b₃
+        $ symmetry,
+      (_ · (a₃ difference b₃)) leibnitz (a₁ lemma_·_differences b₁ a₂ b₂)
+        $ symmetry
+    }
+  )
+
+let lemma_·_+_differences
+  : [a₁: ℕ, b₁: ℕ, a₂: ℕ, b₂: ℕ, a₃: ℕ, b₃: ℕ,
+    ((a₁ difference b₁) · ((a₂ difference b₂) + (a₃ difference b₃))) =
+      (((a₁ difference b₁) · (a₂ difference b₂)) +
+        ((a₁ difference b₁) · (a₃ difference b₃)))]
+  ≔ >{transit,
+    ((a₁ difference b₁) · _) leibnitz (a₂ lemma_+_differences b₂ a₃ b₃),
+    a₁ lemma_·_differences b₁ (a₂ + a₃) (b₂ + b₃),
+    (((a₁ lemma_ℕ_·_+ a₂ a₃) lemma_ℕ_+_both (b₁ lemma_ℕ_·_+ b₂ b₃)) transit
+      ((a₁ · a₂) trade (a₁ · a₃) (b₁ · b₂) (b₁ · b₃))) difference_both
+      (((a₁ lemma_ℕ_·_+ b₂ b₃) lemma_ℕ_+_both (b₁ lemma_ℕ_·_+ a₂ a₃)) transit
+        ((a₁ · b₂) trade (a₁ · b₃) (b₁ · a₂) (b₁ · a₃))),
+    ((a₁ · a₂) + (b₁ · b₂)) lemma_+_differences ((a₁ · b₂) + (b₁ · a₂))
+      ((a₁ · a₃) + (b₁ · b₃)) ((a₁ · b₃) + (b₁ · a₃)) $ symmetry,
+    (a₁ lemma_·_differences b₁ a₂ b₂) lemma_+_both
+      (a₁ lemma_·_differences b₁ a₃ b₃) $ symmetry
+  }
+
+let lemma_+_·_differences
+  : [a₁: ℕ, b₁: ℕ, a₂: ℕ, b₂: ℕ, a₃: ℕ, b₃: ℕ,
+    (((a₁ difference b₁) + (a₂ difference b₂)) · (a₃ difference b₃)) =
+      (((a₁ difference b₁) · (a₃ difference b₃)) +
+        ((a₂ difference b₂) · (a₃ difference b₃)))]
+  ≔ >{transit,
+    (_ · (a₃ difference b₃)) leibnitz (a₁ lemma_+_differences b₁ a₂ b₂),
+    (a₁ + a₂) lemma_·_differences (b₁ + b₂) a₃ b₃,
+    (((a₁ lemma_ℕ_+_· a₂ a₃) lemma_ℕ_+_both (b₁ lemma_ℕ_+_· b₂ b₃)) transit
+      ((a₁ · a₃) trade (a₂ · a₃) (b₁ · b₃) (b₂ · b₃))) difference_both
+      (((a₁ lemma_ℕ_+_· a₂ b₃) lemma_ℕ_+_both (b₁ lemma_ℕ_+_· b₂ a₃)) transit
+        ((a₁ · b₃) trade (a₂ · b₃) (b₁ · a₃) (b₂ · a₃))),
+    ((a₁ · a₃) + (b₁ · b₃)) lemma_+_differences ((a₁ · b₃) + (b₁ · a₃))
+      ((a₂ · a₃) + (b₂ · b₃)) ((a₂ · b₃) + (b₂ · a₃)) $ symmetry,
+    (a₁ lemma_·_differences b₁ a₃ b₃) lemma_+_both
+      (a₂ lemma_·_differences b₂ a₃ b₃) $ symmetry
+  }
+
+## each integer is the difference of its parts: `m nonnegative` is
+## `m difference 0` and `n next_negative` is `0 difference (n next)`.
+let nonnegative_part: [ℤ, ℕ] ≔ {
+  m nonnegative   ^ m,
+  _ next_negative ^ 0
+}
+
+let negative_part: [ℤ, ℕ] ≔ {
+  _ nonnegative   ^ 0,
+  n next_negative ^ n next
+}
+
+let parts: [a: ℤ, a = ((a nonnegative_part) difference (a negative_part))]
+  ≔ match a {
+    _ nonnegative   ^ reflect,
+    _ next_negative ^ reflect
+  }
+
+## the same inputs give the same outcomes of a three-input function.
+let congruence
+  : [@a: ℤ, @a′: ℤ, @b: ℤ, @b′: ℤ, @c: ℤ, @c′: ℤ, f: [ℤ, ℤ, ℤ, ℤ], p: a = a′,
+    q: b = b′, r: c = c′, (a f b c) = (a′ f b′ c′)]
+  ≔ >{transit,
+    (_ f b c) leibnitz p,
+    (a′ f _ c) leibnitz q,
+    (a′ f b′) leibnitz r
+  }
+
+## a law of differences holdeth for integers by writing each as its parts.
+let through_parts
+  : [left: [ℤ, ℤ, ℤ, ℤ], right: [ℤ, ℤ, ℤ, ℤ], a: ℤ, b: ℤ, c: ℤ,
+    law: (((a nonnegative_part) difference (a negative_part)) left
+      ((b nonnegative_part) difference (b negative_part))
+      ((c nonnegative_part) difference (c negative_part))) =
+      (((a nonnegative_part) difference (a negative_part)) right
+        ((b nonnegative_part) difference (b negative_part))
+        ((c nonnegative_part) difference (c negative_part))),
+    (a left b c) = (a right b c)]
+  ≔ >{transit,
+    left congruence (a parts) (b parts) (c parts),
+    law,
+    right congruence (a parts) (b parts) (c parts) $ symmetry
+  }
+
+let lemma_+_+: [a: ℤ, b: ℤ, c: ℤ, (a + (b + c)) = ((a + b) + c)] ≔ {
+  d, e, h ^ d + (e + h)
+} through_parts {d, e, h ^ (d + e) + h} a b c
+  ((a nonnegative_part) lemma_+_+_differences (a negative_part)
+    (b nonnegative_part) (b negative_part) (c nonnegative_part)
+    (c negative_part))
+
+let lemma_·_·: [a: ℤ, b: ℤ, c: ℤ, (a · (b · c)) = ((a · b) · c)] ≔ {
+  d, e, h ^ d · (e · h)
+} through_parts {d, e, h ^ (d · e) · h} a b c
+  ((a nonnegative_part) lemma_·_·_differences (a negative_part)
+    (b nonnegative_part) (b negative_part) (c nonnegative_part)
+    (c negative_part))
+
+let lemma_·_+: [a: ℤ, b: ℤ, c: ℤ, (a · (b + c)) = ((a · b) + (a · c))] ≔ {
+  d, e, h ^ d · (e + h)
+} through_parts {d, e, h ^ (d · e) + (d · h)} a b c
+  ((a nonnegative_part) lemma_·_+_differences (a negative_part)
+    (b nonnegative_part) (b negative_part) (c nonnegative_part)
+    (c negative_part))
+
+let lemma_+_·: [a: ℤ, b: ℤ, c: ℤ, ((a + b) · c) = ((a · c) + (b · c))] ≔ {
+  d, e, h ^ (d + e) · h
+} through_parts {d, e, h ^ (d · h) + (e · h)} a b c
+  ((a nonnegative_part) lemma_+_·_differences (a negative_part)
+    (b nonnegative_part) (b negative_part) (c nonnegative_part)
+    (c negative_part))
+
+bizen: ℤ order_partial {
+  let ≤_reflect ≔ lemma_≤_reflect
+
+  let ≤_antisymmetry ≔ lemma_≤_antisymmetry
+
+  let ≤_transit ≔ lemma_≤_transit
+
+  let ≤_= ≔ lemma_≤_=
+}
+
+bizen: ℤ order_total {
+  let ≤_total ≔ lemma_≤_total
+}
+
+## the sign cases of euclidean division, from the natural quotient `q` and
+## leftover `r` of the dividend tale's size by the divisor's size `e next`. a
+## dividend `m next_negative`, which is `-(m + 1)`, turneth its leftover
+## around to `e ∸ r`, so the leftover is never negative.
+let over_over: [q ⸴ r: ℕ ∧ ℕ, ℤ ∧ ℤ] ≔ (q nonnegative) ⸴ (r nonnegative)
+
+let over_under: [q ⸴ r: ℕ ∧ ℕ, ℤ ∧ ℤ] ≔ (q flip_ℕ) ⸴ (r nonnegative)
+
+let under_over: [e: ℕ, q ⸴ r: ℕ ∧ ℕ, ℤ ∧ ℤ]
+  ≔ (q next_negative) ⸴ ((e ∸ r) nonnegative)
+
+let under_under: [e: ℕ, q ⸴ r: ℕ ∧ ℕ, ℤ ∧ ℤ]
+  ≔ ((q next) nonnegative) ⸴ ((e ∸ r) nonnegative)
+
+let sign: [p: (ℕ ∧ ℕ) optional, f: [ℕ ∧ ℕ, ℤ ∧ ℤ], (ℤ ∧ ℤ) optional] ≔ match p {
+  none    ^ none,
+  p′ some ^ (p′ f) some
+}
+
+let divide_leftover: [ℤ, ℤ, (ℤ ∧ ℤ) optional]
+  ≔ 'divide_leftover_integer' foreign {
+    _,               0 nonnegative        ^ none,
+    m nonnegative,   (e next) nonnegative ^ (m % (e next)) sign over_over,
+    m nonnegative,   e next_negative      ^ (m % (e next)) sign over_under,
+    m next_negative, (e next) nonnegative ^ (m % (e next)) sign (e under_over),
+    m next_negative, e next_negative      ^ (m % (e next)) sign (e under_under)
+  }
+
+bizen: ℤ hath_% {
+  let % ≔ divide_leftover
+}
+
+## the three euclidean laws of a division outcome `p`.
+let eftbuilt: [dividend: ℤ, divisor: ℤ, p: (ℤ ∧ ℤ) optional, *] ≔ (match p {
+  none                       ^ dividend,
+  (quotient ⸴ leftover) some ^ (quotient · divisor) + leftover
+}) = dividend
+
+let leftover_nonnegative: [p: (ℤ ∧ ℤ) optional, *] ≔ (match p {
+  none                ^ yea,
+  (_ ⸴ leftover) some ^ zero ≤ leftover
+}) = yea
+
+let bounded: [divisor: ℤ, p: (ℤ ∧ ℤ) optional, *] ≔ (match p {
+  none                ^ yea,
+  (_ ⸴ leftover) some ^
+    (zero ≤ divisor) if (leftover < divisor) (leftover < (divisor -+ zero))
+}) = yea
+
+## `(q + 1) · (e + 1)` is `(e ∸ r) + (m + 1)` when `m = q · (e + 1) + r` and `r
+## ≤ e`.
+let lemma_grown
+  : [a: ℕ, b: ℕ, c: ℕ, d: ℕ, eftbuild: ((c · (b next)) + d) = a,
+    below: (d ≤ b) = yea, ((c next) · (b next)) = ((b ∸ d) + (a next))]
+  ≔ >{transit,
+    c next_· (b next),
+    {e ^ ((c · (b next)) + e) next} leibnitz ((b ∸_+ d below) symmetry),
+    next leibnitz ((c · (b next)) +_+ (b ∸ d) d),
+    {e ^ (e + d) next} leibnitz ((c · (b next)) +_swap (b ∸ d)),
+    next leibnitz (((b ∸ d) +_+ (c · (b next)) d) symmetry),
+    {e ^ ((b ∸ d) + e) next} leibnitz eftbuild
+  }
+
+## `-((q + 1) · (e + 1)) + (e ∸ r)` is `-(m + 1)`.
+let lemma_eftbuilt_under
+  : [m: ℕ, e: ℕ, q: ℕ, r: ℕ, eftbuild: ((q · (e next)) + r) = m,
+    below: (r ≤ e) = yea,
+    (((((q next) · (e next)) nonnegative) -) + ((e ∸ r) nonnegative)) =
+      (m next_negative)]
+  ≔ >{transit,
+    {a ^ ((a nonnegative) -) + ((e ∸ r) nonnegative)} leibnitz
+      (m lemma_grown e q r eftbuild below),
+    (_ + ((e ∸ r) nonnegative)) leibnitz
+      (((e ∸ r) nonnegative) -_over_+ ((m next) nonnegative)),
+    ((((m next) nonnegative) -) +_+ (((e ∸ r) nonnegative) -)
+      ((e ∸ r) nonnegative)) symmetry,
+    ((((m next) nonnegative) -) + _) leibnitz (((e ∸ r) nonnegative) ring~-_+),
+    (((m next) nonnegative) -) +_zero
+  }
+
+let lemma_eftbuilt_over_over
+  : [m: ℕ, e: ℕ, p: (ℕ ∧ ℕ) optional, divided: (m % (e next)) = p,
+    (m nonnegative) eftbuilt ((e next) nonnegative) (p sign over_over)]
+  ≔ match p {
+    none         ^ reflect,
+    (q ⸴ r) some ^ nonnegative leibnitz (m %_eftbuild e q r divided)
+  }
+
+let lemma_eftbuilt_over_under
+  : [m: ℕ, e: ℕ, p: (ℕ ∧ ℕ) optional, divided: (m % (e next)) = p,
+    (m nonnegative) eftbuilt (e next_negative) (p sign over_under)]
+  ≔ match p {
+    none         ^ reflect,
+    (q ⸴ r) some ^
+      ((_ + (r nonnegative)) leibnitz
+        ((q nonnegative) -_·_- ((e next) nonnegative))) transit
+        (nonnegative leibnitz (m %_eftbuild e q r divided))
+  }
+
+let lemma_eftbuilt_under_over
+  : [m: ℕ, e: ℕ, p: (ℕ ∧ ℕ) optional, divided: (m % (e next)) = p,
+    (m next_negative) eftbuilt ((e next) nonnegative) (p sign (e under_over))]
+  ≔ match p {
+    none         ^ reflect,
+    (q ⸴ r) some ^
+      ((_ + ((e ∸ r) nonnegative)) leibnitz
+        (((q next) nonnegative) -_· ((e next) nonnegative))) transit
+        (m lemma_eftbuilt_under e q r (m %_eftbuild e q r divided)
+          (m %_leftover e q r divided))
+  }
+
+let lemma_eftbuilt_under_under
+  : [m: ℕ, e: ℕ, p: (ℕ ∧ ℕ) optional, divided: (m % (e next)) = p,
+    (m next_negative) eftbuilt (e next_negative) (p sign (e under_under))]
+  ≔ match p {
+    none         ^ reflect,
+    (q ⸴ r) some ^
+      ((_ + ((e ∸ r) nonnegative)) leibnitz
+        (((q next) nonnegative) ·_- ((e next) nonnegative))) transit
+        (m lemma_eftbuilt_under e q r (m %_eftbuild e q r divided)
+          (m %_leftover e q r divided))
+  }
+
+## a leftover at most `e` is below `e next`.
+let lemma_<_next
+  : [a: ℕ, b: ℕ, below: (a ≤ b) = yea,
+    ((a nonnegative) < ((b next) nonnegative)) = yea]
+  ≔ match a, b {
+    0,       _       ^ reflect,
+    _ next,  0       ^ match below {},
+    a′ next, b′ next ^ a′ lemma_<_next b′ below
+  }
+
+## against a negative divisor `e next_negative`, `divisor -+ zero` is `0
+## + (e next)`.
+let lemma_<_turned
+  : [a: ℕ, b: ℕ, below: (a ≤ b) = yea,
+    ((a nonnegative) < ((b next_negative) -+ zero)) = yea]
+  ≔ (next leibnitz ((b zero_+) symmetry)) throughbear @ℕ @(b next) @((0 + b)
+    next) @{c ^ ((a nonnegative) < (c nonnegative)) = yea}
+    (a lemma_<_next b below)
+
+let lemma_nonnegative
+  : [f: [ℕ ∧ ℕ, ℤ ∧ ℤ],
+    kept: [q: ℕ, r: ℕ,
+      (match (q ⸴ r) f { _ ⸴ leftover ^ zero ≤ leftover }) = yea],
+    p: (ℕ ∧ ℕ) optional, (p sign f) leftover_nonnegative]
+  ≔ match p {
+    none         ^ reflect,
+    (q ⸴ r) some ^ q kept r
+  }
+
+let lemma_bounded_over_over
+  : [m: ℕ, e: ℕ, p: (ℕ ∧ ℕ) optional, divided: (m % (e next)) = p,
+    ((e next) nonnegative) bounded (p sign over_over)]
+  ≔ match p {
+    none         ^ reflect,
+    (q ⸴ r) some ^ r lemma_<_next e (m %_leftover e q r divided)
+  }
+
+let lemma_bounded_over_under
+  : [m: ℕ, e: ℕ, p: (ℕ ∧ ℕ) optional, divided: (m % (e next)) = p,
+    (e next_negative) bounded (p sign over_under)]
+  ≔ match p {
+    none         ^ reflect,
+    (q ⸴ r) some ^ r lemma_<_turned e (m %_leftover e q r divided)
+  }
+
+let lemma_bounded_under_over
+  : [e: ℕ, p: (ℕ ∧ ℕ) optional,
+    ((e next) nonnegative) bounded (p sign (e under_over))]
+  ≔ match p {
+    none         ^ reflect,
+    (_ ⸴ r) some ^ (e ∸ r) lemma_<_next e (e ∸_≤ r)
+  }
+
+let lemma_bounded_under_under
+  : [e: ℕ, p: (ℕ ∧ ℕ) optional,
+    (e next_negative) bounded (p sign (e under_under))]
+  ≔ match p {
+    none         ^ reflect,
+    (_ ⸴ r) some ^ (e ∸ r) lemma_<_turned e (e ∸_≤ r)
+  }
+
+bizen: ℤ euclidean {
+  let %_some: [dividend:, divisor:, nonzero:]
+    ≔ match dividend, divisor, nonzero {
+      _,               0 nonnegative,        k ^ match reflect k {},
+      _ nonnegative,   (_ next) nonnegative, _;
+      _ nonnegative,   _ next_negative,      _;
+      _ next_negative, (_ next) nonnegative, _;
+      _ next_negative, _ next_negative,      _ ^ reflect
+    }
+
+  let %_·_+: [dividend:, divisor:] ≔ match dividend, divisor {
+    _,             0 nonnegative        ^ reflect,
+    m nonnegative, (n next) nonnegative ^
+      m lemma_eftbuilt_over_over n (m % (n next)) reflect,
+    m nonnegative, n next_negative ^
+      m lemma_eftbuilt_over_under n (m % (n next)) reflect,
+    m next_negative, (n next) nonnegative ^
+      m lemma_eftbuilt_under_over n (m % (n next)) reflect,
+    m next_negative, n next_negative ^
+      m lemma_eftbuilt_under_under n (m % (n next)) reflect
+  }
+
+  let %_nonnegative: [dividend:, divisor:] ≔ match dividend, divisor {
+    _,             0 nonnegative        ^ reflect,
+    m nonnegative, (n next) nonnegative ^
+      over_over lemma_nonnegative {_, _ ^ reflect} (m % (n next)),
+    m nonnegative, n next_negative ^
+      over_under lemma_nonnegative {_, _ ^ reflect} (m % (n next)),
+    m next_negative, (n next) nonnegative ^
+      (n under_over) lemma_nonnegative {_, _ ^ reflect} (m % (n next)),
+    m next_negative, n next_negative ^
+      (n under_under) lemma_nonnegative {_, _ ^ reflect} (m % (n next))
+  }
+
+  let %_bounded: [dividend:, divisor:] ≔ match dividend, divisor {
+    _,             0 nonnegative        ^ reflect,
+    m nonnegative, (n next) nonnegative ^
+      m lemma_bounded_over_over n (m % (n next)) reflect,
+    m nonnegative, n next_negative ^
+      m lemma_bounded_over_under n (m % (n next)) reflect,
+    m next_negative, (n next) nonnegative ^
+      n lemma_bounded_under_over (m % (n next)),
+    m next_negative, n next_negative ^
+      n lemma_bounded_under_under (m % (n next))
+  }
+}
+
+## string for people omiteth the `+` that an integer literal requireth.
+bizen: ℤ hath_to_string {
+  let to_string ≔ integer_to_string
+}
+
+bizen: ℤ hath_+ {
+  let + ≔ add
+}
+
+bizen: ℤ hath_zero {
+  let zero ≔ +0
+}
+
+bizen: ℤ hath_· {
+  let · ≔ multiply
+}
+
+bizen: ℤ hath_one {
+  let one ≔ +1
+}
+
+bizen: ℤ monoid_+ {
+  let +_+ ≔ lemma_+_+
+
+  let zero_+ ≔ lemma_zero_+
+
+  let +_zero: [a:] ≔ match a {
+    _ nonnegative   ^ reflect,
+    _ next_negative ^ reflect
+  }
+}
+
+bizen: ℤ monoid_· {
+  let ·_· ≔ lemma_·_·
+
+  let one_· ≔ lemma_one_·
+
+  let ·_one: [a:] ≔ match a {
+    m nonnegative   ^ nonnegative leibnitz (m ·_one),
+    m next_negative ^ flip_ℕ leibnitz ((m next) ·_one)
+  }
+}
+
+bizen: ℤ semiring {
+  let +_swap ≔ lemma_+_swap
+
+  let ·_+ ≔ lemma_·_+
+
+  let +_· ≔ lemma_+_·
+
+  let zero_·: [a:] ≔ a lemma_zero_·
+
+  let ·_zero: [a:] ≔ a lemma_·_zero
+}
+
+bizen: ℤ hath_- {
+  let - ≔ flip
+
+  let -+: [b:, a:] ≔ a subtract b
+}
+
+bizen: ℤ ring {
+  let +_- ≔ lemma_+_flip
+
+  let -_+: [a:] ≔ ((a flip) +_swap a) transit (a lemma_+_flip)
+
+  let -+_+: [b:, a:] ≔ match b {
+    m nonnegative   ^ a lemma_+_swap (m flip_ℕ),
+    m next_negative ^ a lemma_+_swap ((m next) nonnegative)
+  }
+}
+
+## boolean equality of integers agreeth with `=`, by sign cases.
+let lemma_≍_=: [a: ℤ, b: ℤ, equal: (a ≍ b) = yea, a = b] ≔ match a, b {
+  m nonnegative,   n nonnegative   ^ nonnegative leibnitz (m ≍_= n equal),
+  m next_negative, n next_negative ^ next_negative leibnitz (m ≍_= n equal),
+  _ nonnegative,   _ next_negative ^ match equal {},
+  _ next_negative, _ nonnegative   ^ match equal {}
+}
+
+let lemma_≍_reflect: [a: ℤ, (a ≍ a) = yea] ≔ match a {
+  m nonnegative   ^ m ≍_reflect,
+  m next_negative ^ m ≍_reflect
+}
+
+## antisymmetry holdeth in `=`, by sound equality.
+let lemma_≤_=: [a: ℤ, b: ℤ, below: (a ≤ b) = yea, above: (b ≤ a) = yea, a = b]
+  ≔ a lemma_≍_= b
+    ((_ ≤ (a ≍ b)) yea_throughbear above
+      ({c ^ >{≤, c, b ≤ a, a ≍ b}} yea_throughbear below
+        (a lemma_≤_antisymmetry b)))
+
+bizen: ℤ ≍_to_= {
+  let ≍_= ≔ lemma_≍_=
+
+  let ≍_reflect ≔ lemma_≍_reflect
+}

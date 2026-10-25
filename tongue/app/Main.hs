@@ -31,7 +31,7 @@ main = do
   (strict, allowed, args) <- either (\message -> putStrLn message >> exitFailure) pure (commandOptions arguments)
   case args of
     ["--name", name, path] -> checkNameFile strict allowed name path
-    _ | Just _ <- allowed -> putStrLn "orsetting options require --name" >> exitFailure
+    _ | Just _ <- allowed -> putStrLn "axiom options require --name" >> exitFailure
     ["--check-stdin"] -> checkStdin strict
     ["--editor-session"] -> editorSession
     ["--language-metadata"] -> putStr languageMetadata
@@ -51,13 +51,13 @@ commandOptions :: [String] -> Either String (Bool, Maybe [String], [String])
 commandOptions = go False Nothing False
   where
     go _ allowed empty ("--no-sorry" : rest) = go True allowed empty rest
-    go strict allowed empty ("--allow-orset" : name : rest)
+    go strict allowed empty ("--allow-axiom" : name : rest)
       | not ("--" `isPrefixOf` name), not empty = go strict (Just (fromMaybe [] allowed ++ [name])) False rest
-    go _ _ _ ["--allow-orset"] = Left "--allow-orset requireth a name"
-    go strict allowed _ ("--no-orset" : rest)
+    go _ _ _ ["--allow-axiom"] = Left "--allow-axiom requireth a name"
+    go strict allowed _ ("--no-axiom" : rest)
       | maybe True null allowed = go strict (Just []) True rest
-    go _ _ _ ("--allow-orset" : _) = Left "--allow-orset requireth a name and cannot accompany --no-orset"
-    go _ _ _ ("--no-orset" : _) = Left "--no-orset cannot accompany --allow-orset"
+    go _ _ _ ("--allow-axiom" : _) = Left "--allow-axiom requireth a name and cannot accompany --no-axiom"
+    go _ _ _ ("--no-axiom" : _) = Left "--no-axiom cannot accompany --allow-axiom"
     go strict allowed _ args = Right (strict, allowed, args)
 
 -- a project loaded from the library roots of `base`, and the `use` paths it
@@ -133,21 +133,21 @@ runFile strict path programArgs = withProgram path \program -> do
   runProgram programArgs program
 
 -- a checked file is a module or a program: a `main` it defineth must be
--- `𝟙 deed`.
+-- `𝟙 effect`.
 checkFile :: Bool -> FilePath -> IO ()
 checkFile strict path = withProject path (`loadProjectFile` path) report \program -> do
   source <- readFile path
   either typeFailure (const (checkedOk strict path source program)) (DependentRun.checkMain program)
 
--- a checked program printeth `ilk ok`, each declaration or law that assumeth
+-- a checked program printeth `type ok`, each declaration or law that assumeth
 -- `sorry`, and then the goal and named context of each `sorry` in the file.
 -- under `--no-sorry` an assumption faileth instead.
 checkedOk :: Bool -> FilePath -> String -> Dependent.SourceProgram -> IO ()
 checkedOk strict path source program = do
   refuseSorry strict program
-  putStrLn "ilk ok"
+  putStrLn "type ok"
   mapM_ (putStrLn . ("sorry: " ++)) (Dependent.sorryAssumptions program)
-  mapM_ (putStrLn . ("orsetting: " ++)) (Dependent.orsendAssumptions program)
+  mapM_ (putStrLn . ("axiom: " ++)) (Dependent.orsendAssumptions program)
   printGoals path source (reverse (Dependent.sourceHoles program))
 
 -- a goal line, then each named local of its context, outermost first.
@@ -189,7 +189,7 @@ proofResult program strict policy name = do
 proofReport :: Dependent.ProofAudit -> Either String () -> String
 proofReport audit verified =
   unlines $
-    ["name: " ++ Dependent.auditName audit, "ilk: " ++ Dependent.auditType audit]
+    ["name: " ++ Dependent.auditName audit, "type: " ++ Dependent.auditType audit]
       ++ (if null dependencies then ["dependencies: none"] else map dependencyReport dependencies)
       ++ [either ("name error: " ++) (const "name ok") verified]
   where
@@ -197,7 +197,7 @@ proofReport audit verified =
     dependencyReport Dependent.ProofDependency {dependencyName, dependencyType, dependencyKind} =
       case dependencyKind of
         Dependent.SorryDependency -> "sorry: " ++ dependencyName ++ ": " ++ dependencyType
-        Dependent.AxiomDependency -> "orsetting: " ++ dependencyName ++ ": " ++ dependencyType
+        Dependent.AxiomDependency -> "axiom: " ++ dependencyName ++ ": " ++ dependencyType
         Dependent.HostDependency key -> "host: " ++ dependencyName ++ " [" ++ key ++ "]: " ++ dependencyType
 
 -- standard input is checked as a file in the current directory. it hath no
@@ -213,7 +213,7 @@ listLibraryPaths :: FilePath -> IO ()
 listLibraryPaths path = resolveLibraryRoots path >>= either projectFailure (mapM_ putStrLn)
 
 typeFailure :: String -> IO a
-typeFailure message = putStrLn ("ilk error: " ++ message) >> exitFailure
+typeFailure message = putStrLn ("type error: " ++ message) >> exitFailure
 
 projectFailure :: String -> IO a
 projectFailure message = putStrLn ("project error: " ++ message) >> exitFailure
@@ -229,7 +229,7 @@ data EditorRequest = EditorRequest
     -- unsaved texts of open files, by path; other modules are read from disk.
     requestTexts :: Map.Map FilePath String,
     requestPath :: Maybe FilePath,
-    requestAllowedOrsettings :: Maybe [String]
+    requestAllowedAxioms :: Maybe [String]
   }
 
 instance FromJSON EditorRequest where
@@ -244,7 +244,7 @@ instance FromJSON EditorRequest where
       <*> request .: "source"
       <*> request .:? "texts" .!= Map.empty
       <*> request .:? "path"
-      <*> request .:? "allowedOrsettings"
+      <*> request .:? "allowedAxioms"
 
 -- the session keepeth checked modules by interface key, so editing one file
 -- rechecketh only the modules that depend on it. a request that nameth its
@@ -342,7 +342,7 @@ sessionRoots ImportCache {cacheRoots} owner =
         Nothing -> resolveLibraryRoots owner <&> \resolved -> (either (const known) (\roots -> Map.insert (manifest, text) roots known) resolved, resolved)
 
 projectResponse :: ImportCache -> EditorRequest -> Map.Map String String -> Map.Map String FilePath -> IO Value
-projectResponse cache EditorRequest {requestCommand, requestName, requestSource = source, requestPath, requestAllowedOrsettings} imports files =
+projectResponse cache EditorRequest {requestCommand, requestName, requestSource = source, requestPath, requestAllowedAxioms} imports files =
   case requestCommand of
     "check" ->
       compilationReport cache requestPath source imports <&> \(result, report, _) ->
@@ -355,19 +355,19 @@ projectResponse cache EditorRequest {requestCommand, requestName, requestSource 
         object
           [ "kind" .= ("names" :: String),
             "files" .= files,
-            "resolved" .= [(spanStart span, spanEnd span, moduleLabel owner, name, ilk) | (span, SymbolId owner name, ilk) <- Dependent.reportNames report],
+            "resolved" .= [(spanStart span, spanEnd span, moduleLabel owner, name, namesType) | (span, SymbolId owner name, namesType) <- Dependent.reportNames report],
             "visible" .= [(written, moduleLabel owner, name, constructor) | (written, SymbolId owner name, constructor) <- visible]
           ]
-    "ilk" ->
+    "type" ->
       compiled cache requestPath source imports <&> \case
         Left failure -> editorError (diagnosticMessage (failureDiagnostic source imports failure))
-        Right program -> either (editorError . ("ilk error: " ++)) (\ty -> object ["kind" .= ("ilk" :: String), "ilk" .= ty]) (Dependent.typeOfName program requestName)
+        Right program -> either (editorError . ("type error: " ++)) (\ty -> object ["kind" .= ("type" :: String), "type" .= ty]) (Dependent.typeOfName program requestName)
     "proof" ->
       compiled cache requestPath source imports >>= \case
         Left failure -> pure (editorError (diagnosticMessage (failureDiagnostic source imports failure)))
         Right program -> do
           path <- maybe getCurrentDirectory pure requestPath
-          policy <- proofPolicy requestAllowedOrsettings path
+          policy <- proofPolicy requestAllowedAxioms path
           pure $ either (editorError . ("name error: " ++)) (uncurry proofResponse) (proofResult program True policy requestName)
     _ -> pure (editorError ("checker session failed: unknown command '" ++ requestCommand ++ "'"))
 
@@ -390,7 +390,7 @@ proofResponse :: Dependent.ProofAudit -> Either String () -> Value
 proofResponse audit verified =
   object
     [ "kind" .= ("proof" :: String),
-      "audit" .= object ["name" .= Dependent.auditName audit, "ilk" .= Dependent.auditType audit, "dependencies" .= map dependencyJSON (Dependent.auditDependencies audit)],
+      "audit" .= object ["name" .= Dependent.auditName audit, "type" .= Dependent.auditType audit, "dependencies" .= map dependencyJSON (Dependent.auditDependencies audit)],
       "verified" .= isRight verified,
       "message" .= fromLeft "name ok" verified,
       "report" .= proofReport audit verified
@@ -400,11 +400,11 @@ proofResponse audit verified =
       object $
         [ "symbol" .= object ["module" .= moduleName owner, "name" .= name],
           "name" .= dependencyName,
-          "ilk" .= dependencyType
+          "type" .= dependencyType
         ]
           ++ case dependencyKind of
             Dependent.SorryDependency -> ["kind" .= ("sorry" :: String)]
-            Dependent.AxiomDependency -> ["kind" .= ("orsetting" :: String)]
+            Dependent.AxiomDependency -> ["kind" .= ("axiom" :: String)]
             Dependent.HostDependency key -> ["kind" .= ("host" :: String), "host" .= key]
     moduleName = moduleLabel
 
@@ -461,9 +461,9 @@ usage =
          tung --language-metadata
          tung --library-paths [project-path]
 
-  --name printeth the name's ilk and the sorry, orsettings, and hosts it reacheth.
+  --name printeth the name's type and the sorry, axioms, and hosts it reacheth.
   --no-sorry before a command rejecteth any reachable sorry.
-  --allow-orset <name> may precede --name repeatedly; --no-orset alloweth none.
+  --allow-axiom <name> may precede --name repeatedly; --no-axiom alloweth none.
   without either option, --name useth the nearest tung.yaml proof policy.
 
   """

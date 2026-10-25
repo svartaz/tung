@@ -100,7 +100,7 @@ columnFamily environment ty =
     Nothing ->
       E.approximate >>= \case
         True -> columnFamily environment ty
-        False -> E.failure "a constructor pattern requireth a value of an inductive ilk"
+        False -> E.failure "a constructor pattern requireth a value of an inductive type"
 
 familyOf :: K.Environment -> N.Value -> Elaboration (Maybe Split)
 familyOf environment ty =
@@ -163,7 +163,7 @@ applyMethod scope (term, termType) build =
       (method, result) <- build methodType
       next <- eval scope method >>= E.instantiate codomain
       pure ((Apply Explicit term method, next), result)
-    _ -> E.failure "invalid eliminator method ilk"
+    _ -> E.failure "invalid eliminator method type"
 
 -- motive domains depend only on the common parameters, never earlier motives.
 -- bind those earlier motives privately to reach this family's domain.
@@ -179,7 +179,7 @@ inductiveMotiveType scope Split {..} levels parameters = do
           | otherwise -> do
               (inner, next) <- bindDomain current Nothing domain codomain
               go inner next rest
-        _ -> E.failure "invalid inductive motive ilk"
+        _ -> E.failure "invalid inductive motive type"
     go _ _ [] = E.failure "missing inductive motive"
 
 -- ordinary matching instantiateth joint induction with the selected motive.
@@ -207,7 +207,7 @@ eliminatorPrefix scope Split {..} levels parameters motive target memo = do
           E.unify (scopeContext scope) inferred domain
           result <- eval scope chosen >>= E.instantiate codomain
           pure (Apply Explicit term chosen, result)
-        _ -> E.failure "invalid inductive motive ilk"
+        _ -> E.failure "invalid inductive motive type"
     constantMotive current ty trivial =
       E.force ty >>= \case
         N.VPi plicity domain codomain -> do
@@ -272,7 +272,7 @@ applyIndexedMotive scope plicities motive value = do
                     ending = drop (length arguments - count) arguments
                 unless (length arguments >= count && map fst ending == plicities) (E.failure "invalid memoised target indices")
                 pure ending
-          _ -> E.failure "invalid memoised target ilk"
+          _ -> E.failure "invalid memoised target type"
   foldM instantiate motive (indices ++ [(Explicit, value)])
   where
     instantiate current (plicity, argument) =

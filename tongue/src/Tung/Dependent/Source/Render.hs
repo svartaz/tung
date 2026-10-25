@@ -38,8 +38,8 @@ renderTermIn globals display = \context names term -> renderTermWith display nam
         let inner = do
               current <- context
               ty <- typed (K.evaluate globals current annotation)
-              worth <- typed (K.evaluate globals current value)
-              pure (K.Context (worth : K.contextValues current) (ty : K.contextTypes current))
+              evaluated <- typed (K.evaluate globals current value)
+              pure (K.Context (evaluated : K.contextValues current) (ty : K.contextTypes current))
          in Let (walk context annotation) (walk context value) (walk inner body)
       Field index value ->
         let receiver = walk context value

@@ -1,0 +1,64 @@
+bring is.tung
+bring type/grounded.tung
+
+type unary: * {
+  nought: unary,
+  after: [unary, unary]
+}
+
+## `b before a` when `a` is `b after`.
+type before: [unary, unary, *] { step: [@n: unary, n before (n after)] }
+
+let nothing_before: [y: unary, y before nought, unary grounded before y] ≔ {}
+
+let reach: [n: unary, unary grounded before n] ≔ match n {
+  nought  ^ nothing_before ground,
+  m after ^ {y: unary, p: y before (m after) ^ match p { step ^ m reach }}
+    ground
+}
+
+## a direct measure useth the same decrease proof at each recursive call.
+let count: [n: unary, unary] ≔ {_ ^ unary} wellfounded_recur_by {x ^ x} reach {
+  n, recur ^ match n {
+    nought  ^ nought,
+    m after ^ (m recur step) after
+  }
+} n
+
+## further inputs are quantified in the result motive.
+let add: [n: unary, k: unary, unary] ≔ {_ ^ [unary, unary]}
+  wellfounded_recur_by {x ^ x} reach {n, recur ^ {k ^ match n {
+    nought  ^ k,
+    m after ^ m recur step (k after)
+  }}} n k
+
+## a computed measure needeth no explicit equality throughbear at the call site.
+let shifted: [n: unary, unary] ≔ {_ ^ unary} wellfounded_recur_by after reach {
+  n, recur ^ match n {
+    nought  ^ nought,
+    m after ^ (m recur step) after
+  }
+} n
+
+## the recursive input may be rebuilt rather than drawn from a recursive field.
+type parcel: * { pack: [unary, parcel] }
+
+let weight: [parcel, unary] ≔ {n pack ^ n}
+
+let unpack_count: [p: parcel, unary] ≔ {_ ^ unary} wellfounded_recur_by weight
+  reach {p, recur ^ match p { n pack ^ match n {
+    nought  ^ nought,
+    m after ^ ((m pack) recur step) after
+  } }} p
+
+## the result motive may depend on the whole input.
+let selfsame: [p: parcel, p = p] ≔ {x ^ x = x} wellfounded_recur_by weight
+  reach {p, recur ^ match p { n pack ^ match n {
+    nought  ^ reflect,
+    m after ^ (
+      let known: (m pack) = (m pack) ≔ (m pack) recur step
+      yield reflect
+    )
+  } }} p
+
+let three: unary ≔ ((nought after) after) after

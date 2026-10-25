@@ -1,7 +1,9 @@
 {
   "name": "tung",
   "private": true,
-  "workspaces": ["vscode"],
+  "workspaces": [
+    "vscode"
+  ],
   "scripts": {
     "setup": "make setup",
     "build": "make build",
@@ -9,5 +11,8 @@
     "test:compiler": "make compiler-test",
     "test:editor": "make editor-test",
     "package:editor": "make extension-package"
+  },
+  "overrides": {
+    "@azure/msal-node": "^7.1.1"
   }
 }

@@ -1,0 +1,33 @@
+bring class/algebra/partial/category.tung
+bring class/algebra/partial/semigroupoid.tung
+bring class/functor.tung
+bring combinator.tung
+bring is.tung
+
+## the yoneda lemma for a functor `φ` on types: a natural transformation
+## from
+## each function out of `α` to `φ` is determined by one value of `α φ`, its
+## image of `identity`, and every such value giveth one.
+## a transformation from each function out of `α` to `φ`.
+show let yoneda: [φ: [*, *], α: *, *] ≔ [@β: *, [α, β], β φ]
+
+## `n` is natural when changing its outcome agreeth with changing its input.
+show let natural: [@φ: [*, *], @: φ functor, @α: *, n: φ yoneda α, *]
+  ≔ [@β: *, @γ: *, f: [α, β], g: [β, γ], ((f n) map g) = ((f ▷ g) n)]
+
+## the transformation that a value giveth: tweak it by each function.
+show let lift: [@φ: [*, *], @: φ functor, @α: *, a: α φ, φ yoneda α] ≔ a map
+
+## the value that a transformation determineth: its image of `identity`.
+show let unlift: [@φ: [*, *], @α: *, n: φ yoneda α, α φ] ≔ identity n
+
+## lifting a value and taking it back giveth the value.
+show let unlift_lift
+  : [@φ: [*, *], @: φ functor, @α: *, a: α φ, ((a lift) unlift) = a]
+  ≔ a map_identity
+
+## a natural transformation is the lift of its own value, at every input.
+show let lift_unlift
+  : [@φ: [*, *], @: φ functor, @α: *, n: φ yoneda α, natural_n: n natural,
+    @β: *, f: [α, β], (f ((n unlift) lift)) = (f n)]
+  ≔ identity natural_n f

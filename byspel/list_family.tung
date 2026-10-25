@@ -1,5 +1,5 @@
 ## one list family storeth values, types, or type constructors.
-ilk list: [α: *, *] {
+type list: [α: *, *] {
   ∅: α list,
   ‥: [head: α, tail: α list, α list]
 }
@@ -8,7 +8,7 @@ ilk list: [α: *, *] {
 let ·: [@α: *, left: α list, right: α list, α list] ≔ {_ ^ α list} unbuild list
   @α right {head, _, leftover ^ head ‥ @α leftover} left
 
-let warp: [@α: *, @β: *, l: α list, f: [α, β], β list] ≔ {_ ^ β list} unbuild
+let map: [@α: *, @β: *, l: α list, f: [α, β], β list] ≔ {_ ^ β list} unbuild
   list @α (∅ @β) {head, _, leftover ^ (head f) ‥ @β leftover} l
 
 ## fold replaceth ∅ with empty and ‥ with step, from right to left.

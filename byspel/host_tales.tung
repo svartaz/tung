@@ -1,43 +1,44 @@
-bring ilk/and.tung
+bring type/and.tung
+bring type/one.tung
 ## pure host functions compute during checking when every input is a literal.
-## a comparison returneth bookhoard's `𝟚`; a partial operation returneth an
+## a comparison returneth the library's `𝟚`; a partial operation returneth an
 ## option, which is none when no result existeth.
-bring ilk/maybe.tung
-bring ilk/one.tung
-bring ilk/two.tung
+bring type/optional.tung
+bring type/two.tung
 
-let +: [ℤ, ℤ, ℤ] ≔ 'eke_wholetale' fremmed
+let +: [ℤ, ℤ, ℤ] ≔ 'add_integer' foreign
 
-let offdraw: [ℤ, ℤ, ℤ] ≔ 'offdraw_wholetale' fremmed
+let subtract: [ℤ, ℤ, ℤ] ≔ 'subtract_integer' foreign
 
-let ·: [ℤ, ℤ, ℤ] ≔ 'fold_wholetale' fremmed
+let ·: [ℤ, ℤ, ℤ] ≔ 'multiply_integer' foreign
 
-let deal_leftover: [ℤ, ℤ, (ℤ ∧ ℤ) maybe] ≔ 'deal_leftover_wholetale' fremmed
+let divide_leftover: [ℤ, ℤ, (ℤ ∧ ℤ) optional]
+  ≔ 'divide_leftover_integer' foreign
 
-let ≤: [ℤ, ℤ, 𝟚] ≔ 'at_most_wholetale' fremmed
+let ≤: [ℤ, ℤ, 𝟚] ≔ 'at_most_integer' foreign
 
-let ≍: [ℤ, ℤ, 𝟚] ≔ 'same_wholetale' fremmed
+let ≍: [ℤ, ℤ, 𝟚] ≔ 'equal_integer' foreign
 
-let to_string: [ℤ, string] ≔ 'wholetale_to_string' fremmed
+let to_string: [ℤ, string] ≔ 'integer_to_string' foreign
 
-let ⊕: [float, float, float] ≔ 'eke_float' fremmed
+let ⊕: [float, float, float] ≔ 'add_float' foreign
 
-let ⌊: [float, ℤ maybe] ≔ '⌊' fremmed
+let ⌊: [float, ℤ optional] ≔ '⌊' foreign
 
-let yoke: [string, string, string] ≔ 'yoke_string' fremmed
+let join: [string, string, string] ≔ 'join_string' foreign
 
-let behead: [string, (unicode ∧ string) maybe] ≔ 'behead_string' fremmed
+let behead: [string, (unicode ∧ string) optional] ≔ 'behead_string' foreign
 
-let code: [unicode, ℕ] ≔ 'unicode_to_kindful' fremmed
+let code: [unicode, ℕ] ≔ 'unicode_to_natural' foreign
 
 ## unsigned digits are a natural; an integer literal hath a sign.
-let ⊞: [ℕ, ℕ, ℕ] ≔ 'eke_kindful' fremmed
+let ⊞: [ℕ, ℕ, ℕ] ≔ 'add_natural' foreign
 
-let ⊟: [ℕ, ℕ, ℕ] ≔ 'offdraw_kindful' fremmed
+let ⊟: [ℕ, ℕ, ℕ] ≔ 'subtract_natural' foreign
 
-let to_wholetale: [ℕ, ℤ] ≔ 'kindful_to_wholetale' fremmed
+let to_integer: [ℕ, ℤ] ≔ 'natural_to_integer' foreign
 
-let to_kindful: [ℤ, ℕ maybe] ≔ 'wholetale_to_kindful' fremmed
+let to_natural: [ℤ, ℕ optional] ≔ 'integer_to_natural' foreign
 
 ## a type may depend on a computed comparison.
 let by_manyhood: [n: ℤ, *] ≔ match n ≤ +0 {

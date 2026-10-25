@@ -1,4 +1,4 @@
--- byspels and host-backed deeds cross the full compiler boundary here. each
+-- byspels and host-backed effects cross the full compiler boundary here. each
 -- byspel is checked as `tung --check` checketh it.
 module Test.Integration (group) where
 
@@ -48,18 +48,18 @@ runnableFileCase :: Imports -> FilePath -> Test
 runnableFileCase imports path = do
   source <- readFile path
   pure $ case checkFileSource source imports of
-    "ilk ok" -> Nothing
+    "type ok" -> Nothing
     actual -> Just ("byspel " ++ path ++ ": " ++ actual)
 
 mainEntry :: Imports -> Test
 mainEntry imports = do
-  actual <- runMainSource "bring often.tung let main:𝟙 deed ≔ only sheer" imports
+  actual <- runMainSource "bring often.tung let main:𝟙 effect ≔ only sheer" imports
   pure $ if actual == "ok 0" then Nothing else Just ("main entry: " ++ actual)
 
 rejectedMain :: Imports -> Test
 rejectedMain imports = do
-  actual <- runMainSource "bring often.tung let main:𝟙 deed ≔ missing" imports
-  pure $ if "ilk error:" `isPrefixOf` actual then Nothing else Just ("rejected main reached evaluation: " ++ actual)
+  actual <- runMainSource "bring often.tung let main:𝟙 effect ≔ missing" imports
+  pure $ if "type error:" `isPrefixOf` actual then Nothing else Just ("rejected main reached evaluation: " ++ actual)
 
 fibonacciSampleResult :: Imports -> Test
 fibonacciSampleResult imports = do
@@ -70,18 +70,18 @@ fibonacciSampleResult imports = do
 fileRoundTrip :: Imports -> Test
 fileRoundTrip imports = do
   directory <- getTemporaryDirectory
-  let path = directory ++ "/tung-file-deed-test~txt"
+  let path = directory ++ "/tung-file-effect-test~txt"
       file = "'" ++ path ++ "'"
-      -- `each` onhangeth in list order.
+      -- `each` appendeth in list order.
       source =
-        "bring often.tung bring deed/file.tung bring ilk/list.tung yield >{then, "
+        "bring often.tung bring effect/file.tung bring type/list.tung yield >{then, "
           ++ (file ++ " file~write 'hello', ")
-          ++ ("(' ' ‥ ('world' ‥ empty)) each { part ^ " ++ file ++ " file~onhang part $ void }, ")
+          ++ ("(' ' ‥ ('world' ‥ empty)) each { part ^ " ++ file ++ " file~append part $ void }, ")
           ++ (file ++ " file~read}")
   removeIfPresent path
   actual <- evaluateSource source imports
   removeIfPresent path
-  pure $ if actual == "eval ok: ('hello world' incast₁)" then Nothing else Just ("file round trip: " ++ actual)
+  pure $ if actual == "eval ok: ('hello world' inject₁)" then Nothing else Just ("file round trip: " ++ actual)
 
 webServerRoundTrip :: Imports -> Test
 webServerRoundTrip imports = do
@@ -89,16 +89,16 @@ webServerRoundTrip imports = do
   let source =
         """
         bring often.tung
-        bring deed/clock.tung
-        bring ilk/maybe.tung
-        bring ilk/wordbook.tung
+        bring effect/clock.tung
+        bring type/optional.tung
+        bring type/wordbook.tung
         bring web/request.tung
         bring web/server.tung
 
-        let route:[incoming: _request, _response deed] ≔ unix_time warp { _ ^
+        let route:[incoming: _request, _response effect] ≔ unix_time map { _ ^
           match ((incoming request~method) ≍ 'POST') ⋏ ((incoming request~target) ≍ '/echo') {
             yea ^ match ((incoming request~headers) wordbook~lookup 'Host') {
-              host maybe~some ^ match host ≍ 'localhost' {
+              host optional~some ^ match host ≍ 'localhost' {
                 yea ^ ((((incoming request~body) ok) with_header 'Transfer-Encoding' 'chunked') with_header 'X-Tung' 'old') with_header 'X-Tung' 'yea',
                 nay ^ 'not found\\n' not_found
               },
@@ -108,7 +108,7 @@ webServerRoundTrip imports = do
           }
         }
 
-        let main:𝟙 deed ≔
+        let main:𝟙 effect ≔
         """
           ++ " "
           ++ show port

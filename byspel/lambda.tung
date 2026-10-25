@@ -1,6 +1,6 @@
 bring often.tung
 
-ilk lambda: [v: *, *] {
+type lambda: [v: *, *] {
   var: [v, v lambda],
   abs: [v, v lambda, v lambda],
   app: [v lambda, v lambda, v lambda]
@@ -13,4 +13,4 @@ let subst: [@v: *, @: v hath_≍, target: v lambda, x: v, s: v lambda, v lambda]
     t0 app t1 ^ (t0 subst x s) app (t1 subst x s)
   }
 
-let main: 𝟙 deed ≔ '!' write_line
+let main: 𝟙 effect ≔ '!' write_line

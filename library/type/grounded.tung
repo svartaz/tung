@@ -1,0 +1,50 @@
+bring is.tung
+
+## `a` is grounded under `smaller` when every `b smaller a` is
+## grounded. recursion on a groundedness proof is structural, so a
+## function may recur on any input that a wellfounded relation maketh
+## smaller.
+show type grounded: [α: *, smaller: [α, α, *], α, *] {
+  ground: [@a: α, [b: α, b smaller a, α grounded smaller b],
+    α grounded smaller a]
+}
+
+## a relation is wellfounded when every value is grounded.
+show let wellfounded: [α: *, smaller: [α, α, *], *]
+  ≔ [a: α, α grounded smaller a]
+
+## recursion on a groundedness proof. `step` defineth the outcome at `a`
+## from the outcomes at every smaller value.
+show let recur
+  : [@α: *, @smaller: [α, α, *], @drive: [α, *],
+    step: [a: α, [b: α, b smaller a, b drive], a drive], a: α,
+    smaller_grounded ground: α grounded smaller a, a drive]
+  ≔ a step {b, below ^ step recur b (b smaller_grounded below)}
+
+## recursion on every value of a wellfounded relation.
+show let wellfounded_recur
+  : [@α: *, @smaller: [α, α, *], @drive: [α, *], founded: α wellfounded smaller,
+    step: [a: α, [b: α, b smaller a, b drive], a drive], a: α, a drive]
+  ≔ step recur a (a founded)
+
+## wellfounded recursion with an explicit outcome drive.
+show let wellfounded_recur_toward
+  : [@α: *, @smaller: [α, α, *], drive: [α, *], founded: α wellfounded smaller,
+    step: [a: α, [b: α, b smaller a, b drive], a drive], a: α, a drive]
+  ≔ founded wellfounded_recur step a
+
+## recur on any input whose measure is smaller. the outcome may hang on
+## the input. only the measure needeth a wellfounded relation.
+show let wellfounded_recur_by
+  : [@α: *, @μ: *, @smaller: [μ, μ, *], drive: [α, *], measure: [α, μ],
+    founded: μ wellfounded smaller,
+    step: [a: α, [b: α, (b measure) smaller (a measure), b drive], a drive],
+    a: α, a drive]
+  ≔
+  ## each measured value carrieth the original input and its equation.
+  {at ^ [b: α, (b measure) = at, b drive]} wellfounded_recur_toward founded {
+    at, recur, c, equal ^
+      c step {
+        b, below ^ (b measure) recur (match equal { reflect ^ below }) b reflect
+      }
+  } (a measure) a reflect

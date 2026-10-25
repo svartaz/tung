@@ -1,0 +1,24 @@
+bring _foreign.tung
+bring class/algebra/total/hath_multiply.tung
+bring class/hath_to_string.tung
+bring effect/file.tung
+bring type/one.tung
+bring type/or.tung
+bring type/string/building.tung
+
+## a path kept distinct from arbitrary string at api boundaries.
+show type _path: * { path: [string, _path] }
+
+bizen: _path hath_to_string {
+  let to_string: [t path:] ≔ t
+}
+
+show let join: [t₀ path: _path, t₁ path: _path, _path] ≔ t₀ · '/' $ · t₁ $ path
+
+show let read: [t path: _path, (string ∨ string) effect] ≔ t file~read
+
+show let write: [t path: _path, contents: string, (string ∨ 𝟙) effect]
+  ≔ t file~write contents
+
+show let append: [t path: _path, contents: string, (string ∨ 𝟙) effect]
+  ≔ t file~append contents

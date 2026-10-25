@@ -1,0 +1,95 @@
+bring class/algebra/total/hath_add.tung
+bring class/algebra/total/hath_subtract.tung
+bring class/algebra/total/hath_zero.tung
+bring class/algebra/total/monoid_add.tung
+bring class/algebra/total/semigroup_add.tung
+bring is.tung
+bring type/two.tung
+
+## an additive group: a monoid whose every value hath a flipping on both sides.
+show class group_+: [α: *, @: α monoid_+, @: α hath_-, *] {
+  let +_-: [a: α, (a + (a -)) = zero]
+
+  let -_+: [a: α, ((a -) + a) = zero]
+
+  let -+_+: [a: α, b: α, (a -+ b) = ((a -) + b)]
+}
+
+bizen: 𝟚 group_+ {
+  let +_- ≔ {
+    nay;
+    yea ^ reflect
+  }
+
+  let -_+ ≔ {
+    nay;
+    yea ^ reflect
+  }
+
+  let -+_+: [_:, _:] ≔ reflect
+}
+
+## a value that leaveth every value alone is `zero`.
+show let zero_alone
+  : [@α: *, @: α group_+, e: α, leaving: [a: α, (e + a) = a], e = zero]
+  ≔ ((e +_zero) symmetry) transit (zero leaving)
+
+## a value that undoeth `a` from the left is its flipping.
+show let -_alone
+  : [@α: *, @: α group_+, a: α, b: α, undoing: (b + a) = zero, b = (a -)]
+  ≔ >{transit,
+    (b +_zero) symmetry,
+    (b +) leibnitz ((a +_-) symmetry),
+    b +_+ a (a -),
+    (_ + (a -)) leibnitz undoing,
+    (a -) zero_+
+  }
+
+## the same sums with one left term have the same right terms.
+show let strike_+
+  : [@α: *, @: α group_+, a: α, b: α, c: α, equal: (a + b) = (a + c), b = c]
+  ≔ >{transit,
+    (b zero_+) symmetry,
+    (_ + b) leibnitz ((a -_+) symmetry),
+    ((a -) +_+ a b) symmetry,
+    ((a -) + _) leibnitz equal,
+    (a -) +_+ a c,
+    (_ + c) leibnitz (a -_+),
+    c zero_+
+  }
+
+## the same sums with one right term have the same left terms.
+show let +_strike
+  : [@α: *, @: α group_+, a: α, b: α, c: α, equal: (b + a) = (c + a), b = c]
+  ≔ >{transit,
+    (b +_zero) symmetry,
+    (b +) leibnitz ((a +_-) symmetry),
+    b +_+ a (a -),
+    (_ + (a -)) leibnitz equal,
+    (c +_+ a (a -)) symmetry,
+    (c +) leibnitz (a +_-),
+    c +_zero
+  }
+
+## the flipping of a flipping is the value.
+show let -_-: [@α: *, @: α group_+, a: α, ((a -) -) = a]
+  ≔ ((a -) -_alone a (a +_-)) symmetry
+
+## `zero` is its own flipping.
+show let zero_-: [@α: *, @: α group_+, (zero -) = zero]
+  ≔ (zero -_alone zero (zero zero_+)) symmetry
+
+## the flipping of a sum is the sum of the flippings, turned around.
+show let -_over_+
+  : [@α: *, @: α group_+, a: α, b: α, ((a + b) -) = ((b -) + (a -))]
+  ≔ ((a + b) -_alone ((b -) + (a -)) >{transit,
+    ((b -) +_+ (a -) (a + b)) symmetry,
+    ((b -) + _) leibnitz ((a -) +_+ a b),
+    {c ^ (b -) + (c + b)} leibnitz (a -_+),
+    ((b -) + _) leibnitz (b zero_+),
+    b -_+
+  }) symmetry
+
+## a value less itself is `zero`.
+show let -+_strike: [@α: *, @: α group_+, a: α, (a -+ a) = zero]
+  ≔ (a -+_+ a) transit (a -_+)

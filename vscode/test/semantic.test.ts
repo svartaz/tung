@@ -55,8 +55,8 @@ const sourceLabels = async (source: string) => {
 test("compiler roles keep types, header binders and application positions consistent", async () => {
   const source =
     "show let constant:[@a:*, @b:*, x:a, _:b, a] ≔ x\n" +
-    "show let read:[string path:_path, (string ∨ string) deed] ≔ string read_file\n" +
-    "show let yoke:[string₀ path:_path, string₁ path:_path, _path] ≔ string₀ · '/' $ · string₁ $ path";
+    "show let read:[string path:_path, (string ∨ string) effect] ≔ string read_file\n" +
+    "show let join:[string₀ path:_path, string₁ path:_path, _path] ≔ string₀ · '/' $ · string₁ $ path";
   const labels = await sourceLabels(source);
   assert.deepEqual(labels("a"), [
     "typeParameter:declaration",
@@ -72,10 +72,10 @@ test("compiler roles keep types, header binders and application positions consis
   assert.deepEqual(labels("*"), ["keyword:", "keyword:"]);
   assert(labels(":").every((label) => label === undefined));
 });
-test("names bound by worth slots stay terms inside later types", async () => {
+test("names bound by value slots stay terms inside later types", async () => {
   const source =
-    "ilk =:[@α:*, a:α, α, *] { eftbend:a = a }\n" +
-    "let leibnitz:[@α:*, @β:*, @a:α, @b:α, f:[α, β], eftbend:a = b, (a f) = (b f)] ≔ reflect\n" +
+    "type =:[@α:*, a:α, α, *] { reflect:a = a }\n" +
+    "let leibnitz:[@α:*, @β:*, @a:α, @b:α, f:[α, β], reflect:a = b, (a f) = (b f)] ≔ reflect\n" +
     "let other:[@a:*, a] ≔ sorry";
   const labels = await sourceLabels(source);
   assert.deepEqual(labels("a"), [
@@ -99,7 +99,7 @@ test("names bound by worth slots stay terms inside later types", async () => {
     "type:",
   ]);
 });
-test("ilk-returning let declarations have type roles", async () => {
+test("type-returning let declarations have type roles", async () => {
   const source =
     "show let powerset:[a:*, *] ≔ a → 𝟚\n" +
     "let predicate:ℤ powerset ≔ {_ ^ yea}";
@@ -112,11 +112,11 @@ test("ilk-returning let declarations have type roles", async () => {
 });
 test("declaration annotations retain compiler roles for prefixed names and greek parameters", async () => {
   const source =
-    "let rime:* ≔ ℤ\n" +
-    "let sameness:[@α:*, x:α, α] ≔ x\n" +
-    "let answer:rime ≔ +42 sameness @rime";
+    "let count:* ≔ ℤ\n" +
+    "let identity:[@α:*, x:α, α] ≔ x\n" +
+    "let answer:count ≔ +42 identity @count";
   const labels = await sourceLabels(source);
-  assert.deepEqual(labels("rime"), ["type:declaration", "type:", "type:"]);
+  assert.deepEqual(labels("count"), ["type:declaration", "type:", "type:"]);
   assert.deepEqual(labels("α"), [
     "typeParameter:declaration",
     "type:",
@@ -124,7 +124,7 @@ test("declaration annotations retain compiler roles for prefixed names and greek
   ]);
   assert.deepEqual(labels("x"), [undefined, undefined]);
   assert.deepEqual(labels("≔"), [undefined, undefined, undefined]);
-  assert.deepEqual(labels("sameness"), [
+  assert.deepEqual(labels("identity"), [
     "function:declaration.applied",
     "call:applied",
   ]);
@@ -149,7 +149,7 @@ test("nested polymorphic binders use compiler type roles", async () => {
   assert.deepEqual(labels("@"), ["keyword:"]);
   assert.deepEqual(labels("f"), [undefined, "call:applied"]);
 });
-test("explicit type arguments retain type roles among worth arguments", async () => {
+test("explicit type arguments retain type roles among value arguments", async () => {
   const source =
     "let f:[@a:*, @b:*, x:a, _:b, a] ≔ x\nyield 'x' f @string @(string list) empty";
   const labels = await sourceLabels(source);
@@ -166,11 +166,11 @@ test("explicit type arguments retain type roles among worth arguments", async ()
     "call:applied",
   ]);
 });
-test("compiler roles use GADT, flock and pattern grammar", async () => {
+test("compiler roles use GADT, class and pattern grammar", async () => {
   const source =
-    "show ilk tag: [a:*, *] { integer: ℤ tag, boolean: 𝟚 tag }\n" +
-    "show flock functor:[f:[*, *], *] { let value_type:* let typed:value_type let warp:[@a:*, @b:*, a f, [a, b], b f] let warp_sameness:[@a:*, af:a f, (af warp sameness) = af] }\n" +
-    "show let void:[@f:[*, *], @:f functor, @a:*, af:a f, 𝟙 f] ≔ af warp {_ ^ only}\n" +
+    "show type tag: [a:*, *] { integer: ℤ tag, boolean: 𝟚 tag }\n" +
+    "show class functor:[f:[*, *], *] { let value_type:* let typed:value_type let map:[@a:*, @b:*, a f, [a, b], b f] let map_identity:[@a:*, af:a f, (af map identity) = af] }\n" +
+    "show let void:[@f:[*, *], @:f functor, @a:*, af:a f, 𝟙 f] ≔ af map {_ ^ only}\n" +
     "let read:[ℤ tag, ℤ] ≔ { x integer ^ x }";
   const labels = await sourceLabels(source);
   assert.deepEqual(labels("tag"), [
@@ -188,7 +188,7 @@ test("compiler roles use GADT, flock and pattern grammar", async () => {
     "enumMember:",
   ]);
   assert.deepEqual(labels("_"), [undefined]);
-  assert.deepEqual(labels("warp"), [
+  assert.deepEqual(labels("map"), [
     "call:declaration.applied",
     "call:applied",
     "call:applied",
@@ -197,8 +197,8 @@ test("compiler roles use GADT, flock and pattern grammar", async () => {
 });
 test("local polymorphic binders have compiler roles in declarations", async () => {
   const source =
-    "ilk packed: * { pack: [@a:*, a, packed] }\n" +
-    "flock hath_≍:[a:*, *] { let rule:[@b:*, x:b, x = x] }\n" +
+    "type packed: * { pack: [@a:*, a, packed] }\n" +
+    "class hath_≍:[a:*, *] { let rule:[@b:*, x:b, x = x] }\n" +
     "bizen:[@a:*, a hath_≍] {}";
   const labels = await sourceLabels(source);
   assert.deepEqual(labels("x"), [undefined, undefined, undefined]);
@@ -230,11 +230,11 @@ test("compiler highlighting recovereth incomplete syntax without accepting it", 
     assert.equal(result.diagnostics[0]?.kind, "parse");
   }
 });
-test("checking decideth whether a name in an annotation is an ilk", () => {
+test("checking decideth whether a name in an annotation is a type", () => {
   const resolve = () => undefined;
-  // `(naught · a) = naught`: the parser readeth annotation names as ilks;
-  // checking resolveth `naught` and `·` to values and `=` to an ilk.
-  const source = "(naught · a) = naught";
+  // `(zero · a) = zero`: the parser readeth annotation names as types;
+  // checking resolveth `zero` and `·` to values and `=` to a type.
+  const source = "(zero · a) = zero";
   const roles: SourceRole[] = [
     [1, 7, "type", []],
     [8, 9, "type", []],
@@ -253,10 +253,10 @@ test("checking decideth whether a name in an annotation is an ilk", () => {
     [{ line: 0, char: 13, length: 1, type: "type", modifiers: [] }],
   );
   // an unchecked name keepeth the parser's role, and a value written where
-  // a term standeth becometh an ilk when checking saith so.
+  // a term standeth becometh a type when checking saith so.
   assert.deepEqual(
     buildHighlightRanges(
-      "rime x",
+      "count x",
       [
         [0, 4, "term", []],
         [5, 6, "type", []],
@@ -270,7 +270,7 @@ test("checking decideth whether a name in an annotation is an ilk", () => {
     ],
   );
 });
-test("compiler spans warp unicode and line endings without eager name resolution", () => {
+test("compiler spans map unicode and line endings without eager name resolution", () => {
   const resolve = () => {
     throw new Error("navigation analysis was unnecessary");
   };

@@ -1,0 +1,20 @@
+bring class/algebra/partial/category.tung
+bring combinator.tung
+bring is.tung
+bring type/one.tung
+
+show class functor: [φ: [*, *], *] {
+  let map: [@α: *, @β: *, α φ, [α, β], β φ]
+
+  let map_identity: [@α: *, af: α φ, (af map identity) = af]
+}
+
+## a function from `ρ` mappeth its outcome: `(ρ →)` is the reader.
+bizen: [@ρ: *, (ρ →) functor] {
+  let map: [a:, f:, r:] ≔ (r a) f
+
+  let map_identity: [_:] ≔ reflect
+}
+
+show let void: [@φ: [*, *], @: φ functor, @α: *, af: α φ, 𝟙 φ]
+  ≔ af map (only singal)

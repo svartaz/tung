@@ -18,14 +18,14 @@ group = Harness.group "harness" [selection, fixtureOverrides]
 -- a changed dependency must invalidate its importer without changing later tests.
 fixtureOverrides :: Harness.Test
 fixtureOverrides = do
-  let direct = "bring ilk/two.tung let answer:𝟚 ≔ nay"
-      transitive = "bring flock/algebra/whole/hath_naught.tung"
-      changed = Map.singleton "ilk/two.tung" "show ilk 𝟚:* { true:𝟚, false:𝟚 }"
+  let direct = "bring type/two.tung let answer:𝟚 ≔ nay"
+      transitive = "bring class/algebra/total/hath_zero.tung"
+      changed = Map.singleton "type/two.tung" "show type 𝟚:* { true:𝟚, false:𝟚 }"
   before <- evaluate (Harness.checkSource False transitive Map.empty)
   directResult <- evaluate (Harness.checkSource False direct changed)
   transitiveResult <- evaluate (Harness.checkSource False transitive changed)
   after <- evaluate (Harness.checkSource False transitive Map.empty)
   Harness.expectEq
     "fixture overrides invalidate direct and transitive imports and stay isolated"
-    ("ilk ok", [True, True], "ilk ok")
+    ("type ok", [True, True], "type ok")
     (before, map (isInfixOf "unknown name 'nay'") [directResult, transitiveResult], after)

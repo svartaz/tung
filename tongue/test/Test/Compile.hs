@@ -6,10 +6,10 @@ module Test.Compile
     compileProjectWith,
     compileProjectDetailed,
     compileYieldWith,
-    bookhoardSources,
-    loadBookhoard,
-    shareBookhoard,
-    checkBookhoardModule,
+    standardSources,
+    loadStandard,
+    shareStandard,
+    checkStandardModule,
   )
 where
 
@@ -45,26 +45,26 @@ compileYieldWith compiled owner source modules = first failureText (compileSnaps
 
 -- each test process readeth one immutable source snapshot. fixture overrides
 -- bypass this cache, including every transitive dependant of a changed source.
-bookhoardSources :: Map.Map String String
-bookhoardSources = let (sources, _, _) = bookhoard in sources
+standardSources :: Map.Map String String
+standardSources = let (sources, _, _) = standard in sources
 
-loadBookhoard :: [String] -> IO (Either String (Map.Map String SourceProgram))
-loadBookhoard paths =
-  let (_, snapshots, cache) = bookhoard
+loadStandard :: [String] -> IO (Either String (Map.Map String SourceProgram))
+loadStandard paths =
+  let (_, snapshots, cache) = standard
    in atomicModifyIORef' cache \checked -> case compileImports checked snapshots paths of
         Left failure -> (checked, Left (failureText failure))
         Right compiled -> (compiled, Right compiled)
 
--- one bookhoard module checked from its source, its imports taken as given.
-checkBookhoardModule :: Map.Map String SourceProgram -> String -> Either String SourceProgram
-checkBookhoardModule imports path =
-  let (_, snapshots, _) = bookhoard
+-- one library module checked from its source, its imports taken as given.
+checkStandardModule :: Map.Map String SourceProgram -> String -> Either String SourceProgram
+checkStandardModule imports path =
+  let (_, snapshots, _) = standard
    in maybe (Left ("library module was not loaded: " ++ path)) Right . Map.lookup path =<< first failureText (compileImports imports snapshots [path])
 
 -- a group process beginneth with the interfaces its parent saved, if any.
-{-# NOINLINE bookhoard #-}
-bookhoard :: (Map.Map String String, Map.Map String SourceSnapshot, IORef (Map.Map String SourceProgram))
-bookhoard = unsafePerformIO do
+{-# NOINLINE standard #-}
+standard :: (Map.Map String String, Map.Map String SourceSnapshot, IORef (Map.Map String SourceProgram))
+standard = unsafePerformIO do
   sources <- readLibraryImports "." >>= either fail pure
   mapM_ (evaluate . length) (Map.elems sources)
   let snapshots = Map.map sourceSnapshot sources
@@ -75,14 +75,14 @@ bookhoard = unsafePerformIO do
   cache <- newIORef initial
   pure (sources, snapshots, cache)
 
--- the parent test process checketh bookhoard once and saveth its interfaces
+-- the parent test process checketh the library once and saveth its interfaces
 -- in a directory it nameth to its group processes. interfaces an earlier run
 -- saved for the same sources are reused, and stale ones removed. a failure
 -- saveth nothing, so each group checketh and reporteth it again.
-shareBookhoard :: IO (String, FilePath)
-shareBookhoard = do
+shareStandard :: IO (String, FilePath)
+shareStandard = do
   let directory = "dist-newstyle/test-interfaces"
-      (_, snapshots, _) = bookhoard
+      (_, snapshots, _) = standard
   keys <- (`cacheKeys` snapshots) <$> libraryBuild
   cached <- loadInterfaces directory snapshots keys
   either (const (pure ())) (saveInterfaces directory keys . (`Map.difference` cached)) (compileImports cached snapshots (Map.keys snapshots))

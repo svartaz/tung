@@ -1,0 +1,28 @@
+bring class/algebra/partial/category.tung
+bring class/algebra/partial/semigroupoid.tung
+bring class/functor.tung
+bring class/functor/applicative.tung
+bring class/functor/monad.tung
+bring combinator.tung
+bring is.tung
+bring type/hade/applicative_bizen.tung
+bring type/hade/building.tung
+
+show hade, wrap, unwrap, get, put, tweak, lift
+
+bizen: [@σ: *, @φ: [*, *], @: φ monad, (σ hade φ) monad] {
+  let flat ≔ building~flat
+
+  let sheer_bind: [a:, f:]
+    ≔ (building~flat leibnitz (a sheer_map f)) transit ((a f) sheer_flat)
+
+  let map_sheer_flat ≔ building~map_sheer_flat
+
+  let bind_bind: [m:, f:, g:] ≔ >{transit,
+    (m building~map f $ building~flat) map_flat g,
+    (_ building~bind g) leibnitz (m map_flat f),
+    m lemma_bind_bind f g,
+    (m building~bind) leibnitz ({a ^ ((a f) map_flat g) symmetry} extend),
+    (m map_flat {a ^ (a f) building~map g $ building~flat}) symmetry
+  }
+}

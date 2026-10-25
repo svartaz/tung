@@ -1,8 +1,8 @@
-## bookhoard's host bindings, shown again to every importing module.
-bring _fremmed.tung
-bring ilk/one.tung
+## the library's host bindings, shown again to every importing module.
+bring _foreign.tung
+bring type/one.tung
 
-show 𝟙, only, write, deed_sheer, deed_bind
+show 𝟙, only, write, effect_sheer, effect_bind
 
-show let then: [@α: *, @β: *, first: α deed, after: β deed, β deed]
-  ≔ first deed_bind {_ ^ after}
+show let then: [@α: *, @β: *, first: α effect, after: β effect, β effect]
+  ≔ first effect_bind {_ ^ after}

@@ -33,8 +33,14 @@ jobs:
       - name: check out source
         uses: actions/checkout@v6
 
+      # the command line tools may ship a newer sdk than their linker readeth;
+      # xcode's toolchain keepeth the sdk and linker matched.
+      - name: use xcode's toolchain
+        if: runner.os == 'macOS'
+        run: echo "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer" >> "$GITHUB_ENV"
+
       - name: set up haskell
-        if: matrix.check == 'compiler' || matrix.check == 'editor' || matrix.check == 'byspel' || matrix.check == 'format'
+        if: matrix.check == 'compiler' || matrix.check == 'editor' || matrix.check == 'byspel' || matrix.check == 'tidy'
         uses: haskell-actions/setup@v2
         with:
           ghc-version: 9.12.4
@@ -48,7 +54,7 @@ jobs:
           cache: npm
 
       - name: set up ormolu
-        if: matrix.check == 'format'
+        if: matrix.check == 'tidy'
         run: cabal install ormolu --install-method=copy --installdir="$HOME/.local/bin" && echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: set up ruby
@@ -57,5 +63,9 @@ jobs:
         with:
           ruby-version: "3.3"
 
+      # a slow test group peaketh near 6 GB, so test processes are bounded by
+      # the runner's memory: 16 GB on ubuntu, 7 GB on macos.
       - name: run ${{ matrix.check }} tests
+        env:
+          TUNG_TEST_JOBS: ${{ runner.os == 'macOS' && 1 || 2 }}
         run: make ${{ matrix.target }}

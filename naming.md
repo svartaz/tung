@@ -7,8 +7,6 @@ paths, and library comments.
 
 ## choosing a word
 
-- coin no new word: no compound, calque, or revived archaism made to avoid
-  a common term.
 - use an existing word with a germanic root when it naturally nameth the
   concept, as `next`, `leftover`, or `sift`.
 - otherwise use the common word, whatever its root: `type`, `class`,
@@ -20,7 +18,7 @@ paths, and library comments.
 a name useth the plain verb, as `gather`, `flip`, and `sift`, unless it
 must tell the agent, the patient, or the event apart. an agent adjective,
 describing the one who doeth, taketh `-and`; and an event
-or an action taketh `-ing`, as `doing`. `-and` and `-ing` never stand for
+or an action taketh `-ing`. `-and` and `-ing` never stand for
 each other. a patient is named by its past participle, as `sifted`.
 
 ## placeholder names

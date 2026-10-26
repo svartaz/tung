@@ -298,6 +298,9 @@ and name, with no shape matching or built-in bizen.
 - `Test.Program` compareth generated checked programs with independent host
   results; dependent groups test kernel and source rules directly.
 - `TUNG_TEST_GROUP` rejecteth unknown names and an empty explicit selection.
+- a full run starteth one group process per processor, slowest groups first.
+  `TUNG_TEST_JOBS` boundeth that count: the `standard` group peaketh near 6 GB,
+  so ci runneth two on ubuntu runners and one on macos runners.
 - executable tests compare byspel output and exit status exactly; `word_count`
   receiveth a real file. one check first fileth the interfaces of every
   library module the byspels bring, then the byspels run side by side, each

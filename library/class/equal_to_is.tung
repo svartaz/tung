@@ -5,7 +5,7 @@ bring type/two.tung
 
 ## a boolean predicate that holdeth of one side of an equality holdeth of the
 ## other.
-show let yea_throughbear
+show let yea_transport
   : [@α: *, @a: α, @b: α, f: [α, 𝟚], equal: a = b, held: (a f) = yea,
     (b f) = yea]
   ≔ ((f leibnitz equal) symmetry) transit held

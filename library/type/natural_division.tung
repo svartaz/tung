@@ -48,7 +48,7 @@ show let ∣_·: [a: ℕ, b: ℕ, c: ℕ, first: a ∣ b, a ∣ (b · c)] ≔ ma
 
 ## dividing a tale is dividing any tale the same as it.
 let lemma_∣_=: [d: ℕ, @a: ℕ, @b: ℕ, equal: a = b, held: d ∣ a, d ∣ b]
-  ≔ equal throughbear @ℕ @a @b @(d ∣) held
+  ≔ equal transport @ℕ @a @b @(d ∣) held
 
 ## adding one tale to both sides keepeth the difference.
 let lemma_+_∸_+: [a: ℕ, b: ℕ, c: ℕ, ((a + c) ∸ (b + c)) = (a ∸ b)] ≔ match c {
@@ -92,7 +92,7 @@ let lemma_second: [(ℕ ∧ ℕ) optional, ℕ] ≔ {
 ## but matching cannot, so `none` is ruled out through `is_some`. each lemma
 ## is stated for any outcome `m` of the division, then for the division itself.
 let lemma_some: [@ζ: *, a: ℕ, b: ℕ, gone: (a % (b next)) = none, ζ]
-  ≔ match gone throughbear @((ℕ ∧ ℕ) optional) @(a % (b next)) @none @{
+  ≔ match gone transport @((ℕ ∧ ℕ) optional) @(a % (b next)) @none @{
     m ^ (m is_some) = yea
   } reflect {}
 
@@ -108,20 +108,20 @@ let lemma_leftover_≤_at
 let lemma_leftover_≤: [a: ℕ, b: ℕ, (((a % (b next)) lemma_second) ≤ b) = yea]
   ≔ a lemma_leftover_≤_at b (a % (b next)) reflect
 
-let lemma_eftbuild_at
+let lemma_rebuild_at
   : [a: ℕ, b: ℕ, m: (ℕ ∧ ℕ) optional, (a % (b next)) = m,
     (((m lemma_first) · (b next)) + (m lemma_second)) = a]
   ≔ match m {
     none         ^ a lemma_some b,
-    (q ⸴ r) some ^ a %_eftbuild b q r
+    (q ⸴ r) some ^ a %_rebuild b q r
   }
 
-## the quotient and leftover of dividing `a` by `b next` eftbuild `a`.
-let lemma_eftbuild
+## the quotient and leftover of dividing `a` by `b next` rebuild `a`.
+let lemma_rebuild
   : [a: ℕ, b: ℕ,
     ((((a % (b next)) lemma_first) · (b next)) + ((a % (b next)) lemma_second))
       = a]
-  ≔ a lemma_eftbuild_at b (a % (b next)) reflect
+  ≔ a lemma_rebuild_at b (a % (b next)) reflect
 
 ## euclid's division with `f` steps to spare: `a` and `0` give `a`, and `a`
 ## and `b next` give the division of `b next` and the leftover of `a`.
@@ -160,7 +160,7 @@ let lemma_euclid_∣
         let below ≔ r ≤_yea_transit b′ f′ (a lemma_leftover_≤ b′) fits
         yield match f′ lemma_euclid_∣ (b′ next) r below {
           on_b ⸴ on_r ^
-            (g lemma_∣_= (a lemma_eftbuild b′)
+            (g lemma_∣_= (a lemma_rebuild b′)
               (g ∣_+ (((a % (b′ next)) lemma_first) · (b′ next)) r
                 (a lemma_∣_quotient b′ g on_b) on_r)) ⸴ on_b
         }
@@ -184,7 +184,7 @@ let lemma_∣_euclid
         let on_r
           ≔ d ∣_strike (((a % (b′ next)) lemma_first) · (b′ next)) r
             (a lemma_∣_quotient b′ d on_b)
-            (d lemma_∣_= ((a lemma_eftbuild b′) symmetry) on_a)
+            (d lemma_∣_= ((a lemma_rebuild b′) symmetry) on_a)
         yield f′ lemma_∣_euclid (b′ next) r d below on_b on_r
       )
     }

@@ -36,7 +36,7 @@ group = do
       : classLayoutCase files
       : equalityCases library
       ++ soundnessCases library
-      ++ groundedCases library
+      ++ accessibleCases library
       ++ yonedaCases library
       ++ topologyCases library
       ++ lawCases library
@@ -56,14 +56,14 @@ equalityCases library =
           "(reflect @ℤ @+1) symmetry",
           "(reflect @ℤ @+1) transit (reflect @ℤ @+1)"
         ],
-    expectEq "library identity supporteth arbitrary types and dependent throughbear" (Right ()) $
+    expectEq "library identity supporteth arbitrary types and dependent transport" (Right ()) $
       ()
         <$ compile
           """
           let reflect_value:[@α:*, x:α, x = x] ≔ reflect
           let reflect_type:[@α:*, α = α] ≔ reflect
           let shift_type:[@α:*, @β:*, reflect:α = β, α, β] ≔ {x ^ x}
-          let shift_value:[@α:*, @a:α, @b:α, @P:[α,*], p:a = b, value:a P, b P] ≔ p throughbear value
+          let shift_value:[@α:*, @a:α, @b:α, @P:[α,*], p:a = b, value:a P, b P] ≔ p transport value
           """,
     rejectContaining "library identity doth not provide axiom K" "axiom K" $
       compile "let k:[@α:*, @a:α, p:a = a, p = reflect] ≔ match p { reflect ^ reflect }",
@@ -351,22 +351,59 @@ lawCases library =
           let ≤_transit ≔ {_, _, _ ^ reflect}
           let ≤_= ≔ {_, _, _, _ ^ reflect}
         }
-        """
+        """,
+    -- `𝟚` with `a ÷ yea` as `a` is the two-element field; a division that
+    -- undoeth no multiplying is no division ring.
+    expectEq "𝟚 is a division ring and a field" (Right ()) $
+      () <$ compileWith library "field_test.tung" (twoField "[a:, _:] ≔ a"),
+    rejectContaining "a lax division maketh no division ring" "cannot unify" $
+      compileWith library "division_ring_test.tung" (twoField "[_:, _:] ≔ nay")
   ]
+  where
+    twoField division = "bizen: 𝟚 hath_÷ { let ÷: " ++ division ++ " }\n" ++ twoFieldLaws
+    twoFieldLaws =
+      """
+      bring class/algebra/total/division_ring.tung
+      bring class/algebra/total/field.tung
+      bring class/algebra/total/hath_divide.tung
+      bring type/two.tung
+      bring is.tung
+      bizen: 𝟚 division_ring {
+        let one_not_zero: [equal:] ≔ match equal {}
+        let ÷_·: [dividend:, divisor:, nonzero:] ≔ match dividend, divisor {
+          yea, yea ^ reflect,
+          nay, yea ^ reflect,
+          _,   nay ^ match reflect nonzero {}
+        }
+        let ·_÷: [dividend:, divisor:, nonzero:] ≔ match dividend, divisor {
+          yea, yea ^ reflect,
+          nay, yea ^ reflect,
+          _,   nay ^ match reflect nonzero {}
+        }
+      }
+      bizen: 𝟚 field {
+        let ·_swap: [a:, b:] ≔ match a, b {
+          yea, yea ^ reflect,
+          yea, nay ^ reflect,
+          nay, yea ^ reflect,
+          nay, nay ^ reflect
+        }
+      }
+      """
 
-groundedCases :: Library -> [Test]
-groundedCases library =
+accessibleCases :: Library -> [Test]
+accessibleCases library =
   [ expectEq "well-founded recursion computeth its step" (Right True) do
-      program <- compileWith library "grounded_test.tung" source
+      program <- compileWith library "accessible_test.tung" source
       sameNormalIn program "answer" "4"
   ]
   where
     source =
       """
-      bring type/grounded.tung
+      bring type/accessible.tung
       bring type/zero.tung
       let never: [_: ℕ, _: ℕ, *] ≔ 𝟘
-      let founded: ℕ wellfounded never ≔ {x ^ {y, impossible ^ impossible ({}: [𝟘, ℕ grounded never y])} ground}
+      let founded: ℕ wellfounded never ≔ {x ^ {y, impossible ^ impossible ({}: [𝟘, ℕ accessible never y])} access}
       let answer: ℕ ≔ founded wellfounded_recur {x, _ ^ x next} 3
       """
 
@@ -378,8 +415,8 @@ soundnessCases library =
       program <-
         compile
           """
-          let closed: ((1 ‥ (2 ‥ empty)) eftwend $ eftwend) = (1 ‥ (2 ‥ empty)) ≔ (1 ‥ (2 ‥ empty)) eftwend_eftwend
-          let direct: ((1 ‥ (2 ‥ empty)) eftwend $ eftwend) = (1 ‥ (2 ‥ empty)) ≔ reflect
+          let closed: ((1 ‥ (2 ‥ empty)) reverse $ reverse) = (1 ‥ (2 ‥ empty)) ≔ (1 ‥ (2 ‥ empty)) reverse_reverse
+          let direct: ((1 ‥ (2 ‥ empty)) reverse $ reverse) = (1 ‥ (2 ‥ empty)) ≔ reflect
           """
       sameNormalIn program "closed" "direct",
     rejectContaining "a list is not its own double" "cannot unify" $
@@ -389,7 +426,7 @@ soundnessCases library =
     rejectContaining "distinct lists are not same" "cannot unify 1 with 2" $
       compile "let bad: (1 ‥ empty) = (2 ‥ empty) ≔ reflect",
     rejectContaining "reversing is not the identity" "cannot unify" $
-      compile "let bad: [l: ℕ list, (l eftwend) = l] ≔ match l { empty ^ reflect, first ‥ leftover ^ (first ‥) leibnitz (leftover bad) }",
+      compile "let bad: [l: ℕ list, (l reverse) = l] ≔ match l { empty ^ reflect, first ‥ leftover ^ (first ‥) leibnitz (leftover bad) }",
     rejectContaining "recursion on the same list cannot prove the empty type" "a recursive call must pass a direct child" $
       compile "let bad: [l: ℕ list, 𝟘] ≔ l bad",
     rejectContaining "recursion on a larger list cannot prove the empty type" "a recursive call must pass a direct child" $
@@ -416,7 +453,7 @@ soundnessCases library =
         let e: [ℕ, ℕ, ℕ] ≔ 'add_natural' foreign { 0, _ ^ 0, _ next, _ ^ 0 }
         let always: [a: ℕ, (a e 0) = 0] ≔ match a { 0 ^ reflect, _ next ^ reflect }
         let claim: [ℕ, *] ≔ {x ^ (x e 0) = 0}
-        let move: [n: ℕ, p: n = 1, 1 claim] ≔ p throughbear @ℕ @n @1 @claim (n always)
+        let move: [n: ℕ, p: n = 1, 1 claim] ≔ p transport @ℕ @n @1 @claim (n always)
         let one_zero: [1 = 0, 𝟘] ≔ {}
         let bad: 𝟘 ≔ (1 move reflect) one_zero
         """

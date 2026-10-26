@@ -12,40 +12,38 @@ bring type/list.tung
 bring type/optional.tung
 bring type/two.tung
 
-## a list-backed finite association wordbook.
-show type wordbook: [α: *, β: *, *] { from_list: [(α ∧ β) list, α wordbook β] }
+## a list-backed finite association table.
+show type table: [α: *, β: *, *] { from_list: [(α ∧ β) list, α table β] }
 
-show let empty: [@α: *, @β: *, α wordbook β] ≔ list~empty from_list
+show let empty: [@α: *, @β: *, α table β] ≔ list~empty from_list
 
-show let onesome: [@α: *, @β: *, key: α, value: β, α wordbook β]
+show let onesome: [@α: *, @β: *, key: α, value: β, α table β]
   ≔ key ⸴ value $ ‥ list~empty $ from_list
 
-show let entries: [@α: *, @β: *, l from_list: α wordbook β, (α ∧ β) list] ≔ l
+show let entries: [@α: *, @β: *, l from_list: α table β, (α ∧ β) list] ≔ l
 
 show let lookup
-  : [@α: *, @: α hath_≍, @β: *, l from_list: α wordbook β, key: α, β optional]
+  : [@α: *, @: α hath_≍, @β: *, l from_list: α table β, key: α, β optional]
   ≔ l find {pair ^ key ≍ (pair project₀)} $ map project₁
 
 show let put
-  : [@α: *, @: α hath_≍, @β: *, l from_list: α wordbook β, key: α, value: β,
-    α wordbook β]
+  : [@α: *, @: α hath_≍, @β: *, l from_list: α table β, key: α, value: β,
+    α table β]
   ≔ (key ⸴ value) ‥ (l sift {pair ^ key ≭ (pair project₀)}) $ from_list
 
 show let rid
-  : [@α: *, @: α hath_≍, @β: *, l from_list: α wordbook β, key: α, α wordbook β]
+  : [@α: *, @: α hath_≍, @β: *, l from_list: α table β, key: α, α table β]
   ≔ l sift {pair ^ key ≭ (pair project₀)} $ from_list
 
-show let keys: [@α: *, @β: *, l from_list: α wordbook β, α list]
-  ≔ l map project₀
+show let keys: [@α: *, @β: *, l from_list: α table β, α list] ≔ l map project₀
 
-show let values: [@α: *, @β: *, l from_list: α wordbook β, β list]
-  ≔ l map project₁
+show let values: [@α: *, @β: *, l from_list: α table β, β list] ≔ l map project₁
 
-bizen: [@α: *, @: α hath_≍, @β: *, (α wordbook β) hath_∋ α] {
+bizen: [@α: *, @: α hath_≍, @β: *, (α table β) hath_∋ α] {
   let ∋: [t:, key:] ≔ (t lookup key) is_some
 }
 
-bizen: [@α: *, (α wordbook) functor] {
+bizen: [@α: *, (α table) functor] {
   let map: [l from_list:, f:] ≔ l map (_ map f) $ from_list
 
   let map_identity: [@β:, entries from_list:]
@@ -56,25 +54,24 @@ bizen: [@α: *, (α wordbook) functor] {
         } entries)
 }
 
-bizen: [@α: *, (α wordbook) hath_sift] {
+bizen: [@α: *, (α table) hath_sift] {
   let sift: [l from_list:, predicate:]
     ≔ l sift (project₁ ▷ predicate) $ from_list
 }
 
-bizen: [@α: *, @β: *, (α wordbook β) hath_manyhood] {
+bizen: [@α: *, @β: *, (α table β) hath_manyhood] {
   let manyhood: [t:] ≔ (t entries) manyhood
 }
 
 show let join
-  : [@α: *, @: α hath_≍, @β: *, first: α wordbook β, other: α wordbook β,
-    α wordbook β]
+  : [@α: *, @: α hath_≍, @β: *, first: α table β, other: α table β, α table β]
   ≔ (other entries) gather₁ first {
     t, pair ^ t put (pair project₀) (pair project₁)
   }
 
 show let tweak
-  : [@α: *, @: α hath_≍, @β: *, l from_list: α wordbook β, key: α, f: [β, β],
-    α wordbook β]
+  : [@α: *, @: α hath_≍, @β: *, l from_list: α table β, key: α, f: [β, β],
+    α table β]
   ≔ l map {pair ^ match key ≍ (pair project₀) {
     nay ^ pair,
     yea ^ pair map f

@@ -148,7 +148,7 @@ show let is_some: [@α: *, α optional, 𝟚] ≔ {
 }
 
 ## true when an option is empty.
-show let is_none: [@α: *, o: α optional, 𝟚] ≔ o is_some $ ¬
+show let is_none: [@α: *, o: α optional, 𝟚] ≔ o is_some $ ∁
 
 ## extract an option or run a fallback computation.
 show let or_else: [@α: *, α optional, [𝟙, α], α] ≔ {

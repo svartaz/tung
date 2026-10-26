@@ -145,5 +145,5 @@ bizen: [@α: *, @: α ≍_to_=, @β: *, @: β ≍_to_=, (α ∧ β) ≍_to_=] {
       ((c ⸴) leibnitz (b ≍_= d ((a ≍ c) yea_if_latter (b ≍ d) held)))
 
   let ≍_reflect: [a ⸴ b:]
-    ≔ (_ if (b ≍ b) nay) yea_throughbear ((a ≍_reflect) symmetry) (b ≍_reflect)
+    ≔ (_ if (b ≍ b) nay) yea_transport ((a ≍_reflect) symmetry) (b ≍_reflect)
 }

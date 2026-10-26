@@ -31,7 +31,7 @@ tests =
     reject "an indexed constructor cannot inhabit another index" $ do
       environment <- vectorEnvironment
       check environment vectorEmpty (vector natural (successor zero)),
-    expectEq "identity throughbear along reflexivity computeth" (Right transportedIdentity) $ do
+    expectEq "identity transport along reflexivity computeth" (Right transportedIdentity) $ do
       environment <- identityEnvironment
       normalise environment transport,
     reject "reflexivity cannot identify distinct constructors" $ do

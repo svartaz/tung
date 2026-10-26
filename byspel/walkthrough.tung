@@ -15,7 +15,7 @@ bring type/hade.tung
 bring type/list.tung
 bring type/optional.tung
 bring type/or.tung
-bring type/wordbook.tung hashmap
+bring type/table.tung hashmap
 
 # 1. values
 # `let name ≔ value` defineth a name. `:` writeth its type.
@@ -91,7 +91,7 @@ let mark: [a: ℤ, string] ≔ match a {
 }
 
 # `{ rows }` is a function that matcheth its inputs directly.
-let ¬′: [𝟚, 𝟚] ≔ {
+let ∁′: [𝟚, 𝟚] ≔ {
   yea ^ nay,
   nay ^ yea
 }
@@ -150,7 +150,7 @@ let older: wight ≔ someone.name wight_of (someone.eld + 1)
 
 # 10. lists, optional, and words
 # `‥` putteth a value before a list; `>{‥, …, list~empty}` writeth a whole
-# list. `list~empty` is qualified because wordbooks have an `empty` too.
+# list. `list~empty` is qualified because tables have an `empty` too.
 let tales: ℤ list ≔ >{‥, +1, +2, +3, list~empty}
 
 let twofolded: ℤ list ≔ tales map twofold
@@ -158,8 +158,8 @@ let twofolded: ℤ list ≔ tales map twofold
 # `optional` holdeth `some` value or `none`.
 let found: ℤ optional ≔ tales find (+2 ≤)
 
-# a wordbook mappeth keys to values.
-let elds: string hashmap~wordbook ℕ ≔ hashmap~empty hashmap~put 'tung' 1
+# a table mappeth keys to values.
+let elds: string hashmap~table ℕ ≔ hashmap~empty hashmap~put 'tung' 1
 
 # 11. classes and bizens
 # a class nameth operations that many types can have; a bizen giveth them for
@@ -193,7 +193,7 @@ class hath_gainsay: [α: *, *] {
 }
 
 bizen: 𝟚 hath_gainsay {
-  let gainsay ≔ ¬′
+  let gainsay ≔ ∁′
 
   let gainsay_gainsay ≔ {
     yea ^ reflect,
@@ -231,7 +231,7 @@ fast echo: 𝟙 effect ≔ read bind {
 }
 
 # `>{then, …}` doth many effects in order.
-let eftbare: 𝟙 effect ≔ >{then,
+let unwrap: 𝟙 effect ≔ >{then,
   'tung' greet,
   seven to_string $ write_line,
   (5 factorial) to_string $ write_line
@@ -271,7 +271,7 @@ let background: 𝟙 effect ≔ (seven pure) fork $ bind wait $ bind {
 
 # `main` is where a program beginneth.
 let main: 𝟙 effect ≔ >{then,
-  eftbare,
+  unwrap,
   message write_line,
   elds_report,
   count_report,

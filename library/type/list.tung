@@ -239,7 +239,7 @@ bizen: [@α: *, (α list) hath_manyhood] {
   let manyhood: [a…:] ≔ a… gather₁ 0 {n, _ ^ n + 1}
 }
 
-show let eftwend: [@α: *, a…: α list, α list]
+show let reverse: [@α: *, a…: α list, α list]
   ≔ a… gather₁ empty {outcome, a ^ a ‥ outcome}
 
 show let zip: [@α: *, @β: *, α list, β list, (α ∧ β) list] ≔ {
@@ -258,9 +258,9 @@ show let at: [@α: *, a…: α list, index: ℕ, α optional] ≔ match a… dro
 show let last: [@α: *, a…: α list, α optional] ≔ a… gather₁ none {_, a ^ a some}
 
 ## repeat a value count times.
-show let eftfold: [@α: *, α, ℕ, α list] ≔ {
+show let replicate: [@α: *, α, ℕ, α list] ≔ {
   _, 0      ^ empty,
-  a, n next ^ a ‥ (a eftfold n)
+  a, n next ^ a ‥ (a replicate n)
 }
 
 ## split values accepted and forsaken by a predicate.
@@ -304,7 +304,7 @@ let lemma_≍_reflect: [@α: *, @: α ≍_to_=, a…: α list, (a… equal a…)
   ≔ match a… {
     empty   ^ reflect,
     a ‥ a…′ ^
-      (_ if (a…′ equal a…′) nay) yea_throughbear ((a ≍_reflect) symmetry)
+      (_ if (a…′ equal a…′) nay) yea_transport ((a ≍_reflect) symmetry)
         (a…′ lemma_≍_reflect)
   }
 

@@ -203,7 +203,7 @@ normalisation.
 - arguments are checked in order, except a case function `{rows}` whose input
   type is still a hole: a hole standeth for it, later arguments are checked,
   and then the case function is checked against the fixed type. so
-  `{ empty ^ 𝟘, _ ‥ _ ^ 𝟙 } throughbear p only` learneth its input type from
+  `{ empty ^ 𝟘, _ ‥ _ ^ 𝟙 } transport p only` learneth its input type from
   `p`. a lambda whose body matcheth inside a larger expression is not
   postponed and needeth a binder annotation.
 - an expected implicit product introduceth its binders before any expression
@@ -267,14 +267,14 @@ type ℕ: * {
   next: [ℕ, ℕ]
 }
 
-let eftbuild: [a: ℕ, ℕ] ≔
+let rebuild: [a: ℕ, ℕ] ≔
   {_: ℕ ^ ℕ} unbuild ℕ zero {n, ih ^ ih next} a
 
 type identity: [α: *, a: α, α, *] {
   refl: α identity a a
 }
 
-let throughbear: [@α: *, @a: α, @b: α, proof: α identity a b,
+let transport: [@α: *, @a: α, @b: α, proof: α identity a b,
   family: [α, *], value: a family, b family] ≔
   {c, _ ^ c family} unbuild identity @α @a value b proof
 ```
@@ -308,7 +308,7 @@ let throughbear: [@α: *, @a: α, @b: α, proof: α identity a b,
   arbitrary recursive lets remain errors; source patterns compile to
   eliminators.
 - the identity family above giveth intensional equality and path induction:
-  `throughbear` computeth to its value on `refl`. there is no equality
+  `transport` computeth to its value on `refl`. there is no equality
   reflection or proof irrelevance.
 
 ### mutual groups
@@ -745,7 +745,7 @@ every name.
 - each key is bound at most once. unknown keys, different types, local
   bindings, and missing annotations are rejected.
 - primitive types match by name. a host data type, such as `𝟙`, `𝟚`,
-  `optional`, `∧`, `∨`, `list`, `wordbook`, `_process_outcome`, `_request`, or
+  `optional`, `∧`, `∨`, `list`, `table`, `_process_outcome`, `_request`, or
   `_response`, matcheth only the `type` of that name in its library file, as
   `type/optional.tung`; a lookalike elsewhere differeth.
 - the catalogue fixeth each data family's parameters, constructor identities,
@@ -780,7 +780,7 @@ every name.
   library tests compare those models with their native operations on
   generated literals, and the kernel trusteth that agreement as it trusteth
   the native operation. a model written anywhere else is rejected: proved by
-  induction and carried to a literal by `throughbear`, a wrong model would
+  induction and carried to a literal by `transport`, a wrong model would
   contradict the native computation. module identity is the bring path, so a
   project file at that path, which shadoweth the library's, replaceth the
   trusted model too, as it would a host data type; the proof audit still
@@ -808,15 +808,15 @@ every name.
 
 ## proof construction
 
-`is.tung` defineth identity as an ordinary indexed family; `throughbear`,
+`is.tung` defineth identity as an ordinary indexed family; `transport`,
 `leibnitz`, and `transit` prove substitution and composition without kernel
 rules. `inspect` passeth a matched value and its branch equation to a case
 function; a constant result family may need a written motive. function
 extensionality is the axiom `extend`.
 
 well-founded recursion is library code in
-[`type/grounded.tung`](../library/type/grounded.tung):
-`wellfounded_recur` recurseth structurally on groundedness evidence, and
+[`type/accessible.tung`](../library/type/accessible.tung):
+`wellfounded_recur` recurseth structurally on accessibility evidence, and
 `wellfounded_recur_by` taketh a result motive `[α, *]` and a measure
 `[α, μ]`, its callback requiring a proof that the new measure is smaller.
 identity elimination keepeth computed measures usable after a match without

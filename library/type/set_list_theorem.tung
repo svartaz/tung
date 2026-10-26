@@ -23,14 +23,14 @@ let above_inhold
     b ‥ leftover ^ (c ≤ b) inspect @𝟚 @{_ ^ (a tight c) = yea} {
       yea, below ^ (
         let at_head: (b ≤ c) = yea
-          ≔ (_ if (b ≤ c) (leftover inhold c)) yea_throughbear below member
-        yield (a tight) yea_throughbear (b ≤_= c at_head below)
+          ≔ (_ if (b ≤ c) (leftover inhold c)) yea_transport below member
+        yield (a tight) yea_transport (b ≤_= c at_head below)
           ((a tight b) yea_if_former (a above leftover) all_above)
       ),
       nay, below ^
         a above_inhold leftover c
           ((a tight b) yea_if_latter (a above leftover) all_above)
-          ((_ if (b ≤ c) (leftover inhold c)) yea_throughbear below member)
+          ((_ if (b ≤ c) (leftover inhold c)) yea_transport below member)
     }
   }
 
@@ -46,7 +46,7 @@ show let inhold_first_below
   : [@α: *, @: α order_total, a: α, a…: α list, b: α,
     member: ((a ‥ a…) inhold b) = yea, (a ≤ b) = yea]
   ≔ (b ≤ a) inspect @𝟚 @{_ ^ (a ≤ b) = yea} {
-    yea, below ^ (_ if (a ≤ b) (a… inhold b)) yea_throughbear below member,
+    yea, below ^ (_ if (a ≤ b) (a… inhold b)) yea_transport below member,
     nay, below ^ b ≤_flip a below
   }
 
@@ -98,11 +98,11 @@ show let extensionality
           (b inhold_first_below b… a a_member)
       # the properties align only the right head.
       let right_aligned: ((a ‥ b…) sorted) = yea
-        ≔ (heads symmetry) throughbear @α @b @a @{
+        ≔ (heads symmetry) transport @α @b @a @{
           head: α ^ ((head ‥ b…) sorted) = yea
         } right
       let members_aligned: [c: α, ((a ‥ a…) inhold c) = ((a ‥ b…) inhold c)]
-        ≔ (heads symmetry) throughbear @α @b @a @{
+        ≔ (heads symmetry) transport @α @b @a @{
           head: α ^ ((a ‥ a…) inhold c) = ((head ‥ b…) inhold c)
         } (c equal_members)
       let tails

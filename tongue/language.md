@@ -44,7 +44,7 @@ namespace is the last path segment before its first dot.
 
 ```tung
 bring type/list.tung
-bring type/wordbook.tung hashmap
+bring type/table.tung hashmap
 
 let xs ≔ list~empty
 let entries ≔ hashmap~empty
@@ -303,7 +303,7 @@ a fast declaration is rejected when:
 there are no mutual fast declarations. checking never unfoldeth one, so
 nothing is proved by its body; [effects](#effects) stateth how one runneth.
 
-well-founded recursion is library code in `type/grounded.tung`:
+well-founded recursion is library code in `type/accessible.tung`:
 `wellfounded_recur_by` taketh a result motive, a measure, a
 well-foundedness proof, a step, and an input, and the step's recursive call
 requireth a smaller-measure proof. `type/natural.tung` provideth
@@ -486,8 +486,9 @@ let symmetry: [@α: *, @a: α, @b: α, p: a = b, b = a] ≔
   match p {reflect ^ reflect}
 ```
 
-`is.tung` also provideth `leibnitz`, `symmetry`, `transit`, `throughbear`,
-`inspect`, and function extensionality as the axiom `extend`.
+`is.tung` also provideth `leibnitz`, `symmetry`, `transit`, `transport`,
+`inspect`, function extensionality as the axiom `extend`, the type negation
+`α ¬`, which is `[α, 𝟘]`, and `a ≠ b`, which is `(a = b) ¬`.
 
 computation includeth η. a function equaleth the lambda that applieth it, and a
 value of a type with one constructor, no indices, and no field of its own type
@@ -572,7 +573,7 @@ let add_natural: [ℕ, ℕ, ℕ] ≔ 'add_natural' foreign {
   operations and bizens come from library imports, usually `often.tung`.
   `effect` and `task` are opaque primitive families of kind `[*, *]` without
   constructors or eliminators.
-- host data families such as `list`, `optional`, `wordbook`, and `𝟙` are the
+- host data families such as `list`, `optional`, `table`, and `𝟙` are the
   types declared at their library paths; a same-spelled type elsewhere is a
   different type.
 

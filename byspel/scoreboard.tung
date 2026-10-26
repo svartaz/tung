@@ -152,7 +152,7 @@ let finished_outcomes
     none          ^ empty
   }
 
-let eftbare: [outcomes: match_outcome list, 𝟙 effect] ≔ >{then,
+let unwrap: [outcomes: match_outcome list, 𝟙 effect] ≔ >{then,
   '' write_line,
   'outcomes' write_line,
   outcomes each print_outcome,
@@ -164,5 +164,5 @@ let eftbare: [outcomes: match_outcome list, 𝟙 effect] ≔ >{then,
 let main: 𝟙 effect ≔ >{then,
   'launching match jobs' write_line,
   fixtures traverse start $ bind {tasks ^ tasks traverse wait} $ map
-    finished_outcomes $ bind eftbare
+    finished_outcomes $ bind unwrap
 }

@@ -21,7 +21,7 @@ tracked `.tung` file and stage test input against an exact oracle.
 
 - port the active lexer first, with a token dump command as its oracle. token
   spans must match exactly in utf-16 units.
-- port the parser with well-founded recursion from `type/grounded.tung`.
+- port the parser with well-founded recursion from `type/accessible.tung`.
   recursive descent over a token list is not structural; fuel is a
   stopgap, not the design.
 - port the tidier after them, since it readeth tokens, comments, and the

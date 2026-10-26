@@ -15,7 +15,7 @@ bring type/optional.tung
 bring type/three.tung
 bring type/two.tung
 
-## a finite wordbook kept as a weight-balanced search tree, ordered by its keys.
+## a finite table kept as a weight-balanced search tree, ordered by its keys.
 ## each node holdeth its weight, the tale of its entries.
 show type tree: [α: *, β: *, *] {
   leaf: α tree β,

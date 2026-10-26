@@ -210,23 +210,23 @@ hostSchemaTests =
       """
       [ ( "web/request.tung",
           """
-          bring type/wordbook.tung
-          show type _request:* { request:[string, string, string wordbook string, string, _request] }
+          bring type/table.tung
+          show type _request:* { request:[string, string, string table string, string, _request] }
 
           """
         ),
         ( "web/response.tung",
           """
-          bring type/wordbook.tung
-          show type _response:* { response:[ℕ, string wordbook string, string, _response] }
+          bring type/table.tung
+          show type _response:* { response:[ℕ, string table string, string, _response] }
 
           """
         ),
-        ( "type/wordbook.tung",
+        ( "type/table.tung",
           """
           bring type/list.tung
           bring type/and.tung
-          show type wordbook:[α:*, β:*, *] { from_list:[(α ∧ β) list, α wordbook β] }
+          show type table:[α:*, β:*, *] { from_list:[(α ∧ β) list, α table β] }
 
           """
         ),

@@ -14,14 +14,14 @@ show class order_total: [α: *, @: α order_partial, *] {
 ## two values that are not ordered one way are ordered the other way.
 show let ≤_flip
   : [@α: *, @: α order_total, a: α, b: α, k: (a ≤ b) = nay, (b ≤ a) = yea]
-  ≔ {c ^ (c ≍ nay) ≤ (b ≤ a)} yea_throughbear k (a ≤_total b)
+  ≔ {c ^ (c ≍ nay) ≤ (b ≤ a)} yea_transport k (a ≤_total b)
 
 ## transitivity for comparisons known to hold.
 show let ≤_yea_transit
   : [@α: *, @: α order_total, a: α, b: α, c: α, k₀: (a ≤ b) = yea,
     k₁: (b ≤ c) = yea, (a ≤ c) = yea]
-  ≔ (_ ≤ (a ≤ c)) yea_throughbear k₁
-    ({d ^ >{≤, d, b ≤ c, a ≤ c}} yea_throughbear k₀ (a ≤_transit b c))
+  ≔ (_ ≤ (a ≤ c)) yea_transport k₁
+    ({d ^ >{≤, d, b ≤ c, a ≤ c}} yea_transport k₀ (a ≤_transit b c))
 
 show let compare: [@α: *, @: α order_total, @: α hath_≤, a: α, b: α, 𝟛]
   ≔ (a ≤ b) if ((b ≤ a) if mid fore) aft

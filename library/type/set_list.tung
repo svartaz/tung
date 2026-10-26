@@ -64,9 +64,9 @@ show let tight_right
 
 show let tight_make
   : [@α: *, @: α order_total, a: α, b: α, below: (a ≤ b) = yea,
-    eftwend: (b ≤ a) = nay, (a tight b) = yea]
+    reverse: (b ≤ a) = nay, (a tight b) = yea]
   ≔ ((_ if ((b ≤ a) if nay yea) nay) leibnitz below) transit
-    ((_ if nay yea) leibnitz eftwend)
+    ((_ if nay yea) leibnitz reverse)
 
 show let tight_transit
   : [@α: *, @: α order_total, a: α, b: α, c: α, first: (a tight b) = yea,
@@ -74,12 +74,12 @@ show let tight_transit
   ≔ (
     let below
       ≔ a ≤_yea_transit b c (a tight_left b first) (b tight_left c other)
-    let eftwend: (c ≤ a) = nay ≔ (c ≤ a) inspect {
+    let reverse: (c ≤ a) = nay ≔ (c ≤ a) inspect {
       yea, held ^ match ((b ≤_yea_transit c a (b tight_left c other) held)
         symmetry) transit (a tight_right b first) {},
       nay, _ ^ reflect
     }
-    yield a tight_make c below eftwend
+    yield a tight_make c below reverse
   )
 
 show let above_transit
@@ -135,8 +135,8 @@ show let put_sorted
             c: 𝟚 ^ ((c if (a ‥ leftover) (b ‥ (a ‥ leftover))) sorted) = yea
           } {
             yea, _       ^ held,
-            nay, eftwend ^ (
-              let less ≔ b tight_make a before eftwend
+            nay, reverse ^ (
+              let less ≔ b tight_make a before reverse
               let above_b
                 ≔ (b tight a) both_yea (b above leftover) less
                   (b above_transit a leftover less above_a)
@@ -284,15 +284,15 @@ show let put_inhold_if
               ((c if (a ‥ leftover) (b ‥ (a ‥ leftover))) inhold d) =
                 (((a ‥ leftover) inhold d) if yea (d equal b))
           } {
-            yea, eftwend ^ >{transit,
+            yea, reverse ^ >{transit,
               original,
               (d equal a) either_swallow (leftover inhold d),
               (_ if yea (d equal a)) leibnitz (original symmetry),
               {c ^ ((a ‥ leftover) inhold d) if yea (d equal c)} leibnitz
-                ((b ≤_= a before eftwend) symmetry)
+                ((b ≤_= a before reverse) symmetry)
             },
-            nay, eftwend ^ (
-              let less ≔ b tight_make a before eftwend
+            nay, reverse ^ (
+              let less ≔ b tight_make a before reverse
               let above_b
                 ≔ (b tight a) both_yea (b above leftover) less
                   (b above_transit a leftover less above_a)

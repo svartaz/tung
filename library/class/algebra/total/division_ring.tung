@@ -1,0 +1,25 @@
+bring class/algebra/total/hath_divide.tung
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/hath_one.tung
+bring class/algebra/total/hath_zero.tung
+bring class/algebra/total/ring.tung
+bring is.tung
+bring type/zero.tung
+
+## a ring whose `one` is not `zero` and in which every divisor but `zero` hath
+## an inverse on both sides: `a ÷ b` is `a` multiplied by that inverse, so
+## dividing undoeth multiplying and multiplying undoeth dividing. when
+## multiplication swappeth, the one law giveth the other; here it need not.
+## dividing by `zero` is left unsaid: a law for it would make `zero` and `one`
+## the same.
+show class division_ring: [α: *, @: α ring, @: α hath_÷, *] {
+  let one_not_zero: one ≠ zero
+
+  let ÷_·
+    : [dividend: α, divisor: α, nonzero: divisor ≠ zero,
+      ((dividend ÷ divisor) · divisor) = dividend]
+
+  let ·_÷
+    : [dividend: α, divisor: α, nonzero: divisor ≠ zero,
+      ((dividend · divisor) ÷ divisor) = dividend]
+}

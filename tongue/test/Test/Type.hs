@@ -343,17 +343,17 @@ importCases =
 
 tableAndSetCases :: Map.Map String String -> [Test]
 tableAndSetCases imports =
-  [ typeOkWith "wordbook, set, and powerset may qualify shared names" (source ++ qualifiedValues) imports,
-    typeErrWith "wordbook, set, powerset, and list empty values are ambiguous bare" (source ++ "let bad ≔ empty") imports,
-    typeErrWith "wordbook and set from_list names are ambiguous bare" (source ++ "let values:ℤ list ≔ list~empty let bad ≔ values from_list") imports
+  [ typeOkWith "table, set, and powerset may qualify shared names" (source ++ qualifiedValues) imports,
+    typeErrWith "table, set, powerset, and list empty values are ambiguous bare" (source ++ "let bad ≔ empty") imports,
+    typeErrWith "table and set from_list names are ambiguous bare" (source ++ "let values:ℤ list ≔ list~empty let bad ≔ values from_list") imports
   ]
   where
-    source = "bring type/integer.tung bring type/list.tung bring type/wordbook.tung bring type/set.tung bring type/powerset.tung "
+    source = "bring type/integer.tung bring type/list.tung bring type/table.tung bring type/set.tung bring type/powerset.tung "
     qualifiedValues =
-      "let wordbook_value:ℤ wordbook string ≔ wordbook~empty "
+      "let table_value:ℤ table string ≔ table~empty "
         ++ "let set_value:ℤ set ≔ set~empty "
         ++ "let powerset_value:ℤ powerset ≔ powerset~empty "
-        ++ "let wordbook_built:ℤ wordbook string ≔ list~empty wordbook~from_list "
+        ++ "let table_built:ℤ table string ≔ list~empty table~from_list "
         ++ "let set_built:ℤ set ≔ list~empty set~from_list"
 
 orderCases :: Map.Map String String -> [Test]

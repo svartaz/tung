@@ -17,7 +17,7 @@ bring type/zero.tung
 ## zero may yield none, which the other laws skip.
 show class euclidean: [α: *, @: α ring, @: α hath_%, @: α order_total, *] {
   let %_some
-    : [dividend: α, divisor: α, nonzero: [divisor = zero, 𝟘],
+    : [dividend: α, divisor: α, nonzero: divisor ≠ zero,
       ((dividend % divisor) is_some) = yea]
 
   let %_·_+: [dividend: α, divisor: α, (match dividend % divisor {

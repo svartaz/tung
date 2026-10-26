@@ -95,7 +95,7 @@ optionData = HostData "type/optional.tung" "optional"
 productData = HostData "type/and.tung" "∧"
 -- a fallible host effect returneth `string ∨ α`: an error message or a result.
 sumData = HostData "type/or.tung" "∨"
-tableData = HostData "type/wordbook.tung" "wordbook"
+tableData = HostData "type/table.tung" "table"
 
 processResultData, requestData, responseData :: HostData
 processResultData = HostData "process/outcome.tung" "_process_outcome"

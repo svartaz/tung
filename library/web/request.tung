@@ -1,15 +1,15 @@
-bring type/wordbook.tung
+bring type/table.tung
 
 ## an incoming http request with its method, target, headers, and utf-8 body.
 show type _request: * {
-  request: [string, string, string wordbook string, string, _request]
+  request: [string, string, string table string, string, _request]
 }
 
 show let method: [method request _ _ _: _request, string] ≔ method
 
 show let target: [_ request target _ _: _request, string] ≔ target
 
-show let headers: [_ request _ headers _: _request, string wordbook string]
+show let headers: [_ request _ headers _: _request, string table string]
   ≔ headers
 
 show let body: [_ request _ _ body: _request, string] ≔ body

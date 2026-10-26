@@ -15,8 +15,8 @@ group = do
   memo <- exampleSource "index_memo.tung"
   functions <- exampleSource "function_recursion.tung"
   wellFounded <- exampleSource "wellfounded.tung"
-  grounded <- loadLibrary ["type/grounded.tung", "type/list_theorem.tung", "type/natural.tung", "often.tung"]
-  Harness.group "dependent-recursion" (wellFoundedTests grounded wellFounded ++ boundedTests grounded ++ positiveTests ++ indexRecursionTests grounded indexed ++ indexMemoTests memo ++ functionRecursionTests grounded functions ++ rejectionTests)
+  accessible <- loadLibrary ["type/accessible.tung", "type/list_theorem.tung", "type/natural.tung", "often.tung"]
+  Harness.group "dependent-recursion" (wellFoundedTests accessible wellFounded ++ boundedTests accessible ++ positiveTests ++ indexRecursionTests accessible indexed ++ indexMemoTests memo ++ functionRecursionTests accessible functions ++ rejectionTests)
 
 -- library measure recursion retaineth checked decrease proofs and dependent results.
 wellFoundedTests :: Library -> String -> [Test]
@@ -30,7 +30,7 @@ wellFoundedTests library example =
         traverse
           (uncurry (sameNormalIn program))
           [ ("three count", "three"),
-            ("three add (nought after)", "three after"),
+            ("three add (zero after)", "three after"),
             ("three shifted", "three"),
             ("(three pack) unpack_count", "three"),
             ("(three pack) selfsame", "(reflect:(three pack) = (three pack))")
@@ -38,8 +38,8 @@ wellFoundedTests library example =
     )
     : [ rejectContaining label "cannot unify" (compile (example ++ source))
       | (label, source) <-
-          [ ("a callback cannot recurse at the same measure", "let bad:[n:unary, unary] ≔ {_ ^ unary} wellfounded_recur_by {x ^ x} reach {n, recur ^ match n { nought ^ nought, m after ^ (m after) recur step }} n"),
-            ("a callback requires the decrease proof", "let bad:[n:unary, unary] ≔ {_ ^ unary} wellfounded_recur_by {x ^ x} reach {n, recur ^ match n { nought ^ nought, m after ^ m recur }} n")
+          [ ("a callback cannot recurse at the same measure", "let bad:[n:unary, unary] ≔ {_ ^ unary} wellfounded_recur_by {x ^ x} reach {n, recur ^ match n { zero ^ zero, m after ^ (m after) recur step }} n"),
+            ("a callback requires the decrease proof", "let bad:[n:unary, unary] ≔ {_ ^ unary} wellfounded_recur_by {x ^ x} reach {n, recur ^ match n { zero ^ zero, m after ^ m recur }} n")
           ]
       ]
   where
@@ -68,7 +68,7 @@ boundedTests library =
       """
       bring class/hath_manyhood.tung
       bring often.tung
-      bring type/grounded.tung
+      bring type/accessible.tung
       bring type/list.tung
       bring type/list_theorem.tung
       bring type/natural.tung

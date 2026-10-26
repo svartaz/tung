@@ -15,8 +15,8 @@ bring class/order/order_partial.tung
 bring class/order/order_total.tung
 bring class/order/semilattice_upper_bounded.tung
 bring is.tung
+bring type/accessible.tung
 bring type/and.tung
-bring type/grounded.tung
 bring type/optional.tung
 bring type/two.tung
 
@@ -272,8 +272,8 @@ let lemma_≍_reflect: [a: ℕ, (a ≍ a) = yea] ≔ match a {
 ## antisymmetry holdeth in `=`, by sound equality.
 let lemma_≤_=: [a: ℕ, b: ℕ, below: (a ≤ b) = yea, above: (b ≤ a) = yea, a = b]
   ≔ a lemma_≍_= b
-    ((_ ≤ (a ≍ b)) yea_throughbear above
-      ({c ^ >{≤, c, b ≤ a, a ≍ b}} yea_throughbear below
+    ((_ ≤ (a ≍ b)) yea_transport above
+      ({c ^ >{≤, c, b ≤ a, a ≍ b}} yea_transport below
         (a lemma_≤_antisymmetry b)))
 
 bizen: ℕ ≍_to_= {
@@ -331,7 +331,7 @@ show let ·_swap: [a: ℕ, b: ℕ, (a · b) = (b · a)] ≔ match b {
 }
 
 ## `a` is under `b` when `a` is smaller: `(a next) ≤ b`. as a relation it is
-## wellfounded, so it may ground recursion on a measure in `ℕ`.
+## wellfounded, so recursion may follow it on a measure in `ℕ`.
 show let under: [a: ℕ, b: ℕ, *] ≔ ((a next) ≤ b) = yea
 
 let lemma_≤_next: [a: ℕ, (a ≤ (a next)) = yea] ≔ match a {
@@ -349,23 +349,23 @@ show let under_transit: [a: ℕ, b: ℕ, c: ℕ, a under b, b under c, a under c
       (b ≤_yea_transit (b next) c (b lemma_≤_next) d₁)
 }
 
-## everything under `n` is grounded, by induction on `n`.
-let lemma_under_grounded: [a: ℕ, b: ℕ, below: b under a, ℕ grounded under b]
+## everything under `n` is accessible, by induction on `n`.
+let lemma_under_accessible: [a: ℕ, b: ℕ, below: b under a, ℕ accessible under b]
   ≔ match a {
     0       ^ match below {},
     a′ next ^ {
       c: ℕ, q: c under b ^
-        a′ lemma_under_grounded c ((c next) ≤_yea_transit b a′ q below)
-    } ground
+        a′ lemma_under_accessible c ((c next) ≤_yea_transit b a′ q below)
+    } access
   }
 
 show let under_wellfounded: ℕ wellfounded under ≔ {
-  n ^ (n lemma_under_grounded) ground
+  n ^ (n lemma_under_accessible) access
 }
 
-## `p` holdeth a quotient and leftover that eftbuild `n` when dividing by `e
+## `p` holdeth a quotient and leftover that rebuild `n` when dividing by `e
 ## next`.
-let eftbuild: [n: ℕ, e: ℕ, q ⸴ r: ℕ ∧ ℕ, *] ≔ ((q · (e next)) + r) = n
+let rebuild: [n: ℕ, e: ℕ, q ⸴ r: ℕ ∧ ℕ, *] ≔ ((q · (e next)) + r) = n
 
 ## `p` holdeth a leftover at most `e`.
 let bound: [e: ℕ, _ ⸴ r: ℕ ∧ ℕ, *] ≔ (r ≤ e) = yea
@@ -381,13 +381,13 @@ let lemma_≤_≭
     a′ next, b′ next ^ a′ lemma_≤_≭ b′ below apart
   }
 
-let lemma_divide_step_eftbuild
-  : [n: ℕ, e: ℕ, p: ℕ ∧ ℕ, held: n eftbuild e p,
-    (n next) eftbuild e (e divide_step p)]
+let lemma_divide_step_rebuild
+  : [n: ℕ, e: ℕ, p: ℕ ∧ ℕ, held: n rebuild e p,
+    (n next) rebuild e (e divide_step p)]
   ≔ match p {
     q ⸴ r ^
       (r ≍ e) inspect @𝟚 @{
-        c: 𝟚 ^ (n next) eftbuild e (c if ((q next) ⸴ 0) (q ⸴ (r next)))
+        c: 𝟚 ^ (n next) rebuild e (c if ((q next) ⸴ 0) (q ⸴ (r next)))
       } {
         yea, known ^ >{transit,
           (_ + (q next)) leibnitz (q next_· e),
@@ -410,10 +410,10 @@ let lemma_divide_step_bound
       }
   }
 
-let lemma_divide_eftbuild: [a: ℕ, b: ℕ, a eftbuild b (a divide b)] ≔ match a {
+let lemma_divide_rebuild: [a: ℕ, b: ℕ, a rebuild b (a divide b)] ≔ match a {
   0       ^ (b next) lemma_zero_·,
   a′ next ^
-    a′ lemma_divide_step_eftbuild b (a′ divide b) (a′ lemma_divide_eftbuild b)
+    a′ lemma_divide_step_rebuild b (a′ divide b) (a′ lemma_divide_rebuild b)
 }
 
 let lemma_divide_bound: [a: ℕ, b: ℕ, b bound (a divide b)] ≔ match a {
@@ -430,19 +430,19 @@ let lemma_%_pair
     e′ some ^ e′
   }} leibnitz divided
 
-## the quotient and leftover of dividing by `e next` eftbuild the dividend tale.
-show let %_eftbuild
+## the quotient and leftover of dividing by `e next` rebuild the dividend tale.
+show let %_rebuild
   : [n: ℕ, e: ℕ, q: ℕ, r: ℕ, divided: (n % (e next)) = ((q ⸴ r) some),
     ((q · (e next)) + r) = n]
-  ≔ (n lemma_%_pair e q r divided) throughbear @(ℕ ∧ ℕ) @(n divide e) @(q ⸴ r)
-    @(n eftbuild e) (n lemma_divide_eftbuild e)
+  ≔ (n lemma_%_pair e q r divided) transport @(ℕ ∧ ℕ) @(n divide e) @(q ⸴ r) @(n
+    rebuild e) (n lemma_divide_rebuild e)
 
 ## the leftover of dividing by `e next` is at most `e`.
 show let %_leftover
   : [n: ℕ, e: ℕ, q: ℕ, r: ℕ, divided: (n % (e next)) = ((q ⸴ r) some),
     (r ≤ e) = yea]
-  ≔ (n lemma_%_pair e q r divided) throughbear @(ℕ ∧ ℕ) @(n divide e) @(q ⸴ r)
-    @(e bound) (n lemma_divide_bound e)
+  ≔ (n lemma_%_pair e q r divided) transport @(ℕ ∧ ℕ) @(n divide e) @(q ⸴ r) @(e
+    bound) (n lemma_divide_bound e)
 
 ## taking away at most `e` and adding it back giveth `e`.
 show let ∸_+: [a: ℕ, b: ℕ, below: (b ≤ a) = yea, ((a ∸ b) + b) = a]

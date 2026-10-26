@@ -273,7 +273,7 @@ isRequirement names plicity domain
   | otherwise = pure False
 
 -- a function whose result applieth one of its own implicit type families,
--- as `throughbear` applieth its property, is a motive function, as lean's
+-- as `transport` applieth its property, is a motive function, as lean's
 -- `elab_as_elim` nameth it. the explicit inputs whose types mention the family
 -- are checked after the result meeteth the expected type, so occurrence
 -- abstraction findeth the family in the goal rather than in an input. a family

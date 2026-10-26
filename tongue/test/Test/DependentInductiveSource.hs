@@ -49,7 +49,7 @@ tests =
                  """
           )
       inferSourceExpression program "(natural_tag:bool tag)",
-    sameNormal "source identity throughbear computeth on reflexivity" (naturalSource ++ identitySource ++ transportSource) "throughbear" "{F:[nat, *] ^ {value:(zero F) ^ value}}",
+    sameNormal "source identity transport computeth on reflexivity" (naturalSource ++ identitySource ++ transportSource) "transport" "{F:[nat, *] ^ {value:(zero F) ^ value}}",
     expectEq "types and constructors share one namespace" (Right [True, True]) $
       traverse
         collision
@@ -261,7 +261,7 @@ vectorSource = "type vec:[α:*, [nat, *]] { nil:α vec zero, cons:[n:nat, head:�
 vectorProofSource = "type vec_proof:[α:*, [nat, *]] { nil:α vec_proof zero, cons:[n:nat, tail:α vec_proof n, proof:(n hath_≍ @nat n), α vec_proof (n next)] }\n"
 identitySource = "type hath_≍:[@α:*, x:α, [α, *]] { refl:(x hath_≍ @α x) }\n"
 vectorHead = "let head:[@α:*, @n:nat, v:α vec (n next), α] ≔ match v { _ cons a _ ^ a }\n"
-transportSource = "let throughbear:[F:[nat, *], value:zero F, zero F] ≔ {y:nat ^ {proof:(zero hath_≍ @nat y) ^ y F}} unbuild hath_≍ @nat @zero value zero (refl @nat @zero)\n"
+transportSource = "let transport:[F:[nat, *], value:zero F, zero F] ≔ {y:nat ^ {proof:(zero hath_≍ @nat y) ^ y F}} unbuild hath_≍ @nat @zero value zero (refl @nat @zero)\n"
 
 naturalFold, vectorOne, vectorFold, vectorProofOne, vectorProofFold :: String
 naturalFold = "{n:nat ^ nat} unbuild nat zero {n:nat ^ {ih:nat ^ ih next}} ((zero next) next)"

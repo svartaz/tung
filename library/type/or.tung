@@ -43,7 +43,7 @@ show let is_inject₀: [@α: *, @β: *, α ∨ β, 𝟚] ≔ {
   _ inject₁ ^ nay
 }
 
-show let is_inject₁: [@α: *, @β: *, sum: α ∨ β, 𝟚] ≔ sum is_inject₀ $ ¬
+show let is_inject₁: [@α: *, @β: *, sum: α ∨ β, 𝟚] ≔ sum is_inject₀ $ ∁
 
 bizen: [@α: *, (α ∨) functor] {
   let map: [sum:, f:] ≔ sum bimap identity f

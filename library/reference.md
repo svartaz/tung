@@ -15,7 +15,7 @@ spelling of its class name.
 - integers provide exact euclidean division. floats expose IEEE operations
   without claiming exact field or total-order laws.
 - `powerset` is a characteristic function `[α, 𝟚]`; its pointwise `·` is
-  intersection, and `upper` giveth union. `set` and `wordbook` are finite,
+  intersection, and `upper` giveth union. `set` and `table` are finite,
   list-backed collections ([sets](#sets)).
 - `tree` is a finite table kept as a weight-balanced search tree, needing only
   a total order on keys. logarithmic paths require ordered, balanced trees
@@ -65,7 +65,7 @@ spelling of its class name.
   `greatest_common_divisor` by euclid's division, with `greatest_common_divisor_∣` and
   `∣_greatest_common_divisor` as its defining laws. it counteth down `b` steps rather
   than recursion on a wellfounded relation, whose unfolding would carry a
-  groundedness proof other than the recursive call's own. conversion seeth
+  accessibility proof other than the recursive call's own. conversion seeth
   that dividing by `b next` yieldeth an outcome but matching cannot, so its
   lemmas take that outcome and its equation as inputs.
 - `effect/fallible.tung` layereth failure over `effect` alone and proveth its
@@ -80,7 +80,7 @@ spelling of its class name.
   function `[β, α]`, a functor for any `φ` whose mapping composeth the
   function. `unlift` needeth `φ functor`; `unlift_lift` holdeth, and the other
   round trip only after `unlift`, since tung hath no quotient types.
-- `type/grounded.tung` provideth well-founded recursion, and
+- `type/accessible.tung` provideth well-founded recursion, and
   `wellfounded_recur_by` lifteth it through a computed measure with an
   explicit dependent motive and a decrease proof per call. `type/natural.tung`
   showeth `under`, the strict order as a relation, with `under_wellfounded`;
@@ -126,7 +126,7 @@ proved theorems:
 | `category.tung`          | `identity_alone`                                                                          |
 | `groupoid.tung`          | `invert_alone`, `invert_invert`, `identity_invert`, `invert_over_▷`                       |
 | `type/natural.tung`      | `next_inject`, `next_+`, `strike_+`, `+_∸`, `·_swap`                                      |
-| `type/list_theorem.tung` | `map_manyhood`, `manyhood_·`, `eftwend_manyhood`                                          |
+| `type/list_theorem.tung` | `map_manyhood`, `manyhood_·`, `reverse_manyhood`                                          |
 
 `group_homomorphism.tung` defineth `homomorphic`, `kernel`, and `image` for
 `group_·` and proveth `one_f` and `/_f`; that the kernel is a normal subgroup
@@ -175,8 +175,10 @@ and [proof checking](../tongue/language.md#proof-checking) auditeth a theorem
 or a declaration applying a chosen bizen's law.
 
 - [`is.tung`](is.tung) proveth `leibnitz`, `symmetry`, `transit`, and
-  `throughbear` for `=` by matching `reflect`.
-- list, non-empty list, sum, option, and wordbook mapping laws, finite boolean
+  `transport` for `=` by matching `reflect`, and defineth the type
+  negation `α ¬` as `[α, 𝟘]` and `a ≠ b` as `(a = b) ¬`, so a proof of either
+  is applied or matched away as any function into `𝟘`.
+- list, non-empty list, sum, option, and table mapping laws, finite boolean
   arithmetic, and finite bounds reduce by cases or induction; generic min/max
   idempotence holdeth for either comparison result.
 - [`type/list_theorem.tung`](type/list_theorem.tung) proveth no confusion and
@@ -205,11 +207,12 @@ or a declaration applying a chosen bizen's law.
   commutativity, associativity, swallowing, and both distributive laws by
   cases on comparisons. `𝟚` and `𝟛` prove `≤_=` by cases, `ℕ`, `ℤ`, lists,
   `unicode`, and `string` from sound equality, and sets from their `≍_to_=`.
-- `field` stateth that multiplication swappeth, that `one` is not `zero`, and that
-  `÷` undoeth multiplying by every divisor but `zero`; a law for dividing by
-  `zero` would make `zero` and `one` the same. `euclidean` stateth by
-  `%_some` that dividing by every divisor but `zero` yieldeth an outcome, so
-  a `%` that always yieldeth none is not euclidean.
+- `division_ring` stateth that `one` is not `zero` and that every divisor
+  but `zero` hath an inverse on both sides: `÷` undoeth multiplying and
+  multiplying undoeth `÷`. a law for dividing by `zero` would make `zero` and
+  `one` the same. `field` is a division ring whose multiplication swappeth.
+  `euclidean` stateth by `%_some` that dividing by every divisor but `zero`
+  yieldeth an outcome, so a `%` that always yieldeth none is not euclidean.
 - [`class/equal_to_is.tung`](class/equal_to_is.tung) stateth that boolean
   equality agreeth with identity, as lean's `LawfulBEq`: `≍_=` turneth
   `(a ≍ b) = yea` into `a = b`, and `≍_reflect` giveth `(a ≍ a) = yea`. `𝟙`,
@@ -264,8 +267,8 @@ generic commutativity, associativity, distributivity, the least element, and
 sound equality without holes or axioms, and check canonical enumeration and
 that insertion order and repetition do not matter.
 
-`wordbook` still exposeth its raw `from_list` constructor and may hold
-duplicate keys; `set~from_list`, a smart constructor, and `wordbook~from_list`
+`table` still exposeth its raw `from_list` constructor and may hold
+duplicate keys; `set~from_list`, a smart constructor, and `table~from_list`
 stay distinct by qualification. a set needeth a decidable total order, while
 `powerset` keepeth its unrestricted predicate. the planned order-insensitive
 bag is tracked in [`todo.md`](../todo.md).
@@ -284,7 +287,7 @@ informeth the small surface; the mapping is approximate:
 | `foldable`, `traversable`         | `catamorphism`, `traverse`                        | applicative evidence belongeth to each polymorphic traversal           |
 | `optional`, `either`, `tuple`     | `optional`, `∨`, `∧`                              | sums and products are library inductives                               |
 | `effect`                          | `effect`                                          | a primitive type; `effect.tung` supplieth its monad bizens             |
-| `array`, `map`, `set`             | `list`, `wordbook`, `set`, `powerset`             | a packed random-access array is absent                                 |
+| `array`, `map`, `set`             | `list`, `table`, `set`, `powerset`                | a packed random-access array is absent                                 |
 
 [purescript traversable](https://pursuit.purescript.org/packages/purescript-foldable-traversable/docs/Data.Traversable)
 informeth the `functor` and `catamorphism` parents. tung copieth neither its open

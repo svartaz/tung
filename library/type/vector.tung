@@ -49,7 +49,7 @@ show let to_list_manyhood
 show let from_list: [@α: *, a…: α list, α vector (a… manyhood)] ≔ match a… {
   list~empty        ^ empty,
   a list~‥ leftover ^
-    ((a ‥_manyhood leftover) symmetry) throughbear (a ‥ (leftover from_list))
+    ((a ‥_manyhood leftover) symmetry) transport (a ‥ (leftover from_list))
 }
 
 ## each value sent through `f`.

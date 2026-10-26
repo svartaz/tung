@@ -663,7 +663,7 @@ solvePattern context identity arguments right = do
     _ -> pure False
 
 -- a hole of function type applied to inputs that are not all distinct
--- locals, as a property `?p b` meeting the goal of `throughbear`, is solved by
+-- locals, as a property `?p b` meeting the goal of `transport`, is solved by
 -- abstracting those inputs from the other side, as lean's `▸` doth. the side
 -- is searched as written first and as a normal form second, so `first p`
 -- is found inside `(first ‥ rest) sift p`. every abstracted input must

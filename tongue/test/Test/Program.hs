@@ -203,9 +203,9 @@ layeredPrograms :: [(String, String, String)]
 layeredPrograms =
   [ ("hade handeth each step the state left by the last", "(>{then, tick, tick, get} hade~unwrap 10) bind {p ^ p project₀ $ to_string $ write}", "12"),
     ("put replaceth and lift keepeth the state", "(>{then, 4 put, ('x' write) hade~lift, get} hade~unwrap 0) bind {p ^ p project₀ $ to_string $ write}", "x4"),
-    ("a failure skippeth every later effect", "(>{then, ('a' write) fallible~lift, ('stop' fail: string fallible 𝟙), ('b' write) fallible~lift} fallible~unwrap) bind eftbare", "astop"),
-    ("handle runneth its handler only on a failure", "(>{then, ('a' write) fallible~lift, 'stop' fail} handle {e ^ (e write) fallible~lift} $ fallible~unwrap) bind eftbare", "astop!"),
-    ("handle leaveth a result alone", "((('a' write) fallible~lift: 𝟙 fallible 𝟙) handle {_ ^ ('never' write) fallible~lift} $ fallible~unwrap) bind eftbare", "a!")
+    ("a failure skippeth every later effect", "(>{then, ('a' write) fallible~lift, ('stop' fail: string fallible 𝟙), ('b' write) fallible~lift} fallible~unwrap) bind unwrap", "astop"),
+    ("handle runneth its handler only on a failure", "(>{then, ('a' write) fallible~lift, 'stop' fail} handle {e ^ (e write) fallible~lift} $ fallible~unwrap) bind unwrap", "astop!"),
+    ("handle leaveth a result alone", "((('a' write) fallible~lift: 𝟙 fallible 𝟙) handle {_ ^ ('never' write) fallible~lift} $ fallible~unwrap) bind unwrap", "a!")
   ]
 
 layeredCase :: Library -> (String, String, String) -> Test
@@ -223,7 +223,7 @@ layeredCase library (name, performed, expected) =
       bring type/and.tung
       bring type/or.tung
       let tick: ℕ hade effect 𝟙 ≔ {n ^ n + 1} tweak
-      let eftbare: [string ∨ 𝟙, 𝟙 effect] ≔ {e inject₀ ^ e write, _ inject₁ ^ '!' write}
+      let unwrap: [string ∨ 𝟙, 𝟙 effect] ≔ {e inject₀ ^ e write, _ inject₁ ^ '!' write}
 
       """
 

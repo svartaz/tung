@@ -13,7 +13,7 @@ let then: [@α: *, @β: *, first: α effect, after: β effect, β effect]
 let line: [a: string, 𝟙 effect] ≔ (a join_string '\n') _foreign~write
 
 ## a fallible effect returneth `string ∨ α`: a message or an outcome.
-let eftbare: [doing: (string ∨ string) effect, 𝟙 effect] ≔ doing effect_bind {
+let unwrap: [doing: (string ∨ string) effect, 𝟙 effect] ≔ doing effect_bind {
   message inject₀  ^ message line,
   contents inject₁ ^ contents line
 }
@@ -27,8 +27,8 @@ let await: [started: (string task) effect, 𝟙 effect]
 
 let main: 𝟙 effect ≔ >{then,
   ('note.txt' file~write 'saved') effect_bind {_ ^ only effect_pure},
-  'note.txt' file~read $ eftbare,
-  'absent.txt' file~read $ eftbare,
+  'note.txt' file~read $ unwrap,
+  'absent.txt' file~read $ unwrap,
   ('from a task' effect_pure) fork $ await,
   match 'tung' behead_string {
     none                ^ 'empty' line,

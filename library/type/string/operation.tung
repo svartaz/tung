@@ -32,10 +32,10 @@ show let take_string: [t: string, count: ℕ, string]
 show let drop_string: [t: string, count: ℕ, string]
   ≔ t string_to_list $ drop count $ list_to_string
 
-show let eftwend_string: [t: string, string]
-  ≔ t string_to_list $ eftwend $ list_to_string
+show let reverse_string: [t: string, string]
+  ≔ t string_to_list $ reverse $ list_to_string
 
-show let forehang_string: [character: unicode, t: string, string]
+show let prepend_string: [character: unicode, t: string, string]
   ≔ character ‥ (t string_to_list) $ list_to_string
 
 show let append_string: [t: string, character: unicode, string]
@@ -71,7 +71,7 @@ show let split_string: [t: string, shedder: unicode, string list]
 ## split string on runs of common ascii whitespace.
 show let words_string: [t: string, string list]
   ≔ t string_to_list $ split_unicode_by is_whitespace $ map list_to_string
-    $ sift (is_empty_string ▷ ¬)
+    $ sift (is_empty_string ▷ ∁)
 
 ## join string values with a separator between neighbours.
 show let join_with_string: [string list, string, string] ≔ {

@@ -91,13 +91,13 @@ webServerRoundTrip imports = do
         bring often.tung
         bring effect/clock.tung
         bring type/optional.tung
-        bring type/wordbook.tung
+        bring type/table.tung
         bring web/request.tung
         bring web/server.tung
 
         let route:[incoming: _request, _response effect] ≔ unix_time map { _ ^
           match ((incoming request~method) ≍ 'POST') ⋏ ((incoming request~target) ≍ '/echo') {
-            yea ^ match ((incoming request~headers) wordbook~lookup 'Host') {
+            yea ^ match ((incoming request~headers) table~lookup 'Host') {
               host optional~some ^ match host ≍ 'localhost' {
                 yea ^ ((((incoming request~body) ok) with_header 'Transfer-Encoding' 'chunked') with_header 'X-Tung' 'old') with_header 'X-Tung' 'yea',
                 nay ^ 'not found\\n' not_found

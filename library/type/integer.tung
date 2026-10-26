@@ -101,14 +101,14 @@ let lemma_≤_reflect: [a: ℤ, (a ≤ a) = yea] ≔ match a {
   m next_negative ^ m ≤_reflect
 }
 
-## antisymmetry with the comparisons of `ℕ` eftwended, as for negative
+## antisymmetry with the comparisons of `ℕ` reversed, as for negative
 ## values.
-let antisymmetry_eftwended: [a: ℕ, b: ℕ, >{≤, b ≤ a, a ≤ b, a ≍ b} = yea]
+let antisymmetry_reversed: [a: ℕ, b: ℕ, >{≤, b ≤ a, a ≤ b, a ≍ b} = yea]
   ≔ match a, b {
     0,       0       ^ reflect,
     0,       _ next  ^ reflect,
     _ next,  0       ^ reflect,
-    a′ next, b′ next ^ a′ antisymmetry_eftwended b′
+    a′ next, b′ next ^ a′ antisymmetry_reversed b′
   }
 
 let lemma_≤_antisymmetry: [a: ℤ, b: ℤ, >{≤, a ≤ b, b ≤ a, a ≍ b} = yea]
@@ -116,11 +116,11 @@ let lemma_≤_antisymmetry: [a: ℤ, b: ℤ, >{≤, a ≤ b, b ≤ a, a ≍ b} =
     m nonnegative,   n nonnegative   ^ m ≤_antisymmetry n,
     _ nonnegative,   _ next_negative ^ reflect,
     _ next_negative, _ nonnegative   ^ reflect,
-    m next_negative, n next_negative ^ m antisymmetry_eftwended n
+    m next_negative, n next_negative ^ m antisymmetry_reversed n
   }
 
-## transitivity with the comparisons of `ℕ` eftwended.
-let transit_eftwended: [a: ℕ, b: ℕ, c: ℕ, >{≤, b ≤ a, c ≤ b, c ≤ a} = yea]
+## transitivity with the comparisons of `ℕ` reversed.
+let transit_reversed: [a: ℕ, b: ℕ, c: ℕ, >{≤, b ≤ a, c ≤ b, c ≤ a} = yea]
   ≔ match a, b, c {
     _, _, 0 ^ match b ≤ a {
       yea;
@@ -128,7 +128,7 @@ let transit_eftwended: [a: ℕ, b: ℕ, c: ℕ, >{≤, b ≤ a, c ≤ b, c ≤ a
     },
     _,       0,       _ next  ^ reflect,
     0,       _ next,  _ next  ^ reflect,
-    a′ next, b′ next, c′ next ^ a′ transit_eftwended b′ c′
+    a′ next, b′ next, c′ next ^ a′ transit_reversed b′ c′
   }
 
 let lemma_≤_transit: [a: ℤ, b: ℤ, c: ℤ, >{≤, a ≤ b, b ≤ c, a ≤ c} = yea]
@@ -148,7 +148,7 @@ let lemma_≤_transit: [a: ℤ, b: ℤ, c: ℤ, >{≤, a ≤ b, b ≤ c, a ≤ c
       yea;
       nay ^ reflect
     },
-    m next_negative, n next_negative, o next_negative ^ m transit_eftwended n o
+    m next_negative, n next_negative, o next_negative ^ m transit_reversed n o
   }
 
 let lemma_≤_total: [a: ℤ, b: ℤ, (((a ≤ b) ≍ nay) ≤ (b ≤ a)) = yea]
@@ -570,7 +570,7 @@ bizen: ℤ hath_% {
 }
 
 ## the three euclidean laws of a division outcome `p`.
-let eftbuilt: [dividend: ℤ, divisor: ℤ, p: (ℤ ∧ ℤ) optional, *] ≔ (match p {
+let rebuilt: [dividend: ℤ, divisor: ℤ, p: (ℤ ∧ ℤ) optional, *] ≔ (match p {
   none                       ^ dividend,
   (quotient ⸴ leftover) some ^ (quotient · divisor) + leftover
 }) = dividend
@@ -589,7 +589,7 @@ let bounded: [divisor: ℤ, p: (ℤ ∧ ℤ) optional, *] ≔ (match p {
 ## `(q + 1) · (e + 1)` is `(e ∸ r) + (m + 1)` when `m = q · (e + 1) + r` and `r
 ## ≤ e`.
 let lemma_grown
-  : [a: ℕ, b: ℕ, c: ℕ, d: ℕ, eftbuild: ((c · (b next)) + d) = a,
+  : [a: ℕ, b: ℕ, c: ℕ, d: ℕ, rebuild: ((c · (b next)) + d) = a,
     below: (d ≤ b) = yea, ((c next) · (b next)) = ((b ∸ d) + (a next))]
   ≔ >{transit,
     c next_· (b next),
@@ -597,18 +597,18 @@ let lemma_grown
     next leibnitz ((c · (b next)) +_+ (b ∸ d) d),
     {e ^ (e + d) next} leibnitz ((c · (b next)) +_swap (b ∸ d)),
     next leibnitz (((b ∸ d) +_+ (c · (b next)) d) symmetry),
-    {e ^ ((b ∸ d) + e) next} leibnitz eftbuild
+    {e ^ ((b ∸ d) + e) next} leibnitz rebuild
   }
 
 ## `-((q + 1) · (e + 1)) + (e ∸ r)` is `-(m + 1)`.
-let lemma_eftbuilt_under
-  : [m: ℕ, e: ℕ, q: ℕ, r: ℕ, eftbuild: ((q · (e next)) + r) = m,
+let lemma_rebuilt_under
+  : [m: ℕ, e: ℕ, q: ℕ, r: ℕ, rebuild: ((q · (e next)) + r) = m,
     below: (r ≤ e) = yea,
     (((((q next) · (e next)) nonnegative) -) + ((e ∸ r) nonnegative)) =
       (m next_negative)]
   ≔ >{transit,
     {a ^ ((a nonnegative) -) + ((e ∸ r) nonnegative)} leibnitz
-      (m lemma_grown e q r eftbuild below),
+      (m lemma_grown e q r rebuild below),
     (_ + ((e ∸ r) nonnegative)) leibnitz
       (((e ∸ r) nonnegative) -_over_+ ((m next) nonnegative)),
     ((((m next) nonnegative) -) +_+ (((e ∸ r) nonnegative) -)
@@ -617,46 +617,46 @@ let lemma_eftbuilt_under
     (((m next) nonnegative) -) +_zero
   }
 
-let lemma_eftbuilt_over_over
+let lemma_rebuilt_over_over
   : [m: ℕ, e: ℕ, p: (ℕ ∧ ℕ) optional, divided: (m % (e next)) = p,
-    (m nonnegative) eftbuilt ((e next) nonnegative) (p sign over_over)]
+    (m nonnegative) rebuilt ((e next) nonnegative) (p sign over_over)]
   ≔ match p {
     none         ^ reflect,
-    (q ⸴ r) some ^ nonnegative leibnitz (m %_eftbuild e q r divided)
+    (q ⸴ r) some ^ nonnegative leibnitz (m %_rebuild e q r divided)
   }
 
-let lemma_eftbuilt_over_under
+let lemma_rebuilt_over_under
   : [m: ℕ, e: ℕ, p: (ℕ ∧ ℕ) optional, divided: (m % (e next)) = p,
-    (m nonnegative) eftbuilt (e next_negative) (p sign over_under)]
+    (m nonnegative) rebuilt (e next_negative) (p sign over_under)]
   ≔ match p {
     none         ^ reflect,
     (q ⸴ r) some ^
       ((_ + (r nonnegative)) leibnitz
         ((q nonnegative) -_·_- ((e next) nonnegative))) transit
-        (nonnegative leibnitz (m %_eftbuild e q r divided))
+        (nonnegative leibnitz (m %_rebuild e q r divided))
   }
 
-let lemma_eftbuilt_under_over
+let lemma_rebuilt_under_over
   : [m: ℕ, e: ℕ, p: (ℕ ∧ ℕ) optional, divided: (m % (e next)) = p,
-    (m next_negative) eftbuilt ((e next) nonnegative) (p sign (e under_over))]
+    (m next_negative) rebuilt ((e next) nonnegative) (p sign (e under_over))]
   ≔ match p {
     none         ^ reflect,
     (q ⸴ r) some ^
       ((_ + ((e ∸ r) nonnegative)) leibnitz
         (((q next) nonnegative) -_· ((e next) nonnegative))) transit
-        (m lemma_eftbuilt_under e q r (m %_eftbuild e q r divided)
+        (m lemma_rebuilt_under e q r (m %_rebuild e q r divided)
           (m %_leftover e q r divided))
   }
 
-let lemma_eftbuilt_under_under
+let lemma_rebuilt_under_under
   : [m: ℕ, e: ℕ, p: (ℕ ∧ ℕ) optional, divided: (m % (e next)) = p,
-    (m next_negative) eftbuilt (e next_negative) (p sign (e under_under))]
+    (m next_negative) rebuilt (e next_negative) (p sign (e under_under))]
   ≔ match p {
     none         ^ reflect,
     (q ⸴ r) some ^
       ((_ + ((e ∸ r) nonnegative)) leibnitz
         (((q next) nonnegative) ·_- ((e next) nonnegative))) transit
-        (m lemma_eftbuilt_under e q r (m %_eftbuild e q r divided)
+        (m lemma_rebuilt_under e q r (m %_rebuild e q r divided)
           (m %_leftover e q r divided))
   }
 
@@ -675,9 +675,8 @@ let lemma_<_next
 let lemma_<_turned
   : [a: ℕ, b: ℕ, below: (a ≤ b) = yea,
     ((a nonnegative) < ((b next_negative) -+ zero)) = yea]
-  ≔ (next leibnitz ((b zero_+) symmetry)) throughbear @ℕ @(b next) @((0 + b)
-    next) @{c ^ ((a nonnegative) < (c nonnegative)) = yea}
-    (a lemma_<_next b below)
+  ≔ (next leibnitz ((b zero_+) symmetry)) transport @ℕ @(b next) @((0 + b) next)
+    @{c ^ ((a nonnegative) < (c nonnegative)) = yea} (a lemma_<_next b below)
 
 let lemma_nonnegative
   : [f: [ℕ ∧ ℕ, ℤ ∧ ℤ],
@@ -734,13 +733,13 @@ bizen: ℤ euclidean {
   let %_·_+: [dividend:, divisor:] ≔ match dividend, divisor {
     _,             0 nonnegative        ^ reflect,
     m nonnegative, (n next) nonnegative ^
-      m lemma_eftbuilt_over_over n (m % (n next)) reflect,
+      m lemma_rebuilt_over_over n (m % (n next)) reflect,
     m nonnegative, n next_negative ^
-      m lemma_eftbuilt_over_under n (m % (n next)) reflect,
+      m lemma_rebuilt_over_under n (m % (n next)) reflect,
     m next_negative, (n next) nonnegative ^
-      m lemma_eftbuilt_under_over n (m % (n next)) reflect,
+      m lemma_rebuilt_under_over n (m % (n next)) reflect,
     m next_negative, n next_negative ^
-      m lemma_eftbuilt_under_under n (m % (n next)) reflect
+      m lemma_rebuilt_under_under n (m % (n next)) reflect
   }
 
   let %_nonnegative: [dividend:, divisor:] ≔ match dividend, divisor {
@@ -856,8 +855,8 @@ let lemma_≍_reflect: [a: ℤ, (a ≍ a) = yea] ≔ match a {
 ## antisymmetry holdeth in `=`, by sound equality.
 let lemma_≤_=: [a: ℤ, b: ℤ, below: (a ≤ b) = yea, above: (b ≤ a) = yea, a = b]
   ≔ a lemma_≍_= b
-    ((_ ≤ (a ≍ b)) yea_throughbear above
-      ({c ^ >{≤, c, b ≤ a, a ≍ b}} yea_throughbear below
+    ((_ ≤ (a ≍ b)) yea_transport above
+      ({c ^ >{≤, c, b ≤ a, a ≍ b}} yea_transport below
         (a lemma_≤_antisymmetry b)))
 
 bizen: ℤ ≍_to_= {

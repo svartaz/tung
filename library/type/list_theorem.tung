@@ -16,7 +16,7 @@ bring type/two.tung
 bring type/zero.tung
 
 ## a unempty list is never empty.
-show let ‥_not_empty: [@α: *, @a: α, @a…: α list, (a ‥ a…) = empty, 𝟘] ≔ {}
+show let ‥_not_empty: [@α: *, @a: α, @a…: α list, (a ‥ a…) ≠ empty] ≔ {}
 
 ## the same unempty lists have the same first members.
 show let ‥_inject_first
@@ -105,13 +105,13 @@ show let sift_·
 show let sift_kept
   : [@α: *, first: α, leftover: α list, p: [α, 𝟚], kept: (first p) = yea,
     ((first ‥ leftover) sift p) = (first ‥ (leftover sift p))]
-  ≔ (kept symmetry) throughbear reflect
+  ≔ (kept symmetry) transport reflect
 
 ## a dropped first member is gone.
 show let sift_dropped
   : [@α: *, first: α, leftover: α list, p: [α, 𝟚], dropped: (first p) = nay,
     ((first ‥ leftover) sift p) = (leftover sift p)]
-  ≔ (dropped symmetry) throughbear reflect
+  ≔ (dropped symmetry) transport reflect
 
 ## sifting twice by one predicate is sifting once.
 show let sift_sift
@@ -120,7 +120,7 @@ show let sift_sift
     empty            ^ reflect,
     first ‥ leftover ^ (first p) inspect {
       yea, kept ^
-        (kept symmetry) throughbear ((first ‥) leibnitz (leftover sift_sift p)),
+        (kept symmetry) transport ((first ‥) leibnitz (leftover sift_sift p)),
       nay, _ ^ leftover sift_sift p
     }
   }
@@ -131,58 +131,58 @@ show let gather₀_‥: [@α: *, l: α list, (l gather₀ empty ‥) = l] ≔ ma
   first ‥ leftover ^ (first ‥) leibnitz (leftover gather₀_‥)
 }
 
-## eftwending onto a start appendeth the start to the eftwended list.
-show let eftwend_onto
+## reversing onto a start appendeth the start to the reversed list.
+show let reverse_onto
   : [@α: *, a…: α list, start: α list,
-    (a… gather₁ start {outcome, a ^ a ‥ outcome}) = ((a… eftwend) · start)]
+    (a… gather₁ start {outcome, a ^ a ‥ outcome}) = ((a… reverse) · start)]
   ≔ match a… {
     empty            ^ reflect,
     first ‥ leftover ^ >{transit,
-      leftover eftwend_onto (first ‥ start),
-      (leftover eftwend) ·_· (first ‥ empty) start,
-      (_ · start) leibnitz ((leftover eftwend_onto (first ‥ empty)) symmetry)
+      leftover reverse_onto (first ‥ start),
+      (leftover reverse) ·_· (first ‥ empty) start,
+      (_ · start) leibnitz ((leftover reverse_onto (first ‥ empty)) symmetry)
     }
   }
 
-## eftwending an appended list appendeth the eftwended parts in order.
-show let eftwend_·
+## reversing an appended list appendeth the reversed parts in order.
+show let reverse_·
   : [@α: *, a…: α list, b…: α list,
-    ((a… · b…) eftwend) = ((b… eftwend) · (a… eftwend))]
+    ((a… · b…) reverse) = ((b… reverse) · (a… reverse))]
   ≔ (a… gather₁_· b… empty {outcome, a ^ a ‥ outcome}) transit
-    (b… eftwend_onto (a… eftwend))
+    (b… reverse_onto (a… reverse))
 
-## eftwending twice giveth the list back.
-show let eftwend_eftwend: [@α: *, a…: α list, ((a… eftwend) eftwend) = a…]
+## reversing twice giveth the list back.
+show let reverse_reverse: [@α: *, a…: α list, ((a… reverse) reverse) = a…]
   ≔ match a… {
     empty            ^ reflect,
     first ‥ leftover ^ >{transit,
-      eftwend leibnitz (leftover eftwend_onto (first ‥ empty)),
-      (leftover eftwend) eftwend_· (first ‥ empty),
-      (first ‥) leibnitz (leftover eftwend_eftwend)
+      reverse leibnitz (leftover reverse_onto (first ‥ empty)),
+      (leftover reverse) reverse_· (first ‥ empty),
+      (first ‥) leibnitz (leftover reverse_reverse)
     }
   }
 
-## mapping swappeth with eftwending.
-show let map_eftwend
+## mapping swappeth with reversing.
+show let map_reverse
   : [@α: *, @β: *, a…: α list, f: [α, β],
-    ((a… eftwend) map f) = ((a… map f) eftwend)]
+    ((a… reverse) map f) = ((a… map f) reverse)]
   ≔ match a… {
     empty            ^ reflect,
     first ‥ leftover ^ >{transit,
-      (_ map f) leibnitz (leftover eftwend_onto (first ‥ empty)),
-      (leftover eftwend) map_· (first ‥ empty) f,
-      (_ · ((first f) ‥ empty)) leibnitz (leftover map_eftwend f),
-      ((leftover map f) eftwend_onto ((first f) ‥ empty)) symmetry
+      (_ map f) leibnitz (leftover reverse_onto (first ‥ empty)),
+      (leftover reverse) map_· (first ‥ empty) f,
+      (_ · ((first f) ‥ empty)) leibnitz (leftover map_reverse f),
+      ((leftover map f) reverse_onto ((first f) ‥ empty)) symmetry
     }
   }
 
 ## mapping a repeated value repeateth the mapped value.
-show let map_eftfold
+show let map_replicate
   : [@α: *, @β: *, a: α, count: ℕ, f: [α, β],
-    ((a eftfold count) map f) = ((a f) eftfold count)]
+    ((a replicate count) map f) = ((a f) replicate count)]
   ≔ match count {
     0      ^ reflect,
-    m next ^ ((a f) ‥) leibnitz (a map_eftfold m f)
+    m next ^ ((a f) ‥) leibnitz (a map_replicate m f)
   }
 
 ## counting from a tale's next endeth one higher.
@@ -203,7 +203,7 @@ show let ‥_manyhood
 ## `manyhood`.
 show let ‥_manyhood_under
   : [@α: *, a: α, a…: α list, (a… manyhood) under ((a ‥ a…) manyhood)]
-  ≔ ((a ‥_manyhood a…) symmetry) throughbear ((a… manyhood) under_next)
+  ≔ ((a ‥_manyhood a…) symmetry) transport ((a… manyhood) under_next)
 
 ## mapping keepeth a list's manyhood.
 show let map_manyhood
@@ -231,26 +231,26 @@ show let manyhood_·
     }
   }
 
-## eftwending keepeth a list's manyhood.
-show let eftwend_manyhood
-  : [@α: *, a…: α list, ((a… eftwend) manyhood) = (a… manyhood)]
+## reversing keepeth a list's manyhood.
+show let reverse_manyhood
+  : [@α: *, a…: α list, ((a… reverse) manyhood) = (a… manyhood)]
   ≔ match a… {
     empty        ^ reflect,
     a ‥ leftover ^ >{transit,
-      manyhood leibnitz ((a ‥ empty) eftwend_· leftover),
-      (leftover eftwend) manyhood_· (a ‥ empty),
-      (_ + 1) leibnitz (leftover eftwend_manyhood),
+      manyhood leibnitz ((a ‥ empty) reverse_· leftover),
+      (leftover reverse) manyhood_· (a ‥ empty),
+      (_ + 1) leibnitz (leftover reverse_manyhood),
       (a ‥_manyhood leftover) symmetry
     }
   }
 
 ## repeating a value count times giveth a list of that manyhood.
-show let eftfold_manyhood: [@α: *, a: α, m: ℕ, ((a eftfold m) manyhood) = m]
+show let replicate_manyhood: [@α: *, a: α, m: ℕ, ((a replicate m) manyhood) = m]
   ≔ match m {
     0       ^ reflect,
     m′ next ^
-      (a ‥_manyhood (a eftfold m′)) transit
-        (next leibnitz (a eftfold_manyhood m′))
+      (a ‥_manyhood (a replicate m′)) transit
+        (next leibnitz (a replicate_manyhood m′))
   }
 
 ## the first count members, appended to the rest, give the list back.
@@ -294,22 +294,22 @@ show let drop_manyhood
   }
 
 ## a repeated value may be appended at either end.
-let lemma_eftfold_·
-  : [@α: *, a: α, m: ℕ, ((a eftfold m) · (a ‥ empty)) = (a ‥ (a eftfold m))]
+let lemma_replicate_·
+  : [@α: *, a: α, m: ℕ, ((a replicate m) · (a ‥ empty)) = (a ‥ (a replicate m))]
   ≔ match m {
     0       ^ reflect,
-    m′ next ^ (a ‥) leibnitz (a lemma_eftfold_· m′)
+    m′ next ^ (a ‥) leibnitz (a lemma_replicate_· m′)
   }
 
 ## a repeated value readeth the same backwards.
-show let eftwend_eftfold
-  : [@α: *, a: α, m: ℕ, ((a eftfold m) eftwend) = (a eftfold m)]
+show let reverse_replicate
+  : [@α: *, a: α, m: ℕ, ((a replicate m) reverse) = (a replicate m)]
   ≔ match m {
     0       ^ reflect,
     m′ next ^ >{transit,
-      (a ‥ empty) eftwend_· (a eftfold m′),
-      (_ · (a ‥ empty)) leibnitz (a eftwend_eftfold m′),
-      a lemma_eftfold_· m′
+      (a ‥ empty) reverse_· (a replicate m′),
+      (_ · (a ‥ empty)) leibnitz (a reverse_replicate m′),
+      a lemma_replicate_· m′
     }
   }
 

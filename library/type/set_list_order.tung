@@ -26,7 +26,7 @@ show let subset_member
         let head
           ≔ (((_ if (a ≤ c) (leftover inhold c)) leibnitz below) symmetry)
             transit member
-        yield (b… inhold) yea_throughbear (a ≤_= c head below)
+        yield (b… inhold) yea_transport (a ≤_= c head below)
           ((b… inhold a) yea_if_former (leftover subset b…) beneath)
       ),
       nay, below ^

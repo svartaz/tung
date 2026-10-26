@@ -1,20 +1,8 @@
-bring class/algebra/total/hath_divide.tung
+bring class/algebra/total/division_ring.tung
 bring class/algebra/total/hath_multiply.tung
-bring class/algebra/total/hath_one.tung
-bring class/algebra/total/hath_zero.tung
-bring class/algebra/total/ring.tung
 bring is.tung
-bring type/zero.tung
 
-## a ring whose multiplication swappeth, whose `one` is not `zero`, and in which
-## every divisor but `zero` can be divided by. dividing by `zero` is left
-## unsaid: a law for it would make `zero` and `one` the same.
-show class field: [α: *, @: α ring, @: α hath_÷, *] {
+## a division ring whose multiplication swappeth.
+show class field: [α: *, @: α division_ring, *] {
   let ·_swap: [a: α, b: α, (a · b) = (b · a)]
-
-  let one_not_zero: [equal: one = zero, 𝟘]
-
-  let ÷_·
-    : [dividend: α, divisor: α, nonzero: [divisor = zero, 𝟘],
-      ((dividend ÷ divisor) · divisor) = dividend]
 }

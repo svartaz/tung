@@ -1,4 +1,5 @@
 bring _foreign.tung
+bring class/algebra/total/division_ring.tung
 bring class/algebra/total/euclidean.tung
 bring class/algebra/total/field.tung
 bring class/algebra/total/hath_add.tung
@@ -78,7 +79,7 @@ show hath_to_string, hath_from_string
 
 show hath_+, hath_zero, monoid_+, hath_·, hath_one, monoid_·, semiring
 
-show hath_-, -+, ∸, ring, hath_÷, field, hath_%, euclidean
+show hath_-, -+, ∸, ring, hath_÷, division_ring, field, hath_%, euclidean
 
 show functor, bifunctor, applicative, monad, hath_∋
 
@@ -86,7 +87,7 @@ show elementary
 
 show →
 
-show ¬, if
+show ∁, if
 
 show when, when_not, branch
 
@@ -124,4 +125,4 @@ show pure, apply, lift₂, lift₃, keep_first, keep_other
 
 show flat, bind, then, void
 
-show =, reflect
+show =, reflect, ≠, ¬

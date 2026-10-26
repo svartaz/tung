@@ -22,7 +22,7 @@ tests example =
     computes "the first matching row winneth" "yes both yes" "yes",
     computes "recursion on a direct child computeth" (two ++ " plus " ++ two) four,
     computes "a fixed implicit input stayeth outside the recursion" "(>{‥, zero, zero, ∅}) length" two,
-    computes "a changing input actth as an accumulator" "(>{‥, zero, zero next, ∅}) eftwend_onto ∅" ">{‥, zero next, zero, ∅}",
+    computes "a changing input actth as an accumulator" "(>{‥, zero, zero next, ∅}) reverse_onto ∅" ">{‥, zero next, zero, ∅}",
     computes "a function input is passed to each recursive call" "(>{‥, zero, zero next, ∅}) map next" ">{‥, zero next, (zero next) next, ∅}",
     computes "several columns recurse together" (two ++ " equal " ++ two) "yes",
     computes "several columns and alternatives" (two ++ " equal zero") "no",

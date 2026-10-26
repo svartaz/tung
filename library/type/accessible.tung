@@ -1,25 +1,25 @@
 bring is.tung
 
-## `a` is grounded under `smaller` when every `b smaller a` is
-## grounded. recursion on a groundedness proof is structural, so a
+## `a` is accessible under `smaller` when every `b smaller a` is
+## accessible. recursion on an accessibility proof is structural, so a
 ## function may recur on any input that a wellfounded relation maketh
 ## smaller.
-show type grounded: [α: *, smaller: [α, α, *], α, *] {
-  ground: [@a: α, [b: α, b smaller a, α grounded smaller b],
-    α grounded smaller a]
+show type accessible: [α: *, smaller: [α, α, *], α, *] {
+  access: [@a: α, [b: α, b smaller a, α accessible smaller b],
+    α accessible smaller a]
 }
 
-## a relation is wellfounded when every value is grounded.
+## a relation is wellfounded when every value is accessible.
 show let wellfounded: [α: *, smaller: [α, α, *], *]
-  ≔ [a: α, α grounded smaller a]
+  ≔ [a: α, α accessible smaller a]
 
-## recursion on a groundedness proof. `step` defineth the outcome at `a`
+## recursion on an accessibility proof. `step` defineth the outcome at `a`
 ## from the outcomes at every smaller value.
 show let recur
   : [@α: *, @smaller: [α, α, *], @drive: [α, *],
     step: [a: α, [b: α, b smaller a, b drive], a drive], a: α,
-    smaller_grounded ground: α grounded smaller a, a drive]
-  ≔ a step {b, below ^ step recur b (b smaller_grounded below)}
+    smaller_accessible access: α accessible smaller a, a drive]
+  ≔ a step {b, below ^ step recur b (b smaller_accessible below)}
 
 ## recursion on every value of a wellfounded relation.
 show let wellfounded_recur

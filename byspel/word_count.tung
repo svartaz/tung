@@ -8,17 +8,17 @@ bring type/list.tung
 bring type/optional.tung
 bring type/or.tung
 bring type/string/operation.tung
-bring type/wordbook.tung
+bring type/table.tung
 
-let count_word: [counts: string wordbook ℤ, word: string, string wordbook ℤ]
+let count_word: [counts: string table ℤ, word: string, string table ℤ]
   ≔ match counts lookup word {
     none       ^ counts put word +1,
     count some ^ counts put word (count + +1)
   }
 
-let count_words: [content: string, string wordbook ℤ] ≔ (
+let count_words: [content: string, string table ℤ] ≔ (
   let words ≔ content words_string
-  yield words gather₁ wordbook~empty count_word
+  yield words gather₁ table~empty count_word
 )
 
 let write_count: [entry: string ∧ ℤ, 𝟙 effect] ≔ >{then,

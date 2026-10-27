@@ -182,6 +182,13 @@ localInstance names context family goal = do
 requirementsOf :: Names -> K.Context -> SymbolId -> Elaboration [(Int, N.Value)]
 requirementsOf names context family = filterM (\(_, ty) -> (== Just family) <$> classFamily names ty) (zip [0 ..] (K.contextTypes context))
 
+-- the first local requirement of the goal's class that unifieth with it.
+firstLocalInstance :: Names -> K.Context -> N.Value -> Elaboration (Maybe Term)
+firstLocalInstance names context goal =
+  classFamily names goal >>= \case
+    Nothing -> pure Nothing
+    Just family -> localInstance names context family goal
+
 -- the one local requirement of the goal's class that unifieth with it; none,
 -- or several, leaveth the goal waiting.
 uniqueLocalInstance :: Names -> K.Context -> N.Value -> Elaboration (Maybe Term)
@@ -218,7 +225,11 @@ searchInstanceAmong restriction environment names mode ancestors context goal = 
   let key = eraseGlobalLevels current
   when (key `elem` ancestors) (E.failure "cyclic instance search")
   family <- classFamily names goal >>= maybe (E.failure "instance goal is not a class") pure
-  localMatch <- localInstance names context family goal
+  localMatch <- case mode of
+    -- a goal with an unknown input taketh a local only when one alone
+    -- fitteth: the first of two categories would fix the input at random.
+    LocalRequirements -> uniqueLocalInstance names context goal
+    AllInstances -> localInstance names context family goal
   case localMatch of
     Just term -> pure term
     Nothing -> do
@@ -237,7 +248,11 @@ searchInstanceAmong restriction environment names mode ancestors context goal = 
         if null direct && isNothing restriction
           then do
             localFamilies <- catMaybes <$> traverse (classFamily names) (K.contextTypes context)
-            firstMatching path (filter (viable localFamilies [family] wanted . Just) (maybe [] classInherited classInfo))
+            let viables = filter (viable localFamilies [family] wanted . Just) (maybe [] classInherited classInfo)
+            met <- firstMatching False path viables
+            -- only the outermost goal may defer, so a nested search tried
+            -- again would repeat itself at every depth.
+            if null met && null ancestors then firstMatching True path viables else pure met
           else pure []
       case direct ++ inherited of
         (term, commit) : _ -> commit >> pure term
@@ -253,10 +268,13 @@ searchInstanceAmong restriction environment names mode ancestors context goal = 
     firstSuccess path = \case
       [] -> pure ([], [])
       symbol : rest ->
-        E.trial (candidate path symbol) >>= \case
+        E.trial (candidate True path symbol) >>= \case
           Right found -> pure ([found], [])
           Left failure -> fmap (failureMessage failure :) <$> firstSuccess path rest
-    firstMatching path = fmap maybeToList . firstJust . map (E.speculate . candidate path)
+    -- a parent projection whose child requirement is met now is preferred:
+    -- deferred, a child with two parents of one class, as a functor's two
+    -- categories, would keep its first projection whether it fitteth or not.
+    firstMatching defer path = fmap maybeToList . firstJust . map (E.speculate . candidate defer path)
     -- a cheap filter: an instance whose class arguments start with a different
     -- family can never match. any other argument is compared by unification.
     rigid symbol = case definitionBody <$> Map.lookup symbol (globals environment) of
@@ -308,7 +326,7 @@ searchInstanceAmong restriction environment names mode ancestors context goal = 
     termHead term = case fst (termSpine term) of
       Global symbol _ | rigid symbol -> Just symbol
       _ -> Nothing
-    candidate path symbol = do
+    candidate defer path symbol = do
       levels <- E.freshUniverses symbol
       let headTerm = Global symbol levels
       headType <- E.infer context headTerm
@@ -325,11 +343,16 @@ searchInstanceAmong restriction environment names mode ancestors context goal = 
           -- findeth its ring. otherwise only the outermost goal's requirements
           -- may wait for later unification: a nested search would commit to
           -- a path it can never check, so that candidate faileth.
+          -- a parent projection of a known goal may take any fitting local.
+          -- through bizens each reacheth the same parent; a class whose
+          -- dictionaries must share one taketh it as a named requirement
+          -- instead. a goal with unknown inputs taketh only a lone fit, lest
+          -- the first local fix those inputs.
           False ->
-            uniqueLocalInstance names context domain >>= \case
+            (if defer || mode == LocalRequirements then uniqueLocalInstance else firstLocalInstance) names context domain >>= \case
               Just sub -> E.evaluateGlued context sub >>= E.unify context holeValue
               Nothing
-                | null ancestors -> E.addInstanceGoal (E.InstanceGoal holeValue context domain)
+                | defer && null ancestors -> E.addInstanceGoal (E.InstanceGoal holeValue context domain)
                 | otherwise -> E.failure "a nested requirement's inputs are unknown"
       pure term
     instantiate term ty pending =

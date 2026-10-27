@@ -13,6 +13,14 @@ planned work in priority order. current behaviour belongeth to the
   in hover and `--name` in that form.
 - report when a shown name's inferred universe constraints change, beside the
   module interface cache, since importers depend on them.
+- fix an earlier field's hole as seen from a later field. in `⊣`, the left
+  triangle's `identity` waiteth on its category; splitting
+  `?➝ (α φ) = ➝₁ (α φ)` is rejected because, retried in the right triangle's
+  context, the hole's solution readeth one variable off (`➝₁` for `➝₀`),
+  as if a term of the shorter context were reused unshifted. it showeth only
+  when a right triangle followeth another triangle, and a written
+  `identity @➝₁` in the first avoideth it, so the library nameth `@➝₁` and
+  `@➝₀`.
 
 ## self-hosting
 

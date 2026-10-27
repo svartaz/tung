@@ -4,8 +4,8 @@ bring class/functor/applicative.tung
 bring class/functor/catamorphism.tung
 
 show class hath_traverse: [φ: [*, *], @: φ functor, @: φ catamorphism, *] {
-  let traverse
-    : [@μ: [*, *], @: μ applicative, @α: *, @β: *, α φ, [α, β μ], (β φ) μ]
+  let traverse: [@μ: [*, *], @: μ applicative, @α: *, @β: *, α φ, [α, β μ],
+    (β φ) μ]
 }
 
 show let sequence

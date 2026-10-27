@@ -1,0 +1,39 @@
+bring class/algebra/partial/category.tung
+bring class/algebra/partial/category/functor.tung
+bring class/algebra/partial/semigroupoid.tung
+bring is.tung
+
+## `a ⇛_along`: `a` is a natural transformation from `φ` to `κ` followed by
+## `γ`.
+show let ⇛_along
+  : [@➝₀: [*, *, *], @➝₁: [*, *, *], @➝₂: [*, *, *], @φ: [*, *], @κ: [*, *],
+    @γ: [*, *], @: ➝₀ category, @: ➝₁ category, @: ➝₂ category, @: ➝₀ ⇒ ➝₂ φ,
+    @: ➝₀ ⇒ ➝₁ κ, @: ➝₁ ⇒ ➝₂ γ, a: [@α: *, (α φ) ➝₂ ((α κ) γ)], *]
+  ≔ [@α: *, @β: *, f: α ➝₀ β,
+    ((f (map @➝₀ @➝₂ @φ)) (▷ @➝₂) (a @β)) =
+      ((a @α) (▷ @➝₂) ((f (map @➝₀ @➝₁ @κ)) (map @➝₁ @➝₂ @γ)))]
+
+## a left kan extension of `φ` along `κ`: a functor `ρ` with a natural `u`
+## from `φ` to `κ` followed by `ρ`, through which every natural `d` from `φ`
+## to `κ` followed by another functor `γ` factoreth by exactly one natural
+## transformation from `ρ` to `γ`.
+show type kan_co: [@➝₀: [*, *, *], @➝₁: [*, *, *], @➝₂: [*, *, *], @φ: [*, *],
+  @κ: [*, *], @ρ: [*, *], @category₀: ➝₀ category, @category₁: ➝₁ category,
+  @category₂: ➝₂ category, @extended: ➝₀ ⇒ ➝₂ φ, @along: ➝₀ ⇒ ➝₁ κ,
+  @extension: ➝₁ ⇒ ➝₂ ρ, u: [@α: *, (α φ) ➝₂ ((α κ) ρ)], *] {
+    kan_co_of: [u_⇛: u ⇛_along @➝₀ @➝₁ @➝₂ @φ @κ @ρ,
+      factor: [@γ: [*, *], @: ➝₁ ⇒ ➝₂ γ, d: [@α: *, (α φ) ➝₂ ((α κ) γ)],
+        d_⇛: d ⇛_along @➝₀ @➝₁ @➝₂ @φ @κ @γ, [@δ: *, (δ ρ) ➝₂ (δ γ)]],
+      factor_⇛: [@γ: [*, *], @: ➝₁ ⇒ ➝₂ γ, d: [@α: *, (α φ) ➝₂ ((α κ) γ)],
+        d_⇛: d ⇛_along @➝₀ @➝₁ @➝₂ @φ @κ @γ,
+        (d (factor @γ) d_⇛) ⇛ @➝₁ @➝₂ @ρ @γ],
+      factor_▷: [@γ: [*, *], @: ➝₁ ⇒ ➝₂ γ, d: [@α: *, (α φ) ➝₂ ((α κ) γ)],
+        d_⇛: d ⇛_along @➝₀ @➝₁ @➝₂ @φ @κ @γ, @α: *,
+        ((u @α) (▷ @➝₂) ((d (factor @γ) d_⇛) @(α κ))) = (d @α)],
+      factor_alone: [@γ: [*, *], @: ➝₁ ⇒ ➝₂ γ, s: [@δ: *, (δ ρ) ➝₂ (δ γ)],
+        t: [@δ: *, (δ ρ) ➝₂ (δ γ)], s_⇛: s ⇛ @➝₁ @➝₂ @ρ @γ,
+        t_⇛: t ⇛ @➝₁ @➝₂ @ρ @γ,
+        agree: [@α: *,
+          ((u @α) (▷ @➝₂) (s @(α κ))) = ((u @α) (▷ @➝₂) (t @(α κ)))], @δ: *,
+        (s @δ) = (t @δ)], u kan_co @➝₀ @➝₁ @➝₂ @φ @κ @ρ]
+  }

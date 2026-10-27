@@ -1,0 +1,188 @@
+bring category/limit.tung
+bring category/limit_along.tung
+bring class/algebra/partial/category.tung
+bring class/algebra/partial/category/functor.tung
+bring class/algebra/partial/semigroupoid.tung
+bring is.tung
+
+## an adjunction `φ ⊣ χ`: `φ` from `➝₀` to `➝₁` is left adjoint to `χ` from
+## `➝₁` back to `➝₀`. the unit taketh each object into `χ` after `φ`, the
+## counit taketh `φ` after `χ` back, both are natural, and following one by
+## the other through either functor is `identity`.
+show type ⊣: [@➝₀: [*, *, *], @➝₁: [*, *, *], φ: [*, *], χ: [*, *],
+  @category₀: ➝₀ category, @category₁: ➝₁ category, @left: ➝₀ ⇒ ➝₁ φ,
+  @right: ➝₁ ⇒ ➝₀ χ, *] {
+    adjunction_of: [unit: [@α: *, α ➝₀ ((α φ) χ)],
+      counit: [@β: *, ((β χ) φ) ➝₁ β],
+      unit_⇛: [@α: *, @β: *, f: α ➝₀ β,
+        (f (▷ @➝₀) (unit @β)) =
+          ((unit @α) (▷ @➝₀) ((f (map @➝₀ @➝₁ @φ)) (map @➝₁ @➝₀ @χ)))],
+      counit_⇛: [@α: *, @β: *, f: α ➝₁ β,
+        (((f (map @➝₁ @➝₀ @χ)) (map @➝₀ @➝₁ @φ)) (▷ @➝₁) (counit @β)) =
+          ((counit @α) (▷ @➝₁) f)],
+      left_triangle: [@α: *,
+        (((unit @α) (map @➝₀ @➝₁ @φ)) (▷ @➝₁) (counit @(α φ))) =
+          (identity @➝₁)],
+      right_triangle: [@β: *,
+        ((unit @(β χ)) (▷ @➝₀) ((counit @β) (map @➝₁ @➝₀ @χ))) =
+          (identity @➝₀)], φ ⊣ χ @➝₀ @➝₁]
+  }
+
+## `a transpose₁ f` turneth `f: α ➝₀ (β χ)` into `(α φ) ➝₁ β`: `f` mapped by
+## `φ`, then the counit.
+show let transpose₁
+  : [@➝₀: [*, *, *], @➝₁: [*, *, *], @φ: [*, *], @χ: [*, *], @: ➝₀ category,
+    @: ➝₁ category, @left: ➝₀ ⇒ ➝₁ φ, @right: ➝₁ ⇒ ➝₀ χ, a: φ ⊣ χ @➝₀ @➝₁,
+    @α: *, @β: *, f: α ➝₀ (β χ), (α φ) ➝₁ β]
+  ≔ match a {
+    _ adjunction_of counit _ _ _ _ ^ (f (map @➝₀ @➝₁ @φ)) (▷ @➝₁) (counit @β)
+  }
+
+## `a transpose₀ g` turneth `g: (α φ) ➝₁ β` into `α ➝₀ (β χ)`: the unit, then
+## `g` mapped by `χ`.
+show let transpose₀
+  : [@➝₀: [*, *, *], @➝₁: [*, *, *], @φ: [*, *], @χ: [*, *], @: ➝₀ category,
+    @: ➝₁ category, @left: ➝₀ ⇒ ➝₁ φ, @right: ➝₁ ⇒ ➝₀ χ, a: φ ⊣ χ @➝₀ @➝₁,
+    @α: *, @β: *, g: (α φ) ➝₁ β, α ➝₀ (β χ)]
+  ≔ match a {
+    unit adjunction_of _ _ _ _ _ ^ (unit @α) (▷ @➝₀) (g (map @➝₁ @➝₀ @χ))
+  }
+
+## turning `g` into `➝₀` and back giveth `g`.
+show let transpose₀_transpose₁
+  : [@➝₀: [*, *, *], @➝₁: [*, *, *], @φ: [*, *], @χ: [*, *], @: ➝₀ category,
+    @: ➝₁ category, @left: ➝₀ ⇒ ➝₁ φ, @right: ➝₁ ⇒ ➝₀ χ, a: φ ⊣ χ @➝₀ @➝₁,
+    @α: *, @β: *, g: (α φ) ➝₁ β, (a transpose₁ (a transpose₀ g)) = g]
+  ≔ match a {
+    unit adjunction_of counit _ counit_⇛ left_triangle _ ^ (
+      let up ≔ (unit @α) (map @➝₀ @➝₁ @φ)
+      let back ≔ (g (map @➝₁ @➝₀ @χ)) (map @➝₀ @➝₁ @φ)
+      yield >{transit,
+        (_ (▷ @➝₁) (counit @β)) leibnitz
+          ((unit @α) (map_▷ @➝₀ @➝₁ @φ) (g (map @➝₁ @➝₀ @χ))),
+        (up (▷_▷ @➝₁) back (counit @β)) symmetry,
+        (up (▷ @➝₁) _) leibnitz (g counit_⇛),
+        up (▷_▷ @➝₁) (counit @(α φ)) g,
+        (_ (▷ @➝₁) g) leibnitz (left_triangle @α),
+        g (identity_▷ @➝₁)
+      }
+    )
+  }
+
+## turning `f` into `➝₁` and back giveth `f`.
+show let transpose₁_transpose₀
+  : [@➝₀: [*, *, *], @➝₁: [*, *, *], @φ: [*, *], @χ: [*, *], @: ➝₀ category,
+    @: ➝₁ category, @left: ➝₀ ⇒ ➝₁ φ, @right: ➝₁ ⇒ ➝₀ χ, a: φ ⊣ χ @➝₀ @➝₁,
+    @α: *, @β: *, f: α ➝₀ (β χ), (a transpose₀ (a transpose₁ f)) = f]
+  ≔ match a {
+    unit adjunction_of counit unit_⇛ _ _ right_triangle ^ (
+      let across ≔ (f (map @➝₀ @➝₁ @φ)) (map @➝₁ @➝₀ @χ)
+      let down ≔ (counit @β) (map @➝₁ @➝₀ @χ)
+      yield >{transit,
+        ((unit @α) (▷ @➝₀) _) leibnitz
+          ((f (map @➝₀ @➝₁ @φ)) (map_▷ @➝₁ @➝₀ @χ) (counit @β)),
+        (unit @α) (▷_▷ @➝₀) across down,
+        (_ (▷ @➝₀) down) leibnitz ((f unit_⇛) symmetry),
+        (f (▷_▷ @➝₀) (unit @(β χ)) down) symmetry,
+        (f (▷ @➝₀) _) leibnitz (right_triangle @β),
+        f (▷_identity @➝₀)
+      }
+    )
+  }
+
+## turning into `➝₁` keepeth composition with a mapped morphism.
+show let transpose₁_▷
+  : [@➝₀: [*, *, *], @➝₁: [*, *, *], @φ: [*, *], @χ: [*, *], @: ➝₀ category,
+    @: ➝₁ category, @left: ➝₀ ⇒ ➝₁ φ, @right: ➝₁ ⇒ ➝₀ χ, a: φ ⊣ χ @➝₀ @➝₁,
+    @α: *, @β: *, @γ: *, f: α ➝₀ (β χ), k: β ➝₁ γ,
+    (a transpose₁ (f (▷ @➝₀) (k (map @➝₁ @➝₀ @χ)))) =
+      ((a transpose₁ f) (▷ @➝₁) k)]
+  ≔ match a {
+    _ adjunction_of counit _ counit_⇛ _ _ ^ (
+      let across ≔ f (map @➝₀ @➝₁ @φ)
+      let back ≔ (k (map @➝₁ @➝₀ @χ)) (map @➝₀ @➝₁ @φ)
+      yield >{transit,
+        (_ (▷ @➝₁) (counit @γ)) leibnitz
+          (f (map_▷ @➝₀ @➝₁ @φ) (k (map @➝₁ @➝₀ @χ))),
+        (across (▷_▷ @➝₁) back (counit @γ)) symmetry,
+        (across (▷ @➝₁) _) leibnitz (k counit_⇛),
+        across (▷_▷ @➝₁) (counit @β) k
+      }
+    )
+  }
+
+## turning into `➝₀` keepeth composition with `k`, which it mappeth by `χ`.
+show let transpose₀_▷
+  : [@➝₀: [*, *, *], @➝₁: [*, *, *], @φ: [*, *], @χ: [*, *], @: ➝₀ category,
+    @: ➝₁ category, @left: ➝₀ ⇒ ➝₁ φ, @right: ➝₁ ⇒ ➝₀ χ, a: φ ⊣ χ @➝₀ @➝₁,
+    @α: *, @β: *, @γ: *, g: (α φ) ➝₁ β, k: β ➝₁ γ,
+    (a transpose₀ (g (▷ @➝₁) k)) =
+      ((a transpose₀ g) (▷ @➝₀) (k (map @➝₁ @➝₀ @χ)))]
+  ≔ match a {
+    unit adjunction_of _ _ _ _ _ ^
+      (((unit @α) (▷ @➝₀) _) leibnitz (g (map_▷ @➝₁ @➝₀ @χ) k)) transit
+        ((unit @α) (▷_▷ @➝₀) (g (map @➝₁ @➝₀ @χ)) (k (map @➝₁ @➝₀ @χ)))
+  }
+
+## mapping by `χ` keepeth a cone over the diagram `δ`.
+let lemma_keep_cone
+  : [@➝₀: [*, *, *], @➝₁: [*, *, *], @➝₂: [*, *, *], @χ: [*, *], @δ: [*, *],
+    @: ➝₀ category, @: ➝₁ category, @: ➝₂ category, @diagram: ➝₂ ⇒ ➝₁ δ,
+    @right: ➝₁ ⇒ ➝₀ χ, @λ: *, p: [@α: *, λ ➝₁ (α δ)], p_cone: p cone @➝₂ @➝₁ @δ,
+    ({@α ^ (p @α) (map @➝₁ @➝₀ @χ)}: [@α: *, (λ χ) ➝₀ ((α δ) χ)]) cone_along @➝₀
+      @➝₁ @➝₂ @δ @χ]
+  ≔ {
+    @α, @β, f ^
+      (((p @α) (map_▷ @➝₁ @➝₀ @χ) (f (map @➝₂ @➝₁ @δ))) symmetry) transit
+        ((map @➝₁ @➝₀ @χ) leibnitz (f p_cone))
+  }
+
+## right adjoints keep limits: a limit `p` of the diagram `δ`, mapped by the
+## right adjoint `χ`, is a limit of `δ` followed by `χ`. a cone `c` there,
+## turned into `➝₁`, is a cone over `δ`; its factoring, turned back, factoreth
+## `c`.
+show let keep_limit
+  : [@➝₀: [*, *, *], @➝₁: [*, *, *], @➝₂: [*, *, *], @φ: [*, *], @χ: [*, *],
+    @δ: [*, *], @: ➝₀ category, @: ➝₁ category, @: ➝₂ category,
+    @left: ➝₀ ⇒ ➝₁ φ, @right: ➝₁ ⇒ ➝₀ χ, @diagram: ➝₂ ⇒ ➝₁ δ, a: φ ⊣ χ @➝₀ @➝₁,
+    @λ: *, p: [@α: *, λ ➝₁ (α δ)], limiting: p limit @➝₂ @➝₁ @δ,
+    ({@α ^ (p @α) (map @➝₁ @➝₀ @χ)}: [@α: *, (λ χ) ➝₀ ((α δ) χ)]) limit_along
+      @➝₀ @➝₁ @➝₂ @δ @χ]
+  ≔ match limiting {
+    p_cone limit_of factor factor_▷ alone ^ (
+      let lower: [@μ: *, c: [@α: *, μ ➝₀ ((α δ) χ)], [@α: *, (μ φ) ➝₁ (α δ)]]
+        ≔ {@α ^ a transpose₁ (c @α)}
+      let lower_cone
+        : [@μ: *, c: [@α: *, μ ➝₀ ((α δ) χ)],
+          c_cone: c cone_along @➝₀ @➝₁ @➝₂ @δ @χ, (c lower) cone @➝₂ @➝₁ @δ]
+        ≔ {
+          @α, @β, f ^
+            ((a transpose₁_▷ (c @α) (f (map @➝₂ @➝₁ @δ))) symmetry) transit
+              ((a transpose₁ _) leibnitz (f c_cone))
+        }
+      yield (p lemma_keep_cone p_cone) limit_along_of {
+        @μ, c, c_cone ^ a transpose₀ ((c lower) factor (c lower_cone c_cone))
+      } {
+        @μ, c, c_cone, @α ^ >{transit,
+          (a transpose₀_▷ ((c lower) factor (c lower_cone c_cone)) (p @α))
+            symmetry,
+          (a transpose₀ _) leibnitz
+            ((c lower) factor_▷ @(μ φ) (c lower_cone c_cone) @α),
+          a transpose₁_transpose₀ (c @α)
+        }
+      } {
+        @μ, g, h, agree ^ >{transit,
+          (a transpose₁_transpose₀ g) symmetry,
+          (a transpose₀ _) leibnitz
+            ((a transpose₁ g) alone (a transpose₁ h) {
+              @α ^ >{transit,
+                (a transpose₁_▷ g (p @α)) symmetry,
+                (a transpose₁ _) leibnitz (agree @α),
+                a transpose₁_▷ h (p @α)
+              }
+            }),
+          a transpose₁_transpose₀ h
+        }
+      }
+    )
+  }

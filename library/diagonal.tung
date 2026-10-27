@@ -1,0 +1,30 @@
+bring class/order/complement.tung
+bring is.tung
+bring type/powerset.tung
+bring type/two.tung
+bring type/zero.tung
+
+## `f diagonal g` taketh each `a` to `g` of `a`'s own value `a (a f)`.
+show let diagonal: [@α: *, @β: *, f: [α, α, β], g: [β, β], α, β] ≔ {
+  a ^ (a (a f)) g
+}
+
+## lawvere's fixed point theorem: when some `a f` is `f diagonal g`, the value
+## `a (a f)` is a fixed point of `g`. so if `f` reacheth every function
+## `[α, β]`, every `g: [β, β]` hath a fixed point.
+show let lawvere
+  : [@α: *, @β: *, f: [α, α, β], g: [β, β], a: α, hit: (a f) = (f diagonal g),
+    ((a (a f)) g) = (a (a f))]
+  ≔ ({h ^ a h} leibnitz hit) symmetry
+
+## no truth value is its own complement.
+let lemma_∁_fixed: [b: 𝟚, (b ∁) ≠ b] ≔ match b {
+  yea;
+  nay ^ {}
+}
+
+## cantor's theorem: no `a f` is the subset of the values outside their own
+## subset, so no `f` reacheth every subset of `α`.
+show let cantor: [@α: *, f: [α, α powerset], a: α, (a f) ≠ (f diagonal ∁)] ≔ {
+  hit ^ (a (a f)) lemma_∁_fixed (f lawvere ∁ a hit)
+}

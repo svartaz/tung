@@ -55,7 +55,7 @@ accepted =
     ("class constraints precede parameters", "class convert:[a:*, @:a hath_≍, b:*, *] { let convert:[a, b] }"),
     ("class member requirement", "class hath_traverse:[f:[*, *], *] { let traverse:[@m:[*, *], @:m applicative, @a:*, @b:*, a f, [a, b m], (b f) m] }"),
     ("class without parameters", "class marker:* { let mark:ℤ }"),
-    ("class with a binary type constructor", "class category:[⇨:[*, *, *], *] { let hath_≍:[@a:*, a ⇨ a] }"),
+    ("class with a binary type constructor", "class category:[➝:[*, *, *], *] { let hath_≍:[@a:*, a ➝ a] }"),
     ("law sides may inhold local blocks", "class identity:[a:*, *] { let rule:[x: a, (let y ≔ x yield y) = (let z ≔ x yield z)] }"),
     ("law parameters use ordinary bracket parsing", "class identity:[a:*, *] { let rule:[x:, x = x] }"),
     ("bizen methods use let", "bizen:[@a:*, @:a hath_≍, (a box) hath_≍] { let ≍: [x box:, y box:] ≔ x ≍ y }"),

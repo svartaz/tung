@@ -82,6 +82,11 @@ inferExpression environment names scope@Scope {scopeContext = context, scopeName
       productTerm current [] = inferExpression environment names current result
       productTerm current (Parameter {..} : remaining) = do
         (domain, domainType) <- inferExpression environment names current parameterType
+        -- a slot's known requirements are found before later slots add
+        -- equations. otherwise every slot's dictionary holes wait together,
+        -- each solution retrieth all their equations, and a later
+        -- approximation may join holes of different slots wrongly.
+        solveDeterminedInstances environment names
         domainLevel <- requireUniverse current domainType
         domainValue <- eval current domain
         (codomain, codomainType) <- productTerm (extend current parameterName domainValue) remaining

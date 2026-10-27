@@ -428,7 +428,8 @@ syntax.
 ## classes, bizens, and laws
 
 `class` declareth a type class and `bizen` an instance. headers end in `*`,
-with named parameters and optional `@: parent` requirements:
+with named parameters, named requirements, and optional `@: parent`
+requirements:
 
 ```tung
 class hath_≍: [α: *, *] {
@@ -443,6 +444,11 @@ bizen: 𝟚 hath_≍ {
 ```
 
 - class parameters omit `@`; members may add their own implicit parameters.
+- a named requirement, as `@category₀: ➝₀ category`, is a parameter that
+  search findeth wherever the class is applied, so every dictionary over the
+  same arguments shareth it. an anonymous `@: parent` is a parent: each
+  dictionary carrieth its own, so laws of two dictionaries over one parent
+  class cannot be joined. an output parameter is written without `@`.
 - `@: α hath_≍` requireth a dictionary. requirements may interleave with
   implicit parameters but name only preceding ones.
 - a member is `let name: type` without a body. a law is a member whose type

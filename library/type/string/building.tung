@@ -25,8 +25,8 @@ show let list_to_string: [unicode list, string] ≔ 'list_to_string' foreign
 ## them and the list laws.
 show axiom list_string: [s: string, ((s string_to_list) list_to_string) = s]
 
-show axiom string_list
-  : [l: unicode list, ((l list_to_string) string_to_list) = l]
+show axiom string_list: [l: unicode list,
+  ((l list_to_string) string_to_list) = l]
 
 show let equal_string: [string, string, 𝟚]
   ≔ 'equal_string' foreign {a, b ^ (a string_to_list) ≍ (b string_to_list)}

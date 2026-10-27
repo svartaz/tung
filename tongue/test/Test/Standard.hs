@@ -139,7 +139,18 @@ numberCases library =
     agreement "unicode" (libraryModule library "type/unicode.tung") ["equal", "at_most"] (0, 3) (\index -> ['`', characters !! index]),
     agreement "string" (libraryModule library "type/string/building.tung") ["equal_string", "at_most_string", "join_string"] (0, 40) (\index -> "'" ++ spelled index ++ "'"),
     expectEq "a modelled operation is proved by computation and by induction" (Right ()) $
-      () <$ compileWith library "natural_proof.tung" proofs
+      () <$ compileWith library "natural_proof.tung" proofs,
+    expectEq "sums, powers, choices, and least divisors compute on literals" (Right (replicate 6 True)) do
+      program <- compileWith library "counting_test.tung" counting
+      traverse
+        (uncurry (sameNormalIn program))
+        [("5 Σ {i ^ i}", "10"), ("2 power 10", "1024"), ("5 !", "120"), ("5 choose 2", "10"), ("91 least_divisor", "7"), ("3 prime_above", "7")],
+    expectEq "the counting, prime, and diagonal theorems apply at concrete values" (Right ()) $
+      () <$ compileWith library "counting_test.tung" (counting ++ theorems),
+    rejectContaining "a wrong sum is rejected" "cannot unify" $
+      compileWith library "counting_test.tung" (counting ++ "let bad: (4 Σ {i ^ i}) = 7 ≔ reflect"),
+    rejectContaining "no tale reacheth the diagonal subset" "cannot unify" $
+      compileWith library "counting_test.tung" (counting ++ "let bad: [f: [ℕ, ℕ powerset], a: ℕ, (a f) = (f diagonal ∁)] ≔ reflect")
   ]
   where
     agreement label models operations range literal =
@@ -177,6 +188,32 @@ numberCases library =
           0 ^ reflect,
           k next ^ {x: ℕ ^ x next} leibnitz (k left_zero)
         }
+      """
+    counting =
+      """
+      bring class/algebra/total/hath_add.tung
+      bring class/algebra/total/hath_multiply.tung
+      bring class/order/complement.tung
+      bring diagonal.tung
+      bring is.tung
+      bring type/natural.tung
+      bring type/natural_below.tung
+      bring type/natural_binomial.tung
+      bring type/natural_division.tung
+      bring type/natural_sum.tung
+      bring type/or.tung
+      bring type/powerset.tung
+      bring type/zero.tung
+
+      """
+    theorems =
+      """
+      let twice: ((5 Σ {i ^ i}) · 2) = (4 · 5) ≔ 4 gauss
+      let cube: ((1 + 2) power 3) = (4 Σ {k ^ (3 choose k) · ((1 power k) · (2 power (3 ∸ k)))}) ≔ 1 binomial 2 3
+      let beyond: [n: ℕ, n under (n prime_above)] ≔ n prime_above_above
+      let split: [n: ℕ, a: ℕ, b: ℕ, held: (n prime_above) ∣ (a · b), ((n prime_above) ∣ a) ∨ ((n prime_above) ∣ b)] ≔ (n prime_above) euclid a b (n prime_above_prime) held
+      let crowded: [f: [2 natural_below, 1 natural_below], inject: [i: 2 natural_below, j: 2 natural_below, (i f) = (j f), i = j], 𝟘] ≔ 1 pigeonhole f inject
+      let missed: [f: [ℕ, ℕ powerset], a: ℕ, (a f) ≠ (f diagonal ∁)] ≔ f cantor a
       """
 
 -- the yoneda and yoneda_co round trips compute for `optional`; yoneda's
@@ -357,9 +394,65 @@ lawCases library =
     expectEq "𝟚 is a division ring and a field" (Right ()) $
       () <$ compileWith library "field_test.tung" (twoField "[a:, _:] ≔ a"),
     rejectContaining "a lax division maketh no division ring" "cannot unify" $
-      compileWith library "division_ring_test.tung" (twoField "[_:, _:] ≔ nay")
+      compileWith library "division_ring_test.tung" (twoField "[_:, _:] ≔ nay"),
+    -- `zero` alone is an ideal of `ℤ`; a part without `zero` is none.
+    expectEq "zero alone is an ideal of the integers" (Right ()) $
+      () <$ compileWith library "ideal_test.tung" (integerIdeal "let zeros: {a: ℤ ^ a = +0} ideal ≔ zero_ideal"),
+    rejectContaining "a part without zero is no ideal" "cannot unify" $
+      compileWith library "ideal_test.tung" (integerIdeal "let ones: {a: ℤ ^ a = +1} ideal ≔ reflect ideal_of sorry sorry sorry sorry"),
+    -- the identity keepeth sums and products, so its kernel is an ideal; a
+    -- shift keepeth no sum.
+    expectEq "the kernel of a ring homomorphism is an ideal" (Right ()) $
+      () <$ compileWith library "ring_homomorphism_test.tung" (integerHomomorphism "{a ^ a}" ++ "let ideal_kernel: (f kernel) ideal ≔ f kernel_ideal hom\n"),
+    rejectContaining "a shift is no ring homomorphism" "cannot unify" $
+      compileWith library "ring_homomorphism_test.tung" (integerHomomorphism "_ + +1"),
+    -- a box keepeth identity and composition, and taking identity is
+    -- natural; a pair whose map swappeth its sides keepeth no identity.
+    expectEq "a box is a functor with a natural identity" (Right ()) $
+      ()
+        <$ compileWith
+          library
+          "functor_test.tung"
+          ( functorPrelude
+              ++ """
+                 type box: [α: *, *] { wrap: [α, α box] }
+                 bizen: → ⇒ → box {
+                   let map: [f:, b:] ≔ match b { a wrap ^ (a f) wrap }
+                   let map_identity: [@α: *] ≔ {c: α box ^ match c { a wrap ^ reflect }} extend
+                   let map_▷: [@α: *, @β: *, @γ: *, _:, _:] ≔ {c: α box ^ match c { a wrap ^ reflect }} extend
+                 }
+                 let same: ((identity @→): [@α: *, (α box) → (α box)]) ⇛ @→ @→ ≔ identity_⇛ @→ @→
+                 """
+          ),
+    rejectContaining "a map that swappeth sides keepeth no identity" "cannot unify" $
+      compileWith
+        library
+        "functor_test.tung"
+        ( functorPrelude
+            ++ """
+               type pair: [α: *, *] { both: [α, α, α pair] }
+               bizen: → ⇒ → pair {
+                 let map: [f:, p:] ≔ match p { a both b ^ (b f) both (a f) }
+                 let map_identity: [@α: *] ≔ {c: α pair ^ match c { a both b ^ reflect }} extend
+                 let map_▷: [@α: *, @β: *, @γ: *, _:, _:] ≔ {c: α pair ^ match c { a both b ^ reflect }} extend
+               }
+               """
+        )
   ]
   where
+    functorPrelude =
+      """
+      bring class/algebra/partial/category.tung
+      bring class/algebra/partial/category/functor.tung
+      bring combinator.tung
+      bring is.tung
+
+      """
+    integerHomomorphism function =
+      "bring often.tung\nbring ideal.tung\nbring ring_homomorphism.tung\nbring is.tung\n"
+        ++ ("let f: [ℤ, ℤ] ≔ " ++ function ++ "\n")
+        ++ "let hom: f homomorphic ≔ {_, _ ^ reflect} homomorphic_of {_, _ ^ reflect}\n"
+    integerIdeal declaration = "bring often.tung\nbring ideal.tung\nbring is.tung\n" ++ declaration
     twoField division = "bizen: 𝟚 hath_÷ { let ÷: " ++ division ++ " }\n" ++ twoFieldLaws
     twoFieldLaws =
       """
@@ -613,7 +706,7 @@ classLayoutCase files = listToMaybe . catMaybes <$> traverse checkModule files
     classPrefix = "class/"
     -- module paths keep the documented ascii spellings of symbolic terms.
     asciiName = concatMap (\character -> maybe [character] id (lookup character spellings))
-    spellings = [('+', "add"), ('-', "subtract"), ('÷', "divide"), ('%', "divide_leftover"), ('·', "multiply"), ('≤', "at_most"), ('≍', "equal"), ('=', "is"), ('∋', "inhold"), ('‖', "length")]
+    spellings = [('+', "add"), ('-', "subtract"), ('÷', "divide"), ('%', "divide_leftover"), ('·', "multiply"), ('≤', "at_most"), ('≍', "equal"), ('=', "is"), ('∋', "inhold"), ('⇒', "functor"), ('‖', "length")]
 
 classNames :: Source.Declaration -> [String]
 classNames (Source.ClassDeclaration name _ _) = [name]

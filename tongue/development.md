@@ -365,7 +365,8 @@ tokens differ from the shortened source's.
   padded, `{ … }`; other braces are not.
 - a `let` or `axiom` that fitteth stayeth on one line. otherwise `≔ body`
   taketh its own line two columns in, and `: annotation` stayeth beside the
-  name unless they do not fit together. a body opening a brace, a declaration
+  name unless they do not fit together. without `≔`, as a class member or an
+  axiom, `: annotation` always stayeth beside the name and wrappeth. a body opening a brace, a declaration
   block, or a `match` openeth it on the `≔` line, and the binding need fit only
   to that opening.
 - a row's `^`, and a `≔` outside a declaration, keep the left side and break

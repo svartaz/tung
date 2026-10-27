@@ -19,6 +19,7 @@ bring type/accessible.tung
 bring type/and.tung
 bring type/optional.tung
 bring type/two.tung
+bring type/zero.tung
 
 ## ℕ is a primitive type with arbitrary precision. its operations are host
 ## bindings; these bizens give it equality, order, and semiring building.
@@ -349,6 +350,12 @@ show let under_transit: [a: ℕ, b: ℕ, c: ℕ, a under b, b under c, a under c
       (b ≤_yea_transit (b next) c (b lemma_≤_next) d₁)
 }
 
+## no tale is under itself.
+show let under_self: [a: ℕ, a under a, 𝟘] ≔ match a {
+  0       ^ {},
+  a′ next ^ a′ under_self
+}
+
 ## everything under `n` is accessible, by induction on `n`.
 let lemma_under_accessible: [a: ℕ, b: ℕ, below: b under a, ℕ accessible under b]
   ≔ match a {
@@ -370,15 +377,14 @@ let rebuild: [n: ℕ, e: ℕ, q ⸴ r: ℕ ∧ ℕ, *] ≔ ((q · (e next)) + r)
 ## `p` holdeth a leftover at most `e`.
 let bound: [e: ℕ, _ ⸴ r: ℕ ∧ ℕ, *] ≔ (r ≤ e) = yea
 
-## a tale at most `e` that is not `e` hath its next at most `e`.
-let lemma_≤_≭
-  : [a: ℕ, b: ℕ, below: (a ≤ b) = yea, apart: (a ≍ b) = nay,
-    ((a next) ≤ b) = yea]
+## a tale at most `b` that is not `b` is under it.
+show let ≤_≭
+  : [a: ℕ, b: ℕ, below: (a ≤ b) = yea, apart: (a ≍ b) = nay, a under b]
   ≔ match a, b {
     0,       0       ^ match apart {},
     0,       _ next  ^ reflect,
     _ next,  0       ^ match below {},
-    a′ next, b′ next ^ a′ lemma_≤_≭ b′ below apart
+    a′ next, b′ next ^ a′ ≤_≭ b′ below apart
   }
 
 let lemma_divide_step_rebuild
@@ -406,7 +412,7 @@ let lemma_divide_step_bound
     q ⸴ r ^
       (r ≍ e) inspect @𝟚 @{c ^ e bound (c if ((q next) ⸴ 0) (q ⸴ (r next)))} {
         yea, _     ^ reflect,
-        nay, known ^ r lemma_≤_≭ e held known
+        nay, known ^ r ≤_≭ e held known
       }
   }
 

@@ -12,8 +12,8 @@ bring type/two.tung
 ## a unicode scalar is named by its code point. the host's `unicode` is
 ## opaque, so this round trip is a listed assumption; the laws below are
 ## proved from it and the `ℕ` laws.
-show axiom natural_unicode
-  : [a: unicode, ((a unicode_to_natural) natural_to_unicode) = (a some)]
+show axiom natural_unicode: [a: unicode,
+  ((a unicode_to_natural) natural_to_unicode) = (a some)]
 
 show let equal: [unicode, unicode, 𝟚]
   ≔ 'equal_unicode' foreign {

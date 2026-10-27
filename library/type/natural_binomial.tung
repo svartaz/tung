@@ -1,0 +1,188 @@
+bring class/algebra/total/hath_add.tung
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/hath_one.tung
+bring class/algebra/total/hath_zero.tung
+bring class/algebra/total/monoid_add.tung
+bring class/algebra/total/monoid_multiply.tung
+bring class/algebra/total/semigroup_add.tung
+bring class/algebra/total/semigroup_multiply.tung
+bring class/algebra/total/semiring.tung
+bring class/order/hath_at_most.tung
+bring is.tung
+bring type/natural.tung
+bring type/natural_sum.tung
+bring type/two.tung
+
+## `a power n` multiplieth `n` copies of `a`.
+show let power: [@α: *, @: α monoid_·, a: α, n: ℕ, α] ≔ match n {
+  0      ^ one,
+  m next ^ (a power m) · a
+}
+
+## `n !` multiplieth the tales from `1` up to `n`.
+show let !: [n: ℕ, ℕ] ≔ match n {
+  0      ^ 1,
+  m next ^ (m !) · (m next)
+}
+
+## `n choose k` counteth the ways to choose `k` of `n` things, by pascal's
+## rule: a choice from `n next` things either leaveth the last or taketh it.
+show let choose: [n: ℕ, k: ℕ, ℕ] ≔ match n, k {
+  _,      0      ^ 1,
+  0,      _ next ^ 0,
+  m next, j next ^ (m choose j) + (m choose (j next))
+}
+
+## there is one way to choose nothing. it is proved, not computed, for any
+## `n`, since `choose` taketh `n` apart first.
+show let choose_zero: [n: ℕ, (n choose 0) = 1] ≔ match n {
+  0      ^ reflect,
+  _ next ^ reflect
+}
+
+## there is no way to choose more things than there are.
+show let choose_above: [n: ℕ, k: ℕ, above: n under k, (n choose k) = 0]
+  ≔ match n, k {
+    _,      0      ^ match above {},
+    0,      _ next ^ reflect,
+    m next, j next ^
+      ((_ + (m choose (j next))) leibnitz (m choose_above j above)) transit
+        ((0 + _) leibnitz
+          (m choose_above (j next)
+            (m under_transit j (j next) above (j under_next))))
+  }
+
+## there is one way to choose every thing.
+show let choose_self: [n: ℕ, (n choose n) = 1] ≔ match n {
+  0      ^ reflect,
+  m next ^
+    ((_ + (m choose (m next))) leibnitz (m choose_self)) transit
+      ((1 + _) leibnitz (m choose_above (m next) (m under_next)))
+}
+
+## taking away a smaller `j` leaveth one more than taking away `j next`.
+let lemma_∸_next
+  : [m: ℕ, j: ℕ, below: j under m, (m ∸ j) = ((m ∸ (j next)) next)]
+  ≔ match m, j {
+    0,       _       ^ match below {},
+    _ next,  0       ^ reflect,
+    m′ next, j′ next ^ m′ lemma_∸_next j′ below
+  }
+
+## a tale whose next is not at most `b` is at least `b`.
+let lemma_≤_nay: [a: ℕ, b: ℕ, above: ((a next) ≤ b) = nay, (b ≤ a) = yea]
+  ≔ match a, b {
+    _,       0       ^ reflect,
+    0,       _ next  ^ match above {},
+    a′ next, b′ next ^ a′ lemma_≤_nay b′ above
+  }
+
+## the last two of three factors may swap places.
+let lemma_·_turn: [a: ℕ, b: ℕ, c: ℕ, ((a · b) · c) = ((a · c) · b)] ≔ >{transit,
+  (a ·_· b c) symmetry,
+  (a · _) leibnitz (b ·_swap c),
+  a ·_· c b
+}
+
+## the first two of three summands may swap places.
+let lemma_+_inner: [a: ℕ, b: ℕ, c: ℕ, (a + (b + c)) = (b + (a + c))]
+  ≔ >{transit, a +_+ b c, (_ + c) leibnitz (a +_swap b), (b +_+ a c) symmetry}
+
+## where `n choose (j next)` is not zero, `j` is under `n`, so
+## `b power (n ∸ j)` hath one more `b` than `b power (n ∸ (j next))`.
+let lemma_choose_power
+  : [n: ℕ, j: ℕ, r: ℕ, b: ℕ,
+    ((n choose (j next)) · (r · (b power (n ∸ j)))) =
+      ((n choose (j next)) · ((r · (b power (n ∸ (j next)))) · b))]
+  ≔ ((j next) ≤ n) inspect @𝟚 @{
+    _ ^
+      ((n choose (j next)) · (r · (b power (n ∸ j)))) =
+        ((n choose (j next)) · ((r · (b power (n ∸ (j next)))) · b))
+  } {
+    yea, below ^
+      ({c ^ (n choose (j next)) · (r · (b power c))} leibnitz
+        (n lemma_∸_next j below)) transit
+        (((n choose (j next)) · _) leibnitz (r ·_· (b power (n ∸ (j next))) b)),
+    nay, above ^ (
+      let no_way ≔ n choose_above (j next) (j lemma_≤_nay n above)
+      yield >{transit,
+        (_ · (r · (b power (n ∸ j)))) leibnitz no_way,
+        (r · (b power (n ∸ j))) zero_·,
+        (((r · (b power (n ∸ (j next)))) · b) zero_·) symmetry,
+        ((_ · ((r · (b power (n ∸ (j next)))) · b)) leibnitz no_way) symmetry
+      }
+    )
+  }
+
+## the `k`th term of `(a + b) power n`.
+let term: [a: ℕ, b: ℕ, n: ℕ, k: ℕ, ℕ]
+  ≔ (n choose k) · ((a power k) · (b power (n ∸ k)))
+
+## pascal's rule on terms: a term of the next power gathereth the term below
+## it times `a` and the term beside it times `b`.
+let lemma_term_next
+  : [a: ℕ, b: ℕ, m: ℕ, j: ℕ,
+    (a term b (m next) (j next)) =
+      (((a term b m j) · a) + ((a term b m (j next)) · b))]
+  ≔ (
+    let p ≔ a power j
+    let x ≔ (p · a) · (b power (m ∸ j))
+    yield >{transit,
+      (m choose j) +_· (m choose (j next)) x,
+      (_ + ((m choose (j next)) · x)) leibnitz
+        ((((m choose j) · _) leibnitz (p lemma_·_turn a (b power (m ∸ j))))
+          transit ((m choose j) ·_· (p · (b power (m ∸ j))) a)),
+      (((a term b m j) · a) + _) leibnitz
+        ((m lemma_choose_power j (p · a) b) transit
+          ((m choose (j next)) ·_· ((p · a) · (b power (m ∸ (j next)))) b))
+    }
+  )
+
+## the binomial theorem: `(a + b) power n` is the sum, over `k` up to `n`, of
+## `n choose k` times `a power k` times `b power (n ∸ k)`.
+show let binomial
+  : [a: ℕ, b: ℕ, n: ℕ,
+    ((a + b) power n) =
+      ((n next) Σ {k ^ (n choose k) · ((a power k) · (b power (n ∸ k)))})]
+  ≔ match n {
+    0      ^ reflect,
+    m next ^ (
+      let s ≔ (m next) Σ (a term b m)
+      let with_a ≔ {k ^ (a term b m k) · a}
+      let with_b ≔ {k ^ (a term b m k) · b}
+      let last: ((m next) with_b) = 0 ≔ >{transit,
+        (_ · b) leibnitz
+          ((_ · ((a power (m next)) · (b power (m ∸ (m next))))) leibnitz
+            (m choose_above (m next) (m under_next))),
+        (_ · b) leibnitz
+          (((a power (m next)) · (b power (m ∸ (m next)))) zero_·),
+        b zero_·
+      }
+      let first: (0 with_b) = (a term b (m next) 0) ≔ >{transit,
+        (_ · b) leibnitz ((_ · (one · (b power m))) leibnitz (m choose_zero)),
+        (_ · b) leibnitz ((one · (b power m)) one_·),
+        (_ · b) leibnitz ((b power m) one_·),
+        (((b power m) · b) one_·) symmetry,
+        ((one · ((b power m) · b)) one_·) symmetry
+      }
+      yield >{transit,
+        (_ · (a + b)) leibnitz (a binomial b m),
+        s ·_+ a b,
+        (_ + (s · b)) leibnitz ((m next) Σ_· (a term b m) a),
+        (((m next) Σ with_a) + _) leibnitz
+          (((m next) Σ_· (a term b m) b) transit
+            (((((m next) Σ with_b) + _) leibnitz last) symmetry)),
+        (((m next) Σ with_a) + _) leibnitz ((m next) Σ_first with_b),
+        ((m next) Σ with_a) lemma_+_inner (0 with_b)
+          ((m next) Σ {k ^ (k next) with_b}),
+        ((0 with_b) + _) leibnitz
+          (((m next) Σ_+ with_a {k ^ (k next) with_b}) symmetry),
+        ((0 with_b) + _) leibnitz
+          ((m next) Σ_agree {k ^ (k with_a) + ((k next) with_b)} {
+            k ^ a term b (m next) (k next)
+          } {k, _ ^ (a lemma_term_next b m k) symmetry}),
+        (_ + ((m next) Σ {k ^ a term b (m next) (k next)})) leibnitz first,
+        ((m next) Σ_first (a term b (m next))) symmetry
+      }
+    )
+  }

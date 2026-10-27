@@ -1,0 +1,91 @@
+bring class/algebra/total/group_add.tung
+bring class/algebra/total/hath_add.tung
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/hath_subtract.tung
+bring class/algebra/total/hath_zero.tung
+bring class/algebra/total/monoid_add.tung
+bring class/algebra/total/ring.tung
+bring class/algebra/total/semiring.tung
+bring ideal.tung
+bring is.tung
+
+## a function between rings that keepeth sums and products.
+show type homomorphic: [@α: *, @domain: α ring, @β: *, @codomain: β ring,
+  f: [α, β], *] {
+    homomorphic_of: [+_f: [a: α, b: α, ((a + b) f) = ((a f) + (b f))],
+      ·_f: [a: α, b: α, ((a · b) f) = ((a f) · (b f))], f homomorphic]
+  }
+
+## the values that `f` sendeth to `zero`.
+show let kernel: [@α: *, @: α ring, @β: *, @: β ring, f: [α, β], a: α, *]
+  ≔ (a f) = zero
+
+## a homomorphism sendeth `zero` to `zero`: `(zero f) + (zero f) = zero f`,
+## and outstriking one `zero f` leaveth `zero`.
+show let zero_f
+  : [@α: *, @: α ring, @β: *, @: β ring, f: [α, β], hom: f homomorphic,
+    ((zero @α) f) = zero]
+  ≔ ((zero @α) f) strike_+ ((zero @α) f) zero >{transit,
+    ((zero @α) hom.+_f zero) symmetry,
+    f leibnitz ((zero @α) +_zero),
+    (((zero @α) f) +_zero) symmetry
+  }
+
+## a homomorphism sendeth a flipping to the flipping.
+show let -_f
+  : [@α: *, @: α ring, @β: *, @: β ring, f: [α, β], hom: f homomorphic, a: α,
+    ((a -) f) = ((a f) -)]
+  ≔ (a f) -_alone ((a -) f) >{transit,
+    ((a -) hom.+_f a) symmetry,
+    f leibnitz (a ring~-_+),
+    f zero_f hom
+  }
+
+## the kernel is an ideal: it holdeth `zero`, is closed under sums and
+## flipping, and taketh in every product with a factor in it.
+show let kernel_ideal
+  : [@α: *, @: α ring, @β: *, @: β ring, f: [α, β], hom: f homomorphic,
+    (f kernel) ideal]
+  ≔ (f zero_f hom) ideal_of {
+    a, b, in_a, in_b ^ >{transit,
+      a hom.+_f b,
+      (_ + (b f)) leibnitz in_a,
+      (zero +) leibnitz in_b,
+      zero +_zero
+    }
+  } {a, in_a ^ >{transit, f -_f hom a, (_ -) leibnitz in_a, zero_-}} {
+    r, a, in_a ^ >{transit, r hom.·_f a, ((r f) ·) leibnitz in_a, (r f) ·_zero}
+  } {
+    a, r, in_a ^ >{transit,
+      a hom.·_f r,
+      (_ · (r f)) leibnitz in_a,
+      (r f) zero_·
+    }
+  }
+
+## the first isomorphism theorem, without quotient types: two values have
+## one image exactly when their difference lieth in the kernel. so the map
+## from the kernel's cosets to the image is well defined (`fibre_kernel`) and
+## injective (`kernel_fibre`).
+show let fibre_kernel
+  : [@α: *, @: α ring, @β: *, @: β ring, f: [α, β], hom: f homomorphic, a: α,
+    b: α, equal: (a f) = (b f), f kernel ((a -) + b)]
+  ≔ >{transit,
+    (a -) hom.+_f b,
+    (_ + (b f)) leibnitz (f -_f hom a),
+    {c ^ (c -) + (b f)} leibnitz equal,
+    (b f) ring~-_+
+  }
+
+show let kernel_fibre
+  : [@α: *, @: α ring, @β: *, @: β ring, f: [α, β], hom: f homomorphic, a: α,
+    b: α, in_kernel: f kernel ((a -) + b), (a f) = (b f)]
+  ≔ (
+    let undone: ((((a f) -) + (b f)) = zero) ≔ <{transit,
+      ((_ + (b f)) leibnitz (f -_f hom a)) symmetry,
+      ((a -) hom.+_f b) symmetry,
+      in_kernel
+    }
+    let flipped: (((a f) -) = ((b f) -)) ≔ (b f) -_alone ((a f) -) undone
+    yield >{transit, ((a f) -_-) symmetry, (_ -) leibnitz flipped, (b f) -_-}
+  )

@@ -1,0 +1,37 @@
+bring class/algebra/total/group_add.tung
+bring class/algebra/total/hath_add.tung
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/hath_subtract.tung
+bring class/algebra/total/hath_zero.tung
+bring class/algebra/total/monoid_add.tung
+bring class/algebra/total/ring.tung
+bring class/algebra/total/semiring.tung
+bring is.tung
+bring type/one.tung
+
+## a two-sided ideal of a ring: a part `p` that holdeth `zero`, is closed
+## under sums and flipping, and taketh in every product with a factor in it,
+## from either side.
+show type ideal: [@α: *, @ring: α ring, p: [α, *], *] {
+  ideal_of: [zero_in: (zero @α) p, +_in: [a: α, b: α, a p, b p, (a + b) p],
+    -_in: [a: α, a p, (a -) p], ·_in: [r: α, a: α, a p, (r · a) p],
+    in_·: [a: α, r: α, a p, (a · r) p], p ideal]
+}
+
+## the whole ring is an ideal.
+show let whole_ideal: [@α: *, @: α ring, {_: α ^ 𝟙} ideal]
+  ≔ only ideal_of {_, _, _, _ ^ only} {_, _ ^ only} {_, _, _ ^ only} {
+    _, _, _ ^ only
+  }
+
+## `zero` alone is an ideal.
+show let zero_ideal: [@α: *, @: α ring, {a: α ^ a = zero} ideal]
+  ≔ reflect ideal_of {
+    a, b, in_a, in_b ^ >{transit,
+      (_ + b) leibnitz in_a,
+      (zero +) leibnitz in_b,
+      zero +_zero
+    }
+  } {_, in_a ^ ((_ -) leibnitz in_a) transit zero_-} {
+    r, _, in_a ^ ((r ·) leibnitz in_a) transit (r ·_zero)
+  } {_, r, in_a ^ ((_ · r) leibnitz in_a) transit (r zero_·)}

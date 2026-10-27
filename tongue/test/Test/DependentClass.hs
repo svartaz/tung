@@ -93,11 +93,29 @@ tests example =
       compiled (example ++ "class bad:[α:*, *] {\nlet f:[α, α]\nlet rule:[x:α, (x f) = yea]\n}\n"),
     rejectContaining "requirements precede bare slots" "must precede bare slots" $
       compiled (example ++ "let bad:[𝟚, @:𝟚 hath_≍, 𝟚] ≔ {x ^ x}\n"),
-    rejectContaining "class parameters are explicit" "without '@'" $
-      compiled (example ++ "class bad:[@α:*, *] { let f:[α, α] }\n")
+    rejectContaining "an implicit class parameter is a requirement" "written @name:class" $
+      compiled (example ++ "class bad:[@α:*, *] { let f:[α, α] }\n"),
+    -- a named requirement is a parameter found where the class is applied, so
+    -- a law about it meeteth the caller's own dictionary; a parent is a field
+    -- of each dictionary, which a caller's dictionary is not.
+    expectEq "a named requirement is shared with the caller" (Right True) do
+      program <- compiled (sharing "@basis:α base")
+      sameNormalIn program "concrete" "reflect @unit @only",
+    rejectContaining "a parent is not the caller's dictionary" "cannot unify" $
+      compiled (sharing "@:α base")
   ]
   where
     pair = "class pair:[α:*, *] {\nlet one:α\nlet two:α\n}\n"
+    sharing requirement =
+      unlines
+        [ "type unit:* { only:unit }",
+          "class base:[α:*, *] { let tag:α }",
+          "class held:[α:*, " ++ requirement ++ ", *] { let kept:(tag:α) = tag }",
+          "bizen:unit base { let tag ≔ only }",
+          "bizen:unit held { let kept ≔ reflect }",
+          "let shared:[@α:*, @:α base, @:α held, (tag:α) = tag] ≔ kept",
+          "let concrete:(tag:unit) = only ≔ kept"
+        ]
     shown =
       """
       show type 𝟚:* { yea: 𝟚, nay: 𝟚 }
@@ -113,7 +131,17 @@ tests example =
 
 selectionTests :: [Test]
 selectionTests =
-  [ -- as in lean, the latest of equal-priority bizens is tried first.
+  [ -- a class with two parents of one class projecteth the one that fitteth,
+    -- and either of two requirements reaching one parent serveth.
+    expectEq "a child's second parent of one class is projected" (Right ()) . (() <$) $
+      compiled
+        """
+        class base:[α:*, *] { let tag:α }
+        class pair:[α:*, β:*, @:α base, @:β base, *] {}
+        let second_tag:[@α:*, @β:*, @:α pair β, β] ≔ tag
+        let shared_tag:[@α:*, @β:*, @γ:*, @:α pair γ, @:β pair γ, γ] ≔ tag
+        """,
+    -- as in lean, the latest of equal-priority bizens is tried first.
     expectEq "the latest matching bizen is chosen" (Right [True, True]) $
       traverse (\(instances, expected) -> compiled (choice ++ instances) >>= \program -> sameNormalIn program "selected @ℤ @ℤ" expected) [(blanket ++ repeated, "+1"), (repeated ++ blanket, "+0")],
     expectEq "a written priority outranketh declaration order" (Right True) do

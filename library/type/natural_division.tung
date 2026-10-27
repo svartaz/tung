@@ -4,13 +4,17 @@ bring class/algebra/total/hath_multiply.tung
 bring class/algebra/total/monoid_multiply.tung
 bring class/algebra/total/semigroup_multiply.tung
 bring class/algebra/total/semiring.tung
+bring class/equal_to_is.tung
+bring class/hath_equal.tung
 bring class/order/hath_at_most.tung
 bring class/order/order_partial.tung
 bring class/order/order_total.tung
 bring is.tung
 bring type/and.tung
 bring type/natural.tung
+bring type/natural_binomial.tung
 bring type/optional.tung
+bring type/or.tung
 bring type/two.tung
 bring type/zero.tung
 
@@ -201,3 +205,353 @@ show let ∣_greatest_common_divisor
   : [a: ℕ, b: ℕ, d: ℕ, on_a: d ∣ a, on_b: d ∣ b,
     d ∣ (a greatest_common_divisor b)]
   ≔ b lemma_∣_euclid a b d (b ≤_reflect) on_a on_b
+
+## the quotient of dividing `a` by `b next`.
+let quotient: [a: ℕ, b: ℕ, ℕ] ≔ (a % (b next)) lemma_first
+
+## the leftover of dividing `a` by `b next`.
+let leftover: [a: ℕ, b: ℕ, ℕ] ≔ (a % (b next)) lemma_second
+
+## `a` is at most `c + a`.
+let lemma_≤_+: [a: ℕ, c: ℕ, (a ≤ (c + a)) = yea] ≔ match a {
+  0       ^ reflect,
+  a′ next ^ a′ lemma_≤_+ c
+}
+
+let lemma_∣_≤_at
+  : [a: ℕ, b: ℕ, k: ℕ, made: (a · k) = (b next), (a ≤ (b next)) = yea]
+  ≔ match k {
+    0       ^ match ({c ^ c ≍ 0} leibnitz made) {},
+    k′ next ^
+      made transport @ℕ @((a · k′) + a) @(b next) @{c ^ (a ≤ c) = yea}
+        (a lemma_≤_+ (a · k′))
+  }
+
+## a divisor of a tale above zero is at most it.
+show let ∣_≤: [a: ℕ, b: ℕ, held: a ∣ (b next), (a ≤ (b next)) = yea]
+  ≔ match held { k divided made ^ a lemma_∣_≤_at b k made }
+
+## no `d` divideth a tale under it other than zero.
+let lemma_∣_under
+  : [d: ℕ, r: ℕ, held: d ∣ r, below: r under d, apart: (r ≍ 0) = nay, 𝟘]
+  ≔ match r {
+    0       ^ match apart {},
+    r′ next ^
+      (r′ next) under_self
+        (((r′ next) next) ≤_yea_transit d (r′ next) below (d ∣_≤ r′ held))
+  }
+
+## a leftover of zero maketh the divisor divide.
+let lemma_leftover_∣
+  : [a: ℕ, b: ℕ, zero: ((a leftover b) ≍ 0) = yea, (b next) ∣ a]
+  ≔ (a quotient b) divided >{transit,
+    (b next) ·_swap (a quotient b),
+    (((a quotient b) · (b next)) + _) leibnitz
+      (((a leftover b) ≍_= 0 zero) symmetry),
+    a lemma_rebuild b
+  }
+
+## `d` divideth `n`, as a truth value: the leftover of the division is zero,
+## or, dividing by zero, `n` is.
+let divides: [d: ℕ, n: ℕ, 𝟚] ≔ match d {
+  0      ^ n ≍ 0,
+  e next ^ (n leftover e) ≍ 0
+}
+
+let lemma_divides_yea: [d: ℕ, n: ℕ, known: (d divides n) = yea, d ∣ n]
+  ≔ match d {
+    0      ^ ((n ≍_= 0 known) symmetry) transport @ℕ @0 @n @(0 ∣) (0 ∣_zero),
+    e next ^ n lemma_leftover_∣ e known
+  }
+
+let lemma_divides_nay: [d: ℕ, n: ℕ, known: (d divides n) = nay, (d ∣ n) ¬]
+  ≔ match d {
+    0 ^ {
+      held ^ match held {
+        k divided made ^ match (((((k zero_·) symmetry) transit made) symmetry)
+          transport @ℕ @n @0 @{c ^ (c ≍ 0) = nay} known) {}
+      }
+    },
+    e next ^ {
+      held ^
+        (e next) lemma_∣_under (n leftover e)
+          ((e next) ∣_strike ((n quotient e) · (e next)) (n leftover e)
+            (n lemma_∣_quotient e (e next) ((e next) ∣_reflect))
+            ((e next) lemma_∣_= ((n lemma_rebuild e) symmetry) held))
+          (n lemma_leftover_≤ e) known
+    }
+  }
+
+## divisibility is decidable: the leftover of the division telleth.
+show let ∣_decide: [a: ℕ, b: ℕ, (a ∣ b) ∨ ((a ∣ b) ¬)]
+  ≔ (a divides b) inspect @𝟚 @{_ ^ (a ∣ b) ∨ ((a ∣ b) ¬)} {
+    yea, known ^ (a lemma_divides_yea b known) inject₀,
+    nay, known ^ (a lemma_divides_nay b known) inject₁
+  }
+
+## `p` is prime: it is above `1`, and its only divisors are `1` and itself.
+show let prime: [p: ℕ, *] ≔ (1 under p) ∧ [d: ℕ, d ∣ p, (d = 1) ∨ (d = p)]
+
+## a divisor of a tale other than zero is at most it.
+let lemma_∣_≤_≭: [a: ℕ, b: ℕ, held: a ∣ b, apart: (b ≍ 0) = nay, (a ≤ b) = yea]
+  ≔ match b {
+    0       ^ match apart {},
+    b′ next ^ a ∣_≤ b′ held
+  }
+
+## a tale above zero is not zero.
+let lemma_≭_zero: [a: ℕ, positive: 0 under a, (a ≍ 0) = nay] ≔ match a {
+  0      ^ match positive {},
+  _ next ^ reflect
+}
+
+## a tale that is not at most `b` is above it.
+let lemma_≤_flip: [a: ℕ, b: ℕ, above: (a ≤ b) = nay, b under a] ≔ match a, b {
+  0,       _       ^ match above {},
+  _ next,  0       ^ reflect,
+  a′ next, b′ next ^ a′ lemma_≤_flip b′ above
+}
+
+## the least of `d` and the `f` tales after it that divideth `n`, or `n` when
+## none of them doth.
+let search: [f: ℕ, d: ℕ, n: ℕ, ℕ] ≔ match f {
+  0       ^ n,
+  f′ next ^ (d divides n) if d (f′ search (d next) n)
+}
+
+## the least divisor of `n` above `1`, or `n` when `n` is below `2`.
+show let least_divisor: [n: ℕ, ℕ] ≔ n search 2 n
+
+let lemma_search_∣: [f: ℕ, d: ℕ, n: ℕ, (f search d n) ∣ n] ≔ match f {
+  0       ^ n ∣_reflect,
+  f′ next ^
+    (d divides n) inspect @𝟚 @{c ^ (c if d (f′ search (d next) n)) ∣ n} {
+      yea, known ^ d lemma_divides_yea n known,
+      nay, _     ^ f′ lemma_search_∣ (d next) n
+    }
+}
+
+let lemma_search_above
+  : [f: ℕ, d: ℕ, n: ℕ, d_above: 1 under d, n_above: 1 under n,
+    1 under (f search d n)]
+  ≔ match f {
+    0       ^ n_above,
+    f′ next ^
+      (d divides n) inspect @𝟚 @{c ^ 1 under (c if d (f′ search (d next) n))} {
+        yea, _ ^ d_above,
+        nay, _ ^
+          f′ lemma_search_above (d next) n
+            (1 under_transit d (d next) d_above (d under_next)) n_above
+      }
+  }
+
+let lemma_search_least
+  : [f: ℕ, d: ℕ, n: ℕ, cover: (n ≤ (d + f)) = yea,
+    none_below: [e: ℕ, 1 under e, e under d, (e ∣ n) ¬], e: ℕ, above: 1 under e,
+    below: e under (f search d n), (e ∣ n) ¬]
+  ≔ match f {
+    0       ^ e none_below above ((e next) ≤_yea_transit n d below cover),
+    f′ next ^ (
+      let cover′: (n ≤ ((d next) + f′)) = yea
+        ≔ ((d next_+ f′) symmetry) transport @ℕ @((d + f′) next) @((d next) +
+          f′) @{c ^ (n ≤ c) = yea} cover
+      let none_below′
+        : [apart: (d ∣ n) ¬, e′: ℕ, above′: 1 under e′,
+          below′: e′ under (d next), (e′ ∣ n) ¬]
+        ≔ (e′ ≍ d) inspect @𝟚 @{_ ^ (e′ ∣ n) ¬} {
+          yea, same ^
+            ((e′ ≍_= d same) symmetry) transport @ℕ @d @e′ @{c ^ (c ∣ n) ¬}
+              apart,
+          nay, apart′ ^ e′ none_below above′ (e′ ≤_≭ d below′ apart′)
+        }
+      let decided: [e under ((f′ next) search d n), (e ∣ n) ¬]
+        ≔ (d divides n) inspect @𝟚 @{
+          c ^ [e under (c if d (f′ search (d next) n)), (e ∣ n) ¬]
+        } {
+          yea, _     ^ e none_below above,
+          nay, known ^ {
+            below″ ^
+              f′ lemma_search_least (d next) n cover′
+                ((d lemma_divides_nay n known) none_below′) e above below″
+          }
+        }
+      yield below decided
+    )
+  }
+
+## the least divisor of `n` divideth `n`.
+show let least_divisor_∣: [n: ℕ, (n least_divisor) ∣ n] ≔ n lemma_search_∣ 2 n
+
+## no tale above `1` and under `n least_divisor` divideth `n`.
+show let least_divisor_least
+  : [n: ℕ, e: ℕ, above: 1 under e, below: e under (n least_divisor), (e ∣ n) ¬]
+  ≔ n lemma_search_least 2 n (n lemma_≤_+ 2) {
+    e′, above′, below′, _ ^
+      e′ under_self ((e′ next) ≤_yea_transit 2 e′ below′ above′)
+  } e above below
+
+## a divisor of the least divisor is `1`, or the least divisor itself.
+let lemma_least_divisor_alone
+  : [n: ℕ, above: 1 under n, e: ℕ, held: e ∣ (n least_divisor),
+    (e = 1) ∨ (e = (n least_divisor))]
+  ≔ (
+    let p ≔ n least_divisor
+    let p_apart: (p ≍ 0) = nay
+      ≔ p lemma_≭_zero
+        (0 under_transit 1 p reflect (n lemma_search_above 2 n reflect above))
+    yield match e {
+      0 ^ match held {
+        k divided made ^ match (((((k zero_·) symmetry) transit made) symmetry)
+          transport @ℕ @p @0 @{c ^ (c ≍ 0) = nay} p_apart) {}
+      },
+      e′ next ^ match e′ {
+        0       ^ reflect inject₀,
+        e″ next ^ (
+          let d ≔ (e″ next) next
+          yield (d ≍ p) inspect @𝟚 @{_ ^ (d = 1) ∨ (d = p)} {
+            yea, same  ^ (d ≍_= p same) inject₁,
+            nay, apart ^
+              ((d ∣_transit p n held (n least_divisor_∣))
+                (n least_divisor_least d reflect
+                  (d ≤_≭ p (d lemma_∣_≤_≭ p held p_apart) apart))) initial
+          }
+        )
+      }
+    }
+  )
+
+## the least divisor of a tale above `1` is prime.
+show let least_divisor_prime: [n: ℕ, above: 1 under n, (n least_divisor) prime]
+  ≔ (n lemma_search_above 2 n reflect above) ⸴
+    (n lemma_least_divisor_alone above)
+
+## `n !` is above zero.
+let lemma_!_above: [n: ℕ, 0 under (n !)] ≔ match n {
+  0      ^ reflect,
+  m next ^
+    1 ≤_yea_transit (m !) (((m !) · m) + (m !)) (m lemma_!_above)
+      ((m !) lemma_≤_+ ((m !) · m))
+}
+
+## every tale from `1` up to `n` divideth `n !`.
+show let ∣_!: [k: ℕ, n: ℕ, positive: 0 under k, below: (k ≤ n) = yea, k ∣ (n !)]
+  ≔ match n {
+    0      ^ (0 under_self (1 ≤_yea_transit k 0 positive below)) initial,
+    m next ^ (k ≍ (m next)) inspect @𝟚 @{_ ^ k ∣ ((m next) !)} {
+      yea, same ^
+        ((k ≍_= (m next) same) symmetry) transport @ℕ @(m next) @k @{
+          c ^ c ∣ ((m !) · (m next))
+        }
+          ((m next) lemma_∣_= ((m next) ·_swap (m !))
+            ((m next) ∣_· (m next) (m !) ((m next) ∣_reflect))),
+      nay, apart ^
+        k ∣_· (m !) (m next) (k ∣_! m positive (k ≤_≭ (m next) below apart))
+    }
+  }
+
+## a prime above `n`: the least divisor of `n ! + 1`, which no tale from `1`
+## up to `n` divideth.
+show let prime_above: [n: ℕ, ℕ] ≔ ((n !) next) least_divisor
+
+## `n prime_above` is prime.
+show let prime_above_prime: [n: ℕ, (n prime_above) prime]
+  ≔ ((n !) next) least_divisor_prime (n lemma_!_above)
+
+## euclid's theorem: there are infinitely many primes, since
+## `n prime_above` is above `n`.
+show let prime_above_above: [n: ℕ, n under (n prime_above)] ≔ (
+  let p ≔ n prime_above
+  let p_above: 1 under p ≔ (n prime_above_prime) project₀
+  yield (p ≤ n) inspect @𝟚 @{_ ^ n under p} {
+    yea, below ^ (
+      let one: p ∣ 1
+        ≔ p ∣_strike (n !) 1
+          (p ∣_! n (0 under_transit 1 p reflect p_above) below)
+          (((n !) next) least_divisor_∣)
+      yield (1 under_self (2 ≤_yea_transit p 1 p_above (p ∣_≤ 0 one))) initial
+    ),
+    nay, above ^ p lemma_≤_flip n above
+  }
+)
+
+## a prime `p` dividing `r · b` for some `r` from `1` to under `p` divideth
+## `b`: dividing `p` by `r` leaveth a smaller such `r`, down to `1`. `fuel`
+## boundeth `r`.
+let lemma_descent
+  : [fuel: ℕ, p: ℕ, b: ℕ, r: ℕ, primality: p prime, fits: (r ≤ fuel) = yea,
+    positive: (r ≍ 0) = nay, below: r under p, held: p ∣ (r · b), p ∣ b]
+  ≔ match fuel {
+    0 ^ match r {
+      0      ^ match positive {},
+      _ next ^ match fits {}
+    },
+    f′ next ^ match r {
+      0       ^ match positive {},
+      r′ next ^ match r′ {
+        0       ^ p lemma_∣_= (b one_·) held,
+        r″ next ^ (
+          let d ≔ (r″ next) next
+          let s ≔ p quotient (r″ next)
+          let t ≔ p leftover (r″ next)
+          yield (t ≍ 0) inspect @𝟚 @{_ ^ p ∣ b} {
+            yea, zero ^ match d (primality project₁) (p lemma_leftover_∣
+              (r″ next) zero) {
+                one inject₀  ^ match ({c ^ c ≍ 1} leibnitz one) {},
+                same inject₁ ^
+                  (p under_self
+                    (same transport @ℕ @d @p @{c ^ c under p} below)) initial
+              },
+            nay, apart ^ (
+              let on_sum: p ∣ (((s · d) · b) + (t · b))
+                ≔ p lemma_∣_=
+                  (((_ · b) leibnitz ((p lemma_rebuild (r″ next)) symmetry))
+                    transit ((s · d) +_· t b)) (p ∣_· p b (p ∣_reflect))
+              let on_part: p ∣ ((s · d) · b)
+                ≔ p lemma_∣_= (((d · b) ·_swap s) transit (s ·_· d b))
+                  (p ∣_· (d · b) s held)
+              yield f′ lemma_descent p b t primality
+                (t ≤_yea_transit (r″ next) f′ (p lemma_leftover_≤ (r″ next))
+                  fits) apart
+                (t under_transit d p (p lemma_leftover_≤ (r″ next)) below)
+                (p ∣_strike ((s · d) · b) (t · b) on_part on_sum)
+            )
+          }
+        )
+      }
+    }
+  }
+
+let lemma_euclid_apart
+  : [p′: ℕ, a: ℕ, b: ℕ, primality: (p′ next) prime, held: (p′ next) ∣ (a · b),
+    apart: ((p′ next) ∣ a) ¬, (p′ next) ∣ b]
+  ≔ (
+    let p ≔ p′ next
+    let q ≔ a quotient p′
+    let r ≔ a leftover p′
+    yield (r ≍ 0) inspect @𝟚 @{_ ^ p ∣ b} {
+      yea, zero     ^ ((a lemma_leftover_∣ p′ zero) apart) initial,
+      nay, positive ^ (
+        let on_sum: p ∣ (((q · p) · b) + (r · b))
+          ≔ p lemma_∣_=
+            (((_ · b) leibnitz ((a lemma_rebuild p′) symmetry)) transit
+              ((q · p) +_· r b)) held
+        let on_part: p ∣ ((q · p) · b)
+          ≔ p ∣_· (q · p) b (a lemma_∣_quotient p′ p (p ∣_reflect))
+        yield r lemma_descent p b r primality (r ≤_reflect) positive
+          (a lemma_leftover_≤ p′)
+          (p ∣_strike ((q · p) · b) (r · b) on_part on_sum)
+      )
+    }
+  )
+
+## euclid's lemma: a prime that divideth a product divideth one of its
+## factors.
+show let euclid
+  : [p: ℕ, a: ℕ, b: ℕ, primality: p prime, held: p ∣ (a · b), (p ∣ a) ∨ (p ∣ b)]
+  ≔ match p {
+    0       ^ match (primality project₀) {},
+    p′ next ^ match (p′ next) ∣_decide a {
+      on_a inject₀  ^ on_a inject₀,
+      apart inject₁ ^ (p′ lemma_euclid_apart a b primality held apart) inject₁
+    }
+  }

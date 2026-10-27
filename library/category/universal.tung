@@ -1,0 +1,37 @@
+bring class/algebra/partial/category.tung
+bring class/algebra/partial/category/functor.tung
+bring class/algebra/partial/semigroupoid.tung
+bring is.tung
+
+## `u through g f`: `u` followed by the image of `g` is `f`.
+show let through
+  : [@➝₀: [*, *, *], @➝₁: [*, *, *], @φ: [*, *], @: ➝₀ category, @: ➝₁ category,
+    @: ➝₀ ⇒ ➝₁ φ, @ξ: *, @α: *, @β: *, u: ξ ➝₁ (α φ), g: α ➝₀ β, f: ξ ➝₁ (β φ),
+    *]
+  ≔ (u ▷ (g map: (α φ) ➝₁ (β φ))) = f
+
+## a universal morphism from the object `ξ` to the functor `φ`: a morphism
+## `u` into `α φ` through which every morphism from `ξ` into an object of
+## `φ` factoreth by exactly one morphism of `➝₀`.
+show type universal: [@➝₀: [*, *, *], @➝₁: [*, *, *], @φ: [*, *],
+  @category₀: ➝₀ category, @category₁: ➝₁ category, @functor: ➝₀ ⇒ ➝₁ φ, @ξ: *,
+  @α: *, u: ξ ➝₁ (α φ), *] {
+    universal_of: [factor: [@β: *, f: ξ ➝₁ (β φ), α ➝₀ β],
+      factor_through: [@β: *, f: ξ ➝₁ (β φ), u through (f factor) f],
+      factor_alone: [@β: *, f: ξ ➝₁ (β φ), g: α ➝₀ β, factoring: u through g f,
+        g = (f factor)], u universal @➝₀]
+  }
+
+## an arrow through which `u` factoreth itself is `identity`.
+show let factor_self
+  : [@➝₀: [*, *, *], @➝₁: [*, *, *], @φ: [*, *], @: ➝₀ category, @: ➝₁ category,
+    @: ➝₀ ⇒ ➝₁ φ, @ξ: *, @α: *, u: ξ ➝₁ (α φ), universality: u universal @➝₀,
+    g: α ➝₀ α, factoring: u through g u, g = identity]
+  ≔ match universality {
+    _ universal_of _ alone ^
+      (u (alone @α) g factoring) transit
+        ((u (alone @α) (identity @➝₀) >{transit,
+          (u ▷ _) leibnitz map_identity,
+          u ▷_identity
+        }) symmetry)
+  }

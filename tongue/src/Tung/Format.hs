@@ -399,7 +399,7 @@ itemBody nodes
 -- a `let`, `fast`, or `axiom` that doth not fit on one line putteth its `≔ body`
 -- on a line of its own, two columns in, and its `: annotation` too when the
 -- name and annotation do not fit together; a block after `≔` openeth on that
--- line.
+-- line. without `≔`, the annotation stayeth beside the name and wrappeth.
 bindingDoc :: [Node] -> Maybe Doc
 bindingDoc nodes = do
   let (keywords, afterKeywords) = span (atomIn [TExport, TLet, TFix, TOrsend]) nodes
@@ -418,7 +418,7 @@ bindingDoc nodes = do
     Just (sign, right)
       | opensBlock right -> Group (named <> Nest 2 (Line <> pieceDoc sign)) <> Text " " <> sequenceDoc right
       | otherwise -> Group (named <> Nest 2 (Line <> pieceDoc sign <> (if null right then Nil else Text " " <> sequenceDoc right)))
-    Nothing -> named
+    Nothing -> Group (sequenceDoc (keywords ++ [name]) <> foldMap (\(colon, written) -> pieceDoc colon <> Text " " <> sequenceDoc written) annotation)
 
 -- a row's `^`, or a binding outside a declaration, keepeth its left side on
 -- the line and breaketh before the right one unless that openeth a block.

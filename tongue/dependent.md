@@ -610,8 +610,11 @@ syntax; [`classes.tung`](../byspel/classes.tung) showeth these rules.
 
 ### classes
 
-- a class parameter is `name:type` without `@`; unnamed slots other than
-  `@:parent` are rejected, and a class needeth a member or a parent.
+- a class parameter is `name:type`, or a named implicit `@name:type`, which
+  the family taketh as an implicit parameter, so a requirement there is found
+  where the class is applied. unnamed slots other than `@:parent` are
+  rejected, an output parameter is explicit, and a class needeth a member or a
+  parent.
 - a class is a one-constructor family `name` over its parameters. its
   constructor `name_make` holdeth one implicit field per parent dictionary,
   then one explicit field per member in order; its eliminator is
@@ -673,6 +676,10 @@ syntax; [`classes.tung`](../byspel/classes.tung) showeth these rules.
   applied holes. a body thus matcheth against computing members, as in
   `((l sift p) sift p) = (l sift p)`. fallback bizens wait for the whole
   declaration.
+- a product solveth its known goals after each slot's type, before later
+  slots add equations. waiting together, a type's dictionary holes made each
+  solution retry every equation, and an approximation could join holes of
+  different slots wrongly, so a type's fields checked only in some orders.
 - a goal waiteth while any input parameter's head is unknown, as rocq's `!`
   mode; `* out` parameters are outputs search findeth, as lean's `outParam`.
   a waiting goal may still be solved by local requirements and their parents.
@@ -684,7 +691,10 @@ syntax; [`classes.tung`](../byspel/classes.tung) showeth these rules.
   then inherited instances; a later tier runneth only when no earlier candidate
   matcheth, so a direct bizen outranketh a parent path. inherited paths are
   not ranked by length, and the first successful one is chosen without
-  comparing parent dictionaries.
+  comparing parent dictionaries. a path whose child requirement is met at once
+  is tried first; only when none is, and only for the outermost goal, may a
+  path's child requirement wait. waiting, a child with two parents of one
+  class would keep its first parent whether that one fitteth or not.
 - registered bizens go by priority, higher first, then latest first, as lean
   doth; the first match with its requirements solved winneth, so overlap is
   never ambiguous. equivalent instance patterns are rejected at registration,
@@ -702,7 +712,11 @@ syntax; [`classes.tung`](../byspel/classes.tung) showeth these rules.
 - a candidate's requirements are solved recursively to depth 16, and a goal
   repeating an ancestor faileth. a requirement with unknown inputs is first
   fixed by the one unifying local requirement of its class, as a parent
-  projection from `ρ module μ` to `μ group_+` findeth its ring. otherwise it
+  projection from `ρ module μ` to `μ group_+` findeth its ring. a parent path
+  tried at once taketh the first unifying local requirement instead. bizens are
+  unique per type, so through bizens each path reacheth the same parent, but
+  two local requirements may carry different parents; a class whose
+  dictionaries must share one taketh it as a named requirement. otherwise it
   waiteth only under the outermost goal's candidate; nested, the candidate
   faileth, since waiting would commit search to an unchecked path.
 - instance patterns and cycle keys compare global identities without universe

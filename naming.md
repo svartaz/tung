@@ -32,8 +32,8 @@ rendereth a type.
 - functions are `f`, `g`, `h`; types are greek, as `α`, `β`; a value never
   taketh a greek name. greek letters taken in order follow the old
   alphabet, with digamma and koppa: α β γ δ ε ϝ ζ η θ ι κ λ μ ν ξ ο π ϙ ρ σ
-  τ υ φ χ ψ ω. a mnemonic letter may stand outside the order, as `ρ` for a
-  ring or `ι` for an index.
+  τ υ φ χ ψ ω. a mnemonic letter may stand outside the order, as `ρ` for a ring or `ι` for
+  an index.
 - conventional letters keep their meaning: `n`, `m`, `k` for tales, `p`, `q`
   for proofs or quotients, and a field name such as `key` or `leftover`.
 - a name with a meaning beateth a letter: `width`, `count`, `seen`.

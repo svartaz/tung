@@ -1,0 +1,39 @@
+bring class/algebra/partial/category.tung
+bring class/algebra/partial/category/functor.tung
+bring class/algebra/partial/semigroupoid.tung
+bring is.tung
+
+## `a along_⇛`: `a` is a natural transformation from `κ` followed by `γ` to
+## `φ`.
+show let along_⇛
+  : [@➝₀: [*, *, *], @➝₁: [*, *, *], @➝₂: [*, *, *], @φ: [*, *], @κ: [*, *],
+    @γ: [*, *], @: ➝₀ category, @: ➝₁ category, @: ➝₂ category, @: ➝₀ ⇒ ➝₂ φ,
+    @: ➝₀ ⇒ ➝₁ κ, @: ➝₁ ⇒ ➝₂ γ, a: [@α: *, ((α κ) γ) ➝₂ (α φ)], *]
+  ≔ [@α: *, @β: *, f: α ➝₀ β,
+    (((f (map @➝₀ @➝₁ @κ)) (map @➝₁ @➝₂ @γ)) (▷ @➝₂) (a @β)) =
+      ((a @α) (▷ @➝₂) (f (map @➝₀ @➝₂ @φ)))]
+
+## a right kan extension of `φ` along `κ`: a functor `ρ` with a natural `e`
+## from `κ` followed by `ρ` to `φ`, through which every natural `d` from `κ`
+## followed by another functor `γ` to `φ` factoreth by exactly one natural
+## transformation from `γ` to `ρ`.
+show type kan: [@➝₀: [*, *, *], @➝₁: [*, *, *], @➝₂: [*, *, *], @φ: [*, *],
+  @κ: [*, *], @ρ: [*, *], @category₀: ➝₀ category, @category₁: ➝₁ category,
+  @category₂: ➝₂ category, @extended: ➝₀ ⇒ ➝₂ φ, @along: ➝₀ ⇒ ➝₁ κ,
+  @extension: ➝₁ ⇒ ➝₂ ρ, e: [@α: *, ((α κ) ρ) ➝₂ (α φ)], *] {
+    kan_of: [e_⇛: e along_⇛ @➝₀ @➝₁ @➝₂ @φ @κ @ρ,
+      factor: [@γ: [*, *], @: ➝₁ ⇒ ➝₂ γ, d: [@α: *, ((α κ) γ) ➝₂ (α φ)],
+        d_⇛: d along_⇛ @➝₀ @➝₁ @➝₂ @φ @κ @γ, [@δ: *, (δ γ) ➝₂ (δ ρ)]],
+      factor_⇛: [@γ: [*, *], @: ➝₁ ⇒ ➝₂ γ, d: [@α: *, ((α κ) γ) ➝₂ (α φ)],
+        d_⇛: d along_⇛ @➝₀ @➝₁ @➝₂ @φ @κ @γ,
+        (d (factor @γ) d_⇛) ⇛ @➝₁ @➝₂ @γ @ρ],
+      factor_▷: [@γ: [*, *], @: ➝₁ ⇒ ➝₂ γ, d: [@α: *, ((α κ) γ) ➝₂ (α φ)],
+        d_⇛: d along_⇛ @➝₀ @➝₁ @➝₂ @φ @κ @γ, @α: *,
+        (((d (factor @γ) d_⇛) @(α κ)) (▷ @➝₂) (e @α)) = (d @α)],
+      factor_alone: [@γ: [*, *], @: ➝₁ ⇒ ➝₂ γ, s: [@δ: *, (δ γ) ➝₂ (δ ρ)],
+        t: [@δ: *, (δ γ) ➝₂ (δ ρ)], s_⇛: s ⇛ @➝₁ @➝₂ @γ @ρ,
+        t_⇛: t ⇛ @➝₁ @➝₂ @γ @ρ,
+        agree: [@α: *,
+          ((s @(α κ)) (▷ @➝₂) (e @α)) = ((t @(α κ)) (▷ @➝₂) (e @α))], @δ: *,
+        (s @δ) = (t @δ)], e kan @➝₀ @➝₁ @➝₂ @φ @κ @ρ]
+  }

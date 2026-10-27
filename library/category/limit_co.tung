@@ -1,0 +1,35 @@
+bring class/algebra/partial/category.tung
+bring class/algebra/partial/category/functor.tung
+bring class/algebra/partial/semigroupoid.tung
+bring is.tung
+
+## a cocone under the diagram `φ` with apex `λ`: a morphism from each object of
+## the diagram that agreeth with the diagram's morphisms.
+show let cone_co
+  : [@➝₀: [*, *, *], @➝₁: [*, *, *], @φ: [*, *], @: ➝₀ category, @: ➝₁ category,
+    @: ➝₀ ⇒ ➝₁ φ, @λ: *, p: [@α: *, (α φ) ➝₁ λ], *]
+  ≔ [@α: *, @β: *, f: α ➝₀ β, ((f map: (α φ) ➝₁ (β φ)) ▷ (p @β)) = (p @α)]
+
+## a colimit of the diagram `φ`: a cocone `p` with apex `λ` that factoreth
+## through every cocone by exactly one morphism out of `λ`.
+show type limit_co: [@➝₀: [*, *, *], @➝₁: [*, *, *], @φ: [*, *],
+  @category₀: ➝₀ category, @category₁: ➝₁ category, @functor: ➝₀ ⇒ ➝₁ φ, @λ: *,
+  p: [@α: *, (α φ) ➝₁ λ], *] {
+    limit_co_of: [p_cone_co: p cone_co @➝₀ @➝₁ @φ,
+      factor: [@μ: *, c: [@α: *, (α φ) ➝₁ μ], c_cone_co: c cone_co @➝₀ @➝₁ @φ,
+        λ ➝₁ μ],
+      factor_▷: [@μ: *, c: [@α: *, (α φ) ➝₁ μ], c_cone_co: c cone_co @➝₀ @➝₁ @φ,
+        @α: *, ((p @α) ▷ (c factor c_cone_co)) = (c @α)],
+      factor_alone: [@μ: *, g: λ ➝₁ μ, h: λ ➝₁ μ,
+        agree: [@α: *, ((p @α) ▷ g) = ((p @α) ▷ h)], g = h], p limit_co @➝₀]
+  }
+
+## a morphism through which the colimit factoreth itself is `identity`.
+show let factor_self
+  : [@➝₀: [*, *, *], @➝₁: [*, *, *], @φ: [*, *], @: ➝₀ category, @: ➝₁ category,
+    @: ➝₀ ⇒ ➝₁ φ, @λ: *, p: [@α: *, (α φ) ➝₁ λ], limiting: p limit_co @➝₀,
+    g: λ ➝₁ λ, agree: [@α: *, ((p @α) ▷ g) = (p @α)], g = identity]
+  ≔ match limiting {
+    _ limit_co_of _ _ alone ^
+      g alone identity {@α ^ (agree @α) transit (((p @α) ▷_identity) symmetry)}
+  }

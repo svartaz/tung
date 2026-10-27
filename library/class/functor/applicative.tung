@@ -9,18 +9,17 @@ show class applicative: [φ: [*, *], @: φ functor, *] {
 
   let apply: [@α: *, @β: *, α φ, [α, β] φ, β φ]
 
-  let apply_identity_pure
-    : [@α: *, a: α φ, (a apply ((identity @→ @α) pure)) = a]
+  let apply_identity_pure: [@α: *, a: α φ,
+    (a apply ((identity @→ @α) pure)) = a]
 
-  let pure_apply_pure
-    : [@α: *, @β: *, a: α, f: [α, β], ((a pure) apply (f pure)) = ((a f) pure)]
+  let pure_apply_pure: [@α: *, @β: *, a: α, f: [α, β],
+    ((a pure) apply (f pure)) = ((a f) pure)]
 
-  let apply_apply
-    : [@α: *, @β: *, @γ: *, a: α φ, f: [α, β], g: [β, γ],
-      <{apply, a, f pure, g pure} = (a apply (f ▷ g $ pure))]
+  let apply_apply: [@α: *, @β: *, @γ: *, a: α φ, f: [α, β], g: [β, γ],
+    <{apply, a, f pure, g pure} = (a apply (f ▷ g $ pure))]
 
-  let pure_apply
-    : [@α: *, @β: *, a: α, fs: [α, β] φ, ((a pure) apply fs) = (fs map (a ▶))]
+  let pure_apply: [@α: *, @β: *, a: α, fs: [α, β] φ,
+    ((a pure) apply fs) = (fs map (a ▶))]
 }
 
 ## the reader's `pure` is a constant function, and it applieth pointwise.

@@ -44,5 +44,5 @@ show let inspect
 ## input is the same as it.
 ## it is a listed assumption, as in agda and lean, where it is not provable
 ## from equality unbuilding alone.
-show axiom extend
-  : [@α: *, @β: *, @f: [α, β], @g: [α, β], [a: α, (a f) = (a g)], f = g]
+show axiom extend: [@α: *, @β: *, @f: [α, β], @g: [α, β], [a: α, (a f) = (a g)],
+  f = g]

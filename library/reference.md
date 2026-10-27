@@ -43,6 +43,48 @@ spelling of its class name.
 - `monad` stateth `bind_bind`, binding's associativity, beside its unit laws.
   `type/kleisli.tung` wrappeth `[α, β φ]` as `α (φ kleisli) β`, a category for
   any monad: `▷` bindeth and `pure` is `identity`.
+- [`class/algebra/partial/category/functor.tung`](class/algebra/partial/category/functor.tung)
+  nameth category theory's parts by arrows: a category's morphisms are `➝`,
+  a functor is `⇒`, and a natural transformation `⇛`. two categories are
+  `➝₀` and `➝₁`, never two kinds of arrow. `➝₀ ⇒ ➝₁ φ` is a functor from
+  `➝₀` to `➝₁` on types: `φ` mappeth objects and `map` morphisms,
+  keeping `identity` (`map_identity`) and `▷` (`map_▷`). the two categories
+  are named requirements of `⇒`, not parents, so a header requireth
+  `➝₀ category` and `➝₁ category` before a functor between them, and every
+  functor there shareth those dictionaries: the laws of `φ` and `χ` join, as
+  an adjunction's transposes need.
+  `functor` is the case where both are functions. `a ⇛ @➝₀` stateth that a
+  family of morphisms `[@α: *, (α φ) ➝₁ (α χ)]` is natural; `identity_⇛` and
+  `▷_⇛` show that identities are natural and naturality composeth. the source
+  category appeareth only in the functors' requirements, so it is given with
+  `@`; at concrete types the target category and the functors may need it
+  too, as `identity_⇛ @→ @→`.
+- `category/` holdeth no class, so it standeth outside `class/`:
+  `universal.tung`, `limit.tung`, `limit_co.tung`, `limit_along.tung`,
+  `adjunction.tung`, `kan.tung`, and `kan_co.tung` state universal properties
+  over the functors
+  of `functor.tung` as types whose one constructor carrieth the factoring, its
+  law, and its uniqueness. a dual taketh the suffix `_co`, as `yoneda_co` doth.
+  `u universal @➝₀` is a universal morphism from `ξ` to `φ`, and `through`
+  stateth a factoring; `p limit @➝₀` is a limit of the diagram `φ` whose
+  `cone` is `p`, and `p limit_co @➝₀` a colimit whose `cone_co` is `p`;
+  `φ ⊣ χ @➝₀ @➝₁` is an adjunction by unit, counit, their naturality, and
+  both triangle laws. `e kan` is a right kan extension of `φ` along `κ` and
+  `u kan_co` a left one, so `kan` paireth with `limit`, a limit being a right
+  kan extension along the functor to one object. `factor_self` showeth for
+  universal morphisms, limits, and colimits that a morphism through which the
+  universal one factoreth itself is `identity`. a composite of two functors on
+  types is no application, so a composite is written as two `map`s, and
+  `along_⇛` and `⇛_along` state naturality out of and into `κ` followed by
+  another functor; likewise `q limit_along` is a limit of the diagram `δ`
+  followed by `χ`, over `cone_along`. `adjunction.tung` showeth the
+  adjunction's transposes `transpose₀` into `➝₀` and `transpose₁` into `➝₁`,
+  their round trips, and `transpose₀_▷` and `transpose₁_▷`, from which
+  `keep_limit` followeth: a limit `p` of `δ`, mapped by the right adjoint `χ`,
+  is a `limit_along`, so right adjoints keep limits. a category or functor
+  that search cannot determine from
+  the arguments is given with `@`, as `(map @➝₀ @➝₁ @φ)`; an undetermined one
+  may make checking run long rather than fail.
 - `type/freer.tung` provideth `freer`, `bind`, `lift`, mapping, flattening, and
   folding. a request `ξ φ` nameth its answer type `ξ` and the program keepeth
   the continuation, so any `φ` serveth and every function stayeth total.
@@ -67,7 +109,33 @@ spelling of its class name.
   than recursion on a wellfounded relation, whose unfolding would carry a
   accessibility proof other than the recursive call's own. conversion seeth
   that dividing by `b next` yieldeth an outcome but matching cannot, so its
-  lemmas take that outcome and its equation as inputs.
+  lemmas take that outcome and its equation as inputs. `∣_≤` boundeth a divisor
+  of a tale above zero, and `∣_decide` decideth `a ∣ b` by the leftover.
+  `p prime` is `1 under p` with every divisor `1` or `p`. a search over a
+  truth-valued test, not over `∣_decide`'s proofs, findeth `least_divisor`,
+  with `least_divisor_∣`, `least_divisor_least`, and `least_divisor_prime`.
+  euclid's theorem is `prime_above`, the least divisor of `n ! + 1`, which is
+  prime and above `n` (`prime_above_prime`, `prime_above_above`, by `∣_!`).
+  `euclid` is euclid's lemma: a prime dividing `a · b` divideth `a` or `b`. it
+  divideth `p` by the leftover `r` of `a` and descendeth to `r` of `1`, so it
+  needeth neither bézout nor the uniqueness of division. a fact that holdeth
+  for some value is a function with laws, as `least_divisor`, since the
+  library hath no dependent pair.
+- `type/natural_sum.tung` showeth `n Σ f`, the sum of `f` at the tales below
+  `n` in any `monoid_+`, with `Σ_first`, `Σ_agree`, and, in a semiring, `Σ_+`
+  and `Σ_·`. `gauss` stateth `((n next) Σ {i ^ i}) · 2 = n · (n next)`.
+- `type/natural_binomial.tung` showeth `power` in any `monoid_·`, `!`, and
+  `choose` by pascal's rule, with `choose_zero`, `choose_above`, and
+  `choose_self`. `choose` taketh `n` apart first, so `n choose 0` is `1` by
+  `choose_zero`, not by conversion. `binomial` is the binomial theorem over ℕ;
+  a commutative semiring class would carry it further.
+- `type/natural_below.tung` showeth `pigeonhole`: no `f` from
+  `(n next) natural_below` to `n natural_below` is injective. it is proved for
+  functions on tales, the last tale's value taking the place of whichever tale
+  went to the greatest place, and `clamp` carrieth it to `natural_below`.
+- `diagonal.tung` stateth lawvere's fixed point theorem pointwise: when `a f`
+  is `f diagonal g`, `a (a f)` is a fixed point of `g`. `cantor` followeth
+  with `∁` on `𝟚`, which hath no fixed point: no `a f` is the diagonal subset.
 - `effect/fallible.tung` layereth failure over `effect` alone and proveth its
   laws from the [effect assumptions](#assumptions).
 - `yoneda.tung` stateth the yoneda lemma for a functor on types: `lift` and
@@ -125,7 +193,7 @@ proved theorems:
 | `module.tung`            | `zero_∘`, `∘_zero`, `-_∘`, `∘_-`, `one_-_∘`                                               |
 | `category.tung`          | `identity_alone`                                                                          |
 | `groupoid.tung`          | `invert_alone`, `invert_invert`, `identity_invert`, `invert_over_▷`                       |
-| `type/natural.tung`      | `next_inject`, `next_+`, `strike_+`, `+_∸`, `·_swap`                                      |
+| `type/natural.tung`      | `next_inject`, `next_+`, `strike_+`, `+_∸`, `·_swap`, `under_self`, `≤_≭`                 |
 | `type/list_theorem.tung` | `map_manyhood`, `manyhood_·`, `reverse_manyhood`                                          |
 
 `group_homomorphism.tung` defineth `homomorphic`, `kernel`, and `image` for
@@ -136,6 +204,22 @@ theorem in coset form, `(a f) = (b f)` exactly when `a /· b` lieth in the
 kernel (`fibre_kernel`, `kernel_fibre`). without quotient types, the quotient
 group is the kernel-coset relation.
 
+`ideal.tung` defineth `p ideal` for a part `p: [α, *]` of a ring: a record
+that `zero` lieth in `p` (`zero_in`), that `p` is closed under sums (`+_in`)
+and flipping (`-_in`), and that it taketh in a product with a factor in it
+from the left (`·_in`) and the right (`in_·`), so an ideal is two-sided. the
+ring dictionary is the named parameter `@ring`, since an unnamed `@:` slot
+would end the parameters and make `p` an index. `whole_ideal` and
+`zero_ideal` are the two ideals every ring hath.
+
+`ring_homomorphism.tung` defineth `f homomorphic` for rings, a record that
+`f` keepeth sums (`+_f`) and products (`·_f`), and `kernel`, the part `f`
+sendeth to `zero`. it proveth `zero_f` and `-_f`; that the kernel is an ideal
+(`kernel_ideal`); and the first isomorphism theorem in coset form,
+`(a f) = (b f)` exactly when `(a -) + b` lieth in the kernel (`fibre_kernel`,
+`kernel_fibre`). a homomorphism need not keep `one`, so the kernel of the
+zero map, the whole ring, is an ideal too.
+
 ## naming and style
 
 - a class that nameth one member and stateth no law is `hath_x`, after that
@@ -145,10 +229,11 @@ group is the kernel-coset relation.
   of a non-member. a class with laws, or combining lawful parents, is named for
   its structure, as `monoid_+` or `order_total`.
 - declared names follow [`AGENTS.md`](../AGENTS.md#writing-rules). module
-  paths keep ascii spellings: `+`, `-`, `·`, `÷`, `%`, `≤`, `≍`, `=`, and `∋`
-  are `add`, `subtract`, `multiply`, `divide`, `divide_leftover`, `at_most`, `equal`,
-  `is`, and `inhold`, so `hath_+` liveth in `hath_add.tung` and `≍_to_=` in
-  `equal_to_is.tung`.
+  paths keep ascii spellings: `+`, `-`, `·`, `÷`, `%`, `≤`, `≍`, `=`, `∋`, and
+  `⇒` are `add`, `subtract`, `multiply`, `divide`, `divide_leftover`,
+  `at_most`, `equal`, `is`, `inhold`, and `functor`, so `hath_+` liveth in
+  `hath_add.tung`, `≍_to_=` in `equal_to_is.tung`, and `⇒` in
+  `category/functor.tung`.
 - a shown name is read qualified, so it repeateth no module name:
   `type/integer.tung` showeth `to_ℕ`, read `integer~to_ℕ`. a host binding
   taketh that name directly, with no second alias.

@@ -155,6 +155,19 @@ cases =
 
       """
     ),
+    ( "a wide member or axiom without a body keepeth its annotation beside the name",
+      "class laws: [α: *, *] { let regroup: [a: α, b: α, c: α, d: α, ((a + b) + (c + d)) = ((a + c) + (b + d))] }\naxiom regroup_tales: [a: ℕ, b: ℕ, c: ℕ, d: ℕ, ((a + b) + (c + d)) = ((a + c) + (b + d))]\n",
+      """
+      class laws: [α: *, *] {
+        let regroup: [a: α, b: α, c: α, d: α,
+          ((a + b) + (c + d)) = ((a + c) + (b + d))]
+      }
+
+      axiom regroup_tales: [a: ℕ, b: ℕ, c: ℕ, d: ℕ,
+        ((a + b) + (c + d)) = ((a + c) + (b + d))]
+
+      """
+    ),
     ( "wide comments wrap; quoted text and block comments stay whole",
       "## a comment that runneth past the limit is broken at the last space that fitteth within it.\nlet greeting: string ≔ 'a long quoted greeting that must never be broken across two lines and more'\n/* a block\n   comment */\nlet after ≔ 1\n",
       """

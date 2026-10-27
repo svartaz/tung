@@ -27,8 +27,8 @@ show class topology: [α: *, *] {
 
   let meet_open: [u: [α, *], v: [α, *], u open, v open, (u meet v) open]
 
-  let join_open
-    : [@ι: *, u: [ι, α, *], each_open: [i: ι, (i u) open], (u among) open]
+  let join_open: [@ι: *, u: [ι, α, *], each_open: [i: ι, (i u) open],
+    (u among) open]
 }
 
 ## every value of `u` is a value of `v`.

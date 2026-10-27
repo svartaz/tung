@@ -11,7 +11,7 @@ import Control.Monad.Trans.Writer.Strict (Writer, runWriter, writer)
 import Data.Functor.Identity (Identity (..))
 import Data.List (intercalate, uncons)
 import Data.Map.Strict qualified as Map
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, isJust)
 import Data.Set qualified as Set
 import Data.Traversable (for)
 import Tung.Dependent.Check qualified as K
@@ -331,13 +331,18 @@ insertClass owner program ClassDeclaration {..} = inContext ("in class '" ++ cla
         Application (Name "out") [Argument Explicit inner] -> (inner, True)
         ty -> (ty, False)
       parents = [parameterType | Parameter {parameterName = Nothing, parameterType} <- classDeclarationParameters]
-  unless (all ((== Explicit) . parameterPlicity) parameters) (failure "class parameters are written name:type, without '@'")
+  -- a named implicit parameter, as `@category₀: ➝₀ category`, is found where
+  -- the class is applied, so every dictionary over the same arguments shareth
+  -- it; an anonymous one is a parent, a field of each dictionary.
+  unless (and [parameterPlicity parameter == Explicit | (parameter, True) <- zip parameters outputs]) (failure "an output parameter is written name:type out, without '@'")
+  unless (all (isClass program) [parameterType | Parameter {parameterPlicity = Implicit, parameterType} <- parameters]) (failure "an implicit class parameter is a requirement, written @name:class")
   unless (and [plicity == Implicit | Parameter plicity Nothing _ <- classDeclarationParameters]) (failure "a parent requirement is written @:parent")
   fromSource (repeated (localNames program) (classDeclarationName : [name | ClassMember name _ <- classDeclarationMembers]))
   -- member types may name earlier fields, including laws.
   let members = [(name, ty) | ClassMember name ty <- classDeclarationMembers]
       constructor = classDeclarationName ++ "_make"
-      family = Application (Name classDeclarationName) [Argument parameterPlicity (Name name) | Parameter {parameterPlicity, parameterName = Just name} <- parameters]
+      -- a requirement is found by search, which a written `@x` skippeth.
+      family = Application (Name classDeclarationName) [Argument Explicit (Name name) | Parameter {parameterPlicity = Explicit, parameterName = Just name} <- parameters]
       parentName = ("#parent_" ++) . show
       -- generated local binders cannot capture source parameter names.
       parentFields = [Parameter Implicit (Just (parentName index)) parent | (index, parent) <- zip [1 :: Int ..] parents]
@@ -373,16 +378,18 @@ insertClass owner program ClassDeclaration {..} = inContext ("in class '" ++ cla
       (zip [1 :: Int ..] (zip parents accessors))
   foldM define withParents (zip (map fst members) (drop (length parents) accessors))
   where
-    classOf parent current = case parent of
+    classOf parent current = maybe (failure "a parent requirement must apply a class") pure (classSymbol parent current)
+    isClass current = isJust . (`classSymbol` current)
+    classSymbol ty current = case ty of
       Application (Name name) _ -> named name
       Name name -> named name
-      _ -> failure "a parent requirement must apply a class"
+      _ -> Nothing
       where
         named name
           | Just (FreshName symbol _) <- lookupName name (globalNames current),
             Map.member symbol (nameClasses (globalNames current)) =
-              pure symbol
-          | otherwise = failure "a parent requirement must apply a class"
+              Just symbol
+          | otherwise = Nothing
 insertClass _ _ _ = failure "expected class declaration"
 
 -- one accessor per field: replace earlier fields by projections from the

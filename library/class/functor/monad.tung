@@ -7,15 +7,14 @@ bring type/one.tung
 show class monad: [φ: [*, *], @: φ applicative, *] {
   let flat: [@α: *, (α φ) φ, α φ]
 
-  let pure_bind
-    : [@α: *, @β: *, a: α, f: [α, β φ], ((a pure) map f $ flat) = (a f)]
+  let pure_bind: [@α: *, @β: *, a: α, f: [α, β φ],
+    ((a pure) map f $ flat) = (a f)]
 
   let map_pure_flat: [@α: *, a: α φ, (a map pure $ flat) = a]
 
-  let bind_bind
-    : [@α: *, @β: *, @γ: *, m: α φ, f: [α, β φ], g: [β, γ φ],
-      ((m map f $ flat) map g $ flat) =
-        (m map {a ^ flat @γ ((a f) map g)} $ flat)]
+  let bind_bind: [@α: *, @β: *, @γ: *, m: α φ, f: [α, β φ], g: [β, γ φ],
+    ((m map f $ flat) map g $ flat) =
+      (m map {a ^ flat @γ ((a f) map g)} $ flat)]
 }
 
 ## the reader flatteneth by reading the same input twice.

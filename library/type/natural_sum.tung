@@ -1,0 +1,89 @@
+bring class/algebra/total/hath_add.tung
+bring class/algebra/total/hath_multiply.tung
+bring class/algebra/total/hath_zero.tung
+bring class/algebra/total/monoid_add.tung
+bring class/algebra/total/semigroup_add.tung
+bring class/algebra/total/semiring.tung
+bring is.tung
+bring type/natural.tung
+
+## `n Σ f` addeth the values of `f` at the tales below `n`, the lowest first.
+show let Σ: [@α: *, @: α monoid_+, n: ℕ, f: [ℕ, α], α] ≔ match n {
+  0      ^ zero,
+  m next ^ (m Σ f) + (m f)
+}
+
+## the first value may be taken out, leaving a sum shifted by one.
+show let Σ_first
+  : [@α: *, @: α monoid_+, n: ℕ, f: [ℕ, α],
+    ((n next) Σ f) = ((0 f) + (n Σ {i ^ (i next) f}))]
+  ≔ match n {
+    0      ^ ((0 f) zero_+) transit (((0 f) +_zero) symmetry),
+    m next ^
+      ((_ + ((m next) f)) leibnitz (m Σ_first f)) transit
+        (((0 f) +_+ (m Σ {i ^ (i next) f}) ((m next) f)) symmetry)
+  }
+
+## families that agree below `n` have one sum.
+show let Σ_agree
+  : [@α: *, @: α monoid_+, n: ℕ, f: [ℕ, α], g: [ℕ, α],
+    agree: [i: ℕ, i under n, (i f) = (i g)], (n Σ f) = (n Σ g)]
+  ≔ match n {
+    0      ^ reflect,
+    m next ^
+      ((_ + (m f)) leibnitz
+        (m Σ_agree f g {
+          i, below ^ i agree (i under_transit m (m next) below (m under_next))
+        })) transit (((m Σ g) + _) leibnitz (m agree (m under_next)))
+  }
+
+## `(a + b) + (c + d)` regroupeth as `(a + c) + (b + d)`.
+let lemma_+_trade
+  : [@α: *, @: α semiring, a: α, b: α, c: α, d: α,
+    ((a + b) + (c + d)) = ((a + c) + (b + d))]
+  ≔ >{transit,
+    (a +_+ b (c + d)) symmetry,
+    (a + _) leibnitz (b +_+ c d),
+    (a + _) leibnitz ((_ + d) leibnitz (b +_swap c)),
+    (a + _) leibnitz ((c +_+ b d) symmetry),
+    a +_+ c (b + d)
+  }
+
+## summing two families together is adding their sums.
+show let Σ_+
+  : [@α: *, @: α semiring, n: ℕ, f: [ℕ, α], g: [ℕ, α],
+    (n Σ {i ^ (i f) + (i g)}) = ((n Σ f) + (n Σ g))]
+  ≔ match n {
+    0      ^ (zero zero_+) symmetry,
+    m next ^
+      ((_ + ((m f) + (m g))) leibnitz (m Σ_+ f g)) transit
+        ((m Σ f) lemma_+_trade (m Σ g) (m f) (m g))
+  }
+
+## a sum multiplied by `c` is the sum of each value multiplied by `c`.
+show let Σ_·
+  : [@α: *, @: α semiring, n: ℕ, f: [ℕ, α], c: α,
+    ((n Σ f) · c) = (n Σ {i ^ (i f) · c})]
+  ≔ match n {
+    0      ^ c zero_·,
+    m next ^
+      ((m Σ f) +_· (m f) c) transit ((_ + ((m f) · c)) leibnitz (m Σ_· f c))
+  }
+
+## the tales up to `n`, added twice, make `n · (n next)`.
+let lemma_gauss
+  : [n: ℕ, (((n next) Σ {i ^ i}) + ((n next) Σ {i ^ i})) = (n · (n next))]
+  ≔ match n {
+    0      ^ reflect,
+    m next ^ >{transit,
+      ((m next) Σ {i ^ i}) lemma_+_trade (m next) ((m next) Σ {i ^ i}) (m next),
+      (_ + ((m next) + (m next))) leibnitz (m lemma_gauss),
+      (m · (m next)) +_+ (m next) (m next),
+      (_ + (m next)) leibnitz ((_ + (m next)) leibnitz (m ·_swap (m next)))
+    }
+  }
+
+## gauss's sum: twice the tales up to `n` is `n · (n next)`.
+show let gauss: [n: ℕ, (((n next) Σ {i ^ i}) · 2) = (n · (n next))]
+  ≔ ((_ + ((n next) Σ {i ^ i})) leibnitz (((n next) Σ {i ^ i}) zero_+)) transit
+    (n lemma_gauss)

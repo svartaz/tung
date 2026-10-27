@@ -1,7 +1,10 @@
+bring class/equal_to_is.tung
+bring class/hath_equal.tung
 bring class/order/hath_at_most.tung
 bring is.tung
 bring type/natural.tung
 bring type/two.tung
+bring type/zero.tung
 
 ## the tales below `n`: `least` is `0`, and `after` steppeth up while the
 ## bound steppeth with it, so `0 natural_below` hath no value.
@@ -44,3 +47,109 @@ show let last: [n: ℕ, (n next) natural_below] ≔ match n {
   0      ^ least,
   m next ^ (m last) after
 }
+
+## values that name one tale are one value.
+let lemma_to_natural_inject
+  : [@n: ℕ, i: n natural_below, j: n natural_below,
+    same: (i to_natural) = (j to_natural), i = j]
+  ≔ match i, j {
+    least,    least    ^ reflect,
+    least,    _ after  ^ match ({c ^ c ≍ 0} leibnitz same) {},
+    _ after,  least    ^ match ({c ^ c ≍ 0} leibnitz same) {},
+    i′ after, j′ after ^
+      after leibnitz (i′ lemma_to_natural_inject j′ (same next_inject))
+  }
+
+## the tale `k` below `n next`, or `0` when `k` is above `n`.
+let clamp: [n: ℕ, k: ℕ, (n next) natural_below] ≔ match n, k {
+  _,      0      ^ least,
+  0,      _ next ^ least,
+  m next, j next ^ (m clamp j) after
+}
+
+let lemma_clamp_to_natural
+  : [n: ℕ, k: ℕ, below: k under (n next), ((n clamp k) to_natural) = k]
+  ≔ match n, k {
+    0,      0      ^ reflect,
+    _ next, 0      ^ reflect,
+    0,      _ next ^ match below {},
+    m next, j next ^ next leibnitz (m lemma_clamp_to_natural j below)
+  }
+
+## tales that are not equal compare `nay`.
+let lemma_≭: [a: ℕ, b: ℕ, apart: a ≠ b, (a ≍ b) = nay]
+  ≔ (a ≍ b) inspect @𝟚 @{c ^ c = nay} {
+    yea, same ^ ((a ≍_= b same) apart) initial,
+    nay, _    ^ reflect
+  }
+
+## the pigeonhole principle on tales: no `f` taketh the tales up to `n` to
+## tales under `n`, different tales to different tales. the last tale's value
+## taketh the place of whichever tale went to the greatest place.
+let lemma_pigeonhole
+  : [n: ℕ, f: [ℕ, ℕ], into: [i: ℕ, i under (n next), (i f) under n],
+    inject: [i: ℕ, j: ℕ, i under (n next), j under (n next), (i f) = (j f),
+      i = j], 𝟘]
+  ≔ match n {
+    0      ^ match (0 into reflect) {},
+    m next ^ (
+      let t ≔ m next
+      let up: [i: ℕ, below: i under t, i under (t next)]
+        ≔ i under_transit t (t next) below (t under_next)
+      let top_alone: [i: ℕ, below: i under t, same: (i f) = (t f), 𝟘]
+        ≔ t under_self
+          ((i inject t (i up below) (t under_next) same) transport @ℕ @i @t @{
+            c ^ c under t
+          } below)
+      let g: [ℕ, ℕ] ≔ {i ^ ((i f) ≍ m) if (t f) (i f)}
+      let into_g: [i: ℕ, below: i under t, (i g) under m]
+        ≔ ((i f) ≍ m) inspect @𝟚 @{c ^ (c if (t f) (i f)) under m} {
+          yea, hit ^
+            (t f) ≤_≭ m (t into (t under_next))
+              ((t f) lemma_≭ m {
+                same ^
+                  i top_alone below (((i f) ≍_= m hit) transit (same symmetry))
+              }),
+          nay, miss ^ (i f) ≤_≭ m (i into (i up below)) miss
+        }
+      let inject_g
+        : [i: ℕ, j: ℕ, below_i: i under t, below_j: j under t, (i g) = (j g),
+          i = j]
+        ≔ ((i f) ≍ m) inspect @𝟚 @{c ^ [(c if (t f) (i f)) = (j g), i = j]} {
+          yea, hit_i ^
+            ((j f) ≍ m) inspect @𝟚 @{c ^ [(t f) = (c if (t f) (j f)), i = j]} {
+              yea, hit_j ^ {
+                _ ^
+                  i inject j (i up below_i) (j up below_j)
+                    (((i f) ≍_= m hit_i) transit (((j f) ≍_= m hit_j) symmetry))
+              },
+              nay, _ ^ {same ^ (j top_alone below_j (same symmetry)) initial}
+            },
+          nay, _ ^
+            ((j f) ≍ m) inspect @𝟚 @{c ^ [(i f) = (c if (t f) (j f)), i = j]} {
+              yea, _ ^ {same ^ (i top_alone below_i same) initial},
+              nay, _ ^ {same ^ i inject j (i up below_i) (j up below_j) same}
+            }
+        }
+      yield m lemma_pigeonhole g into_g inject_g
+    )
+  }
+
+## the pigeonhole principle: `n next` values cannot go to `n` places, each to
+## a place of its own.
+show let pigeonhole
+  : [n: ℕ, f: [(n next) natural_below, n natural_below],
+    inject: [i: (n next) natural_below, j: (n next) natural_below,
+      (i f) = (j f), i = j], 𝟘]
+  ≔ (
+    let h: [ℕ, ℕ] ≔ {k ^ ((n clamp k) f) to_natural}
+    yield n lemma_pigeonhole h {k, _ ^ ((n clamp k) f) to_natural_under} {
+      k, l, below_k, below_l, same ^ >{transit,
+        (n lemma_clamp_to_natural k below_k) symmetry,
+        to_natural leibnitz
+          ((n clamp k) inject (n clamp l)
+            (((n clamp k) f) lemma_to_natural_inject ((n clamp l) f) same)),
+        n lemma_clamp_to_natural l below_l
+      }
+    }
+  )

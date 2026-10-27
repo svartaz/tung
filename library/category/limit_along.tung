@@ -1,0 +1,31 @@
+bring class/algebra/partial/category.tung
+bring class/algebra/partial/category/functor.tung
+bring class/algebra/partial/semigroupoid.tung
+bring is.tung
+
+## a cone over the diagram `δ` followed by the functor `χ`, which is no
+## application `⇒` could take: a morphism from `ν` to each `(α δ) χ` that
+## agreeth with the diagram's morphisms mapped by `χ`.
+show let cone_along
+  : [@➝₀: [*, *, *], @➝₁: [*, *, *], @➝₂: [*, *, *], @: ➝₀ category,
+    @: ➝₁ category, @: ➝₂ category, @δ: [*, *], @χ: [*, *], @: ➝₂ ⇒ ➝₁ δ,
+    @: ➝₁ ⇒ ➝₀ χ, @ν: *, q: [@α: *, ν ➝₀ ((α δ) χ)], *]
+  ≔ [@α: *, @β: *, f: α ➝₂ β,
+    ((q @α) (▷ @➝₀) ((f (map @➝₂ @➝₁ @δ)) (map @➝₁ @➝₀ @χ))) = (q @β)]
+
+## a limit of the diagram `δ` followed by `χ`: a cone `q` with apex `ν`
+## through which every such cone factoreth by exactly one morphism into `ν`.
+show type limit_along: [@➝₀: [*, *, *], @➝₁: [*, *, *], @➝₂: [*, *, *],
+  @δ: [*, *], @χ: [*, *], @category₀: ➝₀ category, @category₁: ➝₁ category,
+  @category₂: ➝₂ category, @diagram: ➝₂ ⇒ ➝₁ δ, @functor: ➝₁ ⇒ ➝₀ χ, @ν: *,
+  q: [@α: *, ν ➝₀ ((α δ) χ)], *] {
+    limit_along_of: [q_cone: q cone_along @➝₀ @➝₁ @➝₂ @δ @χ,
+      factor: [@μ: *, c: [@α: *, μ ➝₀ ((α δ) χ)],
+        c_cone: c cone_along @➝₀ @➝₁ @➝₂ @δ @χ, μ ➝₀ ν],
+      factor_▷: [@μ: *, c: [@α: *, μ ➝₀ ((α δ) χ)],
+        c_cone: c cone_along @➝₀ @➝₁ @➝₂ @δ @χ, @α: *,
+        ((c factor c_cone) (▷ @➝₀) (q @α)) = (c @α)],
+      factor_alone: [@μ: *, g: μ ➝₀ ν, h: μ ➝₀ ν,
+        agree: [@α: *, (g (▷ @➝₀) (q @α)) = (h (▷ @➝₀) (q @α))], g = h],
+      q limit_along @➝₀ @➝₁ @➝₂ @δ @χ]
+  }

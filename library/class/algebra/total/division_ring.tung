@@ -15,11 +15,9 @@ bring type/zero.tung
 show class division_ring: [α: *, @: α ring, @: α hath_÷, *] {
   let one_not_zero: one ≠ zero
 
-  let ÷_·
-    : [dividend: α, divisor: α, nonzero: divisor ≠ zero,
-      ((dividend ÷ divisor) · divisor) = dividend]
+  let ÷_·: [dividend: α, divisor: α, nonzero: divisor ≠ zero,
+    ((dividend ÷ divisor) · divisor) = dividend]
 
-  let ·_÷
-    : [dividend: α, divisor: α, nonzero: divisor ≠ zero,
-      ((dividend · divisor) ÷ divisor) = dividend]
+  let ·_÷: [dividend: α, divisor: α, nonzero: divisor ≠ zero,
+    ((dividend · divisor) ÷ divisor) = dividend]
 }

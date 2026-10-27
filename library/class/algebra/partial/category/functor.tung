@@ -1,0 +1,51 @@
+bring class/algebra/partial/category.tung
+bring class/algebra/partial/semigroupoid.tung
+bring is.tung
+
+## a functor from the category `➝₀` to the category `➝₁`: `φ` mappeth each
+## object, and `map` each arrow, keeping `identity` and composition.
+## `functor` is the case where both categories are functions.
+show class ⇒: [➝₀: [*, *, *], ➝₁: [*, *, *], @category₀: ➝₀ category,
+  @category₁: ➝₁ category, φ: [*, *], *] {
+    let map: [@α: *, @β: *, α ➝₀ β, (α φ) ➝₁ (β φ)]
+
+    let map_identity: [@α: *, ((identity @➝₀ @α) map) = identity]
+
+    let map_▷: [@α: *, @β: *, @γ: *, f: α ➝₀ β, g: β ➝₀ γ,
+      ((f ▷ g) map) = ((f map) ▷ (g map))]
+  }
+
+## `a` is a natural transformation from `φ` to `χ` when its arrow at each
+## object agreeth with mapping: mapping an arrow and then taking `a` is
+## taking `a` and then mapping it.
+show let ⇛
+  : [@➝₀: [*, *, *], @➝₁: [*, *, *], @: ➝₀ category, @: ➝₁ category, @φ: [*, *],
+    @χ: [*, *], @: ➝₀ ⇒ ➝₁ φ, @: ➝₀ ⇒ ➝₁ χ, a: [@α: *, (α φ) ➝₁ (α χ)], *]
+  ≔ [@α: *, @β: *, f: α ➝₀ β,
+    ((f map: (α φ) ➝₁ (β φ)) ▷ a) = (a ▷ (f map: (α χ) ➝₁ (β χ)))]
+
+## taking `identity` at every object is natural.
+show let identity_⇛
+  : [@➝₀: [*, *, *], @➝₁: [*, *, *], @: ➝₀ category, @: ➝₁ category, @φ: [*, *],
+    @: ➝₀ ⇒ ➝₁ φ, ((identity @➝₁): [@α: *, (α φ) ➝₁ (α φ)]) ⇛ @➝₀]
+  ≔ {
+    @α, @β, f ^
+      ((f map: (α φ) ➝₁ (β φ)) ▷_identity) transit
+        (((f map: (α φ) ➝₁ (β φ)) identity_▷) symmetry)
+  }
+
+## two natural transformations compose to a natural transformation.
+show let ▷_⇛
+  : [@➝₀: [*, *, *], @➝₁: [*, *, *], @: ➝₀ category, @: ➝₁ category, @φ: [*, *],
+    @χ: [*, *], @ψ: [*, *], @: ➝₀ ⇒ ➝₁ φ, @: ➝₀ ⇒ ➝₁ χ, @: ➝₀ ⇒ ➝₁ ψ,
+    a: [@α: *, (α φ) ➝₁ (α χ)], b: [@α: *, (α χ) ➝₁ (α ψ)], a_⇛: a ⇛ @➝₀,
+    b_⇛: b ⇛ @➝₀, ((a ▷ b): [@α: *, (α φ) ➝₁ (α ψ)]) ⇛ @➝₀]
+  ≔ {
+    @α, @β, f ^ >{transit,
+      (f map: (α φ) ➝₁ (β φ)) ▷_▷ a b,
+      (_ ▷ b) leibnitz (f a_⇛),
+      (a ▷_▷ (f map: (α χ) ➝₁ (β χ)) b) symmetry,
+      (a ▷ _) leibnitz (f b_⇛),
+      a ▷_▷ b (f map: (α ψ) ➝₁ (β ψ))
+    }
+  }

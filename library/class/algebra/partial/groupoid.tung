@@ -2,17 +2,17 @@ bring class/algebra/partial/category.tung
 bring class/algebra/partial/semigroupoid.tung
 bring is.tung
 
-show class groupoid: [⇨: [*, *, *], @: ⇨ category, *] {
-  let invert: [@α: *, @β: *, α ⇨ β, β ⇨ α]
+show class groupoid: [➝: [*, *, *], @: ➝ category, *] {
+  let invert: [@α: *, @β: *, α ➝ β, β ➝ α]
 
-  let ▷_invert: [@α: *, @β: *, f: α ⇨ β, (f ▷ (f invert)) = identity]
+  let ▷_invert: [@α: *, @β: *, f: α ➝ β, (f ▷ (f invert)) = identity]
 
-  let invert_▷: [@α: *, @β: *, f: α ⇨ β, ((f invert) ▷ f) = identity]
+  let invert_▷: [@α: *, @β: *, f: α ➝ β, ((f invert) ▷ f) = identity]
 }
 
 ## an arrow that undoeth `f` from the left is its inverse.
 show let invert_alone
-  : [@⇨: [*, *, *], @: ⇨ groupoid, @α: *, @β: *, f: α ⇨ β, g: β ⇨ α,
+  : [@➝: [*, *, *], @: ➝ groupoid, @α: *, @β: *, f: α ➝ β, g: β ➝ α,
     undoing: (g ▷ f) = identity, g = (f invert)]
   ≔ >{transit,
     (g ▷_identity) symmetry,
@@ -24,19 +24,19 @@ show let invert_alone
 
 ## the inverse of an inverse is the arrow.
 show let invert_invert
-  : [@⇨: [*, *, *], @: ⇨ groupoid, @α: *, @β: *, f: α ⇨ β,
+  : [@➝: [*, *, *], @: ➝ groupoid, @α: *, @β: *, f: α ➝ β,
     ((f invert) invert) = f]
   ≔ ((f invert) invert_alone f (f ▷_invert)) symmetry
 
 ## `identity` is its own inverse.
 show let identity_invert
-  : [@⇨: [*, *, *], @: ⇨ groupoid, @α: *, ((identity @⇨ @α) invert) = identity]
+  : [@➝: [*, *, *], @: ➝ groupoid, @α: *, ((identity @➝ @α) invert) = identity]
   ≔ (identity invert_alone identity (identity identity_▷)) symmetry
 
 ## the inverse of a composite is the composite of the inverses, turned
 ## around.
 show let invert_over_▷
-  : [@⇨: [*, *, *], @: ⇨ groupoid, @α: *, @β: *, @γ: *, f: α ⇨ β, g: β ⇨ γ,
+  : [@➝: [*, *, *], @: ➝ groupoid, @α: *, @β: *, @γ: *, f: α ➝ β, g: β ➝ γ,
     ((f ▷ g) invert) = ((g invert) ▷ (f invert))]
   ≔ ((f ▷ g) invert_alone ((g invert) ▷ (f invert)) >{transit,
     ((g invert) ▷_▷ (f invert) (f ▷ g)) symmetry,

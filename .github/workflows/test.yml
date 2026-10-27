@@ -33,11 +33,18 @@ jobs:
       - name: check out source
         uses: actions/checkout@v6
 
-      # the command line tools may ship a newer sdk than their linker readeth;
-      # xcode's toolchain keepeth the sdk and linker matched.
+      # ghc's rts nameth the command line tools' sdk among its library
+      # directories, so every link findeth `libSystem` there, whatever
+      # `SDKROOT` saith. that sdk may be newer than the runner's linker
+      # readeth, so its name is pointed at xcode's own sdk, and xcode's
+      # toolchain linketh.
       - name: use xcode's toolchain
         if: runner.os == 'macOS'
-        run: echo "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer" >> "$GITHUB_ENV"
+        run: |
+          developer=/Applications/Xcode.app/Contents/Developer
+          echo "DEVELOPER_DIR=$developer" >> "$GITHUB_ENV"
+          sdk=$(DEVELOPER_DIR=$developer xcrun --sdk macosx --show-sdk-path)
+          sudo ln -sfn "$sdk" /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
 
       - name: set up haskell
         if: matrix.check == 'compiler' || matrix.check == 'editor' || matrix.check == 'byspel' || matrix.check == 'tidy'
